@@ -1,0 +1,1 @@
+xmllint --noout --schema talkbank.xsd aprm19990515.xml
