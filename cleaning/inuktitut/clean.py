@@ -80,13 +80,6 @@ def normalize_sting(line):
     # remove weird characters
     return ''.join(c for c in line if not ord(c) in cc)
 
-def get_ids():
-    # load @IDs
-    pass
-
-def get_id(path):
-    pass
-
 def get_media(path):
     pass
 
@@ -105,6 +98,23 @@ def get_replacements(filepath):
                 sys.exit("Replacements input longer than two columns")
             replacements.append(tuple(row))
 
+ids = {}
+def get_ids(filepath):
+    # load @IDs
+    with open(filepath, "r") as infile:
+        d = csv.reader(infile, delimiter="\t")
+        next(d, None) # skip the header
+        for row in d:
+            id = []
+            for i in range(1, len(row)-1):
+                id.append(row[i])
+            # populate look up table
+            if not row[0] in ids:
+                ids[row[0]] = []
+                ids[row[0]].append("@ID:\t"+"|".join(id)+"|")
+            else:
+                ids[row[0]].append("@ID:\t"+"|".join(id)+"|")                
+
 participants = {}
 def get_participants(filepath):
     # load participant data
@@ -120,9 +130,12 @@ changeables = ["@Activities:", "@Bck:", "@Bg", "@Bg:", "@Blank", "@Comment:", "@
 no_tab = ["@UTF8", "@Begin", "@End", "@New Episode"]
 
 def get_header(path):
-    header = ["@UTF8", "@Begin", "@Languages:\tiku"]
+    header = ["@UTF8", "@Begin", "@Languages:\tike"]
     participant = participants[path.namebase]
-    header.append("@Participants:\t"+participant+"\n")
+    header.append("@Participants:\t"+participant)
+    id = ids[path.namebase]
+    for i in id:
+        header.append(i)
     # header.append(get_id(path))
     # header.append(get_media(path))
     # add other corpus-specific header data here
@@ -135,7 +148,7 @@ def process(path):
 
     # add interim header
     header = get_header(path)
-    outfile.write("\n".join(header))
+    outfile.write("\n".join(header)+"\n")
 
     # process file contents
     n = 0
@@ -191,6 +204,8 @@ def process(path):
 def main(dir, type):
     get_replacements("notes/replacements.csv")
     get_participants("notes/participants.csv")
+    get_ids("notes/IDs.tsv")
+
     # TODO: add in other metadata, e.g. IDs
     for f in path(dir).files(type):
         if not f.basename().startswith('.'):

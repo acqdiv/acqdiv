@@ -84,6 +84,11 @@ def process(path):
             line = infile.readline()
             continue
 
+        # skip end lines
+        if line.startswith("@end") or line.startswith("@End") or line.startswith("@ End"):
+            line = infile.readline()
+            continue
+
         # catch broken lines
         if not line.startswith("*") and not line.startswith("@") and not line.startswith("%"):
             prev += " "+line
