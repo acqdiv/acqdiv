@@ -265,7 +265,12 @@ def parse_xml(file_name, corpus_name):
         # words
         # first resolve special types of transcriptions
         
-        # simple replacements
+        # omissions: ignore them altogether. Omitted words can presently only be removed directly under <w> because ElementTree doesn't give references to parents (i.e. u.findall('.//w') is no good because the parent from which <w> should be dropped is not known). This should be okay, though, since in all XML corpora omissions always occur directly under <u>. 
+        for w in u.findall('w'):
+            if 'type' in w.attrib and w.attrib['type'] == 'omission':
+                u.remove(w)
+        
+        # simple string replacements
         for w in u.findall('.//w'):
             # where the orthography tier is missing in Cree, <w> is not empty but contains 'missingortho' -> remove this
             if w.text == 'missingortho': 
@@ -285,17 +290,28 @@ def parse_xml(file_name, corpus_name):
                             w.text = t.tail
                         else:
                             w.text += t.tail
-                                                
-        # repetitions, e.g. <g><w>shoo</w><r times="3"></g>: insert as many <w> as indicated by attrib "times" of <r>, minus 1 (-> example goes to "shoo shoo shoo")
-        # in all corpora there can only be one <w> and <r> each in a <g>
+        # EOF string replacements
+                
+        # group tags <g> surround groups of repeated or retraced words that are not glossed in the morphology tier -> set new attribute 'glossed' to 'no'
         for g in u.findall('.//g'):
-            w = g.find('.//w')
+            words = g.findall('.//w')
+            # repetitions, e.g. <g><w>shoo</w><w>boo</w><r times="3"></g>: insert as many <w> groups as indicated by attrib "times" of <r>, minus 1 (-> example goes to "shoo boo shoo boo shoo boo")
+            # TODO it would be nicer to repeat the glosses, too, but this requires a special pattern, e.g. attribute 'glossed' to 'copy'??
             repetitions = g.find('r')
             if repetitions is not None:
                 for i in range(0, int(repetitions.attrib['times'])-1):
-                    new_elem = ET.SubElement(g, 'w')
-                    new_elem.text = w.text                        
-                    
+                    for w in words:
+                        new_elem = ET.SubElement(g, 'w')
+                        new_elem.text = w.text
+                        new_elem.attrib['glossed'] = 'no'
+            # retracings, e.g. <g><w formType="UNIBET">shou</w><w formType="UNIBET">shou</w><k type="retracing"/></g>: ignore the complete group for morphology
+            retracings = g.find('k[@type="retracing"]')
+            retracings_wc = g.find('k[@type="retracing with correction"]')
+            if (retracings is not None) or (retracings_wc is not None):
+                for w in words: 
+                    w.attrib['glossed'] = 'no'
+        # EOF group tags
+                                    
         # transcriptions featuring a contrast between actual and target pronunciation: go through words, create an attribute "target" (initially identical to its text), and set it as appropriate. "target" is taken up later again when all content is written to the corpus dic. 
         for w in u.findall('.//w'):
             
@@ -305,9 +321,10 @@ def parse_xml(file_name, corpus_name):
             w_actual = w.text
             w_target = w.text
 
-            # fragments: actual pronunciation remains, target pronunciation is '???' as with untranscribed words. This may occasionally be overwritten by a <replacement> further down.
+            # fragments: actual pronunciation remains, target pronunciation is '???' as with untranscribed words. No glosses. This may occasionally be overwritten by a <replacement> further down.
             if 'type' in w.attrib and w.attrib['type'] == 'fragment':
                 w.attrib['target'] = '???'
+                w.attrib['glossed'] = 'no'
                 continue
             
             # shortenings, e.g. <g><w>wo<shortening>rd</shortening>s</w></g>: 'wos' = actual pronunciation, 'words' = target pronunciation
@@ -321,35 +338,61 @@ def parse_xml(file_name, corpus_name):
                 w.remove(s)
             w.text = w_actual
             w.attrib['target'] = w_target
+        # EOF actual vs target    
             
         # replacements, e.g. <g><w>burred<replacement><w>word</w></replacement></w></g>
         # these require an additional loop over <w> in <u> because there may be shortenings within replacements
-        for w in u.findall('.//w'):    
-            r = w.find('replacement')
+        words = u.findall('.//w')
+        for i in range(0, len(words)):
+            r = words[i].find('replacement')
             if r is not None:
-                w.attrib['target'] = '_'.join(rep_w.attrib['target'] for rep_w in r.findall('w'))
-                w.remove(r)
+                rep_words = r.findall('w')
+                words[i].attrib['target'] = rep_words[0].attrib['target']
+                # a single actual word may be replaced by several target words. In this case it is necessary to insert empty actual words corresponding to all but the first target word. 
+                if len(rep_words) > 1:
+                    for j in range(1, len(rep_words)):
+                        w = ET.Element('w')
+                        w.text = ''
+                        w.attrib['target'] = rep_words[j].attrib['target']
+                        u.insert(i+1, w)
+                        
+                # w.attrib['target'] = '_'.join(rep_w.attrib['target'] for rep_w in r.findall('w'))
+                words[i].remove(r)
 
-        # example for shortening within replacement in Japanese MiiPro, processing step by step:
-        # (1) <w>kitenee<replacement><w>kite</w><w><shortening>i</shortening>nai</w></replacement></w>
-        # (2) <w>kitenee<replacement><w>kite</w><w target="inai">nai</w></replacement></w>
-        # (3) <w target="kite_inai">kitenee<replacement><w>kite</w><w target="inai">nai</w></replacement></w>
-        # (4) <w target="kite_inai">kitenee</w>
+                # example for shortening within complex replacement in Japanese MiiPro (aprm19990722.u287), processing step by step:
+                # (1) initial XML string
+                #   <w>kitenee<replacement><w>kite</w><w><shortening>i</shortening>nai</w></replacement></w>
+                # (2) add targets to all <w>
+                #   <w target="kitenee">kitenee<replacement><w target="kite">kite</w><w target="nai"><shortening>i</shortening>nai</w></replacement></w>
+                # (3) reset target for shortening  
+                #   <w target="kitenee">kitenee<replacement><w target="kite">kite</w><w target="inai"><shortening>i</shortening>nai</w></replacement></w>
+                # (4) remove shortening tag
+                #   <w target="kitenee">kitenee<replacement><w target="kite">kite</w><w target="inai">nai</w></replacement></w>
+                # (5) reset target for w to replacement
+                #   <w target="kite">kitenee<replacement><w target="kite">kite</w><w target="inai">nai</w></replacement></w>
+                # (6) insert new empty word with target = second element of replacement
+                #   <w target="kite">kitenee<replacement><w target="kite">kite</w><w target="inai">nai</w></replacement></w><w target="inai"/>
+                # (7) remove replacement tag
+                #   <w target="kite">kitenee</w><w target="inai"/>
+        
+        # EOF replacements
+                
+        # remember number of (glossed!) words to check alignment later
+        words = u.findall('.//w')
+        unglossed_words = u.findall('.//w[@glossed="no"]')
+        corpus[text_id][utterance_index]['length_in_words'] = len(words) - len(unglossed_words)
+        # print(file_name, utterance_index, ":", len(words), "words;", len(unglossed_words), "unglossed words; so length should be", corpus[text_id][utterance_index]['length_in_words'])
         
         # write words to corpus dic
         word_index = 0
-        for w in u.findall('.//w'):
-            
-            # omissions: ignore them altogether. Note that omitted words can't be removed further up using u.remove(w) because they are not always direct children of u
-            if 'type' in w.attrib and w.attrib['type'] == 'omission':
-                continue
-            else:
-                corpus[text_id][utterance_index]['words'][word_index]['full_word'] = w.text
-                corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.attrib['target']
-                word_index += 1
-        # remember number of words to check alignment later
-        corpus[text_id][utterance_index]['length_in_words'] = word_index
-                
+        for w in words:
+            corpus[text_id][utterance_index]['words'][word_index]['full_word'] = w.text
+            corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.attrib['target']
+            # hand down warning for <w> with no corresponding word in the morphology tier, e.g. fragments and repetitions
+            if 'glossed' in w.attrib and w.attrib['glossed'] == 'no':
+                corpus[text_id][utterance_index]['words'][word_index]['warnings'] = 'not glossed'
+            word_index += 1
+                        
         # standard dependent tiers
         for dependent_tier in xml_dep_correspondences:
             tier = u.find("a[@type='" + dependent_tier + "']")
@@ -475,13 +518,15 @@ def parse_xml(file_name, corpus_name):
         # EOF Cree                    
                                                    
         elif corpus_name == 'Japanese_MiiPro':
+            # TODO quotations are marked by <quotation type="begin"></quotation> and <quotation type="end"></quotation>. The complete group is represented in the morphology tier trn by n|quote, so all words in the group except the first should have an attribute 'not glossed', similar to fragments, replacements, and retracings. It will be difficult to include these because the quoted elements are hard to catch in XPath. 
                         
             # parse the morphology tier trn
             morphology = u.find("a[@type='extension'][@flavor='trn']")
             if morphology is not None:
-                # split trn tier into words, reset word counter to 0
+                # split trn tier into words, reset counters to 0
                 words = re.split('\\s+', morphology.text)
                 word_index = 0
+                words_in_trn = 0
                                 
                 for w in words:
                     # skip "words" that contain no '|' (= punctuation, e.g. '.'); 
@@ -490,14 +535,18 @@ def parse_xml(file_name, corpus_name):
                     # ignore "tags" tag|„ and tag|‡, they are not words but mark syntactic stuff on a higher level
                     if re.search('^tag\\|', w):
                         continue
-                    # words with '???' as their full_word_target (e.g. fragments) are not glossed, so count one up in this case
-                    if corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] == '???':
+                        
+                    # only now count up words_in_trn
+                    words_in_trn += 1
+                        
+                    # some words are not glossed - these got a warning 'not glossed' further above. Ignore them here, i.e. count one up
+                    while 'warnings' in corpus[text_id][utterance_index]['words'][word_index].keys() and corpus[text_id][utterance_index]['words'][word_index]['warnings'] == 'not glossed':
                         word_index += 1
                     
                     # set morpheme counter
                     morpheme_index = 0
                     
-                    # first cut off prefix, it's always on the left edge of the complete word. There are no words with more than 1 prefix. 
+                    # first cut off prefix, it's always on the left edge of the complete word. There are no words with more than 1 prefix in MiiPro. 
                     prefix = ''
                     check_pfx = re.search('^(.+#)', w)
                     if check_pfx:
@@ -518,11 +567,10 @@ def parse_xml(file_name, corpus_name):
                     
                     # get stem gloss from the right edge of the complete word. There are no words with more than 1 stem gloss. 
                     stem_gloss = '???'
-                    check_stem_gloss = re.search('(=\S+)$', w)
+                    check_stem_gloss = re.search('(.+)=(\S+)$', w)
                     if check_stem_gloss:
-                        stem_gloss = check_stem_gloss.group(1)
-                        w = w.rstrip(stem_gloss)
-                        stem_gloss = stem_gloss.replace('=', '')
+                        w = check_stem_gloss.group(1)
+                        stem_gloss = check_stem_gloss.group(2)
                     
                     # split into compound elements (if applicable)
                     compound_elems = w.split('+')
@@ -539,9 +587,9 @@ def parse_xml(file_name, corpus_name):
                         (stem, suffix_string) = ('', '')
                         if check_stem:
                             stem = check_stem.group(1)
+                            suffix_string = check_stem.group(2)
                             # Japanese MiiPro specialty: grammatical categories in suppletive forms are marked by '&' (e.g. da&POL = des); replace by '.'
                             stem = stem.replace('&','.')
-                            suffix_string = check_stem.group(2)
                         
                         # add stem, suffixes, and POS for all to corpus dic
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
@@ -552,9 +600,16 @@ def parse_xml(file_name, corpus_name):
                         if suffix_string:
                             # drop first hyphen in suffix string so split() doesn't produce empty elements
                             suffix_string = suffix_string.lstrip("-")
-                            for suffix in suffix_string.split('-'):
-                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = '???'
-                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = suffix
+                            for suffix_gloss in suffix_string.split('-'):
+                                # most suffixes don't have form glosses in MiiPro, but sometimes blocks of the type IMP:te are found, in which case IMP is the suffix gloss and -te is the suffix form. Only exception is [A-Z]:contr, which is not a stem gloss but indicates contractions.
+                                suffix_form = '???'
+                                check_suffix = re.search('^([A-Z]+):(\w+)$', suffix_gloss)
+                                if check_suffix and check_suffix.group(2) != 'contr':
+                                    suffix_gloss = check_suffix.group(1)
+                                    suffix_form = check_suffix.group(2)
+                                
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = suffix_form
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = suffix_gloss
                                 corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
                                 morpheme_index += 1
                     
@@ -563,9 +618,9 @@ def parse_xml(file_name, corpus_name):
             
                 # check alignment with words that were found in <w>. This can only be done now because before "trn" contained punctuation that wasn't present in <w>.
                 # note: alignment on morpheme-level doesn't have to be checked at all for MiiPro because the segment and gloss tiers are not separate
-                if word_index != corpus[text_id][utterance_index]['length_in_words']:
+                if words_in_trn != corpus[text_id][utterance_index]['length_in_words']:
                     print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ': general word tier <w> has ' 
-                        + str(corpus[text_id][utterance_index]['length_in_words']) + ' words vs ' + str(word_index) + ' in "trn" (= morphology)')
+                        + str(corpus[text_id][utterance_index]['length_in_words']) + ' words vs ' + str(words_in_trn) + ' in "trn" (= morphology)')
                     corpus[text_id][utterance_index]['warnings'] = 'broken alignment full_word : segments/glosses'
         # EOF Japanese MiiPro        
             
