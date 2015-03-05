@@ -995,7 +995,7 @@ def parse_toolbox(file_name, corpus_name):
                             else:
                                 corpus[text_id][utterance_index]['comments'] += '; ' + 'intended form might have been "' + target + '"'
                         # various undocumented markers starting with +, only partially well-formed CHAT, e.g. +//, +., [+]: delete
-                        record['text'] = re.sub('\+\S+|\[\+\]|\[\]', '', record['text'])
+                        record['text'] = re.sub('\+\S+|\[\s*\+\]|\[\]', '', record['text'])
                         # other undocumented markers: delete
                         record['text'] = re.sub('&lt;', '', record['text'])
                     
