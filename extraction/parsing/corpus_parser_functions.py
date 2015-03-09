@@ -1026,7 +1026,7 @@ def parse_toolbox(file_name, corpus_name):
                         elif re.search('\!', record['tx']): 
                             corpus[text_id][utterance_index]['sentence_type'] = 'imperative'    
                         # delete any garbage
-                        record['tx'] = re.sub('[‘’\'“”\"\.!,;:\+\/]|\?$|\.\.\.', '', record['tx'])
+                        record['tx'] = re.sub('[‘’\'“”\"\.!,;:\+\/]|\?$|\.\.\.|\[\?\]|<|>', '', record['tx'])
                         record['tx'] = re.sub('^0$', '', record['tx'])
                         if record['tx'] is '':
                             record.pop('tx')
