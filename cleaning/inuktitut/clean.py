@@ -79,13 +79,30 @@ def rules(s):
     s = re.sub("@оIP0,8п", "", s)
     s = re.sub("@End\s+_", "@End", s)
     s = re.sub(":\s+", ":\t", s, 1)    
+    s = re.sub("(\S)([!\?\.])$", "\\1 \\2", s)
+    s = re.sub("(\S)[,\.]", "\\1", s)
+    s = re.sub("\-\-", "", s)
+
+    if s.startswith("*"):
+        s = re.sub("(\d+)(x)", "\\2 \\1", s)
+        s = re.sub("(x)(\d+)", "\\1 \\2", s)
+        s = re.sub("\s\(?(\d+)\s+x\)?(\s|$)", " [x \\1] ", s)
+        s = re.sub("\s\(?x\s+(\d+)\)?(\s|$)", " [x \\1] ", s)
+        s = re.sub("([^\.\?!]$)", "\\1 .", s)
+        s = re.sub(",", "", s)
+
+    if s.startswith("%add"):
+        s = re.sub("([A-Z]{3})(,)([A-Z]{3})", "\\1\\2\s\\3", s)
+
+
+
+
     return(s.strip())
 
 cc = [6, 130, 26, 96]
 def normalize_sting(line):
     # remove weird characters
     return ''.join(c for c in line if not ord(c) in cc)
-
 
 def get_media(path):
     pass
@@ -136,6 +153,8 @@ def get_participants(filepath):
 changeables = ["@Activities:", "@Bck:", "@Bg", "@Bg:", "@Blank", "@Comment:", "@Date:", "@Eg", "@Eg:", "@EndTurn", "@G:", "@New Episode", "@New Language:", "@Page", "@Situation:", "@T:"]
 no_tab = ["@UTF8", "@Begin", "@End", "@New Episode"]
 
+skip_header = ["@UTF8", "@Begin", "@Languages", "@Participants", "@ID"]
+
 def get_header(path):
     header = ["@UTF8", "@Begin", "@Languages:\tike"]
     participant = participants[path.namebase]
@@ -143,8 +162,8 @@ def get_header(path):
     id = ids[path.namebase]
     for i in id:
         header.append(i)
-    # header.append(get_id(path))
     # header.append(get_media(path))
+    header.append("@Media:\t"+path.namebase+", audio")
     # add other corpus-specific header data here
     return(header)
 
@@ -154,8 +173,8 @@ def process(path):
     outfile = open(outpath, "w")
 
     # add interim header
-    header = get_header(path)
-    outfile.write("\n".join(header)+"\n")
+#    header = get_header(path)
+#    outfile.write("\n".join(header)+"\n")
 
     # process file contents
     n = 0
@@ -168,6 +187,12 @@ def process(path):
         line = rules(line) # do regex replacements for each line
         line = replacement(line) # do manual replacements for each line
 
+        """
+        for i in skip_header:
+            if line.startswith(i):
+                line = infile.readline()
+                continue
+                """
         # skip blank lines, etc.
         if line == "" or line == "*" or line == "%" or line == " ":
             line = infile.readline()
@@ -224,14 +249,11 @@ def main(dir, type):
     # call 
 
 if __name__=="__main__":
-    config = configparser.ConfigParser()
+    # config = configparser.ConfigParser()
     # config.read(sys.argv[1])
-    config.read("inuktitut.conf")
+    # config.read("inuktitut.conf")
     # call the rename filename functions
-    
-    print(config["filepaths"]["rules"])
-
-    sys.exit(1)
+    # print(config["filepaths"]["rules"])
     dir = sys.argv[1]
     type = sys.argv[2]
     main(dir, type)
