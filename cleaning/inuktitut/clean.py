@@ -20,12 +20,18 @@ New Epsiode: -> Situation
 *ALI:Alec sings a song (nonsense) .
 
 
+- @Break is for breaks in the tape --> we can drop it. 
+- @Situation in the middle of file is for information on changes in the situation --> apparently this was allowed when the Inuktitut corpus was compiled; if the present CHAT standard doesn't allow it, convert it to %sit:
+- The codes in %arg: are documented in the attached file, which Shanley can't open anymore... nor can I! Could you give it a try? There must be some textual data in the file because when I open it as ISO-Latin or UTF-8 in Textmate I can see some things that make sense, but there is a large amount of clutter wrapped around it. Best thing would be if we could convert this to pdf somehow and put it under Acqdiv/Documentation. 
+
+
 """
 
 import os
 import re
 import sys
 import csv
+import configparser
 from path import path
 
 skip_tiers = ["%sit:", "%com:", "%err:", "%mor:", "%tim:", "%add:", "%cod:", "%snd:", "%eng:"]
@@ -79,6 +85,7 @@ cc = [6, 130, 26, 96]
 def normalize_sting(line):
     # remove weird characters
     return ''.join(c for c in line if not ord(c) in cc)
+
 
 def get_media(path):
     pass
@@ -187,10 +194,7 @@ def process(path):
             line = infile.readline()
         else:
             if prev:
-                if prev.startswith("@"):
-                    print(prev.split("\t"))
-                else:
-                    outfile.write(prev+"\n")
+                outfile.write(prev+"\n")
             prev = line
             line = infile.readline()
 
@@ -202,20 +206,37 @@ def process(path):
     outfile.close()
 
 def main(dir, type):
+    # replace this with filepaths from the config file
     get_replacements("notes/replacements.csv")
     get_participants("notes/participants.csv")
     get_ids("notes/IDs.tsv")
 
-    # TODO: add in other metadata, e.g. IDs
+    # replace this with the root filepath
     for f in path(dir).files(type):
         if not f.basename().startswith('.'):
             process(f)
             print("PROCESSING:", f.basename())
 #            sys.exit(1)
 
+    # set up directory structure
+    # original/ files from the original source
+    # rename and copy to temp/
+    # call 
+
 if __name__=="__main__":
+    config = configparser.ConfigParser()
+    # config.read(sys.argv[1])
+    config.read("inuktitut.conf")
+    # call the rename filename functions
+    
+    print(config["filepaths"]["rules"])
+
+    sys.exit(1)
     dir = sys.argv[1]
     type = sys.argv[2]
     main(dir, type)
+
+    
+
 
 # python inuktitut.py ../inuktitut/cha *.utf8
