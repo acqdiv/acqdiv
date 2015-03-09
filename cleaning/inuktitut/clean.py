@@ -94,9 +94,6 @@ def rules(s):
     if s.startswith("%add"):
         s = re.sub("([A-Z]{3})(,)([A-Z]{3})", "\\1\\2\s\\3", s)
 
-
-
-
     return(s.strip())
 
 cc = [6, 130, 26, 96]
@@ -173,8 +170,8 @@ def process(path):
     outfile = open(outpath, "w")
 
     # add interim header
-#    header = get_header(path)
-#    outfile.write("\n".join(header)+"\n")
+    header = get_header(path)
+    outfile.write("\n".join(header)+"\n")
 
     # process file contents
     n = 0
@@ -218,7 +215,7 @@ def process(path):
             prev += " "+line
             line = infile.readline()
         else:
-            if prev:
+            if prev and not line.startswith("@"): # skip the incoming header (and potentially any other "@" lines!!)
                 outfile.write(prev+"\n")
             prev = line
             line = infile.readline()
