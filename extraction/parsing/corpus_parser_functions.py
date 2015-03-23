@@ -208,29 +208,30 @@ def parse_xml(file_name, corpus_name):
                             w.text += t.tail
         # EOF string replacements
                 
-        # group tags <g> in Japanese corpora surround groups of problematic words (transcription insecure, no glosses, ...)
-        for g in u.findall('.//g'):
-            words = g.findall('.//w')
-            # repetitions, e.g. <g><w>shoo</w><w>boo</w><r times="3"></g>: insert as many <w> groups as indicated by attrib "times" of <r>, minus 1 (-> example goes to "shoo boo shoo boo shoo boo"), attribute 'glossed' to 'no'
-            # TODO it would be nicer to repeat the glosses, too, but this requires a special pattern, e.g. attribute 'glossed' to 'copy'??
-            repetitions = g.find('r')
-            if repetitions is not None:
-                for i in range(0, int(repetitions.attrib['times'])-1):
-                    for w in words:
-                        new_elem = ET.SubElement(g, 'w')
-                        new_elem.text = w.text
-                        new_elem.attrib['glossed'] = 'no'
-            # retracings, e.g. <g><w formType="UNIBET">shou</w><w formType="UNIBET">shou</w><k type="retracing"/></g>: set attribute 'glossed' to 'no'
-            retracings = g.find('k[@type="retracing"]')
-            retracings_wc = g.find('k[@type="retracing with correction"]')
-            if (retracings is not None) or (retracings_wc is not None):
-                for w in words: 
-                    w.attrib['glossed'] = 'no'
-            # guessed transcriptions: add warning
-            guesses = g.find('k[@type="buest guess"]')
-            if guesses is not None:
-                for w in words:
-                    w.attrib['transcribed'] = 'insecure'
+        # # group tags <g> in Japanese corpora surround groups of problematic words (transcription insecure, no glosses, ...)
+        # for g in u.findall('.//g'):
+        #     words = g.findall('.//w')
+        #     # repetitions, e.g. <g><w>shoo</w><w>boo</w><r times="3"></g>: insert as many <w> groups as indicated by attrib "times" of <r>, minus 1 (-> example goes to "shoo boo shoo boo shoo boo"), attribute 'glossed' to 'no'
+        #     # TODO it would be nicer to repeat the glosses, too, but this requires a special pattern, e.g. attribute 'glossed' to 'copy'??
+        #     repetitions = g.find('r')
+        #     if repetitions is not None:
+        #         for i in range(0, int(repetitions.attrib['times'])-1):
+        #             for w in words:
+        #                 new_elem = ET.SubElement(g, 'w')
+        #                 new_elem.text = w.text
+        #                 new_elem.attrib['glossed'] = 'no'
+        #
+        #     # retracings, e.g. <g><w formType="UNIBET">shou</w><w formType="UNIBET">shou</w><k type="retracing"/></g>: set attribute 'glossed' to 'no'
+        #     retracings = g.find('k[@type="retracing"]')
+        #     retracings_wc = g.find('k[@type="retracing with correction"]')
+        #     if (retracings is not None) or (retracings_wc is not None):
+        #         for w in words:
+        #             w.attrib['glossed'] = 'no'
+        #     # guessed transcriptions: add warning
+        #     guesses = g.find('k[@type="buest guess"]')
+        #     if guesses is not None:
+        #         for w in words:
+        #             w.attrib['transcribed'] = 'insecure'
             
         # EOF group tags
                                     
@@ -308,6 +309,37 @@ def parse_xml(file_name, corpus_name):
                 #   <w target="kite">kitenee</w><w target="inai"/>
         
         # EOF replacements
+        
+        # group tags <g> in Japanese corpora surround groups of problematic words (transcription insecure, no glosses, ...)
+        # these have to be dealt with last because repetitions belongs here and everything that's been done above may be subject to repetition in the end
+        for g in u.findall('.//g'):
+            words = g.findall('.//w')
+            # repetitions, e.g. <g><w>shoo</w><w>boo</w><r times="3"></g>: insert as many <w> groups as indicated by attrib "times" of <r>, minus 1 (-> example goes to "shoo boo shoo boo shoo boo"), attribute 'glossed' to 'no'
+            # TODO it would be nicer to repeat the glosses, too, but this requires a special pattern, e.g. attribute 'glossed' to 'copy'?? beware of differences between MiiPro and Miyata!
+            repetitions = g.find('r')
+            if repetitions is not None:
+                for i in range(0, int(repetitions.attrib['times'])-1):
+                    for w in words:
+                        new_elem = ET.SubElement(g, 'w')
+                        new_elem.text = w.text
+                        new_elem.attrib['glossed'] = 'no'
+                        new_elem.attrib['target'] = w.attrib['target']
+                        mor = w.find('mor')
+                        if mor is not None:
+                            new_elem.insert(0, mor)
+                        
+            # retracings, e.g. <g><w formType="UNIBET">shou</w><w formType="UNIBET">shou</w><k type="retracing"/></g>: set attribute 'glossed' to 'no'
+            retracings = g.find('k[@type="retracing"]')
+            retracings_wc = g.find('k[@type="retracing with correction"]')
+            if (retracings is not None) or (retracings_wc is not None):
+                for w in words: 
+                    w.attrib['glossed'] = 'no'
+            # guessed transcriptions: add warning
+            guesses = g.find('k[@type="buest guess"]')
+            if guesses is not None:
+                for w in words:
+                    w.attrib['transcribed'] = 'insecure'
+        
                 
         # remember number of (glossed!) words to check alignment later
         words = u.findall('.//w')
@@ -323,6 +355,8 @@ def parse_xml(file_name, corpus_name):
             # pass down warnings
             if 'glossed' in w.attrib and w.attrib['glossed'] == 'no':
                 creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'not glossed')
+            if 'glossed' in w.attrib and w.attrib['glossed'] == 'repeated':
+                creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'gloss repeated')
             if 'transcribed' in w.attrib and w.attrib['transcribed'] == 'insecure':
                 creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'transcription insecure')
             word_index += 1
@@ -478,7 +512,7 @@ def parse_xml(file_name, corpus_name):
                     words_in_trn += 1
                         
                     # some words are not glossed - these got a warning 'not glossed' further above. Ignore them here, i.e. count one up
-                    while 'warnings' in corpus[text_id][utterance_index]['words'][word_index].keys() and re.search(corpus[text_id][utterance_index]['words'][word_index]['warnings'], 'not glossed'):
+                    while 'warnings' in corpus[text_id][utterance_index]['words'][word_index].keys() and re.search(corpus[text_id][utterance_index]['words'][word_index]['warnings'], '(not glossed|gloss repeated)'):
                         word_index += 1
                     
                     # set morpheme counter
