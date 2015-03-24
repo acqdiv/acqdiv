@@ -36,101 +36,8 @@ class Vividict(dict):
 ### Global variables ###
 ########################
 
-# correspondences between XML standard dependent tiers (shared across corpora) and JSON
-xml_dep_correspondences = {
-    'actions' : 'comments',
-    'addressee' : 'addressee',
-    'comments' : 'comments',
-    'english translation' : 'english',
-    'explanation' : 'comments',
-    'gesture' : 'gestures',
-    'orthography' : 'orthographic',
-    'situation' : 'comments',
-    'time stamp' : 'starts_at'
-}
-            # correspondences between XML extended dependent tiers and JSON
-xml_ext_correspondences = {
-    'pho' : 'phonetic'  
-}
-# correspondences between other XML elements and JSON
-xml_other_correspondences = {
-    'actmor' : 'segments',
-    'actual' : 'phonetic',
-    'model' : 'phonetic_target',
-    'mormea' : 'glosses_target',
-    'mortyp' : 'pos_target',
-    'tarmor' : 'segments_target'
-}
-
-# correspondences between values of XML <t> (= sentence type) and JSON
-t_correspondences = {
-    'p' : 'default', # CHAT .
-    '.' : 'default',
-    'q' : 'question', # CHAT ?
-    '?' : 'question', 
-    'e' : 'exclamation', # CHAT !
-    '!' : 'exclamation',
- 	'trail off' : 'trail off', # CHAT +...
- 	'interruption' : 'interruption', # CHAT +/.
- 	'self interruption' : 'self interruption', # CHAT +//.
- 	'quotation precedes' : 'quotation precedes', # CHAT +".
- 	'quotation next line' : 'quotation next line', # CHAT +"/.
- 	'interruption question' : 'interruption question' # CHAT +/?
-}
-
-# correspondences between Toolbox utterance-level tiers and JSON
-# a simple dictionary isn't enough here because the meaning of tiers changes according to the corpus
-tbx_utt_tier_correspondences = Vividict()
-tbx_utt_tier_correspondences['Chintang']['comm'] = 'comments'
-tbx_utt_tier_correspondences['Chintang']['Comment'] = 'comments'
-tbx_utt_tier_correspondences['Chintang']['comment'] = 'comments'
-tbx_utt_tier_correspondences['Chintang']['context'] = 'comments'
-tbx_utt_tier_correspondences['Chintang']['cxt'] = 'comments'
-tbx_utt_tier_correspondences['Chintang']['ELANBegin'] = 'starts_at'
-tbx_utt_tier_correspondences['Chintang']['ELANEnd'] = 'ends_at'
-tbx_utt_tier_correspondences['Chintang']['ELANParticipant'] = 'speaker_id'
-tbx_utt_tier_correspondences['Chintang']['eng'] = 'english'
-tbx_utt_tier_correspondences['Chintang']['eth'] = 'comments'
-tbx_utt_tier_correspondences['Chintang']['EUDICOp'] = 'speaker_id'
-tbx_utt_tier_correspondences['Chintang']['EUDICOt0'] = 'starts_at'
-tbx_utt_tier_correspondences['Chintang']['EUDICOt1'] = 'ends_at'
-tbx_utt_tier_correspondences['Chintang']['gram'] = 'comments'
-tbx_utt_tier_correspondences['Chintang']['nep'] = 'nepali'
-tbx_utt_tier_correspondences['Chintang']['tx'] = 'phonetic'
-tbx_utt_tier_correspondences['Indonesian']['begin'] = 'starts_at'
-tbx_utt_tier_correspondences['Indonesian']['ft'] = 'english'
-tbx_utt_tier_correspondences['Indonesian']['nt'] = 'comments'
-tbx_utt_tier_correspondences['Indonesian']['pho'] = 'phonetic'
-tbx_utt_tier_correspondences['Indonesian']['sp'] = 'speaker_id'
-tbx_utt_tier_correspondences['Russian']['act'] = 'comments'
-tbx_utt_tier_correspondences['Russian']['add'] = 'addressee'
-tbx_utt_tier_correspondences['Russian']['com'] = 'comments'
-tbx_utt_tier_correspondences['Russian']['ct'] = 'comments'
-tbx_utt_tier_correspondences['Russian']['ELANBegin'] = 'starts_at'
-tbx_utt_tier_correspondences['Russian']['ELANEnd'] = 'ends_at'
-tbx_utt_tier_correspondences['Russian']['ERR'] = 'comments'
-tbx_utt_tier_correspondences['Russian']['err'] = 'comments'
-tbx_utt_tier_correspondences['Russian']['EUDICOp'] = 'speaker_id'
-tbx_utt_tier_correspondences['Russian']['ph'] = 'phonetic'
-tbx_utt_tier_correspondences['Russian']['PHO'] = 'phonetic'
-tbx_utt_tier_correspondences['Russian']['pho'] = 'phonetic'
-tbx_utt_tier_correspondences['Russian']['sit'] = 'comments'
-
-# correspondences between Toolbox word-level tiers and JSON
-tbx_word_tier_correspondences = Vividict()
-tbx_word_tier_correspondences['Chintang']['gw'] = 'full_word'
-tbx_word_tier_correspondences['Indonesian']['tx'] = 'full_word'
-tbx_word_tier_correspondences['Russian']['text'] = 'full_word'
-
-# correspondences between Toolbox morpheme-level tiers and JSON
-tbx_mor_tier_correspondences = Vividict()
-tbx_mor_tier_correspondences['Chintang']['mgl'] = 'glosses_target'
-tbx_mor_tier_correspondences['Chintang']['mph'] = 'segments_target'
-tbx_mor_tier_correspondences['Chintang']['ps'] = 'pos_target'
-tbx_mor_tier_correspondences['Indonesian']['ge'] = 'glosses_target'
-tbx_mor_tier_correspondences['Indonesian']['mb'] = 'segments_target'
-tbx_mor_tier_correspondences['Russian']['lem'] = 'segments' # Actually there are no segmentations in the Russian corpus, so the levels word and morpheme cannot be separated. However, for consistency across corpora it's best to treat the elements on this tier and on \mor as morphemes (because only morphemes can have glosses). The corresponding "word" tier is \text. 
-tbx_mor_tier_correspondences['Russian']['mor'] = 'glosses'
+# import from separate file
+from corpus_parser_dics import (xml_dep_correspondences, xml_ext_correspondences, xml_other_correspondences, t_correspondences, tbx_utt_tier_correspondences, tbx_word_tier_correspondences, tbx_mor_tier_correspondences)
 
 
 #################
@@ -301,29 +208,30 @@ def parse_xml(file_name, corpus_name):
                             w.text += t.tail
         # EOF string replacements
                 
-        # group tags <g> in Japanese corpora surround groups of problematic words (transcription insecure, no glosses, ...)
-        for g in u.findall('.//g'):
-            words = g.findall('.//w')
-            # repetitions, e.g. <g><w>shoo</w><w>boo</w><r times="3"></g>: insert as many <w> groups as indicated by attrib "times" of <r>, minus 1 (-> example goes to "shoo boo shoo boo shoo boo"), attribute 'glossed' to 'no'
-            # TODO it would be nicer to repeat the glosses, too, but this requires a special pattern, e.g. attribute 'glossed' to 'copy'??
-            repetitions = g.find('r')
-            if repetitions is not None:
-                for i in range(0, int(repetitions.attrib['times'])-1):
-                    for w in words:
-                        new_elem = ET.SubElement(g, 'w')
-                        new_elem.text = w.text
-                        new_elem.attrib['glossed'] = 'no'
-            # retracings, e.g. <g><w formType="UNIBET">shou</w><w formType="UNIBET">shou</w><k type="retracing"/></g>: set attribute 'glossed' to 'no'
-            retracings = g.find('k[@type="retracing"]')
-            retracings_wc = g.find('k[@type="retracing with correction"]')
-            if (retracings is not None) or (retracings_wc is not None):
-                for w in words: 
-                    w.attrib['glossed'] = 'no'
-            # guessed transcriptions: add warning
-            guesses = g.find('k[@type="buest guess"]')
-            if guesses is not None:
-                for w in words:
-                    w.attrib['transcribed'] = 'insecure'
+        # # group tags <g> in Japanese corpora surround groups of problematic words (transcription insecure, no glosses, ...)
+        # for g in u.findall('.//g'):
+        #     words = g.findall('.//w')
+        #     # repetitions, e.g. <g><w>shoo</w><w>boo</w><r times="3"></g>: insert as many <w> groups as indicated by attrib "times" of <r>, minus 1 (-> example goes to "shoo boo shoo boo shoo boo"), attribute 'glossed' to 'no'
+        #     # TODO it would be nicer to repeat the glosses, too, but this requires a special pattern, e.g. attribute 'glossed' to 'copy'??
+        #     repetitions = g.find('r')
+        #     if repetitions is not None:
+        #         for i in range(0, int(repetitions.attrib['times'])-1):
+        #             for w in words:
+        #                 new_elem = ET.SubElement(g, 'w')
+        #                 new_elem.text = w.text
+        #                 new_elem.attrib['glossed'] = 'no'
+        #
+        #     # retracings, e.g. <g><w formType="UNIBET">shou</w><w formType="UNIBET">shou</w><k type="retracing"/></g>: set attribute 'glossed' to 'no'
+        #     retracings = g.find('k[@type="retracing"]')
+        #     retracings_wc = g.find('k[@type="retracing with correction"]')
+        #     if (retracings is not None) or (retracings_wc is not None):
+        #         for w in words:
+        #             w.attrib['glossed'] = 'no'
+        #     # guessed transcriptions: add warning
+        #     guesses = g.find('k[@type="buest guess"]')
+        #     if guesses is not None:
+        #         for w in words:
+        #             w.attrib['transcribed'] = 'insecure'
             
         # EOF group tags
                                     
@@ -362,18 +270,28 @@ def parse_xml(file_name, corpus_name):
             r = words[i].find('replacement')
             if r is not None:
                 rep_words = r.findall('w')
-                words[i].attrib['target'] = rep_words[0].attrib['target']
-                # a single actual word may be replaced by several target words. In this case it is necessary to insert empty actual words corresponding to all but the first target word. 
-                if len(rep_words) > 1:
-                    for j in range(1, len(rep_words)):
+
+                # go through words in replacement
+                for j in range(0, len(rep_words)):
+                    # check for morphology
+                    mor = rep_words[j].find('mor')
+                    # first word: transfer content and any morphology to parent <w> in <u>
+                    if j== 0:
+                        words[i].attrib['target'] = rep_words[0].attrib['target']
+                        if mor is not None:
+                            words[i].insert(0, mor)
+                    # all further words: insert new empty <w> in <u>, put content and morphology there
+                    else:
                         w = ET.Element('w')
                         w.text = ''
                         w.attrib['target'] = rep_words[j].attrib['target']
+                        if mor is not None:
+                            w.insert(0, mor)
                         u.insert(i+1, w)
                         
                 # w.attrib['target'] = '_'.join(rep_w.attrib['target'] for rep_w in r.findall('w'))
                 words[i].remove(r)
-
+                
                 # example for shortening within complex replacement in Japanese MiiPro (aprm19990722.u287), processing step by step:
                 # (1) initial XML string
                 #   <w>kitenee<replacement><w>kite</w><w><shortening>i</shortening>nai</w></replacement></w>
@@ -391,6 +309,37 @@ def parse_xml(file_name, corpus_name):
                 #   <w target="kite">kitenee</w><w target="inai"/>
         
         # EOF replacements
+        
+        # group tags <g> in Japanese corpora surround groups of problematic words (transcription insecure, no glosses, ...)
+        # these have to be dealt with last because repetitions belongs here and everything that's been done above may be subject to repetition in the end
+        for g in u.findall('.//g'):
+            words = g.findall('.//w')
+            # repetitions, e.g. <g><w>shoo</w><w>boo</w><r times="3"></g>: insert as many <w> groups as indicated by attrib "times" of <r>, minus 1 (-> example goes to "shoo boo shoo boo shoo boo"), attribute 'glossed' to 'no'
+            # TODO it would be nicer to repeat the glosses, too, but this requires a special pattern, e.g. attribute 'glossed' to 'copy'?? beware of differences between MiiPro and Miyata!
+            repetitions = g.find('r')
+            if repetitions is not None:
+                for i in range(0, int(repetitions.attrib['times'])-1):
+                    for w in words:
+                        new_elem = ET.SubElement(g, 'w')
+                        new_elem.text = w.text
+                        new_elem.attrib['glossed'] = 'no'
+                        new_elem.attrib['target'] = w.attrib['target']
+                        mor = w.find('mor')
+                        if mor is not None:
+                            new_elem.insert(0, mor)
+                        
+            # retracings, e.g. <g><w formType="UNIBET">shou</w><w formType="UNIBET">shou</w><k type="retracing"/></g>: set attribute 'glossed' to 'no'
+            retracings = g.find('k[@type="retracing"]')
+            retracings_wc = g.find('k[@type="retracing with correction"]')
+            if (retracings is not None) or (retracings_wc is not None):
+                for w in words: 
+                    w.attrib['glossed'] = 'no'
+            # guessed transcriptions: add warning
+            guesses = g.find('k[@type="buest guess"]')
+            if guesses is not None:
+                for w in words:
+                    w.attrib['transcribed'] = 'insecure'
+        
                 
         # remember number of (glossed!) words to check alignment later
         words = u.findall('.//w')
@@ -406,6 +355,8 @@ def parse_xml(file_name, corpus_name):
             # pass down warnings
             if 'glossed' in w.attrib and w.attrib['glossed'] == 'no':
                 creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'not glossed')
+            if 'glossed' in w.attrib and w.attrib['glossed'] == 'repeated':
+                creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'gloss repeated')
             if 'transcribed' in w.attrib and w.attrib['transcribed'] == 'insecure':
                 creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'transcription insecure')
             word_index += 1
@@ -561,7 +512,7 @@ def parse_xml(file_name, corpus_name):
                     words_in_trn += 1
                         
                     # some words are not glossed - these got a warning 'not glossed' further above. Ignore them here, i.e. count one up
-                    while 'warnings' in corpus[text_id][utterance_index]['words'][word_index].keys() and re.search(corpus[text_id][utterance_index]['words'][word_index]['warnings'], 'not glossed'):
+                    while 'warnings' in corpus[text_id][utterance_index]['words'][word_index].keys() and re.search(corpus[text_id][utterance_index]['words'][word_index]['warnings'], '(not glossed|gloss repeated)'):
                         word_index += 1
                     
                     # set morpheme counter
@@ -662,79 +613,76 @@ def parse_xml(file_name, corpus_name):
             word_index = 0
             for w in u.findall('.//w'):
                 morphology = w.find('mor')
+                
                 if morphology is not None:
                     morpheme_index = 0
-                    compound_gloss = ''
                     
-                    # check whether there are compound elements. There can only ever be one <mwc> per <mor>. <mwc> have their own POS tags, but these are ignored here.
-                    compound = morphology.find('mwc')
-                    if compound is not None:
-                        # all stems in the compound except the first get the prefix "=" as a separator. 
-                        mw = compound.findall('mw')
-                        for i in range(1, len(mw)):
-                            # every morphological word has exactly one stem
-                            stem = mw[i].find('stem')
-                            stem.text = '=' + stem.text
-                        # if there are any prefixes on the compound, add them to the corpus dic directly
-                        # compounds never carry suffixes in Miyata XML
-                        for p in compound.findall('mpfx'):
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = p.text
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = '???'
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'pfx'
-                            
-                            morpheme_index += 1
-                        # in compounds the meaning tag <menx> applies to the whole compound, but we want meanings for words -> remember meaning
-                        menx = morphology.find('menx')
-                        if menx is not None:
-                            compound_gloss = menx.text
-                    
-                    # go through morphological words
-                    for mw in morphology.findall('mw'):
-                        
-                        # prefixes under <mw>
-                        for p in mw.findall('mpfx'):
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = p.text
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = '???'
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'pfx'
-                            morpheme_index += 1
-                        
-                        # stem (exactly one in every <mw>) with gloss and part of speech
-                        stemtag = mw.find('stem')
-                        stem = stemtag.text
-                        # if <mw> is part of a compound, the meaning tag <menx> refers to the compound as a whole -> repeat it for all <mw> 
-                        # otherwise <menx> refers to the meaning of the stem
-                        stem_gloss = ''
-                        if compound_gloss: 
-                            stem_gloss = compound_gloss
-                        else: 
-                            menx = morphology.find('menx')
-                            if menx is None:
-                                stem_gloss = '???'
-                            else:    
-                                stem_gloss = menx.text
-                        # part of speech
-                        pos = mw.find('pos')
-                        main_pos = pos.find('c')
-                        stem_pos = main_pos.text
-                        for sub_pos in pos.findall('s'): 
-                            stem_pos = stem_pos + '.' + sub_pos.text
-                        # add to corpus dic
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = stem_pos
-                        
+                    # prefixes can be under <mw> (default) or <mwc> (compounds), so search directly from <mor> with arbitrary depth
+                    for p in morphology.findall('.//mpfx'):
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = p.text
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = '???'
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'pfx'
                         morpheme_index += 1
-                                                    
-                        # suffixes (in a wide sense)
-                        for s in mw.findall('mk'):
-                            # add to corpus dic
+                    
+                    # find stem by joining all stems under <w> (there may be several stems in the case of compounds)
+                    stems = morphology.findall('.//stem')
+                    stem = stems[0].text
+                    for i in range(1, len(stems)):
+                        stem += '=' + stems[i].text
+                    
+                    # stem POS normally is under <mw>. In the case of compounds there is first one tag for the whole compound (which we take over) and then more for the individual elements (which we ignore).
+                    pos = morphology.findall('.//pos')
+                    pos = pos[0]
+                    main_pos = pos.find('c')
+                    stem_pos = main_pos.text
+                    for sub_pos in pos.findall('s'): 
+                        stem_pos = stem_pos + '.' + sub_pos.text
+                    
+                    # stem gloss <menx>, under <mw> by default, under <mwc> for compounds
+                    stem_gloss = ''
+                    menx = morphology.find('menx')
+                    if menx is None:
+                        stem_gloss = '???'
+                    else:    
+                        stem_gloss = menx.text
+                        # compound glosses sometimes have "_" as separator -> replace by "=" as for segment
+                        stem_gloss = re.sub('_', '=', stem_gloss)
+                    
+                    # add stem information to corpus dic
+                    corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
+                    corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
+                    corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = stem_pos
+                    morpheme_index += 1
+                    
+                    # suffixes - there are three types: sfx (default), sfxf (fused into the stem), mc (form for preceding default suffix)
+                    # sfx and mc can only be associated via their position in the tree, so suffixes have to be looped over using an index
+                    suffixes = morphology.findall('.//mk')
+                    
+                    for s in suffixes:
+
+                        # default suffix: add to corpus, count up morphemes
+                        if s.attrib['type'] == 'sfx':
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = '???'
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = s.text
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = s.attrib['type']
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
                             morpheme_index += 1                                                        
-       
-                        # count up words
-                        word_index += 1
+                            
+                        # form for default suffix: add form to preceding element (= suffix), don't count up; ignore if text = "contr" (contraction)
+                        elif s.attrib['type'] == 'mc' and s.text != 'contr':
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index-1]['segments_target'] = s.text
+                            
+                        # fused suffix: add gloss to preceding element (= stem), don't count up
+                        elif s.attrib['type'] == 'sfxf':
+                            # there is one particle (wa 'TOP') which is frequently fused to the copula (de+wa -> ja) and therefore treated as sfxf; the gloss is, however, not "TOP" but "wa". Add this exceptional case to the preceding stem. 
+                            if s.text == 'wa':
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index-1]['segments_target'] += '.' + s.text
+                            # add gloss for all other fused suffixes gloss to the gloss of the preceding stem
+                            else:
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index-1]['glosses_target'] += '.' + s.text
+                              
+                    # count up words
+                    word_index += 1
+                        
                 # if there is no morphology, add warning to present word and count up
                 elif morphology is None:
                     creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'not glossed')
@@ -1131,9 +1079,10 @@ def parse_toolbox(file_name, corpus_name):
                                     if word_might_end_here == True:
                                         word_index += 1
                                         morpheme_index = 0
-                                    # add morpheme to corpus dic, overwriting existing POS
-                                    m = re.sub('\-', '', m)
-                                    if tier_name_JSON == 'pos':
+                                    # add morpheme to corpus dic, overwriting existing POS. Indonesian doesn't have POS, so keep separator!
+                                    if corpus_name == 'Chintang': 
+                                        m = re.sub('\-', '', m)
+                                    if tier_name_JSON in ['pos', 'pos_target']:
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = 'pfx'
                                     else:
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = m
@@ -1155,9 +1104,10 @@ def parse_toolbox(file_name, corpus_name):
                             
                                 # suffix
                                 elif re.search('^\-.', m):
-                                    # add morpheme to corpus dic, overwriting existing POS
-                                    m = re.sub('\-', '', m)
-                                    if tier_name_JSON == 'pos':
+                                    # add morpheme to corpus dic, overwriting existing POS. Indonesian doesn't have POS, so keep separator!
+                                    if corpus_name == 'Chintang': 
+                                        m = re.sub('\-', '', m)
+                                    if tier_name_JSON in ['pos', 'pos_target']:
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = 'sfx'
                                     else:
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = m
