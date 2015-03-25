@@ -44,8 +44,6 @@ from corpus_parser_dics import (xml_dep_correspondences, xml_ext_correspondences
 ### Functions ###
 #################
 
-# TODO move correspondence dics to separate file?
-
 # get all the text contained in an XML tag. This is useful for mixed elements of the form <t1>a<t2>b</t2>c<t1>
 def content(tag):
     return tag.text + ''.join(ET.tostring(e) for e in tag)
@@ -113,6 +111,8 @@ def parse_xml(file_name, corpus_name):
     root = tree.getroot()
     # get ID of present file
     text_id = root.attrib['Id']
+    # construe parent map in order to be able to access parent nodes when only the child is known
+    parent_map = {c:p for p in tree.iter() for c in p}
 
     # walk and clean XML tree for an overview
     for elem in root.iter():
@@ -207,33 +207,6 @@ def parse_xml(file_name, corpus_name):
                         else:
                             w.text += t.tail
         # EOF string replacements
-                
-        # # group tags <g> in Japanese corpora surround groups of problematic words (transcription insecure, no glosses, ...)
-        # for g in u.findall('.//g'):
-        #     words = g.findall('.//w')
-        #     # repetitions, e.g. <g><w>shoo</w><w>boo</w><r times="3"></g>: insert as many <w> groups as indicated by attrib "times" of <r>, minus 1 (-> example goes to "shoo boo shoo boo shoo boo"), attribute 'glossed' to 'no'
-        #     # TODO it would be nicer to repeat the glosses, too, but this requires a special pattern, e.g. attribute 'glossed' to 'copy'??
-        #     repetitions = g.find('r')
-        #     if repetitions is not None:
-        #         for i in range(0, int(repetitions.attrib['times'])-1):
-        #             for w in words:
-        #                 new_elem = ET.SubElement(g, 'w')
-        #                 new_elem.text = w.text
-        #                 new_elem.attrib['glossed'] = 'no'
-        #
-        #     # retracings, e.g. <g><w formType="UNIBET">shou</w><w formType="UNIBET">shou</w><k type="retracing"/></g>: set attribute 'glossed' to 'no'
-        #     retracings = g.find('k[@type="retracing"]')
-        #     retracings_wc = g.find('k[@type="retracing with correction"]')
-        #     if (retracings is not None) or (retracings_wc is not None):
-        #         for w in words:
-        #             w.attrib['glossed'] = 'no'
-        #     # guessed transcriptions: add warning
-        #     guesses = g.find('k[@type="buest guess"]')
-        #     if guesses is not None:
-        #         for w in words:
-        #             w.attrib['transcribed'] = 'insecure'
-            
-        # EOF group tags
                                     
         # transcriptions featuring a contrast between actual and target pronunciation: go through words, create an attribute "target" (initially identical to its text), and set it as appropriate. "target" is taken up later again when all content is written to the corpus dic. 
         for w in u.findall('.//w'):
@@ -280,14 +253,14 @@ def parse_xml(file_name, corpus_name):
                         words[i].attrib['target'] = rep_words[0].attrib['target']
                         if mor is not None:
                             words[i].insert(0, mor)
-                    # all further words: insert new empty <w> in <u>, put content and morphology there
+                    # all further words: insert new empty <w> under parent of last known <w> (= <u> or <g>), put content and morphology there
                     else:
                         w = ET.Element('w')
                         w.text = ''
                         w.attrib['target'] = rep_words[j].attrib['target']
                         if mor is not None:
                             w.insert(0, mor)
-                        u.insert(i+1, w)
+                        parent_map[words[i]].insert(i+1, w)
                         
                 # w.attrib['target'] = '_'.join(rep_w.attrib['target'] for rep_w in r.findall('w'))
                 words[i].remove(r)
@@ -311,18 +284,18 @@ def parse_xml(file_name, corpus_name):
         # EOF replacements
         
         # group tags <g> in Japanese corpora surround groups of problematic words (transcription insecure, no glosses, ...)
-        # these have to be dealt with last because repetitions belongs here and everything that's been done above may be subject to repetition in the end
+        # these have to be dealt with last because repetitions belong here and everything that's been done above may be repeated
         for g in u.findall('.//g'):
             words = g.findall('.//w')
             # repetitions, e.g. <g><w>shoo</w><w>boo</w><r times="3"></g>: insert as many <w> groups as indicated by attrib "times" of <r>, minus 1 (-> example goes to "shoo boo shoo boo shoo boo"), attribute 'glossed' to 'no'
-            # TODO it would be nicer to repeat the glosses, too, but this requires a special pattern, e.g. attribute 'glossed' to 'copy'?? beware of differences between MiiPro and Miyata!
             repetitions = g.find('r')
             if repetitions is not None:
                 for i in range(0, int(repetitions.attrib['times'])-1):
                     for w in words:
                         new_elem = ET.SubElement(g, 'w')
                         new_elem.text = w.text
-                        new_elem.attrib['glossed'] = 'no'
+                        if corpus_name == 'Japanese_MiiPro':
+                            new_elem.attrib['glossed'] = 'repeated'
                         new_elem.attrib['target'] = w.attrib['target']
                         mor = w.find('mor')
                         if mor is not None:
@@ -339,8 +312,7 @@ def parse_xml(file_name, corpus_name):
             if guesses is not None:
                 for w in words:
                     w.attrib['transcribed'] = 'insecure'
-        
-                
+               
         # remember number of (glossed!) words to check alignment later
         words = u.findall('.//w')
         unglossed_words = u.findall('.//w[@glossed="no"]')
@@ -358,7 +330,7 @@ def parse_xml(file_name, corpus_name):
             if 'glossed' in w.attrib and w.attrib['glossed'] == 'repeated':
                 creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'gloss repeated')
             if 'transcribed' in w.attrib and w.attrib['transcribed'] == 'insecure':
-                creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'transcription insecure')
+                creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'transcription insecure')            
             word_index += 1
                         
         # standard dependent tiers
@@ -495,26 +467,40 @@ def parse_xml(file_name, corpus_name):
             # parse the morphology tier trn
             morphology = u.find("a[@type='extension'][@flavor='trn']")
             if morphology is not None:
+                # remove punctuation and tags
+                morphology.text = re.sub('(^|\\s)[\.\?!\+\/]+(\\s|$)', '\\1\\2', morphology.text)
+                morphology.text = re.sub('(^|\\s)tag\|\\S+(\\s|$)', '\\1\\2', morphology.text)
+                morphology.text = re.sub('\\s+$', '', morphology.text)
+                                
                 # split trn tier into words, reset counters to 0
                 words = re.split('\\s+', morphology.text)
                 word_index = 0
-                words_in_trn = 0
-                                
+                trn_index = 0
+
+                # repeated words are not glossed, so repeat morphological words now whose corresponding <w> has been repeated further above
+                for i in range(0, len(corpus[text_id][utterance_index]['words'])):
+                    if('warnings' in corpus[text_id][utterance_index]['words'][i].keys() and
+                        re.search(corpus[text_id][utterance_index]['words'][i]['warnings'], 'gloss repeated')):
+                        # repeat previous word from trn tier; trn index is not incremented for further repetitions!
+                        words.insert(i, words[trn_index-1])
+                        # remove warning and delete key if empty
+                        corpus[text_id][utterance_index]['words'][i]['warnings'] = re.sub(';?\\s*gloss repeated', '', corpus[text_id][utterance_index]['words'][i]['warnings'])
+                        if corpus[text_id][utterance_index]['words'][i]['warnings'] == '':
+                            del corpus[text_id][utterance_index]['words'][i]['warnings']
+                    # if the current <w> is not repeated, increment trn
+                    else:
+                        trn_index += 1
+                
+                # go through words 
                 for w in words:
-                    # skip "words" that contain no '|' (= punctuation, e.g. '.'); 
-                    if not re.search('\\|', w):
-                        continue
-                    # ignore "tags" tag|„ and tag|‡, they are not words but mark syntactic stuff on a higher level
-                    if re.search('^tag\\|', w):
-                        continue
-                        
-                    # only now count up words_in_trn
-                    words_in_trn += 1
-                        
-                    # some words are not glossed - these got a warning 'not glossed' further above. Ignore them here, i.e. count one up
-                    while 'warnings' in corpus[text_id][utterance_index]['words'][word_index].keys() and re.search(corpus[text_id][utterance_index]['words'][word_index]['warnings'], '(not glossed|gloss repeated)'):
-                        word_index += 1
                     
+                    # some words in <w> have warnings - first check this and adapt strategy for morphology 
+                    if 'warnings' in corpus[text_id][utterance_index]['words'][word_index].keys():
+                        # warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
+                        # -> incremeent the <w> counter by one so the present morphological word is associated with the next <w>
+                        if re.search(corpus[text_id][utterance_index]['words'][word_index]['warnings'], 'not glossed'):
+                            word_index += 1
+                                        
                     # set morpheme counter
                     morpheme_index = 0
                     
@@ -588,11 +574,11 @@ def parse_xml(file_name, corpus_name):
                     # count up words
                     word_index += 1
             
-                # check alignment with words that were found in <w>. This can only be done now because before "trn" contained punctuation that wasn't present in <w>.
+                # check alignment with words that were found in <w>
                 # note: alignment on morpheme-level doesn't have to be checked at all for MiiPro because the segment and gloss tiers are not separate
-                if words_in_trn != corpus[text_id][utterance_index]['length_in_words']:
+                if len(words) != corpus[text_id][utterance_index]['length_in_words']:
                     print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ': general word tier <w> has ' 
-                        + str(corpus[text_id][utterance_index]['length_in_words']) + ' words vs ' + str(words_in_trn) + ' in "trn" (= morphology)')
+                        + str(corpus[text_id][utterance_index]['length_in_words']) + ' words vs ' + str(len(words)) + ' in "trn" (= morphology)')
                     creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment full_word : segments/glosses')
 
             # if there is no morphology, add warning to complete utterance
