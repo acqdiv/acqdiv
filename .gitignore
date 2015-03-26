@@ -1,4 +1,7 @@
 corpora/
+.input
+.output
+
 *.py[cod]
 
 # C extensions
