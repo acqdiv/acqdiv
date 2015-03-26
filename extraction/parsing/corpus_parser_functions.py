@@ -222,7 +222,7 @@ def parse_xml(file_name, corpus_name):
                 w.attrib['target'] = '???'
                 w.attrib['glossed'] = 'no'
                 continue
-            
+                        
             # shortenings, e.g. <g><w>wo<shortening>rd</shortening>s</w></g>: 'wos' = actual pronunciation, 'words' = target pronunciation
             # shortenings have to be processed before replacements because a target string with no shortenings may still be classified as a replaced form 
             for s in w.findall('shortening'):
@@ -308,7 +308,7 @@ def parse_xml(file_name, corpus_name):
                 for w in words: 
                     w.attrib['glossed'] = 'no'
             # guessed transcriptions: add warning
-            guesses = g.find('k[@type="buest guess"]')
+            guesses = g.find('k[@type="best guess"]')
             if guesses is not None:
                 for w in words:
                     w.attrib['transcribed'] = 'insecure'
@@ -426,7 +426,6 @@ def parse_xml(file_name, corpus_name):
             # if there is no morphology, add warning to complete utterance
             if any_morphology == False:
                 creadd(corpus[text_id][utterance_index], 'warnings', 'not glossed')
-            
             
             # after analysing all four morphology tiers, go through Vividict to check alignment and add everything to corpus dic
             # first do words
@@ -851,6 +850,9 @@ def parse_xml(file_name, corpus_name):
             elif gloss_tier is None:
                 creadd(corpus[text_id][utterance_index], 'warnings', 'not glossed')
         # EOF Sesotho        
+
+        elif corpus_name == 'Turkish_KULLD':
+            pass
     
     # EOF utterance loop
     
@@ -1244,9 +1246,6 @@ def parse_toolbox(file_name, corpus_name):
 def parse_chat(file_name, corpus_name):
 
     if corpus_name == 'Inuktitut':
-        pass
-    
-    elif corpus_name == 'Turkish_KULLD':
         pass
     
     elif corpus_name == 'Yucatec':
