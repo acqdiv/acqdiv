@@ -25,8 +25,8 @@ else:
 # table with subdirectory and format for each corpus
 corpus_dic = {
     # 'Cree' : {'dir' : 'Cree/test/', 'format' : 'XML'},
-    'Japanese_MiiPro' : {'dir' : 'Japanese_MiiPro/test/', 'format' : 'XML'},
-    # 'Japanese_Miyata' : {'dir' : 'Japanese_Miyata/test/', 'format' : 'XML'},
+    # 'Japanese_MiiPro' : {'dir' : 'Japanese_MiiPro/test/', 'format' : 'XML'},
+    'Japanese_Miyata' : {'dir' : 'Japanese_Miyata/test/', 'format' : 'XML'},
     # 'Sesotho' : {'dir' : 'Sesotho/test/', 'format' : 'XML'},
     # 'Inuktitut' : {'dir' : 'Inuktitut/test/', 'format' : 'CHAT'},
     # 'Turkish_KULLD' : {'dir' : 'Turkish_KULLD/test/', 'format' : 'CHAT'},

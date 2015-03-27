@@ -69,7 +69,7 @@ def parse_words(u):
 def parse_metadata(path):
     tree = objectify.parse(path)
     root = tree.getroot()
-    for e in root.Session.MDGroup.Actors.Actor.getchildren(): 
+    for e in root.Session.MDGroup.Actors.Actor.getchildren():
         print e.tag
         for tag in e:
             print tag.text

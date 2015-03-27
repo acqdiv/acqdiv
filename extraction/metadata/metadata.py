@@ -74,6 +74,7 @@ def parse_metadata(path):
         'participants': [parse_attrs(p) for p in root.Participants.participant],
         'comments': {c.attrib['type']: unicode(c) for c in root.comment},
         'utterances': [parse_utterance(u) for u in root.u],
+        'words': [parse_word(u) for u in root.u],
     }
     print chat
 
