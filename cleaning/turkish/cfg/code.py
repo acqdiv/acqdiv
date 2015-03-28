@@ -5,6 +5,7 @@ def clean_filename(fname):
     fname = fname.replace("cansu36_ 20feb04_02-03-26", "")
     fname = fname.replace("ogun31-05july503_02-05-01", "")
     fname = fname.replace(";", "-")
+    fname = fname.rstrip(".cha")
     return fname
 
 def clean_chat_line(s):
