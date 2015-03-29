@@ -47,6 +47,7 @@ def participants_csv(infile):
         k = '"'+str(k).replace(' ', '')+'"'
         v1 = '"'+str(v)+'"'
         v2 = re.sub("[\[\]()]|',|'", "", v1)
+        v2 = re.sub('"([a-z])','\\1',v2)
         outfile.write(str(k+','+v2+'\n'))
     
     print('\nThe participants info for every file has been written to "participants.csv"\n')
