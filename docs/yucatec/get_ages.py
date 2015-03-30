@@ -77,7 +77,7 @@ if __name__ == "__main__":
         infile = codecs.open(sys.argv[1], 'r', 'utf-8')
         #outfile = codecs.open(sys.argv[2], 'w', 'utf-8')
     else:
-        print('\nPlease indicate the infile as command line arguments.\n')
+        print('\nPlease indicate the infile as command line argument.\n')
     calculate_age(infile)
     
 
