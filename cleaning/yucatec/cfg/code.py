@@ -11,7 +11,7 @@ def clean_chat_line(s):
     s = re.sub("(\w)['’ʼ]", "\\1ʔ", s)
     s = re.sub("['’ʼ](\w)", "ʔ\\1", s)
     s = re.sub("(\w)['’ʼ](\w)", "\\1ʔ\\2", s)
-    
+    s = re.sub("^%mor:", "%xmor:", s)
     
     main tier:
     re.sub('-?0', '', tier)
