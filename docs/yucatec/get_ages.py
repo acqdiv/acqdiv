@@ -68,7 +68,7 @@ for line in all_lines:
                 print('Warning: line ', counter, ' does not contain enougth speaker information to calculate the age.')
                 continue
     
-    writer = csv.writer(outfile, delimiter=',',lineterminator='\n',quotechar = "'")
+    writer = csv.writer(outfile, delimiter=',',lineterminator='\n', quoting=csv.QUOTE_ALL, skipinitialspace=True)
     writer.writerow(line)
 
             
