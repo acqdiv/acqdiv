@@ -10,7 +10,7 @@ import re
 
 from pyacqdiv.util import existing_dir, utf8, read_csv
 from pyacqdiv.lib.chat import chat
-
+from pyacqdiv.lib.chat import repair_lines
 
 STATUS = {num: label for num, label in enumerate([
     'none', 'initialized', 'cleaned'])}
@@ -206,7 +206,9 @@ class Corpus(object):
                 body = True
 
             if body and not line.lower().replace(' ', '').startswith('@end'):
-                lines.append(line)
+                lines.append(line.strip())
+
+        lines = repair_lines(lines)
 
         return chat(
             self.cfg['iso_code'],
