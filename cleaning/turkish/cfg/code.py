@@ -29,6 +29,9 @@ def clean_chat_line(s):
     # replace <:> space with \t in first occurrence
     s = re.sub(":\s*", ":\t", s, 1)
     
+    # added by rabart
+    s = re.sub("^%mor:", "%xmor:", s)
+    
     # get rid of empty headers
     s = re.sub("^@.*:\t*$", "", s)
     
