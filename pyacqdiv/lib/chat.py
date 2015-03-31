@@ -26,7 +26,7 @@ def chat(language, participants, ids, filename, lines):
 
 def repair_lines(lines):
     for i, e in reversed(list(enumerate(lines))):
-        if not e.startswith(("*", "%", "@")):
+        if i > 0 and not e.startswith(("*", "%", "@")):
             lines[i-1] += " "+lines.pop(i)
     return lines
 
