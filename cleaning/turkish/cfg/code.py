@@ -31,6 +31,11 @@ def clean_chat_line(s):
     
     # get rid of empty headers
     s = re.sub("^@.*:\t*$", "", s)
+    
+    s = re.sub("^%pho:", "%tim:", s)
+    s = re.sub("\\byy\\b", "yyy", s)
+    s = re.sub("\\bxx\\b", "xxx", s)
+    s = re.sub(":\\t\[!", ":\\t0 [!", s)
 
     """
     s = re.sub("(^[A-Z]{3}\-[A-Z]{3}:)", r"*\1", s) # MOM-CHI:
@@ -42,10 +47,7 @@ def clean_chat_line(s):
     s = re.sub("(^\*MM)(\-)([A-Z]{3}:)", r"*MOM\2\3", s) # *MM-CHI:
     s = re.sub("(^\*[A-Z]{3}\-[A-Z]{3})(\.)", r"\1:", s) # *NEI-MOM.
     s = re.sub("\*CHI.\s*", "\*CHI:\t", s)
-    s = re.sub("^%pho:", "%tim:", s)
-    s = re.sub("(\b)yy(\b)", "$1yyy$2", s)
-    s = re.sub("(\b)xx(\b)", "$1xxx$2", s)
-    s = re.sub(":\t[!", ":\t0 [!", s)
+
     
     """
 
