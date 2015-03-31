@@ -42,7 +42,11 @@ def clean_chat_line(s):
     s = re.sub("(^\*MM)(\-)([A-Z]{3}:)", r"*MOM\2\3", s) # *MM-CHI:
     s = re.sub("(^\*[A-Z]{3}\-[A-Z]{3})(\.)", r"\1:", s) # *NEI-MOM.
     s = re.sub("\*CHI.\s*", "\*CHI:\t", s)
-
+    s = re.sub("^%pho:", "%tim:", s)
+    s = re.sub("(\b)yy(\b)", "$1yyy$2", s)
+    s = re.sub("(\b)xx(\b)", "$1xxx$2", s)
+    s = re.sub(":\t[!", ":\t0 [!", s)
+    
     """
 
     # fix roles according the CHILDES's depfile.cut 
