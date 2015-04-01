@@ -21,6 +21,7 @@ import re
 import xml.etree.ElementTree as ET
 
 
+
 ###############
 ### Classes ###
 ###############
@@ -260,7 +261,7 @@ def parse_xml(file_name, corpus_name):
                         w.attrib['target'] = rep_words[j].attrib['target']
                         if mor is not None:
                             w.insert(0, mor)
-                        parent_map[words[i]].insert(i+1, w)
+                        parent_map[words[i]].insert(i+j, w)
                         
                 # w.attrib['target'] = '_'.join(rep_w.attrib['target'] for rep_w in r.findall('w'))
                 words[i].remove(r)
@@ -287,7 +288,7 @@ def parse_xml(file_name, corpus_name):
         # these have to be dealt with last because repetitions belong here and everything that's been done above may be repeated
         for g in u.findall('.//g'):
             words = g.findall('.//w')
-            # repetitions, e.g. <g><w>shoo</w><w>boo</w><r times="3"></g>: insert as many <w> groups as indicated by attrib "times" of <r>, minus 1 (-> example goes to "shoo boo shoo boo shoo boo"), attribute 'glossed' to 'no'
+            # repetitions, e.g. <g><w>shoo</w><w>boo</w><r times="3"></g>: insert as many <w> groups as indicated by attrib "times" of <r>, minus 1 (-> example goes to "shoo boo shoo boo shoo boo"), set attribute 'glossed' to 'repeated'
             repetitions = g.find('r')
             if repetitions is not None:
                 for i in range(0, int(repetitions.attrib['times'])-1):
@@ -301,12 +302,27 @@ def parse_xml(file_name, corpus_name):
                         if mor is not None:
                             new_elem.insert(0, mor)
                         
-            # retracings, e.g. <g><w formType="UNIBET">shou</w><w formType="UNIBET">shou</w><k type="retracing"/></g>: set attribute 'glossed' to 'no'
+            # retracings, e.g. <g><w formType="UNIBET">shou</w><w formType="UNIBET">shou</w><k type="retracing"/></g>: search for <w> with same text and use gloss from there; if not available set attribute 'glossed' to 'no'
+            # TODO implement glosses for retracing for MiiPro. Miyata is relatively easy because of its explicit XML structure, but MiiPro has CHAT morphology. What would have to be done here is as follows: give the retraced element an attribute "repeat from ahead" and pass it to the corpus object, e.g. as a warning. In the parsing function, check for this attribute. When it's there, get the text of the present full_word and search through the utterance for a full_word with the same text. If such a word exists, insert its gloss at the present position. 
             retracings = g.find('k[@type="retracing"]')
             retracings_wc = g.find('k[@type="retracing with correction"]')
             if (retracings is not None) or (retracings_wc is not None):
                 for w in words: 
-                    w.attrib['glossed'] = 'no'
+                    gloss_flag = 'no'
+                    # get all elements with the same text
+                    elems_with_same_text = [elem for elem in u.iter() if elem.text == w.text]
+                    for elem in elems_with_same_text:
+                        # only look at <w> 
+                        if elem.tag == 'w':
+                            mor = elem.find('mor')
+                            # if there is <mor>, insert below the retraced word
+                            if mor is not None:
+                                w.insert(0, mor)
+                                gloss_flag = 'yes'
+                    # if no matching glosses were found, set attribute 'glossed' to 'no'
+                    if gloss_flag == 'no':
+                        w.attrib['glossed'] = 'no'
+                    
             # guessed transcriptions: add warning
             guesses = g.find('k[@type="best guess"]')
             if guesses is not None:
