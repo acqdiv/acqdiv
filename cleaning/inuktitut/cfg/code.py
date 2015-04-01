@@ -51,13 +51,13 @@ def clean_chat_line(s):
         s = re.sub("([^\.\?!]$)", "\\1 .", s)
         s = re.sub(",", "", s)
         
-        # added by rabart
-        s = re.sub('(?<=\\w)\+[.,\/]*$', '', s)
-        s = re.sub('(?<=\\w)\+...\s+(?=\\w)', ' ', s)
-        s = re.sub('(?<=\\w)\+.\\s.$', ' +.', s) # transcription break + utterance delimiter -> utterance delimiter
-        s = re.sub('(\\S+)+.(?=\\s\\w)', '&\\1', s) # "transcription break" followed by words really marks fragments
-        s = re.sub('(?<=\\w)\?!', ',', s) # some utterance delimiters surrounded by words -> comma
-        s = re.sub('(?<=\\s)xx(?=\\s)', 'xxx', s) # xx -> xxx
+        # TODO check and add - might cause infinite loop
+        # s = re.sub('(?<=\\w)\+[.,\/]*$', '', s)
+        # s = re.sub('(?<=\\w)\+...\s+(?=\\w)', ' ', s)
+        # s = re.sub('(?<=\\w)\+.\\s.$', ' +.', s) # transcription break + utterance delimiter -> utterance delimiter
+        # s = re.sub('(\\S+)+.(?=\\s\\w)', '&\\1', s) # "transcription break" followed by words really marks fragments
+        # s = re.sub('(?<=\\w)\?!', ',', s) # some utterance delimiters surrounded by words -> comma
+        # s = re.sub('(?<=\\s)xx(?=\\s)', 'xxx', s) # xx -> xxx
 
     if s.startswith("%add"):
         s = re.sub("([A-Z]{3})(,)([A-Z]{3})", "\\1\\2\s\\3", s)
