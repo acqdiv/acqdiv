@@ -321,7 +321,7 @@ def parse_xml(file_name, corpus_name):
                                 gloss_flag = 'yes'
                     # if no matching glosses were found, set attribute 'glossed' to 'no'
                     if gloss_flag == 'no':
-                        w.attrib['glossed'] = 'no'
+                        w.attrib['glossed'] = 'not glossed'
                     
             # guessed transcriptions: add warning
             guesses = g.find('k[@type="best guess"]')
@@ -345,6 +345,8 @@ def parse_xml(file_name, corpus_name):
                 creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'not glossed')
             if 'glossed' in w.attrib and w.attrib['glossed'] == 'repeated':
                 creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'gloss repeated')
+            if 'glossed' in w.attrib and w.attrib['glossed'] == 'ahead':
+                creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'gloss ahead')    
             if 'transcribed' in w.attrib and w.attrib['transcribed'] == 'insecure':
                 creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'transcription insecure')            
             word_index += 1
@@ -588,7 +590,22 @@ def parse_xml(file_name, corpus_name):
                     
                     # count up words
                     word_index += 1
-            
+                
+                # go through words once more and insert glosses for retracings (warning 'gloss ahead')
+                # for i in range(0, len(words)):
+                #     if('warnings' in corpus[text_id][utterance_index]['words'][i].keys() and
+                #         re.search(corpus[text_id][utterance_index]['words'][i]['warnings'], 'gloss ahead')):
+                #         full_word_target = corpus[text_id][utterance_index]['words'][i]['full_word_target']
+                #         # search through words after present position
+                #         for j in range(i, len(corpus[text_id][utterance_index]['words'])):
+                #             if(corpus[text_id][utterance_index]['words'][j]['full_word_target'] == full_word_target and
+                #                 'morphemes' in corpus[text_id][utterance_index]['words'][j].keys()):
+                #                 corpus[text_id][utterance_index]['words'][i]['morphemes'] = corpus[text_id][utterance_index]['words'][j]['morphemes']
+                #                 # print(full_word_target, corpus[text_id][utterance_index]['words'][j])
+                    
+                        # In the parsing function, check for this attribute. When it's there, get the text of the present full_word and search through the utterance for a full_word with the same text. If such a word exists, insert its gloss at the present position.
+
+                
                 # check alignment with words that were found in <w>
                 # note: alignment on morpheme-level doesn't have to be checked at all for MiiPro because the segment and gloss tiers are not separate
                 if len(words) != corpus[text_id][utterance_index]['length_in_words']:
