@@ -775,7 +775,7 @@ def parse_xml(file_name, corpus_name):
                         continue
                     # Keep partially bracketed INF, removing brackets. A more precise regex is required for removing brackets from the gloss tier because there they can also indicate noun classes.
                     else:
-                        w = re.sub('\(([a-z]\\S+)\)', '\\1', w)
+                        w = re.sub('\(([a-zA-Z]\\S+)\)', '\\1', w)
                     
                     # split into morphemes
                     morpheme_index = 0
@@ -794,7 +794,7 @@ def parse_xml(file_name, corpus_name):
                         # n^ prefixed to all noun class glosses: delete
                         gloss = re.sub('[nN]\^(?=\\d)', '', gloss)
                         # n^ prefixed to all proper names: replace by 'a_'
-                        gloss = re.sub('[nN]\^(game|name|place|song)', 'a_\\1', gloss)
+                        gloss = re.sub('[nN]\^([gG]ame|[nN]ame|[pP]lace|[sS]ong)', 'a_\\1', gloss)
                         # t^ and m^ prefixed to affixes: replace by more explicit labels, also replace '_' by more standard '.'
                         gloss = re.sub('t\^(p|f\\d|np)_', 'temp.\\1.', gloss)
                         gloss = re.sub('t\^', 'temp.', gloss)
