@@ -24,6 +24,11 @@ def chat(language, participants, ids, filename, lines):
         filename=filename,
         lines='\n'.join(map(normalize, lines)))
 
+def repair_lines(lines):
+    for i, e in reversed(list(enumerate(lines))):
+        if i > 0 and not e.startswith(("*", "%", "@")):
+            lines[i-1] += " "+lines.pop(i)
+    return lines
 
 def normalize(text):
     """ remove weird/control characters from a unicode line """
