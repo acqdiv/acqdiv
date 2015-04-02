@@ -59,6 +59,7 @@ class Corpus(object):
         self.cfg = cfg
         self._participants = {}
         self._ids = defaultdict(list)
+        self._sessions = defaultdict(list)
         self._replacements = []
         self._code = {}
 
@@ -181,6 +182,21 @@ class Corpus(object):
                     self._ids[row[0]].append("@ID:\t%s|" % "|".join(row[1:-1]))
         return self._ids
 
+    @property
+    def sessions(self):
+        if not self._sessions:
+            if os.path.exists(self.cfg_path('sessions.csv')):
+                header = []
+                for row in read_csv(self.cfg_path('sessions.csv'), skip_header=False):
+                    if len(header) == 0:
+                        header = row
+                    for i in range(1, len(row)):
+                        # can't skip this space in the csv somehow...
+                        row[i] = row[i].strip()
+                        if not row[i] == " " or not row[i] == "  " or not row[i] == "\t":
+                            self._sessions[row[0]].append(header[i]+"\t"+row[i])
+        return self._sessions
+
     def cleaning_path(self, *comps):
         return os.path.join(
             existing_dir(os.path.join(self.cfg['cleaning_dir'], self.id)), *comps)
@@ -215,4 +231,5 @@ class Corpus(object):
             self.participants[filename],
             self.ids[filename],
             filename,
+            self.sessions[filename],
             list(map(self.code['clean_chat_line'], lines)))

@@ -16,12 +16,13 @@ $lines
 """)
 
 
-def chat(language, participants, ids, filename, lines):
+def chat(language, participants, ids, filename, sessions, lines):
     return CHAT_TEMPLATE.substitute(
         languages=language,
         participants=participants,
         ids='\n'.join(ids),
         filename=filename,
+        sessions='\n'.join(sessions),
         lines='\n'.join(map(normalize, lines)))
 
 def repair_lines(lines):
