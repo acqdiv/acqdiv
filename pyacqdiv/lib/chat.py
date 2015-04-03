@@ -11,6 +11,7 @@ CHAT_TEMPLATE = Template("""\
 @Participants:  $participants
 $ids
 @Media: $filename, audio
+$sessions
 $lines
 @End
 """)
