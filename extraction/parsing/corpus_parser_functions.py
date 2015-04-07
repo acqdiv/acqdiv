@@ -669,6 +669,8 @@ def parse_xml(file_name, corpus_name):
                         stem_pos = stem_pos + '.' + sub_pos.text
                     
                     # stem gloss <menx>, under <mw> by default, under <mwc> for compounds
+                    # TODO honorific clitics (=san, =kun etc.) regularly appear in <menx> instead of <mk> -> move
+                    # glosses in <menx>: _FAM, _MASC_FAM, _MASC_FAM_PL, _HON, _POL, _PL, _FAM_PL, _HON_PL, _ORD (ordinal), _CL (classifier), _NLZR (nominaliser); ignore _COMPL
                     stem_gloss = ''
                     menx = morphology.find('menx')
                     if menx is None:
@@ -793,8 +795,9 @@ def parse_xml(file_name, corpus_name):
                         # replace special characters
                         # n^ prefixed to all noun class glosses: delete
                         gloss = re.sub('[nN]\^(?=\\d)', '', gloss)
-                        # n^ prefixed to all proper names: replace by 'a_'
+                        # n^ prefixed to all proper names: replace by 'a_', lowercase label
                         gloss = re.sub('[nN]\^([gG]ame|[nN]ame|[pP]lace|[sS]ong)', 'a_\\1', gloss)
+                        if re.search('a_(Game|Name|Place|Song)', gloss): gloss = gloss.lower()
                         # t^ and m^ prefixed to affixes: replace by more explicit labels, also replace '_' by more standard '.'
                         gloss = re.sub('t\^(p|f\\d|np)_', 'temp.\\1.', gloss)
                         gloss = re.sub('t\^', 'temp.', gloss)
@@ -806,6 +809,7 @@ def parse_xml(file_name, corpus_name):
                         reverse_num_dic = {'I' : '1', 'II' : '2', 'III' : '3', 'IV' : '4', 'V' : '5'}
                         for n in re.findall('((?<!f)\\d+(?![sp]))', gloss):
                             gloss = re.sub(n, num_dic[n], gloss)
+                            gloss = re.sub('irg', '.IRR', gloss)
                         
                         # check whether present element is the stem; if no, set POS to prefix/suffix
                         pos = ''
@@ -831,7 +835,7 @@ def parse_xml(file_name, corpus_name):
                             pos = 'v'
                             gloss = re.sub('[vs]\^', '', gloss)
                         # nouns have their class indicated in brackets, proper names start with 'a_' (< earlier 'n^'); some nouns with suppletive possession only have "ps/"
-                        elif re.search('\(\\d+', gloss) or re.search('a_[a-z]{2,}', gloss) or re.search('^ps\/', gloss):
+                        elif re.search('\((\\d+|[IVX]+)', gloss) or re.search('a_[a-z]{2,}', gloss) or re.search('^ps\/', gloss):
                             pos = 'n'
                             gloss = re.sub('^ps(\d+)\/', '\\1.POSS.', gloss)
                             gloss = re.sub('^ps\/', 'POSS.', gloss)
