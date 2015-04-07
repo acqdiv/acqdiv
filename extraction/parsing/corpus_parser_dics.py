@@ -12,6 +12,7 @@ class Vividict(dict):
 xml_dep_correspondences = {
     'actions' : 'comments',
     'addressee' : 'addressee',
+    'arg' : 'argument structure', 
     'comments' : 'comments',
     'english translation' : 'english',
     'explanation' : 'comments',
@@ -48,7 +49,8 @@ t_correspondences = {
  	'self interruption' : 'self interruption', # CHAT +//.
  	'quotation precedes' : 'quotation precedes', # CHAT +".
  	'quotation next line' : 'quotation next line', # CHAT +"/.
- 	'interruption question' : 'interruption question' # CHAT +/?
+ 	'interruption question' : 'interruption question', # CHAT +/?
+    'broken for coding' : 'default' # Inuktitut corpus only, = not glossed
 }
 
 # correspondences between Toolbox utterance-level tiers and JSON

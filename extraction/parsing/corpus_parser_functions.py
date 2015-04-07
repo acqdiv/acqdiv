@@ -495,7 +495,7 @@ def parse_xml(file_name, corpus_name):
                 # go through words on gloss tier
                 for w in words:
                                         
-                    # some words in <w> warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
+                    # some words in <w> have a warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
                     # -> incremeent the <w> counter by one as long as the present morphological word is associated with the next <w>
                     while('warnings' in corpus[text_id][utterance_index]['words'][word_index].keys() and
                         re.search('not glossed', corpus[text_id][utterance_index]['words'][word_index]['warnings'])):
@@ -898,7 +898,157 @@ def parse_xml(file_name, corpus_name):
 
         elif corpus_name == 'Turkish_KULLD':
             pass
-    
+        # EOF Turkish_KULLD
+        
+        if corpus_name == 'Inuktitut':
+            
+            # TODO move below Cree to keep alphabetical ordering
+            
+            # parse the morphology tier mor
+            morphology = u.find("a[@type='extension'][@flavor='mor']")
+            if morphology is not None:
+                
+                # remove CHAT garbage - TODO check what [+ ...] codes mean, [*], [=? ...]
+                morphology.text = re.sub('(?<=[\\s\\]])[\.\?!](?=\\s|$)', '', morphology.text) # utterance delimiters
+                morphology.text = re.sub('\[\+.*?\]', '', morphology.text) # codes in square brackets
+                morphology.text = re.sub('\[\/+\]', '', morphology.text) # repetition marker
+                morphology.text = re.sub('\[=!\]', '', morphology.text) # comment on action
+                morphology.text = re.sub('\[\*\]', '', morphology.text) # ?
+                morphology.text = re.sub('\[=\?.*?\]', '', morphology.text) # possible target
+                morphology.text = re.sub('[<>]|&[lg]t;', '', morphology.text) # XML entities 
+                morphology.text = re.sub('xxx', '???|???^???', morphology.text) # words with unclear gloss
+                # insecure glosses [?]: add warning, then remove
+                if re.search('\[\?\]', morphology.text):
+                     creadd(corpus[text_id][utterance_index], 'warnings', 'gloss insecure')
+                     morphology.text = re.sub('\[\?\]', '', morphology.text)
+                
+                # strip white space from both ends
+                morphology.text = morphology.text.lstrip()
+                morphology.text = morphology.text.rstrip()
+                
+                # DEBUGGING
+                # print(file_name, utterance_index, morphology.text)
+                
+                # check if anything's left; if not, place warning and break loop
+                if morphology.text == '':
+                    creadd(corpus[text_id][utterance_index], 'warnings', 'not glossed')
+                    continue
+                
+                # split mor tier into words, reset counter to 0
+                words = re.split('\\s+', morphology.text)
+                word_index = 0
+                
+                # DEBUGGING
+                # print(file_name, utterance_index, words)
+                
+                # go through words on gloss tier
+                for w in words:
+                                        
+                    # some words in <w> warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
+                    # -> incremeent the <w> counter by one as long as the present morphological word is associated with the next <w>
+                    # TODO if procedure is identical to MiiPro, move out to separate function
+                    # while('warnings' in corpus[text_id][utterance_index]['words'][word_index].keys() and
+                    #     re.search('not glossed', corpus[text_id][utterance_index]['words'][word_index]['warnings'])):
+                    #         word_index += 1
+                                                            
+                    # set morpheme counter
+                    morpheme_index = 0
+                                        
+                    # split into morphemes by "+"
+                    morphemes = re.split('\+', w)
+                    
+                    # go through morphemes
+                    for m in morphemes: 
+                        # TODO target glosses with &lt; ... &gt; [=? ...]
+                        # TODO target glosses in <a type="errcoding">
+                        
+                        # split each block into POS|form^gloss
+                        pos, form, gloss = '???', '???', '???'
+                        m_struc = re.search('^(.*)\|(.*)\^(.*)$', m)
+                        if m_struc is not None:
+                            if m_struc.group(1) is not None:
+                                pos = m_struc.group(1)
+                                # if there are subPOS marked by "|", use "." as separator instead
+                                pos = re.sub('\|', '.', pos)
+                            if m_struc.group(2) is not None:
+                                form = m_struc.group(2)
+                            if m_struc.group(3) is not None:
+                                gloss = m_struc.group(3)
+                                # replace "&amp;" (= "&", separator between stem and grammatical gloss) by LGR "."
+                                gloss = re.sub('&amp;', '.', gloss)
+                                # remove @e (marker for English words)
+                                gloss = re.sub('@', '', gloss)
+                        # DEBUGGING
+                        else:
+                            print(file_name, utterance_index, ": gloss", m, "appears to be unstructured; morphemes:", morphemes)
+                    
+                        # add morpheme to corpus dic, count up
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = pos
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = form
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = gloss                                            
+                        morpheme_index += 1                                
+                    
+                    # count up words
+                    word_index += 1
+                
+                # remember length of morphology tier in words
+                length_morphology = len(words)
+                
+                # go through words <w> and insert glosses for repetitions and retracings (warning 'not glossed; repeat/search ahead')
+                # TODO if procedure is identical to MiiPro, move out to separate function
+                # for i in range(0, len(corpus[text_id][utterance_index]['words'])):
+                #
+                #     if('warnings' in corpus[text_id][utterance_index]['words'][i].keys() and
+                #         re.search('not glossed; (repeat|search ahead)', corpus[text_id][utterance_index]['words'][i]['warnings'])):
+                #
+                #         # count up number of glossed words
+                #         length_morphology += 1
+                #
+                #         # (1) repetitions: get morphology from preceding word
+                #         if re.search('not glossed; repeat', corpus[text_id][utterance_index]['words'][i]['warnings']):
+                #             if 'morphemes' in corpus[text_id][utterance_index]['words'][i-1].keys():
+                #                 corpus[text_id][utterance_index]['words'][i]['morphemes'] = corpus[text_id][utterance_index]['words'][i-1]['morphemes']
+                #             # trn_index
+                #
+                #         # (2) retracings: get morphology from any matching word further ahead
+                #         if re.search('not glossed; search ahead', corpus[text_id][utterance_index]['words'][i]['warnings']):
+                #             # go through all following <w>
+                #             for j in range(i, len(corpus[text_id][utterance_index]['words'])):
+                #                 # corresponding target words: transfer morphology
+                #                 if(corpus[text_id][utterance_index]['words'][j]['full_word_target'] == corpus[text_id][utterance_index]['words'][i]['full_word_target']
+                #                     and 'morphemes' in corpus[text_id][utterance_index]['words'][j].keys()):
+                #                     # transfer gloss from match to present word
+                #                     corpus[text_id][utterance_index]['words'][i]['morphemes'] = corpus[text_id][utterance_index]['words'][j]['morphemes']
+                #                 # corresponding actual words: transfer morphology AND target word
+                #                 elif(corpus[text_id][utterance_index]['words'][j]['full_word'] == corpus[text_id][utterance_index]['words'][i]['full_word']
+                #                     and 'morphemes' in corpus[text_id][utterance_index]['words'][j].keys()):
+                #                     # transfer gloss and target from match to present word
+                #                     corpus[text_id][utterance_index]['words'][i]['morphemes'] = corpus[text_id][utterance_index]['words'][j]['morphemes']
+                #                     corpus[text_id][utterance_index]['words'][i]['full_word_target'] = corpus[text_id][utterance_index]['words'][j]['full_word_target']
+                            
+                        # remove warning and delete key if empty
+                        # print(utterance_index, corpus[text_id][utterance_index]['words'][i]['warnings'])
+                        # if 'warnings' in corpus[text_id][utterance_index]['words'][i].keys():
+                        #     corpus[text_id][utterance_index]['words'][i]['warnings'] = re.sub(';?\\s*not glossed; (repeat|search ahead)', '', corpus[text_id][utterance_index]['words'][i]['warnings'])
+                        # if corpus[text_id][utterance_index]['words'][i]['warnings'] == '':
+                        #     del corpus[text_id][utterance_index]['words'][i]['warnings']
+
+                # EOF glosses for repetitions/retracings 
+
+                # check alignment with words that were found in <w>
+                # note: alignment on morpheme-level doesn't have to be checked at all for Inuktitut because the segment and gloss tiers are not separate
+                # TODO if procedure is identical to MiiPro, move out to separate function
+                # if length_morphology != corpus[text_id][utterance_index]['length_in_words']:
+                #     print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ': general word tier <w> has '
+                #         + str(corpus[text_id][utterance_index]['length_in_words']) + ' words vs ' + str(length_morphology) + ' in "trn" (= morphology)')
+                #     creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment full_word : segments/glosses')
+
+            # if there is no morphology, add warning to complete utterance
+            elif morphology is None:
+                creadd(corpus[text_id][utterance_index], 'warnings', 'not glossed')
+            
+        # EOF Inuktitut 
+        
     # EOF utterance loop
     
 # EOF parse_xml
@@ -1290,9 +1440,6 @@ def parse_toolbox(file_name, corpus_name):
 # parse an open CHAT file
 def parse_chat(file_name, corpus_name):
 
-    if corpus_name == 'Inuktitut':
-        pass
-    
-    elif corpus_name == 'Yucatec':
+    if corpus_name == 'Yucatec':
         pass
 # EOF parse_chat
