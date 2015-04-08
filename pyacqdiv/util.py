@@ -11,6 +11,11 @@ import chardet
 import pyacqdiv
 
 
+#
+# The following two functions trade memory usage for convenience, i.e. they
+# read and write csv files in one go, but require to store the whole content
+# in memory.
+#
 def read_csv(path, skip_header=True, **kw):
     rows = []
     with open(path, newline='') as csvfile:
@@ -19,6 +24,14 @@ def read_csv(path, skip_header=True, **kw):
             if not skip_header or lineno > 0:
                 rows.append(row)
     return rows
+
+
+def write_csv(path, rows, **kw):
+    kw.setdefault('quoting', csv.QUOTE_ALL)
+    with open(path, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile, **kw)
+        writer.writerows(rows)
+    return path
 
 
 def utf8(path):
