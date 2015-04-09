@@ -24,10 +24,10 @@ else:
 
 # table with subdirectory and format for each corpus
 corpus_dic = {
-    # 'Cree' : {'dir' : 'Cree/test/', 'format' : 'XML'},
+    'Cree' : {'dir' : 'Cree/test/', 'format' : 'XML'},
     # 'Japanese_MiiPro' : {'dir' : 'Japanese_MiiPro/test/', 'format' : 'XML'},
     # 'Japanese_Miyata' : {'dir' : 'Japanese_Miyata/test/', 'format' : 'XML'},
-    'Sesotho' : {'dir' : 'Sesotho/test/', 'format' : 'XML'},
+    # 'Sesotho' : {'dir' : 'Sesotho/test/', 'format' : 'XML'},
     # 'Inuktitut' : {'dir' : 'Inuktitut/test/', 'format' : 'XML'},
     # 'Turkish_KULLD' : {'dir' : 'Turkish_KULLD/test/', 'format' : 'XML'},
     # 'Chintang' : {'dir' : 'Chintang/test/', 'format' : 'Toolbox'},

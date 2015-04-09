@@ -196,7 +196,6 @@ def parse_xml(file_name, corpus_name):
             if 'untranscribed' in w.attrib:
                 w.text = '???'
             # only in Cree: morpheme boundaries in <w> are indicated by '_' -> remove these, segments are also given in the morphology tiers. Other corpora can have '_' in <w>, too, but there it's meaningful (e.g. for concatenating the parts of a book title treated as a single word), so only check Cree!
-            # TODO morphemes in Cree <w> should be used for morpheme shape, they correspond to dic entries and are invariable!
             if corpus_name == 'Cree' and w.text:
                 w.text = re.sub('_', '', w.text)
             # In ElementTree, w.text only stores the text immediately following <w>. In <w>ha<p type="drawl"/>i</w>, only 'ha' is stored as the text of <w> whereas 'i' is stored as the tail of <p>. Tags of this type are: <p> ('prosody marker'), <ca-element> ('pitch marker'), and <wk> ('word combination', marks boundaries between the elements of compounds)
@@ -396,13 +395,13 @@ def parse_xml(file_name, corpus_name):
                
             # split morphology tiers into words
             any_morphology = False
-            for morph_tier in ('mortyp', 'mormea', 'tarmor', 'actmor'):
+            for morph_tier in ('tarmor', 'actmor', 'mormea', 'mortyp'):
                 tier = u.find("a[@type='extension'][@flavor='" + morph_tier + "']")
                 if tier is not None:
                     any_morphology = True
                     tier_name_JSON = xml_other_correspondences[morph_tier]
                     
-                    # edit tier syntax
+                    # edit tier syntax                    
                     # first remove spaces within glosses so that only word boundary markers remain
                     tier.text = re.sub('\\s+(&gt;|>)\\s+', '>', tier.text)
                     # remove square brackets at edges of any of these tiers, they are semantically redundant
@@ -430,12 +429,17 @@ def parse_xml(file_name, corpus_name):
                             + tier_name_JSON + ')')
                         creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment full_word : ' + tier_name_JSON)
                                             
-                    # split words into morphemes, add to Vividict
+                    # split words into morphemes, add to temporary Vividict
                     word_index = 0
                     for w in words:
                         morpheme_index = 0
                         morphemes = re.split('=', w)
                         for m in morphemes:
+                            # some corrections where the Cree tier names don't match our target tiers exactly
+                            if morph_tier == 'mortyp' and m == 'IMP':
+                                morphology['mormea'][word_index][morpheme_index] += '.' + m
+                                m = 'sfx'
+                            # add morpheme to Vividict
                             morphology[morph_tier][word_index][morpheme_index] = m
                             morpheme_index += 1
                         word_index += 1                    
@@ -462,18 +466,18 @@ def parse_xml(file_name, corpus_name):
                     tier_name_JSON = xml_other_correspondences[morph_tier]
                     # check morpheme alignment
                     if len(morphology[morph_tier][word_index]) != max_length_morphemes and len(morphology[morph_tier][word_index]) != 0:
-                        print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ', word ' + str(word_index) + ': there should be ' 
+                        print('panalignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ', word ' + str(word_index) + ': there should be ' 
                             + str(max_length_morphemes) + ' morphemes in all tiers, but ' + morph_tier + ' (=' + tier_name_JSON + ') has only ' 
                             + str(len(morphology[morph_tier][word_index])) + ' for this word')
-                        creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment between morphology tiers - morpheme numbers don\'t match. Check' + tier_name_JSON)    
+                        creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'broken alignment between morphology tiers - morpheme numbers don\'t match. Check ' + tier_name_JSON)    
                     # add morphemes to corpus dic
                     for morpheme_index in range(0, max_length_morphemes):
                         m = morphology[morph_tier][word_index][morpheme_index]
                         if m:
                             # check for "?" attached to gloss; replace by warning that gloss is insecure
-                            if re.search('\?', morphology[morph_tier][word_index][morpheme_index]):
-                                 creadd(corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index], 'warnings', 'gloss insecure for tier' + tier_name_JSON)
-                            m = re.sub('\?', '', m)
+                            if re.search('\\w\?', morphology[morph_tier][word_index][morpheme_index]):
+                                 creadd(corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index], 'warnings', 'gloss insecure for tier ' + tier_name_JSON)
+                                 m = re.sub('\?', '', m)
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = m
         # EOF Cree                    
                                                    
