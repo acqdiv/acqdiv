@@ -12,6 +12,12 @@ def clean_chat_line(s):
     s = re.sub("['’ʼ](\w)", "ʔ\\1", s)
     s = re.sub("(\w)['’ʼ](\w)", "\\1ʔ\\2", s)
     s = re.sub("^%mor:", "%xmor:", s)
+    #This may result in files with two Situation tiers. These will have to be cleaned manually before CLAN will accept them!
+    s = re.sub("^@Activities", "@Situation", s)
+    s = re.sub("^@Birth of ARM:.*", "@Birth of ARM:\t1994-APR-10\n", s)
+    s = re.sub("^@Birth of DAV:.*", "@Birth of DAV:\t1998-APR-18\n", s)
+    s = re.sub("^@Birth of Sandi:.*", "@Birth of SAN:\t1993-JUL-23\n", s)
+    s = re.sub("^@Translation", "@Translator", s)
 
     #cleanup unwanted tiers
     #added by chysi
