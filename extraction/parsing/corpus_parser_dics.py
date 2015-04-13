@@ -24,7 +24,8 @@ xml_dep_correspondences = {
 
 # correspondences between XML extended dependent tiers and JSON
 xml_ext_correspondences = {
-    'pho' : 'phonetic'  
+    'pho' : 'phonetic',
+    'arg' : 'argument_coding'
 }
 # correspondences between other XML elements and JSON
 xml_other_correspondences = {
