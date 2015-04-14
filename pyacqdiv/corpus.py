@@ -130,7 +130,9 @@ class Corpus(object):
         for filename in os.listdir(self.input_path()):
             if not filename.startswith('.'):
                 with open(self.output_path(filename), 'w', encoding='utf8') as outfile:
-                    outfile.write(self.clean_session(filename))
+                    ofw = self.clean_session(filename)
+                    if ofw:
+                        outfile.write(ofw)
 
     #
     # internal helpers
@@ -226,10 +228,40 @@ class Corpus(object):
 
         lines = repair_lines(lines)
 
-        return chat(
-            self.cfg['iso_code'],
-            self.participants[filename],
-            self.ids[filename],
-            filename,
-            self.sessions[filename],
-            list(map(self.code['clean_chat_line'], lines)))
+#        try:
+#            out = chat(
+#            self.cfg['iso_code'],
+#            self.participants[filename],
+#            self.ids[filename],
+#            filename,
+#            self.sessions[filename],
+#            list(map(self.code['clean_chat_line'], lines)))
+#            return out
+
+        try:
+            partps = self.participants[filename]
+        except KeyError:
+            print("Skipped file " + filename)
+            print("\tFile not in participants.")
+            return None
+        try:
+            sids = self.ids[filename]
+        except KeyError:
+            print("Skipped file " + filename)
+            print("\tFile not in ids.")
+            return None
+        try:
+            ssessions = self.sessions[filename]
+        except KeyError:
+            print("Skipped file " + filename)
+            print("\tFile not in sessions.")
+            return None
+
+        out = chat(
+                self.cfg['iso_code'],
+                partps,
+                sids,
+                filename,
+                ssessions,
+                list(map(self.code['clean_chat_line'], lines)))
+        return out
