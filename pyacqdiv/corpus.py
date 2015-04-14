@@ -226,7 +226,6 @@ class Corpus(object):
             if body and not line.lower().replace(' ', '').startswith('@end'):
                 lines.append(line.strip())
 
-<<<<<<< HEAD
         lines = repair_lines(lines)
 
 #        try:
