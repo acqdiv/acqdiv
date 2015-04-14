@@ -34,6 +34,7 @@ from configparser import ConfigParser
 
 from pyacqdiv import util
 from pyacqdiv.corpus import Corpus
+from pyacqdiv.metadata.participants import write_participants
 
 
 # The following dict is used to register callables as named commands.
@@ -44,6 +45,7 @@ COMMANDS = {
     'clean': Corpus.clean,
     'clear_input': Corpus.clear_input,
     'clear_output': Corpus.clear_output,
+    'write_participants': write_participants,
 }
 
 

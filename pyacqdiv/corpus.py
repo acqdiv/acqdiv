@@ -215,7 +215,7 @@ class Corpus(object):
     def clean_session(self, filename):
         lines = []
         body = False
-        for line in open(self.input_path(filename), 'r', encoding='utf8').readlines():
+        for line in repair_lines(open(self.input_path(filename), 'r', encoding='utf8').readlines()):
             if line.strip() in ['', '*', '%']:
                 continue
 
@@ -226,6 +226,7 @@ class Corpus(object):
             if body and not line.lower().replace(' ', '').startswith('@end'):
                 lines.append(line.strip())
 
+<<<<<<< HEAD
         lines = repair_lines(lines)
 
 #        try:
@@ -265,3 +266,4 @@ class Corpus(object):
                 ssessions,
                 list(map(self.code['clean_chat_line'], lines)))
         return out
+
