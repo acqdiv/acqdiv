@@ -5,7 +5,9 @@ from pyacqdiv.tests.util import WithTempDir
 
 SESSION = """\
 @Begin
-something
+@Header
+with second line
+%something
 @End
 """
 
@@ -61,6 +63,8 @@ class Tests(WithTempDir):
         corpus.clean()
         out = corpus.output_path('SESSION')
         self.assertTrue(os.path.exists(out))
-        self.assertIn('else', open(out).read())
+        out = open(out).read()
+        self.assertIn('else', out)
+        self.assertNotIn('second line', out)
         corpus.clear_input()
         self.assertEquals(corpus.status()[0], 0)
