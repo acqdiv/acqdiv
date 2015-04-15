@@ -42,6 +42,7 @@ def clean_chat_line(s):
     
     # added by rabart
     s = re.sub("^%(mor|arg|coding):", "x\\1", s) # replace morphosyntactic annotation by xmor, xcod etc.
+    s = re.sub("\\s*#\\s*", " ", s) # single "#" on any tier probably marks some kind of break -> delete
 
     if s.startswith("*"):
         s = re.sub("(\d+)(x)", "\\2 \\1", s)
