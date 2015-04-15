@@ -811,9 +811,18 @@ def parse_xml(file_name, corpus_name):
                     menx = morphology.find('menx')
                     if menx is None:
                         stem_gloss = '???'
-                    else:    
+                    else:
+                        # the glosses for some clitics (=san, =kun etc.) regularly appear in <menx> instead of <mk> whereas their form is given in <mk> -> remove the gloss from <menx> and insert it at the next morpheme position (= the position of the first suffix)
+                        check_clitics = re.search('((_MASC)?(_(FAM|HON|POL|ORD|CL|NLZR|PL))(_PL)?)', menx.text)
+                        if check_clitics is not None:
+                            clitics = check_clitics.group()
+                            menx.text = re.sub(clitics, '', menx.text)
+                            clitics = re.sub('^_', '', clitics)
+                            clitics = re.sub('_', '.', clitics)
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index+1]['glosses_target'] = clitics
                         stem_gloss = menx.text
-                        # compound glosses sometimes have "_" as separator -> replace by "=" as for segment
+                        # compound glosses sometimes have "_" as separator -> replace by "=" as for segment; "." in case of honorific suppletivisms
+                        stem_gloss = re.sub('_HON', '.HON', stem_gloss)
                         stem_gloss = re.sub('_', '=', stem_gloss)
                     
                     # add stem information to corpus dic
@@ -830,9 +839,15 @@ def parse_xml(file_name, corpus_name):
 
                         # default suffix: add to corpus, count up morphemes
                         if s.attrib['type'] == 'sfx':
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = '???'
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = s.text
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
+                            # default: gloss is not in corpus dic yet
+                            if not 'glosses_target' in corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index].keys():
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = '???'
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = s.text
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
+                            # if gloss for the suffix is already known it's been inserted from a place where it doesn't logically belong, e.g. <menx> (= the tag for stem glosses); in this case the text of <mk> gives the form, not the gloss 
+                            else:
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = s.text
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'            
                             morpheme_index += 1                                                        
                             
                         # form for default suffix: add form to preceding element (= suffix), don't count up; ignore if text = "contr" (contraction)
