@@ -15,6 +15,7 @@ xml_dep_correspondences = {
     'arg' : 'argument structure', 
     'comments' : 'comments',
     'english translation' : 'english',
+    'errcoding' : 'error_coding',
     'explanation' : 'comments',
     'gesture' : 'gestures',
     'orthography' : 'orthographic',

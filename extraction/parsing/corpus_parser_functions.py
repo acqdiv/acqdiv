@@ -63,9 +63,6 @@ def parse_corpus(corpus_name, corpus_dir, corpus_format):
     global corpus
     corpus = Vividict()
     # descriptive statistics
-    global stats
-    stats = collections.defaultdict()
-    stats['xml'] = collections.defaultdict()
     
     format_dic = {
         'XML' : {'regex' : re.compile('.*\.xml$', re.IGNORECASE), 'function' : parse_xml},
@@ -92,14 +89,6 @@ def parse_corpus(corpus_name, corpus_dir, corpus_format):
                 else:
                     print('parsing ' + file.name)
                     format_dic[corpus_format]['function'](file.name, corpus_name)
-
-    # # print descriptive stats
-    # for tag in sorted(stats['xml'], key = lambda x: (stats['xml'][x]['freq']), reverse=True):
-    #     print 'tag: ' + tag + ' (' + str(stats['xml'][tag]['freq']) + ')'
-    #     for attrib in sorted(stats['xml'][tag]['attribs'], key = lambda x: stats['xml'][tag]['attribs'][x]['freq'], reverse=True):
-    #         print '\t attribute: ' + attrib + ' (' + str(stats['xml'][tag]['attribs'][attrib]['freq']) + ')'
-    #         for value in sorted(stats['xml'][tag]['attribs'][attrib]['values'], key = stats['xml'][tag]['attribs'][attrib]['values'].get, reverse=True):
-    #             print '\t\t value: ' + value + ' (' + str(stats['xml'][tag]['attribs'][attrib]['values'][value]) + ')'
                                             
     return corpus
 # EOF parse_corpus
@@ -122,31 +111,7 @@ def parse_xml(file_name, corpus_name):
         tag = elem.tag
         attrib = elem.attrib
 
-        # collect and count tags, attributes, and values in a nested structure:
-        # {'w', 160, {'type', 50, {'untranscribed', 40}}}
-        if not tag in stats['xml']:
-            stats['xml'][tag] = {}
-            stats['xml'][tag]['freq'] = 0
-            stats['xml'][tag]['attribs'] = collections.defaultdict()
-        stats['xml'][tag]['freq'] += 1
-        for key in list(attrib.keys()):
-            if not key in stats['xml'][tag]['attribs']:
-                stats['xml'][tag]['attribs'][key] = {}
-                stats['xml'][tag]['attribs'][key]['freq'] = 0
-                stats['xml'][tag]['attribs'][key]['values'] = collections.Counter()
-            stats['xml'][tag]['attribs'][key]['freq'] += 1
-            stats['xml'][tag]['attribs'][key]['values'][attrib[key]] += 1
-
     # now translate XML tree to JSON target structure
-    
-    # get participants and their IDs/names
-    # participants = {}
-    # for p in root.findall('.//participant'):
-    #     if 'name' in p.attrib:
-    #         participants[p.attrib['id']] = p.attrib['name']
-    #     else:
-    #         print('name missing for participant in', file_name)
-
     # get all utterances
     for u in root.findall('.//u'):
 
@@ -193,17 +158,8 @@ def parse_xml(file_name, corpus_name):
             if 'type' in w.attrib and w.attrib['type'] == 'omission':
                 u.remove(w)
         
-        # simple string replacements
+        # replacements in w.text
         for w in u.findall('.//w'):
-            # where the orthography tier is missing in Cree, <w> is not empty but contains 'missingortho' -> remove this
-            if w.text == 'missingortho': 
-                w.text = ''
-            # CHAT www, xxx, yyy all have an attribute "untranscribed" in XML; unify text to '???'
-            if 'untranscribed' in w.attrib:
-                w.text = '???'
-            # only in Cree: morpheme boundaries in <w> are indicated by '_' -> remove these, segments are also given in the morphology tiers. Other corpora can have '_' in <w>, too, but there it's meaningful (e.g. for concatenating the parts of a book title treated as a single word), so only check Cree!
-            if corpus_name == 'Cree' and w.text:
-                w.text = re.sub('_', '', w.text)
             # In ElementTree, w.text only stores the text immediately following <w>. In <w>ha<p type="drawl"/>i</w>, only 'ha' is stored as the text of <w> whereas 'i' is stored as the tail of <p>. Tags of this type are: <p> ('prosody marker'), <ca-element> ('pitch marker'), and <wk> ('word combination', marks boundaries between the elements of compounds)
             for path in ('.//p', './/ca-element', './/wk'):
                 for t in w.findall(path):
@@ -212,6 +168,18 @@ def parse_xml(file_name, corpus_name):
                             w.text = t.tail
                         else:
                             w.text += t.tail
+            # CHAT www, xxx, yyy all have an attribute "untranscribed" in XML; unify text to '???'
+            if 'untranscribed' in w.attrib:
+                w.text = '???'
+            # other replacements
+            if w.text:
+                # where the orthography tier is missing in Cree, <w> is not empty but contains 'missingortho' -> remove this
+                w.text = re.sub('missingortho', '', w.text)
+                # Sometimes words may be partially untranscribed (-xxx, xxx-, -xxx-) - transform this, too
+                w.text = re.sub('\-?xxx\-?', '???', w.text)
+                # only in Cree: morpheme boundaries in <w> are indicated by '_' -> remove these, segments are also given in the morphology tiers. Other corpora can have '_' in <w>, too, but there it's meaningful (e.g. for concatenating the parts of a book title treated as a single word), so only check Cree!
+                if corpus_name == 'Cree':
+                    w.text = re.sub('_', '', w.text)
         # EOF string replacements
                                     
         # transcriptions featuring a contrast between actual and target pronunciation: go through words, create an attribute "target" (initially identical to its text), and set it as appropriate. "target" is taken up later again when all content is written to the corpus dic. 
@@ -289,10 +257,16 @@ def parse_xml(file_name, corpus_name):
         
         # EOF replacements
                 
-        # group tags <g> surround groups of problematic words (transcription insecure, no glosses, ...)
+        # group tags <g> surround a couple of heterogeneous constructions
         # these have to be dealt with last because repetitions belong here and everything that's been done above may be repeated
         for g in u.findall('.//g'):
             words = g.findall('.//w')
+            
+            # guesses at target word, e.g. <g><w>taaniu</w><ga type="alternative">nanii</ga></g>. Occasionally there may be several targets, in which case only use the first one. 
+            target_guess = g.find('.//ga[@type="alternative"]')
+            if target_guess is not None:
+                words[0].attrib['target'] = target_guess.text
+            
             # repetitions, e.g. <g><w>shoo</w><w>boo</w><r times="3"></g>: insert as many <w> groups as indicated by attrib "times" of <r>, minus 1 (-> example goes to "shoo boo shoo boo shoo boo")
             repetitions = g.find('r')
             if repetitions is not None:
@@ -502,17 +476,18 @@ def parse_xml(file_name, corpus_name):
             morphology = u.find("a[@type='extension'][@flavor='mor']")
             if (morphology is not None) and (not re.search('^xxx\.', morphology.text)):
                 
-                # remove CHAT garbage - TODO check what [+ ...] codes mean, [*], [=? ...]
+                # remove CHAT garbage - TODO deal with [+ ...] = free postcode
                 morphology.text = re.sub('(?<=[\\s\\]])[\.\?!](?=\\s|$)', '', morphology.text) # utterance delimiters
-                morphology.text = re.sub('\[\+.*?\]', '', morphology.text) # codes in square brackets
+                morphology.text = re.sub('\[\+.*?\]', '', morphology.text) # postcodes in square brackets; these are not documented anywhere
                 morphology.text = re.sub('\[\/+\]', '', morphology.text) # repetition marker
                 morphology.text = re.sub('\+[\.,\?!;:\///]+', '', morphology.text) # other codes starting with "+"
                 morphology.text = re.sub('\[=![^\]]*\]', '', morphology.text) # comment on action
                 morphology.text = re.sub('\\s#\\s', ' ', morphology.text) # "#" probably marks pauses
                 morphology.text = re.sub('0\.', '', morphology.text) # empty utterance; this is already indicated on main tier
                 morphology.text = re.sub('(\\s|^)&(amp;)?\\S+', ' ', morphology.text) # fragments - these shouldn't appear on the gloss tier at all
-                morphology.text = re.sub('\[\*\]', '', morphology.text) # ?
+                morphology.text = re.sub('\[\*\]', '', morphology.text) # error coding
                 morphology.text = re.sub('\[=\?\\s+(\\S*?)\\s*\]', '[=?\\1]', morphology.text) # possible target to be processed further below; only remove initial space
+                morphology.text = re.sub('(\[=\?.*?\]\\s*)(\[=\?.*?\])+', '\\1', morphology.text) # in case of several possible targets, only keep the first
                 morphology.text = re.sub('[<>]|&[lg]t;', '', morphology.text) # useless XML entities; keep &amp; 
                 morphology.text = re.sub('xxx', '???|???^???', morphology.text) # words with unclear gloss
                 # insecure glosses [?]: add warning, then remove
@@ -805,8 +780,6 @@ def parse_xml(file_name, corpus_name):
                         stem_pos = stem_pos + '.' + sub_pos.text
                     
                     # stem gloss <menx>, under <mw> by default, under <mwc> for compounds
-                    # TODO honorific clitics (=san, =kun etc.) regularly appear in <menx> instead of <mk> -> move
-                    # glosses in <menx>: _FAM, _MASC_FAM, _MASC_FAM_PL, _HON, _POL, _PL, _FAM_PL, _HON_PL, _ORD (ordinal), _CL (classifier), _NLZR (nominaliser); ignore _COMPL
                     stem_gloss = ''
                     menx = morphology.find('menx')
                     if menx is None:
