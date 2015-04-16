@@ -18,6 +18,8 @@ from lxml import objectify
 # import pyacqdiv # here we need to tie in with the cli
 # from metadata import util # here we will get the age calculator
 
+DEBUG = 1
+
 class Parser(object):
     """
     Expected directory layout for extracting metadata
@@ -69,13 +71,21 @@ class Parser(object):
 
     def get_participants(self):
         pass
+    
+    def validate_json(self, output):
+        with open('valid.json', 'w') as vf:
+            subprocess.call(["python", "-m", "json.tool", output], stdout=vf, stderr=STDOUT)
 
     def write_json(self, output): 
         # with open(path + '.json', 'w') as fp:
         with open('temp.json', 'w') as fp:
-            json.dump(output, fp)
-
-
+            if DEBUG:
+                try:
+                    json.dump(output, fp)
+                except:
+                    print("Skipped object " + repr(output) + " of type " + str(type(output)))
+            else:
+                json.dump(output, fp)
 
 class Imdi(Parser):
     """ subclass of metadata.Parser to deal with IMDI metadata (Chintang and Russian via S. Stoll) """
@@ -95,9 +105,9 @@ class Imdi(Parser):
                     participants[t.lower()] = tag
 
         # convert to standard chat header categories (TODO; below is an example: "familysocialrole" -> "role")
-        for k, v in results.items():
-            if v == "familysocialrole":
-                results["role"] = results.pop(k)
+        #for k, v in participants.items():
+        #    if v == "familysocialrole":
+        #        participants["role"] = participants.pop(k)
         return participants
         
 
@@ -115,13 +125,14 @@ class Chat(Parser):
         return [self.parse_attrs(p) for p in root.Participants.participant]
 
     def get_comments(self, root):
-        print({c.attrib['type']: unicode(c) for c in root.comment})
-        return {c.attrib['type']: unicode(c) for c in root.comment}
+        #print({c.attrib['type']: str(c) for c in root.comment})
+        return {c.attrib['type']: str(c) for c in root.comment}
 
 if __name__=="__main__":
-    # p = Parser("../../corpora/Russian/metadata/V01110710.imdi")
-    p = Imdi("../../corpora/Russian/metadata/V01110710.imdi")
+    # p = Parser("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
+    p = Imdi("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
     # p = Chat("../../corpora/Japanese_MiiPro/xml/ArikaM/aprm19990515.xml")
+    p = Imdi("../../corpora/Chintang/metadata/CLLDCh1R08S02.imdi")
 
     # for pretty print:
     # cat <input.json> | python -mjson.tool
