@@ -70,6 +70,7 @@ class Parser(object):
         pass
 
     def get_participants(self):
+        """ get participants; metadata type specific methods in the subclasses """
         pass
     
     def validate_json(self, output):
@@ -87,13 +88,12 @@ class Parser(object):
             else:
                 json.dump(output, fp)
 
+
 class Imdi(Parser):
     """ subclass of metadata.Parser to deal with IMDI metadata (Chintang and Russian via S. Stoll) """
     def __init__(self, path):
         Parser.__init__(self, path)
         self.metadata["participants"] = self.get_participants(self.root)
-
-        # write output
         self.write_json(self.metadata)
 
     def get_participants(self, root):
@@ -102,12 +102,13 @@ class Imdi(Parser):
             t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "")
             for tag in e:
                 if not tag == "":
-                    participants[t.lower()] = tag
+                    participants[t.lower()] = str(tag) # make even booleans strings
 
-        # convert to standard chat header categories (TODO; below is an example: "familysocialrole" -> "role")
-        #for k, v in participants.items():
-        #    if v == "familysocialrole":
-        #        participants["role"] = participants.pop(k)
+        # TODO: convert to standard chat / acqdiv header categories 
+        # below is an example: "familysocialrole" -> "role")
+        for k, v in participants.items():
+            if v == "familysocialrole":
+                participants["role"] = participants.pop(k)
         return participants
         
 
@@ -117,8 +118,6 @@ class Chat(Parser):
         Parser.__init__(self, path)
         self.metadata["participants"] = self.get_participants(self.root)
         self.metadata["comments"] = self.get_comments(self.root)
-
-        # write output
         self.write_json(self.metadata)
 
     def get_participants(self, root):
@@ -130,7 +129,7 @@ class Chat(Parser):
 
 if __name__=="__main__":
     # p = Parser("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
-    p = Imdi("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
+    # p = Imdi("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
     # p = Chat("../../corpora/Japanese_MiiPro/xml/ArikaM/aprm19990515.xml")
     p = Imdi("../../corpora/Chintang/metadata/CLLDCh1R08S02.imdi")
 
