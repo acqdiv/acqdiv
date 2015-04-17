@@ -72,10 +72,6 @@ class Parser(object):
     def get_participants(self):
         """ get participants; metadata type specific methods in the subclasses """
         pass
-    
-    def validate_json(self, output):
-        with open('valid.json', 'w') as vf:
-            subprocess.call(["python", "-m", "json.tool", output], stdout=vf, stderr=STDOUT)
 
     def write_json(self, output): 
         # with open(path + '.json', 'w') as fp:
@@ -131,7 +127,7 @@ if __name__=="__main__":
     # p = Parser("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
     # p = Imdi("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
     # p = Chat("../../corpora/Japanese_MiiPro/xml/ArikaM/aprm19990515.xml")
-    p = Imdi("../../corpora/Chintang/metadata/CLLDCh1R08S02.imdi")
+    p = Imdi("../../corpora/Chintang/metadata/yupung_Ghume.imdi")
 
     # for pretty print:
     # cat <input.json> | python -mjson.tool
