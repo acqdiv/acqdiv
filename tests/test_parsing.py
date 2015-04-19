@@ -13,8 +13,6 @@ generated json output files from the parser
 
 usage (from main folder of repo): $ nosetests tests/test_parsing.py
 
-ATTENTION: os.chdir() above has to be adapted individually in this script!!
-
 '''
 def files_to_compare(output, gold):
         with codecs.open(output, "r", "utf-8") as output:
