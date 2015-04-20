@@ -4,7 +4,9 @@ import codecs
 import os
 import sys
 os.chdir('../acqdiv') ## make script available from main dir of repository
-sys.path.append("extraction/parsing") 
+sys.path.append("extraction/parsing")
+reload(sys)  
+sys.setdefaultencoding('utf8')
 #from extraction.parsing.corpus_parser_test import parser  ## why doesn't this work (even if I have __init__.py everywhere)??
 from corpus_parser import parser
 
@@ -33,7 +35,6 @@ class Test_Parser(unittest.TestCase):
     ##PROBLEM: Cree, Japanese (both) and Turkish generate UnicodeDecodeError?? How to solve that?
     
     
-    
     def test_inuktitut(self):
         '''test if Inuktitut output is correct.'''
         parser("Inuktitut")
@@ -58,35 +59,40 @@ class Test_Parser(unittest.TestCase):
         output,gold = files_to_compare("corpora_processed/parsed/Sesotho_prettyprint.txt", "tests/parsing_updated/Sesotho_prettyprint.txt")
         self.assertEqual(output, gold)
         
-
-    ##def test_japanese_miipro(self):
-    ##    parser("Japanese_MiiPro")
-    ##    output,gold = files_to_compare("corpora_processed/parsed/Japanese_MiiPro.json", "tests/parsing/Japanese_MiiPro.json")
-    ##    self.assertEqual(output, gold)
-    
-    ##def test_japanese_miyata(self):
-    ##    '''test if Japanese_Miyata output is correct.'''
-    ##    parser("Japanese_Miyata")
-    ##    output,gold = files_to_compare("corpora_processed/parsed/Japanese_Miyata.json", "tests/parsing/Japanese_Miyata.json")
-    ##    self.assertEqual(output, gold)
-    
-    def test_chintang(self):
-        '''test if Chintang output is correct.'''
-        parser("Chintang")
-        output,gold = files_to_compare("corpora_processed/parsed/Chintang_prettyprint.txt", "tests/parsing_updated/Chintang_prettyprint.txt")
+    def test_japanese_miipro(self):
+        '''test if Japanese_MiiPro output is correct.'''
+        parser("Japanese_MiiPro")
+        output,gold = files_to_compare("corpora_processed/parsed/Japanese_MiiPro_prettyprint.txt", "tests/parsing_updated/Japanese_MiiPro_prettyprint.txt")
         self.assertEqual(output, gold)
     
-    #def test_cree(self):
-    #    '''test if Cree output is correct.'''
-    #    parser("Cree")
-    #    output,gold = files_to_compare("tests/parsing/Cree_goldstandard.xml", "tests/parsing/Cree.json")
-    #    self.assertEqual(output, gold)
+    def test_japanese_miyata(self):
+        '''test if Japanese_Miyata output is correct.'''
+        parser("Japanese_Miyata")
+        output,gold = files_to_compare("corpora_processed/parsed/Japanese_Miyata_prettyprint.txt", "tests/parsing_updated/Japanese_Miyata_prettyprint.txt")
+        self.assertEqual(output, gold)
+    
+    def test_cree(self):
+        '''test if Cree output is correct.'''
+        parser("Cree")
+        output,gold = files_to_compare("corpora_processed/parsed/Cree_prettyprint.txt", "tests/parsing_updated/Cree_prettyprint.txt")
+        self.assertEqual(output, gold)
     
     ##def test_turkish(self):
     ##    parser("Turkish_KULLD")
     ##    output,gold = files_to_compare("corpora_processed/parsed/Turkish_KULLD.json", "tests/parsing/Turkish_KULLD.json")
     ##    self.assertEqual(output, gold)
     #
+    #def test_yucatec(self):
+    #    '''test if Cree output is correct.'''
+    #    parser("Yucatec")
+    #    output,gold = files_to_compare("corpora_processed/parsed/Yucatec_prettyprint.txt", "tests/parsing_updated/Yucatec_prettyprint.txt")
+    #    self.assertEqual(output, gold)
+    
+    #def test_chintang(self):
+    #    '''test if Chintang output is correct.'''
+    #    parser("Chintang")
+    #    output,gold = files_to_compare("corpora_processed/parsed/Chintang_prettyprint.txt", "tests/parsing_updated/Chintang_prettyprint.txt")
+    #    self.assertEqual(output, gold)
     
 if __name__ == '__main__':
     unittest.main()

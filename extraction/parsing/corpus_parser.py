@@ -60,4 +60,4 @@ if __name__ == '__main__':
     corpora_to_parse = ['Inuktitut', 'Russian', 'Sesotho', 'Indonesian', 'Cree', 'Chintang']
     #for corpus in corpora_to_parse:
         #parser(corpus)
-    parser("Chintang")
+    parser("Cree")
