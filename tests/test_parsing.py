@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import unittest
 import codecs
 import os
@@ -69,11 +70,11 @@ class Test_Parser(unittest.TestCase):
     ##    output,gold = files_to_compare("corpora_processed/parsed/Japanese_Miyata.json", "tests/parsing/Japanese_Miyata.json")
     ##    self.assertEqual(output, gold)
     
-    ##def test_cree(self):
-    ##    '''test if Cree output is correct.'''
-    ##    parser("Cree")
-    ##    output,gold = files_to_compare("tests/parsing/Cree_goldstandard.xml", "tests/parsing/Cree.json")
-    ##    self.assertEqual(output, gold)
+    def test_cree(self):
+        '''test if Cree output is correct.'''
+        parser("Cree")
+        output,gold = files_to_compare("tests/parsing/Cree_goldstandard.xml", "tests/parsing/Cree.json")
+        self.assertEqual(output, gold)
     
     ##def test_turkish(self):
     ##    parser("Turkish_KULLD")
