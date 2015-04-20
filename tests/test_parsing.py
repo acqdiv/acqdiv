@@ -37,25 +37,25 @@ class Test_Parser(unittest.TestCase):
     def test_inuktitut(self):
         '''test if Inuktitut output is correct.'''
         parser("Inuktitut")
-        output,gold = files_to_compare("corpora_processed/parsed/Inuktitut.json", "tests/parsing_updated/Inuktitut.json")
+        output,gold = files_to_compare("corpora_processed/parsed/Inuktitut_prettyprint.txt", "tests/parsing_updated/Inuktitut_prettyprint.txt")
         self.assertEqual(output, gold)
     
     def test_indonesian(self):
         '''test if Indonesian output is correct.'''
         parser("Indonesian")
-        output,gold = files_to_compare("corpora_processed/parsed/Indonesian.json", "tests/parsing_updated/Indonesian.json")
+        output,gold = files_to_compare("corpora_processed/parsed/Indonesian_prettyprint.txt", "tests/parsing_updated/Indonesian_prettyprint.txt")
         self.assertEqual(output, gold)
-
+    
     def test_russian(self):
         '''test if Russian output is correct.'''
         parser("Russian")
-        output,gold = files_to_compare("corpora_processed/parsed/Russian.json", "tests/parsing_updated/Russian.json")
+        output,gold = files_to_compare("corpora_processed/parsed/Russian_prettyprint.txt", "tests/parsing_updated/Russian_prettyprint.txt")
         self.assertEqual(output, gold)
         
     def test_sesotho(self):
         '''test if Sesotho output is correct.'''
         parser("Sesotho")
-        output,gold = files_to_compare("corpora_processed/parsed/Sesotho.json", "tests/parsing_updated/Sesotho.json")
+        output,gold = files_to_compare("corpora_processed/parsed/Sesotho_prettyprint.txt", "tests/parsing_updated/Sesotho_prettyprint.txt")
         self.assertEqual(output, gold)
         
 
@@ -70,11 +70,11 @@ class Test_Parser(unittest.TestCase):
     ##    output,gold = files_to_compare("corpora_processed/parsed/Japanese_Miyata.json", "tests/parsing/Japanese_Miyata.json")
     ##    self.assertEqual(output, gold)
     
-    def test_cree(self):
-        '''test if Cree output is correct.'''
-        parser("Cree")
-        output,gold = files_to_compare("tests/parsing/Cree_goldstandard.xml", "tests/parsing/Cree.json")
-        self.assertEqual(output, gold)
+    #def test_cree(self):
+    #    '''test if Cree output is correct.'''
+    #    parser("Cree")
+    #    output,gold = files_to_compare("tests/parsing/Cree_goldstandard.xml", "tests/parsing/Cree.json")
+    #    self.assertEqual(output, gold)
     
     ##def test_turkish(self):
     ##    parser("Turkish_KULLD")

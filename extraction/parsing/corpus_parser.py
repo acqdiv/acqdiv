@@ -50,26 +50,13 @@ def parser(corpus_name):
         
         with open('corpora_processed/parsed/' + corpus_name + '.json', 'w') as file:
             json.dump(corpus_object, file, ensure_ascii=False, sort_keys=True)
+        with open('corpora_processed/parsed/' + corpus_name + '_prettyprint.txt', 'w') as file:
+            # careful, sort_keys=True can cause memory errors with bigger corpora such as Japanese_MiiPro
+            file.write(json.dumps(corpus_object, file, sort_keys=True, indent=4, ensure_ascii=False))
 
             
-#def parser_main(corpus_name):
-#    rootdir='corpora/'
-#    if not os.path.exists('corpora_processed/parsed'):
-#        os.mkdir('corpora_processed/parsed')
-#    
-#    
-#    # parse corpora using functions from corpus_parser_functions
-#    if corpus_name in corpus_dic:
-#        corpus_dic[corpus_name]['dir'] = rootdir + corpus_dic[corpus_name]['dir']
-#        corpus_object = parse_corpus(corpus_name, corpus_dic[corpus_name]['dir'], corpus_dic[corpus_name]['format'])        
-#        
-#        with open('corpora_processed/parsed/' + corpus_name + '.json', 'w') as file:
-#            json.dump(corpus_object,file, ensure_ascii=False, sort_keys=True)
-#        with open('corpora_processed/parsed/' + corpus_name + '_prettyprint.txt', 'w') as file:
-#            # careful, sort_keys=True can cause memory errors with bigger corpora such as Japanese_MiiPro
-#            print(json.dumps(corpus_object, sort_keys=True, indent=4, ensure_ascii=False), file=file)
         
 if __name__ == '__main__':
-    corpora_to_parse = ['Inuktitut', 'Russian', 'Sesotho', 'Indonesian']
+    corpora_to_parse = ['Inuktitut', 'Russian', 'Sesotho', 'Indonesian', 'Cree']
     for corpus in corpora_to_parse:
         parser(corpus)
