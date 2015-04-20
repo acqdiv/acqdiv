@@ -70,6 +70,12 @@ class Test_Parser(unittest.TestCase):
     ##    output,gold = files_to_compare("corpora_processed/parsed/Japanese_Miyata.json", "tests/parsing/Japanese_Miyata.json")
     ##    self.assertEqual(output, gold)
     
+    def test_chintang(self):
+        '''test if Chintang output is correct.'''
+        parser("Chintang")
+        output,gold = files_to_compare("corpora_processed/parsed/Chintang_prettyprint.txt", "tests/parsing_updated/Chintang_prettyprint.txt")
+        self.assertEqual(output, gold)
+    
     #def test_cree(self):
     #    '''test if Cree output is correct.'''
     #    parser("Cree")
