@@ -476,7 +476,7 @@ def parse_xml(file_name, corpus_name):
             morphology = u.find("a[@type='extension'][@flavor='mor']")
             if (morphology is not None) and (not re.search('^xxx\.', morphology.text)):
                 
-                # remove CHAT garbage - TODO deal with [+ ...] = free postcode
+                # remove CHAT garbage
                 morphology.text = re.sub('(?<=[\\s\\]])[\.\?!](?=\\s|$)', '', morphology.text) # utterance delimiters
                 morphology.text = re.sub('\[\+.*?\]', '', morphology.text) # postcodes in square brackets; these are not documented anywhere
                 morphology.text = re.sub('\[\/+\]', '', morphology.text) # repetition marker
