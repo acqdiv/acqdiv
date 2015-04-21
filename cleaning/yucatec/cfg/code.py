@@ -19,6 +19,26 @@ def clean_chat_line(s):
     s = re.sub("^@Birth of Sandi:.*", "@Birth of SAN:\t1993-JUL-23\n", s)
     s = re.sub("^@Translation", "@Translator", s)
 
+
+    #character cleaning; cf. ../notes/yua-chars.ods for notes on characters that need manual attention and/or need to be interpreted by Barbara (corpus owner)
+    s = re.sub(" ", " ", s) # unification of two different space types
+    s = re.sub("¨", "", s)
+    s = re.sub("¢", "ó", s)
+    s = re.sub("’", "'", s)
+    s = re.sub("£", "ú", s)
+    s = re.sub("\\s‘\\s", "?", s) # other uses of "‘" need manual attention
+    s = re.sub("¤", "ñ", s)
+    s = re.sub("^.+?\\\\.+?$", "", s) # backslashes only occur in lines of jumbled characters (probably information lost from .doc to .txt)
+    s = re.sub("^.+?¸.+?$", "", s) # "¸" only occurs in lines of jumbled characters (probably information lost from .doc to .txt)
+    s = re.sub("ç", "", s)
+    s = re.sub("Æ", "'", s)
+    s = re.sub("^.+?Ø.+?$", "", s) # "Ø" only occurs in lines of jumbled characters (probably information lost from .doc to .txt)
+    s = re.sub("sÏ", "sí", s)
+    s = re.sub("ï", "'", s)
+    s = re.sub("Í", "í", s)
+    s = re.sub("ë", "é", s)
+    s = re.sub("°", "", s)
+
     #cleanup unwanted tiers
     #added by chysi
     s = re.sub("^@Edad.*", "", s)
