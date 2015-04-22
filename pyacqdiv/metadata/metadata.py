@@ -18,6 +18,8 @@ from lxml import objectify
 # import pyacqdiv # here we need to tie in with the cli
 # from metadata import util # here we will get the age calculator
 
+DEBUG = 1
+
 class Parser(object):
     """
     Expected directory layout for extracting metadata
@@ -68,13 +70,19 @@ class Parser(object):
         pass
 
     def get_participants(self):
+        """ get participants; metadata type specific methods in the subclasses """
         pass
 
     def write_json(self, output): 
         # with open(path + '.json', 'w') as fp:
         with open('temp.json', 'w') as fp:
-            json.dump(output, fp)
-
+            if DEBUG:
+                try:
+                    json.dump(output, fp)
+                except:
+                    print("Skipped object " + repr(output) + " of type " + str(type(output)))
+            else:
+                json.dump(output, fp)
 
 
 class Imdi(Parser):
@@ -82,8 +90,6 @@ class Imdi(Parser):
     def __init__(self, path):
         Parser.__init__(self, path)
         self.metadata["participants"] = self.get_participants(self.root)
-
-        # write output
         self.write_json(self.metadata)
 
     def get_participants(self, root):
@@ -92,12 +98,13 @@ class Imdi(Parser):
             t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "")
             for tag in e:
                 if not tag == "":
-                    participants[t.lower()] = tag
+                    participants[t.lower()] = str(tag) # make even booleans strings
 
-        # convert to standard chat header categories (TODO; below is an example: "familysocialrole" -> "role")
-        for k, v in results.items():
+        # TODO: convert to standard chat / acqdiv header categories 
+        # below is an example: "familysocialrole" -> "role")
+        for k, v in participants.items():
             if v == "familysocialrole":
-                results["role"] = results.pop(k)
+                participants["role"] = participants.pop(k)
         return participants
         
 
@@ -107,21 +114,20 @@ class Chat(Parser):
         Parser.__init__(self, path)
         self.metadata["participants"] = self.get_participants(self.root)
         self.metadata["comments"] = self.get_comments(self.root)
-
-        # write output
         self.write_json(self.metadata)
 
     def get_participants(self, root):
         return [self.parse_attrs(p) for p in root.Participants.participant]
 
     def get_comments(self, root):
-        print({c.attrib['type']: unicode(c) for c in root.comment})
-        return {c.attrib['type']: unicode(c) for c in root.comment}
+        #print({c.attrib['type']: str(c) for c in root.comment})
+        return {c.attrib['type']: str(c) for c in root.comment}
 
 if __name__=="__main__":
-    # p = Parser("../../corpora/Russian/metadata/V01110710.imdi")
-    p = Imdi("../../corpora/Russian/metadata/V01110710.imdi")
+    # p = Parser("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
+    # p = Imdi("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
     # p = Chat("../../corpora/Japanese_MiiPro/xml/ArikaM/aprm19990515.xml")
+    p = Imdi("../../corpora/Chintang/metadata/yupung_Ghume.imdi")
 
     # for pretty print:
     # cat <input.json> | python -mjson.tool
