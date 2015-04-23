@@ -73,6 +73,14 @@ class Parser(object):
         """ get participants; metadata type specific methods in the subclasses """
         pass
 
+    def get_everything(self, root):
+        """ method returns a list of all tag text tuples """
+        everything = []
+        for e in root.getiterator():
+            if e is not None:
+                everything.append((e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", ""), e))
+        return everything
+
     def write_json(self, output): 
         # with open(path + '.json', 'w') as fp:
         with open('temp.json', 'w') as fp:
@@ -93,20 +101,16 @@ class Imdi(Parser):
         self.write_json(self.metadata)
 
     def get_participants(self, root):
-        participants = {}
-        for e in root.Session.MDGroup.Actors.Actor.getchildren():
-            t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "")
-            for tag in e:
-                if not tag == "":
-                    participants[t.lower()] = str(tag) # make even booleans strings
-
-        # TODO: convert to standard chat / acqdiv header categories 
-        # below is an example: "familysocialrole" -> "role")
-        for k, v in participants.items():
-            if v == "familysocialrole":
-                participants["role"] = participants.pop(k)
+        participants = []
+        for actor in root.Session.MDGroup.Actors.getchildren():
+            participant = {}
+            for e in actor.getchildren():
+                t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "") # drop the IMDI stuff
+                # TODO: convert to standard chat / acqdiv header categories 
+                participant[t.lower()] = str(e.text) # make even booleans strings
+            if not len(participant) == 0:
+                participants.append(participant)
         return participants
-        
 
 class Chat(Parser):
     """ subclass of metadata.Parser class to deal with CHAT XML metadata extraction """
