@@ -54,6 +54,32 @@ def clean_chat_line(s):
     
     """
 
+    #character replacements
+    s = re.sub("þ", "ş", s)
+    s = re.sub("ð", "ğ", s)
+    s = re.sub("", "]", s)
+    s = re.sub("", "[", s)
+    s = re.sub("’", "'", s)
+    s = re.sub("", "#", s)
+    s = re.sub("\\}", "]", s)
+    s = re.sub("×", "x", s)
+    s = re.sub("…", "...", s)
+    s = re.sub("⧣", "#", s)
+    s = re.sub("Þ", "Ş", s)
+    s = re.sub("\\{", "[", s)
+    s = re.sub("д", "d", s)
+    s = re.sub("а", "a", s) # Cyrillic a vs Latin a (has been done manually, but put here in case new Turkish files appear)
+    s = re.sub("‘", "'", s) # has been done manually, but put here in case new Turkish files appear
+    s = re.sub('”', '"', s)
+    s = re.sub('“', '"', s)
+    s = re.sub("Ð", "Ğ", s) # has been done manually, but put here in case new Turkish files appear
+    s = re.sub("®", "r", s) # has been done manually, but put here in case new Turkish files appear
+    s = re.sub("ƒ", "f", s) # has been done manually, but put here in case new Turkish files appear
+    s = re.sub("", "(", s) # has been done manually, but put here in case new Turkish files appear
+    s = re.sub("≥", ">", s) # has been done manually, but put here in case new Turkish files appear
+    s = re.sub("\\\\", "", s)
+    s = re.sub("`", "'", s)
+    
     # fix roles according the CHILDES's depfile.cut 
     # line = line.replace("Target_Chıld", "Target\_Child")
     # participants have to be fixed
