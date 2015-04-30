@@ -14,6 +14,8 @@ TODO (@bambooforest):
 
 import sys
 import json
+import os
+import re
 from lxml import objectify
 # import pyacqdiv # here we need to tie in with the cli
 # from metadata import util # here we will get the age calculator
@@ -31,12 +33,15 @@ class Parser(object):
         """
 
     def __init__(self, path):
+        self.path = path
         self.tree = objectify.parse(path)
         self.root = self.tree.getroot()
 
         self.metadata = {
             '__attrs__': self.parse_attrs(self.root),
-        }
+                    }
+        self.metadata['__attrs__']['Cname'] = re.sub(".xml|.imdi", "", os.path.basename(self.path))
+
         # assert existing_dir(self.input_path())
 
     def parse_attrs(self, e):
@@ -181,7 +186,7 @@ class Chat(Parser):
 if __name__=="__main__":
     # p = Parser("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
     p = Imdi("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
-    # p = Chat("../../corpora/Japanese_MiiPro/xml/ArikaM/aprm19990515.xml")
+    # p = Chat("../../corpora/Japanese_MiiPro/xml/ArikaM/aprm20000316.xml")
     # p = Imdi("../../corpora/Chintang/metadata/yupung_Ghume.imdi")
 
     # for pretty print:
