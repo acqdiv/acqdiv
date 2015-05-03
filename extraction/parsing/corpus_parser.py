@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 
 '''
-Read corpus files in CHAT, Toolbox, or XML from a directory, parse their structure, write everything to JSON, and put one output file per corpus in a new folder "corpora_parsed" in the corpus directory.
+Read corpus files in CHAT, Toolbox, or XML from directory corpora/, copy the structure from corpora/ to "parsing/LANGUAGE/input" and parse their structure, write everything to JSON, and put one output file per corpus in a new folder "parsing/LANGUAGE/output" in the main directory of the repository.
 This script only works if the module "corpus_parser_functions.py" is in the same directory. 
 
 Usage: python3 corpus_parser.py -[hacCiIjJrty]   -->> -h or --help for usage
 
-Note: When using -a, the script assumes all corpora to be present under corpora/   If not all corpora are present, specify in script (line 123) below which ones to parse.
+Note: When using -a, the script assumes all corpora to be present under corpora/   If not all corpora are present, specify in script (line 165) below which ones to parse.
 
 Author: Robert Schikowski <robert.schikowski@uzh.ch>
 Modification: Danica Pajovic <danica.pajovic@uzh.ch>
@@ -23,7 +23,7 @@ import errno
 
 
 
-# table with subdirectory and format for each corpus
+# table with subdirectory and format for each corpus (root directory for this is "parsing/")
 corpus_dic = {
      'Cree' : {'dir' : 'Cree/input/', 'format' : 'XML'},
      'Japanese_MiiPro' : {'dir' : 'Japanese_MiiPro/input/', 'format' : 'XML'},
@@ -37,6 +37,7 @@ corpus_dic = {
      'Yucatec' : {'dir' : 'Yucatec/input/', 'format' : 'XML'}
 }
 
+# table with subdirectory and format for each corpus (root directory for this is "tests/")
 corpus_dic_test = {
      'Cree' : {'dir' : 'parsing/Cree/input_test', 'format' : 'XML'},
      'Japanese_MiiPro' : {'dir' : 'parsing/Japanese_MiiPro/input_test/', 'format' : 'XML'},
