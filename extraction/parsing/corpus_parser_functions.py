@@ -155,6 +155,22 @@ def parse_xml(file_name, corpus_name):
         
         # omissions: ignore them altogether. Omitted words can presently only be removed directly under <w> because ElementTree doesn't give references to parents (i.e. u.findall('.//w') is no good because the parent from which <w> should be dropped is not known). This should be okay, though, since in all XML corpora omissions always occur directly under <u>. 
         for w in u.findall('w'):
+            # Specific utterances in Turkish that are not glossed <w formType="(interjection|onomatopoeia|family-specific)">...</w>
+            # set target to '???'
+            # set attribute 'glossed' to 'no'
+            if corpus_name == "Turkish_KULLD":
+                if 'formType' in w.attrib and w.attrib['formType'] == 'interjection':
+                    w.attrib['target'] = '???'
+                    w.attrib['glossed'] = 'no'
+                    continue
+                if 'formType' in w.attrib and w.attrib['formType'] == 'onomatopoeia':
+                    w.attrib['target'] = '???'
+                    w.attrib['glossed'] = 'no'
+                    continue
+                if 'formType' in w.attrib and w.attrib['formType'] == 'family-specific':
+                    w.attrib['target'] = '???'
+                    w.attrib['glossed'] = 'no'
+                    continue
             if 'type' in w.attrib and w.attrib['type'] == 'omission':
                 u.remove(w)
         
@@ -1025,9 +1041,154 @@ def parse_xml(file_name, corpus_name):
         # EOF Sesotho        
 
         elif corpus_name == 'Turkish_KULLD':
-            pass
+            # gets parsed very similar to Japanese_MiiPro, with only minor corpus specific changes
+            # parse the morphology tier mor
+            morphology = u.find("a[@type='extension'][@flavor='mor']")
+            if morphology is not None:
+                # remove punctuation and tags
+                morphology.text = re.sub('(^|\\s)[\.\?!\+\/]+(\\s|$)', '\\1\\2', morphology.text)
+                morphology.text = re.sub('(^|\\s)tag\|\\S+(\\s|$)', '\\1\\2', morphology.text)
+                morphology.text = re.sub('\\s+$', '', morphology.text)
+                                
+                # split trn tier into words, reset counter to 0
+                words = re.split('\\s+', morphology.text)
+                word_index = 0
+                
+                # go through words on gloss tier
+                for w in words:
+                                        
+                    # some words in <w> have a warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
+                    # -> incremeent the <w> counter by one as long as the present morphological word is associated with the next <w>
+                    while('warnings' in corpus[text_id][utterance_index]['words'][word_index].keys() and
+                        re.search('not glossed', corpus[text_id][utterance_index]['words'][word_index]['warnings'])):
+                            word_index += 1
+                                                            
+                    # set morpheme counter
+                    morpheme_index = 0
+                    
+                    # first cut off prefix, it's always on the left edge of the complete word. There are no words with more than 1 prefix in MiiPro. 
+                    prefix = ''
+                    check_pfx = re.search('^(.+#)', w)
+                    if check_pfx:
+                        prefix = check_pfx.group(1) 
+                        w = w.lstrip(prefix)
+                        prefix = prefix.replace('#', '')
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = prefix
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = '???'
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'pfx'
+                                                
+                        morpheme_index += 1
+                        
+                    # cut off "supertags" prefixed to compounds, e.g. the 'num|' in num|+num|kyuu+num|juu. There are no words with more than 1 supertag. 
+                    # note that the dedicated tag for compounds, <wk>, is considered irrelevant for us and is removed further above. It is used rarely (7 times) and inconsistently in MiiPro. 
+                    check_compound = re.search('^[^\\+]+\\+(.*)', w)
+                    if check_compound:
+                        w = check_compound.group(1)
+                    
+                    # get stem gloss from the right edge of the complete word. There are no words with more than 1 stem gloss. 
+                    stem_gloss = '???'
+                    check_stem_gloss = re.search('(.+)=(\S+)$', w)
+                    if check_stem_gloss:
+                        w = check_stem_gloss.group(1)
+                        stem_gloss = check_stem_gloss.group(2)
+                    
+                    # split into compound elements (if applicable)
+                    compound_elems = w.split('+')
+                    for i in range(0, len(compound_elems)):
+                        
+                        # split into POS tag and gloss; add '=' as separator to posterior compound elements
+                        parts = compound_elems[i].partition('|')
+                        stem_pos = parts[0]
+                        gloss = parts[2]
+                        if i>0: gloss = '=' + gloss
+                        
+                        # split into stem and possible suffixes; split suffix chain if exists
+                        check_stem = re.search('^([^\\-]+)(.*)$', gloss)
+                        (stem, suffix_string) = ('', '')
+                        if check_stem:
+                            stem = check_stem.group(1)
+                            suffix_string = check_stem.group(2)
+                            # Japanese MiiPro specialty: grammatical categories in suppletive forms are marked by '&' (e.g. da&POL = des); replace by '.'
+                            stem = stem.replace('&','.')
+                        
+                        # add stem, suffixes, and POS for all to corpus dic
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = stem_pos
+                        morpheme_index += 1
+                        
+                        if suffix_string:
+                            # drop first hyphen in suffix string so split() doesn't produce empty elements
+                            suffix_string = suffix_string.lstrip("-")
+                            for suffix_gloss in suffix_string.split('-'):
+                                # most suffixes don't have form glosses in MiiPro, but sometimes blocks of the type IMP:te are found, in which case IMP is the suffix gloss and -te is the suffix form. Only exception is [A-Z]:contr, which is not a stem gloss but indicates contractions.
+                                suffix_form = '???'
+                                check_suffix = re.search('^([A-Z]+):(\w+)$', suffix_gloss)
+                                if check_suffix and check_suffix.group(2) != 'contr':
+                                    suffix_gloss = check_suffix.group(1)
+                                    suffix_form = check_suffix.group(2)
+                                
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = suffix_form
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = suffix_gloss
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
+                                morpheme_index += 1
+                    
+                    # count up words
+                    word_index += 1
+                
+
+                # remember length of morphology tier in words
+                length_morphology = len(words)
+                
+                # go through words <w> and insert glosses for repetitions and retracings (warning 'not glossed; repeat/search ahead')
+                for i in range(0, len(corpus[text_id][utterance_index]['words'])):
+                    
+                    if('warnings' in corpus[text_id][utterance_index]['words'][i].keys() and
+                        re.search('not glossed; (repeat|search ahead)', corpus[text_id][utterance_index]['words'][i]['warnings'])):
+                        
+                        # count up number of glossed words
+                        length_morphology += 1
+                        
+                        ## (1) repetitions: get morphology from preceding word 
+                        # this gets handeled as in Inuktitut.
+                        
+                        # (2) retracings: get morphology from any matching word further ahead
+                        if re.search('not glossed; search ahead', corpus[text_id][utterance_index]['words'][i]['warnings']):
+                            # go through all following <w> 
+                            for j in range(i, len(corpus[text_id][utterance_index]['words'])):
+                                # corresponding target words: transfer morphology
+                                if(corpus[text_id][utterance_index]['words'][j]['full_word_target'] == corpus[text_id][utterance_index]['words'][i]['full_word_target']
+                                    and 'morphemes' in corpus[text_id][utterance_index]['words'][j].keys()):
+                                    # transfer gloss from match to present word
+                                    corpus[text_id][utterance_index]['words'][i]['morphemes'] = corpus[text_id][utterance_index]['words'][j]['morphemes']
+                                # corresponding actual words: transfer morphology AND target word
+                                elif(corpus[text_id][utterance_index]['words'][j]['full_word'] == corpus[text_id][utterance_index]['words'][i]['full_word']
+                                    and 'morphemes' in corpus[text_id][utterance_index]['words'][j].keys()):
+                                    # transfer gloss and target from match to present word
+                                    corpus[text_id][utterance_index]['words'][i]['morphemes'] = corpus[text_id][utterance_index]['words'][j]['morphemes']
+                                    corpus[text_id][utterance_index]['words'][i]['full_word_target'] = corpus[text_id][utterance_index]['words'][j]['full_word_target']
+                            
+                        # remove warning and delete key if empty
+                        # print(utterance_index, corpus[text_id][utterance_index]['words'][i]['warnings'])
+                        if 'warnings' in corpus[text_id][utterance_index]['words'][i].keys():
+                            corpus[text_id][utterance_index]['words'][i]['warnings'] = re.sub(';?\\s*not glossed; (repeat|search ahead)', '', corpus[text_id][utterance_index]['words'][i]['warnings'])
+                        if corpus[text_id][utterance_index]['words'][i]['warnings'] == '':
+                            del corpus[text_id][utterance_index]['words'][i]['warnings']
+
+                # EOF glosses for repetitions/retracings 
+
+                # check alignment with words that were found in <w>
+                # note: alignment on morpheme-level doesn't have to be checked at all for MiiPro because the segment and gloss tiers are not separate
+                if length_morphology != corpus[text_id][utterance_index]['length_in_words']:
+                    print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ': general word tier <w> has ' 
+                        + str(corpus[text_id][utterance_index]['length_in_words']) + ' words vs ' + str(length_morphology) + ' in "mor" (= morphology)')
+                    creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment full_word : segments/glosses')
+
+            # if there is no morphology, add warning to complete utterance
+            elif morphology is None:
+                creadd(corpus[text_id][utterance_index], 'warnings', 'not glossed')
         # EOF Turkish_KULLD
-        
+
     # EOF utterance loop
     
 # EOF parse_xml
