@@ -44,7 +44,8 @@ class Unifier():
                                 'name': 'name',
                                 'birthdate': 'birthdate',
                                 'age': 'age',
-                                'sex': 'sex'}
+                                'sex': 'sex',
+                                'role': 'familysocialrole'}
 
         UnwantedProjectHeads = set()
         UnwantedSessionHeads = set()
@@ -103,18 +104,82 @@ class Unifier():
                 del self.metadata['media'][resource][key]
 
     def unifyXml(self):
-        pass
+       
+        metadata = {}
+        
+        XmlSessionHeads = {'code':None,
+                           'date':None,
+                           'genre':None,
+                           'location':None,
+                           'situation':None}
+
+        XmlProjectHeads = {'name': None, 
+                           'shortname': None,
+                           'contact': None, 
+                           'id': None}
+
+        XmlMediaHeads = {'file': None,
+                          'format': None,
+                          'size': None,
+                          'length': None}
+
+        XmlParticipantHeads = {'code': None,
+                                'name': None,
+                                'birthdate': None,
+                                'age': None,
+                                'role': None,
+                                'sex': None}
+
+        metadata['project'] = XmlProjectHeads
+        metadata['session'] = XmlSessionHeads
+        metadata['media'] = {}
+        metadata['media']['mediafile'] = XmlMediaHeads
+        metadata['participants'] = []
+
+        for attr in self.metadata['__attrs__']:
+            if attr == 'Cname':
+                metadata['session']['code'] = self.metadata['__attrs__'][attr]
+            elif attr == 'Date':
+                metadata['session']['date'] = self.metadata['__attrs__'][attr]
+            elif attr == 'Media':
+                metadata['media']['mediafile']['file'] = self.metadata['__attrs__'][attr]
+            elif attr == 'Mediatypes':
+                metadata['media']['mediafile']['format'] = self.metadata['__attrs__'][attr]
+            else:
+                continue
+
+        metadata['__attrs__'] = self.metadata['__attrs__']
+
+        for i in range(len(self.metadata['participants'])):
+                metadata['participants'].append(XmlParticipantHeads)
+                for head in self.metadata['participants'][i]:
+                    if head == 'role':
+                        metadata['participants'][i][head] = self.metadata['participants'][i][head]        
+                    elif head == 'name':
+                        metadata['participants'][i][head] = self.metadata['participants'][i][head]
+                    elif head == 'id':
+                        metadata['participants'][i]['code'] = self.metadata['participants'][i][head]
+                    elif head == 'sex':
+                        metadata['participants'][i][head] = self.metadata['participants'][i][head]
+                    elif head == 'birthdate':
+                        metadata['participants'][i][head] = self.metadata['participants'][i][head]
+
+
+        self.metadata = metadata
 
 class testJson(unittest.TestCase):
 
     def setUp(self):
         self.jsu = Unifier("russiantest.json")
+        self.jsc = Unifier("miiprotest.json")
 
     def testLoadsJson(self):
         self.assertIsNotNone(self.jsu.metadata)
+        self.assertIsNotNone(self.jsc.metadata)
 
     def testTypesCorrectly(self):
         self.assertEqual(self.jsu.metatype, 'IMDI')
+        self.assertEqual(self.jsc.metatype, 'XML')
 
     def testUnifiesWithoutError(self):
         self.jsu.unify()
@@ -125,3 +190,8 @@ if __name__ == "__main__":
     jsu.unify()
     with open("unify.json", "w") as unify:
         json.dump(jsu.metadata, unify)
+
+    jsc = Unifier("miiprotest.json")
+    jsc.unify()
+    with open("unify_xml.json", "w") as unify:
+        json.dump(jsc.metadata, unify)

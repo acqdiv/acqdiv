@@ -41,6 +41,7 @@ class Parser(object):
             '__attrs__': self.parse_attrs(self.root),
                     }
         self.metadata['__attrs__']['Cname'] = re.sub(".xml|.imdi", "", os.path.basename(self.path))
+        self.metadata['__attrs__']['schemaLocation'] = self.metadata['__attrs__'].pop('{http://www.w3.org/2001/XMLSchema-instance}schemaLocation')
 
         # assert existing_dir(self.input_path())
 
@@ -115,9 +116,10 @@ class Imdi(Parser):
             for e in actor.getchildren():
                 t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "") # drop the IMDI stuff
                 participant[t.lower()] = str(e.text) # make even booleans strings
-            for k,v in participant.items():
-                if k == "familysocialrole":
-                    participant["speakerrole"] = participant.pop(k)
+            #for k,v in participant.items():
+            #    if k == "familysocialrole":
+            #        participant["speakerrole"] = participant.pop(k)
+
             if not len(participant) == 0:
                 participants.append(participant)
         return participants
@@ -185,8 +187,8 @@ class Chat(Parser):
 
 if __name__=="__main__":
     # p = Parser("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
-    p = Imdi("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
-    # p = Chat("../../corpora/Japanese_MiiPro/xml/ArikaM/aprm20000316.xml")
+    # p = Imdi("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
+    p = Chat("../../corpora/Japanese_MiiPro/xml/ArikaM/aprm20000316.xml")
     # p = Imdi("../../corpora/Chintang/metadata/yupung_Ghume.imdi")
 
     # for pretty print:
