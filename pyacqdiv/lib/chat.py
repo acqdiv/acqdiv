@@ -20,7 +20,7 @@ $lines
 def chat(language, participants, ids, filename, sessions, lines):
     return CHAT_TEMPLATE.substitute(
         languages=language,
-        participants=participants,
+        participants=', '.join(participants),
         ids='\n'.join(ids),
         filename=filename,
         sessions='\n'.join(sessions),
