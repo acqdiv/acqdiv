@@ -57,7 +57,7 @@ class Corpus(object):
     def __init__(self, id_, cfg):
         self.id = id_
         self.cfg = cfg
-        self._participants = {}
+        self._participants = defaultdict(list)
         self._ids = defaultdict(list)
         self._sessions = defaultdict(list)
         self._replacements = []
@@ -157,15 +157,6 @@ class Corpus(object):
         return self._code
 
     @property
-    def participants(self):
-        if not self._participants:
-            if os.path.exists(self.cfg_path('participants.csv')):
-                self._participants = {
-                    r[0]: r[1] for r in read_csv(
-                        self.cfg_path('participants.csv'), skip_header=True, quotechar='"')}
-        return self._participants
-
-    @property
     def replacements(self):
         if not self._replacements:
             if os.path.exists(self.cfg_path('replacements.csv')):
@@ -176,11 +167,20 @@ class Corpus(object):
         return self._replacements
 
     @property
+    def participants(self):
+        if not self._participants:
+            if os.path.exists(self.cfg_path('ids.csv')):
+                for row in read_csv(
+                        self.cfg_path('ids.csv'), skip_header=True, quotechar='"'):
+                    self._participants[row[0]].append(row[3]+" "+row[11]+" "+row[8])
+        return self._participants
+
+    @property
     def ids(self):
         if not self._ids:
-            if os.path.exists(self.cfg_path('ids.tsv')):
+            if os.path.exists(self.cfg_path('ids.csv')):
                 for row in read_csv(
-                        self.cfg_path('ids.tsv'), skip_header=True, delimiter='\t'):
+                        self.cfg_path('ids.csv'), skip_header=True, quotechar='"'):
                     self._ids[row[0]].append("@ID:\t%s|" % "|".join(row[1:-1]))
         return self._ids
 
@@ -228,16 +228,7 @@ class Corpus(object):
 
         lines = repair_lines(lines)
 
-#        try:
-#            out = chat(
-#            self.cfg['iso_code'],
-#            self.participants[filename],
-#            self.ids[filename],
-#            filename,
-#            self.sessions[filename],
-#            list(map(self.code['clean_chat_line'], lines)))
-#            return out
-
+        # warn and skip files that have no metadata
         try:
             partps = self.participants[filename]
         except KeyError:
