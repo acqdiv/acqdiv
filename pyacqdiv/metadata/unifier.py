@@ -10,6 +10,7 @@ import unittest
 class Unifier():
 
     def __init__(self, path):
+        self.path = path
         with open(path) as jsf:
             self.metadata = json.load(jsf)
         if 'IMDI' in  self.metadata['__attrs__']['schemaLocation']:
@@ -17,11 +18,15 @@ class Unifier():
         else:
             self.metatype = 'XML'
 
-    def unify(self):
+    def unify(self, cdc=None):
+        DEBUG = 1
         if self.metatype == 'IMDI':
             self.unifyImdi()
         else:
-            self.unifyXml()
+            self.unifyXml(cdc)
+        if DEBUG == 0:
+            with open(self.path, 'w') as unifile:
+                json.dump(self.metadata, unifile)
 
     def unifyImdi(self):
         ImdiProjectHeads = {'name': 'name', 
@@ -79,11 +84,13 @@ class Unifier():
                 UnwantedMediaTypes.add(resource)
 
         for participant in self.metadata['participants']:
-            for head in participant:
-                if head not in ImdiParticipantHeads:
-                    UnwantedParticipantHeads.add(head)
+            #for head in participant.items():
+            ptcp2 = participant
+            for head in ptcp2:
+                if head[0] not in ImdiParticipantHeads:
+                    UnwantedParticipantHeads.add(head[0])
                 else:
-                    participant[ImdiParticipantHeads[head]] = participant.pop(head)
+                    participant[ImdiParticipantHeads[head[0]]] = participant.pop(head[0])
 
 
         for key in UnwantedProjectHeads:
@@ -91,6 +98,9 @@ class Unifier():
 
         for key in UnwantedSessionHeads:
             del self.metadata['session'][key]
+
+        if 'address' in self.metadata['session']['location']:
+            del self.metadata['session']['location']['address']
 
         for participant in self.metadata['participants']:
             for key in UnwantedParticipantHeads:
@@ -103,7 +113,7 @@ class Unifier():
             for key in UnwantedMediaHeads:
                 del self.metadata['media'][resource][key]
 
-    def unifyXml(self):
+    def unifyXml(self, cdc=None):
        
         metadata = {}
         
@@ -164,6 +174,13 @@ class Unifier():
                     elif head == 'birthdate':
                         metadata['participants'][i][head] = self.metadata['participants'][i][head]
 
+        if cdc:
+            metadata['session']['genre'] = cdc['IMDI_Genre']
+            metadata['session']['location'] = {}
+            metadata['session']['location']['continent'] = cdc['IMDI_Continent']
+            metadata['session']['location']['country'] = cdc['IMDI_Country']
+            metadata['project']['name'] = cdc['Title']
+            meatadata['project']['contact'] = cdc['Creator']
 
         self.metadata = metadata
 

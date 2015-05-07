@@ -19,6 +19,8 @@ import re
 from lxml import objectify
 # import pyacqdiv # here we need to tie in with the cli
 # from metadata import util # here we will get the age calculator
+#TODO once this is in the package the imports should probably read: 
+# from pyacqdiv.metadata....
 
 DEBUG = 1
 
@@ -32,15 +34,16 @@ class Parser(object):
         - <corpus.id>_metadata.csv (csv table of all metadata; to add)
         """
 
-    def __init__(self, path):
+    def __init__(self, path, outpath):
         self.path = path
+        self.outpath = outpath
         self.tree = objectify.parse(path)
         self.root = self.tree.getroot()
 
         self.metadata = {
             '__attrs__': self.parse_attrs(self.root),
                     }
-        self.metadata['__attrs__']['Cname'] = re.sub(".xml|.imdi", "", os.path.basename(self.path))
+        self.metadata['__attrs__']['Cname'] = re.sub(".xml|.imdi", "", os.path.basename(str(self.path)))
         self.metadata['__attrs__']['schemaLocation'] = self.metadata['__attrs__'].pop('{http://www.w3.org/2001/XMLSchema-instance}schemaLocation')
 
         # assert existing_dir(self.input_path())
@@ -88,8 +91,8 @@ class Parser(object):
         return everything
 
     def write_json(self, output): 
-        # with open(path + '.json', 'w') as fp:
-        with open('temp.json', 'w') as fp:
+        with open(self.outpath + '.json', 'w') as fp:
+        #with open('temp.json', 'w') as fp:
             if DEBUG:
                 try:
                     json.dump(output, fp)
@@ -101,8 +104,8 @@ class Parser(object):
 class Imdi(Parser):
     """ subclass of metadata.Parser to deal with IMDI metadata (Chintang and Russian via S. Stoll) """
     #TODO: start dropping unwanted fields
-    def __init__(self, path):
-        Parser.__init__(self, path)
+    def __init__(self, path, outpath):
+        Parser.__init__(self, path, outpath)
         self.metadata["participants"] = self.get_participants(self.root)
         self.metadata["session"] = self.get_session_data(self.root)
         self.metadata["project"] = self.get_project_data(self.root)
@@ -172,8 +175,8 @@ class Imdi(Parser):
 
 class Chat(Parser):
     """ subclass of metadata.Parser class to deal with CHAT XML metadata extraction """
-    def __init__(self, path):
-        Parser.__init__(self, path)
+    def __init__(self, path, outpath):
+        Parser.__init__(self, path, outpath)
         self.metadata["participants"] = self.get_participants(self.root)
         self.metadata["comments"] = self.get_comments(self.root)
         self.write_json(self.metadata)
