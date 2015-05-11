@@ -159,15 +159,7 @@ def parse_xml(file_name, corpus_name):
             # set target to '???'
             # set attribute 'glossed' to 'no'
             if corpus_name == "Turkish_KULLD":
-                if 'formType' in w.attrib and w.attrib['formType'] == 'interjection':
-                    w.attrib['target'] = '???'
-                    w.attrib['glossed'] = 'no'
-                    continue
-                if 'formType' in w.attrib and w.attrib['formType'] == 'onomatopoeia':
-                    w.attrib['target'] = '???'
-                    w.attrib['glossed'] = 'no'
-                    continue
-                if 'formType' in w.attrib and w.attrib['formType'] == 'family-specific':
+                if 'formType' in w.attrib and w.attrib['formType'] in ['interjection', 'onomatopoeia', 'family-specific']:
                     w.attrib['target'] = '???'
                     w.attrib['glossed'] = 'no'
                     continue
