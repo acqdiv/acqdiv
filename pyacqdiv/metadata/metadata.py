@@ -14,9 +14,13 @@ TODO (@bambooforest):
 
 import sys
 import json
+import os
+import re
 from lxml import objectify
 # import pyacqdiv # here we need to tie in with the cli
 # from metadata import util # here we will get the age calculator
+#TODO once this is in the package the imports should probably read: 
+# from pyacqdiv.metadata....
 
 DEBUG = 1
 
@@ -30,13 +34,18 @@ class Parser(object):
         - <corpus.id>_metadata.csv (csv table of all metadata; to add)
         """
 
-    def __init__(self, path):
+    def __init__(self, path, outpath):
+        self.path = path
+        self.outpath = outpath
         self.tree = objectify.parse(path)
         self.root = self.tree.getroot()
 
         self.metadata = {
             '__attrs__': self.parse_attrs(self.root),
-        }
+                    }
+        self.metadata['__attrs__']['Cname'] = re.sub(".xml|.imdi", "", os.path.basename(str(self.path)))
+        self.metadata['__attrs__']['schemaLocation'] = self.metadata['__attrs__'].pop('{http://www.w3.org/2001/XMLSchema-instance}schemaLocation')
+
         # assert existing_dir(self.input_path())
 
     def parse_attrs(self, e):
@@ -82,8 +91,8 @@ class Parser(object):
         return everything
 
     def write_json(self, output): 
-        # with open(path + '.json', 'w') as fp:
-        with open('temp.json', 'w') as fp:
+        with open(self.outpath + '.json', 'w') as fp:
+        #with open('temp.json', 'w') as fp:
             if DEBUG:
                 try:
                     json.dump(output, fp)
@@ -92,12 +101,15 @@ class Parser(object):
             else:
                 json.dump(output, fp)
 
-
 class Imdi(Parser):
     """ subclass of metadata.Parser to deal with IMDI metadata (Chintang and Russian via S. Stoll) """
-    def __init__(self, path):
-        Parser.__init__(self, path)
+    #TODO: start dropping unwanted fields
+    def __init__(self, path, outpath):
+        Parser.__init__(self, path, outpath)
         self.metadata["participants"] = self.get_participants(self.root)
+        self.metadata["session"] = self.get_session_data(self.root)
+        self.metadata["project"] = self.get_project_data(self.root)
+        self.metadata["media"] = self.get_media_data(self.root)
         self.write_json(self.metadata)
 
     def get_participants(self, root):
@@ -106,16 +118,65 @@ class Imdi(Parser):
             participant = {}
             for e in actor.getchildren():
                 t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "") # drop the IMDI stuff
-                # TODO: convert to standard chat / acqdiv header categories 
                 participant[t.lower()] = str(e.text) # make even booleans strings
+            #for k,v in participant.items():
+            #    if k == "familysocialrole":
+            #        participant["speakerrole"] = participant.pop(k)
+
             if not len(participant) == 0:
                 participants.append(participant)
         return participants
 
+    def get_session_data(self, root):
+        session = {}
+        session['code'] = root.Session.Name.text
+        session['date'] = root.Session.Date.text
+        session['genre'] = root.Session.MDGroup.Content.Genre.text
+        session['location'] = self.get_location(root)
+        session['situation'] = root.Session.Description.text
+        map(lambda x: x.lower(), session)
+        return session
+
+    def get_location(self, root):
+        location = {}
+        for e in root.Session.MDGroup.Location.getchildren():
+            t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "")
+            location[t.lower()] = str(e.text)
+        return location
+
+    def get_project_data(self, root):
+        project = {}
+        project['name'] = root.Session.MDGroup.Project.Title.text
+        project['shortname'] = root.Session.MDGroup.Project.Name.text
+        project['id'] = root.Session.MDGroup.Project.Id.text
+        project['contact'] = self.get_project_contact(root)
+        return project
+
+    def get_project_contact(self, root):
+        contact = {}
+        for e in root.Session.MDGroup.Project.Contact.getchildren():
+            t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "")
+            contact[t.lower()] = str(e.text)
+        return contact
+
+    def get_media_data(self, root):
+        media = {}
+        for e in root.Session.Resources.getchildren():
+            t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "")
+            media[t.lower()] = self.get_mediafile_data(e)
+        return media
+
+    def get_mediafile_data(self, element):
+        mediafile = {}
+        for e in element.getchildren():
+            t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "")
+            mediafile[t.lower()] = str(e.text)
+        return mediafile
+
 class Chat(Parser):
     """ subclass of metadata.Parser class to deal with CHAT XML metadata extraction """
-    def __init__(self, path):
-        Parser.__init__(self, path)
+    def __init__(self, path, outpath):
+        Parser.__init__(self, path, outpath)
         self.metadata["participants"] = self.get_participants(self.root)
         self.metadata["comments"] = self.get_comments(self.root)
         self.write_json(self.metadata)
@@ -130,8 +191,8 @@ class Chat(Parser):
 if __name__=="__main__":
     # p = Parser("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
     # p = Imdi("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
-    # p = Chat("../../corpora/Japanese_MiiPro/xml/ArikaM/aprm19990515.xml")
-    p = Imdi("../../corpora/Chintang/metadata/yupung_Ghume.imdi")
+    p = Chat("../../corpora/Japanese_MiiPro/xml/ArikaM/aprm20000316.xml")
+    # p = Imdi("../../corpora/Chintang/metadata/yupung_Ghume.imdi")
 
     # for pretty print:
     # cat <input.json> | python -mjson.tool
