@@ -44,7 +44,9 @@ def clean_chat_line(s):
     s = re.sub(r"(\*[A-Z]{3})-([A-Z]{3})(:.+)", r"\1\3\n%add:\t\2", s) # puts addressee into separate dependent tier (%add), instead of in the format speaker-addressee (SSS-AAA).
     s = re.sub(r"(\[x)(\d\])", r"\1 \2", s) # fixes repetitions
     s = re.sub(r"&=\s+", "&=", s)
-
+    s = re.sub(r"\+''", r'\+"', s)
+    
+    
     """
     s = re.sub("(^[A-Z]{3}\-[A-Z]{3}:)", r"*\1", s) # MOM-CHI:
     s = re.sub("(^\*[A-Z]{3})(-)(:)", r"\1\3", s) # *MOT-:
