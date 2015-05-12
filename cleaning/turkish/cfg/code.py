@@ -10,8 +10,8 @@ def clean_filename(fname):
 
 def clean_chat_line(s):
     s = re.sub("^@New Episode:$", "@New Episode", s)
-    s = re.sub("^@Participants\s+", "@Participants:\t", s)
-    s = re.sub("^%act\s+","%act:\t", s)
+    s = re.sub("^@Participants\\s+", "@Participants:\\t", s)
+    s = re.sub("^%act\\s+","%act:\\t", s)
     s = re.sub("^@Age of CHI$", "@Age of CHI:", s)
     s = re.sub("^@Coder$", "@Coder:", s)
     s = re.sub("^@Date$", "@Date:", s)
@@ -20,20 +20,20 @@ def clean_chat_line(s):
     s = re.sub("^@Media$", "@Media:", s)
     s = re.sub("^@Recorder$", "@Recorder:", s)
     s = re.sub("^@Transcriber$", "@Transcriber:", s)
-    s = re.sub("^\*MOT$", "", s)
+    s = re.sub("^\\*MOT$", "", s)
     s = re.sub("^@Child: Tuğçe$", "", s)
     s = re.sub("^@Sex of CHI$", "@Sex of CHI:", s)
     s = re.sub("^@SEX of CHI$", "@SEX of CHI:", s)
     s = re.sub("^@SES of MOT$","@SES of MOT:", s)
     s = re.sub("^@Mother, FAT Father$", "", s)
     # replace <:> space with \t in first occurrence
-    s = re.sub(":\s*", ":\t", s, 1)
+    s = re.sub(":\\s*", ":\\t", s, 1)
     
     # added by rabart
     s = re.sub("^%mor:", "%xmor:", s)
     
     # get rid of empty headers
-    s = re.sub("^@.*:\t*$", "", s)
+    s = re.sub("^@.*:\\s*$", "", s)
     
     s = re.sub("^%pho:", "%tim:", s)
     s = re.sub("\\byy\\b", "yyy", s)
