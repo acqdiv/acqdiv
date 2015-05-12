@@ -95,6 +95,9 @@ class Unifier():
         for i in range(len(self.metadata['participants'])):
             metadata['participants'].append(ParticipantHeads)
             for head in self.metadata['participants'][i]:
+                if head == 'code':
+                    if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] != 'Unspecified':
+                        metadata['participants'][i][head] = self.metadata['participants'][i][head]        
                 if head == 'familysocialrole':
                     if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] != 'Unspecified':
                         metadata['participants'][i]['role'] = self.metadata['participants'][i][head]        
