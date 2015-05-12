@@ -42,9 +42,17 @@ def clean_chat_line(s):
 
     # removes empty dependent tiers.
     s = re.sub("^%.{3,4}:$", "", s)
+    s = re.sub("\n ", "\n\t", s, re.M)
+
+    # Since replacements.csv is not used anymore
+    s = re.sub("@Break", "@New Episode", s)
+
+    # Removes tabs in the middle of the lines
+    s = re.sub(":(\t.*)\t", ":\\1 ", s)
 
     # added by rabart
-    s = re.sub("^%(mor|arg|coding):", "x\\1", s) # replace morphosyntactic annotation by xmor, xcod etc.
+    #s = re.sub("^%(mor|arg|coding):", "%x\\1:", s) # replace morphosyntactic annotation by xmor, xcod etc.
+
     s = re.sub("\\s*#\\s*", " ", s) # single "#" on any tier probably marks some kind of break -> delete
 
     if s.startswith("*"):
