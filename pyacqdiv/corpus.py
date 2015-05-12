@@ -1,4 +1,4 @@
-import os
+import os, sys
 import shutil
 from collections import defaultdict
 from copy import copy
@@ -177,13 +177,13 @@ class Corpus(object):
             if os.path.exists(self.cfg_path('sessions.csv')):
                 header = []
                 for row in read_csv(self.cfg_path('sessions.csv'), skip_header=False):
+                    # first row returned by read_csv is the header
                     if len(header) == 0:
                         header = row
+                    # first column is the filename (key)
                     for i in range(1, len(row)):
-                        # can't skip this space in the csv somehow...
-                        row[i] = row[i].strip()
-                        if not row[i] == " " or not row[i] == "  " or not row[i] == "\t":
-                            self._sessions[row[0]].append(header[i]+"\t"+row[i])
+                        if not row[i] == "":
+                            self._sessions[row[0].strip()].append(header[i].strip()+"\t"+row[i].strip())
         return self._sessions
 
     def cleaning_path(self, *comps):
