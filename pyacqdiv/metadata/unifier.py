@@ -74,15 +74,15 @@ class Unifier():
         metadata['session'] = SessionHeads
         metadata['media'] = {}
         metadata['media']['mediafile'] = MediaHeads
-
         metadata['participants'] = []
+
         for head in self.metadata['project']:
             if head in ProjectHeads:
-                metadata['project'][ProjectHeads[head]] = self.metadata['project'][head]
+                metadata['project'][head] = self.metadata['project'][head]
 
         for head in self.metadata['session']:
             if head in SessionHeads:
-                metadata['session'][SessionHeads[head]] = self.metadata['session'][head]
+                metadata['session'][head] = self.metadata['session'][head]
                 
         #The IMDI mediafile headers get special treatment because they actually need reassignment
 
