@@ -181,7 +181,7 @@ class Corpus(object):
             if os.path.exists(self.cfg_path('ids.csv')):
                 for row in read_csv(
                         self.cfg_path('ids.csv'), skip_header=True, quotechar='"'):
-                    self._ids[row[0]].append("@ID:\t%s|" % "|".join(row[1:-1]))
+                    self._ids[row[0]].append("@ID:\t%s|" % "|".join(row[1:-2]))
         return self._ids
 
     @property
