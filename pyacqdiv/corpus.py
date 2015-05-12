@@ -45,8 +45,6 @@ class Corpus(object):
     │   ├── cfg
     │   │   ├── code.py
     │   │   ├── ids.tsv
-    │   │   ├── participants.csv
-    │   │   └── replacements.csv
     │   ├── input/
     │   └── output/
 
@@ -60,7 +58,6 @@ class Corpus(object):
         self._participants = defaultdict(list)
         self._ids = defaultdict(list)
         self._sessions = defaultdict(list)
-        self._replacements = []
         self._code = {}
 
     #
@@ -155,16 +152,6 @@ class Corpus(object):
                     if _locals.get(name):
                         self._code[name] = _locals[name]
         return self._code
-
-    @property
-    def replacements(self):
-        if not self._replacements:
-            if os.path.exists(self.cfg_path('replacements.csv')):
-                for row in read_csv(self.cfg_path('replacements.csv')):
-                    if len(row) != 2:
-                        raise ValueError("Replacements input longer than two columns")
-                    self._replacements.append(tuple(row))
-        return self._replacements
 
     @property
     def participants(self):
