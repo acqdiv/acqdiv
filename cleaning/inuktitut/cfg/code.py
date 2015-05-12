@@ -39,7 +39,10 @@ def clean_chat_line(s):
     s = re.sub("(\S)([!\?\.])$", "\\1 \\2", s)
     s = re.sub("(\S)[,\.]", "\\1", s)
     s = re.sub("\-\-", "", s)
-    
+
+    # removes empty dependent tiers.
+    s = re.sub("^%.{3,4}:$", "", s)
+
     # added by rabart
     s = re.sub("^%(mor|arg|coding):", "x\\1", s) # replace morphosyntactic annotation by xmor, xcod etc.
     s = re.sub("\\s*#\\s*", " ", s) # single "#" on any tier probably marks some kind of break -> delete

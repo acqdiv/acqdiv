@@ -248,12 +248,16 @@ class Corpus(object):
             print("\tFile not in sessions.")
             return None
 
+        # Removes empty lines
+        lines2 = map(self.code['clean_chat_line'], lines)
+        lines2 = filter(None, lines2)
+
         out = chat(
                 self.cfg['iso_code'],
                 partps,
                 sids,
                 filename,
                 ssessions,
-                list(map(self.code['clean_chat_line'], lines)))
+                list(lines2))
         return out
 
