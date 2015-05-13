@@ -94,6 +94,8 @@ def clean_chat_line(s):
     s = re.sub("≥", ">", s) # has been done manually, but put here in case new Turkish files appear
     s = re.sub("\\\\", "", s)
     s = re.sub("`", "'", s)
+    s = re.sub("å", "a", s)
+    
     
     # fix roles according the CHILDES's depfile.cut 
     # line = line.replace("Target_Chıld", "Target\_Child")
