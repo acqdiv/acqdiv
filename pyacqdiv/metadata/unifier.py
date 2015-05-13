@@ -20,7 +20,7 @@ class Unifier():
             self.metatype = 'XML'
 
     def unify(self, cdc=None):
-        DEBUG = 1
+        DEBUG = 0
         if self.metatype == 'IMDI':
             self.unifyImdi()
         else:
@@ -65,20 +65,20 @@ class Unifier():
 
         metadata = {}
 
-        metadata['__attrs__'] = metadata['__attrs__']
+        metadata['__attrs__'] = self.metadata['__attrs__']
 
-        metadata['project'] = ProjectHeads
-        metadata['session'] = SessionHeads
+        metadata['project'] = ProjectHeads.copy()
+        metadata['session'] = SessionHeads.copy()
         metadata['media'] = {}
-        metadata['media']['mediafile'] = MediaHeads
+        metadata['media']['mediafile'] = MediaHeads.copy()
         metadata['participants'] = []
 
         for head in self.metadata['project']:
-            if head in ProjectHeads:
+            if head in ProjectHeads.copy():
                 metadata['project'][head] = self.metadata['project'][head]
 
         for head in self.metadata['session']:
-            if head in SessionHeads:
+            if head in SessionHeads.copy():
                 metadata['session'][head] = self.metadata['session'][head]
                 
         #The IMDI mediafile headers get special treatment because they actually need reassignment
@@ -86,11 +86,11 @@ class Unifier():
         for resource in self.metadata['media']:
             if resource == 'mediafile':
                 for head in self.metadata['media'][resource]:
-                    if head in ImdiMediaHeads:
-                        metadata['media'][resource][ImdiMediaHeads[head]] = self.metadata['media'][resource][head]
+                    if head in ImdiMediaHeads.copy():
+                        metadata['media'][resource][ImdiMediaHeads.copy()[head]] = self.metadata['media'][resource][head]
 
         for i in range(len(self.metadata['participants'])):
-            metadata['participants'].append(ParticipantHeads)
+            metadata['participants'].append(ParticipantHeads.copy())
             for head in self.metadata['participants'][i]:
                 if head == 'code':
                     if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] != 'Unspecified':
@@ -143,10 +143,10 @@ class Unifier():
 
         metadata = {}
 
-        metadata['project'] = ProjectHeads
-        metadata['session'] = SessionHeads
+        metadata['project'] = ProjectHeads.copy()
+        metadata['session'] = SessionHeads.copy()
         metadata['media'] = {}
-        metadata['media']['mediafile'] = MediaHeads
+        metadata['media']['mediafile'] = MediaHeads.copy()
         metadata['participants'] = []
 
         for attr in self.metadata['__attrs__']:
@@ -166,7 +166,7 @@ class Unifier():
         parts = len(self.metadata['participants'])
 
         for i in range(parts):
-            metadata['participants'] += [ParticipantHeads]
+            metadata['participants'].append(ParticipantHeads.copy())
             for head in self.metadata['participants'][i]:
                 if head == 'role':
                     metadata['participants'][i][head] = self.metadata['participants'][i][head]        

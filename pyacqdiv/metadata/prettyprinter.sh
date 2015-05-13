@@ -3,6 +3,7 @@
 prettyprint(){
 
 	DIR=$1
+	[[ $DIR = */ ]] || DIR="$DIR/"
 
 	mkdir -p "$DIR"prettyprint/
 	for file in "$DIR"*

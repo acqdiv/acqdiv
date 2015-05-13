@@ -15,7 +15,7 @@ class MetaExtractor():
         else:
             self.cdc = None
         self.extract()
-        #self.unify()
+        self.unify()
 
     def extract(self):
         od = self.cfg['out_dir']
@@ -50,8 +50,9 @@ class MetaExtractor():
                 try:
                     jsu = Unifier(inf)
                     jsu.unify(self.cdc)
-                except:
-                    return -1 
+                except Exception as e:
+                    print("Could not unify file " + filename + ":")
+                    print("Error: {0}".format(e))
 
 if __name__ == '__main__':
     cfg = ConfigParser()
