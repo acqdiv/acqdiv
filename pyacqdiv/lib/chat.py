@@ -7,15 +7,13 @@ from string import Template
 CHAT_TEMPLATE = Template("""\
 @UTF8
 @Begin
-@Languages: $languages
-@Participants:  $participants
+@Languages:\t$languages
+@Participants:\t$participants
 $ids
-@Media: $filename, audio
 $sessions
 $lines
 @End
 """)
-
 
 def chat(language, participants, ids, filename, sessions, lines):
     return CHAT_TEMPLATE.substitute(

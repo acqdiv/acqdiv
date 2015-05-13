@@ -36,6 +36,9 @@ def clean_chat_line(s):
     s = re.sub("^@.*:\\s*$", "", s)
     
     s = re.sub("^%pho:", "%tim:", s)
+    s = re.sub("^%acT:", "%act:", s)
+    s = re.sub("^%atc:", "%act:", s)
+    s = re.sub("^%EXP:", "%exp:", s)
     s = re.sub("\\byy\\b", "yyy", s)
     s = re.sub("\\bxx\\b", "xxx", s)
     s = re.sub(":\\t\[!", ":\\t0 [!", s)
@@ -45,6 +48,11 @@ def clean_chat_line(s):
     s = re.sub(r"(\[x)(\d\])", r"\1 \2", s) # fixes repetitions
     s = re.sub(r"&=\s+", "&=", s)
     s = re.sub(r"\+''", r'\+"', s)
+    s = re.sub(r"\[\s+=", r"[=", s)
+    s = re.sub(r'.%snd:".+?"_(\d)_(\d+)(\d\d\d+).', r'\n%tim:\t\1-\2.\3', s)
+    s = re.sub(r'.%snd:".+?"_(\d+)(\d\d\d)_(\d+)(\d\d\d+).', r'\n%tim:\t\1.\2-\3.\4', s)
+    s = re.sub(r"\[!", r"[=!", s)
+    s = re.sub(r"(@New Episode):\s(.+$)", r"\1\n%sit:\t\2", s)
     
     
     """
@@ -86,6 +94,8 @@ def clean_chat_line(s):
     s = re.sub("≥", ">", s) # has been done manually, but put here in case new Turkish files appear
     s = re.sub("\\\\", "", s)
     s = re.sub("`", "'", s)
+    s = re.sub("å", "a", s)
+    
     
     # fix roles according the CHILDES's depfile.cut 
     # line = line.replace("Target_Chıld", "Target\_Child")
