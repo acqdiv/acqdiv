@@ -37,6 +37,7 @@ def clean_chat_line(s):
     
     s = re.sub("^%pho:", "%tim:", s)
     s = re.sub("^%acT:", "%act:", s)
+    s = re.sub("^%atc:", "%act:", s)
     s = re.sub("\\byy\\b", "yyy", s)
     s = re.sub("\\bxx\\b", "xxx", s)
     s = re.sub(":\\t\[!", ":\\t0 [!", s)
