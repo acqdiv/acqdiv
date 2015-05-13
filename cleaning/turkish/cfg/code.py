@@ -45,6 +45,7 @@ def clean_chat_line(s):
     s = re.sub(r"(\[x)(\d\])", r"\1 \2", s) # fixes repetitions
     s = re.sub(r"&=\s+", "&=", s)
     s = re.sub(r"\+''", r'\+"', s)
+    s = re.sub(r"\[\s+=", r"[=", s)
     
     
     """
