@@ -43,7 +43,7 @@ class Parser(object):
         self.metadata = {
             '__attrs__': self.parse_attrs(self.root),
                     }
-        self.metadata['__attrs__']['Cname'] = re.sub(".xml|.imdi", "", os.path.basename(str(self.path)))
+        self.metadata['__attrs__']['Cname'] = re.sub(r'\.xml.*|\.imdi.*', "", os.path.basename(str(self.path)))
         self.metadata['__attrs__']['schemaLocation'] = self.metadata['__attrs__'].pop('{http://www.w3.org/2001/XMLSchema-instance}schemaLocation')
 
         # assert existing_dir(self.input_path())
@@ -186,7 +186,10 @@ class Chat(Parser):
 
     def get_comments(self, root):
         #print({c.attrib['type']: str(c) for c in root.comment})
-        return {c.attrib['type']: str(c) for c in root.comment}
+        try:
+            return {c.attrib['type']: str(c) for c in root.comment}
+        except:
+            pass
 
 if __name__=="__main__":
     # p = Parser("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
