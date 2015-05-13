@@ -23,29 +23,36 @@ class MetaExtractor():
 
         if self.cfg['metatype'] == 'IMDI':
             for filename in os.listdir(self.cfg['meta_dir']):
-                if not filename.startswith('.'):
+                if not filename.startswith('.') or os.path.isdir(filename):
                     of = os.path.join(od, filename.split(".")[0])
                     with open(os.path.join(self.cfg['meta_dir'], filename), 'r') as fp:
                         try:
                             md.Imdi(fp, of)
-                        except:
-                            print("Skipped file " + filename)
+                        except Exception as e:
+                            print("Skipped file " + filename + ":")
+                            print("Error: {0}".format(e))
+
         else:
             for filename in os.listdir(self.cfg['meta_dir']):
-                if not filename.startswith('.'):
+                if not filename.startswith('.') or os.path.isdir(filename):
                     of = os.path.join(od, filename.split(".")[0])
                     with open(os.path.join(self.cfg['meta_dir'], filename), 'r') as fp:
                         try:
                             md.Chat(fp, of)
-                        except:
-                            print("Skipped file " + filename)
+                        except Exception as e:
+                            print("Skipped file " + filename + ":")
+                            print("Error: {0}".format(e))
 
     def unify(self):
         for filename in os.listdir(self.cfg['out_dir']):
-            if not filename.startswith('.'):
+            if not filename.startswith('.') or os.path.isdir(filename):
                 inf = os.path.join(self.cfg['out_dir'], filename)
-                jsu = Unifier(inf)
-                jsu.unify(self.cdc)
+                try:
+                    jsu = Unifier(inf)
+                    jsu.unify(self.cdc)
+                except Exception as e:
+                    print("Could not unify file " + filename + ":")
+                    print("Error: {0}".format(e))
 
 if __name__ == '__main__':
     cfg = ConfigParser()

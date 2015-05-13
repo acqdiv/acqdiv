@@ -9,34 +9,12 @@ import unittest
 
 class Unifier():
 
-    SessionHeads = {'code':None,
-                           'date':None,
-                           'genre':None,
-                           'location':None,
-                           'situation':None}
-
-    ProjectHeads = {'name': None, 
-                           'shortname': None,
-                           'contact': None, 
-                           'id': None}
-
-    MediaHeads = {'file': None,
-                          'format': None,
-                          'size': None,
-                          'length': None}
-
-    ParticipantHeads = {'code': None,
-                                'name': None,
-                                'birthdate': None,
-                                'age': None,
-                                'role': None,
-                                'sex': None}
-
     def __init__(self, path):
+
         self.path = path
         with open(path) as jsf:
             self.metadata = json.load(jsf)
-        if 'IMDI' in  self.metadata['__attrs__']['schemaLocation']:
+        if 'IMDI' in self.metadata["__attrs__"]['schemaLocation']:
             self.metatype = 'IMDI'
         else:
             self.metatype = 'XML'
@@ -48,16 +26,33 @@ class Unifier():
         else:
             self.unifyXml(cdc)
         if DEBUG == 0:
-            with open(self.path, 'w') as unifile:
-                json.dump(self.metadata, unifile)
+                with open(self.path, 'w') as unifile:
+                    json.dump(self.metadata, unifile)
 
     def unifyImdi(self):
 
-        ProjectHeads = Unifier.ProjectHeads
-        SessionHeads = Unifier.SessionHeads
-        MediaHeads = Unifier.MediaHeads
-        ParticipantHeads = Unifier.ParticipantHeads
+        SessionHeads = {'code': None,
+                               'date': None,
+                               'genre': None,
+                               'location': None,
+                               'situation': None}
 
+        ProjectHeads = {'name': None, 
+                               'shortname': None,
+                               'contact': None, 
+                               'id': None}
+
+        MediaHeads = {'file': None,
+                              'format': None,
+                              'size': None,
+                              'length': None}
+
+        ParticipantHeads = {'code': None,
+                                    'name': None,
+                                    'birthdate': None,
+                                    'age': None,
+                                    'role': None,
+                                    'sex': None}
 
         ImdiMediaHeads = {'resourcelink': 'file',
                           'format': 'format',
@@ -70,18 +65,20 @@ class Unifier():
 
         metadata = {}
 
-        metadata['project'] = ProjectHeads
-        metadata['session'] = SessionHeads
+        metadata['__attrs__'] = self.metadata['__attrs__']
+
+        metadata['project'] = ProjectHeads.copy()
+        metadata['session'] = SessionHeads.copy()
         metadata['media'] = {}
-        metadata['media']['mediafile'] = MediaHeads
+        metadata['media']['mediafile'] = MediaHeads.copy()
         metadata['participants'] = []
 
         for head in self.metadata['project']:
-            if head in ProjectHeads:
+            if head in ProjectHeads.copy():
                 metadata['project'][head] = self.metadata['project'][head]
 
         for head in self.metadata['session']:
-            if head in SessionHeads:
+            if head in SessionHeads.copy():
                 metadata['session'][head] = self.metadata['session'][head]
                 
         #The IMDI mediafile headers get special treatment because they actually need reassignment
@@ -89,11 +86,11 @@ class Unifier():
         for resource in self.metadata['media']:
             if resource == 'mediafile':
                 for head in self.metadata['media'][resource]:
-                    if head in ImdiMediaHeads:
-                        metadata['media'][resource][ImdiMediaHeads[head]] = self.metadata['media'][resource][head]
+                    if head in ImdiMediaHeads.copy():
+                        metadata['media'][resource][ImdiMediaHeads.copy()[head]] = self.metadata['media'][resource][head]
 
         for i in range(len(self.metadata['participants'])):
-            metadata['participants'].append(ParticipantHeads)
+            metadata['participants'].append(ParticipantHeads.copy())
             for head in self.metadata['participants'][i]:
                 if head == 'code':
                     if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] != 'Unspecified':
@@ -121,17 +118,35 @@ class Unifier():
 
     def unifyXml(self, cdc=None):
 
-        ProjectHeads = Unifier.ProjectHeads
-        SessionHeads = Unifier.SessionHeads
-        MediaHeads = Unifier.MediaHeads
-        ParticipantHeads = Unifier.ParticipantHeads
+        SessionHeads = {'code': None,
+                               'date': None,
+                               'genre': None,
+                               'location': None,
+                               'situation': None}
+
+        ProjectHeads = {'name': None, 
+                               'shortname': None,
+                               'contact': None, 
+                               'id': None}
+
+        MediaHeads = {'file': None,
+                              'format': None,
+                              'size': None,
+                              'length': None}
+
+        ParticipantHeads = {'code': None,
+                                    'name': None,
+                                    'birthdate': None,
+                                    'age': None,
+                                    'role': None,
+                                    'sex': None}
 
         metadata = {}
 
-        metadata['project'] = ProjectHeads
-        metadata['session'] = SessionHeads
+        metadata['project'] = ProjectHeads.copy()
+        metadata['session'] = SessionHeads.copy()
         metadata['media'] = {}
-        metadata['media']['mediafile'] = MediaHeads
+        metadata['media']['mediafile'] = MediaHeads.copy()
         metadata['participants'] = []
 
         for attr in self.metadata['__attrs__']:
@@ -148,19 +163,23 @@ class Unifier():
 
         metadata['__attrs__'] = self.metadata['__attrs__']
 
-        for i in range(len(self.metadata['participants'])):
-                metadata['participants'].append(ParticipantHeads)
-                for head in self.metadata['participants'][i]:
-                    if head == 'role':
-                        metadata['participants'][i][head] = self.metadata['participants'][i][head]        
-                    elif head == 'name':
-                        metadata['participants'][i][head] = self.metadata['participants'][i][head]
-                    elif head == 'code':
-                        metadata['participants'][i]['code'] = self.metadata['participants'][i][head]
-                    elif head == 'sex':
-                        metadata['participants'][i][head] = self.metadata['participants'][i][head]
-                    elif head == 'birthdate':
-                        metadata['participants'][i][head] = self.metadata['participants'][i][head]
+        parts = len(self.metadata['participants'])
+
+        for i in range(parts):
+            metadata['participants'].append(ParticipantHeads.copy())
+            for head in self.metadata['participants'][i]:
+                if head == 'role':
+                    metadata['participants'][i][head] = self.metadata['participants'][i][head]        
+                elif head == 'name':
+                    metadata['participants'][i][head] = self.metadata['participants'][i][head]
+                elif head == 'age':
+                    metadata['participants'][i][head] = self.metadata['participants'][i][head]
+                elif head == 'id':
+                    metadata['participants'][i]['code'] = self.metadata['participants'][i][head]
+                elif head == 'sex':
+                    metadata['participants'][i][head] = self.metadata['participants'][i][head]
+                elif head == 'birthdate':
+                    metadata['participants'][i][head] = self.metadata['participants'][i][head]
 
         if cdc:
             metadata['session']['genre'] = cdc.metadata['IMDI_Genre'] if 'IMDI_Genre' in cdc.metadata else None
@@ -191,12 +210,17 @@ class testJson(unittest.TestCase):
         self.assertIsNotNone(self.jsu.metadata)
 
 if __name__ == "__main__":
-    jsu = Unifier("russiantest.json")
+    #jsu = Unifier("russiantest.json")
+    #jsu.unify()
+    #with open("unify.json", "w") as unify:
+    #    json.dump(jsu.metadata, unify)
+
+    #jsc = Unifier("miiprotest.json")
+    #jsc.unify()
+    #with open("unify_xml.json", "w") as unify:
+    #    json.dump(jsc.metadata, unify)
+
+    jsu = Unifier("sesothotest.json")
     jsu.unify()
     with open("unify.json", "w") as unify:
         json.dump(jsu.metadata, unify)
-
-    jsc = Unifier("miiprotest.json")
-    jsc.unify()
-    with open("unify_xml.json", "w") as unify:
-        json.dump(jsc.metadata, unify)
