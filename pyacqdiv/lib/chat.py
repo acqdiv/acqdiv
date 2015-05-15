@@ -10,12 +10,10 @@ CHAT_TEMPLATE = Template("""\
 @Languages:\t$languages
 @Participants:\t$participants
 $ids
-@Media:\t$filename, audio
 $sessions
 $lines
 @End
 """)
-
 
 def chat(language, participants, ids, filename, sessions, lines):
     return CHAT_TEMPLATE.substitute(
