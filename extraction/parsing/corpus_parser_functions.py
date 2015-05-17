@@ -57,7 +57,9 @@ def creadd(location, key, value):
         location[key] += '; ' + value
     
 # format-specific parsing is done by more specific functions called by this one
-def parse_corpus(corpus_name, corpus_dir, corpus_format):
+def parse_corpus(corpus_name, corpus_dir,file_name, corpus_format):
+#def parse_corpus(corpus_name, corpus_dir, corpus_format):
+    files_to_parse = []
     
     # structured corpus
     global corpus
@@ -89,8 +91,13 @@ def parse_corpus(corpus_name, corpus_dir, corpus_format):
                 else:
                     print('parsing ' + file.name)
                     format_dic[corpus_format]['function'](file.name, corpus_name)
+                    files_to_parse.append(format_dic[corpus_format]['function'](file.name, corpus_name))
+                                    
                                             
-    return corpus
+    #return corpus
+    for elem in files_to_parse:
+        return corpus
+    
 # EOF parse_corpus
 
 # parse an open XML file
@@ -159,18 +166,18 @@ def parse_xml(file_name, corpus_name):
             # set target to '???'
             # set attribute 'glossed' to 'no'
             if corpus_name == "Turkish_KULLD":
-                if 'formType' in w.attrib and w.attrib['formType'] == 'interjection':
+                if 'formType' in w.attrib and w.attrib['formType'] in ['interjection', 'onomatopoeia', 'family-specific']:
                     w.attrib['target'] = '???'
                     w.attrib['glossed'] = 'no'
                     continue
-                if 'formType' in w.attrib and w.attrib['formType'] == 'onomatopoeia':
-                    w.attrib['target'] = '???'
-                    w.attrib['glossed'] = 'no'
-                    continue
-                if 'formType' in w.attrib and w.attrib['formType'] == 'family-specific':
-                    w.attrib['target'] = '???'
-                    w.attrib['glossed'] = 'no'
-                    continue
+                #if 'formType' in w.attrib and w.attrib['formType'] == 'onomatopoeia':
+                #    w.attrib['target'] = '???'
+                #    w.attrib['glossed'] = 'no'
+                #    continue
+                #if 'formType' in w.attrib and w.attrib['formType'] == 'family-specific':
+                #    w.attrib['target'] = '???'
+                #    w.attrib['glossed'] = 'no'
+                #    continue
             if 'type' in w.attrib and w.attrib['type'] == 'omission':
                 u.remove(w)
         
