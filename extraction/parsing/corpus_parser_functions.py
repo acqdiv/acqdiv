@@ -57,9 +57,10 @@ def creadd(location, key, value):
         location[key] += '; ' + value
     
 # format-specific parsing is done by more specific functions called by this one
-def parse_corpus(corpus_name, corpus_dir,file_name, corpus_format):
+def parse_corpus(corpus_name,corpus_dir,file_name, corpus_format):
+    #corpus_dir = corpus_dir
 #def parse_corpus(corpus_name, corpus_dir, corpus_format):
-    files_to_parse = []
+    #files_to_parse = []
     
     # structured corpus
     global corpus
@@ -81,7 +82,7 @@ def parse_corpus(corpus_name, corpus_dir,file_name, corpus_format):
     # go through all files in corpus directory
     for root, subs, files in os.walk(corpus_dir):
                         
-        for file in files:
+        for i, file in enumerate(files):
             filepath = os.path.join(root, file)
             with open(filepath, 'r') as file:
                 
@@ -91,12 +92,12 @@ def parse_corpus(corpus_name, corpus_dir,file_name, corpus_format):
                 else:
                     print('parsing ' + file.name)
                     format_dic[corpus_format]['function'](file.name, corpus_name)
-                    files_to_parse.append(format_dic[corpus_format]['function'](file.name, corpus_name))
+                    #files_to_parse.append(format_dic[corpus_format]['function'](file.name, corpus_name))
                                     
                                             
-    #return corpus
-    for elem in files_to_parse:
-        return corpus
+                    return corpus
+    #for elem in files_to_parse:
+    #    return corpus
     
 # EOF parse_corpus
 

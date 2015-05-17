@@ -63,19 +63,19 @@ def parser(corpus_name):
     if corpus_name in corpus_dic:
         corpus_dic[corpus_name]['dir'] = rootdir + corpus_dic[corpus_name]['dir']
         for root, subs, files in os.walk(corpus_dic[corpus_name]['dir']):
-          for file in files:
-               filepath = os.path.join(root, file)
-               filename = os.path.basename(filepath)
-               if filename.endswith('.xml') or filename.endswith('.txt'):
+            for file in files:
+                filepath = os.path.join(root, file)
+                filename = os.path.basename(filepath)
+                if filename.endswith('.xml') or filename.endswith('.txt'):
         
                     #corpus_object = parse_corpus(corpus_name, corpus_dic[corpus_name]['dir'], filename, corpus_dic[corpus_name]['format'])
                     corpus_object = parse_corpus(corpus_name, corpus_dic[corpus_name]['dir'], filename, corpus_dic[corpus_name]['format'])
           
-          with open('parsed/'+corpus_name + '/'+ filename+'.json', 'w') as file:
-              json.dump(corpus_object, file, ensure_ascii=False)
-          with open('parsed/'+corpus_name + '/'+ filename+ '_prettyprint.txt', 'w') as file:
-              # careful, sort_keys=True can cause memory errors with bigger corpora such as Japanese_MiiPro
-              file.write(json.dumps(corpus_object, file, sort_keys=True, indent=4, ensure_ascii=False))
+                    with open('parsed/'+corpus_name + '/'+ filename[:-4]+'.json', 'w') as file:
+                      json.dump(corpus_object, file, ensure_ascii=False)
+                    with open('parsed/'+corpus_name + '/'+ filename[:-4]+ '_prettyprint.txt', 'w') as file:
+                      # careful, sort_keys=True can cause memory errors with bigger corpora such as Japanese_MiiPro
+                      file.write(json.dumps(corpus_object, file, sort_keys=True, indent=4, ensure_ascii=False))
             
 
 def parserTest(corpus_name):
