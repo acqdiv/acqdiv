@@ -48,10 +48,15 @@ def clean_chat_line(s):
     s = re.sub("@Break", "@New Episode", s)
 
     # Removes tabs in the middle of the lines
-    s = re.sub(":(\t.*)\t", ":\\1 ", s)
+    # (Couldn't find a way to do this with only one string)
+    l = s.split('\t', 1)
+    if (len(l) == 2):
+        s2 = re.sub("\s+", " ", l[1])
+        s = l[0] + '\t' + s2
 
     # added by rabart
-    #s = re.sub("^%(mor|arg|coding):", "%x\\1:", s) # replace morphosyntactic annotation by xmor, xcod etc.
+    # replace morphosyntactic annotation by xmor, xcod etc.
+    s = re.sub("^%(mor|arg|cod|snd):", "%x\\1:", s)
 
     s = re.sub("\\s*#\\s*", " ", s) # single "#" on any tier probably marks some kind of break -> delete
 
@@ -70,6 +75,14 @@ def clean_chat_line(s):
         s = re.sub('(\\S+)\+\.(?=\\s\\w)', '&\\1', s) # "transcription break" followed by words really marks fragments
         s = re.sub('(?<=\\w)\?!', ',', s) # some utterance delimiters surrounded by words -> comma
         s = re.sub('(?<=\\s)xx(?=\\s)', 'xxx', s) # xx -> xxx
+
+        # These characters are not allowed in the Main Line.
+        s = re.sub('[-/]', '(.)', s)
+
+    if s.startswith("%eng"):
+        # These characters are not allowed in the English transcription.
+        s = re.sub('[-/]', '(.)', s)
+
 
     if s.startswith("%add"):
         s = re.sub("([A-Z]{3})(,)([A-Z]{3})", "\\1\\2\s\\3", s)
