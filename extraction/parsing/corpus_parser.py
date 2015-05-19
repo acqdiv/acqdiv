@@ -133,8 +133,8 @@ if __name__ == '__main__':
     if args.yucatec:
         parser("Yucatec")
     if args.all:
-        ## for now missing Yucatek and Turkish (to add!)
-        corpora_to_parse = ['Inuktitut', 'Russian', 'Sesotho', 'Indonesian', 'Cree', 'Chintang', 'Japanese_MiiPro', 'Japanese_Miyata']
+        ## for now missing Yucatek (to add!)
+        corpora_to_parse = ['Inuktitut', 'Russian', 'Sesotho', 'Indonesian', 'Cree', 'Chintang', 'Japanese_MiiPro', 'Japanese_Miyata', 'Turkish_KULLD']
         for corpus in corpora_to_parse:
             parser(corpus)
         
