@@ -85,13 +85,15 @@ def parserTest(corpus_name):
     # parse corpora using functions from corpus_parser_functions
     if corpus_name in corpus_dic_test:
         corpus_dic_test[corpus_name]['dir'] = rootdir + corpus_dic_test[corpus_name]['dir']
-        corpus_object = parse_corpus(corpus_name, corpus_dic_test[corpus_name]['dir'], corpus_dic_test[corpus_name]['format'])        
-        
-        #with open('tests/parsing/'+corpus_name+'/output_test/' + corpus_name + '.json', 'w') as file:
-        #    json.dump(corpus_object, file, ensure_ascii=False)
-        with open('tests/parsing/'+corpus_name+'/' + corpus_name + '_prettyprint.txt', 'w') as file:
-            # careful, sort_keys=True can cause memory errors with bigger corpora such as Japanese_MiiPro
-            file.write(json.dumps(corpus_object, file, sort_keys=True, indent=4, ensure_ascii=False))
+        #corpus_object = [elem for elem in parse_corpus(corpus_name, corpus_dic_test[corpus_name]['dir'], corpus_dic_test[corpus_name]['format'])]
+        for elem in parse_corpus(parse_corpus(corpus_name, corpus_dic_test[corpus_name]['dir'], corpus_dic_test[corpus_name]['format'])):
+            corpus_object = elem
+            
+            #with open('tests/parsing/'+corpus_name+'/output_test/' + corpus_name + '.json', 'w') as file:
+            #    json.dump(corpus_object, file, ensure_ascii=False)
+            with open('tests/parsing/'+corpus_name+'/' + corpus_name + '_prettyprint.txt', 'w') as file:
+                # careful, sort_keys=True can cause memory errors with bigger corpora such as Japanese_MiiPro
+                file.write(json.dumps(corpus_object, file, sort_keys=True, indent=4, ensure_ascii=False))
 
             
         
