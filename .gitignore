@@ -4,6 +4,10 @@ corpora/
 
 *.py[cod]
 
+# Backup files
+*~
+*.bkup
+
 # C extensions
 *.so
 
