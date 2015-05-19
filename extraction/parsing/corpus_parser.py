@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Read corpus files in CHAT, Toolbox, or XML from directory corpora/, copy the structure from corpora/ to "parsing/LANGUAGE/input" and parse their structure, write everything to JSON, and put one output file per corpus in a new folder "parsing/LANGUAGE/output" in the main directory of the repository.
+Read corpus files in CHAT, Toolbox, or XML from directory corpora/, copy the structure from corpora/ to "parsing/LANGUAGE/input" and parse their structure, write everything to JSON, and put output files per corpus in a new folder "parsed/LANGUAGE/" in the main directory of the repository.
 This script only works if the module "corpus_parser_functions.py" is in the same directory. 
 
 Usage: python3 corpus_parser.py -[hacCiIjJrty]   -->> -h or --help for usage
@@ -54,7 +54,6 @@ corpus_dic_test = {
 
         
 def parser(corpus_name):
-    ## create generator
     rootdir='corpora/'
     
     if not os.path.exists('parsed/'+corpus_name + '/'):
@@ -68,11 +67,10 @@ def parser(corpus_name):
                 filepath = os.path.join(root, file)
                 filename = os.path.basename(filepath)
                 if filename.endswith('.xml') or filename.endswith('.txt'):
-        
-                    #corpus_object = parse_corpus(corpus_name, corpus_dic[corpus_name]['dir'], corpus_dic[corpus_name]['format'])
                     for elem in parse_corpus(corpus_name, corpus_dic[corpus_name]['dir'],filepath, corpus_dic[corpus_name]['format']):
                         corpus_object = elem
-          
+                        
+                        ## write outfiles with file name structure: filename.json or filename_prettyprint.txt
                         with open('parsed/'+corpus_name + '/'+ filename[:-4]+'.json', 'w') as file:
                           json.dump(corpus_object, file, ensure_ascii=False)
                         with open('parsed/'+corpus_name + '/'+ filename[:-4]+ '_prettyprint.txt', 'w') as file:
@@ -84,15 +82,20 @@ def parserTest(corpus_name):
     '''Function used in tests/test_parsing.py'''    
     rootdir='corpora/'
     
-    # parse corpora using functions from corpus_parser_functions
+    # parse test corpora using functions from corpus_parser_functions
     if corpus_name in corpus_dic_test:
         corpus_dic_test[corpus_name]['dir'] = rootdir + corpus_dic_test[corpus_name]['dir']
-        corpus_object = parse_corpus(corpus_name, corpus_dic_test[corpus_name]['dir'], corpus_dic_test[corpus_name]['format'])            
-        #with open('tests/parsing/'+corpus_name+'/output_test/' + corpus_name + '.json', 'w') as file:
-        #    json.dump(corpus_object, file, ensure_ascii=False)
-        with open('tests/parsing/'+corpus_name+'/' + corpus_name + '_prettyprint.txt', 'w') as file:
-            # careful, sort_keys=True can cause memory errors with bigger corpora such as Japanese_MiiPro
-            file.write(json.dumps(corpus_object, file, sort_keys=True, indent=4, ensure_ascii=False))
+        for root, subs, files in os.walk(corpus_dic_test[corpus_name]['dir']):
+            for file in files:
+                filepath = os.path.join(root,file)
+                filename = os.path.basename(filepath)
+                if filename.endswith('.xml') or filename.endswith('.txt'):
+                    for elem in parse_corpus(corpus_name,corpus_dic_test[corpus_name]['dir'],filepath,corpus_dic_test[corpus_name]['format']):
+                        corpus_object = elem
+                        
+                        with open('tests/parsing/'+corpus_name+'/' + corpus_name + '_prettyprint.txt', 'w') as file:
+                            # careful, sort_keys=True can cause memory errors with bigger corpora such as Japanese_MiiPro
+                            file.write(json.dumps(corpus_object, file, sort_keys=True, indent=4, ensure_ascii=False))
 
             
         

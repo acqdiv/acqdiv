@@ -78,7 +78,8 @@ def parse_corpus(corpus_name,corpus_dir,filename,corpus_format):
         print('Format "' + corpus_format + '" for corpus ' + corpus_name + ' does not exist; skipping this corpus')
     
     ## --------------------------------------------------------------------------------------------------------------
-    ## the commented things below are used when printing everything form corpora/LANGUAGE/* to one big json file:    
+    ## the commented things below are used when printing everything form corpora/LANGUAGE/* to one (!) big json file:
+    
     #if not os.path.exists(corpus_dir):
     #    print('Path "' + corpus_dir + '" for corpus ' + corpus_name + ' does not exist; skipping this corpus')
     #
