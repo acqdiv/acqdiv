@@ -69,7 +69,7 @@ def parser(corpus_name):
                 if filename.endswith('.xml') or filename.endswith('.txt'):
         
                     #corpus_object = parse_corpus(corpus_name, corpus_dic[corpus_name]['dir'], filename, corpus_dic[corpus_name]['format'])
-                    corpus_object = parse_corpus(corpus_name, corpus_dic[corpus_name]['dir'], filename, corpus_dic[corpus_name]['format'])
+                    corpus_object = next(parse_corpus(corpus_name, corpus_dic[corpus_name]['dir'], filename, corpus_dic[corpus_name]['format']))
           
                     with open('parsed/'+corpus_name + '/'+ filename[:-4]+'.json', 'w') as file:
                       json.dump(corpus_object, file, ensure_ascii=False)
