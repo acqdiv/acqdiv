@@ -159,15 +159,7 @@ def parse_xml(file_name, corpus_name):
             # set target to '???'
             # set attribute 'glossed' to 'no'
             if corpus_name == "Turkish_KULLD":
-                if 'formType' in w.attrib and w.attrib['formType'] == 'interjection':
-                    w.attrib['target'] = '???'
-                    w.attrib['glossed'] = 'no'
-                    continue
-                if 'formType' in w.attrib and w.attrib['formType'] == 'onomatopoeia':
-                    w.attrib['target'] = '???'
-                    w.attrib['glossed'] = 'no'
-                    continue
-                if 'formType' in w.attrib and w.attrib['formType'] == 'family-specific':
+                if 'formType' in w.attrib and w.attrib['formType'] in ['interjection', 'onomatopoeia', 'family-specific']:
                     w.attrib['target'] = '???'
                     w.attrib['glossed'] = 'no'
                     continue
@@ -1046,12 +1038,17 @@ def parse_xml(file_name, corpus_name):
             morphology = u.find("a[@type='extension'][@flavor='mor']")
             if morphology is not None:
                 # remove punctuation and tags
-                morphology.text = re.sub('(^|\\s)[\.\?!\+\/]+(\\s|$)', '\\1\\2', morphology.text)
+                morphology.text = re.sub('(^|\\s)[\.\?!:\+\/]+(\\s|$)', '\\1\\2', morphology.text)
                 morphology.text = re.sub('(^|\\s)tag\|\\S+(\\s|$)', '\\1\\2', morphology.text)
                 morphology.text = re.sub('\\s+$', '', morphology.text)
                                 
-                # split trn tier into words, reset counter to 0
-                words = re.split('\\s+', morphology.text)
+                # split mor tier into words, reset counter to 0
+                words = re.split('\\s+',morphology.text)
+                
+                #words = re.split('(\\s+|_)', morphology.text)      -->> lingdp: did not solve problem with '_', this can actually be deleted!
+                #if '_' in words:                                   
+                #    word.remove('_')
+                
                 word_index = 0
                 
                 # go through words on gloss tier
@@ -1187,8 +1184,8 @@ def parse_xml(file_name, corpus_name):
             # if there is no morphology, add warning to complete utterance
             elif morphology is None:
                 creadd(corpus[text_id][utterance_index], 'warnings', 'not glossed')
+                
         # EOF Turkish_KULLD
-
     # EOF utterance loop
     
 # EOF parse_xml
