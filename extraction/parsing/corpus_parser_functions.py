@@ -57,7 +57,7 @@ def creadd(location, key, value):
         location[key] += '; ' + value
     
 # format-specific parsing is done by more specific functions called by this one
-def parse_corpus(corpus_name,corpus_dir,file_name, corpus_format):
+def parse_corpus(corpus_name,corpus_dir,filename,corpus_format):
     #corpus_dir = corpus_dir
 #def parse_corpus(corpus_name, corpus_dir, corpus_format):
     #files_to_parse = []
@@ -76,32 +76,30 @@ def parse_corpus(corpus_name,corpus_dir,file_name, corpus_format):
     # check input
     if not format_dic[corpus_format]:
         print('Format "' + corpus_format + '" for corpus ' + corpus_name + ' does not exist; skipping this corpus')
-    if not os.path.exists(corpus_dir):
-        print('Path "' + corpus_dir + '" for corpus ' + corpus_name + ' does not exist; skipping this corpus')
     
-    # go through all files in corpus directory
-    for root, subs, files in os.walk(corpus_dir):
-                        
-        for i, file in enumerate(files):
-            filepath = os.path.join(root, file)
-            with open(filepath, 'r') as file:
-                
-                # check format of present file and parse as appropriate
-                if not format_dic[corpus_format]['regex'].match(file.name):
-                    print('file "' + file.name + '" is in unexpected format (should be ' + corpus_format + ') - skipping it')                
-                else:
-                    print('parsing ' + file.name)
-                    format_dic[corpus_format]['function'](file.name, corpus_name)
-                    
-            #print(files[i])
-            for elem in corpus.items():
-                print(elem)
-    yield corpus
+    ## --------------------------------------------------------------------------------------------------------------
+    ## the commented things below are used when printing everything form corpora/LANGUAGE/* to one big json file:    
+    #if not os.path.exists(corpus_dir):
+    #    print('Path "' + corpus_dir + '" for corpus ' + corpus_name + ' does not exist; skipping this corpus')
+    #
+    ## go through all files in corpus directory
+    #for root, subs, files in os.walk(corpus_dir):
+    #                    
+    #    for file in files:
+    #       filepath = os.path.join(root, file)
+    ## --------------------------------------------------------------------------------------------------------------
     
-                
+    with open(filename, 'r') as file:
+        
+        # check format of present file and parse as appropriate
+        if not format_dic[corpus_format]['regex'].match(file.name):
+            print('file "' + file.name + '" is in unexpected format (should be ' + corpus_format + ') - skipping it')                
+        else:
+            print('parsing ' + file.name)
+            format_dic[corpus_format]['function'](file.name, corpus_name)
                     
-    #for elem in files_to_parse:
-    #    return corpus
+        yield corpus
+    
     
 # EOF parse_corpus
 
