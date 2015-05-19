@@ -93,9 +93,13 @@ def parse_corpus(corpus_name,corpus_dir,file_name, corpus_format):
                     print('parsing ' + file.name)
                     format_dic[corpus_format]['function'](file.name, corpus_name)
                     #files_to_parse.append(format_dic[corpus_format]['function'](file.name, corpus_name))
-                                    
-                                            
+                    #corpus = files[i]
+                    print(corpus)
+        #print(corpus)
                     return corpus
+        
+                
+                    
     #for elem in files_to_parse:
     #    return corpus
     
