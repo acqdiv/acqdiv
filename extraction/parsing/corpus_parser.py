@@ -73,9 +73,9 @@ def parser(corpus_name):
                         ## write outfiles with file name structure: filename.json or filename_prettyprint.txt
                         with open('parsed/'+corpus_name + '/'+ filename[:-4]+'.json', 'w') as file:
                           json.dump(corpus_object, file, ensure_ascii=False)
-                        with open('parsed/'+corpus_name + '/'+ filename[:-4]+ '_prettyprint.txt', 'w') as file:
-                          # careful, sort_keys=True can cause memory errors with bigger corpora such as Japanese_MiiPro
-                          file.write(json.dumps(corpus_object, file, sort_keys=True, indent=4, ensure_ascii=False))
+                        #with open('parsed/'+corpus_name + '/'+ filename[:-4]+ '_prettyprint.txt', 'w') as file:
+                        #  # careful, sort_keys=True can cause memory errors with bigger corpora such as Japanese_MiiPro
+                        #  file.write(json.dumps(corpus_object, file, sort_keys=True, indent=4, ensure_ascii=False))
             
 
 def parserTest(corpus_name):
