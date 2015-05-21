@@ -57,7 +57,10 @@ def creadd(location, key, value):
         location[key] += '; ' + value
     
 # format-specific parsing is done by more specific functions called by this one
-def parse_corpus(corpus_name, corpus_dir, corpus_format):
+def parse_corpus(corpus_name,corpus_dir,filename,corpus_format):
+    #corpus_dir = corpus_dir
+#def parse_corpus(corpus_name, corpus_dir, corpus_format):
+    #files_to_parse = []
     
     # structured corpus
     global corpus
@@ -73,24 +76,32 @@ def parse_corpus(corpus_name, corpus_dir, corpus_format):
     # check input
     if not format_dic[corpus_format]:
         print('Format "' + corpus_format + '" for corpus ' + corpus_name + ' does not exist; skipping this corpus')
-    if not os.path.exists(corpus_dir):
-        print('Path "' + corpus_dir + '" for corpus ' + corpus_name + ' does not exist; skipping this corpus')
     
-    # go through all files in corpus directory
-    for root, subs, files in os.walk(corpus_dir):
-                        
-        for file in files:
-            filepath = os.path.join(root, file)
-            with open(filepath, 'r') as file:
-                
-                # check format of present file and parse as appropriate
-                if not format_dic[corpus_format]['regex'].match(file.name):
-                    print('file "' + file.name + '" is in unexpected format (should be ' + corpus_format + ') - skipping it')                
-                else:
-                    print('parsing ' + file.name)
-                    format_dic[corpus_format]['function'](file.name, corpus_name)
-                                            
-    return corpus
+    ## --------------------------------------------------------------------------------------------------------------
+    ## the commented things below are used when printing everything form corpora/LANGUAGE/* to one (!) big json file:
+    
+    #if not os.path.exists(corpus_dir):
+    #    print('Path "' + corpus_dir + '" for corpus ' + corpus_name + ' does not exist; skipping this corpus')
+    #
+    ## go through all files in corpus directory
+    #for root, subs, files in os.walk(corpus_dir):
+    #                    
+    #    for file in files:
+    #       filepath = os.path.join(root, file)
+    ## --------------------------------------------------------------------------------------------------------------
+    
+    with open(filename, 'r') as file:
+        
+        # check format of present file and parse as appropriate
+        if not format_dic[corpus_format]['regex'].match(file.name):
+            print('file "' + file.name + '" is in unexpected format (should be ' + corpus_format + ') - skipping it')                
+        else:
+            print('parsing ' + file.name)
+            format_dic[corpus_format]['function'](file.name, corpus_name)
+                    
+        yield corpus
+    
+    
 # EOF parse_corpus
 
 # parse an open XML file
@@ -159,18 +170,18 @@ def parse_xml(file_name, corpus_name):
             # set target to '???'
             # set attribute 'glossed' to 'no'
             if corpus_name == "Turkish_KULLD":
-                if 'formType' in w.attrib and w.attrib['formType'] == 'interjection':
+                if 'formType' in w.attrib and w.attrib['formType'] in ['interjection', 'onomatopoeia', 'family-specific']:
                     w.attrib['target'] = '???'
                     w.attrib['glossed'] = 'no'
                     continue
-                if 'formType' in w.attrib and w.attrib['formType'] == 'onomatopoeia':
-                    w.attrib['target'] = '???'
-                    w.attrib['glossed'] = 'no'
-                    continue
-                if 'formType' in w.attrib and w.attrib['formType'] == 'family-specific':
-                    w.attrib['target'] = '???'
-                    w.attrib['glossed'] = 'no'
-                    continue
+                #if 'formType' in w.attrib and w.attrib['formType'] == 'onomatopoeia':
+                #    w.attrib['target'] = '???'
+                #    w.attrib['glossed'] = 'no'
+                #    continue
+                #if 'formType' in w.attrib and w.attrib['formType'] == 'family-specific':
+                #    w.attrib['target'] = '???'
+                #    w.attrib['glossed'] = 'no'
+                #    continue
             if 'type' in w.attrib and w.attrib['type'] == 'omission':
                 u.remove(w)
         
@@ -1046,12 +1057,17 @@ def parse_xml(file_name, corpus_name):
             morphology = u.find("a[@type='extension'][@flavor='mor']")
             if morphology is not None:
                 # remove punctuation and tags
-                morphology.text = re.sub('(^|\\s)[\.\?!\+\/]+(\\s|$)', '\\1\\2', morphology.text)
+                morphology.text = re.sub('(^|\\s)[\.\?!:\+\/]+(\\s|$)', '\\1\\2', morphology.text)
                 morphology.text = re.sub('(^|\\s)tag\|\\S+(\\s|$)', '\\1\\2', morphology.text)
                 morphology.text = re.sub('\\s+$', '', morphology.text)
                                 
-                # split trn tier into words, reset counter to 0
-                words = re.split('\\s+', morphology.text)
+                # split mor tier into words, reset counter to 0
+                words = re.split('\\s+',morphology.text)
+                
+                #words = re.split('(\\s+|_)', morphology.text)      -->> lingdp: did not solve problem with '_', this can actually be deleted!
+                #if '_' in words:                                   
+                #    word.remove('_')
+                
                 word_index = 0
                 
                 # go through words on gloss tier
@@ -1187,8 +1203,8 @@ def parse_xml(file_name, corpus_name):
             # if there is no morphology, add warning to complete utterance
             elif morphology is None:
                 creadd(corpus[text_id][utterance_index], 'warnings', 'not glossed')
+                
         # EOF Turkish_KULLD
-
     # EOF utterance loop
     
 # EOF parse_xml
