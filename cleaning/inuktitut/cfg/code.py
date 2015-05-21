@@ -47,6 +47,9 @@ def clean_chat_line(s):
     # Since replacements.csv is not used anymore
     s = re.sub("@Break", "@New Episode", s)
 
+    # Maybe, I could always insert a @Situation when there is a ":" after "@New Episode"
+    s = re.sub("@New Episode:", "@New Episode\n@Situation:", s)
+
     # Removes tabs in the middle of the lines
     # (Couldn't find a way to do this with only one string)
     l = s.split('\t', 1)
@@ -77,11 +80,13 @@ def clean_chat_line(s):
         s = re.sub('(?<=\\s)xx(?=\\s)', 'xxx', s) # xx -> xxx
 
         # These characters are not allowed in the Main Line.
-        s = re.sub('[-/]', '(.)', s)
+        s = re.sub(' - ', ' (.) ', s)
+        s = re.sub(' / ', ' (.) ', s)
 
     if s.startswith("%eng"):
         # These characters are not allowed in the English transcription.
-        s = re.sub('[-/]', '(.)', s)
+        s = re.sub(' - ', ' (.) ', s)
+        s = re.sub(' / ', ' (.) ', s)
 
 
     if s.startswith("%add"):
