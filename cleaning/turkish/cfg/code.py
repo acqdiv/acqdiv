@@ -55,6 +55,7 @@ def clean_chat_line(s):
     s = re.sub(r"(@New Episode):\s(.+$)", r"\1\n%sit:\t\2", s)
     s = re.sub(r"#", r"(.)", s) # hashtag is equivalent to (.) which is CHAT for notation for pauses.
     s = re.sub(r"\[[X\*]\s?(\d)\]", r"[x \1]", s)
+    s = re.sub(r"\[x([1-9])\]", r"[x \1]", s)
     
         
     """
