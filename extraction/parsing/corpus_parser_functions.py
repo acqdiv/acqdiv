@@ -346,7 +346,27 @@ def parse_xml(file_name, corpus_name):
         word_index = 0
         for w in words:
             corpus[text_id][utterance_index]['words'][word_index]['full_word'] = w.text
-            corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.attrib['target']
+            
+            # get target_words for Yucatec which are under 'pho'
+            if corpus_name == 'Yucatec':
+                extension = 'pho'
+                tier = u.find("a[@type='extension'][@flavor='" + extension + "']")
+                if tier is not None:
+                    t_words = re.split('\\s+', tier.text)
+                    for i,t_word in enumerate(t_words):
+                        try:    
+                            corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = t_words[word_index]
+                        except IndexError:
+                            # when there is a full_word, but no target_word
+                            corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = t_words[i]
+                            
+                if tier is None:
+                    corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = '???'
+                    
+                            
+            else:
+                corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.attrib['target']
+                
             # pass down warnings
             if 'glossed' in w.attrib and w.attrib['glossed'] == 'no':
                 creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'not glossed')
@@ -360,17 +380,34 @@ def parse_xml(file_name, corpus_name):
                         
         # standard dependent tiers
         for dependent_tier in xml_dep_correspondences:
-            tier = u.find("a[@type='" + dependent_tier + "']")
-            if tier is not None:
-                tier_name_JSON = xml_dep_correspondences[dependent_tier]
-                creadd(corpus[text_id][utterance_index], tier_name_JSON, tier.text)
+            if corpus_name == 'Yucatec':
+                if dependent_tier == 'english translation':
+                    tier = u.find("a[@type='" + dependent_tier + "']")
+                    tier_name_JSON = 'spanish'
+                    try:
+                        creadd(corpus[text_id][utterance_index],tier_name_JSON, tier.text)
+                    except AttributeError:
+                        pass
+            else:    
+                tier = u.find("a[@type='" + dependent_tier + "']")
+                if tier is not None:
+                    try:
+                        tier_name_JSON = xml_dep_correspondences[dependent_tier]
+                        creadd(corpus[text_id][utterance_index], tier_name_JSON, tier.text)
+                    except AttributeError:
+                        pass
                         
         # extended dependent tiers
         for extension in xml_ext_correspondences:
-            tier = u.find("a[@type='extension'][@flavor='" + extension + "']")
-            if tier is not None: 
-                tier_name_JSON = xml_ext_correspondences[extension]
-                corpus[text_id][utterance_index][tier_name_JSON] = tier.text
+            # in Yucatec 'pho' marks full_word_target utterance, so skip it here.
+            if corpus_name == 'Yucatec':
+                    if extension == 'pho':
+                        pass                
+            else:
+                tier = u.find("a[@type='extension'][@flavor='" + extension + "']")
+                if tier is not None: 
+                    tier_name_JSON = xml_ext_correspondences[extension]
+                    corpus[text_id][utterance_index][tier_name_JSON] = tier.text
         
         # corpus-specific stuff
         if corpus_name == 'Cree':
@@ -1063,11 +1100,7 @@ def parse_xml(file_name, corpus_name):
                                 
                 # split mor tier into words, reset counter to 0
                 words = re.split('\\s+',morphology.text)
-                
-                #words = re.split('(\\s+|_)', morphology.text)      -->> lingdp: did not solve problem with '_', this can actually be deleted!
-                #if '_' in words:                                   
-                #    word.remove('_')
-                
+
                 word_index = 0
                 
                 # go through words on gloss tier
@@ -1082,7 +1115,7 @@ def parse_xml(file_name, corpus_name):
                     # set morpheme counter
                     morpheme_index = 0
                     
-                    # first cut off prefix, it's always on the left edge of the complete word. There are no words with more than 1 prefix in MiiPro. 
+                    # first cut off prefix, it's always on the left edge of the complete word.  
                     prefix = ''
                     check_pfx = re.search('^(.+#)', w)
                     if check_pfx:
@@ -1095,8 +1128,7 @@ def parse_xml(file_name, corpus_name):
                                                 
                         morpheme_index += 1
                         
-                    # cut off "supertags" prefixed to compounds, e.g. the 'num|' in num|+num|kyuu+num|juu. There are no words with more than 1 supertag. 
-                    # note that the dedicated tag for compounds, <wk>, is considered irrelevant for us and is removed further above. It is used rarely (7 times) and inconsistently in MiiPro. 
+                    # cut off "supertags" prefixed to compounds, e.g. the 'num|' in num|+num|kyuu+num|juu. There are no words with more than 1 supertag.  
                     check_compound = re.search('^[^\\+]+\\+(.*)', w)
                     if check_compound:
                         w = check_compound.group(1)
@@ -1194,7 +1226,6 @@ def parse_xml(file_name, corpus_name):
                 # EOF glosses for repetitions/retracings 
 
                 # check alignment with words that were found in <w>
-                # note: alignment on morpheme-level doesn't have to be checked at all for MiiPro because the segment and gloss tiers are not separate
                 if length_morphology != corpus[text_id][utterance_index]['length_in_words']:
                     print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ': general word tier <w> has ' 
                         + str(corpus[text_id][utterance_index]['length_in_words']) + ' words vs ' + str(length_morphology) + ' in "mor" (= morphology)')
@@ -1205,6 +1236,102 @@ def parse_xml(file_name, corpus_name):
                 creadd(corpus[text_id][utterance_index], 'warnings', 'not glossed')
                 
         # EOF Turkish_KULLD
+        
+        elif corpus_name == 'Yucatec':
+            
+            # parse the morphology tier mor
+            morphology = u.find("a[@type='extension'][@flavor='mor']")
+            if morphology is not None:
+                # remove punctuation and tags
+                morphology.text = re.sub('(^|\\s)[\.\?!\+\/]+(\\s|$)', '\\1\\2', morphology.text)
+                morphology.text = re.sub('(^|\\s)tag\|\\S+(\\s|$)', '\\1\\2', morphology.text)
+                morphology.text = re.sub('\\s+$', '', morphology.text)
+                                
+                # split mor tier into words, reset counter to 0
+                word_index = 0
+                words = re.split('[\\s+&]', morphology.text)
+                
+                # set morpheme counter
+                morpheme_index = 0
+                ## go through words on morpheme level and split on '#' or ':', preserving the delimiter!
+                for word in words:
+                    # process words with neither prefixes nor suffixes
+                    if not '#' in word and not ':' in word:
+                        stem_gloss = re.sub('\|.*','',word)
+                        stem = re.sub('.*\|','',word)
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
+                        morpheme_index +=1
+                    
+                    # get prefixes
+                    pfx_marker = re.search('#', word)
+                    # split on '#' and preserve '#'
+                    prefixes = '#,'.join(word.split('#')).split(',')
+                    morpheme_index = 0
+                    for w in prefixes:
+                        check_pfx = re.search('(.*)\|(.+#)',w)
+                        if check_pfx:
+                            prefix = check_pfx.group(2).replace('#','')
+                            pfx_gloss = check_pfx.group(1)
+                            
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = prefix
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = pfx_gloss
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'pfx'
+                            morpheme_index +=1
+                    
+                    # get stem of words that contain prefix(es) and suffix(es)
+                    # 1) words that might have prefix and suffix
+                    stem_marker = re.search('(.*)?#(.*)\|(.*?):', word)
+                    if stem_marker:
+                        stem_gloss = re.sub('[\|:].*','',stem_marker.group(2))
+                        stem = re.sub('.*#','',stem_marker.group(3))
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
+                        morpheme_index +=1
+                    # 2) words that only might have prefix
+                    else:
+                        stem_marker2 = re.search('(\|.*)?#(.*)\|(.*?)$', word)
+                        if stem_marker2:
+                            stem_gloss = re.sub('[\|:].*','',stem_marker2.group(2))
+                            stem = stem_marker2.group(3)
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
+                            morpheme_index +=1
+                        
+                    # get suffixes            
+                    sfx_marker = re.search(':',word)
+                    # split on ':' and preserve ':'
+                    suffixes = ',:'.join(word.split(':')).split(',')
+                    for w in suffixes:
+                        check_suffix = re.search('(:.*)\|(-.*)', w)
+                        if check_suffix:
+                            suffix = check_suffix.group(2).replace('-','')
+                            sfx_gloss = check_suffix.group(1).replace(':','')
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = suffix
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = sfx_gloss
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
+                            morpheme_index +=1
+                    
+                    # increase word counter for words on morpheme level
+                    word_index += 1
+                length_morphology = len(words)
+                    
+                # check alignment with words that were found in <w>
+                if length_morphology != corpus[text_id][utterance_index]['length_in_words']:
+                    print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ': general word tier <w> has ' 
+                    + str(corpus[text_id][utterance_index]['length_in_words']) + ' words vs ' + str(length_morphology) + ' in "mor" (= morphology)')
+                creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment full_word : segments/glosses')
+                
+                
+                    
+            # if there is no morphology, add warning to complete utterance
+            elif morphology is None:
+                creadd(corpus[text_id][utterance_index], 'warnings', 'not glossed')
+                
+                
     # EOF utterance loop
     
 # EOF parse_xml
