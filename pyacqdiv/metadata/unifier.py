@@ -6,6 +6,7 @@
 import json
 import sys
 import unittest
+import age
 
 class Unifier():
 
@@ -18,6 +19,7 @@ class Unifier():
             self.metatype = 'IMDI'
         else:
             self.metatype = 'XML'
+        self.null = ["Unknown", "Unspecified", "None"]
 
     def unify(self, cdc=None):
         DEBUG = 0
@@ -93,26 +95,36 @@ class Unifier():
             metadata['participants'].append(ParticipantHeads.copy())
             for head in self.metadata['participants'][i]:
                 if head == 'code':
-                    if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] != 'Unspecified':
+                    if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] not in self.null:
                         metadata['participants'][i][head] = self.metadata['participants'][i][head]        
-                if head == 'familysocialrole':
-                    if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] != 'Unspecified':
-                        metadata['participants'][i]['role'] = self.metadata['participants'][i][head]        
                 if head == 'role':
-                    if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] != 'Unspecified':
+                    if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] not in self.null:
                             metadata['participants'][i][head] = self.metadata['participants'][i][head]
+                elif head == 'familysocialrole':
+                    if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] not in self.null:
+                        metadata['participants'][i]['role'] = self.metadata['participants'][i][head]        
                 elif head == 'name':
-                    if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] != 'Unspecified':
+                    if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] not in self.null:
                         metadata['participants'][i][head] = self.metadata['participants'][i][head]
                 elif head == 'id':
-                    if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] != 'Unspecified':
+                    if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] not in self.null:
                         metadata['participants'][i]['code'] = self.metadata['participants'][i][head]
                 elif head == 'sex':
-                    if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] != 'Unspecified':
+                    if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] not in self.null:
                         metadata['participants'][i][head] = self.metadata['participants'][i][head]
                 elif head == 'birthdate':
-                    if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] != 'Unspecified':
+                    if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] not in self.null:
                         metadata['participants'][i][head] = self.metadata['participants'][i][head]
+
+        for participant in metadata['participants']:
+            if participant['birthdate']:
+                try:
+                    recdate = age.numerize_date(metadata['session']['date'])
+                    bdate = age.numerize_date(participant['birthdate'])
+                    participant['age'] = age.format_imdi_age(bdate, recdate)
+                except Exception as e:
+                        print("Couldn't calculate age in " + self.path)
+                        print("Error: {0}".format(e))
 
         self.metadata = metadata
 
@@ -188,6 +200,16 @@ class Unifier():
             metadata['session']['location']['country'] = cdc.metadata['IMDI_Country'] if 'IMDI_Country' in cdc.metadata else None
             metadata['project']['name'] = cdc.metadata['Title'] if 'Title' in cdc.metadata else None
             metadata['project']['contact'] = cdc.metadata['Creator'] if 'Creator' in cdc.metadata else None
+
+
+        for participant in metadata['participants']:
+            if participant['age']:
+                try:
+                    agestr = participant['age']
+                    participant['age'] = age.format_xml_age(agestr)
+                except Exception as e:
+                        print("Couldn't calculate age in " + self.path)
+                        print("Error: {0}".format(e))
 
         self.metadata = metadata
 

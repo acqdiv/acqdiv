@@ -31,43 +31,6 @@ def clean_chat_line(s):
     
     # added by rabart
     s = re.sub("^%mor:", "%xmor:", s)
-    
-    # get rid of empty headers
-    s = re.sub("^@.*:\\s*$", "", s)
-    
-    s = re.sub("^%pho:", "%tim:", s)
-    s = re.sub("^%acT:", "%act:", s)
-    s = re.sub("^%atc:", "%act:", s)
-    s = re.sub("^%EXP:", "%exp:", s)
-    s = re.sub("\\byy\\b", "yyy", s)
-    s = re.sub("\\bxx\\b", "xxx", s)
-    s = re.sub(":\\t\[!", ":\\t0 [!", s)
-    s = re.sub(r"\n\n", r"\n", s) # gets rid of empty lines
-    s = re.sub(r"\n\s+", r" ", s) # gets rid of line breaks in utterance; IMPORTANT: this must go before the following replacement, otherwise %add is inserted into the middle of utterances.
-    s = re.sub(r"(\*[A-Z]{3})-([A-Z]{3})(:.+)", r"\1\3\n%add:\t\2", s) # puts addressee into separate dependent tier (%add), instead of in the format speaker-addressee (SSS-AAA).
-    s = re.sub(r"(\[x)(\d\])", r"\1 \2", s) # fixes repetitions
-    s = re.sub(r"&=\s+", "&=", s)
-    s = re.sub(r"\+''", r'\+"', s)
-    s = re.sub(r"\[\s+=", r"[=", s)
-    s = re.sub(r'.%snd:".+?"_(\d)_(\d+)(\d\d\d+).', r'\n%tim:\t\1-\2.\3', s)
-    s = re.sub(r'.%snd:".+?"_(\d+)(\d\d\d)_(\d+)(\d\d\d+).', r'\n%tim:\t\1.\2-\3.\4', s)
-    s = re.sub(r"\[!", r"[=!", s)
-    s = re.sub(r"(@New Episode):\s(.+$)", r"\1\n%sit:\t\2", s)
-    
-    
-    """
-    s = re.sub("(^[A-Z]{3}\-[A-Z]{3}:)", r"*\1", s) # MOM-CHI:
-    s = re.sub("(^\*[A-Z]{3})(-)(:)", r"\1\3", s) # *MOT-:
-    s = re.sub("(^\*[A-Z]{3})(.)(:)", r"\1\3", s) # *MOT-:
-    s = re.sub("(^\*[A-Z]{3}\-[A-Z]{3})(\s+)(:)", r"\1\3", s) # *MOT-MOM :
-    s = re.sub("(^\*[A-Z]{3})(\-)(\s+)([A-Z]{3}:)", r"\1\2\4", s) # *MOT- NEI:
-    s = re.sub("(^\*[A-Z]{3})(\s+)(\-)([A-Z]{3}:)", r"\1\3\4", s) # *CHI -MOT:
-    s = re.sub("(^\*MM)(\-)([A-Z]{3}:)", r"*MOM\2\3", s) # *MM-CHI:
-    s = re.sub("(^\*[A-Z]{3}\-[A-Z]{3})(\.)", r"\1:", s) # *NEI-MOM.
-    s = re.sub("\*CHI.\s*", "\*CHI:\t", s)
-
-    
-    """
 
     #character replacements
     s = re.sub("þ", "ş", s)
@@ -95,6 +58,54 @@ def clean_chat_line(s):
     s = re.sub("\\\\", "", s)
     s = re.sub("`", "'", s)
     s = re.sub("å", "a", s)
+
+    # get rid of empty headers
+    s = re.sub("^@.*:\\s*$", "", s)
+    
+    s = re.sub("^%pho:", "%tim:", s)
+    s = re.sub("^%acT:", "%act:", s)
+    s = re.sub("^%atc:", "%act:", s)
+    s = re.sub("^%EXP:", "%exp:", s)
+    s = re.sub("\\byy\\b", "yyy", s)
+    s = re.sub("\\bxx\\b", "xxx", s)
+    s = re.sub(":\\t\[!", ":\\t0 [!", s)
+    s = re.sub(r"\n\n", r"\n", s) # gets rid of empty lines
+    s = re.sub(r"\n\s+", r" ", s) # gets rid of line breaks in utterance; IMPORTANT: this must go before the following replacement, otherwise %add is inserted into the middle of utterances.
+    s = re.sub(r"(\*[A-Z]{3})-([A-Z]{3})(:.+)", r"\1\3\n%add:\t\2", s) # puts addressee into separate dependent tier (%add), instead of in the format speaker-addressee (SSS-AAA).
+    s = re.sub(r"(\[x)(\d\])", r"\1 \2", s) # fixes repetitions
+    s = re.sub(r"&=\s+", "&=", s)
+    s = re.sub(r"\+''", r'+"', s)
+    s = re.sub(r"\[\s+=", r"[=", s)
+    s = re.sub(r'.%snd:".+?"_(\d)_(\d+)(\d\d\d+).', r'\n%tim:\t\1-\2.\3', s)
+    s = re.sub(r'.%snd:".+?"_(\d+)(\d\d\d)_(\d+)(\d\d\d+).', r'\n%tim:\t\1.\2-\3.\4', s)
+    s = re.sub(r"\[!", r"[=!", s)
+    s = re.sub(r"(@New Episode):\s(.+$)", r"\1\n%sit:\t\2", s)
+    s = re.sub(r"#", r"(.)", s) # hashtag is equivalent to (.) which is CHAT for notation for pauses.
+    s = re.sub(r"\[[X\*]\s?(\d)\]", r"[x \1]", s)
+    s = re.sub(r"([^\n])@\S+", r"\1", s) # many uses of "@" plus following code are inconsistent and are not CHAT compliant. cf. issue #86
+    s = re.sub(r"@(\s)", r"\1", s) # many uses of "@" (plus following code) are inconsistent and are not CHAT compliant. cf. issue #86
+    s = re.sub(r'<(.+?)>\s\["\]', r"'\1'", s)
+    s = re.sub(r'(\S+)\s\["\]', r"'\1'", s)
+    s = re.sub(r'\+/([^/])', r'+//\1', s)
+    s = re.sub(r"\+//\s\.", r"+//.", s)
+    s = re.sub(r"\+//\n", r"+//.\n", s)
+    s = re.sub(r"\n\n", r"\n", s)
+        
+    """
+    s = re.sub("(^[A-Z]{3}\-[A-Z]{3}:)", r"*\1", s) # MOM-CHI:
+    s = re.sub("(^\*[A-Z]{3})(-)(:)", r"\1\3", s) # *MOT-:
+    s = re.sub("(^\*[A-Z]{3})(.)(:)", r"\1\3", s) # *MOT-:
+    s = re.sub("(^\*[A-Z]{3}\-[A-Z]{3})(\s+)(:)", r"\1\3", s) # *MOT-MOM :
+    s = re.sub("(^\*[A-Z]{3})(\-)(\s+)([A-Z]{3}:)", r"\1\2\4", s) # *MOT- NEI:
+    s = re.sub("(^\*[A-Z]{3})(\s+)(\-)([A-Z]{3}:)", r"\1\3\4", s) # *CHI -MOT:
+    s = re.sub("(^\*MM)(\-)([A-Z]{3}:)", r"*MOM\2\3", s) # *MM-CHI:
+    s = re.sub("(^\*[A-Z]{3}\-[A-Z]{3})(\.)", r"\1:", s) # *NEI-MOM.
+    s = re.sub("\*CHI.\s*", "\*CHI:\t", s)
+
+    
+    """
+
+
     
     
     # fix roles according the CHILDES's depfile.cut 

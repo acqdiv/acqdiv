@@ -11,11 +11,8 @@ prettyprint(){
 
 	for file in "$DIR"*.json
 	do
-		if [ $file != *_pp.json ]
-		then
-			exjson=1
-			break
-		fi
+		exjson=1
+		break
 	done
 
 	if [ $exjson -eq 1 ]
@@ -95,6 +92,7 @@ do
 done
 
 DIR=$1
-
+echo "Processing..."
 prettyprint $DIR $RECURSIVE $VERBOSITY
+echo "Done."
 exit
