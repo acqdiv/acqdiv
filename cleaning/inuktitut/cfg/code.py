@@ -50,6 +50,9 @@ def clean_chat_line(s):
     # Maybe, I could always insert a @Situation when there is a ":" after "@New Episode"
     s = re.sub("@New Episode:", "@New Episode\n@Situation:", s)
 
+    s = re.sub("\(repeated six times\)", "[x 6]", s)
+    s = re.sub("([0-9]+)x", "[x \\1]", s)
+
     # Removes tabs in the middle of the lines
     # (Couldn't find a way to do this with only one string)
     l = s.split('\t', 1)
