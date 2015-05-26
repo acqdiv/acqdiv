@@ -12,13 +12,13 @@ combinejson() {
 	echo "out: $OUTDIR"
 	echo "r: $RECURSIVE"
 
-	if [[ $RECURSIVE -eq 1 ]]
+	if [ $RECURSIVE -eq 1 ]
 	then
-		for file in $DIR
+		for file in "$DIR"*
 		do
-			if [[ -d $file && $file != "*./" ]]
+			if [[ -d $file && $file != "*./" && $file != "$DIR" ]]
 			then
-				cat "$file"*.json > "$OUTDIR"$(basename $file).json
+				cat "$file"/*.json > "$OUTDIR"$(basename $file).json
 			fi
 		done
 	else
