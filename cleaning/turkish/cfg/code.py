@@ -55,7 +55,8 @@ def clean_chat_line(s):
     s = re.sub(r"(@New Episode):\s(.+$)", r"\1\n%sit:\t\2", s)
     s = re.sub(r"#", r"(.)", s) # hashtag is equivalent to (.) which is CHAT for notation for pauses.
     s = re.sub(r"\[[X\*]\s?(\d)\]", r"[x \1]", s)
-
+    s = re.sub(r"(\S)@[^a|b|c|d|f|g|i|k|l|n|o|p|q|t|u|x|pm|si|sl|sas|wp|s:|z:]", r"\1", s) # many uses of "@" plus following code are inconsistent and do not conform to CHAT standard. 
+    
 
     """
     s = re.sub("(^[A-Z]{3}\-[A-Z]{3}:)", r"*\1", s) # MOM-CHI:
