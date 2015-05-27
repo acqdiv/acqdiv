@@ -242,5 +242,7 @@ class Corpus(object):
                 filename,
                 ssessions,
                 list(map(self.code['clean_chat_line'], lines)))
-        return out
+
+        # remove all blank lines including blanks in things like sessions files
+        return '\n'.join([x for x in out.split("\n") if x.strip()!=''])
 
