@@ -482,7 +482,7 @@ def parse_xml(file_name, corpus_name):
                         morphemes = re.split('=', w)
                         for m in morphemes:
                             # some corrections where the Cree tier names don't match our target tiers exactly
-                            if morph_tier == 'mortyp' and m == 'IMP':
+                            if morph_tier == 'mortyp' and m == 'IMP' and morphology['mormea'][word_index][morpheme_index]:
                                 morphology['mormea'][word_index][morpheme_index] += '.' + m
                                 m = 'sfx'
                             # add morpheme to Vividict
