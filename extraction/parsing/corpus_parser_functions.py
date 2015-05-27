@@ -55,9 +55,44 @@ def creadd(location, key, value):
         location[key] = value
     else:
         location[key] += '; ' + value
+
+# format-specific parsing is done by more specific functions called by this one (output is one big json file per corpus)
+def parse_corpus(corpus_name, corpus_dir, corpus_format):
     
-# format-specific parsing is done by more specific functions called by this one
-def parse_corpus(corpus_name,corpus_dir,filename,corpus_format):
+    # structured corpus
+    global corpus
+    corpus = Vividict()
+    # descriptive statistics
+    
+    format_dic = {
+        'XML' : {'regex' : re.compile('.*\.xml$', re.IGNORECASE), 'function' : parse_xml},
+        'CHAT' : {'regex' : re.compile('.*\.(chat?)$', re.IGNORECASE), 'function' : parse_chat},
+        'Toolbox' : {'regex' : re.compile('.*\.(tbx?|txt)$', re.IGNORECASE), 'function' : parse_toolbox},
+    }
+    
+    # check input
+    if not format_dic[corpus_format]:
+        print('Format "' + corpus_format + '" for corpus ' + corpus_name + ' does not exist; skipping this corpus')
+    if not os.path.exists(corpus_dir):
+        print('Path "' + corpus_dir + '" for corpus ' + corpus_name + ' does not exist; skipping this corpus')
+    
+    # go through all files in corpus directory
+    for root, subs, files in os.walk(corpus_dir):
+        for file in files:
+            filepath = os.path.join(root, file)
+            with open(filepath, 'r') as file:
+                # check format of present file and parse as appropriate
+                if not format_dic[corpus_format]['regex'].match(file.name):
+                    print('file "' + file.name + '" is in unexpected format (should be ' + corpus_format + ') - skipping it')                
+                else:
+                    print('parsing ' + file.name)
+                    format_dic[corpus_format]['function'](file.name, corpus_name)
+                                            
+    return corpus
+# EOF parse_corpus
+    
+# format-specific parsing is done by more specific functions called by this one (output is one json file per file in corpora/LANGUAGE)
+def parse_corpus_per_file(corpus_name,corpus_dir,filename,corpus_format):
     #corpus_dir = corpus_dir
 #def parse_corpus(corpus_name, corpus_dir, corpus_format):
     #files_to_parse = []
@@ -77,21 +112,7 @@ def parse_corpus(corpus_name,corpus_dir,filename,corpus_format):
     if not format_dic[corpus_format]:
         print('Format "' + corpus_format + '" for corpus ' + corpus_name + ' does not exist; skipping this corpus')
     
-    ## --------------------------------------------------------------------------------------------------------------
-    ## the commented things below are used when printing everything form corpora/LANGUAGE/* to one (!) big json file:
-    
-    #if not os.path.exists(corpus_dir):
-    #    print('Path "' + corpus_dir + '" for corpus ' + corpus_name + ' does not exist; skipping this corpus')
-    #
-    ## go through all files in corpus directory
-    #for root, subs, files in os.walk(corpus_dir):
-    #                    
-    #    for file in files:
-    #       filepath = os.path.join(root, file)
-    ## --------------------------------------------------------------------------------------------------------------
-    
     with open(filename, 'r') as file:
-        
         # check format of present file and parse as appropriate
         if not format_dic[corpus_format]['regex'].match(file.name):
             print('file "' + file.name + '" is in unexpected format (should be ' + corpus_format + ') - skipping it')                
@@ -102,7 +123,7 @@ def parse_corpus(corpus_name,corpus_dir,filename,corpus_format):
         yield corpus
     
     
-# EOF parse_corpus
+# EOF parse_corpus_per_file
 
 # parse an open XML file
 def parse_xml(file_name, corpus_name):
@@ -1261,7 +1282,7 @@ def parse_xml(file_name, corpus_name):
                         stem = re.sub('.*\|','',word)
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'xxx'
                         morpheme_index +=1
                     
                     # get prefixes
@@ -1288,7 +1309,7 @@ def parse_xml(file_name, corpus_name):
                         stem = re.sub('.*#','',stem_marker.group(3))
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'xxx'
                         morpheme_index +=1
                     # 2) words that only might have prefix
                     else:
@@ -1298,7 +1319,7 @@ def parse_xml(file_name, corpus_name):
                             stem = stem_marker2.group(3)
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'xxx'
                             morpheme_index +=1
                         
                     # get suffixes            
@@ -1323,15 +1344,16 @@ def parse_xml(file_name, corpus_name):
                 if length_morphology != corpus[text_id][utterance_index]['length_in_words']:
                     print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ': general word tier <w> has ' 
                     + str(corpus[text_id][utterance_index]['length_in_words']) + ' words vs ' + str(length_morphology) + ' in "mor" (= morphology)')
-                creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment full_word : segments/glosses')
+                    creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment full_word : segments/glosses')
                 
                 
-                    
             # if there is no morphology, add warning to complete utterance
             elif morphology is None:
                 creadd(corpus[text_id][utterance_index], 'warnings', 'not glossed')
                 
-                
+        
+        # EOF Yucatec
+        
     # EOF utterance loop
     
 # EOF parse_xml
