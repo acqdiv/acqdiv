@@ -93,10 +93,6 @@ def parse_corpus(corpus_name, corpus_dir, corpus_format):
     
 # format-specific parsing is done by more specific functions called by this one (output is one json file per file in corpora/LANGUAGE)
 def parse_corpus_per_file(corpus_name,corpus_dir,filename,corpus_format):
-    #corpus_dir = corpus_dir
-#def parse_corpus(corpus_name, corpus_dir, corpus_format):
-    #files_to_parse = []
-    
     # structured corpus
     global corpus
     corpus = Vividict()
