@@ -47,6 +47,7 @@ def clean_chat_line(s):
     s = re.sub(r"\n\n", r"\n", s) # gets rid of empty lines
     s = re.sub(r"\n\s+", r" ", s) # gets rid of line breaks in utterance; IMPORTANT: this must go before the following replacement, otherwise %add is inserted into the middle of utterances.
     s = re.sub(r"(\*[A-Z]{3})-([A-Z]{3})(:.+)", r"\1\3\n%add:\t\2", s) # puts addressee into separate dependent tier (%add), instead of in the format speaker-addressee (SSS-AAA).
+    s = re.sub(r"(\*[A-Z]{2}\d)-([A-Z]{2}\d)(:.+)", r"\1\3\n%add:\t\2", s) # puts addressee into separate dependent tier (%add), instead of in the format speaker-addressee (SSS-AAA).
     s = re.sub(r"(\[x)(\d\])", r"\1 \2", s) # fixes repetitions
     s = re.sub(r"&=\s+", "&=", s)
     s = re.sub(r"\+''", r'+"', s)
@@ -59,6 +60,7 @@ def clean_chat_line(s):
     s = re.sub(r"\[[X\*]\s?(\d)\]", r"[x \1]", s)
     s = re.sub(r"([^\n])@\S+", r"\1", s) # many uses of "@" plus following code are inconsistent and are not CHAT compliant. cf. issue #86
     s = re.sub(r"@(\s)", r"\1", s) # many uses of "@" (plus following code) are inconsistent and are not CHAT compliant. cf. issue #86
+    s = re.sub(r"([^\n])@(\W+)", r"\1\2", s)
     s = re.sub(r'<(.+?)>\s\["\]', r"'\1'", s)
     s = re.sub(r'(\S+)\s\["\]', r"'\1'", s)
     s = re.sub(r'\+/([^/])', r'+//\1', s)
