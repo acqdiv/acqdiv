@@ -32,32 +32,7 @@ def clean_chat_line(s):
     # added by rabart
     s = re.sub("^%mor:", "%xmor:", s)
 
-    #character replacements
-    s = re.sub("þ", "ş", s)
-    s = re.sub("ð", "ğ", s)
-    s = re.sub("", "]", s)
-    s = re.sub("", "[", s)
-    s = re.sub("’", "'", s)
-    s = re.sub("", "#", s)
-    s = re.sub("\\}", "]", s)
-    s = re.sub("×", "x", s)
-    s = re.sub("…", "...", s)
-    s = re.sub("⧣", "#", s)
-    s = re.sub("Þ", "Ş", s)
-    s = re.sub("\\{", "[", s)
-    s = re.sub("д", "d", s)
-    s = re.sub("а", "a", s) # Cyrillic a vs Latin a (has been done manually, but put here in case new Turkish files appear)
-    s = re.sub("‘", "'", s) # has been done manually, but put here in case new Turkish files appear
-    s = re.sub('”', '"', s)
-    s = re.sub('“', '"', s)
-    s = re.sub("Ð", "Ğ", s) # has been done manually, but put here in case new Turkish files appear
-    s = re.sub("®", "r", s) # has been done manually, but put here in case new Turkish files appear
-    s = re.sub("ƒ", "f", s) # has been done manually, but put here in case new Turkish files appear
-    s = re.sub("", "(", s) # has been done manually, but put here in case new Turkish files appear
-    s = re.sub("≥", ">", s) # has been done manually, but put here in case new Turkish files appear
-    s = re.sub("\\\\", "", s)
-    s = re.sub("`", "'", s)
-    s = re.sub("å", "a", s)
+    
 
     # get rid of empty headers
     s = re.sub("^@.*:\\s*$", "", s)
@@ -104,7 +79,32 @@ def clean_chat_line(s):
 
     
     """
-
+#character replacements
+    s = re.sub("þ", "ş", s)
+    s = re.sub("ð", "ğ", s)
+    s = re.sub("", "]", s)
+    s = re.sub("", "[", s)
+    s = re.sub("’", "'", s)
+    s = re.sub("", "#", s)
+    s = re.sub("\\}", "]", s)
+    s = re.sub("×", "x", s)
+    s = re.sub("…", "...", s)
+    s = re.sub("⧣", "#", s)
+    s = re.sub("Þ", "Ş", s)
+    s = re.sub("\\{", "[", s)
+    s = re.sub("д", "d", s)
+    s = re.sub("а", "a", s) # Cyrillic a vs Latin a (has been done manually, but put here in case new Turkish files appear)
+    s = re.sub("‘", "'", s) # has been done manually, but put here in case new Turkish files appear
+    s = re.sub('”', '"', s)
+    s = re.sub('“', '"', s)
+    s = re.sub("Ð", "Ğ", s) # has been done manually, but put here in case new Turkish files appear
+    s = re.sub("®", "r", s) # has been done manually, but put here in case new Turkish files appear
+    s = re.sub("ƒ", "f", s) # has been done manually, but put here in case new Turkish files appear
+    s = re.sub("", "(", s) # has been done manually, but put here in case new Turkish files appear
+    s = re.sub("≥", ">", s) # has been done manually, but put here in case new Turkish files appear
+    s = re.sub("\\\\", "", s)
+    s = re.sub("`", "'", s)
+    s = re.sub("å", "a", s)
 
     
     
