@@ -70,6 +70,9 @@ def clean_chat_line(s):
     s = re.sub(r"\+//\s\.", r"+//.", s)
     s = re.sub(r"\+//\n", r"+//.\n", s)
     s = re.sub(r"\n\n", r"\n", s)
+    s = re.sub(r"\[:\s(\w)", r"[: \1", s)
+    s = re.sub(r"\[(\w+)\]", r"[: \1]")
+    
         
     """
     s = re.sub("(^[A-Z]{3}\-[A-Z]{3}:)", r"*\1", s) # MOM-CHI:
