@@ -71,7 +71,7 @@ def clean_chat_line(s):
     s = re.sub(r"\+//\n", r"+//.\n", s)
     s = re.sub(r"\n\n", r"\n", s)
     s = re.sub(r"\[:\s(\w)", r"[: \1", s)
-    s = re.sub(r"\[(\w+)\]", r"[: \1]")
+    s = re.sub(r"\[(\w+)\]", r"[: \1]", s)
     
         
     """
@@ -87,7 +87,8 @@ def clean_chat_line(s):
 
     
     """
-#character replacements
+    
+    #character replacements
     s = re.sub("þ", "ş", s)
     s = re.sub("ð", "ğ", s)
     s = re.sub("", "]", s)
