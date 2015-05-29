@@ -366,20 +366,6 @@ def parse_xml(file_name, corpus_name):
             # get target_words for Yucatec which are under 'pho'
             if corpus_name == 'Yucatec':
                 corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.text
-                
-                #extension = 'pho'
-                #tier = u.find("a[@type='extension'][@flavor='" + extension + "']")
-                #if tier is not None:
-                #    t_words = re.split('\\s+', tier.text)
-                #    for i,t_word in enumerate(t_words):
-                #        try:    
-                #            corpus[text_id][utterance_index]['words'][word_index]['full_word'] = t_words[word_index]
-                #        except IndexError:
-                #            # when there is a full_word, but no target_word
-                #            corpus[text_id][utterance_index]['words'][word_index]['full_word'] = t_words[i]
-                            
-                #if tier is None:
-                #    corpus[text_id][utterance_index]['words'][word_index]['full_word'] = '???'
                 corpus[text_id][utterance_index]['words'][word_index]['full_word'] = '???'
                     
                             
@@ -419,11 +405,6 @@ def parse_xml(file_name, corpus_name):
                         
         # extended dependent tiers
         for extension in xml_ext_correspondences:
-            # in Yucatec 'pho' marks full_word_target utterance, so skip it here.
-            #if corpus_name == 'Yucatec':
-            #        if extension == 'pho':
-            #            pass                
-            #else:
             tier = u.find("a[@type='extension'][@flavor='" + extension + "']")
             if tier is not None: 
                 tier_name_JSON = xml_ext_correspondences[extension]
@@ -1281,7 +1262,7 @@ def parse_xml(file_name, corpus_name):
                         stem = re.sub('.*\|','',word)
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'xxx'
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
                         morpheme_index +=1
                     
                     # get prefixes
