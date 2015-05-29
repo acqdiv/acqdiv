@@ -362,26 +362,29 @@ def parse_xml(file_name, corpus_name):
         # write words to corpus dic
         word_index = 0
         for w in words:
-            corpus[text_id][utterance_index]['words'][word_index]['full_word'] = w.text
             
             # get target_words for Yucatec which are under 'pho'
             if corpus_name == 'Yucatec':
-                extension = 'pho'
-                tier = u.find("a[@type='extension'][@flavor='" + extension + "']")
-                if tier is not None:
-                    t_words = re.split('\\s+', tier.text)
-                    for i,t_word in enumerate(t_words):
-                        try:    
-                            corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = t_words[word_index]
-                        except IndexError:
-                            # when there is a full_word, but no target_word
-                            corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = t_words[i]
+                corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.text
+                
+                #extension = 'pho'
+                #tier = u.find("a[@type='extension'][@flavor='" + extension + "']")
+                #if tier is not None:
+                #    t_words = re.split('\\s+', tier.text)
+                #    for i,t_word in enumerate(t_words):
+                #        try:    
+                #            corpus[text_id][utterance_index]['words'][word_index]['full_word'] = t_words[word_index]
+                #        except IndexError:
+                #            # when there is a full_word, but no target_word
+                #            corpus[text_id][utterance_index]['words'][word_index]['full_word'] = t_words[i]
                             
-                if tier is None:
-                    corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = '???'
+                #if tier is None:
+                #    corpus[text_id][utterance_index]['words'][word_index]['full_word'] = '???'
+                corpus[text_id][utterance_index]['words'][word_index]['full_word'] = '???'
                     
                             
             else:
+                corpus[text_id][utterance_index]['words'][word_index]['full_word'] = w.text
                 corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.attrib['target']
                 
             # pass down warnings
@@ -417,14 +420,14 @@ def parse_xml(file_name, corpus_name):
         # extended dependent tiers
         for extension in xml_ext_correspondences:
             # in Yucatec 'pho' marks full_word_target utterance, so skip it here.
-            if corpus_name == 'Yucatec':
-                    if extension == 'pho':
-                        pass                
-            else:
-                tier = u.find("a[@type='extension'][@flavor='" + extension + "']")
-                if tier is not None: 
-                    tier_name_JSON = xml_ext_correspondences[extension]
-                    corpus[text_id][utterance_index][tier_name_JSON] = tier.text
+            #if corpus_name == 'Yucatec':
+            #        if extension == 'pho':
+            #            pass                
+            #else:
+            tier = u.find("a[@type='extension'][@flavor='" + extension + "']")
+            if tier is not None: 
+                tier_name_JSON = xml_ext_correspondences[extension]
+                corpus[text_id][utterance_index][tier_name_JSON] = tier.text
         
         # corpus-specific stuff
         if corpus_name == 'Cree':
@@ -1305,7 +1308,7 @@ def parse_xml(file_name, corpus_name):
                         stem = re.sub('.*#','',stem_marker.group(3))
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'xxx'
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
                         morpheme_index +=1
                     # 2) words that only might have prefix
                     else:
@@ -1315,7 +1318,7 @@ def parse_xml(file_name, corpus_name):
                             stem = stem_marker2.group(3)
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'xxx'
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
                             morpheme_index +=1
                         
                     # get suffixes            
