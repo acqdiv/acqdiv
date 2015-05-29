@@ -146,10 +146,10 @@ if __name__ == '__main__':
         parser_flag.add_argument("--japanMP", nargs=1,help="parse Japanese MiiPro corpus")
         parser_flag.add_argument("--japanMY", nargs=1,help="parse Japanese Myata corpus")
         parser_flag.add_argument("--sesotho", nargs=1, help="parse Sesotho corpus")
-        parser_flag.add_argument("--inuk", nargs=1,help="parse Inuktitut corpus")
+        parser_flag.add_argument("--inuktitut", nargs=1,help="parse Inuktitut corpus")
         parser_flag.add_argument("--turkish", nargs=1, help="parse Turikish corpus")
         parser_flag.add_argument("--chintang", nargs=1, help="parse Chintang corpus")
-        parser_flag.add_argument("--indones", nargs=1, help="parse Indonesian corpus")
+        parser_flag.add_argument("--indonesian", nargs=1, help="parse Indonesian corpus")
         parser_flag.add_argument("--russian", nargs=1, help="parse Russian corpus")
         parser_flag.add_argument("--yucatec", nargs=1, help="parse Yucatec corpus")
         parser_flag.add_argument("--all", nargs=1, help="parse all corpora in folder corpora/")
@@ -157,9 +157,11 @@ if __name__ == '__main__':
         args = parser_flag.parse_args()
         
         
-        ## for each corpus defined, check what output option has been chosen and parse accordingly:
+        ## for each language/corpus defined, check what output option has been chosen and parse accordingly:
         ## 'one' for one big json output file per corpus
         ## 'many' for a json output file per file in corpora/LANGUAGE
+        
+        
         if args.cree:
             if args.cree[0] == 'one':
                 parser_one_json("Cree")
@@ -192,12 +194,12 @@ if __name__ == '__main__':
             elif args.sesotho[0] not in ['one', 'many']:
                 print('\nPlease specify the json output:\n--sesotho=one for one big json file per corpus\n--sesotho=many for a json file per file in the corpus\n')
             
-        if args.inuk:
-            if args.inuk[0] == 'one':
+        if args.inuktitut:
+            if args.inuktitut[0] == 'one':
                 parser_one_json("Inuktitut")
-            elif args.inuk == 'many':
+            elif args.inuktitut == 'many':
                 parser_per_file("Inuktitut")
-            elif args.inuk[0] not in ['one', 'many']:
+            elif args.inuktitut[0] not in ['one', 'many']:
                 print('\nPlease specify the json output:\n--inuk=one for one big json file per corpus\n--inuk=many for a json file per file in the corpus\n')
         
         if args.turkish:    
@@ -216,12 +218,12 @@ if __name__ == '__main__':
             elif args.chintang[0] not in ['one', 'many']:
                 print('\nPlease specify the json output:\n--chintang=one for one big json file per corpus\n--chintang=many for a json file per file in the corpus\n')
             
-        if args.indones:
-            if args.indones[0]:
+        if args.indonesian:
+            if args.indonesian[0] == 'one':
                 parser_one_json("Indonesian")
-            elif args.indones[0] == 'many':
+            elif args.indonesian[0] == 'many':
                 parser_per_file("Indonesian")
-            elif args.indones[0] not in ['one', 'many']:
+            elif args.indonesian[0] not in ['one', 'many']:
                 print('\nPlease specify the json output:\n--indones=one for one big json file per corpus\n--indones=many for a json file per file in the corpus\n')
             
         if args.russian:
