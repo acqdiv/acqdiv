@@ -10,6 +10,49 @@ Author: Robert Schikowski <robert.schikowski@uzh.ch>
 '''
 
 
+'''
+TODO
+
+{
+    "Russian_goldstandard": {
+
+      "utterances" : [
+      {
+            "id" : "1",
+            "ends_at": "unknown",
+            "length_in_words": 4,
+            "sentence_type": "default",
+            "speaker_id": "BAB",
+            "starts_at": "unknown",
+            "words": [
+                {
+                    "full_word": "a",
+                    "morphemes": [
+                        {
+                            "glosses": "CONJ",
+                            "pos_target": "CONJ",
+                            "segments": "a"
+                        }]
+
+                },
+                {
+                    "full_word": "ehto",
+                    "morphemes": [
+                        {
+                            "glosses": "ACC.SG",
+                            "pos_target": "PRO.DEM.NOUN",
+                            "segments": "ehto"
+                        }
+                    ]
+                }
+          ]
+      }
+      ]
+}
+
+'''
+
+
 ################
 ### Packages ###
 ################
@@ -55,9 +98,12 @@ def creadd(location, key, value):
         location[key] = value
     else:
         location[key] += '; ' + value
-
-# format-specific parsing is done by more specific functions called by this one (output is one big json file per corpus)
-def parse_corpus(corpus_name, corpus_dir, corpus_format):
+    
+# format-specific parsing is done by more specific functions called by this one
+def parse_corpus(corpus_name,corpus_dir,filename,corpus_format):
+    #corpus_dir = corpus_dir
+#def parse_corpus(corpus_name, corpus_dir, corpus_format):
+    #files_to_parse = []
     
     # structured corpus
     global corpus
@@ -73,42 +119,22 @@ def parse_corpus(corpus_name, corpus_dir, corpus_format):
     # check input
     if not format_dic[corpus_format]:
         print('Format "' + corpus_format + '" for corpus ' + corpus_name + ' does not exist; skipping this corpus')
-    if not os.path.exists(corpus_dir):
-        print('Path "' + corpus_dir + '" for corpus ' + corpus_name + ' does not exist; skipping this corpus')
     
-    # go through all files in corpus directory
-    for root, subs, files in os.walk(corpus_dir):
-        for file in files:
-            filepath = os.path.join(root, file)
-            with open(filepath, 'r') as file:
-                # check format of present file and parse as appropriate
-                if not format_dic[corpus_format]['regex'].match(file.name):
-                    print('file "' + file.name + '" is in unexpected format (should be ' + corpus_format + ') - skipping it')                
-                else:
-                    print('parsing ' + file.name)
-                    format_dic[corpus_format]['function'](file.name, corpus_name)
-                                            
-    return corpus
-# EOF parse_corpus
+    ## --------------------------------------------------------------------------------------------------------------
+    ## the commented things below are used when printing everything form corpora/LANGUAGE/* to one (!) big json file:
     
-# format-specific parsing is done by more specific functions called by this one (output is one json file per file in corpora/LANGUAGE)
-def parse_corpus_per_file(corpus_name,corpus_dir,filename,corpus_format):
-    # structured corpus
-    global corpus
-    corpus = Vividict()
-    # descriptive statistics
-    
-    format_dic = {
-        'XML' : {'regex' : re.compile('.*\.xml$', re.IGNORECASE), 'function' : parse_xml},
-        'CHAT' : {'regex' : re.compile('.*\.(chat?)$', re.IGNORECASE), 'function' : parse_chat},
-        'Toolbox' : {'regex' : re.compile('.*\.(tbx?|txt)$', re.IGNORECASE), 'function' : parse_toolbox},
-    }
-    
-    # check input
-    if not format_dic[corpus_format]:
-        print('Format "' + corpus_format + '" for corpus ' + corpus_name + ' does not exist; skipping this corpus')
+    #if not os.path.exists(corpus_dir):
+    #    print('Path "' + corpus_dir + '" for corpus ' + corpus_name + ' does not exist; skipping this corpus')
+    #
+    ## go through all files in corpus directory
+    #for root, subs, files in os.walk(corpus_dir):
+    #                    
+    #    for file in files:
+    #       filepath = os.path.join(root, file)
+    ## --------------------------------------------------------------------------------------------------------------
     
     with open(filename, 'r') as file:
+        
         # check format of present file and parse as appropriate
         if not format_dic[corpus_format]['regex'].match(file.name):
             print('file "' + file.name + '" is in unexpected format (should be ' + corpus_format + ') - skipping it')                
@@ -119,7 +145,7 @@ def parse_corpus_per_file(corpus_name,corpus_dir,filename,corpus_format):
         yield corpus
     
     
-# EOF parse_corpus_per_file
+# EOF parse_corpus
 
 # parse an open XML file
 def parse_xml(file_name, corpus_name):
@@ -127,10 +153,13 @@ def parse_xml(file_name, corpus_name):
     # parse XML tree
     tree = ET.parse(file_name)
     root = tree.getroot()
-    # get ID of present file
-    text_id = root.attrib['Id']
     # construe parent map in order to be able to access parent nodes when only the child is known
     parent_map = {c:p for p in tree.iter() for c in p}
+    # get ID of present file
+    text_id = root.attrib['Id']
+    # corpus[text_id] is a list of utterances; initial utterance index is -1
+    corpus[text_id] = []
+    utterance_index = -1
 
     # walk and clean XML tree for an overview
     for elem in root.iter():
@@ -142,17 +171,15 @@ def parse_xml(file_name, corpus_name):
     # now translate XML tree to JSON target structure
     # get all utterances
     for u in root.findall('.//u'):
-
-        # utterance index is uID minus '^u'
-        utterance_index = re.sub('^\D+', '', u.attrib['uID'])
-        utterance_index = int(utterance_index)
-
-        # speaker id and name for utterance
-        speaker_id = u.attrib['who']
-        corpus[text_id][utterance_index]['speaker_id'] = speaker_id
-        # if speaker_id in participants:
-        #     corpus[text_id][utterance_index]['speaker_name'] = participants[speaker_id]
-
+        
+        # count up utterance index and append empty Vividict to list to extend it
+        utterance_index += 1    
+        corpus[text_id].append(Vividict())
+        
+        # get utterance ID and speaker ID
+        corpus[text_id][utterance_index]['utterance_id'] = u.attrib['uID']
+        corpus[text_id][utterance_index]['speaker_id'] = u.attrib['who']
+                                
         # various optional tags under <u>
         # sentence type
         sentence_type = u.find('t')
@@ -191,14 +218,6 @@ def parse_xml(file_name, corpus_name):
                     w.attrib['target'] = '???'
                     w.attrib['glossed'] = 'no'
                     continue
-                #if 'formType' in w.attrib and w.attrib['formType'] == 'onomatopoeia':
-                #    w.attrib['target'] = '???'
-                #    w.attrib['glossed'] = 'no'
-                #    continue
-                #if 'formType' in w.attrib and w.attrib['formType'] == 'family-specific':
-                #    w.attrib['target'] = '???'
-                #    w.attrib['glossed'] = 'no'
-                #    continue
             if 'type' in w.attrib and w.attrib['type'] == 'omission':
                 u.remove(w)
         
@@ -362,16 +381,25 @@ def parse_xml(file_name, corpus_name):
         # write words to corpus dic
         word_index = 0
         for w in words:
+            corpus[text_id][utterance_index]['words'][word_index]['full_word'] = w.text
             
-            # get target_words for Yucatec which are under 'pho'
-            if corpus_name == 'Yucatec':
-                corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.text
-                corpus[text_id][utterance_index]['words'][word_index]['full_word'] = '???'
-                    
-                            
-            else:
-                corpus[text_id][utterance_index]['words'][word_index]['full_word'] = w.text
-                corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.attrib['target']
+            # all corpora except Yucatec have target words related to the <w> tag
+            if corpus_name != 'Yucatec':
+                corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.attrib['target']                            
+            # for Yucatec, target_words are only visible on the "pho" tier
+            elif corpus_name == 'Yucatec':
+                extension = 'pho'
+                tier = u.find("a[@type='extension'][@flavor='" + extension + "']")
+                if tier is not None:
+                    t_words = re.split('\\s+', tier.text)
+                    for i,t_word in enumerate(t_words):
+                        try:    
+                            corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = t_words[word_index]
+                        except IndexError:
+                            # when there is a full_word, but no target_word
+                            corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = t_words[i]
+                if tier is None:
+                    corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = '???'
                 
             # pass down warnings
             if 'glossed' in w.attrib and w.attrib['glossed'] == 'no':
@@ -405,10 +433,15 @@ def parse_xml(file_name, corpus_name):
                         
         # extended dependent tiers
         for extension in xml_ext_correspondences:
-            tier = u.find("a[@type='extension'][@flavor='" + extension + "']")
-            if tier is not None: 
-                tier_name_JSON = xml_ext_correspondences[extension]
-                corpus[text_id][utterance_index][tier_name_JSON] = tier.text
+            # in Yucatec 'pho' marks full_word_target utterance, so skip it here.
+            if corpus_name == 'Yucatec':
+                    if extension == 'pho':
+                        pass                
+            else:
+                tier = u.find("a[@type='extension'][@flavor='" + extension + "']")
+                if tier is not None: 
+                    tier_name_JSON = xml_ext_correspondences[extension]
+                    corpus[text_id][utterance_index][tier_name_JSON] = tier.text
         
         # corpus-specific stuff
         if corpus_name == 'Cree':
@@ -1324,16 +1357,15 @@ def parse_xml(file_name, corpus_name):
                 if length_morphology != corpus[text_id][utterance_index]['length_in_words']:
                     print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ': general word tier <w> has ' 
                     + str(corpus[text_id][utterance_index]['length_in_words']) + ' words vs ' + str(length_morphology) + ' in "mor" (= morphology)')
-                    creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment full_word : segments/glosses')
+                creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment full_word : segments/glosses')
                 
                 
+                    
             # if there is no morphology, add warning to complete utterance
             elif morphology is None:
                 creadd(corpus[text_id][utterance_index], 'warnings', 'not glossed')
                 
-        
-        # EOF Yucatec
-        
+                
     # EOF utterance loop
     
 # EOF parse_xml
@@ -1344,6 +1376,10 @@ def parse_toolbox(file_name, corpus_name):
     # get session ID from file name
     structure = re.search('^.*\/(.*)\.(txt|tbx?)$', file_name)
     text_id = structure.group(1)
+
+    # corpus[text_id] is a list of utterances; initial utterance index is -1
+    corpus[text_id] = []
+    utterance_index = -1
     
     with open(file_name) as file:
         # read file into a single string
@@ -1358,6 +1394,11 @@ def parse_toolbox(file_name, corpus_name):
         
         # go through utterances
         for u in utterances:
+            
+            # count up utterance index and append empty Vividict to list to extend it
+            utterance_index += 1    
+            corpus[text_id].append(Vividict())            
+            
             # split by single \n to get tiers
             tiers = re.split('\\n', u)
             
@@ -1388,7 +1429,7 @@ def parse_toolbox(file_name, corpus_name):
             # now check tiers in right order, split and/or add to corpus dic
             if record:
                 
-                utterance_index = ''
+                utterance_id = ''
                 
                 # \ref = record marker, extract utterance index. Ignore complete record if marker is missing or invalid. 
                 if not 'ref' in record.keys():
@@ -1399,12 +1440,12 @@ def parse_toolbox(file_name, corpus_name):
                 
                 if corpus_name is 'Chintang':
                     structure = re.search('.*\.(\\d+\.?[a-z]?)$', record['ref'])
-                    if structure is not None: utterance_index = structure.group(1)
+                    if structure is not None: utterance_id = structure.group(1)
                 # EOF Chintang checks
                 
                 elif corpus_name is 'Russian':
                     structure = re.search('.*_(\\d+)$', record['ref'])
-                    if structure is not None: utterance_index = structure.group(1)
+                    if structure is not None: utterance_id = structure.group(1)
                     
                     # stuff found in \text and \pho
                     for tier in ('text', 'pho'):
@@ -1456,7 +1497,7 @@ def parse_toolbox(file_name, corpus_name):
                 elif corpus_name is 'Indonesian':
                     # TODO speaker codes in Indonesian often have code of target child suffixed to them (e.g. CHI -> CHIHIZ). These suffixes are not present in the complete metadata, so remove them!
                     structure = re.search('^(\\d+)$', record['ref'])
-                    if structure is not None: utterance_index = structure.group(1)
+                    if structure is not None: utterance_id = structure.group(1)
                     
                     # The first two records of a file regularly contain metadata in CHAT format but on regular Toolbox tiers. Therefore, skip a record if the content of any of a few regular tiers starts with "@" (the CHAT marker for metadata tiers).
                     if ('sp' in record.keys() and re.search('^@', record['sp'])) or ('ft' in record.keys() and re.search('^@', record['ft'])):
@@ -1486,10 +1527,14 @@ def parse_toolbox(file_name, corpus_name):
                         
                 # EOF Indonesian checks
                                 
-                # skip record if utterance_index is empty (because \ref was not well-formed)
-                if not utterance_index:
+                # add utterance ID to corpus object if it exists
+                if utterance_id:
+                    corpus[text_id][utterance_index]['utterance_id'] = utterance_id
+                # skip record if utterance_index is empty (because \ref was not well-formed)    
+                elif not utterance_id:
                     print(file_name + ': invalid record marker "' + record['ref'] + '", skipping this record')
                     continue
+                
                 # add warning if primary transcription tier is missing or empty (\tx for Chintang, Indonesian; \text for Russian)
                 if corpus_name in ['Chintang', 'Indonesian']:
                     if ('tx' not in record.keys()) or ('tx' in record.keys() and record['tx'] == ''):
