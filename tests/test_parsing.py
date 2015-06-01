@@ -82,11 +82,11 @@ class Test_Parser(unittest.TestCase):
         output,gold = files_to_compare("tests/parsing/Cree/Cree_prettyprint.txt", "tests/parsing/Cree/Cree_goldstandard.txt")
         self.assertEqual(output, gold)
     
-    ##def test_turkish(self):
-    ##    parserTest("Turkish_KULLD")
-    ##    output,gold = files_to_compare("tests/parsing/Turkish_KULLD/Turkish_KULLD_prettyprint.txt", "tests/parsing/Turkish_KULLD/Turkish_KULLD_goldstandard.txt")
-    ##    self.assertEqual(output, gold)
-    #
+    def test_turkish(self):
+        parserTest("Turkish_KULLD")
+        output,gold = files_to_compare("tests/parsing/Turkish_KULLD/Turkish_KULLD_prettyprint.txt", "tests/parsing/Turkish_KULLD/Turkish_KULLD_goldstandard.txt")
+        self.assertEqual(output, gold)
+    
     #def test_yucatec(self):
     #    '''test if Cree output is correct.'''
     #    parserTest("Yucatec")
