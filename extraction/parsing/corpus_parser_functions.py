@@ -9,6 +9,47 @@ from corpus_parser_functions import parse_corpus
 Author: Robert Schikowski <robert.schikowski@uzh.ch>
 '''
 
+'''
+TODO
+
+{
+    "Russian_goldstandard": {
+
+      "utterances" : [
+      {
+            "id" : "1",
+            "ends_at": "unknown",
+            "length_in_words": 4,
+            "sentence_type": "default",
+            "speaker_id": "BAB",
+            "starts_at": "unknown",
+            "words": [
+                {
+                    "full_word": "a",
+                    "morphemes": [
+                        {
+                            "glosses": "CONJ",
+                            "pos_target": "CONJ",
+                            "segments": "a"
+                        }]
+
+                },
+                {
+                    "full_word": "ehto",
+                    "morphemes": [
+                        {
+                            "glosses": "ACC.SG",
+                            "pos_target": "PRO.DEM.NOUN",
+                            "segments": "ehto"
+                        }
+                    ]
+                }
+          ]
+      }
+      ]
+}
+
+'''
 
 ################
 ### Packages ###
@@ -127,10 +168,13 @@ def parse_xml(file_name, corpus_name):
     # parse XML tree
     tree = ET.parse(file_name)
     root = tree.getroot()
-    # get ID of present file
-    text_id = root.attrib['Id']
     # construe parent map in order to be able to access parent nodes when only the child is known
     parent_map = {c:p for p in tree.iter() for c in p}
+    # get ID of present file
+    text_id = root.attrib['Id']
+    # corpus[text_id] is a list of utterances; initial utterance index is -1
+    corpus[text_id] = []
+    utterance_index = -1
 
     # walk and clean XML tree for an overview
     for elem in root.iter():
@@ -143,15 +187,13 @@ def parse_xml(file_name, corpus_name):
     # get all utterances
     for u in root.findall('.//u'):
 
-        # utterance index is uID minus '^u'
-        utterance_index = re.sub('^\D+', '', u.attrib['uID'])
-        utterance_index = int(utterance_index)
-
-        # speaker id and name for utterance
-        speaker_id = u.attrib['who']
-        corpus[text_id][utterance_index]['speaker_id'] = speaker_id
-        # if speaker_id in participants:
-        #     corpus[text_id][utterance_index]['speaker_name'] = participants[speaker_id]
+        # count up utterance index and append empty Vividict to list to extend it
+        utterance_index += 1    
+        corpus[text_id].append(Vividict())
+        
+        # get utterance ID and speaker ID
+        corpus[text_id][utterance_index]['utterance_id'] = u.attrib['uID']
+        corpus[text_id][utterance_index]['speaker_id'] = u.attrib['who']
 
         # various optional tags under <u>
         # sentence type
@@ -1345,6 +1387,10 @@ def parse_toolbox(file_name, corpus_name):
     structure = re.search('^.*\/(.*)\.(txt|tbx?)$', file_name)
     text_id = structure.group(1)
     
+    # corpus[text_id] is a list of utterances; initial utterance index is -1
+    corpus[text_id] = []
+    utterance_index = -1    
+    
     with open(file_name) as file:
         # read file into a single string
         text = file.read()
@@ -1358,6 +1404,11 @@ def parse_toolbox(file_name, corpus_name):
         
         # go through utterances
         for u in utterances:
+            
+            # count up utterance index and append empty Vividict to list to extend it
+            utterance_index += 1    
+            corpus[text_id].append(Vividict())
+            
             # split by single \n to get tiers
             tiers = re.split('\\n', u)
             
@@ -1388,7 +1439,7 @@ def parse_toolbox(file_name, corpus_name):
             # now check tiers in right order, split and/or add to corpus dic
             if record:
                 
-                utterance_index = ''
+                utterance_id = ''
                 
                 # \ref = record marker, extract utterance index. Ignore complete record if marker is missing or invalid. 
                 if not 'ref' in record.keys():
@@ -1399,12 +1450,12 @@ def parse_toolbox(file_name, corpus_name):
                 
                 if corpus_name is 'Chintang':
                     structure = re.search('.*\.(\\d+\.?[a-z]?)$', record['ref'])
-                    if structure is not None: utterance_index = structure.group(1)
+                    if structure is not None: utterance_id = structure.group(1)
                 # EOF Chintang checks
                 
                 elif corpus_name is 'Russian':
                     structure = re.search('.*_(\\d+)$', record['ref'])
-                    if structure is not None: utterance_index = structure.group(1)
+                    if structure is not None: utterance_id = structure.group(1)
                     
                     # stuff found in \text and \pho
                     for tier in ('text', 'pho'):
@@ -1456,7 +1507,7 @@ def parse_toolbox(file_name, corpus_name):
                 elif corpus_name is 'Indonesian':
                     # TODO speaker codes in Indonesian often have code of target child suffixed to them (e.g. CHI -> CHIHIZ). These suffixes are not present in the complete metadata, so remove them!
                     structure = re.search('^(\\d+)$', record['ref'])
-                    if structure is not None: utterance_index = structure.group(1)
+                    if structure is not None: utterance_id = structure.group(1)
                     
                     # The first two records of a file regularly contain metadata in CHAT format but on regular Toolbox tiers. Therefore, skip a record if the content of any of a few regular tiers starts with "@" (the CHAT marker for metadata tiers).
                     if ('sp' in record.keys() and re.search('^@', record['sp'])) or ('ft' in record.keys() and re.search('^@', record['ft'])):
@@ -1486,10 +1537,14 @@ def parse_toolbox(file_name, corpus_name):
                         
                 # EOF Indonesian checks
                                 
-                # skip record if utterance_index is empty (because \ref was not well-formed)
-                if not utterance_index:
+                # add utterance ID to corpus object if it exists
+                if utterance_id:
+                    corpus[text_id][utterance_index]['utterance_id'] = utterance_id
+                # skip record if utterance_index is empty (because \ref was not well-formed)    
+                elif not utterance_id:
                     print(file_name + ': invalid record marker "' + record['ref'] + '", skipping this record')
                     continue
+
                 # add warning if primary transcription tier is missing or empty (\tx for Chintang, Indonesian; \text for Russian)
                 if corpus_name in ['Chintang', 'Indonesian']:
                     if ('tx' not in record.keys()) or ('tx' in record.keys() and record['tx'] == ''):
