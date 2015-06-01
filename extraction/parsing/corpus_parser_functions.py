@@ -402,18 +402,23 @@ def parse_xml(file_name, corpus_name):
         corpus[text_id][utterance_index]['length_in_words'] = len(words) - len(unglossed_words)
         
         # write words to corpus dic
-        word_index = 0
+        # corpus[text_id][utterance_index]['words'] is a list of words; initial index is -1
+        corpus[text_id][utterance_index]['words'] = []
+        word_index = -1
+        
         for w in words:
+            # count up word index and append empty Vividict to list to extend it
+            word_index += 1    
+            corpus[text_id][utterance_index]['words'].append(Vividict())
             
-            # get target_words for Yucatec which are under 'pho'
-            if corpus_name == 'Yucatec':
+            # all corpora except Yucatec have target words related to <w> 
+            if corpus_name != 'Yucatec':
+                corpus[text_id][utterance_index]['words'][word_index]['full_word'] = w.text
+                corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.attrib['target']            
+            # Yucatec only has target words on "pho" tier (dealt with further below)
+            elif corpus_name == 'Yucatec':
                 corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.text
                 corpus[text_id][utterance_index]['words'][word_index]['full_word'] = '???'
-                    
-                            
-            else:
-                corpus[text_id][utterance_index]['words'][word_index]['full_word'] = w.text
-                corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.attrib['target']
                 
             # pass down warnings
             if 'glossed' in w.attrib and w.attrib['glossed'] == 'no':
@@ -424,26 +429,18 @@ def parse_xml(file_name, corpus_name):
                 creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'not glossed; search ahead')
             if 'transcribed' in w.attrib and w.attrib['transcribed'] == 'insecure':
                 creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'transcription insecure')            
-            word_index += 1
                         
         # standard dependent tiers
         for dependent_tier in xml_dep_correspondences:
-            if corpus_name == 'Yucatec':
-                if dependent_tier == 'english translation':
-                    tier = u.find("a[@type='" + dependent_tier + "']")
-                    tier_name_JSON = 'spanish'
-                    try:
-                        creadd(corpus[text_id][utterance_index],tier_name_JSON, tier.text)
-                    except AttributeError:
-                        pass
-            else:    
-                tier = u.find("a[@type='" + dependent_tier + "']")
-                if tier is not None:
-                    try:
-                        tier_name_JSON = xml_dep_correspondences[dependent_tier]
-                        creadd(corpus[text_id][utterance_index], tier_name_JSON, tier.text)
-                    except AttributeError:
-                        pass
+            tier = u.find("a[@type='" + dependent_tier + "']")
+            if tier is not None:
+                try:
+                    tier_name_JSON = xml_dep_correspondences[dependent_tier]
+                    if corpus_name == 'Yucatec' and tier_name_JSON == 'english':
+                        tier_name_JSON = 'spanish'
+                    creadd(corpus[text_id][utterance_index], tier_name_JSON, tier.text)
+                except AttributeError:
+                    pass
                         
         # extended dependent tiers
         for extension in xml_ext_correspondences:
@@ -550,6 +547,10 @@ def parse_xml(file_name, corpus_name):
                 
             # go through words
             for word_index in range(0, max_length_words):
+                
+                # append empty Vividict to word list to extend it
+                corpus[text_id][utterance_index]['words'].append(Vividict())
+                
                 max_length_morphemes = max(len(morphology['mortyp'][word_index]), len(morphology['mormea'][word_index]), len(morphology['tarmor'][word_index]), len(morphology['actmor'][word_index]))
                 for morph_tier in ('mortyp', 'mormea', 'tarmor', 'actmor'):
                     tier_name_JSON = xml_other_correspondences[morph_tier]
@@ -571,8 +572,6 @@ def parse_xml(file_name, corpus_name):
         # EOF Cree                    
 
         elif corpus_name == 'Inuktitut':
-            
-            # TODO stuff from corpus_parser_documentation
             
             # take over tier "coding" (= general syntactic coding). This tier cannot be treated in the shared XML part because it has very different contents across corpora.  
             tier = u.find("a[@type='coding']")
@@ -618,6 +617,9 @@ def parse_xml(file_name, corpus_name):
                 
                 # go through words on gloss tier
                 for w in words:
+                    
+                    # append empty Vividict to word list to extend it
+                    corpus[text_id][utterance_index]['words'].append(Vividict())
                     
                     # words of the form [=? ...] are target glosses for the last word -> set a flag and decrease word index
                     target_gloss = False
@@ -712,6 +714,9 @@ def parse_xml(file_name, corpus_name):
                 
                 # go through words on gloss tier
                 for w in words:
+                    
+                    # append empty Vividict to word list to extend it
+                    corpus[text_id][utterance_index]['words'].append(Vividict())
                                         
                     # some words in <w> have a warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
                     # -> incremeent the <w> counter by one as long as the present morphological word is associated with the next <w>
@@ -860,6 +865,10 @@ def parse_xml(file_name, corpus_name):
             # note that there are two tags for compounds. <wk> (between <u> and <w>) is considered irrelevant for us and therefore removed further above in the general part. It is used rarely (21 times) and inconsistently. The other one, <mwc> (between <mor> and <mw> is part of the morphology subtree and is parsed here. 
             word_index = 0
             for w in u.findall('.//w'):
+                
+                # append empty Vividict to word list to extend it
+                corpus[text_id][utterance_index]['words'].append(Vividict())
+                
                 morphology = w.find('mor')
                 
                 if morphology is not None:
@@ -997,6 +1006,9 @@ def parse_xml(file_name, corpus_name):
                     
                 # go through words
                 for w in gloss_words:
+                    
+                    # append empty Vividict to word list to extend it
+                    corpus[text_id][utterance_index]['words'].append(Vividict())
                     
                     # ignore punctuation in the segment/gloss tiers; this shouldn't be counted as morphological words
                     if re.search('^[.!\?]$', w):
@@ -1148,6 +1160,9 @@ def parse_xml(file_name, corpus_name):
                 
                 # go through words on gloss tier
                 for w in words:
+                    
+                    # append empty Vividict to word list to extend it
+                    corpus[text_id][utterance_index]['words'].append(Vividict())
                                         
                     # some words in <w> have a warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
                     # -> incremeent the <w> counter by one as long as the present morphological word is associated with the next <w>
@@ -1296,8 +1311,13 @@ def parse_xml(file_name, corpus_name):
                 
                 # set morpheme counter
                 morpheme_index = 0
-                ## go through words on morpheme level and split on '#' or ':', preserving the delimiter!
+                
+                # go through words on morpheme level and split on '#' or ':', preserving the delimiter!
                 for word in words:
+                    
+                    # append empty Vividict to word list to extend it
+                    corpus[text_id][utterance_index]['words'].append(Vividict())
+                    
                     # process words with neither prefixes nor suffixes
                     if not '#' in word and not ':' in word:
                         stem_gloss = re.sub('\|.*','',word)
@@ -1366,8 +1386,7 @@ def parse_xml(file_name, corpus_name):
                 if length_morphology != corpus[text_id][utterance_index]['length_in_words']:
                     print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ': general word tier <w> has ' 
                     + str(corpus[text_id][utterance_index]['length_in_words']) + ' words vs ' + str(length_morphology) + ' in "mor" (= morphology)')
-                    creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment full_word : segments/glosses')
-                
+                    creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment full_word : segments/glosses')            
                 
             # if there is no morphology, add warning to complete utterance
             elif morphology is None:
