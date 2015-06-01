@@ -1307,6 +1307,7 @@ def parse_xml(file_name, corpus_name):
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
                         morpheme_index +=1
                     
+                    
                     # get prefixes
                     pfx_marker = re.search('#', word)
                     # split on '#' and preserve '#'
@@ -1336,9 +1337,19 @@ def parse_xml(file_name, corpus_name):
                     # 2) words that only might have prefix
                     else:
                         stem_marker2 = re.search('(\|.*)?#(.*)\|(.*?)$', word)
+                        stem_marker3 = re.search('^(.*)\|(.*?)[:\|]', word)
+                        
                         if stem_marker2:
                             stem_gloss = re.sub('[\|:].*','',stem_marker2.group(2))
                             stem = stem_marker2.group(3)
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
+                            morpheme_index +=1
+                        
+                        elif stem_marker3:
+                            stem_gloss = re.sub('[\|:].*','',stem_marker3.group(1))
+                            stem = stem_marker3.group(2)
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
