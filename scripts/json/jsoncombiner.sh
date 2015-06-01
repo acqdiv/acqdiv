@@ -6,7 +6,7 @@ combinejson() {
 	RECURSIVE=$3
 
 	[[ $DIR = */ ]] || DIR="$DIR/"
-	[[ $OUTDIR = */ ]] || OUTDIR="$DIR/"
+	[[ $OUTDIR = */ ]] || OUTDIR="$OUTDIR/"
 
 	echo "target: $DIR"
 	echo "out: $OUTDIR"
@@ -14,15 +14,33 @@ combinejson() {
 
 	if [ $RECURSIVE -eq 1 ]
 	then
-		for file in "$DIR"*
+		for sub in "$DIR"*
 		do
-			if [[ -d $file && $file != "*./" && $file != "$DIR" ]]
+			if [[ -d $sub && $sub != "*./" && $sub != "$DIR" ]]
 			then
-				cat "$file"/*.json > "$OUTDIR"$(basename $file).json
+				OUT="$OUTDIR"$(basename $sub).json
+				echo '{"metadata": [' > "$OUT"
+				for file in "$sub"/*.json
+				do
+					cat "$file" >> "$OUT"
+					echo "," >> "$OUT"
+				done
+				sed -i '$s/,$//' "$OUT"
+				echo ']}' >> "$OUT"
+				ed -s "$OUT" <<< $'1,$j\nwq'
 			fi
 		done
 	else
-		cat "$DIR"*.json > "$OUTDIR"$(basename $DIR).json
+		OUT="$OUTDIR"$(basename $DIR)".json"
+		echo '{"metadata": [' > "$OUT"
+		for file in "$DIR"*.json
+		do
+			cat "$file" >> "$OUT"
+			echo "," >> "$OUT"
+		done
+		sed -i '$s/,$//' "$OUT"
+		echo ']}' >> "$OUT"
+		ed -s "$OUT" <<< $'1,$j\nwq'
 	fi
 }
 
