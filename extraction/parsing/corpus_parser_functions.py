@@ -1687,14 +1687,15 @@ def parse_toolbox(file_name, corpus_name):
                             word_index = -1
                             for m in morphemes:
                                 
-                                # count up word index, extend list if necessary
-                                word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
-                                
                                 # ignore punctuation
                                 if re.search('^([\.,;!:\"\+\-\/]+|\?)$|PUNCT|ANNOT', m):
-                                    continue
+                                    continue    
+                                # count up word index, extend list if necessary
+                                else:    
+                                    word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
+                                    
                                 # tier \lem contains lemmas - take every lemma as the first morpheme of the corresponding word
-                                elif tier is 'lem':
+                                if tier is 'lem':
                                     corpus[text_id][utterance_index]['words'][word_index]['morphemes'][0][tier_name_JSON] = m
                                 # tier \mor may contain POS and glosses - split and assign
                                 elif tier is 'mor':
@@ -1715,12 +1716,12 @@ def parse_toolbox(file_name, corpus_name):
                                         gloss = re.sub(':', '.', gloss)
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][0][tier_name_JSON] = gloss
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][0]['pos_target'] = pos
-
+                                        
                                     # if there is no ":", POS and gloss are identical (e.g. for particles PCL)
                                     else:
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][0][tier_name_JSON] = m
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][0]['pos_target'] = m
-                            
+                                                            
                 # EOF Russian morpheme tiers
                 
                 # check all alignments
@@ -1799,7 +1800,7 @@ def parse_toolbox(file_name, corpus_name):
                 
                 elif corpus_name == 'Indonesian':
                     # go through words once more and add corresponding target words for fragments and shortenings                    
-                    for w in corpus[text_id][utterance_index]['words']:
+                    for w in range(0, len(corpus[text_id][utterance_index]['words'])):
                         if corpus[text_id][utterance_index]['words'][w]['full_word']:                            
                             # if there are brackets, actual word is word with bracket contents removed and target word is word with brackets removed, e.g. wo(rd)s: actual word = "wos", target word = "words"
                             if re.search('\(', corpus[text_id][utterance_index]['words'][w]['full_word']):
