@@ -37,7 +37,7 @@ def clean_chat_line(s):
     # get rid of empty headers
     s = re.sub("^@.*:\\s*$", "", s)
     
-    s = re.sub("^%pho:", "%xtim:", s)
+    s = re.sub("^%pho:", "%tim:", s)
     s = re.sub("^%acT:", "%act:", s)
     s = re.sub("^%atc:", "%act:", s)
     s = re.sub("^%EXP:", "%exp:", s)
