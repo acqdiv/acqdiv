@@ -34,7 +34,8 @@ class Parser(object):
         - <corpus.id>_metadata.csv (csv table of all metadata; to add)
         """
 
-    def __init__(self, path, outpath):
+    def __init__(self, corpus, path, outpath):
+        self.corpus = corpus
         self.path = path
         self.outpath = outpath
         self.tree = objectify.parse(path)
@@ -44,6 +45,9 @@ class Parser(object):
             '__attrs__': self.parse_attrs(self.root),
                     }
         self.metadata['__attrs__']['Cname'] = re.sub(r'\.xml.*|\.imdi.*', "", os.path.basename(str(self.path)))
+        if self.corpus == "Indonesian":
+            match = re.match(r"(\w{3})-\d{2}(\d{2})-(\d{2})-(\d{2})",self.metadata['__attrs__']['Cname'])
+            self.metadata['__attrs__']['Cname'] = match.group(1).upper() + '-' + match.group(4) + match.group(3) + match.group(2)
         self.metadata['__attrs__']['schemaLocation'] = self.metadata['__attrs__'].pop('{http://www.w3.org/2001/XMLSchema-instance}schemaLocation')
 
         # assert existing_dir(self.input_path())
@@ -104,8 +108,8 @@ class Parser(object):
 class Imdi(Parser):
     """ subclass of metadata.Parser to deal with IMDI metadata (Chintang and Russian via S. Stoll) """
     #TODO: start dropping unwanted fields
-    def __init__(self, path, outpath):
-        Parser.__init__(self, path, outpath)
+    def __init__(self, corpus, path, outpath):
+        Parser.__init__(self, corpus, path, outpath)
         self.metadata["participants"] = self.get_participants(self.root)
         self.metadata["session"] = self.get_session_data(self.root)
         self.metadata["project"] = self.get_project_data(self.root)
@@ -175,8 +179,8 @@ class Imdi(Parser):
 
 class Chat(Parser):
     """ subclass of metadata.Parser class to deal with CHAT XML metadata extraction """
-    def __init__(self, path, outpath):
-        Parser.__init__(self, path, outpath)
+    def __init__(self, corpus, path, outpath):
+        Parser.__init__(self, corpus, path, outpath)
         self.metadata["participants"] = self.get_participants(self.root)
         self.metadata["comments"] = self.get_comments(self.root)
         self.write_json(self.metadata)

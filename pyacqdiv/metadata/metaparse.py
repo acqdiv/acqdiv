@@ -7,8 +7,8 @@ import os
 
 class MetaExtractor():
     
-    def __init__(self, meta_dir, cfg):
-        self.path = meta_dir
+    def __init__(self, corpus, cfg):
+        self.corpus = corpus
         self.cfg = cfg
         if self.cfg['cdc'] == 'yes':
             self.cdc = CdcParser(self.cfg['cdc_path'])
@@ -27,7 +27,7 @@ class MetaExtractor():
                     of = os.path.join(od, filename.split(".")[0])
                     with open(os.path.join(self.cfg['meta_dir'], filename), 'r') as fp:
                         try:
-                            md.Imdi(fp, of)
+                            md.Imdi(self.corpus, fp, of)
                         except Exception as e:
                             print("Skipped file " + filename + ":")
                             print("Error: {0}".format(e))
@@ -38,7 +38,7 @@ class MetaExtractor():
                     of = os.path.join(od, filename.split(".")[0])
                     with open(os.path.join(self.cfg['meta_dir'], filename), 'r') as fp:
                         try:
-                            md.Chat(fp, of)
+                            md.Chat(self.corpus, fp, of)
                         except Exception as e:
                             print("Skipped file " + filename + ":")
                             print("Error: {0}".format(e))

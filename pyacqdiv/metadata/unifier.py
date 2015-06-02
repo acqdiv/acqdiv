@@ -210,6 +210,7 @@ class Unifier():
                 except Exception as e:
                         print("Couldn't calculate age in " + self.path)
                         print("Error: {0}".format(e))
+                        participant['age'] = None
 
         self.metadata = metadata
 

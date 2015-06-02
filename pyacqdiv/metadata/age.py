@@ -35,7 +35,8 @@ def format_imdi_age(birthdate, sessiondate):
         else:
             return("%d;%d.0" % (diff.years, diff.months))
     else: 
-        return("%d;0.0" % diff.years)
+        age = "%d;0.0" % diff.years
+        return(age if age != "0;0.0" else None)
 
 def format_xml_age(age_str):
     age = re.match("P(\d*)Y(\d*)M(\d*)?D?", age_str)

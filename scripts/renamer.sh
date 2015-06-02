@@ -13,7 +13,7 @@ do
 
 	for file in "$DIR"*
 	do
-		mv $file "$DIR"$(basename $DIR)"_"$(basename $file)
+		mv $file "$DIR"$(basename $DIR)"-"$(basename $file)
 	done
 
 	shift
