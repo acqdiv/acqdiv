@@ -49,6 +49,8 @@ TODO
       ]
 }
 
+TODO get rid of empty {} in JSON
+
 '''
 
 ################
@@ -96,6 +98,16 @@ def creadd(location, key, value):
         location[key] = value
     else:
         location[key] += '; ' + value
+
+# increment an index and extend list nested in Vividict accordingly
+def list_index_up(index, vivilist):
+    # count up index
+    index += 1
+    # check if list in Vividict is too short for present index
+    if len(vivilist) <= index:
+        # if it is, append empty element to list to extend index
+        vivilist.append(Vividict())
+    return index
 
 # format-specific parsing is done by more specific functions called by this one (output is one big json file per corpus)
 def parse_corpus(corpus_name, corpus_dir, corpus_format):
@@ -187,12 +199,12 @@ def parse_xml(file_name, corpus_name):
     # get all utterances
     for u in root.findall('.//u'):
 
-        # count up utterance index and append empty Vividict to list to extend it
-        utterance_index += 1    
-        corpus[text_id].append(Vividict())
+        # count up utterance index, extend list if necessary
+        utterance_index = list_index_up(utterance_index, corpus[text_id])
         
         # get utterance ID and speaker ID
-        corpus[text_id][utterance_index]['utterance_id'] = u.attrib['uID']
+        utterance_id = u.attrib['uID']
+        corpus[text_id][utterance_index]['utterance_id'] = utterance_id
         corpus[text_id][utterance_index]['speaker_id'] = u.attrib['who']
 
         # various optional tags under <u>
@@ -233,14 +245,6 @@ def parse_xml(file_name, corpus_name):
                     w.attrib['target'] = '???'
                     w.attrib['glossed'] = 'no'
                     continue
-                #if 'formType' in w.attrib and w.attrib['formType'] == 'onomatopoeia':
-                #    w.attrib['target'] = '???'
-                #    w.attrib['glossed'] = 'no'
-                #    continue
-                #if 'formType' in w.attrib and w.attrib['formType'] == 'family-specific':
-                #    w.attrib['target'] = '???'
-                #    w.attrib['glossed'] = 'no'
-                #    continue
             if 'type' in w.attrib and w.attrib['type'] == 'omission':
                 u.remove(w)
         
@@ -407,9 +411,8 @@ def parse_xml(file_name, corpus_name):
         word_index = -1
         
         for w in words:
-            # count up word index and append empty Vividict to list to extend it
-            word_index += 1    
-            corpus[text_id][utterance_index]['words'].append(Vividict())
+            # count up word index, extend list if necessary
+            word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
             
             # all corpora except Yucatec have target words related to <w> 
             if corpus_name != 'Yucatec':
@@ -510,7 +513,7 @@ def parse_xml(file_name, corpus_name):
                     
                     # check alignment with words that were found in <w> 
                     if len(words) != corpus[text_id][utterance_index]['length_in_words']:
-                        print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ': general word tier <w> has ' 
+                        print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ': general word tier <w> has ' 
                             + str(corpus[text_id][utterance_index]['length_in_words']) + ' words vs ' + str(len(words)) + ' in "' + morph_tier + '" (= ' 
                             + tier_name_JSON + ')')
                         creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment full_word : ' + tier_name_JSON)
@@ -540,23 +543,23 @@ def parse_xml(file_name, corpus_name):
             for morph_tier in ('mortyp', 'mormea', 'tarmor', 'actmor'):
                 tier_name_JSON = xml_other_correspondences[morph_tier]
                 if len(morphology[morph_tier]) != max_length_words and len(morphology[morph_tier]) != 0:
-                    print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ': there should be ' 
+                    print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ': there should be ' 
                         + str(max_length_words) + ' words in all tiers, but ' + morph_tier + ' (=' + tier_name_JSON + ') has only ' 
                         + str(len(morphology[morph_tier]))) 
                     creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment between morphology tiers - word numbers don\'t match. Check' + tier_name_JSON)
                 
             # go through words
-            for word_index in range(0, max_length_words):
+            for word_index in range(-1, max_length_words):
                 
-                # append empty Vividict to word list to extend it
-                corpus[text_id][utterance_index]['words'].append(Vividict())
+                # count up word index, extend list if necessary
+                word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
                 
                 max_length_morphemes = max(len(morphology['mortyp'][word_index]), len(morphology['mormea'][word_index]), len(morphology['tarmor'][word_index]), len(morphology['actmor'][word_index]))
                 for morph_tier in ('mortyp', 'mormea', 'tarmor', 'actmor'):
                     tier_name_JSON = xml_other_correspondences[morph_tier]
                     # check morpheme alignment
                     if len(morphology[morph_tier][word_index]) != max_length_morphemes and len(morphology[morph_tier][word_index]) != 0:
-                        print('panalignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ', word ' + str(word_index) + ': there should be ' 
+                        print('panalignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ', word ' + str(word_index) + ': there should be ' 
                             + str(max_length_morphemes) + ' morphemes in all tiers, but ' + morph_tier + ' (=' + tier_name_JSON + ') has only ' 
                             + str(len(morphology[morph_tier][word_index])) + ' for this word')
                         creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'broken alignment between morphology tiers - morpheme numbers don\'t match. Check ' + tier_name_JSON)    
@@ -612,14 +615,14 @@ def parse_xml(file_name, corpus_name):
                 
                 # split mor tier into words, reset counters to 0
                 words = re.split('\\s+', morphology.text)
-                word_index = 0
+                word_index = -1
                 length_morphology = 0
                 
                 # go through words on gloss tier
                 for w in words:
                     
-                    # append empty Vividict to word list to extend it
-                    corpus[text_id][utterance_index]['words'].append(Vividict())
+                    # count up word index, extend list if necessary
+                    word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
                     
                     # words of the form [=? ...] are target glosses for the last word -> set a flag and decrease word index
                     target_gloss = False
@@ -633,7 +636,7 @@ def parse_xml(file_name, corpus_name):
                     # -> incremeent the <w> counter by one as long as the present morphological word is associated with the next <w>
                     while('warnings' in corpus[text_id][utterance_index]['words'][word_index].keys() and
                         re.search('not glossed', corpus[text_id][utterance_index]['words'][word_index]['warnings'])):
-                        word_index += 1
+                         word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
                                                             
                     # set morpheme counter
                     morpheme_index = 0
@@ -680,14 +683,13 @@ def parse_xml(file_name, corpus_name):
                                     
                         morpheme_index += 1                                
                     
-                    # count up words
-                    word_index += 1
+                    # count up morphology
                     length_morphology += 1
                                 
                 # check alignment with words that were found in <w>
                 # note: alignment on morpheme-level doesn't have to be checked at all for Inuktitut because the segment and gloss tiers are not separate
                 if length_morphology != corpus[text_id][utterance_index]['length_in_words']:
-                    print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ': general word tier <w> has '
+                    print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ': general word tier <w> has '
                         + str(corpus[text_id][utterance_index]['length_in_words']) + ' words vs ' + str(length_morphology) + ' in "mor" (= morphology)')
                     creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment full_word : segments/glosses')
 
@@ -710,19 +712,19 @@ def parse_xml(file_name, corpus_name):
                                 
                 # split trn tier into words, reset counter to 0
                 words = re.split('\\s+', morphology.text)
-                word_index = 0
+                word_index = -1
                 
                 # go through words on gloss tier
                 for w in words:
                     
-                    # append empty Vividict to word list to extend it
-                    corpus[text_id][utterance_index]['words'].append(Vividict())
+                    # count up word index, extend list if necessary
+                    word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
                                         
                     # some words in <w> have a warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
                     # -> incremeent the <w> counter by one as long as the present morphological word is associated with the next <w>
                     while('warnings' in corpus[text_id][utterance_index]['words'][word_index].keys() and
                         re.search('not glossed', corpus[text_id][utterance_index]['words'][word_index]['warnings'])):
-                            word_index += 1
+                            word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
                                                             
                     # set morpheme counter
                     morpheme_index = 0
@@ -793,10 +795,7 @@ def parse_xml(file_name, corpus_name):
                                 corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = suffix_gloss
                                 corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
                                 morpheme_index += 1
-                    
-                    # count up words
-                    word_index += 1
-                
+                                    
 
                 # remember length of morphology tier in words
                 length_morphology = len(words)
@@ -844,7 +843,7 @@ def parse_xml(file_name, corpus_name):
                 # check alignment with words that were found in <w>
                 # note: alignment on morpheme-level doesn't have to be checked at all for MiiPro because the segment and gloss tiers are not separate
                 if length_morphology != corpus[text_id][utterance_index]['length_in_words']:
-                    print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ': general word tier <w> has ' 
+                    print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ': general word tier <w> has ' 
                         + str(corpus[text_id][utterance_index]['length_in_words']) + ' words vs ' + str(length_morphology) + ' in "trn" (= morphology)')
                     creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment full_word : segments/glosses')
 
@@ -863,11 +862,11 @@ def parse_xml(file_name, corpus_name):
             
             # Miyata is the only corpus with morphology coded in explicit XML style, so at least alignment doesn't have to be checked
             # note that there are two tags for compounds. <wk> (between <u> and <w>) is considered irrelevant for us and therefore removed further above in the general part. It is used rarely (21 times) and inconsistently. The other one, <mwc> (between <mor> and <mw> is part of the morphology subtree and is parsed here. 
-            word_index = 0
+            word_index = -1
             for w in u.findall('.//w'):
                 
-                # append empty Vividict to word list to extend it
-                corpus[text_id][utterance_index]['words'].append(Vividict())
+                # count up word index, extend list if necessary
+                word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
                 
                 morphology = w.find('mor')
                 
@@ -951,14 +950,11 @@ def parse_xml(file_name, corpus_name):
                             # add gloss for all other fused suffixes gloss to the gloss of the preceding stem
                             else:
                                 corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index-1]['glosses_target'] += '.' + s.text
-                              
-                    # count up words
-                    word_index += 1
-                        
+                                                      
                 # if there is no morphology, add warning to present word and count up
                 elif morphology is None:
                     creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'not glossed')
-                    word_index += 1
+                    word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
 
         # EOF Japanese Miyata                
                         
@@ -972,6 +968,7 @@ def parse_xml(file_name, corpus_name):
                 # split into words
                 word_index = 0
                 segment_words = re.split('\\s+', segment_tier.text)
+                
                 for w in segment_words:
                     # Check brackets. In Sesotho, these are only used to mark contractions of the verb 'go' which are conventional in both child and adult speech. The form of 'go' is given in brackets from the first to the last morpheme, is completely covert, and does not correspond to an element in <w>, so drop it altogether. The following, partially bracketed INF (if-) has an effect on the contracted surface form, so only remove the brackets but keep the gloss.
                     if re.search('^\(.*\)$', w):
@@ -989,7 +986,7 @@ def parse_xml(file_name, corpus_name):
             # Glosses and POS
             gloss_tier = u.find("a[@type='coding']")    
             if gloss_tier is not None: 
-                word_index = 0
+                word_index = -1
                 # first remove spaces in noun class brackets
                 gloss_tier.text = re.sub('\\s+,\\s+', ',', gloss_tier.text)
                 # replace / as noun class separator by | so it can't be confused with / as a morpheme separator
@@ -999,16 +996,16 @@ def parse_xml(file_name, corpus_name):
                 gloss_words = re.split('\\s+', gloss_tier.text)
                 
                 # check alignment between segments and glosses on word level
-                if len(gloss_words) != len(segment_words):
-                    print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ': tier "target gloss" (= segments_target) has ' + 
+                if len(gloss_words) != len(segments):
+                    print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ': tier "target gloss" (= segments_target) has ' + 
                         str(len(segments)) + ' words vs. ' + str(len(gloss_words)) + ' in "coding" (= glosses_target)')
                     creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment segments_target : glosses_target')
                     
                 # go through words
                 for w in gloss_words:
                     
-                    # append empty Vividict to word list to extend it
-                    corpus[text_id][utterance_index]['words'].append(Vividict())
+                    # count up word index, extend list if necessary
+                    word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
                     
                     # ignore punctuation in the segment/gloss tiers; this shouldn't be counted as morphological words
                     if re.search('^[.!\?]$', w):
@@ -1029,7 +1026,7 @@ def parse_xml(file_name, corpus_name):
                     
                     # check alignment between segments and glosses on morpheme level
                     if len(glosses) != len(segments[word_index]):
-                        print('alignment problem in' + file_name + ', utterance ' + str(utterance_index) + ', word ' + str(word_index) +
+                        print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ', word ' + str(word_index) +
                             ': tier "target gloss" (= segments_target) has ' + str(len(segments[word_index])) + ' morphemes vs. ' + str(len(glosses)) + 
                             ' in "coding" (= glosses_target)')
                         creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'broken alignment segments_target : glosses_target')
@@ -1128,14 +1125,11 @@ def parse_xml(file_name, corpus_name):
                         
                         # count up morphemes
                         morpheme_index += 1
-                        
-                    # count up words
-                    word_index += 1
-                
+                                        
                 # check alignment between glosses and words that were found in <w>. This can be done only now because glosses contain punctuation (dropped in the end) but <w> doesn't. 
                 # alignment between <w> and segments doesn't have to be checked separately because glosses:segments is already checked above and good alignment for both glosses:segments and glosses:<w> entails good alignment for segments:<w>
                 if word_index != corpus[text_id][utterance_index]['length_in_words']:
-                    print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ': general word tier <w> has ' 
+                    print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ': general word tier <w> has ' 
                         + str(corpus[text_id][utterance_index]['length_in_words']) + ' words vs ' + str(word_index) + ' in "coding" (= glosses_target)')
                     creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment full_word : glosses_target')
             # if there is no morphology, add warning to complete utterance
@@ -1156,19 +1150,19 @@ def parse_xml(file_name, corpus_name):
                 # split mor tier into words, reset counter to 0
                 words = re.split('\\s+',morphology.text)
 
-                word_index = 0
+                word_index = -1
                 
                 # go through words on gloss tier
                 for w in words:
                     
-                    # append empty Vividict to word list to extend it
-                    corpus[text_id][utterance_index]['words'].append(Vividict())
+                    # count up word index, extend list if necessary
+                    word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
                                         
                     # some words in <w> have a warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
                     # -> incremeent the <w> counter by one as long as the present morphological word is associated with the next <w>
                     while('warnings' in corpus[text_id][utterance_index]['words'][word_index].keys() and
                         re.search('not glossed', corpus[text_id][utterance_index]['words'][word_index]['warnings'])):
-                            word_index += 1
+                            word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
                                                             
                     # set morpheme counter
                     morpheme_index = 0
@@ -1237,11 +1231,7 @@ def parse_xml(file_name, corpus_name):
                                 corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = suffix_form
                                 corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = suffix_gloss
                                 corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
-                                morpheme_index += 1
-                    
-                    # count up words
-                    word_index += 1
-                
+                                morpheme_index += 1                
 
                 # remember length of morphology tier in words
                 length_morphology = len(words)
@@ -1285,7 +1275,7 @@ def parse_xml(file_name, corpus_name):
 
                 # check alignment with words that were found in <w>
                 if length_morphology != corpus[text_id][utterance_index]['length_in_words']:
-                    print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ': general word tier <w> has ' 
+                    print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ': general word tier <w> has ' 
                         + str(corpus[text_id][utterance_index]['length_in_words']) + ' words vs ' + str(length_morphology) + ' in "mor" (= morphology)')
                     creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment full_word : segments/glosses')
 
@@ -1313,25 +1303,24 @@ def parse_xml(file_name, corpus_name):
                 morpheme_index = 0
                 
                 # go through words on morpheme level and split on '#' or ':', preserving the delimiter!
-                for word in words:
+                for w in words:
                     
-                    # append empty Vividict to word list to extend it
-                    corpus[text_id][utterance_index]['words'].append(Vividict())
+                    # count up word index, extend list if necessary
+                    word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
                     
                     # process words with neither prefixes nor suffixes
-                    if not '#' in word and not ':' in word:
-                        stem_gloss = re.sub('\|.*','',word)
-                        stem = re.sub('.*\|','',word)
+                    if not '#' in w and not ':' in w:
+                        stem_gloss = re.sub('\|.*','',w)
+                        stem = re.sub('.*\|','',w)
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
                         morpheme_index +=1
                     
-                    
                     # get prefixes
-                    pfx_marker = re.search('#', word)
+                    pfx_marker = re.search('#', w)
                     # split on '#' and preserve '#'
-                    prefixes = '#,'.join(word.split('#')).split(',')
+                    prefixes = '#,'.join(w.split('#')).split(',')
                     morpheme_index = 0
                     for w in prefixes:
                         check_pfx = re.search('(.*)\|(.+#)',w)
@@ -1346,7 +1335,7 @@ def parse_xml(file_name, corpus_name):
                     
                     # get stem of words that contain prefix(es) and suffix(es)
                     # 1) words that might have prefix and suffix
-                    stem_marker = re.search('(.*)?#(.*)\|(.*?):', word)
+                    stem_marker = re.search('(.*)?#(.*)\|(.*?):', w)
                     if stem_marker:
                         stem_gloss = re.sub('[\|:].*','',stem_marker.group(2))
                         stem = re.sub('.*#','',stem_marker.group(3))
@@ -1356,8 +1345,8 @@ def parse_xml(file_name, corpus_name):
                         morpheme_index +=1
                     # 2) words that only might have prefix
                     else:
-                        stem_marker2 = re.search('(\|.*)?#(.*)\|(.*?)$', word)
-                        stem_marker3 = re.search('^(.*)\|(.*?)[:\|]', word)
+                        stem_marker2 = re.search('(\|.*)?#(.*)\|(.*?)$', w)
+                        stem_marker3 = re.search('^(.*)\|(.*?)[:\|]', w)
                         
                         if stem_marker2:
                             stem_gloss = re.sub('[\|:].*','',stem_marker2.group(2))
@@ -1376,9 +1365,9 @@ def parse_xml(file_name, corpus_name):
                             morpheme_index +=1
                         
                     # get suffixes            
-                    sfx_marker = re.search(':',word)
+                    sfx_marker = re.search(':', w)
                     # split on ':' and preserve ':'
-                    suffixes = ',:'.join(word.split(':')).split(',')
+                    suffixes = ',:'.join(w.split(':')).split(',')
                     for w in suffixes:
                         check_suffix = re.search('(:.*)\|(-.*)', w)
                         if check_suffix:
@@ -1389,8 +1378,6 @@ def parse_xml(file_name, corpus_name):
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
                             morpheme_index +=1
                     
-                    # increase word counter for words on morpheme level
-                    word_index += 1
                 length_morphology = len(words)
                     
                 # check alignment with words that were found in <w>
@@ -1435,9 +1422,8 @@ def parse_toolbox(file_name, corpus_name):
         # go through utterances
         for u in utterances:
             
-            # count up utterance index and append empty Vividict to list to extend it
-            utterance_index += 1    
-            corpus[text_id].append(Vividict())
+            # count up utterance index, extend list if necessary
+            utterance_index = list_index_up(utterance_index, corpus[text_id])
             
             # split by single \n to get tiers
             tiers = re.split('\\n', u)
@@ -1458,6 +1444,8 @@ def parse_toolbox(file_name, corpus_name):
                     content = content.rstrip()
 
                     # edit field markers and contents
+                    # all: redundant spaces
+                    content = re.sub('\\s+', ' ', content)
                     # Chintang: inconsistent field markers
                     field_marker = re.sub('TOS', 'tos', field_marker)
                     # Russian & Indonesian: garbage imported from CHAT
@@ -1609,14 +1597,21 @@ def parse_toolbox(file_name, corpus_name):
                         
                         # split into words and add them to corpus
                         words = re.split('\\s+', record[tier])
-                        word_index = 0
+                        # corpus[text_id][utterance_index]['words'] is a list of words; initial index is -1
+                        corpus[text_id][utterance_index]['words'] = []
+                        word_index = -1
+                        
                         for w in words:
+                            # count up word index, extend list if necessary
+                            word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
+                            
+                            # add word
                             corpus[text_id][utterance_index]['words'][word_index][tier_name_JSON] = w
-                            word_index += 1
                 
                 # morpheme-level tiers in Toolbox have to be split in a different way from XML because there are no clear word separators
                 # go through all morphemes and infer where words begin and end based on the morpheme separator "-"
                 # Russian is exceptional because it does not have any segmentation - it is treated further below
+                
                 if corpus_name in ['Chintang', 'Indonesian']:
                     for tier in tbx_mor_tier_correspondences[corpus_name].keys(): 
                         tier_name_JSON = tbx_mor_tier_correspondences[corpus_name][tier]
@@ -1630,7 +1625,8 @@ def parse_toolbox(file_name, corpus_name):
                                 if re.search('.\-$', m):
                                     # if last morpheme was stem or suffix, start a new word
                                     if word_might_end_here == True:
-                                        word_index += 1
+                                        # count up word index, extend list if necessary
+                                        word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
                                         morpheme_index = 0
                                     # add morpheme to corpus dic, overwriting existing POS. Indonesian doesn't have POS, so keep separator!
                                     if corpus_name == 'Chintang': 
@@ -1647,7 +1643,8 @@ def parse_toolbox(file_name, corpus_name):
                                 elif not re.search('^\-|\-$', m):
                                     # if last morpheme was stem or suffix, start a new word
                                     if word_might_end_here == True: 
-                                        word_index += 1
+                                        # count up word index, extend list if necessary
+                                        word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
                                         morpheme_index = 0
                                     # add morpheme to corpus dic
                                     corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = m
@@ -1674,6 +1671,8 @@ def parse_toolbox(file_name, corpus_name):
                                     word_might_end_here = False
                  
                         # Russian (no segmentations!) is dealt with differently; \text is used for the word tier while \lem and \mor go to pseud-morpheme tiers (only ever 1 morpheme per word, so morpheme_index is always 0)
+                # EOF Chintang/Indonesian morpheme tiers
+                
                 elif corpus_name is 'Russian':
                     # TODO Russian has clitics, marked by the separator ~
                     
@@ -1685,8 +1684,12 @@ def parse_toolbox(file_name, corpus_name):
                             record[tier] = re.sub('^\\s+|\\s+$', '', record[tier])
                             
                             morphemes = re.split('\\s+', record[tier])
-                            word_index = 0
+                            word_index = -1
                             for m in morphemes:
+                                
+                                # count up word index, extend list if necessary
+                                word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
+                                
                                 # ignore punctuation
                                 if re.search('^([\.,;!:\"\+\-\/]+|\?)$|PUNCT|ANNOT', m):
                                     continue
@@ -1717,12 +1720,13 @@ def parse_toolbox(file_name, corpus_name):
                                     else:
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][0][tier_name_JSON] = m
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][0]['pos_target'] = m
-                                word_index += 1
                             
+                # EOF Russian morpheme tiers
+                
                 # check all alignments
                 
                 if corpus[text_id][utterance_index]['words']:
-                    corpus[text_id][utterance_index]['length_in_words'] = max(corpus[text_id][utterance_index]['words'])+1
+                    corpus[text_id][utterance_index]['length_in_words'] = len(corpus[text_id][utterance_index]['words'])
                 else:
                     corpus[text_id][utterance_index]['length_in_words'] = 0
                     
@@ -1733,14 +1737,15 @@ def parse_toolbox(file_name, corpus_name):
                         if tier in record.keys():
                             tier_name_JSON = tbx_word_tier_correspondences[corpus_name][tier]
                             if not corpus[text_id][utterance_index]['words'][max_index_words][tier_name_JSON]:
-                                print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ': all tiers should have '
+                                print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ': all tiers should have '
                                     + str(max_index_words+1) + ' words, but ' + tier + ' (= ' + tier_name_JSON + ') has less')
                                 creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment: not enough elements in ' + tier_name_JSON)
                 else:
                     creadd(corpus[text_id][utterance_index], 'warnings', 'empty utterance')
                 
                 # morpheme tiers
-                for word_index in corpus[text_id][utterance_index]['words']:
+                for word_index in range(0, len(corpus[text_id][utterance_index]['words'])):
+                    
                     if corpus[text_id][utterance_index]['words'][word_index]['morphemes']:
                         max_index_morphemes = max(corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
                     else:
@@ -1751,7 +1756,7 @@ def parse_toolbox(file_name, corpus_name):
                         if tier in record.keys():
                             # print(utterance_index, tier, len(corpus[text_id][utterance_index]['words'][word_index]['morphemes']))
                             if not corpus[text_id][utterance_index]['words'][word_index]['morphemes'][max_index_morphemes][tier_name_JSON]:
-                                print('alignment problem in ' + file_name + ', utterance ' + str(utterance_index) + ', word ' + str(word_index) 
+                                print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ', word ' + str(word_index) 
                                     + ': all words should have ' + str(max_index_morphemes+1) + ' morphemes, but ' + tier + ' (= ' + tier_name_JSON + ') has less')
                                 creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'broken alignment: not enough elements in ' + tier_name_JSON)
                 # EOF Toolbox parser general part
