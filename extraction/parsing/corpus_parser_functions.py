@@ -111,6 +111,13 @@ def list_index_up(index, vivilist):
         vivilist.append(Vividict())
     return index
 
+# extend list nested in Vividict if it is to short for a counter variable
+def ext_vivi(index, vivilist):
+    # check if list in Vividict is too short for present index
+    if len(vivilist) <= index:
+        # if it is, append empty element to list to extend index
+        vivilist.append(Vividict())
+
 # format-specific parsing is done by more specific functions called by this one (output is one big json file per corpus)
 def parse_corpus(corpus_name, corpus_dir, corpus_format):
     
@@ -1677,25 +1684,35 @@ def parse_toolbox(file_name, corpus_name):
                     for tier in tbx_mor_tier_correspondences[corpus_name].keys(): 
                         tier_name_JSON = tbx_mor_tier_correspondences[corpus_name][tier]
                         if tier in record.keys():
-                            morphemes = re.split('\\s+', record[tier])
                             word_index = 0
-                            morpheme_index = 0
+                            morphemes = re.split('\\s+', record[tier])
                             word_might_end_here = False
+                            
+                            # corpus[text_id][utterance_index]['words'][word_index]['morphemes'] is a list of morphemes; initial index is 0
+                            if not corpus[text_id][utterance_index]['words'][word_index]['morphemes']:
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'] = []
+                            morpheme_index = 0
+                            
                             for m in morphemes:
+                                
                                 # prefix
                                 if re.search('.\-$', m):
                                     # if last morpheme was stem or suffix, start a new word
                                     if word_might_end_here == True:
                                         # count up word index, extend list if necessary
                                         word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
+                                        if not corpus[text_id][utterance_index]['words'][word_index]['morphemes']:
+                                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'] = []
                                         morpheme_index = 0
                                     # add morpheme to corpus dic, overwriting existing POS. Indonesian doesn't have POS, so keep separator!
+                                    ext_vivi(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])                                    
                                     if corpus_name == 'Chintang': 
                                         m = re.sub('\-', '', m)
                                     if tier_name_JSON in ['pos', 'pos_target']:
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = 'pfx'
                                     else:
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = m
+                                    # count up morpheme index
                                     morpheme_index += 1
                                     # set terminator flag
                                     word_might_end_here = False
@@ -1706,9 +1723,13 @@ def parse_toolbox(file_name, corpus_name):
                                     if word_might_end_here == True: 
                                         # count up word index, extend list if necessary
                                         word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
+                                        if not corpus[text_id][utterance_index]['words'][word_index]['morphemes']:    
+                                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'] = []
                                         morpheme_index = 0
                                     # add morpheme to corpus dic
+                                    ext_vivi(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
                                     corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = m
+                                    # count up morpheme index
                                     morpheme_index += 1
                                     # set terminator flag
                                     word_might_end_here = True
@@ -1716,12 +1737,14 @@ def parse_toolbox(file_name, corpus_name):
                                 # suffix
                                 elif re.search('^\-.', m):
                                     # add morpheme to corpus dic, overwriting existing POS. Indonesian doesn't have POS, so keep separator!
+                                    ext_vivi(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
                                     if corpus_name == 'Chintang': 
                                         m = re.sub('\-', '', m)
                                     if tier_name_JSON in ['pos', 'pos_target']:
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = 'sfx'
                                     else:
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = m
+                                    # count up morpheme index
                                     morpheme_index += 1
                                     # set terminator flag
                                     word_might_end_here = True
@@ -1746,6 +1769,10 @@ def parse_toolbox(file_name, corpus_name):
                             
                             morphemes = re.split('\\s+', record[tier])
                             word_index = -1
+                            # corpus[text_id][utterance_index]['words'][word_index]['morphemes'] is a list of morphemes; initial index is 0
+                            if not corpus[text_id][utterance_index]['words'][word_index]['morphemes']:
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'] = []
+                                
                             for m in morphemes:
                                 
                                 # ignore punctuation
@@ -1754,9 +1781,12 @@ def parse_toolbox(file_name, corpus_name):
                                 # count up word index, extend list if necessary
                                 else:    
                                     word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
+                                    if not corpus[text_id][utterance_index]['words'][word_index]['morphemes']:    
+                                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'] = []
                                     
                                 # tier \lem contains lemmas - take every lemma as the first morpheme of the corresponding word
                                 if tier is 'lem':
+                                    ext_vivi(0, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
                                     corpus[text_id][utterance_index]['words'][word_index]['morphemes'][0][tier_name_JSON] = m
                                 # tier \mor may contain POS and glosses - split and assign
                                 elif tier is 'mor':
@@ -1775,11 +1805,13 @@ def parse_toolbox(file_name, corpus_name):
                                             gloss = match_pos_and_gloss.group(2)
                                         pos = re.sub('\-', '.', pos)
                                         gloss = re.sub(':', '.', gloss)
+                                        ext_vivi(0, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][0][tier_name_JSON] = gloss
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][0]['pos_target'] = pos
                                         
                                     # if there is no ":", POS and gloss are identical (e.g. for particles PCL)
                                     else:
+                                        ext_vivi(0, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][0][tier_name_JSON] = m
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][0]['pos_target'] = m
                                                             
@@ -1809,7 +1841,7 @@ def parse_toolbox(file_name, corpus_name):
                 for word_index in range(0, len(corpus[text_id][utterance_index]['words'])):
                     
                     if corpus[text_id][utterance_index]['words'][word_index]['morphemes']:
-                        max_index_morphemes = max(corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
+                        max_index_morphemes = len(corpus[text_id][utterance_index]['words'][word_index]['morphemes'])-1
                     else:
                         max_index_morphemes = 0
                     
