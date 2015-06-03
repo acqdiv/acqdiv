@@ -67,11 +67,17 @@ def clean_chat_line(s):
     s = re.sub(r"@(\W+)", r"\1", s) #gets rid of "@" at the end of words
     s = re.sub(r'<(.+?)>\s\["\]', r"'\1'", s)
     s = re.sub(r'(\S+)\s\["\]', r"'\1'", s)
-    s = re.sub(r'\+/([^/])', r'+//\1', s) # check CHAT manual, this might be a dirty fix for legitimate CHAT with an utterance delimiter missing
+    s = re.sub(r'\+/([^/])', r'+//\1', s) ######### check CHAT manual, this might be a dirty fix for legitimate CHAT with an utterance delimiter missing
     s = re.sub(r"\+//\s\.", r"+//.", s)
     s = re.sub(r"\+//\n", r"+//.\n", s)
     s = re.sub(r"\[:\s(\w)", r"[: \1", s)
     s = re.sub(r"\[\s?(\w+)\]", r"[: \1]", s)
+    s = re.sub(r"<(\S+?)>", r"\1", s) # gets rid of redundant <> brackets around single elements; the <> are to signal that two elements are treated together
+    s = re.sub(r"[!\?\.](\s*\[.+?\]\s*[!\?\.])", r"\1", s) # deletes superfluous utterance delimiters.
+    #? s = re.sub(r"([!\?\.])(\s*\[.+?\]\s*?)$", r"\2\1", s) # moves utterance delimiter to to line end
+    #? s = re.sub(r"(^\*.+?[^\.\?!\s]+)$", r"\1 .", s) # adds utterance delimiters to utterance lines ending without utterance delimiter
+    #? s = re.sub(r"\[/\]", r"", s) # deletes redundant repetition marker (milk [/] milk = milk milk) since it often causes problems for CHATTER in combination with \W characters
+    #? s = re.sub(r"^([\*%].+?\t.+?)\t", r"\1 ", s)
     
     
         
