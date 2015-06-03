@@ -11,47 +11,9 @@ Author: Robert Schikowski <robert.schikowski@uzh.ch>
 
 '''
 
-TODO
-
-{
-    "Russian_goldstandard": {
-
-      "utterances" : [
-      {
-            "id" : "1",
-            "ends_at": "unknown",
-            "length_in_words": 4,
-            "sentence_type": "default",
-            "speaker_id": "BAB",
-            "starts_at": "unknown",
-            "words": [
-                {
-                    "full_word": "a",
-                    "morphemes": [
-                        {
-                            "glosses": "CONJ",
-                            "pos_target": "CONJ",
-                            "segments": "a"
-                        }]
-
-                },
-                {
-                    "full_word": "ehto",
-                    "morphemes": [
-                        {
-                            "glosses": "ACC.SG",
-                            "pos_target": "PRO.DEM.NOUN",
-                            "segments": "ehto"
-                        }
-                    ]
-                }
-          ]
-      }
-      ]
-}
-
 TODO get rid of empty {} in JSON
 TODO unify alignment checks across corpora (esp. calculating length of utterance in words)
+TODO write error messages to log file (adapting paths)
 
 '''
 
@@ -1837,22 +1799,23 @@ def parse_toolbox(file_name, corpus_name):
                 else:
                     creadd(corpus[text_id][utterance_index], 'warnings', 'empty utterance')
                 
-                # morpheme tiers
-                for word_index in range(0, len(corpus[text_id][utterance_index]['words'])):
+                # morpheme tiers (doesn't make sense for Russian)
+                if corpus_name in ['Chintang', 'Indonesian']:
+                    for word_index in range(0, len(corpus[text_id][utterance_index]['words'])):
                     
-                    if corpus[text_id][utterance_index]['words'][word_index]['morphemes']:
-                        max_index_morphemes = len(corpus[text_id][utterance_index]['words'][word_index]['morphemes'])-1
-                    else:
-                        max_index_morphemes = 0
+                        if corpus[text_id][utterance_index]['words'][word_index]['morphemes']:
+                            max_index_morphemes = len(corpus[text_id][utterance_index]['words'][word_index]['morphemes'])-1
+                        else:
+                            max_index_morphemes = 0
                     
-                    for tier in tbx_mor_tier_correspondences[corpus_name].keys():
-                        tier_name_JSON = tbx_mor_tier_correspondences[corpus_name][tier]
-                        if tier in record.keys():
-                            # print(utterance_index, tier, len(corpus[text_id][utterance_index]['words'][word_index]['morphemes']))
-                            if not corpus[text_id][utterance_index]['words'][word_index]['morphemes'][max_index_morphemes][tier_name_JSON]:
-                                print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ', word ' + str(word_index) 
-                                    + ': all words should have ' + str(max_index_morphemes+1) + ' morphemes, but ' + tier + ' (= ' + tier_name_JSON + ') has less')
-                                creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'broken alignment: not enough elements in ' + tier_name_JSON)
+                        for tier in tbx_mor_tier_correspondences[corpus_name].keys():
+                            tier_name_JSON = tbx_mor_tier_correspondences[corpus_name][tier]
+                            if tier in record.keys():
+                                # print(utterance_index, tier, len(corpus[text_id][utterance_index]['words'][word_index]['morphemes']))
+                                if not corpus[text_id][utterance_index]['words'][word_index]['morphemes'][max_index_morphemes][tier_name_JSON]:
+                                    print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ', word ' + str(word_index) 
+                                        + ': all words should have ' + str(max_index_morphemes+1) + ' morphemes, but ' + tier + ' (= ' + tier_name_JSON + ') has less')
+                                    creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'broken alignment: not enough elements in ' + tier_name_JSON)
                 # EOF Toolbox parser general part
                 
                 # corpus-specific part starts here
