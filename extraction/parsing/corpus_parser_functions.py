@@ -11,7 +11,7 @@ Author: Robert Schikowski <robert.schikowski@uzh.ch>
 
 '''
 
-TODO get rid of empty {} in JSON
+TODO get rid of empty {}, [] in JSON: Chintang, Cree, Indonesian, Inuktitut, Japanese MiiPro, Japanese Miyata, Russian, Turkish. Sesotho doesn't have this problem, and Yucatec only has [].
 TODO unify alignment checks across corpora (esp. calculating length of utterance in words)
 TODO write error messages to log file (adapting paths)
 
@@ -111,7 +111,25 @@ def parse_corpus(corpus_name, corpus_dir, corpus_format):
                 else:
                     print('parsing ' + file.name)
                     format_dic[corpus_format]['function'](file.name, corpus_name)
-                                            
+    
+    # # do some hacky cleaning: remove empty [], {} while looping over original corpus; remove corresponding entries from clean deepcopy
+    # corpus_clean = copy.deepcopy(corpus)
+    # for text_id in corpus:
+    #     # list of utterances empty: insert warning for dummy utterance 0
+    #     if corpus[text_id] == []:
+    #         corpus_clean[text_id][0]['warnings'] = 'no parsable utterances in this text!'
+    #         for u in corpus[text_id]:
+    #             # present utterance empty: pop from list
+    #             if corpus[text_id][u] == {}:
+    #                 corpus_clean[text_id].pop(u)
+    #             # list of words empty: delete key 'words'
+    #             if corpus[text_id][u]['words'] == []:
+    #                 del corpus_clean[text_id][u]['words']
+    #             for w in corpus[text_id][u]['words']:
+    #                 # list of morphemes empty: delete key 'morphemes'
+    #                 if corpus[text_id][u]['words'][w]['morphemes'] == []:
+    #                     del corpus_clean[text_id][u]['words'][w]['morphemes']
+                
     return corpus
 # EOF parse_corpus
     
@@ -141,8 +159,7 @@ def parse_corpus_per_file(corpus_name,corpus_dir,filename,corpus_format):
             format_dic[corpus_format]['function'](file.name, corpus_name)
                     
         yield corpus
-    
-    
+       
 # EOF parse_corpus_per_file
 
 # parse an open XML file
@@ -558,6 +575,12 @@ def parse_xml(file_name, corpus_name):
                                  m = re.sub('\?', '', m)
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = m
                             if(morpheme_index > 2): print(utterance_id, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
+        
+
+                # check if morpheme list has been filled; if not delete key
+                if corpus[text_id][utterance_index]['words'][word_index]['morphemes'] == []:
+                    del corpus[text_id][utterance_index]['words'][word_index]['morphemes']
+            # EOF word loop
         # EOF Cree                    
 
         elif corpus_name == 'Inuktitut':
@@ -673,7 +696,13 @@ def parse_xml(file_name, corpus_name):
                                     
                     # count up morphology
                     length_morphology += 1
-                                
+                    
+                    # check if morpheme list has been filled; if not delete key
+                    if corpus[text_id][utterance_index]['words'][word_index]['morphemes'] == []:
+                        del corpus[text_id][utterance_index]['words'][word_index]['morphemes']
+                        
+                # EOF word loop
+                
                 # check alignment with words that were found in <w>
                 # note: alignment on morpheme-level doesn't have to be checked at all for Inuktitut because the segment and gloss tiers are not separate
                 if length_morphology != corpus[text_id][utterance_index]['length_in_words']:
@@ -791,6 +820,13 @@ def parse_xml(file_name, corpus_name):
                                 corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
                                     
 
+                    
+                    # check if morpheme list has been filled; if not delete key
+                    if corpus[text_id][utterance_index]['words'][word_index]['morphemes'] == []:
+                        del corpus[text_id][utterance_index]['words'][word_index]['morphemes']
+                        
+                # EOF word loop
+                
                 # remember length of morphology tier in words
                 length_morphology = len(words)
                 
@@ -960,7 +996,13 @@ def parse_xml(file_name, corpus_name):
                 elif morphology is None:
                     creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'not glossed')
                     word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
-
+        
+                # check if morpheme list has been filled; if not delete key
+                if corpus[text_id][utterance_index]['words'][word_index]['morphemes'] == []:
+                    del corpus[text_id][utterance_index]['words'][word_index]['morphemes']
+                    
+            # EOF word loop
+            
         # EOF Japanese Miyata                
                         
         elif corpus_name == 'Sesotho':      
@@ -1138,6 +1180,13 @@ def parse_xml(file_name, corpus_name):
                         else: 
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = ''
                 
+                    
+                    # check if morpheme list has been filled; if not delete key
+                    if corpus[text_id][utterance_index]['words'][word_index]['morphemes'] == []:
+                        del corpus[text_id][utterance_index]['words'][word_index]['morphemes']
+                        
+                # EOF word loop
+                
                 # check alignment between glosses and words that were found in <w>. This can be done only now because glosses contain punctuation (dropped in the end) but <w> doesn't. 
                 # alignment between <w> and segments doesn't have to be checked separately because glosses:segments is already checked above and good alignment for both glosses:segments and glosses:<w> entails good alignment for segments:<w>
                 if (word_index+1) != corpus[text_id][utterance_index]['length_in_words']:
@@ -1250,6 +1299,13 @@ def parse_xml(file_name, corpus_name):
                                 corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = suffix_gloss
                                 corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
 
+                    # check if morpheme list has been filled; if not delete key
+                    if corpus[text_id][utterance_index]['words'][word_index]['morphemes'] == []:
+                        del corpus[text_id][utterance_index]['words'][word_index]['morphemes']
+                        
+                # EOF word loop
+                
+                
                 # remember length of morphology tier in words
                 length_morphology = len(words)
                 
@@ -1408,6 +1464,12 @@ def parse_xml(file_name, corpus_name):
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = sfx_gloss
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
                     
+                    # check if morpheme list has been filled; if not delete key
+                    if corpus[text_id][utterance_index]['words'][word_index]['morphemes'] == []:
+                        del corpus[text_id][utterance_index]['words'][word_index]['morphemes']
+                        
+                # EOF word loop
+                
                 length_morphology = len(words)
                     
                 # check alignment with words that were found in <w>
@@ -1422,6 +1484,10 @@ def parse_xml(file_name, corpus_name):
                 
         
         # EOF Yucatec
+        
+        # check if word list has been filled; if not delete key
+        if corpus[text_id][utterance_index]['words'] == []:
+            del corpus[text_id][utterance_index]['words']
         
     # EOF utterance loop
     
@@ -1777,6 +1843,7 @@ def parse_toolbox(file_name, corpus_name):
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][0][tier_name_JSON] = m
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][0]['pos_target'] = m
                                                             
+                            # EOF word/morpheme loop
                 # EOF Russian morpheme tiers
                 
                 # check all alignments
@@ -1800,14 +1867,18 @@ def parse_toolbox(file_name, corpus_name):
                     creadd(corpus[text_id][utterance_index], 'warnings', 'empty utterance')
                 
                 # morpheme tiers (doesn't make sense for Russian)
-                if corpus_name in ['Chintang', 'Indonesian']:
+                if corpus_name in ['Chintang', 'Indonesian', 'Russian']:
                     for word_index in range(0, len(corpus[text_id][utterance_index]['words'])):
                     
                         if corpus[text_id][utterance_index]['words'][word_index]['morphemes']:
                             max_index_morphemes = len(corpus[text_id][utterance_index]['words'][word_index]['morphemes'])-1
                         else:
                             max_index_morphemes = 0
-                    
+                        
+                        # check if morpheme list has been filled; if not delete key
+                        if corpus[text_id][utterance_index]['words'][word_index]['morphemes'] == []:
+                            del corpus[text_id][utterance_index]['words'][word_index]['morphemes']
+                        
                         for tier in tbx_mor_tier_correspondences[corpus_name].keys():
                             tier_name_JSON = tbx_mor_tier_correspondences[corpus_name][tier]
                             if tier in record.keys():
@@ -1867,11 +1938,14 @@ def parse_toolbox(file_name, corpus_name):
                                 corpus[text_id][utterance_index]['words'][w]['full_word_target'] = corpus[text_id][utterance_index]['words'][w]['full_word']
                 # EOF Indonesian
                             
+            # check if word list has been filled; if not delete key
+            if corpus[text_id][utterance_index]['words'] == []:
+                del corpus[text_id][utterance_index]['words']
+            
+        # EOF utterance loop
 # EOF parse_toolbox
-    
+
 # parse an open CHAT file
 def parse_chat(file_name, corpus_name):
-
-    if corpus_name == 'Yucatec':
-        pass
+    pass
 # EOF parse_chat
