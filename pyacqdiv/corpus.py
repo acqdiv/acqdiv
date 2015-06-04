@@ -126,7 +126,7 @@ class Corpus(object):
         assert existing_dir(self.output_path())
         for filename in os.listdir(self.input_path()):
             if not filename.startswith('.'):
-                with open(self.output_path(filename), 'w', encoding='utf8') as outfile:
+                with open(self.output_path(filename+".cha"), 'w', encoding='utf8') as outfile:
                     ofw = self.clean_session(filename)
                     if ofw:
                         outfile.write(ofw)
