@@ -1333,6 +1333,7 @@ def parse_xml(file_name, corpus_name):
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
+                    
                         
                     # process words with neither prefixes nor suffixes
                     if not '#' in w and not ':' in w:
