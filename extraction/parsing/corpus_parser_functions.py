@@ -1380,7 +1380,17 @@ def parse_xml(file_name, corpus_name):
                     # corpus[text_id][utterance_index]['words'][word_index]['morphemes'] is a list of morphemes; initial index is -1
                     corpus[text_id][utterance_index]['words'][word_index]['morphemes'] = []
                     morpheme_index = -1
-                                    
+                    # get proper names
+                    if 'N:PROP' in w:
+                        # count up morpheme index, extend list if necessary
+                        morpheme_index = list_index_up(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
+                        stem_gloss = re.sub('\|.*','',w)
+                        stem = re.sub('.*\|','',w)
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
+                    
+                        
                     # process words with neither prefixes nor suffixes
                     if not '#' in w and not ':' in w:
                         # count up morpheme index, extend list if necessary
