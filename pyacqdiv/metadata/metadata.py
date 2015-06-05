@@ -133,7 +133,7 @@ class Imdi(Parser):
 
     def get_session_data(self, root):
         session = {}
-        session['code'] = root.Session.Name.text
+        session['code'] = self.metadata['__attrs__']['Cname']
         session['date'] = root.Session.Date.text
         session['genre'] = root.Session.MDGroup.Content.Genre.text
         session['location'] = self.get_location(root)

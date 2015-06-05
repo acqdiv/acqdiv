@@ -3,7 +3,7 @@
 library(dplyr)
 library(ggplot2)
 
-acqdiv_corpora <- readRDS("aqcdiv_corpora.RDS")
+acqdiv_corpora <- readRDS("acqdiv_corpora.RDS")
 
 # rename the Japanese corpora
 acqdiv_corpora$Language[acqdiv_corpora$Language == "Japanese_MiiPro"] <- "Japanese"
