@@ -111,7 +111,7 @@ class Unifier():
                         metadata['participants'][i]['code'] = self.metadata['participants'][i][head]
                 elif head == 'sex':
                     if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] not in self.null:
-                        metadata['participants'][i][head] = self.metadata['participants'][i][head]
+                        metadata['participants'][i][head] = self.metadata['participants'][i][head].lower()
                 elif head == 'birthdate':
                     if "\n" not in self.metadata['participants'][i][head] and self.metadata['participants'][i][head] not in self.null:
                         metadata['participants'][i][head] = self.metadata['participants'][i][head]
@@ -189,7 +189,7 @@ class Unifier():
                 elif head == 'id':
                     metadata['participants'][i]['code'] = self.metadata['participants'][i][head]
                 elif head == 'sex':
-                    metadata['participants'][i][head] = self.metadata['participants'][i][head]
+                    metadata['participants'][i][head] = self.metadata['participants'][i][head].lower()
                 elif head == 'birthdate':
                     metadata['participants'][i][head] = self.metadata['participants'][i][head]
 
