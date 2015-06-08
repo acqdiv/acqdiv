@@ -79,7 +79,7 @@ def parser_one_json(corpus_name):
         corpus_object = parse_corpus(corpus_name, corpus_dic[corpus_name]['dir'], corpus_dic[corpus_name]['format'])        
         
         with open('parsed/'+corpus_name + '/' + corpus_name + '.json', 'w') as file:
-            json.dump(corpus_object, file, ensure_ascii=False)
+            json.dump(corpus_object, file, ensure_ascii=False, indent=4)
         #with open('parsed/'+corpus_name + '/' + corpus_name + '_prettyprint.txt', 'w') as file:
         #    # careful, sort_keys=True can cause memory errors with bigger corpora such as Japanese_MiiPro
         #    file.write(json.dumps(corpus_object, file, sort_keys=True, indent=4, ensure_ascii=False))
