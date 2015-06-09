@@ -11,7 +11,31 @@ def clean_filename(fname):
 def clean_chat_line(s):
     s = re.sub("^@New Episode:$", "@New Episode", s)
     s = re.sub("^@Participants\\s+", "@Participants:\\t", s)
+    
+    # gets rid of empty headers
+    s = re.sub("^@.*:\\s*$", "", s) 
+    
+    # variations of activity tier plus > %act:
+    s = re.sub(r"(@Åctivity:|@Åctivities:|@åct:|% act:|%acts:|%act,:|%%act:|%:	act:|%ect:|%ACT:|%ACt:|%Act:|%Activities:|%ac|%ac:|%acT:|%acr:|%act|%act:|%atc:|%avt:|%axt:|%cat:|%ct:|\*ACT:|\*act:|@Act:|@Acticities:|@Action:|@Activies:|@Activities|@Activities:|@Activitities:|@Activity:|@act:|@activation:|@activities:)", r"%act:", s)
+    
+    # variations of explanation tier > %exp:
+    s = re.sub(r"(%:	exp:|%exp	:|%expt:|%ezp:|%EXP:|%aexp:|%axp:|%ecp:|%epx:|%ex:|%exp|%exp:|%xp:|\*exp:|@Explanation:|@ex:|@exp|@exp:)", r"%exp:", s)
+     
+    # situation-tier-code unification > %sit: # KULLD corpus does not make any differentiation between @Situation header (which contains more general info) and %sit: tier (which contains more situation specific info) thus all replaced with %sit: - to distinguish them would need manual cleaning
+    s = re.sub(r"(%Sit:|%Situation:|%sit|%sit:|%situation:|\*sit:|@Sit:|@Sitaution:|@Sitiuation:|@Situati|@Situation:|@Situations:|@Situatiton:|@Situaton:|@Situtation:|@Sitution:|@Siuation:|@sit|@sit:|@sitiuation:|@situaiton:|@situat|@situation:|@situaton:|@situtaion:|@siuation:|@Sütuation:|@Stiuation:|@Siutation:|@Situtaion:|@Situaiton:)", r"%sit:", s)
+    
+    s = re.sub(r"%CHI|%CHI:", r"*CHI:", s)
+    s = re.sub(r"(\*mor:|%mot:|%MOR:)", r"%mor:", s)
+    s = re.sub(r"%gox:|%gx:", r"%gpx:", s)
+    s = re.sub(r"(%com:|%comment:|@Comment:|@Commet:)", r"%com:", s)
+    s = re.sub(r"%rec:", r"%tim:", s)
+    s = re.sub(r"(%PHO:|%Pho:|%phO|%pho|%pho:|%po:|\*pho:|%ho:|%ğpho:)", r"%pho:", s)
+    s = re.sub("^%pho:", "%tim:", s)
     s = re.sub("^%act\\s+","%act:\\t", s)
+    s = re.sub("^%acT:", "%act:", s)
+    s = re.sub("^%atc:", "%act:", s)
+    s = re.sub("^%EXP:", "%exp:", s)
+    s = re.sub(r"", r"", s)
     s = re.sub("^@Age of CHI$", "@Age of CHI:", s)
     s = re.sub("^@Coder$", "@Coder:", s)
     s = re.sub("^@Date$", "@Date:", s)
@@ -25,61 +49,93 @@ def clean_chat_line(s):
     s = re.sub("^@Sex of CHI$", "@Sex of CHI:", s)
     s = re.sub("^@SEX of CHI$", "@SEX of CHI:", s)
     s = re.sub("^@SES of MOT$","@SES of MOT:", s)
-    s = re.sub("^@Mother, FAT Father$", "", s)
+    s = re.sub("^@Mother, FAT Father$", "", s)    
+    
     # replace <:> space with \t in first occurrence
     s = re.sub(":\\s*", ":\\t", s, 1)
     
-    # added by rabart
+    # %xmor: allows any kind of syntax (=CHATTER leaves tier as it is)
     s = re.sub("^%mor:", "%xmor:", s)
-
     
-
-    # get rid of empty headers
-    s = re.sub(r"^(\*.*[^\.\?!])$", r"\1 .", s) # adds utterance delimiters to utterance lines ending without utterance delimiter
+    # adds utterance delimiters to utterance lines ending without utterance delimiter
+    s = re.sub(r"^(\*.*[^\.\?!])$", r"\1 .", s) 
+    
+    # gets rid of whitespace at the end of lines
     s = re.sub(r"\s+$", r"", s)
-    s = re.sub("^@.*:\\s*$", "", s)
-    s = re.sub("^%pho:", "%tim:", s)
+    
+    # solution for some files with idiosyncratic time stamp
     s = re.sub(r"(\*[A-Z]{1,3}\d{0,2}:)\s*(\d{1,2}:\d\d)", r"\1\txxx .\n%tim:\t\2", s)
     s = re.sub(r'.%snd:".+?"_(\d)_(\d+)(\d\d\d+).', r'\n%tim:\t\1-\2.\3', s)
     s = re.sub(r'.%snd:".+?"_(\d+)(\d\d\d)_(\d+)(\d\d\d+).', r'\n%tim:\t\1.\2-\3.\4', s)
-    s = re.sub(r"%tim:\s(\d:\d\d)", r"%tim:\t0\1", s) # prefixes 0 to time > 10 min
-    s = re.sub("^%acT:", "%act:", s)
-    s = re.sub("^%atc:", "%act:", s)
-    s = re.sub("^%EXP:", "%exp:", s)
+    
+    # prefixes 0 to time > 10 min
+    s = re.sub(r"%tim:\s(\d:\d\d)", r"%tim:\t0\1", s) 
+    
     s = re.sub("\\byy\\b", "yyy", s)
     s = re.sub("\\bxx\\b", "xxx", s)
-    s = re.sub(":\\t\[!", ":\\t0 [!", s) 
-    s = re.sub(r"\n\n", r"\n", s) # gets rid of empty lines
-    s = re.sub(r"\n\s+", r" ", s) # gets rid of line breaks in utterance; IMPORTANT: this must go before the following replacement, otherwise %add is inserted into the middle of utterances.
-    s = re.sub(r"(\*[A-Z]{3})-([A-Z]{3})(:.+)", r"\1\3\n%add:\t\2", s) # puts addressee into separate dependent tier (%add), instead of in the format speaker-addressee (SSS-AAA).
+    
+    #CHATTER needs something in utterance tier before an action, "0" is a dummy utterance
+    s = re.sub(":\\t\[!", ":\\t0 [!", s)
+    
+    # gets rid of empty lines in body
+    s = re.sub(r"\n\n", r"\n", s) 
+    
+    # gets rid of line breaks in utterance; IMPORTANT: this must go before the following replacement, otherwise %add is inserted into the middle of utterances.
+    s = re.sub(r"\n\s+", r" ", s) 
+    
+    # puts addressee into separate dependent tier (%add), instead of in the format speaker-addressee (SSS-AAA).
+    s = re.sub(r"(\*[A-Z]{3})-([A-Z]{3})(:.+)", r"\1\3\n%add:\t\2", s)     
     s = re.sub(r"(\*[A-Z]{2}\d)-([A-Z]{2}\d)(:.+)", r"\1\3\n%add:\t\2", s) # puts addressee into separate dependent tier (%add), instead of in the format speaker-addressee (SS\d-AA\d).
     s = re.sub(r"(\*[A-Z]{3})-([A-Z]{2}\d)(:.+)", r"\1\3\n%add:\t\2", s) # puts addressee into separate dependent tier (%add), instead of in the format speaker-addressee (SSS-AA\d).
     s = re.sub(r"(\*[A-Z]{2}\d)-([A-Z]{3})(:.+)", r"\1\3\n%add:\t\2", s) # puts addressee into separate dependent tier (%add), instead of in the format speaker-addressee (SS\d-AAA).
-    s = re.sub(r"(\[x)(\d\])", r"\1 \2", s) # fixes repetitions
+    
+    # fixes repetitions
+    s = re.sub(r"(\[x)(\d\])", r"\1 \2", s) 
+    
     s = re.sub(r"&=\s+", "&=", s)
     s = re.sub(r"\+''", r'+"', s)
     s = re.sub(r"\[\s+=", r"[=", s)
     s = re.sub(r"\[!", r"[=!", s)
     s = re.sub(r"(@New Episode):\s(.+$)", r"\1\n%sit:\t\2", s)
-    s = re.sub(r"#", r"(.)", s) # hashtag is equivalent to (.) which is CHAT for notation for pauses.
+    
+    # hashtag in KULLD corpus is equivalent to (.) which is CHAT for notation for pauses.
+    s = re.sub(r"#", r"(.)", s) 
+    
+    # repetitions
     s = re.sub(r"\[[X\*]\s?(\d)\]", r"[x \1]", s)
+    
     # many uses of "@" (plus following code) are inconsistent and are not CHAT compliant. cf. issue #86
     s = re.sub(r"(@fp|@e|@s|@oın|@İ|@lsi|@i_ham@i_ham|@oı|@s|@ı|@fmı|@fi|@s|@i_ham@i_ha:m|@omı|@oa|@ia|@fmi|@cmı|@y|@r|@oını|@l'in|@imi|@i_ham@i_ham@i_ham@i_ham@i_ham|@fb|@eng|@eın|@oe|@m|@lyi|@imı|@ie|@:i|@fyı|@fnı|@fa|@en|@eler|@e|@sit|@si_kızını|@oü|@o_şupur|@omu|@olatmadık|@lidi|@is|@iksin|@i_hey@i_hey|@i_ham@i_ham@i_ham@i_ham@i_ham@i_ham|@i_ham@i_ham@i_ham@i_ham|@i_ham@i_ham@i_ham|@i_ham@i_ham|@i_ham@i_ha:m_ham@i_ham@i_ha:m|@ie|@i_benim_kuzum|@ì|@fmu|@fler|@elerde|@e_bye@e|@cnın|@c:e|@yu|@verme|@tıtı|@swi|@S-QUE|@simu|@si_kıvrıla|@se|@ş|@o'yi|@ou|@o_şıkır@o_şıkır|@o_miyav|@olerle|@olatmadık|@oların|@oları|@olar|@ola|@o_kırt@o_kırt@o_kırt@o_kırt|@o_kırt@o_kırt|@o_kırt|@oına|@oımız|@o_huppur|@o&hav|@o\[/\]hav|@o_havmı|@o_ham@o_ham@o_ham|@o_fırıl|@odan|@o_cuf@o_cuf|@ob|@ö|@mı|@lylen|@lsi|@l\^si|@lni|@kurmasınlar|@köpek|@kızım|@i_uf|@i_tu|@ir|@int|@inmi|@inı|@i_ne_güzel|@imuş|@im|@iktim|@iktim|@ikmisin|@ikmisin|@ii\(y\)im|@iives|@i_ı@i_ı@i_ı|@i_ı@i_ı|@i_ı|@iıhı|@i_ıh|@i@ie|@iı|@ii|@ihıhı|@i_hıh|@ihıha|@i_hı|@ihı|@,ıh|@i_ham@i_ham@i_ham@i_ham@i_ham@i_ham@i_ham|@i_ham@i_ham@i_ham@i_ha:m_ham@i_ham@i_ham@i_ham@i_ha:m|@i_ham@i_ham@i_ham@i_ha:m|@i_ham@i_ham@i_ham@i_ha|@i_ham|@iğinmi|@iee|@iee|@iee|@ie|@i_benim_yy_bunu_ben_yapalım|@iama|@hav|@ha|@h|@fyü|@fylamı|@fyi|@f_yapıyo\(r|@fya|@ftan|@fsını|@fsini|@fsı|@f_oldu|@foldu|@fo|@fnin|@fmü|@flara|@fı|@f_ham|@fbıdı|@eye|@:e's|@erın|@en|@emi|@eların|@elar|@ede|@ea|@ea|@e|@e|@dı|@da|@cuna|@cü|@cmi|@clarmı|@c_kut:u|@c_by:e@e|@c_adamalar|@bur\(a\)da|@b=&laugh|@bi|@b_ga|@bak|@babbab|@ba|@\[b26\]i|@ai|@0)", r"", s)
     s = re.sub(r"@(\W+)", r"\1", s) #gets rid of "@" at the end of words
+    
+    # for CHATTER compliant quotes
     s = re.sub(r'<(.+?)>\s\["\]', r"'\1'", s)
     s = re.sub(r'(\S+)\s\["\]', r"'\1'", s)
-    s = re.sub(r'\+/([^/])', r'+//\1', s) ######### check CHAT manual, this might be a dirty fix for legitimate CHAT with an utterance delimiter missing
+    
+    ######### check CHAT manual, this might be a dirty fix for legitimate CHAT with an utterance delimiter missing
+    s = re.sub(r'\+/([^/])', r'+//\1', s) 
+    
     s = re.sub(r"\+//\s([!\?\.])", r"+//\1", s)
     s = re.sub(r"\+//\n", r"+//.\n", s)
     s = re.sub(r"\[:\s*(\w)", r"[: \1", s)
     s = re.sub(r"\[\s?(\w+)\]", r"[: \1]", s)
-    s = re.sub(r"<(\S+?)>", r"\1", s) # gets rid of redundant <> brackets around single elements; the <> are to signal that two elements are treated together 
-    s = re.sub(r"[!\?\.](\s*\[.+?\]\s*[!\?\.])", r"\1", s) # deletes superfluous utterance delimiters.
-    s = re.sub(r"([!\?\.])(\s*\[.+?\]\s*?)$", r"\2\1", s) # moves utterance delimiter to to line end
-    s = re.sub(r"\[/\]", r"", s) # deletes redundant repetition marker (milk [/] milk = milk milk) since it often causes problems for CHATTER in combination with \W characters
-    s = re.sub(r"^([\*%].+?\t.+?)\t", r"\1 ", s) # deletes tabs in utterance or %xmor tiers
+    
+    # gets rid of redundant <> brackets around single elements; the <> are to signal that two elements are treated together 
+    s = re.sub(r"<(\S+?)>", r"\1", s) 
+    
+    # deletes superfluous utterance delimiters.
+    s = re.sub(r"[!\?\.](\s*\[.+?\]\s*[!\?\.])", r"\1", s) 
+    
+    # moves utterance delimiter to to line end
+    s = re.sub(r"([!\?\.])(\s*\[.+?\]\s*?)$", r"\2\1", s) 
+    
+    # deletes redundant repetition marker (milk [/] milk = milk milk) since it often causes problems for CHATTER in combination with \W characters
+    s = re.sub(r"\[/\]", r"", s)
+    
+    # deletes tabs in utterance or %xmor tiers
+    s = re.sub(r"^([\*%].+?\t.+?)\t", r"\1 ", s) 
+    
     s = re.sub(r"\+\.+", r"+...", s)
-    # s = re.sub(r"", r"", s)
     
     
     
