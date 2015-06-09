@@ -53,6 +53,7 @@ class Unifier():
                                     'name': None,
                                     'birthdate': None,
                                     'age': None,
+                                    'age.days': None,
                                     'role': None,
                                     'sex': None}
 
@@ -121,7 +122,9 @@ class Unifier():
                 try:
                     recdate = age.numerize_date(metadata['session']['date'])
                     bdate = age.numerize_date(participant['birthdate'])
-                    participant['age'] = age.format_imdi_age(bdate, recdate)
+                    agelist = age.format_imdi_age(bdate, recdate)
+                    participant['age'] = agelist[0]
+                    participant['age.days'] = agelist[1]
                 except Exception as e:
                         print("Couldn't calculate age in " + self.path)
                         print("Error: {0}".format(e))
@@ -150,6 +153,7 @@ class Unifier():
                                     'name': None,
                                     'birthdate': None,
                                     'age': None,
+                                    'age.days': None,
                                     'role': None,
                                     'sex': None}
 
@@ -207,10 +211,12 @@ class Unifier():
                 try:
                     agestr = participant['age']
                     participant['age'] = age.format_xml_age(agestr)
+                    participant['age.days'] = age.calculate_xml_days(participant['age'])
                 except Exception as e:
                         print("Couldn't calculate age in " + self.path)
                         print("Error: {0}".format(e))
                         participant['age'] = None
+                        participant['age.days'] = None
 
         self.metadata = metadata
 
@@ -233,15 +239,6 @@ class testJson(unittest.TestCase):
         self.assertIsNotNone(self.jsu.metadata)
 
 if __name__ == "__main__":
-    #jsu = Unifier("russiantest.json")
-    #jsu.unify()
-    #with open("unify.json", "w") as unify:
-    #    json.dump(jsu.metadata, unify)
-
-    #jsc = Unifier("miiprotest.json")
-    #jsc.unify()
-    #with open("unify_xml.json", "w") as unify:
-    #    json.dump(jsc.metadata, unify)
 
     jsu = Unifier("sesothotest.json")
     jsu.unify()

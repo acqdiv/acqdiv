@@ -29,14 +29,17 @@ def format_imdi_age(birthdate, sessiondate):
             acc_flag_sd = 2
 
     diff = relativedelta(d2, d1)
+    diff_days = d2 - d1
     if acc_flag_bd != 1 and acc_flag_sd != 1:
         if acc_flag_sd != 2:
-            return("%d;%d.%d" % (diff.years, diff.months, diff.days))
+            age_cform = "%d;%d.%d" % (diff.years, diff.months, diff.days)
         else:
-            return("%d;%d.0" % (diff.years, diff.months))
+            age_cform = "%d;%d.0" % (diff.years, diff.months)
     else: 
-        age = "%d;0.0" % diff.years
-        return(age if age != "0;0.0" else None)
+        age_cform = "%d;0.0" % diff.years
+
+    age_days = str(diff_days.days)
+    return([age_cform if age_cform != "0;0.0" else None, age_days if age_days != "0" else None])
 
 def format_xml_age(age_str):
     age = re.match("P(\d*)Y(\d*)M(\d*)?D?", age_str)
@@ -47,3 +50,11 @@ def format_xml_age(age_str):
     else:
         days = "0"
     return("%s;%s.%s" % (years, months, days))
+
+def calculate_xml_days(age_str):
+    age = re.match("(\d*);(\d*).(\d*)", age_str)
+    years = int(age.group(1))
+    months = int(age.group(2))
+    days = int(age.group(3))
+    out = years * 365 + months * 31 + days
+    return out
