@@ -33,7 +33,7 @@ class Unifier():
 
     def unifyImdi(self):
 
-        SessionHeads = {'code': None,
+        SessionHeads = {'id': None,
                                'date': None,
                                'genre': None,
                                'location': None,
@@ -133,7 +133,7 @@ class Unifier():
 
     def unifyXml(self, cdc=None):
 
-        SessionHeads = {'code': None,
+        SessionHeads = {'id': None,
                                'date': None,
                                'genre': None,
                                'location': None,
@@ -167,7 +167,7 @@ class Unifier():
 
         for attr in self.metadata['__attrs__']:
             if attr == 'Cname':
-                metadata['session']['code'] = self.metadata['__attrs__'][attr]
+                metadata['session']['id'] = self.metadata['__attrs__'][attr]
             elif attr == 'Date':
                 metadata['session']['date'] = self.metadata['__attrs__'][attr]
             elif attr == 'Media':
