@@ -12,9 +12,7 @@ def clean_chat_line(s):
     s = re.sub("^@New Episode:$", "@New Episode", s)
     s = re.sub("^@Participants\\s+", "@Participants:\\t", s)
     
-    # gets rid of empty headers
-    s = re.sub("^@.*:\\s*$", "", s) 
-    
+     
     # variations of activity tier plus > %act:
     s = re.sub(r"(@Åctivity:|@Åctivities:|@åct:|% act:|%acts:|%act,:|%%act:|%:	act:|%ect:|%ACT:|%ACt:|%Act:|%Activities:|%ac|%ac:|%acT:|%acr:|%act|%act:|%atc:|%avt:|%axt:|%cat:|%ct:|\*ACT:|\*act:|@Act:|@Acticities:|@Action:|@Activies:|@Activities|@Activities:|@Activitities:|@Activity:|@act:|@activation:|@activities:)", r"%act:", s)
     
@@ -51,17 +49,21 @@ def clean_chat_line(s):
     s = re.sub("^@SES of MOT$","@SES of MOT:", s)
     s = re.sub("^@Mother, FAT Father$", "", s)    
     
+    # gets rid of empty headers
+    s = re.sub("^[%@].*:\\s*$", "", s)
+    
     # replace <:> space with \t in first occurrence
     s = re.sub(":\\s*", ":\\t", s, 1)
     
     # %xmor: allows any kind of syntax (=CHATTER leaves tier as it is)
     s = re.sub("^%mor:", "%xmor:", s)
     
-    # adds utterance delimiters to utterance lines ending without utterance delimiter
-    s = re.sub(r"^(\*.*[^\.\?!])$", r"\1 .", s) 
-    
     # gets rid of whitespace at the end of lines
     s = re.sub(r"\s+$", r"", s)
+    # adds utterance delimiters to utterance lines ending without utterance delimiter
+    s = re.sub(r"^(\*.*[^\.\?!])$", r"\1 .", s) 
+    # gets rid of double utterance delimiters
+    s = re.sub(r"([\.\?!])\s*[\.\?!]\s*$", r"\1", s)
     
     # solution for some files with idiosyncratic time stamp
     s = re.sub(r"(\*[A-Z]{1,3}\d{0,2}:)\s*(\d{1,2}:\d\d)", r"\1\txxx .\n%tim:\t\2", s)
@@ -75,7 +77,12 @@ def clean_chat_line(s):
     s = re.sub("\\bxx\\b", "xxx", s)
     
     #CHATTER needs something in utterance tier before an action, "0" is a dummy utterance
-    s = re.sub(":\\t\[!", ":\\t0 [!", s)
+    s = re.sub(r"\[!", r"[=!", s)
+    s = re.sub(r"0\[:!", r"0 [=!", s)
+    s = re.sub(r"\[:!", r"[=!", s)
+    s = re.sub(r"\[\s+=", r"[=", s)
+    s = re.sub(":\\t\[=!", ":\\t0 [=!", s)
+    
     
     # gets rid of empty lines in body
     s = re.sub(r"\n\n", r"\n", s) 
@@ -94,8 +101,6 @@ def clean_chat_line(s):
     
     s = re.sub(r"&=\s+", "&=", s)
     s = re.sub(r"\+''", r'+"', s)
-    s = re.sub(r"\[\s+=", r"[=", s)
-    s = re.sub(r"\[!", r"[=!", s)
     s = re.sub(r"(@New Episode):\s(.+$)", r"\1\n%sit:\t\2", s)
     
     # hashtag in KULLD corpus is equivalent to (.) which is CHAT for notation for pauses.
