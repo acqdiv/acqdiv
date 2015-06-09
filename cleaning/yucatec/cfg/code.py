@@ -39,9 +39,9 @@ def clean_chat_line(s):
     s = re.sub("ë", "é", s)
     s = re.sub("°", "", s)
 
-	s=re.sub("Ts¿a", "Tsʔa", s)
-	s=re.sub("k¿aas", "kʔaas", s)
-	s=re.sub("yo¿ch", "yoʔch", s)
+    s=re.sub("Ts¿a", "Tsʔa", s)
+    s=re.sub("k¿aas", "kʔaas", s)
+    s=re.sub("yo¿ch", "yoʔch", s)
 
     #cleanup unwanted tiers
     #added by chysi
