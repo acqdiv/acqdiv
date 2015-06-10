@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Read corpus files in CHAT, Toolbox, or XML from directory corpora/, copy the structure from corpora/ to "parsing/LANGUAGE/input" and parse their structure, write everything to JSON,
+Read corpus files in CHAT, Toolbox, or XML from directory corpora/, parse their structure, write everything to JSON,
 and put output files per corpus in a new folder "parsed/LANGUAGE/" in the main directory of the repository.
 
 This script only works if the module "corpus_parser_functions.py" is in the same directory. 
@@ -79,7 +79,7 @@ def parser_one_json(corpus_name):
         corpus_object = parse_corpus(corpus_name, corpus_dic[corpus_name]['dir'], corpus_dic[corpus_name]['format'])        
         
         with open('parsed/'+corpus_name + '/' + corpus_name + '.json', 'w') as file:
-            json.dump(corpus_object, file, ensure_ascii=False, indent=4)
+            json.dump(corpus_object, file, ensure_ascii=False)
         #with open('parsed/'+corpus_name + '/' + corpus_name + '_prettyprint.txt', 'w') as file:
         #    # careful, sort_keys=True can cause memory errors with bigger corpora such as Japanese_MiiPro
         #    file.write(json.dumps(corpus_object, file, sort_keys=True, indent=4, ensure_ascii=False))
