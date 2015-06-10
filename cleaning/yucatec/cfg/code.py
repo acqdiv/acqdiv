@@ -19,6 +19,38 @@ def clean_chat_line(s):
     s = re.sub("^@Birth of Sandi:.*", "@Birth of SAN:\t1993-JUL-23\n", s)
     s = re.sub("^@Translation", "@Translator", s)
 
+    #unification %xspa tier
+    s=re.sub("\*ESPA:", "%xspa:", s)
+    s=re.sub("\*ESP:", "%xspa:", s)
+    s=re.sub("\*ESP.", "%xspa:", s)
+    s=re.sub("[^\*]ESP:", "%xspa:", s)
+
+    s=re.sub("Esp:", "%xspa:", s)
+    s=re.sub("Esp.", "%xspa:", s)
+
+    s=re.sub("%esp.", "%xspa:", s)
+    s=re.sub("%esp_:", "%xspa:", s)
+    s=re.sub("%esp :", "%xspa:", s)
+    s=re.sub("%esp:", "%xspa:", s)
+
+    s=re.sub("%eng:", "%xspa:", s)
+    s=re.sub("%eng;", "%xspa:", s)
+    s=re.sub("%eng.", "%xspa:", s)
+    s=re.sub("%engL:", "%xspa:", s)
+    s=re.sub("%eng :", "%xspa:", s)
+    s=re.sub("%eng", "%xspa:", s)
+
+    #unification %xpho tier
+    s=re.sub("\*pho:", "%xpho:", s)
+    s=re.sub("%fon:", "%xpho:", s)
+    s=re.sub("%pho:", "%xpho:", s)
+    s=re.sub("%pho.", "%xpho:", s)
+    s=re.sub("%pho :", "%xpho:", s)
+    s=re.sub("%pho;", "%xpho:", s)
+    s=re.sub("^pho:", "%xpho:", s)
+    s=re.sub("\s+pho:", "%xpho:", s)
+    s=re.sub("%PHO:", "%xpho:", s)
+    s=re.sub("%pho", "%xpho:", s)
 
     #character cleaning; cf. ../notes/yua-chars.ods for notes on characters that need manual attention and/or need to be interpreted by Barbara (corpus owner)
     s = re.sub(" ", " ", s) # unification of two different space types
@@ -38,10 +70,11 @@ def clean_chat_line(s):
     s = re.sub("Í", "í", s)
     s = re.sub("ë", "é", s)
     s = re.sub("°", "", s)
-
+    #inverted question mark
     s=re.sub("Ts¿a", "Tsʔa", s)
     s=re.sub("k¿aas", "kʔaas", s)
     s=re.sub("yo¿ch", "yoʔch", s)
+    s=re.sub("^\*(.*)¿(.*)$", "\*($1)($2)", s) #not allowed in a *PARTICIPANT tier
 
     #cleanup unwanted tiers
     #added by chysi
