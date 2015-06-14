@@ -11,7 +11,7 @@ def clean_chat_line(s):
     s = re.sub("(\w)['’ʼ]", "\\1ʔ", s)
     s = re.sub("['’ʼ](\w)", "ʔ\\1", s)
     s = re.sub("(\w)['’ʼ](\w)", "\\1ʔ\\2", s)
-    s = re.sub("^%mor:", "%xmor:", s)
+    #s = re.sub("^%mor:", "%xmor:", s) # it is a few lines below, with a group of similar rules
     #This may result in files with two Situation tiers. These will have to be cleaned manually before CLAN will accept them!
     s = re.sub("^@Activities", "@Situation", s)
     s = re.sub("^@Birth of ARM:.*", "@Birth of ARM:\t1994-APR-10\n", s)
@@ -19,6 +19,12 @@ def clean_chat_line(s):
     s = re.sub("^@Birth of Sandi:.*", "@Birth of SAN:\t1993-JUL-23\n", s)
     s = re.sub("^@Translation", "@Translator", s)
 
+    #unification %xmor tier
+    s=re.sub("%MOR:", "%xmor:", s)    
+    s=re.sub("\*mor:", "%xmor:", s)    
+    s=re.sub("%mor.", "%xmor:", s)    
+    s=re.sub("%mor:", "%xmor:", s)
+            
     #unification %xspa tier
     s=re.sub("\*ESPA:", "%xspa:", s)
     s=re.sub("\*ESP:", "%xspa:", s)
