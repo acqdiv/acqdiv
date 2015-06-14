@@ -76,6 +76,10 @@ def clean_chat_line(s):
     s=re.sub("k¿aas", "kʔaas", s)
     s=re.sub("yo¿ch", "yoʔch", s)
     s=re.sub("^\*(.*)¿(.*)$", "\*($1)($2)", s) #not allowed in a *PARTICIPANT tier
+    #inverted exclamation mark
+    s=re.sub("all¡", "allí", s)
+    s=re.sub("as¡", "así", s)
+    s=re.sub("aqu¡", "aquí", s)
 
     #cleanup unwanted tiers
     #added by chysi
