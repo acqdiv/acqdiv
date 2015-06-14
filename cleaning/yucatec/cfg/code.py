@@ -54,7 +54,8 @@ def clean_chat_line(s):
 
     #character cleaning; cf. ../notes/yua-chars.ods for notes on characters that need manual attention and/or need to be interpreted by Barbara (corpus owner)
     s = re.sub(" ", " ", s) # unification of two different space types
-    s = re.sub("¨", "", s)
+    s=re.sub("¨(.*)\?", "¿($1)\?", s) # if the dieresis happens at the beginning of a line and then comes "?", then it has to be replaced by "¿"
+    #s = re.sub("¨", "", s)
     s = re.sub("¢", "ó", s)
     s = re.sub("’", "'", s)
     s = re.sub("£", "ú", s)
