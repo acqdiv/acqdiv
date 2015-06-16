@@ -11,13 +11,31 @@ def clean_chat_line(s):
     s = re.sub("(\w)['’ʼ]", "\\1ʔ", s)
     s = re.sub("['’ʼ](\w)", "ʔ\\1", s)
     s = re.sub("(\w)['’ʼ](\w)", "\\1ʔ\\2", s)
-    #s = re.sub("^%mor:", "%xmor:", s) # it is a few lines below, with a group of similar rules
     #This may result in files with two Situation tiers. These will have to be cleaned manually before CLAN will accept them!
     s = re.sub("^@Activities", "@Situation", s)
     s = re.sub("^@Birth of ARM:.*", "@Birth of ARM:\t1994-APR-10\n", s)
     s = re.sub("^@Birth of DAV:.*", "@Birth of DAV:\t1998-APR-18\n", s)
     s = re.sub("^@Birth of Sandi:.*", "@Birth of SAN:\t1993-JUL-23\n", s)
     s = re.sub("^@Translation", "@Translator", s)
+
+    #unification *PARTICIPANT tier
+    #remove numbers and spaces before the participant's ID so that only the asterisk and code are there:
+    s=re.sub(r"[0-9]+(.*)\*([A-Z]{3}:)", r"*\2", s)
+    s=re.sub(r"[0-9]+(.*)\*([A-Z]{4}:)", r"*\2", s)
+    s=re.sub(r"[0-9]+(.*)\*([A-Z]{6}:)", r"*\2", s)
+
+
+    #unification %xpho tier
+    s=re.sub("\*pho:", "%xpho:", s)
+    s=re.sub("%fon:", "%xpho:", s)
+    s=re.sub("%pho:", "%xpho:", s)
+    s=re.sub("%pho.", "%xpho:", s)
+    s=re.sub("%pho :", "%xpho:", s)
+    s=re.sub("%pho;", "%xpho:", s)
+    s=re.sub("^pho:", "%xpho:", s)
+    s=re.sub("\s+pho:", "%xpho:", s)
+    s=re.sub("%PHO:", "%xpho:", s)
+    s=re.sub("%pho", "%xpho:", s)
 
     #unification %xmor tier
     s=re.sub("%MOR:", "%xmor:", s)    
@@ -46,17 +64,8 @@ def clean_chat_line(s):
     s=re.sub("%eng :", "%xspa:", s)
     s=re.sub("%eng", "%xspa:", s)
 
-    #unification %xpho tier
-    s=re.sub("\*pho:", "%xpho:", s)
-    s=re.sub("%fon:", "%xpho:", s)
-    s=re.sub("%pho:", "%xpho:", s)
-    s=re.sub("%pho.", "%xpho:", s)
-    s=re.sub("%pho :", "%xpho:", s)
-    s=re.sub("%pho;", "%xpho:", s)
-    s=re.sub("^pho:", "%xpho:", s)
-    s=re.sub("\s+pho:", "%xpho:", s)
-    s=re.sub("%PHO:", "%xpho:", s)
-    s=re.sub("%pho", "%xpho:", s)
+
+
 
     #character cleaning; cf. ../notes/yua-chars.ods for notes on characters that need manual attention and/or need to be interpreted by Barbara (corpus owner)
     s = re.sub(" ", " ", s) # unification of two different space types
@@ -67,6 +76,8 @@ def clean_chat_line(s):
     s = re.sub("£", "ú", s)
     s = re.sub("\\s‘\\s", "?", s) # other uses of "‘" need manual attention
     s = re.sub("¤", "ñ", s)
+    s=re.sub("hńn", "hnn", s)
+    s=re.sub("ń", "ñ", s)
     s = re.sub("^.+?\\\\.+?$", "", s) # backslashes only occur in lines of jumbled characters (probably information lost from .doc to .txt)
     s = re.sub("^.+?¸.+?$", "", s) # "¸" only occurs in lines of jumbled characters (probably information lost from .doc to .txt)
     s = re.sub("ç", "", s)
@@ -78,14 +89,13 @@ def clean_chat_line(s):
     s = re.sub("ë", "é", s)
     s = re.sub("°", "", s)
     #inverted question mark
-    s=re.sub("Ts¿a", "Tsʔa", s)
-    s=re.sub("k¿aas", "kʔaas", s)
-    s=re.sub("yo¿ch", "yoʔch", s)
-    s=re.sub("^\*(.*)¿(.*)$", "\*($1)($2)", s) #not allowed in a *PARTICIPANT tier
+    s=re.sub(r"^\*(.*)¿(.*)$", r"*\1\2", s) #not allowed in a *PARTICIPANT tier
+    
     #inverted exclamation mark
     s=re.sub("all¡", "allí", s)
     s=re.sub("as¡", "así", s)
     s=re.sub("aqu¡", "aquí", s)
+    s=re.sub("ah¡", "ahí", s)
 
     #cleanup unwanted tiers
     #added by chysi
