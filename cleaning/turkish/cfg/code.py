@@ -83,7 +83,7 @@ def clean_chat_line(s):
     s = re.sub(r"\[\s+=", r"[=", s)
     s = re.sub(":\\t\[=!", ":\\t0 [=!", s)
     
-        # gets rid of empty lines in body
+    # gets rid of empty lines in body
     s = re.sub(r"\n\n", r"\n", s) 
     
     # gets rid of line breaks in utterance; IMPORTANT: this must go before the following replacement, otherwise %add is inserted into the middle of utterances.
@@ -93,9 +93,7 @@ def clean_chat_line(s):
     s = re.sub(r"(\*[a-zA-Z]{1,3}\d{0,2})[_-]+\s?([a-zA-Z]{1,3}\d{0,2})(:.+)", r"\1\3\n%add:\t\2", s)     
     s = re.sub(r"(\*[a-zA-Z]{1,3}\d{0,2})[_-]+\s?([a-zA-Z]{1,3}\d{0,2})(\s.+)", r"\1\3\n%add:\t\2", s)
     
-    # fixes repetitions
-    s = re.sub(r"(\[x)(\d\])", r"\1 \2", s) 
-    
+  
     s = re.sub(r"&=\s+", "&=", s)
     s = re.sub(r"\+''", r'+"', s)
     s = re.sub(r"(@New Episode):\s(.+$)", r"\1\n%sit:\t\2", s)
@@ -104,7 +102,7 @@ def clean_chat_line(s):
     s = re.sub(r"#", r"(.)", s) 
     
     # repetitions
-    s = re.sub(r"\[[X\*]\s?(\d)\]", r"[x \1]", s)
+    s = re.sub(r"\[[X\*×x]\s*(\d)\]", r"[x \1]", s)
     
     # many uses of "@" (plus following code) are inconsistent and are not CHAT compliant. cf. issue #86
     s = re.sub(r"(@fp|@e|@s|@oın|@İ|@lsi|@i_ham@i_ham|@oı|@s|@ı|@fmı|@fi|@s|@i_ham@i_ha:m|@omı|@oa|@ia|@fmi|@cmı|@y|@r|@oını|@l'in|@imi|@i_ham@i_ham@i_ham@i_ham@i_ham|@fb|@eng|@eın|@oe|@m|@lyi|@imı|@ie|@:i|@fyı|@fnı|@fa|@en|@eler|@e|@sit|@si_kızını|@oü|@o_şupur|@omu|@olatmadık|@lidi|@is|@iksin|@i_hey@i_hey|@i_ham@i_ham@i_ham@i_ham@i_ham@i_ham|@i_ham@i_ham@i_ham@i_ham|@i_ham@i_ham@i_ham|@i_ham@i_ham|@i_ham@i_ha:m_ham@i_ham@i_ha:m|@ie|@i_benim_kuzum|@ì|@fmu|@fler|@elerde|@e_bye@e|@cnın|@c:e|@yu|@verme|@tıtı|@swi|@S-QUE|@simu|@si_kıvrıla|@se|@ş|@o'yi|@ou|@o_şıkır@o_şıkır|@o_miyav|@olerle|@olatmadık|@oların|@oları|@olar|@ola|@o_kırt@o_kırt@o_kırt@o_kırt|@o_kırt@o_kırt|@o_kırt|@oına|@oımız|@o_huppur|@o&hav|@o\[/\]hav|@o_havmı|@o_ham@o_ham@o_ham|@o_fırıl|@odan|@o_cuf@o_cuf|@ob|@ö|@mı|@lylen|@lsi|@l\^si|@lni|@kurmasınlar|@köpek|@kızım|@i_uf|@i_tu|@ir|@int|@inmi|@inı|@i_ne_güzel|@imuş|@im|@iktim|@iktim|@ikmisin|@ikmisin|@ii\(y\)im|@iives|@i_ı@i_ı@i_ı|@i_ı@i_ı|@i_ı|@iıhı|@i_ıh|@i@ie|@iı|@ii|@ihıhı|@i_hıh|@ihıha|@i_hı|@ihı|@,ıh|@i_ham@i_ham@i_ham@i_ham@i_ham@i_ham@i_ham|@i_ham@i_ham@i_ham@i_ha:m_ham@i_ham@i_ham@i_ham@i_ha:m|@i_ham@i_ham@i_ham@i_ha:m|@i_ham@i_ham@i_ham@i_ha|@i_ham|@iğinmi|@iee|@iee|@iee|@ie|@i_benim_yy_bunu_ben_yapalım|@iama|@hav|@ha|@h|@fyü|@fylamı|@fyi|@f_yapıyo\(r|@fya|@ftan|@fsını|@fsini|@fsı|@f_oldu|@foldu|@fo|@fnin|@fmü|@flara|@fı|@f_ham|@fbıdı|@eye|@:e's|@erın|@en|@emi|@eların|@elar|@ede|@ea|@ea|@e|@e|@dı|@da|@cuna|@cü|@cmi|@clarmı|@c_kut:u|@c_by:e@e|@c_adamalar|@bur\(a\)da|@b=&laugh|@bi|@b_ga|@bak|@babbab|@ba|@\[b26\]i|@ai|@0)", r"", s)
@@ -122,7 +120,8 @@ def clean_chat_line(s):
     
     # keep this order - fixes replacements in square brackets    
     s = re.sub(r"\[:\s*(\w)", r"[: \1", s)
-    s = re.sub(r"\s\[\.", r" [:", s)    
+    s = re.sub(r"\s\[\.", r" [:", s)   
+    s = re.sub(r"\[(\w+?)\]", r"[: \1]", s)
     
     # gets rid of redundant <> brackets around single elements; the <> are to signal that two elements are treated together 
     s = re.sub(r"<(\S+?)>", r"\1", s) 
@@ -134,7 +133,7 @@ def clean_chat_line(s):
     s = re.sub(r"([!\?\.])(\s*\[.+?\]\s*?)$", r"\2\1", s) 
     
     # deletes redundant repetition marker (milk [/] milk = milk milk) since it often causes problems for CHATTER in combination with \W characters
-    s = re.sub(r"\[\s?/\s?\]", r"", s)
+    s = re.sub(r"\[\s*/\s*\]", r"", s)
     
     # deletes tabs in utterance or %xmor tiers
     s = re.sub(r"^([\*%].+?\t.+?)\t", r"\1 ", s) 
