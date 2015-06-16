@@ -83,18 +83,15 @@ def clean_chat_line(s):
     s = re.sub(r"\[\s+=", r"[=", s)
     s = re.sub(":\\t\[=!", ":\\t0 [=!", s)
     
-    
-    # gets rid of empty lines in body
+        # gets rid of empty lines in body
     s = re.sub(r"\n\n", r"\n", s) 
     
     # gets rid of line breaks in utterance; IMPORTANT: this must go before the following replacement, otherwise %add is inserted into the middle of utterances.
     s = re.sub(r"\n\s+", r" ", s) 
     
     # puts addressee into separate dependent tier (%add), instead of in the format speaker-addressee (SSS-AAA).
-    s = re.sub(r"(\*[A-Z]{3})-([A-Z]{3})(:.+)", r"\1\3\n%add:\t\2", s)     
-    s = re.sub(r"(\*[A-Z]{2}\d)-([A-Z]{2}\d)(:.+)", r"\1\3\n%add:\t\2", s) # puts addressee into separate dependent tier (%add), instead of in the format speaker-addressee (SS\d-AA\d).
-    s = re.sub(r"(\*[A-Z]{3})-([A-Z]{2}\d)(:.+)", r"\1\3\n%add:\t\2", s) # puts addressee into separate dependent tier (%add), instead of in the format speaker-addressee (SSS-AA\d).
-    s = re.sub(r"(\*[A-Z]{2}\d)-([A-Z]{3})(:.+)", r"\1\3\n%add:\t\2", s) # puts addressee into separate dependent tier (%add), instead of in the format speaker-addressee (SS\d-AAA).
+    s = re.sub(r"(\*[a-zA-Z]{1,3}\d{0,2})[_-]+\s?([a-zA-Z]{1,3}\d{0,2})(:.+)", r"\1\3\n%add:\t\2", s)     
+    s = re.sub(r"(\*[a-zA-Z]{1,3}\d{0,2})[_-]+\s?([a-zA-Z]{1,3}\d{0,2})(\s.+)", r"\1\3\n%add:\t\2", s)
     
     # fixes repetitions
     s = re.sub(r"(\[x)(\d\])", r"\1 \2", s) 
@@ -122,8 +119,10 @@ def clean_chat_line(s):
     
     s = re.sub(r"\+//\s([!\?\.])", r"+//\1", s)
     s = re.sub(r"\+//\n", r"+//.\n", s)
+    
+    # keep this order - fixes replacements in square brackets    
     s = re.sub(r"\[:\s*(\w)", r"[: \1", s)
-    s = re.sub(r"\[\s?(\w+)\]", r"[: \1]", s)
+    s = re.sub(r"\s\[\.", r" [:", s)    
     
     # gets rid of redundant <> brackets around single elements; the <> are to signal that two elements are treated together 
     s = re.sub(r"<(\S+?)>", r"\1", s) 
@@ -135,13 +134,20 @@ def clean_chat_line(s):
     s = re.sub(r"([!\?\.])(\s*\[.+?\]\s*?)$", r"\2\1", s) 
     
     # deletes redundant repetition marker (milk [/] milk = milk milk) since it often causes problems for CHATTER in combination with \W characters
-    s = re.sub(r"\[/\]", r"", s)
+    s = re.sub(r"\[\s?/\s?\]", r"", s)
     
     # deletes tabs in utterance or %xmor tiers
     s = re.sub(r"^([\*%].+?\t.+?)\t", r"\1 ", s) 
     
     s = re.sub(r"\+\.+", r"+...", s)
+    s = re.sub(r"([\*%]...:\t)(:|t:)", r"\1", s)
+    #s = re.sub(r"(^\*.+?)\s(\w+?)&", r"\1 \2", s)
     
+    # gets rid of duplicate dependent tiers
+    s = re.sub(r"%exp:\s*(.+?)\n%exp:\s*(.+?)$", r"%exp:\t\1 \2", s)
+    s = re.sub(r"%exp:\s*(.+?)\n%exp:\s*(.+?)$", r"%exp:\t\1 \2", s) # repetition for triplicate tiers
+    s = re.sub(r"%act:\s*(.+?)\n%act:\s*(.+?)$", r"%act:\t\1 \2", s)
+    s = re.sub(r"%act:\s*(.+?)\n%act:\s*(.+?)$", r"%act:\t\1 \2", s) # repetition for triplicate tiers
     
     
         
@@ -185,7 +191,6 @@ def clean_chat_line(s):
     s = re.sub("å", "a", s)
 
     
-    
     # fix roles according the CHILDES's depfile.cut 
     # line = line.replace("Target_Chıld", "Target\_Child")
     # participants have to be fixed
@@ -201,3 +206,4 @@ def clean_chat_line(s):
     # utterance delimiter always needed (e.g. ".")
 
     return s
+    
