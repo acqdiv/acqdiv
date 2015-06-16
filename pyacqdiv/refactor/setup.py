@@ -1,4 +1,6 @@
-# for now call xml2json (installed script)
+# do we want to incorporate something like this for teh xml2json 
+# into pyacqdiv? functions below taken from pyacqdiv to utf-8 via chardet -- but python internal
+#
 # think about and talk to Robert about how to incorporate external-python libraries to pyacqdiv
 
 # drop the unneeded
