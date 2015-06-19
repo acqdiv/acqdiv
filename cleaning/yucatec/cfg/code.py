@@ -18,59 +18,96 @@ def clean_chat_line(s):
     s = re.sub("^@Birth of Sandi:.*", "@Birth of SAN:\t1993-JUL-23\n", s)
     s = re.sub("^@Translation", "@Translator", s)
 
-    #unification *PARTICIPANT tier
-    #remove numbers and spaces before the participant's ID so that only the asterisk and code are there:
-    s=re.sub(r"[0-9]+(.*)\*([A-Z]{3}:)", r"*\2", s)
-    s=re.sub(r"[0-9]+(.*)\*([A-Z]{4}:)", r"*\2", s)
-    s=re.sub(r"[0-9]+(.*)\*([A-Z]{6}:)", r"*\2", s)
 
+    ### TIER NAMES CLEANING ###
+    #unification *PARTICIPANT tier
+    #correct participants' IDs:
+    s=re.sub(r"\*MECH:", r"*MEC:", s)
+    s=re.sub(r"\*GOYO:", r"*GOY:", s)
+    s=re.sub(r"\*PEPE:", r"*PEP:", s)
+    s=re.sub(r"\*ABUE:", r"*ABU:", s)
+    s=re.sub(r"\*MARI:", r"*MAR:", s)
+    s=re.sub(r"\*CHIC:", r"*CHI:", s)
+    s=re.sub(r"\*SANI:", r"*SAN:", s)
+    s=re.sub(r"\*ABUELA:", r"*ABU:", s)
+    s=re.sub(r"ABUELA:", r"*ABU:", s)
+    s=re.sub(r"\*MAMDAV:", r"*FIL:", s)
+    s=re.sub(r"\*mamdav:", r"*FIL:", s)
+    s=re.sub(r"\*mamdav\*:", r"*FIL:", s)
+    s=re.sub(r"\*mamdav", r"*FIL:", s)
+    s=re.sub(r"mamdav:", r"*FIL:", s)
+    s=re.sub(r"mamdav", r"*FIL:", s)
+    s=re.sub(r"\*davdav:", r"*DAV:", s)
+    s=re.sub(r"\*davdav", r"*DAV:", s)
+    s=re.sub(r"\*davsan:", r"*SAN:", s)
+    s=re.sub(r"\*davsan", r"*SAN:", s)
+    s=re.sub(r"\*dav\*:", r"*DAV:", s)
+    s=re.sub(r"\*dav:", r"*DAV:", s)
+    s=re.sub(r"\*dav", r"*DAV:", s)
+    s=re.sub(r"\*san:", r"*SAN:", s)
+    s=re.sub(r"\*fil:", r"*FIL:", s)
+    s=re.sub(r"\*fil", r"*FIL:", s)
+    s=re.sub(r"fil:", r"*FIL:", s)
+    s=re.sub(r"\*mot::", r"*MOT:", s)
+    s=re.sub(r"\*mot:", r"*MOT:", s)
+    s=re.sub(r"\*arm:", r"*ARM:", s)
+    s=re.sub(r"\*mar:", r"*MAR:", s)
+    s=re.sub(r"\*nef:", r"*NEF:", s)
+    s=re.sub(r"\*lor:", r"*LOR:", s)
+    s=re.sub(r"\*:", r"*UNK:", s)
+    s=re.sub(r"\*([A-Z]{3}) :", r"*\1:", s) # if there is a space between the participant's code and the colon, remove it.
+    s=re.sub(r"\(\s?(\*[A-Z]{3})\s?\):", r"\1:", s) # participant codes with form e.g. "(*ARM):" or "( *SAN ):" should be transformed into "*ARM:"
+
+    #remove numbers and spaces before the participant's ID so that only the asterisk and code appear:
+    s=re.sub(r"[0-9]+(.*)\*([A-Z]{3}:)", r"*\2", s)
+    #s=re.sub(r"[0-9]+(.*)\*([A-Z]{4}:)", r"*\2", s) # if the participants' IDs have been changed first, these two are no longer needed. Left here for final checking.
+    #s=re.sub(r"[0-9]+(.*)\*([A-Z]{6}:)", r"*\2", s)
 
     #unification %xpho tier
-    s=re.sub("\*pho:", "%xpho:", s)
-    s=re.sub("%fon:", "%xpho:", s)
-    s=re.sub("%pho:", "%xpho:", s)
-    s=re.sub("%pho.", "%xpho:", s)
-    s=re.sub("%pho :", "%xpho:", s)
-    s=re.sub("%pho;", "%xpho:", s)
-    s=re.sub("^pho:", "%xpho:", s)
-    s=re.sub("\s+pho:", "%xpho:", s)
-    s=re.sub("%PHO:", "%xpho:", s)
-    s=re.sub("%pho", "%xpho:", s)
+    s=re.sub(r"\*pho:", r"%xpho:", s)
+    s=re.sub(r"%fon:", r"%xpho:", s)
+    s=re.sub(r"%pho:", r"%xpho:", s)
+    s=re.sub(r"%pho.", r"%xpho:", s)
+    s=re.sub(r"%pho :", r"%xpho:", s)
+    s=re.sub(r"%pho;", r"%xpho:", s)
+    s=re.sub(r"^pho:", r"%xpho:", s)
+    s=re.sub(r"%PHO:", r"%xpho:", s)
+    s=re.sub(r"%pho", r"%xpho:", s)
 
     #unification %xmor tier
-    s=re.sub("%MOR:", "%xmor:", s)    
-    s=re.sub("\*mor:", "%xmor:", s)    
-    s=re.sub("%mor.", "%xmor:", s)    
-    s=re.sub("%mor:", "%xmor:", s)
+    s=re.sub(r"%MOR:", r"%xmor:", s)    
+    s=re.sub(r"\*mor:", r"%xmor:", s)    
+    s=re.sub(r"%mor.", r"%xmor:", s)    
+    s=re.sub(r"%mor:", r"%xmor:", s)
             
     #unification %xspa tier
-    s=re.sub("\*ESPA:", "%xspa:", s)
-    s=re.sub("\*ESP:", "%xspa:", s)
-    s=re.sub("\*ESP.", "%xspa:", s)
-    s=re.sub("[^\*]ESP:", "%xspa:", s)
+    s=re.sub(r"\*ESPA:", r"%xspa:", s)
+    s=re.sub(r"\*ESP:", r"%xspa:", s)
+    s=re.sub(r"\*ESP.", r"%xspa:", s)
+    s=re.sub(r"[^\*]ESP:", r"%xspa:", s)
 
-    s=re.sub("Esp:", "%xspa:", s)
-    s=re.sub("Esp.", "%xspa:", s)
+    s=re.sub(r"Esp:", r"%xspa:", s)
+    s=re.sub(r"Esp.", r"%xspa:", s)
 
-    s=re.sub("%esp.", "%xspa:", s)
-    s=re.sub("%esp_:", "%xspa:", s)
-    s=re.sub("%esp :", "%xspa:", s)
-    s=re.sub("%esp:", "%xspa:", s)
+    s=re.sub(r"%esp.", r"%xspa:", s)
+    s=re.sub(r"%esp_:", r"%xspa:", s)
+    s=re.sub(r"%esp :", r"%xspa:", s)
+    s=re.sub(r"%esp:", r"%xspa:", s)
+    s=re.sub(r"%\*esp:", r"%xspa:", s)
+    s=re.sub(r"\*esp:", r"%xspa:", s)
 
-    s=re.sub("%eng:", "%xspa:", s)
-    s=re.sub("%eng;", "%xspa:", s)
-    s=re.sub("%eng.", "%xspa:", s)
-    s=re.sub("%engL:", "%xspa:", s)
-    s=re.sub("%eng :", "%xspa:", s)
-    s=re.sub("%eng", "%xspa:", s)
+    s=re.sub(r"%ENG:", r"%xspa:", s)
+    s=re.sub(r"%eng:", r"%xspa:", s)
+    s=re.sub(r"%eng;", r"%xspa:", s)
+    s=re.sub(r"%eng.", r"%xspa:", s)
+    s=re.sub(r"%engL:", r"%xspa:", s)
+    s=re.sub(r"%eng :", r"%xspa:", s)
+    s=re.sub(r"%eng", r"%xspa:", s)
 
-
-
-
-    #character cleaning; cf. ../notes/yua-chars.ods for notes on characters that need manual attention and/or need to be interpreted by Barbara (corpus owner)
+    ### CHARACTER CLEANING ###
+    # cf. ../notes/yua-chars.ods for notes on characters that need manual attention and/or need to be interpreted by Barbara (corpus owner)
     s = re.sub(" ", " ", s) # unification of two different space types
-    s=re.sub("¨(.*)\?", "¿($1)\?", s) # if the dieresis happens at the beginning of a line and then comes "?", then it has to be replaced by "¿"
-    #s = re.sub("¨", "", s)
+    s=re.sub(r"¨(.*)\?", r"¿\1\?", s) # if the dieresis happens at the beginning of a line and later comes "?", then the dieresis has to be replaced by "¿"
     s = re.sub("¢", "ó", s)
     s = re.sub("’", "'", s)
     s = re.sub("£", "ú", s)
@@ -88,14 +125,19 @@ def clean_chat_line(s):
     s = re.sub("Í", "í", s)
     s = re.sub("ë", "é", s)
     s = re.sub("°", "", s)
+    s=re.sub("ż", "¿", s)
+
     #inverted question mark
-    s=re.sub(r"^\*(.*)¿(.*)$", r"*\1\2", s) #not allowed in a *PARTICIPANT tier
-    
+    s=re.sub(r"^\*([A-Z]{3}:)(.*)¿(.*)$", r"*\1\2\3", s) # not allowed in a *PARTICIPANT tier
+    s=re.sub(r"^%xpho:(.*)¿(.*)$", r"%xpho:\1\2", s) # not allowed in a %xpho tier
+    s=re.sub(r"%xspa:(.*)¿$", r"%xspa:\1\?", s) # at the end of a %xspa tier, "¿" has to be "?"
+
     #inverted exclamation mark
-    s=re.sub("all¡", "allí", s)
+    s=re.sub("all¡", "allí", s) # these four refer to consistent errors across the corpus and they simplify the application of other rules below.
     s=re.sub("as¡", "así", s)
     s=re.sub("aqu¡", "aquí", s)
     s=re.sub("ah¡", "ahí", s)
+
 
     #cleanup unwanted tiers
     #added by chysi

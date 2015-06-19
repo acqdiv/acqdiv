@@ -12,7 +12,7 @@ class Vividict(dict):
 xml_dep_correspondences = {
     'actions' : 'comments',
     'addressee' : 'addressee',
-    'arg' : 'argument structure', 
+    'arg' : 'argument_coding', 
     'comments' : 'comments',
     'english translation' : 'english',
     'errcoding' : 'error_coding',
