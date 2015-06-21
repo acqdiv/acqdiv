@@ -56,5 +56,5 @@ def calculate_xml_days(age_str):
     years = int(age.group(1))
     months = int(age.group(2))
     days = int(age.group(3))
-    out = years * 365 + months * 31 + days
+    out = years * 365 + months * 30 + days
     return out
