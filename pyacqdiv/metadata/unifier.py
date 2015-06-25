@@ -89,8 +89,8 @@ class Unifier():
         for resource in self.metadata['media']:
             if resource == 'mediafile':
                 for head in self.metadata['media'][resource]:
-                    if head in ImdiMediaHeads.copy():
-                        metadata['media'][resource][ImdiMediaHeads.copy()[head]] = self.metadata['media'][resource][head]
+                    if head in ImdiMediaHeads:
+                        metadata['media'][resource][ImdiMediaHeads[head]] = self.metadata['media'][resource][head]
 
         for i in range(len(self.metadata['participants'])):
             metadata['participants'].append(ParticipantHeads.copy())

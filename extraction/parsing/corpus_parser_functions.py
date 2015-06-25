@@ -1100,7 +1100,7 @@ def parse_xml(file_name, corpus_name):
                         # replace noun class numbers by more standard Roman numbers; exception are [12][sp] (= SAP) and f\d (= FUT)
                         num_dic = {'0' : '0', '1' : 'I', '2' : 'II', '3' : 'III', '4' : 'IV', '5' : 'V', '6' : 'VI', '7' : 'VII', '8' : 'VIII', '9' : 'IX', 
                             '10' : 'X', '11' : 'XI', '12' : 'XII', '13' : 'XIII', '14' : 'XIV', '15' : 'XV', '16' : 'XVI', '17' : 'XVII', '18' : 'XVIII', 
-                            '19' : 'XIX', '20' : 'XX', '21' : 'XI', '22' : 'XII'}
+                            '19' : 'XIX', '20' : 'XX', '21' : 'XXI', '22' : 'XXII'}
                         reverse_num_dic = {'I' : '1', 'II' : '2', 'III' : '3', 'IV' : '4', 'V' : '5'}
                         for n in re.findall('((?<!f)\\d+(?![sp]))', gloss):
                             gloss = re.sub(n, num_dic[n], gloss)
