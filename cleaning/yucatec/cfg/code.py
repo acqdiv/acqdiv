@@ -58,6 +58,7 @@ def clean_chat_line(s):
     s=re.sub(r"\*lor:", r"*LOR:", s)
     s=re.sub(r"\*SEÑ:", r"*UNK:", s)
     s=re.sub(r"\*:", r"*UNK:", s)
+    s=re.sub(r"\*\?:", r"*UNK:", s)
     s=re.sub(r"\*([A-Z]{3}) :", r"*\1:", s) # if there is a space between the participant's code and the colon, remove it.
     s=re.sub(r"\(\s?(\*[A-Z]{3})\s?\):", r"\1:", s) # participant codes with form e.g. "(*ARM):" or "( *SAN ):" should be transformed into "*ARM:"
 
@@ -103,14 +104,14 @@ def clean_chat_line(s):
     s=re.sub(r"%eng:", r"%xspa:", s)
     s=re.sub(r"%eng;", r"%xspa:", s)
     s=re.sub(r"%eng.", r"%xspa:", s)
-    s=re.sub(r"%engL:", r"%xspa:", s)
+    s=re.sub(r"%engL:", r"%xspa:", s) ######## only a few instances? move to yua-manual-changes.xls?
     s=re.sub(r"%eng :", r"%xspa:", s)
     s=re.sub(r"%eng", r"%xspa:", s)
 
     ### CHARACTER CLEANING ###
     # cf. ../notes/yua-chars.ods for notes on characters that need manual attention and/or need to be interpreted by Barbara (corpus owner)
     s = re.sub(" ", " ", s) # unification of two different space types
-    s=re.sub(r"¨(.*)\?", r"¿\1\?", s) # if the dieresis happens at the beginning of a line and later comes "?", then the dieresis has to be replaced by "¿"
+    s=re.sub(r"¨(.*)\?", r"¿\1\?", s) # if the dieresis happens at the beginning of a line and later comes "?", then the dieresis has to be replaced by "¿" ######### this seems to happen in only one file. Recheck...
     s=re.sub("¢", "ó", s)
     s=re.sub("σ", "ó", s)
     s = re.sub("’", "'", s)
@@ -119,7 +120,7 @@ def clean_chat_line(s):
     s=re.sub("¤", "ñ", s)
     s=re.sub("ρ", "ñ", s)
     s=re.sub("с", "ñ", s) # Russian character
-    s=re.sub("hńn", "hnn", s) ########## recheck. Also "hn´n" was found. Maybe there is something else there...
+    s=re.sub("hńn", "hnn", s) ########## recheck. Also "hn´n" was found. Maybe there is something else there... Also look for hm@i
     s=re.sub("ń", "ñ", s)
     s = re.sub("^.+?\\\\.+?$", "", s) # backslashes only occur in lines of jumbled characters (probably information lost from .doc to .txt)
     s=re.sub("ç", "", s)
@@ -131,7 +132,7 @@ def clean_chat_line(s):
     s=re.sub("è", "é", s)
     s=re.sub("ì", "í", s)
     #s=re.sub("°", "", s) # only two instances. Moved to yua-manual-changes.xls
-    s=re.sub("ż", "¿", s)
+    s=re.sub("ż", "¿", s) ########### this seems to affect only one file. Recheck.
 
     #inverted question mark
     s=re.sub(r"^\*([A-Z]{3}:)(.*)¿(.*)$", r"*\1\2\3", s) # not allowed in a *PARTICIPANT tier
@@ -149,7 +150,7 @@ def clean_chat_line(s):
     s=re.sub("m¡o", "mío", s)
     s=re.sub("j¡cara", "jícara", s)
     s=re.sub("todav¡a", "todavía", s)
-    s=re.sub("sand¡a", "sandía", s) # only two instances. Move to manual changes... ?
+    s=re.sub("sand¡a", "sandía", s) ########## only two instances. Move to manual changes... ?
 
 
     #cleanup unwanted tiers
