@@ -19,7 +19,7 @@ def clean_chat_line(s):
     s = re.sub("^@Translation", "@Translator", s)
 
 
-    ### TIER NAMES CLEANING ###
+    ### TIER CLEANING ###
     #unification *PARTICIPANT tier
     #correct participants' IDs:
     s=re.sub(r"\*MECH:", r"*MEC:", s)
@@ -62,11 +62,6 @@ def clean_chat_line(s):
     s=re.sub(r"\*([A-Z]{3}) :", r"*\1:", s) # if there is a space between the participant's code and the colon, remove it.
     s=re.sub(r"\(\s?(\*[A-Z]{3})\s?\):", r"\1:", s) # participant codes with form e.g. "(*ARM):" or "( *SAN ):" should be transformed into "*ARM:"
 
-    #remove numbers and spaces before the participant's ID so that only the asterisk and code appear:
-    s=re.sub(r"[0-9]+(.*)\*([A-Z]{3}:)", r"*\2", s)
-    #s=re.sub(r"[0-9]+(.*)\*([A-Z]{4}:)", r"*\2", s) # if the participants' IDs have been changed first, these two are no longer needed. Left here for final checking.
-    #s=re.sub(r"[0-9]+(.*)\*([A-Z]{6}:)", r"*\2", s)
-
     #unification %xpho tier
     s=re.sub(r"\*pho:", r"%xpho:", s)
     s=re.sub(r"%fon:", r"%xpho:", s)
@@ -108,36 +103,81 @@ def clean_chat_line(s):
     s=re.sub(r"%eng :", r"%xspa:", s)
     s=re.sub(r"%eng", r"%xspa:", s)
 
+
+    s=re.sub(r"^[0-9]+(\s)(\*([A-Z]{3}:)", r"\2", s) # remove numbers and spaces before *PARTICIPANT tiers
+    s=re.sub(r"^\s+(\*([A-Z]{3}:)", r"\1", s) # remove spaces before *PARTICIPANT tiers
+    s=re.sub(r"^[0-9]+(\s)(%[a-z]{4}:)", r"\2", s) # remove numbers and spaces before %xpho, %xmor and %xspa tiers
+    #s=re.sub(r"[0-9]+(.*)\*([A-Z]{4}:)", r"*\2", s) # if the participants' IDs have been changed first, these two are no longer needed. Left here for final checking.
+    #s=re.sub(r"[0-9]+(.*)\*([A-Z]{6}:)", r"*\2", s)
+    s=re.sub(r"^\t+([%|\*])", r"\1", s) # remove all tabs before the beginning of a tier
+    s=re.sub(r"^\s+([%|\*])", r"\1", s) # remove all spaces before the beginning of a tier
+    s=re.sub(r"^(%xpho:)(.*)/(.*)/", r"\1\2\3", s) # remove "/" in %xpho tiers
+    s=re.sub(r"^\((.*)\)", r"%xcom:(\1)", s) # place lines with comments in brackets into a %xcom tier, without the brackets
+    s=re.sub(r"^[0-9]+$", r"", s) # remove lines which have only numbers
+    
+
+
+
+
+
     ### CHARACTER CLEANING ###
     # cf. ../notes/yua-chars.ods for notes on characters that need manual attention and/or need to be interpreted by Barbara (corpus owner)
-    s = re.sub(" ", " ", s) # unification of two different space types
-    s=re.sub(r"¨(.*)\?", r"¿\1\?", s) # if the dieresis happens at the beginning of a line and later comes "?", then the dieresis has to be replaced by "¿" ######### this seems to happen in only one file. Recheck...
+    
+    s=re.sub(r"α", r"á", s)
+    s=re.sub(r"ι", r"é", s)
+    s=re.sub(r"ν", r"í", s)
+    s=re.sub(r"σ", r"ó", s)
+    s=re.sub(r"ϊ", r"ú", s)
+    s=re.sub(r"ρ", r"ñ", s)
+    s=re.sub(r"Ώ", r"¿", s)
+
+    s=re.sub(r"б", r"á", s)
+    s=re.sub(r"й", r"é", s)
+    s=re.sub(r"н", r"í", s)
+    s=re.sub(r"у", r"ó", s)
+    s=re.sub(r"ъ", r"ú", s)
+    s=re.sub(r"с", r"ñ", s)
+    
+    #s=re.sub(r"", r"á", s)
+    #s=re.sub(r"", r"é", s)
+    #s=re.sub(r"", r"í", s)
     s=re.sub("¢", "ó", s)
-    s=re.sub("σ", "ó", s)
-    s = re.sub("’", "'", s)
-    s = re.sub("£", "ú", s)
-    s = re.sub("\\s‘\\s", "?", s) # other uses of "‘" need manual attention
+    s=re.sub("£", "ú", s)
     s=re.sub("¤", "ñ", s)
-    s=re.sub("ρ", "ñ", s)
-    s=re.sub("с", "ñ", s) # Russian character
-    s=re.sub("hńn", "hnn", s) ########## recheck. Also "hn´n" was found. Maybe there is something else there... Also look for hm@i
-    s=re.sub("ń", "ñ", s)
-    s = re.sub("^.+?\\\\.+?$", "", s) # backslashes only occur in lines of jumbled characters (probably information lost from .doc to .txt)
+
     s=re.sub("ç", "", s)
     s=re.sub("Æ", "'", s)
     s=re.sub("sÏ", "sí", s)
-    s = re.sub("ï", "'", s)
-    #s=re.sub("ë", "é", s) # only one instance. Moved to yua-manual-changes.xls
-    s=re.sub("à", "á", s)    
+    s=re.sub("à", "á", s)
     s=re.sub("è", "é", s)
     s=re.sub("ì", "í", s)
-    #s=re.sub("°", "", s) # only two instances. Moved to yua-manual-changes.xls
-    s=re.sub("ż", "¿", s) ########### this seems to affect only one file. Recheck.
+    s=re.sub("ż", "¿", s)
+    s=re.sub("hńn", "hnn", s) ########## recheck. Also "hn´n" was found. Maybe there is something else there... Also look for hm@i, and for @ alone...
+    s=re.sub("ń", "ñ", s)
+    s=re.sub(r"(%xmor:)(.*)\\", r"\1\2\|", s) # in %xmor tiers, replace "\" with "|"
 
-    #inverted question mark
+    # dieresis
+    s=re.sub(r"%xspa:[\s|\t]+¨(.*)\?", r"%xspa:\t¿\1\?", s) # replace a dieresis at the beginning of a %xspa tier with a "¿"
+    s=re.sub(r"(%xpho:[\s|\t]+)¨", r"\1", s) # remove the dieresis at the beginning of a %xpho tier
+    s=re.sub(r"", r"", s) ######### what about a dieresis at the beginning of a *PARTICIPANT tier?
+    
+    # inverted question mark
     s=re.sub(r"^\*([A-Z]{3}:)(.*)¿(.*)$", r"*\1\2\3", s) # not allowed in a *PARTICIPANT tier
     s=re.sub(r"^%xpho:(.*)¿(.*)$", r"%xpho:\1\2", s) # not allowed in a %xpho tier
     s=re.sub(r"%xspa:(.*)¿$", r"%xspa:\1\?", s) # at the end of a %xspa tier, "¿" has to be "?"
+
+
+
+
+
+
+    s = re.sub(" ", " ", s) # unification of two different space types
+    s = re.sub("’", "'", s)
+    s = re.sub("\\s‘\\s", "?", s) # other uses of "‘" need manual attention
+    s = re.sub("^.+?\\\\.+?$", "", s) # backslashes only occur in lines of jumbled characters (probably information lost from .doc to .txt) ##### I don't see this anywhere. Ask Andi.
+    s = re.sub("ï", "'", s)
+
+
 
     #inverted exclamation mark (work in progress...)
     s=re.sub(r"¡$", r"!", s) # at the end of a line, "¡" has to be "!"
@@ -151,6 +191,18 @@ def clean_chat_line(s):
     s=re.sub("j¡cara", "jícara", s)
     s=re.sub("todav¡a", "todavía", s)
     s=re.sub("sand¡a", "sandía", s) ########## only two instances. Move to manual changes... ?
+
+
+    ### OTHER CLEANING ###
+    s=re.sub("ERg", "ERG", s)
+
+
+
+
+
+
+
+
 
 
     #cleanup unwanted tiers
@@ -193,7 +245,6 @@ def clean_chat_line(s):
     # fix errors in the pho line
     if s.startswith("%pho:"):
         s = re.sub("\.\.\.", ":", s)
-        s = re.sub("/", "", s)
         s = re.sub("(?<=\w)[\.,]", "", s)
         s = re.sub("[\.,]\s*$", "", s)
         s = re.sub("\s\.\s", " (.) ", s)
