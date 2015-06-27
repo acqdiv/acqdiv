@@ -114,7 +114,10 @@ def clean_chat_line(s):
     s=re.sub(r"^(%xpho:)(.*)/(.*)/", r"\1\2\3", s) # remove "/" in %xpho tiers
     s=re.sub(r"^\((.*)\)", r"%xcom:(\1)", s) # place lines with comments in brackets into a %xcom tier, without the brackets
     s=re.sub(r"^[0-9]+$", r"", s) # remove lines which have only numbers
-    
+    s=re.sub(r"^n$", r"", s) # remove lines which have only "n"    
+    s=re.sub(r"^\s+\.$", r"", s) # remove lines which have only " ." ######## careful! this seems to be "content of %mor tiers divided sometimes in two lines"
+    s=re.sub(r"^\n$", r"", s) # remove empty lines ######## recheck! is this correct? See with Andi/Steve/Robert
+
 
 
 
