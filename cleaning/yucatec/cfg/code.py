@@ -78,7 +78,9 @@ def clean_chat_line(s):
     s=re.sub(r"\*mor:", r"%xmor:", s)    
     s=re.sub(r"%mor.", r"%xmor:", s)    
     s=re.sub(r"%mor:", r"%xmor:", s)
-            
+    #s=re.sub(r"%mor :", r"%xmor:", s) # note that it is not the usual whitespace
+    s=re.sub(r"%mor", r"%xmor:", s)
+
     #unification %xspa tier
     s=re.sub(r"\*ESPA:", r"%xspa:", s)
     s=re.sub(r"\*ESP:", r"%xspa:", s)
@@ -99,7 +101,7 @@ def clean_chat_line(s):
     s=re.sub(r"%eng:", r"%xspa:", s)
     s=re.sub(r"%eng;", r"%xspa:", s)
     s=re.sub(r"%eng.", r"%xspa:", s)
-    s=re.sub(r"%engL:", r"%xspa:", s) ######## only a few instances? move to yua-manual-changes.xls?
+    s=re.sub(r"%engL:", r"%xspa:", s)
     s=re.sub(r"%eng :", r"%xspa:", s)
     s=re.sub(r"%eng", r"%xspa:", s)
 
@@ -112,10 +114,10 @@ def clean_chat_line(s):
     s=re.sub(r"^\t+([%|\*])", r"\1", s) # remove all tabs before the beginning of a tier
     s=re.sub(r"^\s+([%|\*])", r"\1", s) # remove all spaces before the beginning of a tier
     s=re.sub(r"^(%xpho:)(.*)/(.*)/", r"\1\2\3", s) # remove "/" in %xpho tiers
-    s=re.sub(r"^\((.*)\)", r"%xcom:(\1)", s) # place lines with comments in brackets into a %xcom tier, without the brackets
+    s=re.sub(r"^\((.*)\)", r"%xcom:\1", s) # place lines with comments in brackets into a %xcom tier, without the brackets
     s=re.sub(r"^[0-9]+$", r"", s) # remove lines which have only numbers
     s=re.sub(r"^n$", r"", s) # remove lines which have only "n"    
-    s=re.sub(r"^\s+\.$", r"", s) # remove lines which have only " ." ######## careful! this seems to be "content of %mor tiers divided sometimes in two lines"
+    s=re.sub(r"^\s+\.$", r"", s) # remove lines which have only " ." ##### careful! this seems to be "content of %mor tiers divided sometimes in two lines". recheck at the end.
     s=re.sub(r"^\n$", r"", s) # remove empty lines ######## recheck! is this correct? See with Andi/Steve/Robert
 
 
@@ -133,6 +135,7 @@ def clean_chat_line(s):
     s=re.sub(r"ϊ", r"ú", s)
     s=re.sub(r"ρ", r"ñ", s)
     s=re.sub(r"Ώ", r"¿", s)
+    #s=re.sub(r"‘", r"¡", s) ####### apostrophe/inverted comma involved. Pending.
 
     s=re.sub(r"б", r"á", s)
     s=re.sub(r"й", r"é", s)
@@ -155,19 +158,20 @@ def clean_chat_line(s):
     s=re.sub("è", "é", s)
     s=re.sub("ì", "í", s)
     s=re.sub("ż", "¿", s)
-    s=re.sub("hńn", "hnn", s) ########## recheck. Also "hn´n" was found. Maybe there is something else there... Also look for hm@i, and for @ alone...
+    s=re.sub("hńn", "hnn", s) ########## recheck. Also "hn´n" was found. Maybe there is something else there... Also look for hm@i, and for @ alone... It looks like the pattern is @i or @in or @ia. Check. And when there is this in a *PARTICIPANT tier, then there are no other tiers following.
     s=re.sub("ń", "ñ", s)
     s=re.sub(r"(%xmor:)(.*)\\", r"\1\2\|", s) # in %xmor tiers, replace "\" with "|"
 
     # dieresis
-    s=re.sub(r"%xspa:[\s|\t]+¨(.*)\?", r"%xspa:\t¿\1\?", s) # replace a dieresis at the beginning of a %xspa tier with a "¿"
-    s=re.sub(r"(%xpho:[\s|\t]+)¨", r"\1", s) # remove the dieresis at the beginning of a %xpho tier
-    s=re.sub(r"", r"", s) ######### what about a dieresis at the beginning of a *PARTICIPANT tier?
+    s=re.sub(r"^%xspa:[\s|\t]+¨(.*)\?", r"%xspa:\t¿\1\?", s) # replace a dieresis at the beginning of a %xspa tier with a "¿"
+    s=re.sub(r"^(%xpho:[\s|\t]+)¨", r"\1", s) # remove the dieresis at the beginning of a %xpho tier
+    s=re.sub(r"^(\*[A-Z]{3}:[\s|\t]+)¨", r"\1", s) # remove the dieresis at the beginning of a *PARTICIPANT tier
+    s=re.sub(r"", r"", s) ######### What about %mor tiers?
     
     # inverted question mark
     s=re.sub(r"^\*([A-Z]{3}:)(.*)¿(.*)$", r"*\1\2\3", s) # not allowed in a *PARTICIPANT tier
     s=re.sub(r"^%xpho:(.*)¿(.*)$", r"%xpho:\1\2", s) # not allowed in a %xpho tier
-    s=re.sub(r"%xspa:(.*)¿$", r"%xspa:\1\?", s) # at the end of a %xspa tier, "¿" has to be "?"
+    s=re.sub(r"^%xspa:(.*)¿$", r"%xspa:\1\?", s) # at the end of a %xspa tier, "¿" has to be "?"
 
 
 
