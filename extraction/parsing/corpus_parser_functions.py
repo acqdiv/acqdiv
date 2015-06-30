@@ -402,11 +402,10 @@ def parse_xml(file_name, corpus_name):
             # count up word index, extend list if necessary
             word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
             
-            # all corpora except Yucatec have target words related to <w> 
+            # <w> is in all corpora except Yucatec the "full_word". In Yucatec <w> corresponds to "full_word_target". 
             if corpus_name != 'Yucatec':
                 corpus[text_id][utterance_index]['words'][word_index]['full_word'] = w.text
                 corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.attrib['target']            
-            # Yucatec only has target words on "pho" tier (dealt with further below)
             elif corpus_name == 'Yucatec':
                 corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.text
                 corpus[text_id][utterance_index]['words'][word_index]['full_word'] = '???'
@@ -1372,7 +1371,7 @@ def parse_xml(file_name, corpus_name):
                 word_index = -1
                 words = re.split('[\\s+&]', morphology.text)
                 
-                # go through words on morpheme level and split on '#' or ':', preserving the delimiter!
+                
                 for w in words:
                     
                     # count up word index, extend list if necessary
@@ -1403,6 +1402,7 @@ def parse_xml(file_name, corpus_name):
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
                     
+                    # in order to get prefixes and suffixes: go through words on morpheme level and split on '#' or ':', preserving the delimiter!
                     # get prefixes
                     pfx_marker = re.search('#', w)
                     # split on '#' and preserve '#'
