@@ -203,7 +203,7 @@ if __name__ == '__main__':
         if args.inuktitut:
             if args.inuktitut[0] == 'one':
                 parser_one_json("Inuktitut")
-            elif args.inuktitut == 'many':
+            elif args.inuktitut[0] == 'many':
                 parser_per_file("Inuktitut")
             elif args.inuktitut[0] not in ['one', 'many']:
                 print('\nPlease specify the json output:\n--inuktitut=one for one big json file per corpus\n--inuktitut=many for a json file per file in the corpus\n')
