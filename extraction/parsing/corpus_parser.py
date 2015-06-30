@@ -200,7 +200,7 @@ if __name__ == '__main__':
             elif args.inuktitut == 'many':
                 parser_per_file("Inuktitut")
             elif args.inuktitut[0] not in ['one', 'many']:
-                print('\nPlease specify the json output:\n--inuk=one for one big json file per corpus\n--inuk=many for a json file per file in the corpus\n')
+                print('\nPlease specify the json output:\n--inuktitut=one for one big json file per corpus\n--inuktitut=many for a json file per file in the corpus\n')
         
         if args.turkish:    
             if args.turkish[0] == 'one':
@@ -224,7 +224,7 @@ if __name__ == '__main__':
             elif args.indonesian[0] == 'many':
                 parser_per_file("Indonesian")
             elif args.indonesian[0] not in ['one', 'many']:
-                print('\nPlease specify the json output:\n--indones=one for one big json file per corpus\n--indones=many for a json file per file in the corpus\n')
+                print('\nPlease specify the json output:\n--indonesian=one for one big json file per corpus\n--indonesian=many for a json file per file in the corpus\n')
             
         if args.russian:
             if args.russian[0] == 'one':
