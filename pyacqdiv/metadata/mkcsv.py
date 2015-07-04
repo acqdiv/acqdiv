@@ -12,22 +12,19 @@ class JsonReader():
         with open(path) as fp:
             self.data = json.load(fp)
         self.fname = self.get_file_id()
-        self.csv_fieldnames = self.get_csv_fields()
         self.participant_rows = self.get_participant_rows()
         self.session_row = self.get_session_row()
 
     def get_file_id(self):
         return self.data['__attrs__']['Cname']
 
-    def get_csv_fields(self):
-        pass
-
     def get_participant_rows(self):
         rows = []
         session = self.data['session']['id']
+        lang = self.data['session']['language']
         for participant in self.data['participants']:
              rows.append( 
-                     [session, participant['code'], participant['name'], 
+                     [lang, session, participant['code'], participant['name'], 
                      participant['age.days'], participant['age'], 
                      participant['birthdate'], participant['sex'], 
                      participant['role']])
@@ -35,14 +32,20 @@ class JsonReader():
 
     def get_session_row(self):
         sid = self.data['session']['id']
-        lang = self.data['__attrs__']['Lang']
+        lang = self.data['session']['language']
         date = self.data['session']['date']
-        location = self.data['session']['location']['country']
-        media = self.data['media']['mediafile']['file']
-        mediaformat = self.data['media']['mediafile']['format']
-        row = [sid,lang,date,location,media,mediaformat]
+        try:
+            continent = self.data['session']['location']['continent']
+        except:
+            continent = None
+        try:
+            country = self.data['session']['location']['country']
+        except:
+            country = None
+        genre = self.data['session']['genre']
+        sit = self.data['session']['situation']
+        row = [lang,sid,date,genre,sit,continent,country]
         return row
-
 
 class CSVDumper():
 
@@ -52,11 +55,11 @@ class CSVDumper():
         self.partfile = partfile
 
     def dump(self):
-        with open(self.sessionfile, 'a') as fp:
-            writer = csv.writer(fp)
+        with open(self.sessionfile, 'a', newline='') as fp:
+            writer = csv.writer(fp, dialect='unix')
             writer.writerow(self.data.session_row)
-        with open(self.partfile, 'a') as fp:
-            writer = csv.writer(fp)
+        with open(self.partfile, 'a', newline='') as fp:
+            writer = csv.writer(fp, dialect='unix')
             writer.writerows(self.data.participant_rows)
 
 class TestCSV(unittest.TestCase):
