@@ -51,6 +51,7 @@ def clean_chat_line(s):
     
     # gets rid of empty headers
     s = re.sub("^[%@].*:\\s*$", "", s)
+ 
     
     # replace <:> space with \t in first occurrence
     s = re.sub(":\\s*", ":\\t", s, 1)
@@ -92,14 +93,14 @@ def clean_chat_line(s):
     # puts addressee into separate dependent tier (%add), instead of in the format speaker-addressee (SSS-AAA).
     s = re.sub(r"(\*[a-zA-Z]{1,3}\d{0,2})[_-]+\s?([a-zA-Z]{1,3}\d{0,2})(:.+)", r"\1\3\n%add:\t\2", s)     
     s = re.sub(r"(\*[a-zA-Z]{1,3}\d{0,2})[_-]+\s?([a-zA-Z]{1,3}\d{0,2})(\s.+)", r"\1\3\n%add:\t\2", s)
-    
+
   
     s = re.sub(r"&=\s+", "&=", s)
     s = re.sub(r"\+''", r'+"', s)
     s = re.sub(r"(@New Episode):\s(.+$)", r"\1\n%sit:\t\2", s)
     
     # hashtag in KULLD corpus is equivalent to (.) which is CHAT for notation for pauses.
-    s = re.sub(r"#", r"(.)", s) 
+    s = re.sub(r"#", r"(.)", s)
     s = re.sub(r"(\S)\(\.\)", r"\1 (.)", s)
     
     # repetitions
@@ -135,7 +136,7 @@ def clean_chat_line(s):
     s = re.sub(r'(\S+)\s\["\]', r"'\1'", s)
     
     ######### check CHAT manual, this might be a dirty fix for legitimate CHAT with an utterance delimiter missing
-    s = re.sub(r'\+/([^/])', r'+//\1', s) 
+    s = re.sub(r'\+/([^/\.])', r'+//\1', s) 
     
     s = re.sub(r"\+//\s([!\?\.])", r"+//\1", s)
     s = re.sub(r"\+//\n", r"+//.\n", s)
@@ -156,7 +157,7 @@ def clean_chat_line(s):
     s = re.sub(r"([!\?\.])(\s*\[.+?\]\s*?)$", r"\2\1", s) 
     
     # deletes redundant repetition marker (milk [/] milk = milk milk) since it often causes problems for CHATTER in combination with \W characters
-    s = re.sub(r"<.+?>\s*\[\s*/\s*\]\s*<.+?>", r"", s)
+    s = re.sub(r"<(.+?)>\s*\[\s*/\s*\]\s*<(.+?)>", r"\1 \2", s)
     s = re.sub(r"\[\s*/\s*\]", r"", s)
     
     # deletes tabs in utterance or %xmor tiers
@@ -171,8 +172,14 @@ def clean_chat_line(s):
     s = re.sub(r"%exp:\s*(.+?)\n%exp:\s*(.+?)$", r"%exp:\t\1 \2", s) # repetition for triplicate tiers
     s = re.sub(r"%act:\s*(.+?)\n%act:\s*(.+?)$", r"%act:\t\1 \2", s)
     s = re.sub(r"%act:\s*(.+?)\n%act:\s*(.+?)$", r"%act:\t\1 \2", s) # repetition for triplicate tiers
+    s = re.sub(r"^(%exp|%com|%sit|%act):(.+?)\n\1:(.+?)$", r"\1:\t\2 \3", s)  
+    s = re.sub(r"^(%exp|%com|%sit|%act):(.+?)\n\1:(.+?)$", r"\1:\t\2 \3", s)   
     
+    s = re.sub(r"(\w)\s_\s(\w)", r"\1_\2", s)
+    s = re.sub(r"(\w)\s_(\w)", r"\1_\2", s)
+    s = re.sub(r"(\w)_\s(\w)", r"\1_\2", s)
     
+    s = re.sub(r",,", r",", s)
         
     """
     s = re.sub("(^[A-Z]{3}\-[A-Z]{3}:)", r"*\1", s) # MOM-CHI:
