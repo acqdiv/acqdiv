@@ -100,6 +100,7 @@ def clean_chat_line(s):
     
     # hashtag in KULLD corpus is equivalent to (.) which is CHAT for notation for pauses.
     s = re.sub(r"#", r"(.)", s) 
+    s = re.sub(r"(\S)\(\.\)", r"\1 (.)", s)
     
     # repetitions
     s = re.sub(r"\[[X\*×x]\s*(\d)\]", r"[x \1]", s)
@@ -122,6 +123,10 @@ def clean_chat_line(s):
     s = re.sub(r"@ì", r"@i", s)
     s = re.sub(r"@þ", r"@i", s)
     s = re.sub(r"@Ý", r"@i", s)
+    s = re.sub(r"(\W)ha:m([^\w@])", r"\1ha:m@i\2", s)
+    s = re.sub(r"ha:m@i_ha:m@i_...ha:m@i", r"ha:m@i ha:m@i ... ha:m@i", s)
+    s = re.sub(r"ha:m@i_ha:m@i_ha:m@i", r"ha:m@i ha:m@i ha:m@i ha:m@i", s)
+    s = re.sub(r"ha:m@i_ha:m@i_ha:m@i_ha:m@i_ha:m@i_ha:m@i", r"ha:m@i ha:m@i ha:m@i ha:m@i ha:m@i ha:m@i", s)
     s = re.sub(r"(@fp|@e|@s|@oın|@İ|@lsi|@i_ham@i_ham|@oı|@s|@ı|@fmı|@fi|@s|@i_ham@i_ha:m|@omı|@oa|@ia|@fmi|@cmı|@y|@r|@oını|@l'in|@imi|@i_ham@i_ham@i_ham@i_ham@i_ham|@fb|@eng|@eın|@oe|@m|@lyi|@imı|@ie|@:i|@fyı|@fnı|@fa|@en|@eler|@e|@sit|@si_kızını|@oü|@o_şupur|@omu|@olatmadık|@lidi|@is|@iksin|@i_hey@i_hey|@i_ham@i_ham@i_ham@i_ham@i_ham@i_ham|@i_ham@i_ham@i_ham@i_ham|@i_ham@i_ham@i_ham|@i_ham@i_ham|@i_ham@i_ha:m_ham@i_ham@i_ha:m|@ie|@i_benim_kuzum|@ì|@fmu|@fler|@elerde|@e_bye@e|@cnın|@c:e|@yu|@verme|@tıtı|@swi|@S-QUE|@simu|@si_kıvrıla|@se|@ş|@o'yi|@ou|@o_şıkır@o_şıkır|@o_miyav|@olerle|@olatmadık|@oların|@oları|@olar|@ola|@o_kırt@o_kırt@o_kırt@o_kırt|@o_kırt@o_kırt|@o_kırt|@oına|@oımız|@o_huppur|@o&hav|@o\[/\]hav|@o_havmı|@o_ham@o_ham@o_ham|@o_fırıl|@odan|@o_cuf@o_cuf|@ob|@ö|@mı|@lylen|@lsi|@l\^si|@lni|@kurmasınlar|@köpek|@kızım|@i_uf|@i_tu|@ir|@int|@inmi|@inı|@i_ne_güzel|@imuş|@im|@iktim|@iktim|@ikmisin|@ikmisin|@ii\(y\)im|@iives|@i_ı@i_ı@i_ı|@i_ı@i_ı|@i_ı|@iıhı|@i_ıh|@i@ie|@iı|@ii|@ihıhı|@i_hıh|@ihıha|@i_hı|@ihı|@,ıh|@i_ham@i_ham@i_ham@i_ham@i_ham@i_ham@i_ham|@i_ham@i_ham@i_ham@i_ha:m_ham@i_ham@i_ham@i_ham@i_ha:m|@i_ham@i_ham@i_ham@i_ha:m|@i_ham@i_ham@i_ham@i_ha|@i_ham|@iğinmi|@iee|@iee|@iee|@ie|@i_benim_yy_bunu_ben_yapalım|@iama|@hav|@ha|@h|@fyü|@fylamı|@fyi|@f_yapıyo\(r|@fya|@ftan|@fsını|@fsini|@fsı|@f_oldu|@foldu|@fo|@fnin|@fmü|@flara|@fı|@f_ham|@fbıdı|@eye|@:e's|@erın|@en|@emi|@eların|@elar|@ede|@ea|@ea|@e|@e|@dı|@da|@cuna|@cü|@cmi|@clarmı|@c_kut:u|@c_by:e@e|@c_adamalar|@bur\(a\)da|@b=&laugh|@bi|@b_ga|@bak|@babbab|@ba|@\[b26\]i|@ai|@0)", r"", s)
     s = re.sub(r"@(\W+)", r"\1", s) #gets rid of "@" at the end of words
     
@@ -134,6 +139,7 @@ def clean_chat_line(s):
     
     s = re.sub(r"\+//\s([!\?\.])", r"+//\1", s)
     s = re.sub(r"\+//\n", r"+//.\n", s)
+    s = re.sub(r"(\S)\+//", r"\1 +//", s)
     
     # keep this order - fixes replacements in square brackets    
     s = re.sub(r"\[:\s*(\w)", r"[: \1", s)
@@ -150,6 +156,7 @@ def clean_chat_line(s):
     s = re.sub(r"([!\?\.])(\s*\[.+?\]\s*?)$", r"\2\1", s) 
     
     # deletes redundant repetition marker (milk [/] milk = milk milk) since it often causes problems for CHATTER in combination with \W characters
+    s = re.sub(r"<.+?>\s*\[\s*/\s*\]\s*<.+?>", r"", s)
     s = re.sub(r"\[\s*/\s*\]", r"", s)
     
     # deletes tabs in utterance or %xmor tiers
