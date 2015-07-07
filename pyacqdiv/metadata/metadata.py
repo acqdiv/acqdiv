@@ -63,7 +63,6 @@ class Parser(object):
         return os.path.join(
             existing_dir(os.path.join(self.cfg['cleaning_dir'], self.id)), *comps)
 
-
     # where to write the json files
 
     def validate(self, src, schema):
@@ -107,7 +106,6 @@ class Parser(object):
 
 class Imdi(Parser):
     """ subclass of metadata.Parser to deal with IMDI metadata (Chintang and Russian via S. Stoll) """
-    #TODO: start dropping unwanted fields
     def __init__(self, corpus, path, outpath):
         Parser.__init__(self, corpus, path, outpath)
         self.metadata["participants"] = self.get_participants(self.root)
@@ -123,9 +121,6 @@ class Imdi(Parser):
             for e in actor.getchildren():
                 t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "") # drop the IMDI stuff
                 participant[t.lower()] = str(e.text) # make even booleans strings
-            #for k,v in participant.items():
-            #    if k == "familysocialrole":
-            #        participant["speakerrole"] = participant.pop(k)
 
             if not len(participant) == 0:
                 participants.append(participant)

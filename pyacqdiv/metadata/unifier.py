@@ -21,23 +21,24 @@ class Unifier():
             self.metatype = 'XML'
         self.null = ["Unknown", "Unspecified", "None"]
 
-    def unify(self, cdc=None):
+    def unify(self, lang, cdc=None):
         DEBUG = 0
         if self.metatype == 'IMDI':
-            self.unifyImdi()
+            self.unifyImdi(lang)
         else:
-            self.unifyXml(cdc)
+            self.unifyXml(lang, cdc)
         if DEBUG == 0:
                 with open(self.path, 'w') as unifile:
                     json.dump(self.metadata, unifile)
 
-    def unifyImdi(self):
+    def unifyImdi(self, lang):
 
         SessionHeads = {'id': None,
                                'date': None,
                                'genre': None,
                                'location': None,
-                               'situation': None}
+                               'situation': None,
+                               'language': lang}
 
         ProjectHeads = {'name': None, 
                                'shortname': None,
@@ -83,14 +84,14 @@ class Unifier():
         for head in self.metadata['session']:
             if head in SessionHeads.copy():
                 metadata['session'][head] = self.metadata['session'][head]
-                
+
         #The IMDI mediafile headers get special treatment because they actually need reassignment
 
         for resource in self.metadata['media']:
             if resource == 'mediafile':
                 for head in self.metadata['media'][resource]:
-                    if head in ImdiMediaHeads.copy():
-                        metadata['media'][resource][ImdiMediaHeads.copy()[head]] = self.metadata['media'][resource][head]
+                    if head in ImdiMediaHeads:
+                        metadata['media'][resource][ImdiMediaHeads[head]] = self.metadata['media'][resource][head]
 
         for i in range(len(self.metadata['participants'])):
             metadata['participants'].append(ParticipantHeads.copy())
@@ -131,13 +132,14 @@ class Unifier():
 
         self.metadata = metadata
 
-    def unifyXml(self, cdc=None):
+    def unifyXml(self, lang, cdc=None):
 
         SessionHeads = {'id': None,
                                'date': None,
                                'genre': None,
                                'location': None,
-                               'situation': None}
+                               'situation': None,
+                               'language': lang}
 
         ProjectHeads = {'name': None, 
                                'shortname': None,
