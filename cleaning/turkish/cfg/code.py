@@ -89,7 +89,8 @@ def clean_chat_line(s):
     
     # gets rid of line breaks in utterance; IMPORTANT: this must go before the following replacement, otherwise %add is inserted into the middle of utterances.
     s = re.sub(r"\n\s+", r" ", s) 
-        
+    s = re.sub(r"(\*[a-zA-Z]{1,3}\d{0,2})\*([a-zA-Z]{1,3}\d{0,2})", r"\1-\2", s)    
+    
     # puts addressee into separate dependent tier (%add), instead of in the format speaker-addressee (SSS-AAA).
     s = re.sub(r"(\*[a-zA-Z]{1,3}\d{0,2})[_-]+\s?([a-zA-Z]{1,3}\d{0,2})(:.+)", r"\1\3\n%add:\t\2", s)     
     s = re.sub(r"(\*[a-zA-Z]{1,3}\d{0,2})[_-]+\s?([a-zA-Z]{1,3}\d{0,2})(\s.+)", r"\1\3\n%add:\t\2", s)
@@ -186,7 +187,7 @@ def clean_chat_line(s):
     s = re.sub(r"\*+?\s+\n", r".\n", s) #
     s = re.sub(r"\*+?\n", r".\n", s) #
     s = re.sub(r"\*CAM\*MOT:	<bi\(r\) kardeş> \[/\] bir kız kardeşim var \.", r"*CAM:	bi(r) kardeş bir kız kardeşim var .\n%add:\tMOT", s)
-    s = re.sub(r"^(\*.+?)\*+", r"", s)
+    s = re.sub(r"^(\*.+?)[^\[]\*+", r"", s)
     
     
     """
