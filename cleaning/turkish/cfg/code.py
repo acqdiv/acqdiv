@@ -184,10 +184,11 @@ def clean_chat_line(s):
     s = re.sub(r"^(%act:)\s+", r"\1\t", s)
     s = re.sub(r"^(%xmor:)\s+", r"\1\t", s)
     s = re.sub(r"\[/\[", r"", s)
-    s = re.sub(r"\*+?\s+\n", r".\n", s) #
-    s = re.sub(r"\*+?\n", r".\n", s) #
+    s = re.sub(r"\*+?\s+\n", r".\n", s)
+    s = re.sub(r"\*+?\n", r".\n", s)
     s = re.sub(r"\*CAM\*MOT:	<bi\(r\) kardeş> \[/\] bir kız kardeşim var \.", r"*CAM:	bi(r) kardeş bir kız kardeşim var .\n%add:\tMOT", s)
-    s = re.sub(r"^(\*.+?)[^\[]\*+", r"", s)
+    s = re.sub(r"^(\*.+?[^\[])\*+", r"", s)
+
     
     
     """
