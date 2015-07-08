@@ -5,8 +5,8 @@ def clean_chat_line(s):
     s = re.sub(":\s+", ":\t", s, 1)
     s = re.sub("^@Begi$", "@Begin", s)
     s = re.sub("^@Fin$", "@End", s)
-    s = re.sub("\s###\s", "\sxxx\s", s)
-    s = re.sub("XXX", "xxx", s)
+    s=re.sub("\s###\s", " xxx ", s)
+    s=re.sub("XXX", "xxx", s)
     s = re.sub("(^[\*%]\S+\t+[^\t]+)\t", "\1", s)
     s = re.sub("(\w)['’ʼ]", "\\1ʔ", s)
     s = re.sub("['’ʼ](\w)", "ʔ\\1", s)
@@ -46,6 +46,7 @@ def clean_chat_line(s):
     s=re.sub(r"\*dav:", r"*DAV:", s)
     s=re.sub(r"\*dav", r"*DAV:", s)
     s=re.sub(r"\*:DAV", r"*DAV:", s)
+    s=re.sub(r"\*DAV", r"*DAV:", s)
     s=re.sub(r"\*san:", r"*SAN:", s)
     s=re.sub(r"\*fil:", r"*FIL:", s)
     s=re.sub(r"\*fil", r"*FIL:", s)
@@ -58,8 +59,10 @@ def clean_chat_line(s):
     s=re.sub(r"\*lor:", r"*LOR:", s)
     s=re.sub(r"\*SEÑ:", r"*UNK:", s)
     s=re.sub(r"\*:", r"*UNK:", s)
+    s=re.sub(r"^\s+:\s$", r"*UNK:", s) # replace ":" at the beginning of a line, with some spaces before and after, with *UNK:
     s=re.sub(r"\*\?:", r"*UNK:", s)
-    s=re.sub(r"\*([A-Z]{3}) :", r"*\1:", s) # if there is a space between the participant's code and the colon, remove it.
+    s=re.sub(r"xxx:", r"*UNK:", s) ###### careful! conflict with rule above:  s=re.sub("XXX", "xxx", s) . Check ordering after having cleaned up there.
+    s=re.sub(r"\*([A-Z]{3}) :", r"*\1:", s) # remove a space between the participant's code and the colon
     s=re.sub(r"\(\s?(\*[A-Z]{3})\s?\):", r"\1:", s) # participant codes with form e.g. "(*ARM):" or "( *SAN ):" should be transformed into "*ARM:"
 
     #unification %xpho tier
@@ -105,7 +108,7 @@ def clean_chat_line(s):
     s=re.sub(r"%eng :", r"%xspa:", s)
     s=re.sub(r"%eng", r"%xspa:", s)
 
-
+    ######some of these should go before the tier name cleaning above. Check
     s=re.sub(r"^[0-9]+(\s)(\*([A-Z]{3}:)", r"\2", s) # remove numbers and spaces before *PARTICIPANT tiers
     s=re.sub(r"^\s+(\*([A-Z]{3}:)", r"\1", s) # remove spaces before *PARTICIPANT tiers
     s=re.sub(r"^[0-9]+(\s)(%[a-z]{4}:)", r"\2", s) # remove numbers and spaces before %xpho, %xmor and %xspa tiers
@@ -114,13 +117,13 @@ def clean_chat_line(s):
     s=re.sub(r"^\t+([%|\*])", r"\1", s) # remove all tabs before the beginning of a tier
     s=re.sub(r"^\s+([%|\*])", r"\1", s) # remove all spaces before the beginning of a tier
     s=re.sub(r"^(%xpho:)(.*)/(.*)/", r"\1\2\3", s) # remove "/" in %xpho tiers
-    s=re.sub(r"^\((.*)\)", r"%xcom:\1", s) # place lines with comments in brackets into a %xcom tier, without the brackets
+    s=re.sub(r"^\((.*)\)", r"%xcom:\1", s) # place lines with comments in brackets into an %xcom tier, without the brackets
     s=re.sub(r"^[0-9]+$", r"", s) # remove lines which have only numbers
     s=re.sub(r"^n$", r"", s) # remove lines which have only "n"    
     s=re.sub(r"^\s+\.$", r"", s) # remove lines which have only " ." ##### careful! this seems to be "content of %mor tiers divided sometimes in two lines". recheck at the end.
     s=re.sub(r"^\n$", r"", s) # remove empty lines ######## recheck! is this correct? See with Andi/Steve/Robert
-
-
+    s=re.sub(r"^(.*)\*$", r"\1", s) # remove asterisk at the end of a line
+    s=re.sub(r"%xpho:\s!", r"%xpho:\s", s) # remove "!" at the beginning of a %xpho tier
 
 
 
@@ -158,7 +161,7 @@ def clean_chat_line(s):
     s=re.sub("è", "é", s)
     s=re.sub("ì", "í", s)
     s=re.sub("ż", "¿", s)
-    s=re.sub("hńn", "hnn", s) ########## recheck. Also "hn´n" was found. Maybe there is something else there... Also look for hm@i, and for @ alone... It looks like the pattern is @i or @in or @ia. Check. And when there is this in a *PARTICIPANT tier, then there are no other tiers following.
+    s=re.sub("hńn", "hnn", s) ########## recheck. Also "hn´n" was found. Maybe there is something else there... Also look for hm@i, and for @ alone... It looks like the pattern is @i or @in or @ia. Check. And when there is this in a *PARTICIPANT tier, then there are no other tiers following. There is also hn'n in *XYZ (and right below, in %pho, it was written as hn’h). Check.
     s=re.sub("ń", "ñ", s)
     s=re.sub(r"(%xmor:)(.*)\\", r"\1\2\|", s) # in %xmor tiers, replace "\" with "|"
 
