@@ -2,11 +2,23 @@ def clean_filename(fname):
     return fname.rstrip(".txt")
 
 def clean_chat_line(s):
-    s = re.sub(":\s+", ":\t", s, 1)
-    s = re.sub("^@Begi$", "@Begin", s)
-    s = re.sub("^@Fin$", "@End", s)
-    s=re.sub("\s###\s", " xxx ", s)
-    s=re.sub("XXX", "xxx", s)
+    s = re.sub(":\s+", ":\t", s, 1) #### has to do with syntax having to be: [tier-name]:\t -> update now that all tiers are unified and place in right place
+
+    ### IMPORTANT NOTE: careful with all rules involving "¡", "¿", apostrophe/inverted comma. Check that ordering is correct
+
+
+    # unification of @Begin and @End lines
+    s=re.sub(r"^@Begi$", r"@Begin", s)
+    s=re.sub(r"^@Begin:", r"@Begin", s)
+    s=re.sub(r"@Fin$", r"@End", s)
+    s=re.sub(r"^FIN$", r"@End", s)
+    s=re.sub(r"@End\.", r"@End", s)
+    s=re.sub(r"@End \.", r"@End", s)
+    s=re.sub(r"@End:", r"@End", s)
+    s=re.sub(r"@End ", r"@End", s)
+
+    s=re.sub(r"\s###\s", r" xxx ", s)
+    s=re.sub(r"XXX", r"xxx", s)
     s = re.sub("(^[\*%]\S+\t+[^\t]+)\t", "\1", s)
     s = re.sub("(\w)['’ʼ]", "\\1ʔ", s)
     s = re.sub("['’ʼ](\w)", "ʔ\\1", s)
@@ -16,6 +28,7 @@ def clean_chat_line(s):
     s = re.sub("^@Birth of ARM:.*", "@Birth of ARM:\t1994-APR-10\n", s)
     s = re.sub("^@Birth of DAV:.*", "@Birth of DAV:\t1998-APR-18\n", s)
     s = re.sub("^@Birth of Sandi:.*", "@Birth of SAN:\t1993-JUL-23\n", s)
+    # this three above... search for cases...
     s = re.sub("^@Translation", "@Translator", s)
 
 
@@ -51,6 +64,7 @@ def clean_chat_line(s):
     s=re.sub(r"\*fil:", r"*FIL:", s)
     s=re.sub(r"\*fil", r"*FIL:", s)
     s=re.sub(r"fil:", r"*FIL:", s)
+    s=re.sub(r"\*FIl:", r"*FIL:", s)
     s=re.sub(r"\*mot::", r"*MOT:", s)
     s=re.sub(r"\*mot:", r"*MOT:", s)
     s=re.sub(r"\*arm:", r"*ARM:", s)
@@ -108,16 +122,23 @@ def clean_chat_line(s):
     s=re.sub(r"%eng :", r"%xspa:", s)
     s=re.sub(r"%eng", r"%xspa:", s)
 
+    # creating an %xcom tier for uncategorized comments
+    s=re.sub(r"^\((.*)\)", r"%xcom:\1", s) # place lines with comments in brackets into an %xcom tier, without the brackets    
+    s=re.sub(r"^&", r"%xcom:", s) # place lines which start with "&" into an %xcom tier
+
+
+    ##### maybe unify also %sit and %exp (and all others, if there are) to %xsit and %xexp, so that all tier names have the same pattern %[a-z]{4}. ?? Think.
+
+
     ######some of these should go before the tier name cleaning above. Check
-    s=re.sub(r"^[0-9]+(\s)(\*([A-Z]{3}:)", r"\2", s) # remove numbers and spaces before *PARTICIPANT tiers
-    s=re.sub(r"^\s+(\*([A-Z]{3}:)", r"\1", s) # remove spaces before *PARTICIPANT tiers
-    s=re.sub(r"^[0-9]+(\s)(%[a-z]{4}:)", r"\2", s) # remove numbers and spaces before %xpho, %xmor and %xspa tiers
+    s=re.sub(r"^[0-9]+\s(\*([A-Z]{3}:)", r"\1", s) # remove numbers and spaces before *PARTICIPANT tiers
+    s=re.sub(r"^\s+(\*([A-Z]{3}:)", r"\1", s) # remove spaces before *PARTICIPANT tiers ###### maybe this one at the beginning, before the tiers cleaning
+    s=re.sub(r"^[0-9]+(\s)(%[a-z]{4}:)", r"\2", s) # remove numbers and spaces before %xpho, %xmor and %xspa tiers ###### maybe this one at the beginning, before the tiers cleaning
     #s=re.sub(r"[0-9]+(.*)\*([A-Z]{4}:)", r"*\2", s) # if the participants' IDs have been changed first, these two are no longer needed. Left here for final checking.
     #s=re.sub(r"[0-9]+(.*)\*([A-Z]{6}:)", r"*\2", s)
     s=re.sub(r"^\t+([%|\*])", r"\1", s) # remove all tabs before the beginning of a tier
     s=re.sub(r"^\s+([%|\*])", r"\1", s) # remove all spaces before the beginning of a tier
     s=re.sub(r"^(%xpho:)(.*)/(.*)/", r"\1\2\3", s) # remove "/" in %xpho tiers
-    s=re.sub(r"^\((.*)\)", r"%xcom:\1", s) # place lines with comments in brackets into an %xcom tier, without the brackets
     s=re.sub(r"^[0-9]+$", r"", s) # remove lines which have only numbers
     s=re.sub(r"^n$", r"", s) # remove lines which have only "n"    
     s=re.sub(r"^\s+\.$", r"", s) # remove lines which have only " ." ##### careful! this seems to be "content of %mor tiers divided sometimes in two lines". recheck at the end.
@@ -154,14 +175,29 @@ def clean_chat_line(s):
     s=re.sub("£", "ú", s)
     s=re.sub("¤", "ñ", s)
 
-    s=re.sub("ç", "", s)
+    s=re.sub(r"‡", r"á", s)
+    s=re.sub(r"Ž", r"é", s)
+    #s=re.sub(r"’", r"í", s) ####### apostrophe/inverted comma involved. Pending.
+    s=re.sub(r"—", r"ó", s)
+    s=re.sub(r"œ", r"ú", s)
+    #s=re.sub(r"-", r"ñ", s) #### conflictive character. Pending.
+
+    s=re.sub(r"ב", r"á", s)
+    #s=re.sub(r"י", r"é", s) ####### apostrophe/inverted comma involved. Pending.
+    s=re.sub(r"ם", r"í", s)
+    s=re.sub(r"ף", r"ó", s)
+    s=re.sub(r"ת", r"ú", s)
+    s=re.sub(r"ס", r"ñ", s)
+
+    s=re.sub("pochĄech", "pochkech", s) #### confirm with Barbara?
+    s=re.sub("Ą", "¡", s)
     s=re.sub("Æ", "'", s)
     s=re.sub("sÏ", "sí", s)
     s=re.sub("à", "á", s)
     s=re.sub("è", "é", s)
     s=re.sub("ì", "í", s)
     s=re.sub("ż", "¿", s)
-    s=re.sub("hńn", "hnn", s) ########## recheck. Also "hn´n" was found. Maybe there is something else there... Also look for hm@i, and for @ alone... It looks like the pattern is @i or @in or @ia. Check. And when there is this in a *PARTICIPANT tier, then there are no other tiers following. There is also hn'n in *XYZ (and right below, in %pho, it was written as hn’h). Check.
+    s=re.sub("hńn", "hnn", s) ########## recheck. Also "hn´n" was found. Maybe there is something else there... Also look for hm@i, and for @ alone... It looks like the pattern is @i or @in or @ia. Check. And when there is this in a *PARTICIPANT tier, then there are no other tiers following. There is also hn'n in *XYZ (and right below, in %pho, it was written as hn’h). Check. Check manual, @i... seems to have a meaning...
     s=re.sub("ń", "ñ", s)
     s=re.sub(r"(%xmor:)(.*)\\", r"\1\2\|", s) # in %xmor tiers, replace "\" with "|"
 
@@ -169,7 +205,7 @@ def clean_chat_line(s):
     s=re.sub(r"^%xspa:[\s|\t]+¨(.*)\?", r"%xspa:\t¿\1\?", s) # replace a dieresis at the beginning of a %xspa tier with a "¿"
     s=re.sub(r"^(%xpho:[\s|\t]+)¨", r"\1", s) # remove the dieresis at the beginning of a %xpho tier
     s=re.sub(r"^(\*[A-Z]{3}:[\s|\t]+)¨", r"\1", s) # remove the dieresis at the beginning of a *PARTICIPANT tier
-    s=re.sub(r"", r"", s) ######### What about %mor tiers?
+    #s=re.sub(r"", r"", s) ######### What about a dieresis in %mor tiers?
     
     # inverted question mark
     s=re.sub(r"^\*([A-Z]{3}:)(.*)¿(.*)$", r"*\1\2\3", s) # not allowed in a *PARTICIPANT tier
@@ -181,10 +217,10 @@ def clean_chat_line(s):
 
 
 
-    s = re.sub(" ", " ", s) # unification of two different space types
+    #s = re.sub(" ", " ", s) # unification of two different space types
     s = re.sub("’", "'", s)
     s = re.sub("\\s‘\\s", "?", s) # other uses of "‘" need manual attention
-    s = re.sub("^.+?\\\\.+?$", "", s) # backslashes only occur in lines of jumbled characters (probably information lost from .doc to .txt) ##### I don't see this anywhere. Ask Andi.
+    s = re.sub("^.+?\\\\.+?$", "", s) # backslashes only occur in lines of jumbled characters (probably information lost from .doc to .txt) ##### Not there anymore. grep backslash. -> all the lines in capital letters LOWER, MERGEFORMAT, usw. have to go away too. Check
     s = re.sub("ï", "'", s)
 
 
@@ -205,7 +241,9 @@ def clean_chat_line(s):
 
     ### OTHER CLEANING ###
     s=re.sub("ERg", "ERG", s)
-
+    s=re.sub(r"mçuu", r"múu", s)
+    s=re.sub(r"dçomde", r"dónde", s)
+    s=re.sub("ç", "", s)
 
 
 
