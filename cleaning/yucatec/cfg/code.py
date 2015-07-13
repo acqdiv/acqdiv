@@ -10,12 +10,19 @@ def clean_chat_line(s):
     # unification of @Begin and @End lines
     s=re.sub(r"^@Begi$", r"@Begin", s)
     s=re.sub(r"^@Begin:", r"@Begin", s)
+    s=re.sub(r"^Begin", r"@Begin", s)
+    s=re.sub(r"La @Begin", r"@Begin", s)
     s=re.sub(r"@Fin$", r"@End", s)
     s=re.sub(r"^FIN$", r"@End", s)
     s=re.sub(r"@End\.", r"@End", s)
     s=re.sub(r"@End \.", r"@End", s)
     s=re.sub(r"@End:", r"@End", s)
+    s=re.sub(r"@End :", r"@End", s)
     s=re.sub(r"@End ", r"@End", s)
+    s=re.sub(r"@end\.", r"@End", s)
+    s=re.sub(r"@ End", r"@End", s)
+    s=re.sub(r"\( FINALIZA \)", r"@End", s)
+    s=re.sub(r"\( finaliza \)", r"@End", s)
 
     s=re.sub(r"\s###\s", r" xxx ", s)
     s=re.sub(r"XXX", r"xxx", s)
@@ -75,6 +82,7 @@ def clean_chat_line(s):
     s=re.sub(r"\*:", r"*UNK:", s)
     s=re.sub(r"^\s+:\s$", r"*UNK:", s) # replace ":" at the beginning of a line, with some spaces before and after, with *UNK:
     s=re.sub(r"\*\?:", r"*UNK:", s)
+    s=re.sub(r"\(\s+\):", r"*UNK:", s) # replace "(    ):" with "*UNK:"
     s=re.sub(r"xxx:", r"*UNK:", s) ###### careful! conflict with rule above:  s=re.sub("XXX", "xxx", s) . Check ordering after having cleaned up there.
     s=re.sub(r"\*([A-Z]{3}) :", r"*\1:", s) # remove a space between the participant's code and the colon
     s=re.sub(r"\(\s?(\*[A-Z]{3})\s?\):", r"\1:", s) # participant codes with form e.g. "(*ARM):" or "( *SAN ):" should be transformed into "*ARM:"
@@ -131,22 +139,24 @@ def clean_chat_line(s):
 
 
     ######some of these should go before the tier name cleaning above. Check
+    s=re.sub(r"^\.(.*)", r"\1", s) # remove a dot at the beginning of a line ##### this should be done before removing numbers and tabs at the beginning of a line
     s=re.sub(r"^[0-9]+\s(\*([A-Z]{3}:)", r"\1", s) # remove numbers and spaces before *PARTICIPANT tiers
     s=re.sub(r"^\s+(\*([A-Z]{3}:)", r"\1", s) # remove spaces before *PARTICIPANT tiers ###### maybe this one at the beginning, before the tiers cleaning
-    s=re.sub(r"^[0-9]+(\s)(%[a-z]{4}:)", r"\2", s) # remove numbers and spaces before %xpho, %xmor and %xspa tiers ###### maybe this one at the beginning, before the tiers cleaning
+    s=re.sub(r"^[0-9]+(\s)(%[a-z]{4}:)", r"\2", s) # remove numbers and spaces before %xpho, %xmor and %xspa tiers ###### maybe this one at the beginning, before the tiers cleaning. There are also numbers at the beginning lines without any tier marker... Check
     #s=re.sub(r"[0-9]+(.*)\*([A-Z]{4}:)", r"*\2", s) # if the participants' IDs have been changed first, these two are no longer needed. Left here for final checking.
     #s=re.sub(r"[0-9]+(.*)\*([A-Z]{6}:)", r"*\2", s)
     s=re.sub(r"^\t+([%|\*])", r"\1", s) # remove all tabs before the beginning of a tier
     s=re.sub(r"^\s+([%|\*])", r"\1", s) # remove all spaces before the beginning of a tier
-    s=re.sub(r"^(%xpho:)(.*)/(.*)/", r"\1\2\3", s) # remove "/" in %xpho tiers
+    s=re.sub(r"^(%xpho:)(.*)/(.*)/", r"\1\2\3", s) # remove "/" in %xpho tiers #### amend. some tiers have a dot at the end... And sometimes there is only one /. And sometimes there is the pattern / ( utterance here ) /
     s=re.sub(r"^[0-9]+$", r"", s) # remove lines which have only numbers
     s=re.sub(r"^n$", r"", s) # remove lines which have only "n"    
     s=re.sub(r"^\s+\.$", r"", s) # remove lines which have only " ." ##### careful! this seems to be "content of %mor tiers divided sometimes in two lines". recheck at the end.
     s=re.sub(r"^\n$", r"", s) # remove empty lines ######## recheck! is this correct? See with Andi/Steve/Robert
     s=re.sub(r"^(.*)\*$", r"\1", s) # remove asterisk at the end of a line
     s=re.sub(r"%xpho:\s!", r"%xpho:\s", s) # remove "!" at the beginning of a %xpho tier
-
-
+    s=re.sub(r"(%pho:\s+)\((.*?)\)(\s+\.)", r"\1\2\3", s) # in %xpho tiers that end in a dot, remove the brackets that surround all the content of the tier
+    s=re.sub(r"(%pho:\s+)\((.*?)\)", r"\1\2", s) # in %xpho tiers that don't end in a dot, remove the brackets that surround all the content of the tier
+    
 
 
     ### CHARACTER CLEANING ###
@@ -197,7 +207,8 @@ def clean_chat_line(s):
     s=re.sub("è", "é", s)
     s=re.sub("ì", "í", s)
     s=re.sub("ż", "¿", s)
-    s=re.sub("hńn", "hnn", s) ########## recheck. Also "hn´n" was found. Maybe there is something else there... Also look for hm@i, and for @ alone... It looks like the pattern is @i or @in or @ia. Check. And when there is this in a *PARTICIPANT tier, then there are no other tiers following. There is also hn'n in *XYZ (and right below, in %pho, it was written as hn’h). Check. Check manual, @i... seems to have a meaning...
+    s=re.sub("Ê", "", s)
+    s=re.sub("hńn", "hnn", s) ########## recheck. Also "hn´n" was found. Maybe there is something else there... Also look for hm@i, and for @ alone... It looks like the pattern is @i or @in or @ia. Check. And when there is this in a *PARTICIPANT tier, then there are no other tiers following. There is also hn'n in *XYZ (and right below, in %pho, it was written as hn’h). Check. Check CHAT manual, @i/@in... seems to have a meaning...
     s=re.sub("ń", "ñ", s)
     s=re.sub(r"(%xmor:)(.*)\\", r"\1\2\|", s) # in %xmor tiers, replace "\" with "|"
 
@@ -237,15 +248,15 @@ def clean_chat_line(s):
     s=re.sub("j¡cara", "jícara", s)
     s=re.sub("todav¡a", "todavía", s)
     s=re.sub("sand¡a", "sandía", s) ########## only two instances. Move to manual changes... ?
-
+    #s=re.sub(r"^\*([A-Z]{3}:)(.*)¡(.*)$", r"*\1\2\3", s) # not allowed in a *PARTICIPANT tier
 
     ### OTHER CLEANING ###
     s=re.sub("ERg", "ERG", s)
     s=re.sub(r"mçuu", r"múu", s)
     s=re.sub(r"dçomde", r"dónde", s)
     s=re.sub("ç", "", s)
-
-
+    s=re.sub("quë", "qué", s)
+    s=re.sub(r"\-x\-x\-x\-", r"", s) ##### this one has to go before the one that deletes the empty tiers.
 
 
 
