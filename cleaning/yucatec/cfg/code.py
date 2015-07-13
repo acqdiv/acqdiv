@@ -7,11 +7,12 @@ def clean_chat_line(s):
     ### IMPORTANT NOTE: careful with all rules involving "¡", "¿", apostrophe/inverted comma. Check that ordering is correct
 
 
-    # unification of @Begin and @End lines
-    s=re.sub(r"^@Begi$", r"@Begin", s)
-    s=re.sub(r"^@Begin:", r"@Begin", s)
+    # unification of @Begin and @End lines. -> Commented out since these will be dealt with by the header cleaner.
+    '''
+    s=re.sub(r"La @Begin", r"@Begin", s)    
+    s=re.sub(r"@Begi$", r"@Begin", s)
+    s=re.sub(r"@Begin:", r"@Begin", s)
     s=re.sub(r"^Begin", r"@Begin", s)
-    s=re.sub(r"La @Begin", r"@Begin", s)
     s=re.sub(r"@Fin$", r"@End", s)
     s=re.sub(r"^FIN$", r"@End", s)
     s=re.sub(r"@End\.", r"@End", s)
@@ -23,23 +24,25 @@ def clean_chat_line(s):
     s=re.sub(r"@ End", r"@End", s)
     s=re.sub(r"\( FINALIZA \)", r"@End", s)
     s=re.sub(r"\( finaliza \)", r"@End", s)
+    '''
 
-    s=re.sub(r"\s###\s", r" xxx ", s)
-    s=re.sub(r"XXX", r"xxx", s)
     s = re.sub("(^[\*%]\S+\t+[^\t]+)\t", "\1", s)
     s = re.sub("(\w)['’ʼ]", "\\1ʔ", s)
     s = re.sub("['’ʼ](\w)", "ʔ\\1", s)
     s = re.sub("(\w)['’ʼ](\w)", "\\1ʔ\\2", s)
     #This may result in files with two Situation tiers. These will have to be cleaned manually before CLAN will accept them!
+    '''
     s = re.sub("^@Activities", "@Situation", s)
     s = re.sub("^@Birth of ARM:.*", "@Birth of ARM:\t1994-APR-10\n", s)
     s = re.sub("^@Birth of DAV:.*", "@Birth of DAV:\t1998-APR-18\n", s)
     s = re.sub("^@Birth of Sandi:.*", "@Birth of SAN:\t1993-JUL-23\n", s)
     # this three above... search for cases...
     s = re.sub("^@Translation", "@Translator", s)
-
+    '''
 
     ### TIER CLEANING ###
+    # At the end existing tiers will be: *XYZ:, %pho:, %mor:, %xspa:, %sit:, %exp:, %com:
+
     #unification *PARTICIPANT tier
     #correct participants' IDs:
     s=re.sub(r"\*MECH:", r"*MEC:", s)
@@ -66,6 +69,7 @@ def clean_chat_line(s):
     s=re.sub(r"\*dav:", r"*DAV:", s)
     s=re.sub(r"\*dav", r"*DAV:", s)
     s=re.sub(r"\*:DAV", r"*DAV:", s)
+    s=re.sub(r"\*DAV :", r"*DAV:", s)
     s=re.sub(r"\*DAV", r"*DAV:", s)
     s=re.sub(r"\*san:", r"*SAN:", s)
     s=re.sub(r"\*fil:", r"*FIL:", s)
@@ -81,43 +85,43 @@ def clean_chat_line(s):
     s=re.sub(r"\*SEÑ:", r"*UNK:", s)
     s=re.sub(r"\*:", r"*UNK:", s)
     s=re.sub(r"^\s+:\s$", r"*UNK:", s) # replace ":" at the beginning of a line, with some spaces before and after, with *UNK:
-    s=re.sub(r"\*\?:", r"*UNK:", s)
+    s=re.sub(r"\*\?:", r"*UNK:", s) # replace "*?:" with "*UNK:"
     s=re.sub(r"\(\s+\):", r"*UNK:", s) # replace "(    ):" with "*UNK:"
-    s=re.sub(r"xxx:", r"*UNK:", s) ###### careful! conflict with rule above:  s=re.sub("XXX", "xxx", s) . Check ordering after having cleaned up there.
-    s=re.sub(r"\*([A-Z]{3}) :", r"*\1:", s) # remove a space between the participant's code and the colon
+    s=re.sub(r"xxx:", r"*UNK:", s) # replace "xxx:" with "*UNK:"
+    s=re.sub(r"\*XXX:", r"*UNK:", s) # replace "*XXX:" with "*UNK:"
+    s=re.sub(r"(\*[A-Z]{3}) :", r"\1:", s) # remove a space between the participant's code and the colon
     s=re.sub(r"\(\s?(\*[A-Z]{3})\s?\):", r"\1:", s) # participant codes with form e.g. "(*ARM):" or "( *SAN ):" should be transformed into "*ARM:"
 
-    #unification %xpho tier
-    s=re.sub(r"\*pho:", r"%xpho:", s)
-    s=re.sub(r"%fon:", r"%xpho:", s)
-    s=re.sub(r"%pho:", r"%xpho:", s)
-    s=re.sub(r"%pho.", r"%xpho:", s)
-    s=re.sub(r"%pho :", r"%xpho:", s)
-    s=re.sub(r"%pho;", r"%xpho:", s)
-    s=re.sub(r"^pho:", r"%xpho:", s)
-    s=re.sub(r"%PHO:", r"%xpho:", s)
-    s=re.sub(r"%pho", r"%xpho:", s)
+    #unification %pho tier
+    s=re.sub(r"\*pho:", r"%pho:", s)
+    s=re.sub(r"%fon:", r"%pho:", s)
+    s=re.sub(r"%pho\.", r"%pho:", s)
+    s=re.sub(r"%pho :", r"%pho:", s) # note that it is not the usual whitespace
+    s=re.sub(r"%pho;", r"%pho:", s)
+    s=re.sub(r"^pho:", r"%pho:", s)
+    s=re.sub(r"%PHO:", r"%pho:", s)
+    s=re.sub(r"%pho", r"%pho:", s)
 
-    #unification %xmor tier
-    s=re.sub(r"%MOR:", r"%xmor:", s)    
-    s=re.sub(r"\*mor:", r"%xmor:", s)    
-    s=re.sub(r"%mor.", r"%xmor:", s)    
-    s=re.sub(r"%mor:", r"%xmor:", s)
-    #s=re.sub(r"%mor :", r"%xmor:", s) # note that it is not the usual whitespace
-    s=re.sub(r"%mor", r"%xmor:", s)
+    #unification %mor tier
+    s=re.sub(r"%MOR:", r"%mor:", s)    
+    s=re.sub(r"\*mor:", r"%mor:", s)    
+    s=re.sub(r"%mor\.", r"%mor:", s)    
+    s=re.sub(r"%mor :", r"%mor:", s) # note that it is not the usual whitespace
+    s=re.sub(r"%mor", r"%mor:", s)
 
     #unification %xspa tier
     s=re.sub(r"\*ESPA:", r"%xspa:", s)
     s=re.sub(r"\*ESP:", r"%xspa:", s)
-    s=re.sub(r"\*ESP.", r"%xspa:", s)
-    s=re.sub(r"[^\*]ESP:", r"%xspa:", s)
+    s=re.sub(r"\*ESP\.", r"%xspa:", s)
+    s=re.sub(r"%ESP:", r"%xspa:", s)
+    s=re.sub(r"ESP:", r"%xspa:", s)
 
     s=re.sub(r"Esp:", r"%xspa:", s)
-    s=re.sub(r"Esp.", r"%xspa:", s)
+    s=re.sub(r"Esp\.", r"%xspa:", s)
 
-    s=re.sub(r"%esp.", r"%xspa:", s)
+    s=re.sub(r"%esp\.", r"%xspa:", s)
     s=re.sub(r"%esp_:", r"%xspa:", s)
-    s=re.sub(r"%esp :", r"%xspa:", s)
+    s=re.sub(r"%esp :", r"%xspa:", s) # note that it is not the usual whitespace
     s=re.sub(r"%esp:", r"%xspa:", s)
     s=re.sub(r"%\*esp:", r"%xspa:", s)
     s=re.sub(r"\*esp:", r"%xspa:", s)
@@ -125,23 +129,25 @@ def clean_chat_line(s):
     s=re.sub(r"%ENG:", r"%xspa:", s)
     s=re.sub(r"%eng:", r"%xspa:", s)
     s=re.sub(r"%eng;", r"%xspa:", s)
-    s=re.sub(r"%eng.", r"%xspa:", s)
+    s=re.sub(r"%eng\.", r"%xspa:", s)
     s=re.sub(r"%engL:", r"%xspa:", s)
     s=re.sub(r"%eng :", r"%xspa:", s)
     s=re.sub(r"%eng", r"%xspa:", s)
 
-    # creating an %xcom tier for uncategorized comments
-    s=re.sub(r"^\((.*)\)", r"%xcom:\1", s) # place lines with comments in brackets into an %xcom tier, without the brackets    
-    s=re.sub(r"^&", r"%xcom:", s) # place lines which start with "&" into an %xcom tier
+    # creating a %com tier for uncategorized comments
+    s=re.sub(r"^\((.*)\)", r"%com:\1", s) # place lines with comments in brackets into a %com tier, without the brackets     #### recheck
+    s=re.sub(r"^&", r"%com:", s) # place lines which start with "&" into a %com tier
 
 
-    ##### maybe unify also %sit and %exp (and all others, if there are) to %xsit and %xexp, so that all tier names have the same pattern %[a-z]{4}. ?? Think.
+
 
 
     ######some of these should go before the tier name cleaning above. Check
+    s=re.sub(r"\s###\s", r" xxx ", s)
+    s=re.sub(r"XXX", r"xxx", s)
     s=re.sub(r"^\.(.*)", r"\1", s) # remove a dot at the beginning of a line ##### this should be done before removing numbers and tabs at the beginning of a line
-    s=re.sub(r"^[0-9]+\s(\*([A-Z]{3}:)", r"\1", s) # remove numbers and spaces before *PARTICIPANT tiers
-    s=re.sub(r"^\s+(\*([A-Z]{3}:)", r"\1", s) # remove spaces before *PARTICIPANT tiers ###### maybe this one at the beginning, before the tiers cleaning
+    s=re.sub(r"^[0-9]+\s\*([A-Z]{3}:)", r"\1", s) # remove numbers and spaces before *PARTICIPANT tiers
+    s=re.sub(r"^\s+\*([A-Z]{3}:)", r"\1", s) # remove spaces before *PARTICIPANT tiers ###### maybe this one at the beginning, before the tiers cleaning
     s=re.sub(r"^[0-9]+(\s)(%[a-z]{4}:)", r"\2", s) # remove numbers and spaces before %xpho, %xmor and %xspa tiers ###### maybe this one at the beginning, before the tiers cleaning. There are also numbers at the beginning lines without any tier marker... Check
     #s=re.sub(r"[0-9]+(.*)\*([A-Z]{4}:)", r"*\2", s) # if the participants' IDs have been changed first, these two are no longer needed. Left here for final checking.
     #s=re.sub(r"[0-9]+(.*)\*([A-Z]{6}:)", r"*\2", s)
@@ -179,7 +185,7 @@ def clean_chat_line(s):
     s=re.sub(r"с", r"ñ", s)
     
     #s=re.sub(r"", r"á", s)
-    #s=re.sub(r"", r"é", s)
+    s=re.sub(r"‚", r"é", s) # problem of this specific comma only. Fine to run this rule on all files.
     #s=re.sub(r"", r"í", s)
     s=re.sub("¢", "ó", s)
     s=re.sub("£", "ú", s)
@@ -281,7 +287,7 @@ def clean_chat_line(s):
     if s.startswith("*"):
         s = re.sub("##", "", s)
         s = re.sub("#", "", s)
-        s = re.sub("(\\S)\-(\\S)", "\\1\\2", s)
+        s = re.sub("(\\S)\-(\\S)", "\\1\\2", s) # remove hyphen between non-empty characters
         s = re.sub("^\\s*\\d+\\s+(?=[\*%])", "", s)
 
         # added by rabart
@@ -289,7 +295,7 @@ def clean_chat_line(s):
         s = re.sub('(?<=\\w)&(?=[au])', '', s)
 
     if s.startswith("%eng"):
-        s = re.sub("\[\\s*", "", s)
+        s = re.sub("\[\\s*", "", s) # remove [ from %eng tiers... ------> ? check.
         s = re.sub("\\s*\]", "", s)
         
         # added by rabart
