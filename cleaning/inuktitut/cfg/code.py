@@ -120,8 +120,7 @@ def clean_chat_line(s):
         s = remove_unmatched_brackets(s)
         s = check_for_letters(s)
 
-        # Removes unmatched [ brackets.
-        # (commented because happens only twice. Better add a special case)
+        # Removes unmatched " brackets.
         s = remove_unmatched_brackets(s, 
                     brackets_open = '"',
                     brackets_close = '"',
@@ -146,6 +145,9 @@ def clean_chat_line(s):
         s = re.sub("\[(intake of breath\])", "[% \\1", s)
         s = re.sub("\[(intake of breath indicating \"yes\"\])", "[% \\1", s)
         s = re.sub("\((Where do yo?u two want to go to)\?\)", "\\1", s)
+        s = re.sub("2 more times after that", "[x 2]", s)
+        s = re.sub("(\*SUP\:)\tCh1 vocalizes\.", "\\1\t0 [= vocalizes].", s)
+        s = re.sub("(\(Pow!\))([35])", "\\1 [x \\2]", s)
 
         # Changes "(2 x)" and "(x 2)" (with or without parenthesis) into
         # "[x 2]"
