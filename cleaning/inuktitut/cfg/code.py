@@ -42,22 +42,26 @@ def clean_chat_line(s):
 
         return out + " " + ending
 
-    def remove_unmatched_brackets(s):
+    def remove_unmatched_brackets(s,
+                    brackets_open = '<',
+                    brackets_close = '>',
+                    ignored_open = '[',
+                    ignored_close = ']'):
         index_stack = []
         output_list = []
         curr_str = ''
         index = 0
         inside = 0
         for i in s:
-            if i in '[':
+            if i in ignored_open:
                 inside += 1
                 curr_str += i
-            elif i in ']':
+            elif i in ignored_close:
                 inside -= 1
                 curr_str += i
             elif inside > 0:
                 curr_str += i
-            elif i in '<':
+            elif i in brackets_open:
                 # Inserts current output in stack
                 output_list.append(curr_str)
                 output_list.append(i)
@@ -67,7 +71,7 @@ def clean_chat_line(s):
                 index_stack.append(index)
                 index += 1
                 curr_str = ''
-            elif i in '>':
+            elif i in brackets_close:
                 output_list.append(curr_str)
                 index += 1
                 if (len(index_stack) > 0):
@@ -116,6 +120,14 @@ def clean_chat_line(s):
         s = remove_unmatched_brackets(s)
         s = check_for_letters(s)
 
+        # Removes unmatched [ brackets.
+        # (commented because happens only twice. Better add a special case)
+        s = remove_unmatched_brackets(s, 
+                    brackets_open = '"',
+                    brackets_close = '"',
+                    ignored_open = '[',
+                    ignored_close = ']')
+
         # Idiossyncratic strings fixed by hand
         s = re.sub("\(repeated six times\)", "[x 6]", s)
         s = re.sub("\( i don't like it \)", ", i don't like it", s)
@@ -129,6 +141,11 @@ def clean_chat_line(s):
         s = re.sub("(%eng:\tYou )\(\?\)!!", "\\1[?]!", s)
         s = re.sub("(%eng:\tBig )\(\?\)!", "\\1[?]!", s)
         s = re.sub("(%eng:\tlady bug )\(\?\)", "\\1[?].", s)
+        #s = re.sub("(JNT:\tcan i sleep here\?)\[A", "\\1", s)
+        #s = re.sub("(CHL:\tTaanna!)\[A", "\\1", s)
+        s = re.sub("\[(intake of breath\])", "[% \\1", s)
+        s = re.sub("\[(intake of breath indicating \"yes\"\])", "[% \\1", s)
+        s = re.sub("\((Where do yo?u two want to go to)\?\)", "\\1", s)
 
         # Changes "(2 x)" and "(x 2)" (with or without parenthesis) into
         # "[x 2]"
@@ -147,16 +164,23 @@ def clean_chat_line(s):
 
         # Removes characters that are not allowed
         s = re.sub("\[B", "", s)
+        s = re.sub("\[A", "", s)
         s = re.sub(".46q", ".", s)
         s = re.sub("XXX", "xxx", s)
         s = re.sub("&", "", s)
+        s = re.sub("&", "", s)
         s = re.sub("\(\?\)", "xxx", s)
+
+        # Before replacing all quotes, removes cases of the type
+        # "quotedpart"-nonquotedpart, which are not allowed.
+        s = fixpoint_regex('\"([^"]*)\"-', '\\1-', s)
 
         # Replaces quotes by unicode "special" quotes
         s = fixpoint_regex('\"([^"]*)\"', '\u201C \\1 \u201D', s)
 
         # Replaces parenthesis in the Main Line by comments.
-        s = re.sub("\s\(([\w\s,\.\+!\?\-\%;]*)\)(\s|\.|$)", " [= \\1] ", s)
+        s = re.sub("\s\(([\w\s,\.\+!\?\-\%;]*)\)(\s|\.|\?|!|$)",
+                   " [= \\1] ", s)
 
         # Inserts "0" before empty utterances that have only [...]
         s = re.sub("^(\*...:)\s+\[", "\\1\t0 [", s)
@@ -167,6 +191,9 @@ def clean_chat_line(s):
         s = check_for_letters(s)
 
         s = re.sub("\[\"\]", "[% Direct speech]", s)
+
+        # Remove "=" as when not inside a square brackets (i.e., [ and ]).
+        s = re.sub("=(?![^\[]*\])", "", s)
 
         # These characters are not allowed in the Main Line.
         s = re.sub("(\w\s+)-(\w)", "\\1-\\2", s)
@@ -189,10 +216,10 @@ def clean_chat_line(s):
         # 1) Beginning of utterance: suppressed
         # 2) Between words: transformed in pause
         # 3) Inside words: transformed in syllable prolongation
-        s = re.sub('(?<=:\t)\s*#\s*', ' ', s)
-        s = re.sub('\s+#\s*', ' (.) ', s)
-        s = re.sub('\s*#\s+', ' (.) ', s)
-        s = re.sub('\w#\w', ':', s)
+        s = fixpoint_regex('(?<=:\t)\s*#\s*', ' ', s)
+        s = fixpoint_regex('\s+#\s*', ' (.) ', s)
+        s = fixpoint_regex('\s*#\s+', ' (.) ', s)
+        s = re.sub('(\w)#(\w)', '\\1:\\2', s)
 
         # In case there are too many pauses now
         #s = re.sub('(\s*\(\.\)\s*)*', ' (.) ', s)
@@ -254,10 +281,15 @@ def clean_chat_line(s):
         s = re.sub("(\.|!|\+!\?|\?)+\s*\(\.\)\s*", " (.) ", s)
 
         s = re.sub("\+?\.\.\.\?", "+..?", s)
+        s = re.sub("\+?\.\.\.!", "+...", s)
         s = re.sub(" \.\?", "?", s)
 
         # If no punctuation fix worked so far, simply remove it
         s = remove_punctuations(s)
+
+        # It seems CHECK doesn't allow +. in %eng tiers.
+        if s.startswith("%eng"):
+            s = re.sub("\+\.", ".", s)
 
         # Removes ' (apostrophe) when it is word initial
         s = re.sub("\s*\'", "\'", s)
@@ -270,21 +302,12 @@ def clean_chat_line(s):
         # FIXME: Check why the dot was removed, if I had already put it before
         s = re.sub("([^\.\?!]\s*$)", "\\1 .", s)
 
-        ### removes ","
-        #s = re.sub(",", "", s)
-
-        # added by rabart
-        # NEVER MATCHED!!!
-	# These would remove "+." and "+...", if they worked
-        #s = re.sub("(?<=\\w)\+[\.,\/]*$", "", s)
-        #s = re.sub("(?<=\\w)\+\.\.\.\s+(?=\\w)", " ", s)
-
-
         # "wordword+. wordword" --> "&wordword wordword" (& indicates
         # incomplete word)
         s = re.sub("(\\S+)\+\.(?=\\s\\w)", "&\\1", s)
 
-        s = re.sub("(?<=\\s)xx(?=\\s)", "xxx", s) # xx -> xxx
+        # xx -> xxx
+        s = re.sub("(?<=\\s)xx(?=\\s)", "xxx", s)
         return s
 
 
@@ -322,6 +345,8 @@ def clean_chat_line(s):
     s = re.sub("@Comments:", "@Comment:", s)
     s = re.sub("@TIME WARP. SOUND IS ON", "@Comment: TIME WARP. SOUND IS ON", s)
     s = re.sub("(See below; %com)", "See the comment tier", s)
+    s = re.sub("(See %com:)", "See the comment tier", s)
+    s = re.sub("(See %com)", "See the comment tier", s)
     s = re.sub("%erg", "%eng", s)
 
     s = re.sub("@ŽIP0,16Ż", "", s)
@@ -388,9 +413,6 @@ def clean_chat_line(s):
     # Replace morphosyntactic annotation by xmor, xcod etc.
     s = re.sub("^%(mor|arg|cod|snd):", "%x\\1:", s)
 
-    # Delete single "#" on any tier (they probably mark some break)
-    #s = re.sub("\\s*#\\s*", " ", s)
-
 
     if s.startswith("*") or s.startswith("%eng"):
         s = clean_main_line(s)
@@ -399,8 +421,8 @@ def clean_chat_line(s):
     # There are two more cases for the removal of "#":
     # 1) When it appears as [#], remove the three characters
     # 2) Else, just remove it
-    s = re.sub("\\s*\[#\]\\s*", " ", s)
-    s = re.sub("\\s*#\\s*", " ", s)
+    s = fixpoint_regex("\\s*\[#\]\\s*", " ", s)
+    s = fixpoint_regex("\\s*#\\s*", " ", s)
 
     # If we ended up putting a space after tier name, removes it
     s = re.sub("(^\*[A-Z0-9]{3}:)(\s+)", r"\1\t", s)
@@ -457,18 +479,28 @@ def clean_chat_line(s):
         # Removes &
         s = fixpoint_regex("&", "", s)
 
+        # Removes +
+        s = fixpoint_regex("\+", "", s)
+
     if s.startswith("%tim"):
         s = re.sub('-', 'and', s)
         s = re.sub("%tim:(\tqaishaaliku = qaisaaliruq\s*)", "%err:\\1", s)
+        s = re.sub("%tim:(\t2\) niuvilaurlagiit = niuvirtilaurlagiit\s*)",
+                   "%err:\\1", s)
+        s = re.sub("%tim:(\tangijuuravi = angijuugavit\s*)", "%err:\\1", s)
         s = re.sub("%tim:(\tALI)", "%add:\\1", s)
         s = re.sub("%tim:(\tDAN)", "%add:\\1", s)
 
     if s.startswith("%add"):
         s = re.sub("(%add:\tMAR) %sit:", "\\1", s)
+        s = re.sub("(%add:\tANI)\[B", "\\1", s)
         s = re.sub("\*", "", s)
         s = re.sub(" & ", ", ", s)
         s = re.sub("([A-Z]{3})(,)([A-Z]{3})", "\\1\\2 \\3", s)
         s = re.sub("%add:\s*(uliivaisivaa = utiriasivaa)", "%err:\t\\1", s)
+
+        # Removes [?]
+        s = re.sub("\s*\[\?\]", "", s)
 
     if s.startswith("%com"):
         s = re.sub(' /( |$)', ' (.) ', s)
