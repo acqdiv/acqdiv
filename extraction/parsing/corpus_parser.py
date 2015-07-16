@@ -7,22 +7,28 @@ and put output files per corpus in a new folder "parsed/LANGUAGE/" in the main d
 
 This script only works if the module "corpus_parser_functions.py" is in the same directory. 
 
-Usage: python3 corpus_parser.py --LANGUAGE=(one|many)   -->> -h or --help for usage
+Usage: python3 corpus_parser.py --CORPUS=MODE   -->> -h or --help for usage
 
-where LANGUAGE =
+where CORPUS =
 --cree
 --japanMP
 --japanMY
 --sesotho
---inuk
+--inuktitut
 --turkish
 --chintang
---indones
+--indonesian
 --russian
 --yucatec
 --all
 
-Note: When using -a, the script assumes all corpora to be present under corpora/   If not all corpora are present, specify inline below (line 246 and 250) which ones to parse.
+Note: When using --all, the script assumes all corpora to be present under corpora/   If not all corpora are present, specify inline below (line 246 and 250) which ones to parse.
+
+
+and MODE =
+many    output is one json file per file in the corpora/LANGUAGE folder
+one     output is one big json file that includes the information of all files in a corpora/LANGUAGE folder
+
 
 Author: Robert Schikowski <robert.schikowski@uzh.ch>
 Modification: Danica Pajovic <danica.pajovic@uzh.ch>
@@ -197,10 +203,10 @@ if __name__ == '__main__':
         if args.inuktitut:
             if args.inuktitut[0] == 'one':
                 parser_one_json("Inuktitut")
-            elif args.inuktitut == 'many':
+            elif args.inuktitut[0] == 'many':
                 parser_per_file("Inuktitut")
             elif args.inuktitut[0] not in ['one', 'many']:
-                print('\nPlease specify the json output:\n--inuk=one for one big json file per corpus\n--inuk=many for a json file per file in the corpus\n')
+                print('\nPlease specify the json output:\n--inuktitut=one for one big json file per corpus\n--inuktitut=many for a json file per file in the corpus\n')
         
         if args.turkish:    
             if args.turkish[0] == 'one':
@@ -213,7 +219,7 @@ if __name__ == '__main__':
         if args.chintang:
             if args.chintang[0] == 'one':
                 parser_one_json("Chintang")
-            elif args.chintang == 'many':
+            elif args.chintang[0] == 'many':
                 parser_per_file("Chintang")
             elif args.chintang[0] not in ['one', 'many']:
                 print('\nPlease specify the json output:\n--chintang=one for one big json file per corpus\n--chintang=many for a json file per file in the corpus\n')
@@ -224,7 +230,7 @@ if __name__ == '__main__':
             elif args.indonesian[0] == 'many':
                 parser_per_file("Indonesian")
             elif args.indonesian[0] not in ['one', 'many']:
-                print('\nPlease specify the json output:\n--indones=one for one big json file per corpus\n--indones=many for a json file per file in the corpus\n')
+                print('\nPlease specify the json output:\n--indonesian=one for one big json file per corpus\n--indonesian=many for a json file per file in the corpus\n')
             
         if args.russian:
             if args.russian[0] == 'one':

@@ -1,6 +1,6 @@
 # Get some basic stats from the ACQDIV corpora R object (data resides on server)
 
-library(plyr)
+# library(plyr) # plyr doesn't play well with dplyr @cazim
 library(dplyr)
 library(ggplot2)
 
@@ -10,6 +10,7 @@ load("acqdiv_metadata.Rdata")
 # rename the Japanese corpora
 acqdiv_corpora$Language[acqdiv_corpora$Language == "Japanese_MiiPro"] <- "Japanese"
 acqdiv_corpora$Language[acqdiv_corpora$Language == "Japanese_Miyata"] <- "Japanese"
+
 participant.metadata$Language <- revalue(participant.metadata$Language, c(Japanese_Miyata="Japanese", Japanese_Miipro="Japanese"))
 session.metadata$Language <- revalue(session.metadata$Language, c(Japanese_Miyata="Japanese", Japanese_Miipro="Japanese"))
 

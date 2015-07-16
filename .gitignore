@@ -2,6 +2,9 @@ corpora/
 .input
 .output
 
+# Docs
+.pdf
+
 *.py[cod]
 
 # Backup files
@@ -43,3 +46,6 @@ nosetests.xml
 .pydevproject
 .idea
 
+# R files
+.RDS
+.Rdata
