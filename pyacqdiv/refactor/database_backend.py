@@ -1,5 +1,7 @@
 # table definitions
 
+# TODO: set the correct values nullable, unique, etc.
+
 import sqlalchemy as sa
 import sqlalchemy.ext.declarative
 
@@ -10,6 +12,14 @@ create_engine = sa.create_engine
 class Model(sa.ext.declarative.declarative_base()):
 
     __abstract__ = True
+
+class Corpus(Model):
+
+    __tablename__ = 'corpus'
+
+    pk = sa.Column(sa.Integer, primary_key=True)
+    name = sa.Column(sa.Text, nullable=False, unique=True)
+
 
 class Session(Model):
     __tablename__ = 'Sessions'
@@ -52,6 +62,8 @@ class Utterance(Model):
     SentenceType = sa.Column(sa.Text, nullable=False, unique=True)
     Translation = sa.Column(sa.Text, nullable=False, unique=True)
     Comment = sa.Column(sa.Text, nullable=False, unique=True)
+    Morphemes = sa.Column(sa.Text, nullable=False, unique=True) # concatenated MorphemeIDs per utterance
+    Words = sa.Column(sa.Text, nullable=False, unique=True) # concatenated WordIDs per utterance
 
 class Word(Model):
     __tablename__ = 'Words'
@@ -60,6 +72,7 @@ class Word(Model):
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     ID = sa.Column(sa.Text, nullable=False, unique=True)
     Word = sa.Column(sa.Text, nullable=False, unique=True)
+    Morphemes = sa.Column(sa.Text, nullable=False, unique=True) # concatenated MorphemeIDs per utterance
 
 class Morpheme(Model):
     __tablename__ = 'Morphemes'
@@ -71,12 +84,7 @@ class Morpheme(Model):
     Gloss = sa.Column(sa.Text, nullable=False, unique=True)
     POS = sa.Column(sa.Text, nullable=False, unique=True)
 
-class Corpus(Model):
 
-    __tablename__ = 'corpus'
-
-    pk = sa.Column(sa.Integer, primary_key=True)
-    name = sa.Column(sa.Text, nullable=False, unique=True)
 
 
 
