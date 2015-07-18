@@ -43,6 +43,8 @@ if __name__=="__main__":
     Session = sessionmaker(bind=engine)
     session = Session()
 
+    # TODO: in these objects we could do our testing and corrections
+    # from bugzilla party
     m1 = Movie("Robocop", 1987)
     m1.director = Director("Paul Verhoeven")
 
