@@ -1,10 +1,10 @@
 # table definitions
 
 # TODO: set the correct values nullable, unique, etc.
+# TODO: pull out the Speakers from Session info into a separate table
 
 import sqlalchemy as sa
 import sqlalchemy.ext.declarative
-
 
 create_engine = sa.create_engine
 
@@ -43,6 +43,8 @@ class Session(Model):
     SessionAddress = sa.Column(sa.Text, nullable=False, unique=True)
     SessionContinent = sa.Column(sa.Text, nullable=False, unique=True)
     SessionCountry = sa.Column(sa.Text, nullable=False, unique=True)
+
+
 
 class Utterance(Model):
     __tablename__ = 'Utterances'
