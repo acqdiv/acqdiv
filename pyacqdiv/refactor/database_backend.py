@@ -15,10 +15,10 @@ class Model(sa.ext.declarative.declarative_base()):
 
 class Corpus(Model):
 
-    __tablename__ = 'corpus'
+    __tablename__ = 'Corpus'
 
-    pk = sa.Column(sa.Integer, primary_key=True)
-    name = sa.Column(sa.Text, nullable=False, unique=True)
+    PK = sa.Column(sa.Integer, primary_key=True)
+    Name = sa.Column(sa.Text, nullable=False, unique=True)
 
 
 class Session(Model):
@@ -29,14 +29,7 @@ class Session(Model):
 
     SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     Language = sa.Column(sa.Text, nullable=False, unique=True)
-    Corpus = sa.Column(sa.Text, nullable=False, unique=True)
-    SpeakerLabel = sa.Column(sa.Text, nullable=False, unique=True)
-    SpeakerName = sa.Column(sa.Text, nullable=False, unique=True)
-    SpeakerAgeInDays = sa.Column(sa.Text, nullable=False, unique=True)
-    SpeakerAge = sa.Column(sa.Text, nullable=False, unique=True)
-    SpeakerBirthday = sa.Column(sa.Text, nullable=False, unique=True)
-    SpeakerGender = sa.Column(sa.Text, nullable=False, unique=True)
-    SpeakerRole = sa.Column(sa.Text, nullable=False, unique=True)
+    CorpusName = sa.Column(sa.Text, ForeignKey('Corpus.Name'))
     SessionDate = sa.Column(sa.Text, nullable=False, unique=True)
     SessionGenre = sa.Column(sa.Text, nullable=False, unique=True)
     SessionSituation = sa.Column(sa.Text, nullable=False, unique=True)
@@ -44,13 +37,29 @@ class Session(Model):
     SessionContinent = sa.Column(sa.Text, nullable=False, unique=True)
     SessionCountry = sa.Column(sa.Text, nullable=False, unique=True)
 
+    Corpus = sa.relationship('Corpus', backref=backref('Sessions', order_by=SessionID))
+
+class Speaker(Model):
+    __tablename__ = 'Speakers'
+
+    SessionID = sa.Column(sa.Text, ForeignKey('Sessions.SessionID'))
+    SpeakerLabel = sa.Column(sa.Text, nullable=False, unique=True)
+    SpeakerName = sa.Column(sa.Text, nullable=False, unique=True)
+    SpeakerAgeInDays = sa.Column(sa.Text, nullable=False, unique=True)
+    SpeakerAge = sa.Column(sa.Text, nullable=False, unique=True)
+    SpeakerBirthday = sa.Column(sa.Text, nullable=False, unique=True)
+    SpeakerGender = sa.Column(sa.Text, nullable=False, unique=True)
+    SpeakerRole = sa.Column(sa.Text, nullable=False, unique=True)
+
+    Session = sa.relationship('Session', backref=backref('Speakers', order_by=SpeakerLabel))
+
 
 
 class Utterance(Model):
     __tablename__ = 'Utterances'
 
     pk = sa.Column(sa.Integer, primary_key=True)
-    SessionID = sa.Column(sa.Text, nullable=False, unique=True)
+    SessionID = sa.Column(sa.Text, ForeignKey('Sessions.SessionID'))
     Fingerprint = sa.Column(sa.Text, nullable=False, unique=True)
     ID = sa.Column(sa.Text, nullable=False, unique=True)
     OriginalID = sa.Column(sa.Text, nullable=False, unique=True)
@@ -67,6 +76,8 @@ class Utterance(Model):
     Morphemes = sa.Column(sa.Text, nullable=False, unique=True) # concatenated MorphemeIDs per utterance
     Words = sa.Column(sa.Text, nullable=False, unique=True) # concatenated WordIDs per utterance
 
+    Session = sa.relationship('Session', backref=backref('Utterances', order_by=id))
+
 class Word(Model):
     __tablename__ = 'Words'
 
@@ -74,7 +85,8 @@ class Word(Model):
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     ID = sa.Column(sa.Text, nullable=False, unique=True)
     Word = sa.Column(sa.Text, nullable=False, unique=True)
-    Morphemes = sa.Column(sa.Text, nullable=False, unique=True) # concatenated MorphemeIDs per utterance
+    UtteranceID = sa.Column(sa.Text, ForeignKey('Utterances.ID'))
+    Utterance = sa.relationship('Utterance',  backref=backref('Words', order_by=ID))
 
 class Morpheme(Model):
     __tablename__ = 'Morphemes'
@@ -85,9 +97,6 @@ class Morpheme(Model):
     Morpheme = sa.Column(sa.Text, nullable=False, unique=True)
     Gloss = sa.Column(sa.Text, nullable=False, unique=True)
     POS = sa.Column(sa.Text, nullable=False, unique=True)
-
-
-
-
-
+    WordID = sa.Column(sa.Text, ForeignKey('Words.ID'))
+    Word = sa.relationship('Word', backref=backref('Morphemes', order_by=ID))
 
