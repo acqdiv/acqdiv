@@ -2,6 +2,8 @@
 """
 
 import sys
+import xml.etree.ElementTree as ET
+from factories import *
 
 # TODO: integrate the Corpus specific parsing routines from the body parser
 # TODO: integrate the metadata parsing
@@ -67,6 +69,32 @@ class ChatXMLParser(SessionParser):
 
     # TODO: METADATA - call/integrate Cazim's metadata code and map it to the db tables
     # Note: make sure this is overriding the superclass.parse. Need a keyword?
+
+    def __init__(self, config):
+        super.__init__()
+        self.fpath = self.config["file"]
+        with open(self.fpath, 'r') as xml:
+            self.tree = ET.parse(xml)
+        self.root = self.tree.getroot()
+        # this creates a dictionary of child:parent pairs
+        # I don't know what it's good for yet but I'm putting it in here until
+        # we can figure out what rsk uses it for in his parser
+        # and whether we need it.
+        self.pmap = {c:p for p in tree.iter() for c in p}
+        self.clean_tree()
+
+
+    def clean_tree(self):
+        """
+        Removes prefixed namespaces
+        """
+        
+        for elem in self.root.iter():
+            elem.tag = re.sub('^\{http[^\}]+\}', '', elem.tag)
+        #    tag = elem.tag
+        #    attrib = elem.attrib
+        #    #God knows what those are good for. Debugging?
+
     def get_session_metadata(self):
         # Do xml-specific parsing of session metadata.
         # The config so it knows what symbols to look for.
@@ -80,7 +108,14 @@ class ChatXMLParser(SessionParser):
     def next_utterance(self):
         # Do xml-specific parsing of utterances.
         # The config so it knows what symbols to look for.
-        pass
+        uf = UtteranceFactory(self.config["utterance_config"])
+
+        for u in self.root.findall('.//u'):
+            yield uf.make_utterance(u)
+    
+        # sample utterance processing call
+        # ideally we'd just have to implement UtteranceFactory and be done here
+        # also I supposed by "we" we mean "chysi"
 
     # not sure here how @rabart extracts stuff from the XML, but Xpath
     #  seems reasonable; esp becuz you can get the patterns for free from

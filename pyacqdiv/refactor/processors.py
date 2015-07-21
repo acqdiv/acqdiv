@@ -11,7 +11,7 @@ from parsers import *
 class CorporaProcessor(object):
     def process_corpora(self, config):
         for corpus_config in config:
-            c = Corpus(corpus_config)
+            c = CorpusProcessor(corpus_config)
             c.process_corpus()
 
 
