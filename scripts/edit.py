@@ -24,4 +24,4 @@ for root, dirs, files in os.walk(input_dir):
         with open(os.path.join(root, name), 'r') as input_file, open(os.path.join(output_dir, name), 'w') as output_file:        
             for line in input_file:
                 line = re.sub('^\d*\s+(?=[\*%])', '', line)
-                print(line, file=output_file)
+                print(line, file=output_file, end='')
