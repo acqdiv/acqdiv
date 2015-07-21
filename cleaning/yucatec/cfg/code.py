@@ -171,27 +171,24 @@ def clean_chat_line(s):
     s=re.sub(r"^\s+[0-9]+\s+$", r"", s) # remove numbers and/or spaces alone in a line
     s=re.sub(r"^\t+[0-9]+\t+$", r"", s) # remove numbers and/or tabs alone in a line
     #s=re.sub(r"^\s+([%|\*])", r"\1", s) # remove all spaces before the beginning of a tier
+    # up to here the rules which could be included in edit.py
 
-    # place two different tiers that were in one line into two different lines
+    # place two different tiers that were in one line into two different lines ### not needed anymore? done by corpus.py
     s=re.sub(r"^(\*[A-Z]{3}:)(.*?)(%[a-z]{3}:)(.*?)$", r"\1\2\n\3\4", s)
     s=re.sub(r"^(%[a-z]{3}:)(.*?)(%[a-z]{3}:)(.*?)$", r"\1\2\n\3\4", s)
-
 
     s=re.sub(r"^(%pho:)(.*)/(.*)/", r"\1\2\3", s) # remove "/" twice in %pho tiers
     s=re.sub(r"^(%pho:)(.*)/", r"\1\2", s) # remove "/" once in %pho tiers
     s=re.sub(r"^n$", r"", s) # remove lines which have only "n"
     s=re.sub(r"%pho:\t!", r"%pho:\t", s) # remove "!" at the beginning of a %pho tier
     s=re.sub(r"^(.*)\*$", r"\1", s) # remove asterisk at the end of a line
+    #s=re.sub(r"^\s+\.$", r"", s) # remove lines which have only " ."
+    s=re.sub(r"^\s+\t+\.$", r"", s) # remove lines which have only " ." # the previous rule doesn't work due to the extra white space added at line start.
+    #s=re.sub(r"^\n$", r"", s) # remove empty lines # not needed anymore; it is done somewhere else in the cleaning
+    #s=re.sub(r"(%pho:\s+)\((.*?)\)(\s+\.)", r"\1\2\3", s) # in %pho tiers that end in a dot, remove the brackets that surround all the content of the tier # not needed; brackets have a meaning
+    #s=re.sub(r"(%pho:\s+)\((.*?)\)", r"\1\2", s) # in %xpho tiers that don't end in a dot, remove the brackets that surround all the content of the tier # not needed; brackets have a meaning
 
-
-    '''
-    s=re.sub(r"^\s+\.$", r"", s) # remove lines which have only " ." ##### careful! this seems to be "content of %mor tiers divided sometimes in two lines". recheck at the end.
-    s=re.sub(r"^\n$", r"", s) # remove empty lines ######## recheck! is this correct? See with Andi/Steve/Robert
-    s=re.sub(r"(%pho:\s+)\((.*?)\)(\s+\.)", r"\1\2\3", s) # in %xpho tiers that end in a dot, remove the brackets that surround all the content of the tier
-    s=re.sub(r"(%pho:\s+)\((.*?)\)", r"\1\2", s) # in %xpho tiers that don't end in a dot, remove the brackets that surround all the content of the tier
-    # there are lines with numbers and an asterisk only, e.g. 020101-DAV: 003 *  ### check lines beginning with numbers
-    '''
-
+    # there are lines with numbers and an asterisk only, e.g. 020101-DAV: 003 * ---> egrep "^ [0-9]" # These are not being removed due to the extra white space added at line start. Recheck in case we are doing part of the tier cleaning through edit.py.
 
     s=re.sub(r"<\s*Sandi y Armando\s*>", r"", s)
     s=re.sub(r"^< (.*) >", r"%com:\t\1", s)
