@@ -1,20 +1,24 @@
 """ Parsers for parsing CHAT XML and Toolbox files for acqdiv corpora
 """
 
+import sys
+
 # TODO: integrate the Corpus specific parsing routines from the body parser
 # TODO: integrate the metadata parsing
 
 class SessionParser(object):
     # Static class-level method to create a new parser instance
     # based on session format type.
-    def create_parser(config):
-        format = config.format()
+    @staticmethod
+    def create_parser(config, file):
+        format = config['corpus']['format']
+
         if format == "ChatXML":
             return ChatXMLParser(config)
         if format == "Toolbox":
             return ToolboxParser(config)
         assert 0, "Unknown format type: " + format
-    create_parser(config) = staticmethod(create_parser)
+    # create_parser(config) = staticmethod(create_parser)
 
     def __init__(self, config):
         self.config = config
@@ -33,10 +37,35 @@ class SessionParser(object):
     def next_utterance(self):
         pass
 
-
-class ChatXMLParser(SessionParser):
+class ToolboxParser(SessionParser):
+    """ Chintang, Indonesian, Russian, Dene
+    """
     # Note: do we need additional special syntax to indicate that we're extending Session?
 
+    # TODO: METADATA - call/integrate Cazim's metadata code and map it to the db tables
+    # Note: make sure this is overriding the superclass.parse. Need a keyword?
+    def get_session_metadata(self):
+        # Do toolbox-specific parsing of session metadata.
+        # Presumably we will have to look for the metadata file in the config.
+        # The config so it knows what symbols to look for.
+        pass
+
+    # Generator to yield Speakers for the Speaker table in the db
+    def next_speaker(self):
+        pass
+
+    # Note: make sure this is overriding the superclass.parse. Need a keyword?
+    def next_utterance(self):
+        # Do toolbox-specific parsing of utterances.
+        # The config so it knows what symbols to look for.
+        pass
+
+class ChatXMLParser(SessionParser):
+    """ Cree, Inuktitut, MiiPro, Miyata, Sesotho, Turkish, Yucatec
+    """
+    # Note: do we need additional special syntax to indicate that we're extending Session?
+
+    # TODO: METADATA - call/integrate Cazim's metadata code and map it to the db tables
     # Note: make sure this is overriding the superclass.parse. Need a keyword?
     def get_session_metadata(self):
         # Do xml-specific parsing of session metadata.
@@ -56,23 +85,3 @@ class ChatXMLParser(SessionParser):
     # not sure here how @rabart extracts stuff from the XML, but Xpath
     #  seems reasonable; esp becuz you can get the patterns for free from
     #  the developer tools in some browsers
-
-class ToolboxParser(SessionParser):
-    # Note: do we need additional special syntax to indicate that we're extending Session?
-
-    # Note: make sure this is overriding the superclass.parse. Need a keyword?
-    def get_session_metadata(self):
-        # Do toolbox-specific parsing of session metadata.
-        # Presumably we will have to look for the metadata file in the config.
-        # The config so it knows what symbols to look for.
-        pass
-
-    # Generator to yield Speakers for the Speaker table in the db
-    def next_speaker(self):
-        pass
-
-    # Note: make sure this is overriding the superclass.parse. Need a keyword?
-    def next_utterance(self):
-        # Do toolbox-specific parsing of utterances.
-        # The config so it knows what symbols to look for.
-        pass
