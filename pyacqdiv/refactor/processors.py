@@ -1,6 +1,11 @@
 """ Processors for acqdiv corpora
 """
 
+import sys
+import glob
+
+from parsers import *
+
 # If it turns out that these really don't do anything but the loops, we can get rid of
 # the Corp[us|ora]Processor classes and just make them, well, loops. In some function.
 class CorporaProcessor(object):
@@ -11,14 +16,18 @@ class CorporaProcessor(object):
 
 
 class CorpusProcessor(object):
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, cfg):
+        self.cfg = cfg
+        self.process_corpus()
 
     def process_corpus(self):
-        for session_config in self.config:
-        # Create a session based on the format type given in config.
-        s = SessionProcessor(session_config)
-        s.process()
+        path = self.cfg['paths']['sessions']
+        files = glob.glob(path)
+
+        for session_file in files:
+            # Create a session based on the format type given in config.
+            s = SessionProcessor(self.cfg, session_file)
+            s.process_session()
 
 
 # SessionProcessor invokes a parser to get the extracted data, and then interacts
@@ -26,13 +35,15 @@ class CorpusProcessor(object):
 class SessionProcessor(object):
     # TODO: Does the Session object need a primary key? Is that passed in from the caller
     # (ie, when we know about the Corpus-level data)?
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, cfg, file):
+        self.config = cfg
+        self.file = file
 
     def process_session(self):
-        # Init parser with config.
-        # config contains map of standard label -> local label.
-        self.parser = SessionParser.create_parser(self.config)
+        # Init parser with config and pass in file path.
+        # Config contains map of standard label -> local label.
+        self.parser = SessionParser.create_parser(self.config, self.file)
+
         # Now start asking the parser for stuff...
         # For example:
 
@@ -41,6 +52,7 @@ class SessionProcessor(object):
 
         # Speakers table stuff in db
         # TODO(stiv): Define Speaker table
+        """
         speakers = []
         for s in self.parser.next_speaker():
             # TODO(stiv): Do we also need to add some kind of key for joining to the s?
@@ -55,6 +67,7 @@ class SessionProcessor(object):
             utterances.append(u)
         # Then write it to the backend.
         commit(session_metadata, speakers, utterances)
+        """
 
     def commit(self, session_metadata, speakers, utterances):
         # Set up the connection to the backend.
