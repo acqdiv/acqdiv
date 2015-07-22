@@ -2,7 +2,6 @@
 """
 
 import sys
-import glob
 
 from parsers import *
 
@@ -18,16 +17,14 @@ class CorporaProcessor(object):
 class CorpusProcessor(object):
     def __init__(self, cfg):
         self.cfg = cfg
-        self.process_corpus()
 
     def process_corpus(self):
-        path = self.cfg['paths']['sessions']
-        files = glob.glob(path)
-
-        for session_file in files:
+        for session_file in self.cfg.session_files:
+            print("Processing:", session_file)
             # Create a session based on the format type given in config.
             s = SessionProcessor(self.cfg, session_file)
-            s.process_session()
+            # s.process_session()
+            sys.exit(1)
 
 
 # SessionProcessor invokes a parser to get the extracted data, and then interacts
@@ -35,14 +32,14 @@ class CorpusProcessor(object):
 class SessionProcessor(object):
     # TODO: Does the Session object need a primary key? Is that passed in from the caller
     # (ie, when we know about the Corpus-level data)?
-    def __init__(self, cfg, file):
+    def __init__(self, cfg, file_path):
         self.config = cfg
-        self.file = file
+        self.file_path = file_path
 
     def process_session(self):
         # Init parser with config and pass in file path.
         # Config contains map of standard label -> local label.
-        self.parser = SessionParser.create_parser(self.config, self.file)
+        self.parser = SessionParser.create_parser(self.config, self.file_path)
 
         # Now start asking the parser for stuff...
         # For example:
@@ -84,5 +81,5 @@ class SessionProcessor(object):
             self.db_session.add_all(utterances)
             self.db_session.commit()
         except:
-            # TODO: print some error message?
+            # TODO: print some error message? log it?
             self.db_session.rollback()
