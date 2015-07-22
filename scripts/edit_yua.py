@@ -82,37 +82,38 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"^pho:", r"%pho:", line)
                 line=re.sub(r"%PHO:", r"%pho:", line)
 
-                #unification %mor tier
-                line=re.sub(r"%MOR:", r"%mor:", line)
-                line=re.sub(r"\*mor:", r"%mor:", line)
-                line=re.sub(r"%mor\.", r"%mor:", line)
-                line=re.sub(r"%mor\s+:", r"%mor:", line)
-                line=re.sub(r"%mor :", r"%mor:", line) # note that it is not the usual whitespace
+                #unification %xmor tier
+                line=re.sub(r"%MOR:", r"%xmor:", line)
+                line=re.sub(r"%mor:", r"%xmor:", line)
+                line=re.sub(r"\*mor:", r"%xmor:", line)
+                line=re.sub(r"%mor\.", r"%xmor:", line)
+                line=re.sub(r"%mor\s+:", r"%xmor:", line)
+                line=re.sub(r"%mor :", r"%xmor:", line) # note that it is not the usual whitespace
 
-                #unification %xspa tier
-                line=re.sub(r"\*ESPA:", r"%xspa:", line)
-                line=re.sub(r"\*ESP:", r"%xspa:", line)
-                line=re.sub(r"\*ESP\.", r"%xspa:", line)
-                line=re.sub(r"%ESP:", r"%xspa:", line)
-                line=re.sub(r"ESP:", r"%xspa:", line)
+                #unification %spa tier
+                line=re.sub(r"\*ESPA:", r"%spa:", line)
+                line=re.sub(r"\*ESP:", r"%spa:", line)
+                line=re.sub(r"\*ESP\.", r"%spa:", line)
+                line=re.sub(r"%ESP:", r"%spa:", line)
+                line=re.sub(r"ESP:", r"%spa:", line)
 
-                line=re.sub(r"Esp:", r"%xspa:", line)
-                line=re.sub(r"Esp\.", r"%xspa:", line)
+                line=re.sub(r"Esp:", r"%spa:", line)
+                line=re.sub(r"Esp\.", r"%spa:", line)
 
-                line=re.sub(r"%esp\.", r"%xspa:", line)
-                line=re.sub(r"%esp_:", r"%xspa:", line)
-                line=re.sub(r"%esp :", r"%xspa:", line) # note that it is not the usual whitespace
-                line=re.sub(r"%esp:", r"%xspa:", line)
-                line=re.sub(r"%\*esp:", r"%xspa:", line)
-                line=re.sub(r"\*esp:", r"%xspa:", line)
+                line=re.sub(r"%esp\.", r"%spa:", line)
+                line=re.sub(r"%esp_:", r"%spa:", line)
+                line=re.sub(r"%esp :", r"%spa:", line) # note that it is not the usual whitespace
+                line=re.sub(r"%esp:", r"%spa:", line)
+                line=re.sub(r"%\*esp:", r"%spa:", line)
+                line=re.sub(r"\*esp:", r"%spa:", line)
 
-                line=re.sub(r"%ENG:", r"%xspa:", line)
-                line=re.sub(r"%eng:", r"%xspa:", line)
-                line=re.sub(r"%eng;", r"%xspa:", line)
-                line=re.sub(r"%eng\.", r"%xspa:", line)
-                line=re.sub(r"%engL:", r"%xspa:", line)
-                line=re.sub(r"%eng :", r"%xspa:", line)
-                line=re.sub(r"%eng", r"%xspa:", line)
+                line=re.sub(r"%ENG:", r"%spa:", line)
+                line=re.sub(r"%eng:", r"%spa:", line)
+                line=re.sub(r"%eng;", r"%spa:", line)
+                line=re.sub(r"%eng\.", r"%spa:", line)
+                line=re.sub(r"%engL:", r"%spa:", line)
+                line=re.sub(r"%eng :", r"%spa:", line)
+                line=re.sub(r"%eng", r"%spa:", line)
 
                 # placing uncategorized comments into a %com tier
                 line=re.sub(r"^\((.*)\)$", r"%com:\t\1", line) # lines with comments in brackets
@@ -127,13 +128,13 @@ for root, dirs, files in os.walk(input_dir):
 
                 line=re.sub(r"^\s+[0-9]+\s+(\*[A-Z]{3}:)", r"\1", line) # remove spaces, numbers and spaces before *PARTICIPANT tiers
                 line=re.sub(r"^\s+[0-9]+\s+(%[a-z]{3}:)", r"\1", line) # remove spaces, numbers and spaces before %xxx tiers
-                line=re.sub(r"^\s+[0-9]+\s+(%xspa:)", r"\1", line) # remove spaces, numbers and spaces before %xspa tiers
+                line=re.sub(r"^\s+[0-9]+\s+(%xmor:)", r"\1", line) # remove spaces, numbers and spaces before %xmor tiers
                 line=re.sub(r"^\s+(\*[A-Z]{3}:)", r"\1", line) # remove spaces before *PARTICIPANT tiers
                 line=re.sub(r"^\s+(%[a-z]{3}:)", r"\1", line) # remove spaces before %xxx tiers
-                line=re.sub(r"^\s+(%xspa:)", r"\1", line) # remove spaces before %xspa tiers
+                line=re.sub(r"^\s+(%xmor:)", r"\1", line) # remove spaces before %xmor tiers
                 line=re.sub(r"^\t+(\*[A-Z]{3}:)", r"\1", line) # remove tabs before *PARTICIPANT tiers
                 line=re.sub(r"^\t+(%[a-z]{3}:)", r"\1", line) # remove tabs before %xxx tiers
-                line=re.sub(r"^\t+(%xspa:)", r"\1", line) # remove tabs before %xspa tiers
+                line=re.sub(r"^\t+(%xmor:)", r"\1", line) # remove tabs before %xmor tiers
                 line=re.sub(r"^\s+[0-9]+\s+$", r"", line) # remove numbers and/or spaces alone in a line
                 line=re.sub(r"^\t+[0-9]+\t+$", r"", line) # remove numbers and/or tabs alone in a line
                 #line=re.sub(r"^\s+([%|\*])", r"\1", line) # remove all spaces before the beginning of a tier
@@ -142,5 +143,5 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"^(\*[A-Z]{3}:)(.*?)(%[a-z]{3}:)(.*?)$", r"\1\2\n\3\4", line)
                 line=re.sub(r"^(%[a-z]{3}:)(.*?)(%[a-z]{3}:)(.*?)$", r"\1\2\n\3\4", line)
 
-                #line = re.sub('^\d*\s+(?=[\*%])', '', line)
+                line = re.sub('^\d*\s+(?=[\*%])', '', line)
                 print(line, file=output_file, end='')

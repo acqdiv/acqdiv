@@ -32,6 +32,7 @@ def clean_chat_line(s):
     s = re.sub("(\w)['’ʼ](\w)", "\\1ʔ\\2", s)
 
 
+
     #This may result in files with two Situation tiers. These will have to be cleaned manually before CLAN will accept them!
     '''
     s = re.sub("^@Activities", "@Situation", s)
@@ -48,7 +49,7 @@ def clean_chat_line(s):
 
 
     ### TIER CLEANING ###
-    # At the end existing tiers will be: *XYZ:, %pho:, %mor:, %xspa:, %sit:, %exp:, %com:
+    # At the end existing tiers will be: *XYZ:, %pho:, %xmor:, %spa:, %sit:, %exp:, %com:
 
     # big tier cleaning done in edit_yua.py
     s=re.sub(r"\*SEÑ:", r"*UNK:", s)
@@ -63,6 +64,7 @@ def clean_chat_line(s):
     #s=re.sub(r"^\n$", r"", s) # remove empty lines # not needed anymore; it is done somewhere else in the cleaning
     #s=re.sub(r"(%pho:\s+)\((.*?)\)(\s+\.)", r"\1\2\3", s) # in %pho tiers that end in a dot, remove the brackets that surround all the content of the tier # not needed; brackets have a meaning
     #s=re.sub(r"(%pho:\s+)\((.*?)\)", r"\1\2", s) # in %xpho tiers that don't end in a dot, remove the brackets that surround all the content of the tier # not needed; brackets have a meaning
+    s=re.sub(r"(%xmor:)(.*)\\", r"\1\2\|", s) # in %xmor tiers, replace "\" with "|"
 
     # there are lines with numbers and an asterisk only, e.g. 020101-DAV: 003 * ---> egrep "^ [0-9]" # These are not being removed due to the extra white space added at line start. Recheck in case we are doing part of the tier cleaning through edit.py.
 
@@ -121,18 +123,19 @@ def clean_chat_line(s):
     s=re.sub("ż", "¿", s)
     s=re.sub("Ê", "", s)
     s=re.sub("hńn", "hnn", s) #
+    s=re.sub("dińo", "dino", s)
     s=re.sub("ń", "ñ", s)
-    s=re.sub(r"(%mor:)(.*)\\", r"\1\2\|", s) # in %mor tiers, replace "\" with "|"
+
 
     # dieresis
-    s=re.sub(r"^%xspa:[\s|\t]+¨(.*)\?", r"%xspa:\t¿\1\?", s) # replace a dieresis at the beginning of a %xspa tier with a "¿"
+    s=re.sub(r"^%spa:[\s|\t]+¨(.*)\?", r"%spa:\t¿\1\?", s) # replace a dieresis at the beginning of a %spa tier with a "¿"
     s=re.sub(r"^(%pho:[\s|\t]+)¨", r"\1", s) # remove the dieresis at the beginning of a %pho tier
     s=re.sub(r"^(\*[A-Z]{3}:[\s|\t]+)¨", r"\1", s) # remove the dieresis at the beginning of a *PARTICIPANT tier
 
     # inverted question mark
     s=re.sub(r"^(\*[A-Z]{3}:)(.*)¿(.*)$", r"\1\2\3", s) # not allowed in a *PARTICIPANT tier
     s=re.sub(r"^(%pho:)(.*)¿(.*)$", r"\1\2\3", s) # not allowed in a %pho tier
-    s=re.sub(r"^(%xspa:)(.*)¿$", r"\1\2\?", s) # at the end of a %xspa tier, "¿" has to be "?"
+    s=re.sub(r"^(%spa:)(.*)¿$", r"\1\2\?", s) # at the end of a %spa tier, "¿" has to be "?"
 
 
 
@@ -167,6 +170,7 @@ def clean_chat_line(s):
     s=re.sub(r"\-x\-x\-x\-", r"", s) ##### this one has to go before the one that deletes the empty tiers.
     s=re.sub("Cárga,e", "Cárgame", s)
     s=re.sub("laìz", "lápiz", s)
+
 
 
 
