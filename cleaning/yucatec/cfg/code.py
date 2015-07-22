@@ -25,12 +25,12 @@ def clean_chat_line(s):
     s=re.sub(r"\( finaliza \)", r"@End", s)
     '''
 
-    '''
+
     s = re.sub("(^[\*%]\S+\t+[^\t]+)\t", "\1", s)
     s = re.sub("(\w)['’ʼ]", "\\1ʔ", s)
     s = re.sub("['’ʼ](\w)", "ʔ\\1", s)
     s = re.sub("(\w)['’ʼ](\w)", "\\1ʔ\\2", s)
-    '''
+
 
     #This may result in files with two Situation tiers. These will have to be cleaned manually before CLAN will accept them!
     '''
@@ -50,132 +50,8 @@ def clean_chat_line(s):
     ### TIER CLEANING ###
     # At the end existing tiers will be: *XYZ:, %pho:, %mor:, %xspa:, %sit:, %exp:, %com:
 
-    #unification *PARTICIPANT tier
-    #correct participants' IDs:
-    s=re.sub(r"\*MECH:", r"*MEC:", s)
-    s=re.sub(r"\*:MEC:", r"*MEC:", s)    
-    s=re.sub(r"\*GOYO:", r"*GOY:", s)
-    s=re.sub(r"\*PEPE:", r"*PEP:", s)
-    s=re.sub(r"\*ABUE:", r"*ABU:", s)
-    s=re.sub(r"\*MARI:", r"*MAR:", s)
-    s=re.sub(r"\*CHIC:", r"*CHI:", s)
-    s=re.sub(r"\*SANI:", r"*SAN:", s)
-    s=re.sub(r"\*ABUELA:", r"*ABU:", s)
-    s=re.sub(r"ABUELA:", r"*ABU:", s)
-    s=re.sub(r"\*MAMDAV:", r"*FIL:", s)
-    s=re.sub(r"\*mamdav:", r"*FIL:", s)
-    s=re.sub(r"\*mamdav\*:", r"*FIL:", s)
-    s=re.sub(r"\*mamdav", r"*FIL:", s)
-    s=re.sub(r"mamdav:", r"*FIL:", s)
-    s=re.sub(r"mamdav", r"*FIL:", s)
-    s=re.sub(r"\*davdav:", r"*DAV:", s)
-    s=re.sub(r"\*davdav", r"*DAV:", s)
-    s=re.sub(r"\*davsan:", r"*SAN:", s)
-    s=re.sub(r"\*davsan", r"*SAN:", s)
-    s=re.sub(r"\*dav\*:", r"*DAV:", s)
-    s=re.sub(r"\*dav:", r"*DAV:", s)
-    s=re.sub(r"\*dav", r"*DAV:", s)
-    s=re.sub(r"\*:DAV", r"*DAV:", s)
-    s=re.sub(r"\*DAV :", r"*DAV:", s)
-    s=re.sub(r"\*DAV", r"*DAV:", s)
-    s=re.sub(r"dav:", r"*DAV:", s)
-    s=re.sub(r"\*san:", r"*SAN:", s)
-    s=re.sub(r"\*fil:", r"*FIL:", s)
-    s=re.sub(r"\*fil", r"*FIL:", s)
-    s=re.sub(r"fil:", r"*FIL:", s)
-    s=re.sub(r"\*FIl:", r"*FIL:", s)
-    s=re.sub(r"\*mot::", r"*MOT:", s)
-    s=re.sub(r"\*mot:", r"*MOT:", s)
-    s=re.sub(r"\*arm:", r"*ARM:", s)
-    s=re.sub(r"\* Arm:", r"*ARM:", s)
-    s=re.sub(r"\*mar:", r"*MAR:", s)
-    s=re.sub(r"\*nef:", r"*NEF:", s)
-    s=re.sub(r"\*lor:", r"*LOR:", s)
+    # big tier cleaning done in edit_yua.py
     s=re.sub(r"\*SEÑ:", r"*UNK:", s)
-    s=re.sub(r"\*:", r"*UNK:", s)
-    s=re.sub(r"^\s+:\s$", r"*UNK:", s) # replace ":" at the beginning of a line, with some spaces before and after, with *UNK:
-    s=re.sub(r"\*\?:", r"*UNK:", s) # replace "*?:" with "*UNK:"
-    s=re.sub(r"\(\s+\):", r"*UNK:", s) # replace "(    ):" with "*UNK:"
-    s=re.sub(r"xxx:", r"*UNK:", s) # replace "xxx:" with "*UNK:"
-    s=re.sub(r"\*XXX:", r"*UNK:", s) # replace "*XXX:" with "*UNK:"
-    s=re.sub(r"(\*[A-Z]{3}) :", r"\1:", s) # remove a space between the participant's code and the colon
-    s=re.sub(r"\(\s?(\*[A-Z]{3})\s?\):", r"\1:", s) # participant codes with form e.g. "(*ARM):" or "( *SAN ):" should be transformed into "*ARM:"
-
-    #unification %pho tier
-    s=re.sub(r"\*pho:", r"%pho:", s)
-    s=re.sub(r"%fon:", r"%pho:", s)
-    s=re.sub(r"%pho\.", r"%pho:", s)
-    s=re.sub(r"%pho :", r"%pho:", s) # note that it is not the usual whitespace
-    s=re.sub(r"%pho;", r"%pho:", s)
-    s=re.sub(r"^pho:", r"%pho:", s)
-    s=re.sub(r"%PHO:", r"%pho:", s)
-
-    #unification %mor tier
-    s=re.sub(r"%MOR:", r"%mor:", s)
-    s=re.sub(r"\*mor:", r"%mor:", s)
-    s=re.sub(r"%mor\.", r"%mor:", s)
-    s=re.sub(r"%mor\s+:", r"%mor:", s)
-    s=re.sub(r"%mor :", r"%mor:", s) # note that it is not the usual whitespace
-
-    #unification %xspa tier
-    s=re.sub(r"\*ESPA:", r"%xspa:", s)
-    s=re.sub(r"\*ESP:", r"%xspa:", s)
-    s=re.sub(r"\*ESP\.", r"%xspa:", s)
-    s=re.sub(r"%ESP:", r"%xspa:", s)
-    s=re.sub(r"ESP:", r"%xspa:", s)
-
-    s=re.sub(r"Esp:", r"%xspa:", s)
-    s=re.sub(r"Esp\.", r"%xspa:", s)
-
-    s=re.sub(r"%esp\.", r"%xspa:", s)
-    s=re.sub(r"%esp_:", r"%xspa:", s)
-    s=re.sub(r"%esp :", r"%xspa:", s) # note that it is not the usual whitespace
-    s=re.sub(r"%esp:", r"%xspa:", s)
-    s=re.sub(r"%\*esp:", r"%xspa:", s)
-    s=re.sub(r"\*esp:", r"%xspa:", s)
-
-    s=re.sub(r"%ENG:", r"%xspa:", s)
-    s=re.sub(r"%eng:", r"%xspa:", s)
-    s=re.sub(r"%eng;", r"%xspa:", s)
-    s=re.sub(r"%eng\.", r"%xspa:", s)
-    s=re.sub(r"%engL:", r"%xspa:", s)
-    s=re.sub(r"%eng :", r"%xspa:", s)
-    s=re.sub(r"%eng", r"%xspa:", s)
-
-    # placing uncategorized comments into a %com tier
-    s=re.sub(r"^\((.*)\)$", r"%com:\t\1", s) # lines with comments in brackets
-    s=re.sub(r"^&", r"%com:\t", s) # lines which start with "&"
-
-    # all tier names must be followed by a tab before the tier content starts
-    s=re.sub(r"(\*[A-Z]{3}:)\s+", r"\1\t", s)
-    s=re.sub(r"(%[a-z]{3}:)\s+", r"\1\t", s)
-
-
-
-
-    ######some of these should go before the tier name cleaning above. Check
-    s=re.sub(r"\s###\s", r" xxx ", s)
-    s=re.sub(r"XXX", r"xxx", s)
-
-
-
-    s=re.sub(r"^\s+[0-9]+\s+(\*[A-Z]{3}:)", r"\1", s) # remove spaces, numbers and spaces before *PARTICIPANT tiers
-    s=re.sub(r"^\s+[0-9]+\s+(%[a-z]{3}:)", r"\1", s) # remove spaces, numbers and spaces before %xxx tiers
-    s=re.sub(r"^\s+[0-9]+\s+(%xspa:)", r"\1", s) # remove spaces, numbers and spaces before %xspa tiers
-    s=re.sub(r"^\s+(\*[A-Z]{3}:)", r"\1", s) # remove spaces before *PARTICIPANT tiers
-    s=re.sub(r"^\s+(%[a-z]{3}:)", r"\1", s) # remove spaces before %xxx tiers
-    s=re.sub(r"^\s+(%xspa:)", r"\1", s) # remove spaces before %xspa tiers
-    s=re.sub(r"^\t+(\*[A-Z]{3}:)", r"\1", s) # remove tabs before *PARTICIPANT tiers
-    s=re.sub(r"^\t+(%[a-z]{3}:)", r"\1", s) # remove tabs before %xxx tiers
-    s=re.sub(r"^\t+(%xspa:)", r"\1", s) # remove tabs before %xspa tiers
-    s=re.sub(r"^\s+[0-9]+\s+$", r"", s) # remove numbers and/or spaces alone in a line
-    s=re.sub(r"^\t+[0-9]+\t+$", r"", s) # remove numbers and/or tabs alone in a line
-    #s=re.sub(r"^\s+([%|\*])", r"\1", s) # remove all spaces before the beginning of a tier
-    # up to here the rules which could be included in edit.py
-
-    # place two different tiers that were in one line into two different lines ### not needed anymore? done by corpus.py
-    s=re.sub(r"^(\*[A-Z]{3}:)(.*?)(%[a-z]{3}:)(.*?)$", r"\1\2\n\3\4", s)
-    s=re.sub(r"^(%[a-z]{3}:)(.*?)(%[a-z]{3}:)(.*?)$", r"\1\2\n\3\4", s)
 
     s=re.sub(r"^(%pho:)(.*)/(.*)/", r"\1\2\3", s) # remove "/" twice in %pho tiers
     s=re.sub(r"^(%pho:)(.*)/", r"\1\2", s) # remove "/" once in %pho tiers
@@ -290,6 +166,7 @@ def clean_chat_line(s):
     s=re.sub("quë", "qué", s)
     s=re.sub(r"\-x\-x\-x\-", r"", s) ##### this one has to go before the one that deletes the empty tiers.
     s=re.sub("Cárga,e", "Cárgame", s)
+    s=re.sub("laìz", "lápiz", s)
 
 
 
