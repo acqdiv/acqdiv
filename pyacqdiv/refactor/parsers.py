@@ -19,7 +19,7 @@ class CorpusConfigParser(configparser.ConfigParser):
 
     optionxform = str # preserves case
 
-    # TODO: identify whether we want (extended) interolation, etc.
+    # TODO: identify whether we want (extended) interolation, ordered dicts, inline commenting, etc.
 #    _dict_type = collections.OrderedDict
 #    _inline_comment_prefixes = ('#',)
 #    _interpolation = configparser.ExtendedInterpolation()
@@ -37,7 +37,7 @@ class CorpusConfigParser(configparser.ConfigParser):
         super().read(filenames, encoding)
 
         # Load up the list of relative paths to corpus sessions files.
-        # This creates a dependency that processors.py must be in same location as parsers.py
+        # This creates a dependency that processors.py must be in same location as parsers.py!
         self.path = self['paths']['sessions']
         self.session_files = glob.glob(self.path)
         self.metadata_dir = self['paths']['metadata_dir']
@@ -47,6 +47,7 @@ class CorpusConfigParser(configparser.ConfigParser):
         # symbols used in the corpus to the 'standard' symbols.
         # TODO: fix the inline commenting "#"
         self.peculiarities = dict(self.items('peculiarities'))
+        self.format = self['corpus']['format']
 
         # ...And now any other additional things you want to do on
         # configfile load time.
@@ -55,25 +56,19 @@ class SessionParser(object):
     """ Static class-level method to create a new parser instance based on session format type. """
 
     @staticmethod
-    def create_parser(config, file):
-        format = config['corpus']['format']
+    def create_parser(config, file_path):
+        format = config.format
 
         if format == "ChatXML":
-            return ChatXMLParser(config, file)
+            return ChatXMLParser(config, file_path)
         if format == "Toolbox":
-            return ToolboxParser(config, file)
+            return ToolboxParser(config, file_path)
         assert 0, "Unknown format type: " + format
 
-    def __init__(self, config, file):
+    def __init__(self, config, file_path):
         self.config = config
-        self.file = file
-        # SessionParser.create_parser(self.config, self.file)
-
-        # TODO: parse the incoming configuration file
-        # get_percularities()
-        # get metadata_type()
-        # get metadata_path() # how to link this to the file? must be same file name?
-        #  add missing files to logs
+        self.file_path = file_path
+        # SessionParser.create_parser(self.config, self.file_path)
 
     # To be overridden in subclasses.
     # Session metadata for the Sessions table in the db
@@ -89,12 +84,16 @@ class SessionParser(object):
         pass
 
 class ToolboxParser(SessionParser):
-    """ Chintang, Indonesian, Russian, Dene  """
+    """ For Chintang, Indonesian, Russian, & Dene  """
 
-    def __init__(self, config, file):
-        SessionParser.__init__(self, config, file)
+    def __init__(self, config, file_path):
+        SessionParser.__init__(self, config, file_path)
         # self.config = config
         # self.file = file
+
+        # TODO: ugly hack -- fix
+        temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
+        self.metadata_file_path = temp.replace(".txt", ".imdi")
 
     # TODO: METADATA - call/integrate Cazim's metadata code and map it to the db tables
     # Note: make sure this is overriding the superclass.parse. Need a keyword?
@@ -102,9 +101,15 @@ class ToolboxParser(SessionParser):
         # Do toolbox-specific parsing of session metadata.
         # Presumably we will have to look for the metadata file in the config.
         # The config so it knows what symbols to look for.
-        imdi = Imdi(self.file)
-        # print(imdi)
 
+        metadata_file_path = ""
+        imdi = Imdi(self.metadata_file_path)
+
+        participants = imdi.get_participants()
+        # print(type(participants))
+        for i in participants:
+            print(type(i), len(i))
+        sys.exit(1)
         # return Imdi(self.file)
 
     # Generator to yield Speakers for the Speaker table in the db
@@ -118,7 +123,7 @@ class ToolboxParser(SessionParser):
         pass
 
 class ChatXMLParser(SessionParser):
-    """ Cree, Inuktitut, MiiPro, Miyata, Sesotho, Turkish, Yucatec """
+    """ For Cree, Inuktitut, MiiPro, Miyata, Sesotho, Turkish, & Yucatec """
 
     def __init__(self, config, file):
         self.config = config

@@ -72,14 +72,14 @@ class Imdi(Parser):
     """ subclass of metadata.Parser to deal with IMDI metadata (Chintang and Russian via S. Stoll) """
     def __init__(self, path):
         Parser.__init__(self, path)
-        self.metadata["participants"] = self.get_participants(self.root)
-        self.metadata["session"] = self.get_session_data(self.root)
-        self.metadata["project"] = self.get_project_data(self.root)
-        self.metadata["media"] = self.get_media_data(self.root)
+        # self.metadata["participants"] = self.get_participants()
+        # self.metadata["session"] = self.get_session_data(self.root)
+        # self.metadata["project"] = self.get_project_data(self.root)
+        # self.metadata["media"] = self.get_media_data(self.root)
 
-    def get_participants(self, root):
+    def get_participants(self):
         participants = []
-        for actor in root.Session.MDGroup.Actors.getchildren():
+        for actor in self.root.Session.MDGroup.Actors.getchildren():
             participant = {}
             for e in actor.getchildren():
                 t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "") # drop the IMDI stuff

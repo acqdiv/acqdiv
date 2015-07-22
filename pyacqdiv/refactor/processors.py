@@ -23,8 +23,7 @@ class CorpusProcessor(object):
             print("Processing:", session_file)
             # Create a session based on the format type given in config.
             s = SessionProcessor(self.cfg, session_file)
-            # s.process_session()
-            sys.exit(1)
+            s.process_session()
 
 
 # SessionProcessor invokes a parser to get the extracted data, and then interacts
