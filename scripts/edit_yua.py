@@ -23,8 +23,8 @@ for root, dirs, files in os.walk(input_dir):
     for name in files:
         with open(os.path.join(root, name), 'r') as input_file, open(os.path.join(output_dir, name), 'w') as output_file:        
             for line in input_file:
-				#unification *PARTICIPANT tier
-				#correct participants' IDs:
+                #unification *PARTICIPANT tier
+                #correct participants' IDs:
                 line=re.sub(r"\*MECH:", r"*MEC:", line)
                 line=re.sub(r"\*:MEC:", r"*MEC:", line)
                 line=re.sub(r"\*GOYO:", r"*GOY:", line)
