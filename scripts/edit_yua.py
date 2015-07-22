@@ -21,7 +21,7 @@ for root, dirs, files in os.walk(input_dir):
         os.makedirs(output_dir)
     
     for name in files:
-        with open(os.path.join(root, name), 'r') as input_file, open(os.path.join(output_dir, name), 'w') as output_file:        
+        with open(os.path.join(root, name), 'r', encoding="utf8") as input_file, open(os.path.join(output_dir, name), 'w', encoding="utf8") as output_file:        
             for line in input_file:
                 #unification *PARTICIPANT tier
                 #correct participants' IDs:
@@ -115,9 +115,9 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"%eng :", r"%spa:", line)
                 line=re.sub(r"%eng", r"%spa:", line)
 
-                # placing uncategorized comments into a %com tier
-                line=re.sub(r"^\((.*)\)$", r"%com:\t\1", line) # lines with comments in brackets
-                line=re.sub(r"^&", r"%com:\t", line) # lines which start with "&"
+                # %com and %sit tiers
+                line=re.sub(r"^\((.*)\)$", r"%com:\t\1", line) # place lines with comments in brackets into a %com tier
+                line=re.sub(r"^&", r"%com:\t", line) # place lines which start with "&" into a %com tier
 
                 # all tier names must be followed by a tab before the tier content starts
                 line=re.sub(r"(\*[A-Z]{3}:)\s+", r"\1\t", line)
