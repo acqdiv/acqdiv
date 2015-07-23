@@ -9,7 +9,7 @@ class Factory(object):
     # The following two are basically API prototypes
 
     def __parse(self, data):
-    pass
+        pass
 
     def __make(self):
         pass
@@ -73,7 +73,9 @@ class XmlUtteranceFactory(Factory):
     def __make(self):
         pass
 
-    def make_utterance(self, self.raw):
+    # TODO: this was throwing some error, so i commented it out
+    # def make_utterance(self, self.raw):
+    def make_utterance(self):
         self.__parse(u)
         return self.u
 
@@ -82,3 +84,4 @@ def XmlWordFactory(Factory):
         super().__init__()
 
     def __parse(self, w):
+        pass
