@@ -77,6 +77,7 @@ class Imdi(Parser):
         # self.metadata["project"] = self.get_project_data(self.root)
         # self.metadata["media"] = self.get_media_data(self.root)
 
+    # TODO: yield "speaker/participant" data in a
     def get_participants(self):
         participants = []
         for actor in self.root.Session.MDGroup.Actors.getchildren():

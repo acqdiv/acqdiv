@@ -1,4 +1,4 @@
-""" Parsers for parsing CHAT XML and Toolbox files for acqdiv corpora
+""" Parsers for CHAT XML and Toolbox files for acqdiv corpora, and an acqdiv config file parser.
 """
 
 import sys
@@ -95,26 +95,21 @@ class ToolboxParser(SessionParser):
         temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
         self.metadata_file_path = temp.replace(".txt", ".imdi")
 
+        # init body and metadata file objects? (then don't have to do for every instance call)
+        self.imdi = Imdi(self.metadata_file_path)
+
     # TODO: METADATA - call/integrate Cazim's metadata code and map it to the db tables
     # Note: make sure this is overriding the superclass.parse. Need a keyword?
     def get_session_metadata(self):
         # Do toolbox-specific parsing of session metadata.
         # Presumably we will have to look for the metadata file in the config.
         # The config so it knows what symbols to look for.
-
-        metadata_file_path = ""
-        imdi = Imdi(self.metadata_file_path)
-
-        participants = imdi.get_participants()
-        # print(type(participants))
-        for i in participants:
-            print(type(i), len(i))
-        sys.exit(1)
+        return self.imdi.get_participants()
         # return Imdi(self.file)
 
     # Generator to yield Speakers for the Speaker table in the db
     def next_speaker(self):
-        pass
+        return ["tom", "dick", "mary"]
 
     # Note: make sure this is overriding the superclass.parse. Need a keyword?
     def next_utterance(self):

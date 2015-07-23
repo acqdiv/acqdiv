@@ -3,7 +3,11 @@
 
 import sys
 
+from sqlalchemy.orm import sessionmaker
+
 from parsers import *
+from database_backend import *
+
 
 # If it turns out that these really don't do anything but the loops, we can get rid of
 # the Corp[us|ora]Processor classes and just make them, well, loops. In some function.
@@ -24,6 +28,7 @@ class CorpusProcessor(object):
             # Create a session based on the format type given in config.
             s = SessionProcessor(self.cfg, session_file)
             s.process_session()
+            s.commit()
 
 
 # SessionProcessor invokes a parser to get the extracted data, and then interacts
@@ -35,6 +40,11 @@ class SessionProcessor(object):
         self.config = cfg
         self.file_path = file_path
 
+        # Initialize database connection and session maker.
+        engine = db_connect()
+        create_tables(engine)
+        self.Session = sessionmaker(bind=engine)
+
     def process_session(self):
         # Init parser with config and pass in file path.
         # Config contains map of standard label -> local label.
@@ -44,7 +54,7 @@ class SessionProcessor(object):
         # For example:
 
         # Session table stuff in db (metadata)
-        session_metadata = self.parser.get_session_metadata()
+        # session_metadata = self.parser.get_session_metadata()
 
         # Speakers table stuff in db
         # TODO(stiv): Define Speaker table
@@ -65,20 +75,45 @@ class SessionProcessor(object):
         commit(session_metadata, speakers, utterances)
         """
 
-    def commit(self, session_metadata, speakers, utterances):
+    def commit(self):
+    # def commit(self, session_metadata, speakers, utterances):
         # Set up the connection to the backend.
         # TODO(stiv): Put some kind of namespace on the db session stuff, to distinguish
         # it from the recording sessions. Sessions, sessions everywhere!
+
+        # TODO: figure out what goes where why: http://docs.sqlalchemy.org/en/latest/orm/session_basics.html#session-faq-whentocreate
         # engine = create_engine('dbms://user:pwd@host/dbname')
-        engine = create_engine('sqlite:///_corpora.sqlite3', echo=False)
-        Base.metadata.create_all(engine)
-        SessionMaker = sessionmaker(bind=engine)
-        self.db_session = SessionMaker()
+        # engine = create_engine('sqlite:///_corpora.sqlite3', echo=False)
+        # Base.metadata.create_all(engine)
+        # SessionMaker = sessionmaker(bind=engine)
+
+        session = self.Session()
+        entry = Speaker(SpeakerLabel="CHI")
+        # entry = Speaker(**item)
+        # self.db_session = SessionMaker()
+
         try:
-            self.db_session.add(session_metadata)
-            self.db_session.add_all(speakers)
-            self.db_session.add_all(utterances)
-            self.db_session.commit()
+            session.add(entry)
+            session.commit()
+            # self.db_session.add(session_metadata)
+            # self.db_session.add_all(self.speakers)
+            # self.db_session.add_all(utterances)
+            # self.db_session.commit()
         except:
             # TODO: print some error message? log it?
-            self.db_session.rollback()
+            # self.db_session.rollback()
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+# can we return from the metadata parser some json object, etc., that we can then
+# unpack for session.add_all ?
+
+"""
+>>> session.add_all([
+...     User(name='wendy', fullname='Wendy Williams', password='foobar'),
+...     User(name='mary', fullname='Mary Contrary', password='xxg527'),
+...     User(name='fred', fullname='Fred Flinstone', password='blah')])
+"""
+

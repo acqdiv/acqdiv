@@ -36,7 +36,7 @@ class Director(Base):
 
 
 if __name__=="__main__":
-    engine = create_engine('sqlite:///_corpora.sqlite3', echo=False)
+    engine = create_engine('sqlite:///_movies.sqlite3', echo=False)
     # engine = create_engine('dbms://user:pwd@host/dbname')
     Base.metadata.create_all(engine)
 

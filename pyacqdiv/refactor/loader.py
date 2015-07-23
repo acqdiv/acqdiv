@@ -3,6 +3,8 @@
 
 from processors import *
 from parsers import *
+from database_backend import *
+
 
 # TODO:
 
@@ -12,6 +14,10 @@ from parsers import *
 #  - integrate metadata stuff
 
 if __name__=="__main__":
+    # probably load up the database first, eh?
+    # http://docs.sqlalchemy.org/en/latest/orm/session_basics.html#session-faq-whentocreate
+
+    # parse the config file and call the sessions processor
     cfg = CorpusConfigParser()
     cfg.read('Chintang.ini')
     c = CorpusProcessor(cfg)

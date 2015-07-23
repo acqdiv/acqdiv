@@ -1,14 +1,45 @@
-# table definitions
+""" ORM declarations, database table definitions """
 
 # TODO: set the correct values nullable, unique, etc.
 # TODO: pull out the Speakers from Session info into a separate table
+# TODO: create the links between the database tables
+# http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#eager-loading
 
-import sqlalchemy as sa
-import sqlalchemy.ext.declarative
+from sqlalchemy import create_engine, Text, Column, Integer, String, DateTime
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.engine.url import URL
 
-create_engine = sa.create_engine
+Base = declarative_base()
+# DeclarativeBase = declarative_base()
+
+def db_connect():
+    """ Performs database connection. We can add a database settings
+    from settings.py later. Returns sqlalchemy engine instance.
+    """
+    # TODO: add postgres settings
+    # return create_engine(URL(**settings.DATABASE))
+    return create_engine('sqlite:///_acqdiv.sqlite3', echo=False)
+
+def create_tables(engine):
+    """ """
+    Base.metadata.create_all(engine)
 
 
+class Speaker(Base):
+    __tablename__ = 'Speakers'
+
+    ID = Column(Integer, primary_key=True)
+    SpeakerLabel = Column(Text, nullable=True, unique=False)
+
+    # def __init__(self, speaker_label=None):
+    #    self.speaker_label = speaker_label
+
+    # optional pretty formatting
+    def __repr__(self):
+        return "Speaker(%s)" % (self.speaker_label)
+
+
+""""
 class Model(sa.ext.declarative.declarative_base()):
 
     __abstract__ = True
@@ -53,6 +84,15 @@ class Speaker(Model):
 
     Session = sa.relationship('Session', backref=backref('Speakers', order_by=SpeakerLabel))
 
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    fullname = Column(String)
+    password = Column(String)
+
+    # optional pretty formatting
+    def __repr__(self):
+        return "<User(name='%s', fullname='%s', password='%s')>" % \
+               (self.name, self.fullname, self.password)
 
 
 class Utterance(Model):
@@ -99,4 +139,4 @@ class Morpheme(Model):
     POS = sa.Column(sa.Text, nullable=False, unique=True)
     WordID = sa.Column(sa.Text, ForeignKey('Words.ID'))
     Word = sa.relationship('Word', backref=backref('Morphemes', order_by=ID))
-
+"""
