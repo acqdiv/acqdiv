@@ -1,4 +1,4 @@
-""" A metadata parser base class from Czim
+""" A metadata parser base class from Cazim
 
 Metadata formats:
 
@@ -96,16 +96,6 @@ class Imdi(Parser):
                 participants.append(participant)
         return participants
 
-    def get_speaker_codes(self):
-        """
-        :return: list of speaker codes
-        """
-        speaker_codes = []
-        for participant in self.metadata['participants']:
-            speaker_codes.append(participant['code'])
-        print(speaker_codes)
-        # return self.metadata['participants']['code']
-
     def get_session_data(self, root):
         session = {}
         session['id'] = self.metadata['__attrs__']['Cname']
@@ -158,7 +148,7 @@ class Chat(Parser):
         Parser.__init__(self, path)
         self.metadata["participants"] = self.get_participants(self.root)
         self.metadata["comments"] = self.get_comments(self.root)
-        self.write_json(self.metadata)
+        # self.write_json(self.metadata)
 
     def get_participants(self, root):
         return [self.parse_attrs(p) for p in root.Participants.participant]
@@ -173,8 +163,6 @@ class Chat(Parser):
 if __name__=="__main__":
     # TODO: we need some serious tests
     imdi = Imdi("../../corpora/Chintang/metadata/CLDLCh1R01S01.imdi")
-    participants = imdi.get_speaker_codes()
-
-    #for participant in participants:
-    #    print(participant)
-    #print(len(participants))
+    for p in imdi.metadata['participants']:
+        print(p)
+        print()

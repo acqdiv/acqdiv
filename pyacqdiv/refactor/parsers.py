@@ -107,8 +107,17 @@ class ToolboxParser(SessionParser):
         return self.imdi.get_participants()
         # return Imdi(self.file)
 
+    # looks like it'll be easier to just parse Cazim's self.metadata,
+    # (which awesomely gets all the damn metadata) for just the db specific
+    # stuff we need...
+
     # Generator to yield Speakers for the Speaker table in the db
     def next_speaker(self):
+        # speaker_codes = []
+        # for participant in self.metadata['participants']:
+        #     speaker_codes.append(participant['code'])
+        # print(speaker_codes)
+        # return self.metadata['participants']['code']
         for speaker in self.imdi.get_participants():
             yield speaker
 
