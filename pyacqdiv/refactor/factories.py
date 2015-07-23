@@ -69,6 +69,8 @@ class XmlUtteranceFactory(Factory):
         for w in self.raw.findall('w'):
             if 'type' in w.attrib and w.attrib['type'] == 'omission':
                 self.raw.remove(w)
+        for w in self.raw.findall('.//w'):
+            yield wf.make_word(w)
 
     def __make(self):
         pass
@@ -78,7 +80,11 @@ class XmlUtteranceFactory(Factory):
         return self.u
 
 def XmlWordFactory(Factory):
-    def __init__(self):
+    def __init__(self, config):
         super().__init__()
 
     def __parse(self, w):
+        word = Word()
+
+        # bunch of things happen here
+        return word
