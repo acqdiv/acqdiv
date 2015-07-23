@@ -127,7 +127,7 @@ class ChatXMLParser(SessionParser):
 
     # TODO: METADATA - call/integrate Cazim's metadata code and map it to the db tables
     def __init__(self, config):
-        super.__init__()
+        super().__init__()
         self.fpath = self.config["file"]
         with open(self.fpath, 'r') as xml:
             self.tree = ET.parse(xml)

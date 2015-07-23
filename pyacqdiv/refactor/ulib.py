@@ -12,7 +12,14 @@ class TbxParser():
     pass
 
 class XmlParser():
-    pass
+    def __init__(self, u):
+        self.raw = u
+        
+    def clean(self):
+
 
 class ChintangParser(TbxParser):
+    pass
+
+class CreeParser(XmlParser):
     pass
