@@ -5,7 +5,8 @@
 # TODO: create the links between the database tables
 # http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#eager-loading
 
-from sqlalchemy import create_engine, Text, Column, Integer, String, DateTime
+from sqlalchemy import create_engine, Text, Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.engine.url import URL
 
@@ -22,15 +23,27 @@ def db_connect():
 
 def create_tables(engine):
     """ """
+    # Drop all the database tables first
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(engine)
+
+class Session(Base):
+    __tablename__ = 'session'
+    id = Column(Integer, primary_key=True)
+    session_id = Column(Text, nullable=False, unique=True)
+    speakers = relationship('Speaker', backref='session') #, lazy='dynamic')
 
 
 class Speaker(Base):
-    __tablename__ = 'Speakers'
+    __tablename__ = 'speaker'
 
-    ID = Column(Integer, primary_key=True)
-    SpeakerLabel = Column(Text, nullable=True, unique=False)
+    id = Column(Integer, primary_key=True)
+    parent_id = Column(Integer, ForeignKey('session.session_id'))
+    speaker_label = Column(Text, nullable=True, unique=False)
+    speaker_name = Column(Text, nullable=True, unique=False)
 
+    # NOTE: apparently sqla Base objects do not need constructors
+    #  and they seem to be discouraged
     # def __init__(self, speaker_label=None):
     #    self.speaker_label = speaker_label
 

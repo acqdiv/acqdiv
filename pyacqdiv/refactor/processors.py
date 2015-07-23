@@ -19,14 +19,15 @@ class CorporaProcessor(object):
 
 
 class CorpusProcessor(object):
-    def __init__(self, cfg):
+    def __init__(self, cfg, engine):
         self.cfg = cfg
+        self.engine = engine
 
     def process_corpus(self):
         for session_file in self.cfg.session_files:
             print("Processing:", session_file)
             # Create a session based on the format type given in config.
-            s = SessionProcessor(self.cfg, session_file)
+            s = SessionProcessor(self.cfg, session_file, self.engine)
             s.process_session()
             s.commit()
 
@@ -36,14 +37,10 @@ class CorpusProcessor(object):
 class SessionProcessor(object):
     # TODO: Does the Session object need a primary key? Is that passed in from the caller
     # (ie, when we know about the Corpus-level data)?
-    def __init__(self, cfg, file_path):
+    def __init__(self, cfg, file_path, engine):
         self.config = cfg
         self.file_path = file_path
-
-        # Initialize database connection and session maker.
-        engine = db_connect()
-        create_tables(engine)
-        self.Session = sessionmaker(bind=engine)
+        self.Session = sessionmaker(bind=engine) # sqla session
 
     def process_session(self):
         # Init parser with config and pass in file path.
@@ -88,12 +85,20 @@ class SessionProcessor(object):
         # SessionMaker = sessionmaker(bind=engine)
 
         session = self.Session()
-        entry = Speaker(SpeakerLabel="CHI")
+
+        session_entry = Session(session_id=self.file_path)
+        speaker_entries = []
+        for i in range(0, 10):
+            # fuck... do we really have to do this FK assignment "manually"??
+            speaker_entry = Speaker(parent_id=self.file_path, speaker_label="CHI"+str(i), speaker_name="Child"+str(i))
+            speaker_entries.append(speaker_entry)
+
         # entry = Speaker(**item)
         # self.db_session = SessionMaker()
 
         try:
-            session.add(entry)
+            session.add(session_entry)
+            session.add_all(speaker_entries)
             session.commit()
             # self.db_session.add(session_metadata)
             # self.db_session.add_all(self.speakers)

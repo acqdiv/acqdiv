@@ -5,26 +5,26 @@ from processors import *
 from parsers import *
 from database_backend import *
 
-
-# TODO:
-
-# set up config files
-#  - create the config files, e.g. Chintang.ini, cree.ini...
+# TODO: setup the config files, e.g. Chintang.ini, Cree.ini...
 #  - define the corpus/session-specific attributes in each config; see example in Chintang
 #  - integrate metadata stuff
 
 if __name__=="__main__":
-    # probably load up the database first, eh?
+    # Initialize database connection and drop and then create tables.
     # http://docs.sqlalchemy.org/en/latest/orm/session_basics.html#session-faq-whentocreate
+    engine = db_connect()
+    create_tables(engine)
 
-    # parse the config file and call the sessions processor
+    # Parse the config file and call the sessions processor
     cfg = CorpusConfigParser()
     cfg.read('Chintang.ini')
-    c = CorpusProcessor(cfg)
+
+    # Process by parsing the files and adding extracted data to the db
+    c = CorpusProcessor(cfg, engine)
     c.process_corpus()
 
 
-# TODO FUTURE: postprocessing tasks
+# TODO postprocessing tasks:
 #  - metadata label unification?
 #  - morphological label unification (i don't think this should be
 #    in the parser, but in a separate post-processing module
