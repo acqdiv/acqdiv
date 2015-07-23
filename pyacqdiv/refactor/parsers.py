@@ -109,7 +109,8 @@ class ToolboxParser(SessionParser):
 
     # Generator to yield Speakers for the Speaker table in the db
     def next_speaker(self):
-        return ["tom", "dick", "mary"]
+        for speaker in self.imdi.get_participants():
+            yield speaker
 
     # Note: make sure this is overriding the superclass.parse. Need a keyword?
     def next_utterance(self):

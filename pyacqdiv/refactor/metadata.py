@@ -10,6 +10,8 @@ Metadata formats:
 import sys
 import os
 import re
+import collections
+
 from lxml import objectify
 
 DEBUG = 1 # TODO: move debug to standard logging module
@@ -72,13 +74,17 @@ class Imdi(Parser):
     """ subclass of metadata.Parser to deal with IMDI metadata (Chintang and Russian via S. Stoll) """
     def __init__(self, path):
         Parser.__init__(self, path)
-        # self.metadata["participants"] = self.get_participants()
-        # self.metadata["session"] = self.get_session_data(self.root)
-        # self.metadata["project"] = self.get_project_data(self.root)
-        # self.metadata["media"] = self.get_media_data(self.root)
+        self.metadata["participants"] = self.get_participants()
+        self.metadata["session"] = self.get_session_data(self.root)
+        self.metadata["project"] = self.get_project_data(self.root)
+        self.metadata["media"] = self.get_media_data(self.root)
 
-    # TODO: yield "speaker/participant" data in a
+    # TODO: yield "speaker/participant" data
     def get_participants(self):
+        """
+        :return: list of participants; each participant is a dict
+        of key:value, e.g. 'birthdate': '1978-03-28', 'code': 'RM'
+        """
         participants = []
         for actor in self.root.Session.MDGroup.Actors.getchildren():
             participant = {}
@@ -89,6 +95,16 @@ class Imdi(Parser):
             if not len(participant) == 0:
                 participants.append(participant)
         return participants
+
+    def get_speaker_codes(self):
+        """
+        :return: list of speaker codes
+        """
+        speaker_codes = []
+        for participant in self.metadata['participants']:
+            speaker_codes.append(participant['code'])
+        print(speaker_codes)
+        # return self.metadata['participants']['code']
 
     def get_session_data(self, root):
         session = {}
@@ -153,3 +169,12 @@ class Chat(Parser):
             return {c.attrib['type']: str(c) for c in root.comment}
         except:
             pass
+
+if __name__=="__main__":
+    # TODO: we need some serious tests
+    imdi = Imdi("../../corpora/Chintang/metadata/CLDLCh1R01S01.imdi")
+    participants = imdi.get_speaker_codes()
+
+    #for participant in participants:
+    #    print(participant)
+    #print(len(participants))

@@ -40,7 +40,10 @@ class SessionProcessor(object):
     def __init__(self, cfg, file_path, engine):
         self.config = cfg
         self.file_path = file_path
+        self.language = self.config['corpus']['language']
+        self.corpus = self.config['corpus']['corpus']
         self.Session = sessionmaker(bind=engine) # sqla session
+
 
     def process_session(self):
         # Init parser with config and pass in file path.
@@ -73,20 +76,13 @@ class SessionProcessor(object):
         """
 
     def commit(self):
-    # def commit(self, session_metadata, speakers, utterances):
-        # Set up the connection to the backend.
+        # def commit(self, session_metadata, speakers, utterances):
         # TODO(stiv): Put some kind of namespace on the db session stuff, to distinguish
         # it from the recording sessions. Sessions, sessions everywhere!
-
-        # TODO: figure out what goes where why: http://docs.sqlalchemy.org/en/latest/orm/session_basics.html#session-faq-whentocreate
-        # engine = create_engine('dbms://user:pwd@host/dbname')
-        # engine = create_engine('sqlite:///_corpora.sqlite3', echo=False)
-        # Base.metadata.create_all(engine)
-        # SessionMaker = sessionmaker(bind=engine)
-
         session = self.Session()
 
-        session_entry = Session(session_id=self.file_path)
+        # test data
+        session_entry = Session(session_id=self.file_path, language=self.language, corpus=self.corpus)
         speaker_entries = []
         for i in range(0, 10):
             # fuck... do we really have to do this FK assignment "manually"??

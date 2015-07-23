@@ -31,6 +31,9 @@ class Session(Base):
     __tablename__ = 'session'
     id = Column(Integer, primary_key=True)
     session_id = Column(Text, nullable=False, unique=True)
+    language = Column(Text, nullable=False)
+    corpus = Column(Text, nullable=False)
+    # link to speakers
     speakers = relationship('Speaker', backref='session') #, lazy='dynamic')
 
 
