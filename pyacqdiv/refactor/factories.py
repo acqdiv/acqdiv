@@ -48,9 +48,9 @@ class XmlUtteranceFactory(Factory):
             else:
                 self.u.SentenceType = t_correspondences[sentence_type.attrib['type']]
             
-        # check for empty self.rawtterances, add warning
+        # check for empty utterances, add warning
         if self.raw.find('.//w') is None:
-            creadd(self.udata, 'warnings', 'empty self.rawtterance')
+            creadd(self.udata, 'warnings', 'empty utterance')
             # in the Japanese corpora there is a special subtype of empty self.rawtterance containing the event tag <e> 
             # (for laughing, coughing etc.) -> sentence type
             if self.raw.find('e'): 
@@ -65,11 +65,203 @@ class XmlUtteranceFactory(Factory):
     def __make_words(self):
         # can we reduce this to one instance of self.raw.findall()?
         # that would be very helpful
-        wf = self.config['word_factory']()
+        wf = self.config['word_factory'](self.config['wf_config'], self)
         for w in self.raw.findall('w'):
             if 'type' in w.attrib and w.attrib['type'] == 'omission':
                 self.raw.remove(w)
+
+        # replacements in w.text
         for w in self.raw.findall('.//w'):
+            # In ElementTree, w.text only stores the text immediately following <w>. 
+            # In <w>ha<p type="drawl"/>i</w>, only 'ha' is stored as the text of <w> whereas 'i' is stored as the tail of <p>. 
+            # Tags of this type are: <p> ('prosody marker'), <ca-element> ('pitch marker'), 
+            # and <wk> ('word combination', marks boundaries between the elements of compounds)
+            for path in ('.//p', './/ca-element', './/wk'):
+                for t in w.findall(path):
+                    if t.tail is not None:
+                        if w.text is None:
+                            w.text = t.tail
+                        else:
+                            w.text += t.tail
+            # CHAT www, xxx, yyy all have an attribute "untranscribed" in XML; self.raw.ify text to '???'
+            if 'untranscribed' in w.attrib:
+                w.text = '???'
+            # other replacements
+            if w.text:
+                # where the orthography tier is missing in Cree, <w> is not empty but contains 'missingortho' -> remove this
+                w.text = re.sub('missingortho', '', w.text)
+                # Sometimes words may be partially self.raw.transcribed (-xxx, xxx-, -xxx-) - transform this, too
+                w.text = re.sub('\-?xxx\-?', '???', w.text)
+                # only in Cree: morpheme boundaries in <w> are indicated by '_' -> remove these, segments are also given in the morphology tiers. Other corpora can have '_' in <w>, too, but there it's meaningful (e.g. for concatenating the parts of a book title treated as a single word), so only check Cree!
+                # TODO: put the below in the Cree parser
+                #if corpus_name == 'Cree':
+                #    w.text = re.sub('_', '', w.text)
+        # EOF string replacements
+                                    
+        # transcriptions featuring a contrast between actual and target pronunciation: go through words, create an attribute "target" (initially identical to its text), and set it as appropriate. "target" is taken self.raw. later again when all content is written to the corpus dic. 
+        for w in self.raw.findall('.//w'):
+            
+            # Note that in ElementTree, w.text only stores the text immediately following <w>. In <w>al<shortening>pha</shortening>bet</w>, only 'al' is stored as the text of <w> whereas bet' is stored as the tail of <shortening>. Therefore, actual and target pronunciation have to be assembled step by step in most cases. 
+            if w.text is None:
+                w.text = ''
+            w_actual = w.text
+            w_target = w.text
+
+            # fragments: actual pronunciation remains, target pronunciation is '???' as with self.raw.transcribed words. No glosses. This may occasionally be overwritten by a <replacement> further down.
+            if 'type' in w.attrib and w.attrib['type'] == 'fragment':
+                w.attrib['target'] = '???'
+                w.attrib['glossed'] = 'no'
+                continue
+                        
+            # shortenings, e.g. <g><w>wo<shortening>rd</shortening>s</w></g>: 'wos' = actual pronunciation, 'words' = target pronunciation
+            # shortenings have to be processed before replacements because a target string with no shortenings may still be classified as a replaced form 
+            for s in w.findall('shortening'):
+                if s.text is not None:
+                    w_target += s.text
+                if s.tail is not None:
+                    w_target += s.tail
+                    w_actual += s.tail
+                w.remove(s)
+            w.text = w_actual
+            w.attrib['target'] = w_target
+        # EOF actual vs target    
+            
+        # replacements, e.g. <g><w>burred<replacement><w>word</w></replacement></w></g>
+        # these require an additional loop over <w> in <u> because there may be shortenings within replacements
+        words = self.raw.findall('.//w')
+        for i in range(0, len(words)):
+            r = words[i].find('replacement')
+            if r is not None:
+                rep_words = r.findall('w')
+
+                # go through words in replacement
+                for j in range(0, len(rep_words)):
+                    # check for morphology
+                    mor = rep_words[j].find('mor')
+                    # first word: transfer content and any morphology to parent <w> in <u>
+                    if j== 0:
+                        words[i].attrib['target'] = rep_words[0].attrib['target']
+                        if mor is not None:
+                            words[i].insert(0, mor)
+                    # all further words: insert new empty <w> self.raw.der parent of last known <w> (= <u> or <g>), put content and morphology there
+                    else:
+                        w = ET.Element('w')
+                        w.text = ''
+                        w.attrib['target'] = rep_words[j].attrib['target']
+                        if mor is not None:
+                            w.insert(0, mor)
+                        parent_map[words[i]].insert(i+j, w)
+                        
+                # w.attrib['target'] = '_'.join(rep_w.attrib['target'] for rep_w in r.findall('w'))
+                words[i].remove(r)
+                
+                # example for shortening within complex replacement in Japanese MiiPro (aprm19990722.u287), processing step by step:
+                # (1) initial XML string
+                #   <w>kitenee<replacement><w>kite</w><w><shortening>i</shortening>nai</w></replacement></w>
+                # (2) add targets to all <w>
+                #   <w target="kitenee">kitenee<replacement><w target="kite">kite</w><w target="nai"><shortening>i</shortening>nai</w></replacement></w>
+                # (3) reset target for shortening  
+                #   <w target="kitenee">kitenee<replacement><w target="kite">kite</w><w target="inai"><shortening>i</shortening>nai</w></replacement></w>
+                # (4) remove shortening tag
+                #   <w target="kitenee">kitenee<replacement><w target="kite">kite</w><w target="inai">nai</w></replacement></w>
+                # (5) reset target for w to replacement
+                #   <w target="kite">kitenee<replacement><w target="kite">kite</w><w target="inai">nai</w></replacement></w>
+                # (6) insert new empty word with target = second element of replacement
+                #   <w target="kite">kitenee<replacement><w target="kite">kite</w><w target="inai">nai</w></replacement></w><w target="inai"/>
+                # (7) remove replacement tag
+                #   <w target="kite">kitenee</w><w target="inai"/>
+        
+        # EOF replacements
+
+        # TODO: figure out whether we can put the <g> tag routines in the corpus parsers
+                
+        # group tags <g> surround a couple of heterogeneous constructions
+        # these have to be dealt with last because repetitions belong here and everything that's been done above may be repeated
+        for g in self.raw.findall('.//g'):
+            words = g.findall('.//w')
+            
+            # guesses at target word, e.g. <g><w>taaniu</w><ga type="alternative">nanii</ga></g>. Occasionally there may be several targets, in which case only self.raw.e the first one. 
+            target_guess = g.find('.//ga[@type="alternative"]')
+            if target_guess is not None:
+                words[0].attrib['target'] = target_guess.text
+            
+            # repetitions, e.g. <g><w>shoo</w><w>boo</w><r times="3"></g>: insert as many <w> groups as indicated by attrib "times" of <r>, minus 1 (-> example goes to "shoo boo shoo boo shoo boo")
+            repetitions = g.find('r')
+            if repetitions is not None:
+                for i in range(0, int(repetitions.attrib['times'])-1):
+                    for w in words:
+                        new_elem = ET.SubElement(g, 'w')
+                        new_elem.text = w.text
+                        # Japanese MiiPro only: repeated elements are only glossed once -> mark the word as "to be repeated" here; the morphology routine will see this and repeat the corresponding glosses. Turkish also has cases where repeated elements are only glossed once but is inconsistent; glossed repetitions seem to be more frequent overall. 
+                        if corpus_name == 'Japanese_MiiPro':
+                            new_elem.attrib['glossed'] = 'repeated'
+                        new_elem.attrib['target'] = w.attrib['target']
+                        mor = w.find('mor')
+                        if mor is not None:
+                            new_elem.insert(0, mor)
+
+            # retracings, e.g. <g><w formType="UNIBET">shou</w><w formType="UNIBET">shou</w><k type="retracing"/></g>: search for <w> with same text and self.raw.e gloss from there; if not available set attribute 'glossed' to 'ahead'. Skip this step for Inuktitut, where retracings are regularly glossed. 
+            if corpus_name != 'Inuktitut':
+                retracings = g.find('k[@type="retracing"]')
+                retracings_wc = g.find('k[@type="retracing with correction"]')
+                if (retracings is not None) or (retracings_wc is not None):
+                    for w in words: 
+                        # Japanese Miyata: morphology is coded as structured XML, so matching glosses can already be searched for and inserted at this point
+                        if corpus_name == 'Japanese_Miyata':
+                            # get all elements with the same text
+                            elems_with_same_text = [elem for elem in self.raw.iter() if elem.text == w.text]
+                            for elem in elems_with_same_text:
+                                # only look at <w> 
+                                if elem.tag == 'w':
+                                    mor = elem.find('mor')
+                                    # if there is <mor>, insert below the retraced word
+                                    if mor is not None:
+                                        w.insert(0, mor)
+                        # Japanese MiiPro and Turkish: morphology is coded CHAT style, so missing glosses can only be repeated later -> mark <w> 
+                        elif corpus_name == 'Japanese_MiiPro' or corpus_name == 'Turkish_KULLD':
+                            w.attrib['glossed'] = 'ahead'
+                    
+            # guessed transcriptions: add warning
+            guesses = g.find('k[@type="best guess"]')
+            if guesses is not None:
+                for w in words:
+                    w.attrib['transcribed'] = 'insecure'
+        # EOF <g> (repetitions, retracings, ...)
+               
+        # remember number of (glossed!) words to check alignment later
+        words = self.raw.findall('.//w')
+        self.raw.glossed_words = self.raw.findall('.//w[@glossed="no"]')
+        self.udata['length_in_words'] = len(words) - len(unglossed_words)
+        
+        # write words to corpus dic
+        # corpus[text_id][utterance_index]['words'] is a list of words; initial index is -1
+        # TODO: this is where our factory routines should come in
+        corpus[text_id][utterance_index]['words'] = []
+        word_index = -1
+        
+        for w in words:
+            # count self.raw. word index, extend list if necessary
+            word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
+            
+            # TODO: is this needed? if yes, this goes in the corpus-specific parsers
+            ## <w> is in all corpora except Yucatec the "full_word". In Yucatec <w> corresponds to "full_word_target". 
+            #if corpus_name != 'Yucatec':
+            #    corpus[text_id][utterance_index]['words'][word_index]['full_word'] = w.text
+            #    corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.attrib['target']            
+            #elif corpus_name == 'Yucatec':
+            #    corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.text
+            #    corpus[text_id][utterance_index]['words'][word_index]['full_word'] = '???'
+                
+            # pass down warnings
+            if 'glossed' in w.attrib and w.attrib['glossed'] == 'no':
+                creadd(self.udata['words'][word_index], 'warnings', 'not glossed')
+            if 'glossed' in w.attrib and w.attrib['glossed'] == 'repeated':
+                creadd(self.udata['words'][word_index], 'warnings', 'not glossed; repeat')
+            if 'glossed' in w.attrib and w.attrib['glossed'] == 'ahead':
+                creadd(self.udata['words'][word_index], 'warnings', 'not glossed; search ahead')
+            if 'transcribed' in w.attrib and w.attrib['transcribed'] == 'insecure':
+                creadd(self.udata['words'][word_index], 'warnings', 'transcription insecure')            
+
             yield wf.make_word(w)
 
     def __make(self):
@@ -82,12 +274,30 @@ class XmlUtteranceFactory(Factory):
         return self.u
 
 def XmlWordFactory(Factory):
-    def __init__(self, config):
+    def __init__(self, config, utterance):
         super().__init__()
+        self.parent = utterance
 
     def __parse(self, w):
-        #word = Word()
+        word = Word()
 
         # bunch of things happen here
-        #return word
-        pass
+                        
+        # standard dependent tiers
+        for dependent_tier in xml_dep_correspondences:
+            tier = self.raw.find("a[@type='" + dependent_tier + "']")
+            if tier is not None:
+                try:
+                    tier_name_JSON = xml_dep_correspondences[dependent_tier]
+                    if corpus_name == 'Yucatec' and tier_name_JSON == 'english':
+                        tier_name_JSON = 'spanish'
+                    creadd(corpus[text_id][utterance_index], tier_name_JSON, tier.text)
+                except AttributeError:
+                    pass
+                        
+        # extended dependent tiers
+        for extension in xml_ext_correspondences:
+            tier = self.raw.find("a[@type='extension'][@flavor='" + extension + "']")
+            if tier is not None: 
+                tier_name_JSON = xml_ext_correspondences[extension]
+                corpus[text_id][utterance_index][tier_name_JSON] = tier.text
