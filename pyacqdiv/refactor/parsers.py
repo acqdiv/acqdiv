@@ -111,14 +111,9 @@ class ToolboxParser(SessionParser):
     # (which awesomely gets all the damn metadata) for just the db specific
     # stuff we need...
 
-    # Generator to yield Speakers for the Speaker table in the db
+    # Generator to yield Speakers metadata for the Speaker table in the db
     def next_speaker(self):
-        # speaker_codes = []
-        # for participant in self.metadata['participants']:
-        #     speaker_codes.append(participant['code'])
-        # print(speaker_codes)
-        # return self.metadata['participants']['code']
-        for speaker in self.imdi.get_participants():
+        for speaker in self.imdi.metadata['participants']:
             yield speaker
 
     # Note: make sure this is overriding the superclass.parse. Need a keyword?

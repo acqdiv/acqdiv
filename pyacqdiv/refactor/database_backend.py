@@ -17,7 +17,7 @@ def db_connect():
     """ Performs database connection. We can add a database settings
     from settings.py later. Returns sqlalchemy engine instance.
     """
-    # TODO: add postgres settings
+    # TODO: add postgres settings and change to postgres
     # return create_engine(URL(**settings.DATABASE))
     return create_engine('sqlite:///_acqdiv.sqlite3', echo=False)
 
@@ -26,6 +26,8 @@ def create_tables(engine):
     # Drop all the database tables first
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(engine)
+
+# NOTE: apparently sqla Base objects do not need constructors; they seem to be discouraged
 
 class Session(Base):
     __tablename__ = 'session'
@@ -38,17 +40,19 @@ class Session(Base):
 
 
 class Speaker(Base):
+    # TODO: we will have to make a link between
+
     __tablename__ = 'speaker'
 
     id = Column(Integer, primary_key=True)
     parent_id = Column(Integer, ForeignKey('session.session_id'))
-    speaker_label = Column(Text, nullable=True, unique=False)
-    speaker_name = Column(Text, nullable=True, unique=False)
-
-    # NOTE: apparently sqla Base objects do not need constructors
-    #  and they seem to be discouraged
-    # def __init__(self, speaker_label=None):
-    #    self.speaker_label = speaker_label
+    label = Column(Text, nullable=True, unique=False)
+    name = Column(Text, nullable=True, unique=False)
+    # age_in_days = Column(Integer, nullable=True, unique=False)
+    age = Column(Text, nullable=True, unique=False)
+    birthday = Column(Text, nullable=True, unique=False)
+    gender = Column(Text, nullable=True, unique=False)
+    role = Column(Text, nullable=True, unique=False)
 
     # optional pretty formatting
     def __repr__(self):
@@ -99,11 +103,6 @@ class Speaker(Model):
     SpeakerRole = sa.Column(sa.Text, nullable=False, unique=True)
 
     Session = sa.relationship('Session', backref=backref('Speakers', order_by=SpeakerLabel))
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    fullname = Column(String)
-    password = Column(String)
 
     # optional pretty formatting
     def __repr__(self):

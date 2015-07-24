@@ -1,10 +1,4 @@
-""" A metadata parser base class from Cazim
-
-Metadata formats:
-
-- IMDI (Russian; Chintang)
-- CHAT XML (the converted CHAT corpora)
-
+""" A metadata parser base class with subclasses for IMDI and CHAT XML formats
 """
 
 import sys
@@ -72,6 +66,9 @@ class Parser(object):
 
 class Imdi(Parser):
     """ subclass of metadata.Parser to deal with IMDI metadata (Chintang and Russian via S. Stoll) """
+
+    # Do we want to load up this dictionary of everything on init
+    # so that the caller has to deal with the db-specific parsing?
     def __init__(self, path):
         Parser.__init__(self, path)
         self.metadata["participants"] = self.get_participants()
@@ -79,7 +76,6 @@ class Imdi(Parser):
         self.metadata["project"] = self.get_project_data(self.root)
         self.metadata["media"] = self.get_media_data(self.root)
 
-    # TODO: yield "speaker/participant" data
     def get_participants(self):
         """
         :return: list of participants; each participant is a dict
@@ -162,7 +158,17 @@ class Chat(Parser):
 
 if __name__=="__main__":
     # TODO: we need some serious tests
-    imdi = Imdi("../../corpora/Chintang/metadata/CLDLCh1R01S01.imdi")
-    for p in imdi.metadata['participants']:
-        print(p)
-        print()
+    imdi = Imdi("../../corpora/Chintang/metadata/CLDLCh2R01S02.imdi")
+
+    print(imdi.metadata)
+    #for speaker in imdi.metadata['participants']:
+    #    print(speaker)
+    """
+        label = speaker['code']
+        name = speaker['name']
+        age = speaker['age']
+        birthday = None or speaker['birthdate']
+        gender = speaker['sex']
+        role = speaker['role']
+        print(label, name, age, birthday, gender, role)
+        """

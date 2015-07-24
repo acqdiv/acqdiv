@@ -19,6 +19,8 @@ class CorporaProcessor(object):
 
 
 class CorpusProcessor(object):
+    """ Handler for processing each session file in particular corpus
+    """
     def __init__(self, cfg, engine):
         self.cfg = cfg
         self.engine = engine
@@ -32,38 +34,41 @@ class CorpusProcessor(object):
             s.commit()
 
 
-# SessionProcessor invokes a parser to get the extracted data, and then interacts
-# with the ORM backend to push data to it.
 class SessionProcessor(object):
+    """ SessionProcessor invokes a parser to get the extracted data, and then interacts
+        with the ORM backend to push data to it.
+    """
     # TODO: Does the Session object need a primary key? Is that passed in from the caller
     # (ie, when we know about the Corpus-level data)?
+
     def __init__(self, cfg, file_path, engine):
+        # Init parser with config and pass in file path to process. Create sqla session.
         self.config = cfg
         self.file_path = file_path
         self.language = self.config['corpus']['language']
         self.corpus = self.config['corpus']['corpus']
-        self.Session = sessionmaker(bind=engine) # sqla session
-
+        self.Session = sessionmaker(bind=engine)
 
     def process_session(self):
-        # Init parser with config and pass in file path.
         # Config contains map of standard label -> local label.
         self.parser = SessionParser.create_parser(self.config, self.file_path)
 
         # Now start asking the parser for stuff...
-        # For example:
-
-        # Session table stuff in db (metadata)
         # session_metadata = self.parser.get_session_metadata()
+        self.session_entry = Session(session_id=self.file_path, language=self.language, corpus=self.corpus)
+        self.speaker_entries = []
+        for speaker in self.parser.next_speaker():
+            self.speaker_entries.append(Speaker(
+                parent_id = self.file_path,
+                label = speaker['role'],
+                name = speaker['name'],
+                age = speaker['age'],
+                # TODO: birthdate is not always available in the
+                # birthday = speaker['birthdate'],
+                gender = speaker['sex'],
+                role = speaker['role']))
 
-        # Speakers table stuff in db
-        # TODO(stiv): Define Speaker table
         """
-        speakers = []
-        for s in self.parser.next_speaker():
-            # TODO(stiv): Do we also need to add some kind of key for joining to the s?
-            speakers.append(s)
-
         # TODO(stiv): Need to add to each utterance some kind of joining key.
         # I think it makes sense to construct/add it here, since this is where
         # we do database stuff, and not in the parser (there's no reason the parser
@@ -81,20 +86,12 @@ class SessionProcessor(object):
         # it from the recording sessions. Sessions, sessions everywhere!
         session = self.Session()
 
-        # test data
-        session_entry = Session(session_id=self.file_path, language=self.language, corpus=self.corpus)
-        speaker_entries = []
-        for i in range(0, 10):
-            # fuck... do we really have to do this FK assignment "manually"??
-            speaker_entry = Speaker(parent_id=self.file_path, speaker_label="CHI"+str(i), speaker_name="Child"+str(i))
-            speaker_entries.append(speaker_entry)
-
         # entry = Speaker(**item)
         # self.db_session = SessionMaker()
 
         try:
-            session.add(session_entry)
-            session.add_all(speaker_entries)
+            session.add(self.session_entry)
+            session.add_all(self.speaker_entries)
             session.commit()
             # self.db_session.add(session_metadata)
             # self.db_session.add_all(self.speakers)
