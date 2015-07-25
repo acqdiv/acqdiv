@@ -42,7 +42,7 @@ class SessionProcessor(object):
     # (ie, when we know about the Corpus-level data)?
 
     def __init__(self, cfg, file_path, engine):
-        # Init parser with config and pass in file path to process. Create sqla session.
+        # Init parser with corpus config. Pass in file path to process. Create sqla session.
         self.config = cfg
         self.file_path = file_path
         self.language = self.config['corpus']['language']
@@ -54,31 +54,38 @@ class SessionProcessor(object):
         self.parser = SessionParser.create_parser(self.config, self.file_path)
 
         # Now start asking the parser for stuff...
-        # session_metadata = self.parser.get_session_metadata()
-        self.session_entry = Session(session_id=self.file_path, language=self.language, corpus=self.corpus)
+
+        # Get session metadata via labels defined in corpus config and create Session instance
+        # TODO: deal with IMDI's dict in dict encoding of location:
+        # address = session_metadata['location']['address'],
+        # continent = session_metadata['location']['continent'],
+        # country = session_metadata['location']['country']
+        session_metadata = self.parser.get_session_metadata()
+        d = {}
+        for k, v in self.config['session_labels'].items():
+            d[k] = session_metadata[v]
+        d['session_id'] = self.file_path
+        self.session_entry = Session(**d)
+
+        # Get speaker metadata
         self.speaker_entries = []
         for speaker in self.parser.next_speaker():
-            self.speaker_entries.append(Speaker(
-                parent_id = self.file_path,
-                label = speaker['role'],
-                name = speaker['name'],
-                age = speaker['age'],
-                # TODO: birthdate is not always available in the
-                # birthday = speaker['birthdate'],
-                gender = speaker['sex'],
-                role = speaker['role']))
+            d = {}
+            for k, v in self.config['speaker_labels'].items():
+                d[k] = speaker[v]
+            self.speaker_entries.append(Speaker(**d))
 
-        """
         # TODO(stiv): Need to add to each utterance some kind of joining key.
         # I think it makes sense to construct/add it here, since this is where
         # we do database stuff, and not in the parser (there's no reason the parser
         # should have to know about primary keys - it's a parser, not a db)
+        """
         utterances = []
         for u in self.parser.next_utterance():
             utterances.append(u)
-        # Then write it to the backend.
-        commit(session_metadata, speakers, utterances)
         """
+        # Then write it to the backend.
+        # commit(session_metadata, speakers, utterances)
 
     def commit(self):
         # def commit(self, session_metadata, speakers, utterances):

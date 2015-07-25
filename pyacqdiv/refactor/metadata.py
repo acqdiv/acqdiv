@@ -11,10 +11,8 @@ from lxml import objectify
 DEBUG = 1 # TODO: move debug to standard logging module
 
 class Parser(object):
+    """ Base metadata parser class
     """
-    Base metadata parser class
-    """
-
     def __init__(self, path):
         self.path = path
         self.tree = objectify.parse(path)
@@ -72,14 +70,15 @@ class Imdi(Parser):
     def __init__(self, path):
         Parser.__init__(self, path)
         self.metadata["participants"] = self.get_participants()
-        self.metadata["session"] = self.get_session_data(self.root)
+        self.metadata["session"] = self.get_session_data()
         self.metadata["project"] = self.get_project_data(self.root)
         self.metadata["media"] = self.get_media_data(self.root)
 
     def get_participants(self):
         """
         :return: list of participants; each participant is a dict
-        of key:value, e.g. 'birthdate': '1978-03-28', 'code': 'RM'
+        of key:value, e.g. 'birthdate': '1978-03-28', 'code': 'RM'.
+        Note: missing values (e.g. birthdate) skipped when not present.
         """
         participants = []
         for actor in self.root.Session.MDGroup.Actors.getchildren():
@@ -92,13 +91,13 @@ class Imdi(Parser):
                 participants.append(participant)
         return participants
 
-    def get_session_data(self, root):
+    def get_session_data(self):
         session = {}
         session['id'] = self.metadata['__attrs__']['Cname']
-        session['date'] = root.Session.Date.text
-        session['genre'] = root.Session.MDGroup.Content.Genre.text
-        session['location'] = self.get_location(root)
-        session['situation'] = root.Session.Description.text
+        session['date'] = self.root.Session.Date.text
+        session['genre'] = self.root.Session.MDGroup.Content.Genre.text
+        session['location'] = self.get_location(self.root)
+        session['situation'] = self.root.Session.Description.text
         map(lambda x: x.lower(), session)
         return session
 
@@ -158,17 +157,16 @@ class Chat(Parser):
 
 if __name__=="__main__":
     # TODO: we need some serious tests
-    imdi = Imdi("../../corpora/Chintang/metadata/CLDLCh2R01S02.imdi")
+    chat = Chat("../../corpora/Cree/xml/Ani/2005-03-08.xml")
+    for i in chat.metadata:
+        print(i)
 
-    print(imdi.metadata)
-    #for speaker in imdi.metadata['participants']:
-    #    print(speaker)
+    print(chat.metadata['participants'])
+
     """
-        label = speaker['code']
-        name = speaker['name']
-        age = speaker['age']
-        birthday = None or speaker['birthdate']
-        gender = speaker['sex']
-        role = speaker['role']
-        print(label, name, age, birthday, gender, role)
-        """
+    imdi = Imdi("../../corpora/Chintang/metadata/CLDLCh2R01S02.imdi")
+    for k, v in imdi.metadata['session'].items():
+        print(k, v)
+    print()
+    print(imdi.metadata['session']['location']['address'])
+    """

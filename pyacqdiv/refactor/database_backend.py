@@ -8,6 +8,8 @@
 from sqlalchemy import create_engine, Text, Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.declarative.api import _declarative_constructor
+
 from sqlalchemy.engine.url import URL
 
 Base = declarative_base()
@@ -31,11 +33,20 @@ def create_tables(engine):
 
 class Session(Base):
     __tablename__ = 'session'
+
     id = Column(Integer, primary_key=True)
-    session_id = Column(Text, nullable=False, unique=True)
-    language = Column(Text, nullable=False)
-    corpus = Column(Text, nullable=False)
-    # link to speakers
+    session_id = Column(Text, nullable=False, unique=False)
+    imdi_id = Column(Text, nullable=True, unique=False)
+    language = Column(Text, nullable=True, unique=False)
+    corpus = Column(Text, nullable=True, unique=False)
+    date = Column(Text, nullable=True, unique=False)
+    genre = Column(Text, nullable=True, unique=False)
+    situation = Column(Text, nullable=True, unique=False)
+    address = Column(Text, nullable=True, unique=False)
+    continent = Column(Text, nullable=True, unique=False)
+    country = Column(Text, nullable=True, unique=False)
+
+    # foreign relationships
     speakers = relationship('Speaker', backref='session') #, lazy='dynamic')
 
 
@@ -50,7 +61,7 @@ class Speaker(Base):
     name = Column(Text, nullable=True, unique=False)
     # age_in_days = Column(Integer, nullable=True, unique=False)
     age = Column(Text, nullable=True, unique=False)
-    birthday = Column(Text, nullable=True, unique=False)
+    birthdate = Column(Text, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
     role = Column(Text, nullable=True, unique=False)
 

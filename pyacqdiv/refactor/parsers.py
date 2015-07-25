@@ -53,7 +53,8 @@ class CorpusConfigParser(configparser.ConfigParser):
         # configfile load time.
 
 class SessionParser(object):
-    """ Static class-level method to create a new parser instance based on session format type. """
+    """ Static class-level method to create a new parser instance based on session format type.
+    """
 
     @staticmethod
     def create_parser(config, file_path):
@@ -88,32 +89,23 @@ class ToolboxParser(SessionParser):
 
     def __init__(self, config, file_path):
         SessionParser.__init__(self, config, file_path)
-        # self.config = config
-        # self.file = file
 
-        # TODO: ugly hack -- fix
+        # Ugly hack
         temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
         self.metadata_file_path = temp.replace(".txt", ".imdi")
 
         # init body and metadata file objects? (then don't have to do for every instance call)
-        self.imdi = Imdi(self.metadata_file_path)
+        self.metadata_parser = Imdi(self.metadata_file_path)
 
-    # TODO: METADATA - call/integrate Cazim's metadata code and map it to the db tables
-    # Note: make sure this is overriding the superclass.parse. Need a keyword?
     def get_session_metadata(self):
         # Do toolbox-specific parsing of session metadata.
         # Presumably we will have to look for the metadata file in the config.
         # The config so it knows what symbols to look for.
-        return self.imdi.get_participants()
-        # return Imdi(self.file)
+        return self.metadata_parser.metadata['session']
 
-    # looks like it'll be easier to just parse Cazim's self.metadata,
-    # (which awesomely gets all the damn metadata) for just the db specific
-    # stuff we need...
-
-    # Generator to yield Speakers metadata for the Speaker table in the db
+    # Generator to yield participants metadata for the Speaker table in the db
     def next_speaker(self):
-        for speaker in self.imdi.metadata['participants']:
+        for speaker in self.metadata_parser.metadata['participants']:
             yield speaker
 
     # Note: make sure this is overriding the superclass.parse. Need a keyword?
@@ -125,12 +117,22 @@ class ToolboxParser(SessionParser):
 class ChatXMLParser(SessionParser):
     """ For Cree, Inuktitut, MiiPro, Miyata, Sesotho, Turkish, & Yucatec """
 
-    def __init__(self, config, file):
-        self.config = config
-        self.file = file
-        SessionParser.__init__(self, config, file)
+    def __init__(self, config, file_patg):
+        SessionParser.__init__(self, config, file_path)
+        self.metadata_parser = Chat(self.file_path)
 
-    # TODO: METADATA - call/integrate Cazim's metadata code and map it to the db tables
+    def get_session_metadata(self):
+        # Do xml-specific parsing of session metadata.
+        # The config so it knows what symbols to look for.
+        return self.metadata_parser.metadata['session']
+
+    # Generator to yield Speakers for the Speaker table in the db
+    def next_speaker(self):
+        pass
+
+
+    # @Chysi: Why did you add a second __init__() here? Don't be scared!
+    """
     def __init__(self, config):
         super().__init__()
         self.fpath = self.config["file"]
@@ -143,6 +145,7 @@ class ChatXMLParser(SessionParser):
         # and whether we need it.
         self.pmap = {c:p for p in tree.iter() for c in p}
         self.clean_tree()
+        """
 
     def clean_tree(self):
         """ Removes prefixed namespaces """
@@ -151,15 +154,6 @@ class ChatXMLParser(SessionParser):
         #    tag = elem.tag
         #    attrib = elem.attrib
         #    #God knows what those are good for. Debugging?
-
-    def get_session_metadata(self):
-        # Do xml-specific parsing of session metadata.
-        # The config so it knows what symbols to look for.
-        pass
-
-    # Generator to yield Speakers for the Speaker table in the db
-    def next_speaker(self):
-        pass
 
     # Note: make sure this is overriding the superclass.parse. Need a keyword?
     def next_utterance(self):
@@ -173,7 +167,3 @@ class ChatXMLParser(SessionParser):
         # sample utterance processing call
         # ideally we'd just have to implement UtteranceFactory and be done here
         # also I supposed by "we" we mean "chysi"
-
-    # not sure here how @rabart extracts stuff from the XML, but Xpath
-    #  seems reasonable; esp becuz you can get the patterns for free from
-    #  the developer tools in some browsers

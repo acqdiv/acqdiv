@@ -26,6 +26,7 @@ if __name__=="__main__":
 
 # TODO postprocessing tasks:
 #  - metadata label unification?
+#  - additionally calculated stuff like AgeInDays?
 #  - morphological label unification (i don't think this should be
 #    in the parser, but in a separate post-processing module
 #  - BB's wish for MorphemeID+MorphemeID, WordID+WordID, etc.
