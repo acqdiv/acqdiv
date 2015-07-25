@@ -73,6 +73,7 @@ class SessionProcessor(object):
             d = {}
             for k, v in self.config['speaker_labels'].items():
                 d[k] = speaker[v]
+            d['parent_id'] = self.file_path
             self.speaker_entries.append(Speaker(**d))
 
         # TODO(stiv): Need to add to each utterance some kind of joining key.
