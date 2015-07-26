@@ -117,18 +117,19 @@ class ToolboxParser(SessionParser):
 class ChatXMLParser(SessionParser):
     """ For Cree, Inuktitut, MiiPro, Miyata, Sesotho, Turkish, & Yucatec """
 
-    def __init__(self, config, file_patg):
+    def __init__(self, config, file_path):
         SessionParser.__init__(self, config, file_path)
         self.metadata_parser = Chat(self.file_path)
 
     def get_session_metadata(self):
         # Do xml-specific parsing of session metadata.
         # The config so it knows what symbols to look for.
-        return self.metadata_parser.metadata['session']
+        return self.metadata_parser.metadata['__attrs__']
 
     # Generator to yield Speakers for the Speaker table in the db
     def next_speaker(self):
-        pass
+        for speaker in self.metadata_parser.metadata['participants']:
+            yield speaker
 
 
     # @Chysi: Why did you add a second __init__() here? Don't be scared!

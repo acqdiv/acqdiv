@@ -36,7 +36,7 @@ class Session(Base):
 
     id = Column(Integer, primary_key=True)
     session_id = Column(Text, nullable=False, unique=False)
-    imdi_id = Column(Text, nullable=True, unique=False)
+    transcript_id = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     corpus = Column(Text, nullable=True, unique=False)
     date = Column(Text, nullable=True, unique=False)
