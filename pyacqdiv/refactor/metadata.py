@@ -162,9 +162,8 @@ if __name__=="__main__":
     chat = Chat("../../corpora/Cree/xml/Ani/2005-03-08.xml")
     for i in chat.metadata:
         print(i)
-
-    print(chat.metadata['participants'])
-
+        print(chat.metadata[i])
+        print()
     """
     imdi = Imdi("../../corpora/Chintang/metadata/CLDLCh2R01S02.imdi")
     for k, v in imdi.metadata['session'].items():
