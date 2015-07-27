@@ -90,7 +90,7 @@ class XmlUtteranceFactory(Factory):
             if w.text:
                 # where the orthography tier is missing in Cree, <w> is not empty but contains 'missingortho' -> remove this
                 w.text = re.sub('missingortho', '', w.text)
-                # Sometimes words may be partially self.raw.transcribed (-xxx, xxx-, -xxx-) - transform this, too
+                # Sometimes words may be partially untranscribed (-xxx, xxx-, -xxx-) - transform this, too
                 w.text = re.sub('\-?xxx\-?', '???', w.text)
                 # only in Cree: morpheme boundaries in <w> are indicated by '_' -> remove these, segments are also given in the morphology tiers. Other corpora can have '_' in <w>, too, but there it's meaningful (e.g. for concatenating the parts of a book title treated as a single word), so only check Cree!
                 # TODO: put the below in the Cree parser
@@ -107,7 +107,7 @@ class XmlUtteranceFactory(Factory):
             w_actual = w.text
             w_target = w.text
 
-            # fragments: actual pronunciation remains, target pronunciation is '???' as with self.raw.transcribed words. No glosses. This may occasionally be overwritten by a <replacement> further down.
+            # fragments: actual pronunciation remains, target pronunciation is '???' as with untranscribed words. No glosses. This may occasionally be overwritten by a <replacement> further down.
             if 'type' in w.attrib and w.attrib['type'] == 'fragment':
                 w.attrib['target'] = '???'
                 w.attrib['glossed'] = 'no'
