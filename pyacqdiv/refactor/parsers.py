@@ -4,6 +4,7 @@
 import sys
 import configparser
 import glob
+import re
 import xml.etree.ElementTree as ET
 
 from metadata import Imdi, Chat
@@ -120,6 +121,16 @@ class ChatXMLParser(SessionParser):
     def __init__(self, config, file_path):
         SessionParser.__init__(self, config, file_path)
         self.metadata_parser = Chat(self.file_path)
+        #TODO: can this be a self.body_parser() or something?
+        with open(self.file_path, 'r') as xml:
+            self.tree = ET.parse(xml)
+        self.root = self.tree.getroot()
+        # this creates a dictionary of child:parent pairs
+        # I don't know what it's good for yet but I'm putting it in here until
+        # we can figure out what rsk uses it for in his parser
+        # and whether we need it.
+        self.pmap = {c:p for p in self.tree.iter() for c in p}
+        self.clean_tree()
 
     def get_session_metadata(self):
         # Do xml-specific parsing of session metadata.
@@ -130,23 +141,6 @@ class ChatXMLParser(SessionParser):
     def next_speaker(self):
         for speaker in self.metadata_parser.metadata['participants']:
             yield speaker
-
-
-    # @Chysi: Why did you add a second __init__() here? Don't be scared!
-    """
-    def __init__(self, config):
-        super().__init__()
-        self.fpath = self.config["file"]
-        with open(self.fpath, 'r') as xml:
-            self.tree = ET.parse(xml)
-        self.root = self.tree.getroot()
-        # this creates a dictionary of child:parent pairs
-        # I don't know what it's good for yet but I'm putting it in here until
-        # we can figure out what rsk uses it for in his parser
-        # and whether we need it.
-        self.pmap = {c:p for p in tree.iter() for c in p}
-        self.clean_tree()
-        """
 
     def clean_tree(self):
         """ Removes prefixed namespaces """
@@ -160,7 +154,7 @@ class ChatXMLParser(SessionParser):
     def next_utterance(self):
         # Do xml-specific parsing of utterances.
         # The config so it knows what symbols to look for.
-        uf = UtteranceFactory(self.config["utterance_config"])
+        uf = XmlUtteranceFactory()
 
         for u in self.root.findall('.//u'):
             yield uf.make_utterance(u)

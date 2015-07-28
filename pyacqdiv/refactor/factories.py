@@ -3,7 +3,7 @@ from database_backend import *
 from parselib import *
 
 class Factory(object):
-    def __init__(self, config):
+    def __init__(self, config=None):
         self.config = config
 
     # The following two are basically API prototypes
@@ -16,7 +16,7 @@ class Factory(object):
 
 
 class XmlUtteranceFactory(Factory):
-    def __init__(self, config):
+    def __init__(self, config=None):
         super().__init__()
 
     def __parse(self, data):
@@ -28,13 +28,13 @@ class XmlUtteranceFactory(Factory):
         self.u = Utterance()
 
         self.__get_u_data()
-        self.__make_words()
+        #self.__make_words()
 
     def __get_u_data(self):
 
-        # get self.rawtterance ID and speaker ID
-        self.u.ID = self.raw.attrib['uID']
-        self.u.SpeakerID = self.raw.attrib['who']
+        # get utterance ID and speaker ID
+        self.u.id = self.raw.attrib['uID']
+        self.u.speaker_id = self.raw.attrib['who']
 
         # various optional tags self.rawnder <u>
         # sentence type
@@ -46,7 +46,7 @@ class XmlUtteranceFactory(Factory):
                 creadd(self.udata, 'warnings', 'not glossed')
             # other sentence types: get JSON equivalent from dic
             else:
-                self.u.SentenceType = t_correspondences[sentence_type.attrib['type']]
+                self.u.sentence_type = t_correspondences[sentence_type.attrib['type']]
             
         # check for empty utterances, add warning
         if self.raw.find('.//w') is None:
@@ -54,13 +54,13 @@ class XmlUtteranceFactory(Factory):
             # in the Japanese corpora there is a special subtype of empty self.rawtterance containing the event tag <e> 
             # (for laughing, coughing etc.) -> sentence type
             if self.raw.find('e'): 
-                self.u.SentenceType = 'action'
+                self.u.sentence_type = 'action'
         
         # time stamps
         time_stamp = self.raw.find('media')
         if time_stamp is not None:
-            self.u.TimeStampStart = time_stamp.attrib['start']
-            self.u.TimeStampEnd = time_stamp.attrib['end']
+            self.u.timestamp_start = time_stamp.attrib['start']
+            self.u.timestamp_end = time_stamp.attrib['end']
 
     def __make_words(self):
         # can we reduce this to one instance of self.raw.findall()?
@@ -264,12 +264,9 @@ class XmlUtteranceFactory(Factory):
 
             yield wf.make_word(w)
 
-    def __make(self):
-        pass
-
     # TODO: this was throwing some error, so i commented it out
     # def make_utterance(self, self.raw):
-    def make_utterance(self):
+    def make_utterance(self, u):
         self.__parse(u)
         return self.u
 

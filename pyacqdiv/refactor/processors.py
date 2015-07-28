@@ -80,11 +80,16 @@ class SessionProcessor(object):
         # I think it makes sense to construct/add it here, since this is where
         # we do database stuff, and not in the parser (there's no reason the parser
         # should have to know about primary keys - it's a parser, not a db)
-        """
-        utterances = []
+
+        #TODO(chysi): this doesn't look like a generator to me!!!
+        self.utterances = []
         for u in self.parser.next_utterance():
-            utterances.append(u)
-        """
+            u.parent_id = self.file_path
+            #TODO: u.ids counted per session
+            # we need a better way of making them unique across corpora
+            #dirty, dirty hack:
+            u.id = u.parent_id + "_" + u.id
+            self.utterances.append(u)
         # Then write it to the backend.
         # commit(session_metadata, speakers, utterances)
 
@@ -100,6 +105,7 @@ class SessionProcessor(object):
         try:
             session.add(self.session_entry)
             session.add_all(self.speaker_entries)
+            session.add_all(self.utterances)
             session.commit()
             # self.db_session.add(session_metadata)
             # self.db_session.add_all(self.speakers)
