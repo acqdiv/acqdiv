@@ -35,25 +35,42 @@ class Vividict(dict):
         value = self[key] = type(self)()
         return value
 
+##functions for xml utterances
+
+def set_comment(u, val):
+    u.comment = val
+
+def set_translation(u, val):
+    u.translation = val
+
+def set_orthographic(u, val):
+    u.u_orthographic = val
+
+def set_timestamp_start(u, val):
+    u.timestamp_start = val
+
+def set_phonetic(u, val):
+    u.u_phonetic = val
+
 # correspondences between XML standard dependent tiers (shared across corpora) and JSON
 xml_dep_correspondences = {
-    'actions' : 'comments',
-    'addressee' : 'addressee',
-    'arg' : 'argument_coding', 
-    'comments' : 'comments',
-    'english translation' : 'english',
-    'errcoding' : 'error_coding',
-    'explanation' : 'comments',
-    'gesture' : 'gestures',
-    'orthography' : 'orthographic',
-    'situation' : 'comments',
-    'time stamp' : 'starts_at'
+    'actions' : set_comment,
+    #'addressee' : addressee,
+    #'arg' : argument_coding, 
+    'comments' : set_comment,
+    'english translation' : set_translation,
+    #'errcoding' : error_coding,
+    'explanation' : set_comment,
+    #'gesture' : gestures,
+    'orthography' : set_orthographic,
+    'situation' : set_comment,
+    'time stamp' : set_timestamp_start
 }
 
 # correspondences between XML extended dependent tiers and JSON
 xml_ext_correspondences = {
-    'pho' : 'phonetic',
-    'arg' : 'argument_coding'
+    'pho' : set_phonetic,
+    #'arg' : argument_coding
 }
 # correspondences between other XML elements and JSON
 xml_other_correspondences = {

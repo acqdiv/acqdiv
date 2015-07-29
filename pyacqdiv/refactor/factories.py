@@ -27,10 +27,10 @@ class XmlUtteranceFactory(Factory):
         self.raw = data
         self.u = Utterance()
 
-        self.__get_u_data()
-        #self.__make_words()
+        self._get_u_data()
+        #self._clean_words()
 
-    def __get_u_data(self):
+    def _get_u_data(self):
 
         # get utterance ID and speaker ID
         self.u.id = self.raw.attrib['uID']
@@ -62,10 +62,29 @@ class XmlUtteranceFactory(Factory):
             self.u.timestamp_start = time_stamp.attrib['start']
             self.u.timestamp_end = time_stamp.attrib['end']
 
-    def __make_words(self):
+        # standard dependent tiers
+        for dependent_tier in xml_dep_correspondences:
+            tier = self.raw.find("a[@type='" + dependent_tier + "']")
+            if tier is not None:
+                try:
+                    xml_dep_correspondences[dependent_tier](self.u, tier.text)
+                    #TODO: put this in yucatec parser
+                    #if corpus_name == 'Yucatec' and tier_name_JSON == 'english':
+                    #    tier_name_db = 'spanish'
+                except AttributeError:
+                    print("Skipping file " + self.file_path)
+                    print("Error: {0}".format(e))
+                        
+        # extended dependent tiers
+        for extension in xml_ext_correspondences:
+            tier = self.raw.find("a[@type='extension'][@flavor='" + extension + "']")
+            if tier is not None: 
+                xml_ext_correspondences[extension](self.u, tier.text)
+
+
+    def _clean_words(self):
         # can we reduce this to one instance of self.raw.findall()?
         # that would be very helpful
-        wf = self.config['word_factory'](self.config['wf_config'], self)
         for w in self.raw.findall('w'):
             if 'type' in w.attrib and w.attrib['type'] == 'omission':
                 self.raw.remove(w)
@@ -262,13 +281,18 @@ class XmlUtteranceFactory(Factory):
             if 'transcribed' in w.attrib and w.attrib['transcribed'] == 'insecure':
                 creadd(self.udata['words'][word_index], 'warnings', 'transcription insecure')            
 
-            yield wf.make_word(w)
 
     # TODO: this was throwing some error, so i commented it out
     # def make_utterance(self, self.raw):
     def make_utterance(self, u):
         self.__parse(u)
         return self.u
+
+    def next_word(self):
+        wf = self.config['word_factory'](self)
+        for w in self.words:
+            yield wf.make_word(w)
+
 
 def XmlWordFactory(Factory):
     def __init__(self, config, utterance):
@@ -280,21 +304,3 @@ def XmlWordFactory(Factory):
 
         # bunch of things happen here
                         
-        # standard dependent tiers
-        for dependent_tier in xml_dep_correspondences:
-            tier = self.raw.find("a[@type='" + dependent_tier + "']")
-            if tier is not None:
-                try:
-                    tier_name_JSON = xml_dep_correspondences[dependent_tier]
-                    if corpus_name == 'Yucatec' and tier_name_JSON == 'english':
-                        tier_name_JSON = 'spanish'
-                    creadd(corpus[text_id][utterance_index], tier_name_JSON, tier.text)
-                except AttributeError:
-                    pass
-                        
-        # extended dependent tiers
-        for extension in xml_ext_correspondences:
-            tier = self.raw.find("a[@type='extension'][@flavor='" + extension + "']")
-            if tier is not None: 
-                tier_name_JSON = xml_ext_correspondences[extension]
-                corpus[text_id][utterance_index][tier_name_JSON] = tier.text
