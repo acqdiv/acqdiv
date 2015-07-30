@@ -237,6 +237,10 @@ def clean_chat_line(s):
         s = fixpoint_regex("<((\s|\w)*)((\.|\?|!|\+)+)>\s*\[((.)*)\]",
                             "<\\1> [\\5] \\3", s)
 
+        # ", [*]" --> "[*] ,"
+        # (square bracketed parts should not come after a comma)
+        s = re.sub(",\s*\[[^\]]*\]", "", s)
+
         # Removes "," in the end of the line
         s = re.sub("((\.|\?|!)*)\s*,\s*$", "\\1", s)
 
@@ -310,6 +314,10 @@ def clean_chat_line(s):
 
         # xx -> xxx
         s = re.sub("(?<=\\s)xx(?=\\s)", "xxx", s)
+
+        # Removes <> [?] or <> [/]
+        s = re.sub("<\s*>\s*\[.\]", "", s)
+
         return s
 
 
@@ -435,6 +443,13 @@ def clean_chat_line(s):
     s = re.sub(":\s+", ":\t", s, 1)
 
 
+    if s.startswith("%xsnd"):
+        # Remove quotes
+        s = re.sub('"', '', s)
+
+        # Removes interrogation marks (?)
+        s = re.sub("\?", '', s)
+
     if s.startswith("%sit"):
         # Suppresses parenthesis in situation -- CHAT thinks it is a symbol
         s = re.sub('\t\((.*)\)', '\t\\1', s)
@@ -472,9 +487,6 @@ def clean_chat_line(s):
         # Removes other quotes
         s = fixpoint_regex('\"', '', s)
 
-        # If this removal caused the tier to become empty, remove it
-        s = re.sub("^%.{3,4}:\s*$", "", s)
-
         # Removes * (stars) from the line (except the first one)
         s = fixpoint_regex("\*", "", s)
 
@@ -485,13 +497,14 @@ def clean_chat_line(s):
         s = fixpoint_regex("\+", "", s)
 
     if s.startswith("%tim"):
-        s = re.sub('-', 'and', s)
+        #s = re.sub('-', 'and', s)
         s = re.sub("%tim:(\tqaishaaliku = qaisaaliruq\s*)", "%err:\\1", s)
         s = re.sub("%tim:(\t2\) niuvilaurlagiit = niuvirtilaurlagiit\s*)",
                    "%err:\\1", s)
         s = re.sub("%tim:(\tangijuuravi = angijuugavit\s*)", "%err:\\1", s)
         s = re.sub("%tim:(\tALI)", "%add:\\1", s)
         s = re.sub("%tim:(\tDAN)", "%add:\\1", s)
+        s = re.sub("%tim:(\tLOU)", "%add:\\1", s)
 
     if s.startswith("%add"):
         s = re.sub("(%add:\tMAR) %sit:", "\\1", s)
@@ -509,6 +522,9 @@ def clean_chat_line(s):
         s = fixpoint_regex(",(\S+)", " , \\1", s)
 
         s = re.sub("\(\?\)( = program he knows\.)", "xxx\\1", s)
+
+    # If anything caused the tier to become empty, remove it
+    s = re.sub("^%.{3,4}:\s*$", "", s)
 
     return s
 
