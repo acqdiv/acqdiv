@@ -1,43 +1,20 @@
-"""
-A parser base class
-
-Metadata formats:
-
-- IMDI (Russian; Chintang)
-- CHAT XML (the converted CHAT corpora)
-
-TODO (@bambooforest): 
-- how and where to dump the json wrt cli.py
-- add lxml objectify to setup.py
-
+""" A metadata parser base class with subclasses for IMDI and CHAT XML formats
 """
 
 import sys
-import json
 import os
 import re
-from lxml import objectify
-# import pyacqdiv # here we need to tie in with the cli
-# from metadata import util # here we will get the age calculator
-#TODO once this is in the package the imports should probably read: 
-# from pyacqdiv.metadata....
+import collections
 
-DEBUG = 1
+from lxml import objectify
+
+DEBUG = 1 # TODO: move debug to standard logging module
 
 class Parser(object):
+    """ Base metadata parser class
     """
-    Expected directory layout for extracting metadata
-
-    metadata/
-      - <corpus.id>
-        - original-filename.xml.json == json output files
-        - <corpus.id>_metadata.csv (csv table of all metadata; to add)
-        """
-
-    def __init__(self, corpus, path, outpath):
-        self.corpus = corpus
+    def __init__(self, path):
         self.path = path
-        self.outpath = outpath
         self.tree = objectify.parse(path)
         self.root = self.tree.getroot()
 
@@ -45,25 +22,19 @@ class Parser(object):
             '__attrs__': self.parse_attrs(self.root),
                     }
         self.metadata['__attrs__']['Cname'] = re.sub(r'\.xml.*|\.imdi.*', "", os.path.basename(str(self.path)))
-        if self.corpus == "Indonesian":
-            match = re.match(r"(\w{3})-\d{2}(\d{2})-(\d{2})-(\d{2})",self.metadata['__attrs__']['Cname'])
-            self.metadata['__attrs__']['Cname'] = match.group(1).upper() + '-' + match.group(4) + match.group(3) + match.group(2)
+
+        # special case for Indonesian -- what's this?
+        # # Explanation: this converts the session ID to the same format as in the body files
+        # # Unless that issue was fixed in another way we will probably still want it
+        # if self.corpus == "Indonesian":
+        #    match = re.match(r"(\w{3})-\d{2}(\d{2})-(\d{2})-(\d{2})",self.metadata['__attrs__']['Cname'])
+       #     self.metadata['__attrs__']['Cname'] = match.group(1).upper() + '-' + match.group(4) + match.group(3) + match.group(2)
         self.metadata['__attrs__']['schemaLocation'] = self.metadata['__attrs__'].pop('{http://www.w3.org/2001/XMLSchema-instance}schemaLocation')
 
         # assert existing_dir(self.input_path())
 
     def parse_attrs(self, e):
         return {k: e.attrib[k] for k in e.keys()}
-
-    def input_path(self, *comps):
-        # TODO
-        return os.path.join(os.path.join(self.cleaning_path(), '.input'), *comps)
-
-    def cleaning_path(self, *comps):
-        return os.path.join(
-            existing_dir(os.path.join(self.cfg['cleaning_dir'], self.id)), *comps)
-
-    # where to write the json files
 
     def validate(self, src, schema):
         """ validate a set of xml files """
@@ -93,30 +64,26 @@ class Parser(object):
                 everything.append((e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", ""), e))
         return everything
 
-    def write_json(self, output): 
-        with open(self.outpath + '.json', 'w') as fp:
-        #with open('temp.json', 'w') as fp:
-            if DEBUG:
-                try:
-                    json.dump(output, fp)
-                except:
-                    print("Skipped object " + repr(output) + " of type " + str(type(output)))
-            else:
-                json.dump(output, fp)
-
 class Imdi(Parser):
     """ subclass of metadata.Parser to deal with IMDI metadata (Chintang and Russian via S. Stoll) """
-    def __init__(self, corpus, path, outpath):
-        Parser.__init__(self, corpus, path, outpath)
-        self.metadata["participants"] = self.get_participants(self.root)
-        self.metadata["session"] = self.get_session_data(self.root)
+
+    # Do we want to load up this dictionary of everything on init
+    # so that the caller has to deal with the db-specific parsing?
+    def __init__(self, path):
+        Parser.__init__(self, path)
+        self.metadata["participants"] = self.get_participants()
+        self.metadata["session"] = self.get_session_data()
         self.metadata["project"] = self.get_project_data(self.root)
         self.metadata["media"] = self.get_media_data(self.root)
-        self.write_json(self.metadata)
 
-    def get_participants(self, root):
+    def get_participants(self):
+        """
+        :return: list of participants; each participant is a dict
+        of key:value, e.g. 'birthdate': '1978-03-28', 'code': 'RM'.
+        Note: missing values (e.g. birthdate) skipped when not present.
+        """
         participants = []
-        for actor in root.Session.MDGroup.Actors.getchildren():
+        for actor in self.root.Session.MDGroup.Actors.getchildren():
             participant = {}
             for e in actor.getchildren():
                 t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "") # drop the IMDI stuff
@@ -126,13 +93,13 @@ class Imdi(Parser):
                 participants.append(participant)
         return participants
 
-    def get_session_data(self, root):
+    def get_session_data(self):
         session = {}
         session['id'] = self.metadata['__attrs__']['Cname']
-        session['date'] = root.Session.Date.text
-        session['genre'] = root.Session.MDGroup.Content.Genre.text
-        session['location'] = self.get_location(root)
-        session['situation'] = root.Session.Description.text
+        session['date'] = self.root.Session.Date.text
+        session['genre'] = self.root.Session.MDGroup.Content.Genre.text
+        session['location'] = self.get_location(self.root)
+        session['situation'] = self.root.Session.Description.text
         map(lambda x: x.lower(), session)
         return session
 
@@ -174,11 +141,11 @@ class Imdi(Parser):
 
 class Chat(Parser):
     """ subclass of metadata.Parser class to deal with CHAT XML metadata extraction """
-    def __init__(self, corpus, path, outpath):
-        Parser.__init__(self, corpus, path, outpath)
+    def __init__(self, path):
+        Parser.__init__(self, path)
         self.metadata["participants"] = self.get_participants(self.root)
         self.metadata["comments"] = self.get_comments(self.root)
-        self.write_json(self.metadata)
+        # self.write_json(self.metadata)
 
     def get_participants(self, root):
         return [self.parse_attrs(p) for p in root.Participants.participant]
@@ -191,10 +158,16 @@ class Chat(Parser):
             pass
 
 if __name__=="__main__":
-    # p = Parser("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
-    # p = Imdi("../../corpora/Russian/metadata/IMDI/V01110710.imdi")
-    p = Chat("../../corpora/Japanese_MiiPro/xml/ArikaM/aprm20000316.xml")
-    # p = Imdi("../../corpora/Chintang/metadata/yupung_Ghume.imdi")
-
-    # for pretty print:
-    # cat <input.json> | python -mjson.tool
+    # TODO: we need some serious tests
+    chat = Chat("../../corpora/Cree/xml/Ani/2005-03-08.xml")
+    for i in chat.metadata:
+        print(i)
+        print(chat.metadata[i])
+        print()
+    """
+    imdi = Imdi("../../corpora/Chintang/metadata/CLDLCh2R01S02.imdi")
+    for k, v in imdi.metadata['session'].items():
+        print(k, v)
+    print()
+    print(imdi.metadata['session']['location']['address'])
+    """

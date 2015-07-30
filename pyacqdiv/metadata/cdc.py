@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Created by Cazim Hysi @ UZH
-# cazim.hysi@gmail.com
+# cazim dot hysi at gmail dot com
 
 import os
 import sys

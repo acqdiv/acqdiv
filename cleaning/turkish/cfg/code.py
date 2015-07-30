@@ -26,7 +26,7 @@ def clean_chat_line(s):
     s = re.sub(r"(\*mor:|%mot:|%MOR:)", r"%mor:", s)
     s = re.sub(r"%gox:|%gx:", r"%gpx:", s)
     s = re.sub(r"(%com:|%comment:|@Comment:|@Commet:)", r"%com:", s)
-    s = re.sub(r"%rec:", r"%tim:", s)
+    s = re.sub(r"%rec:\s*", r"%tim:\t", s)
     s = re.sub(r"(%PHO:|%Pho:|%phO|%pho|%pho:|%po:|\*pho:|%ho:|%ğpho:)", r"%pho:", s)
     s = re.sub("^%pho:", "%tim:", s)
     s = re.sub("^%act\\s+","%act:\\t", s)
@@ -51,6 +51,7 @@ def clean_chat_line(s):
     
     # gets rid of empty headers
     s = re.sub("^[%@].*:\\s*$", "", s)
+ 
     
     # replace <:> space with \t in first occurrence
     s = re.sub(":\\s*", ":\\t", s, 1)
@@ -88,23 +89,46 @@ def clean_chat_line(s):
     
     # gets rid of line breaks in utterance; IMPORTANT: this must go before the following replacement, otherwise %add is inserted into the middle of utterances.
     s = re.sub(r"\n\s+", r" ", s) 
+    s = re.sub(r"(\*[a-zA-Z]{1,3}\d{0,2})\*([a-zA-Z]{1,3}\d{0,2})", r"\1-\2", s)    
     
     # puts addressee into separate dependent tier (%add), instead of in the format speaker-addressee (SSS-AAA).
     s = re.sub(r"(\*[a-zA-Z]{1,3}\d{0,2})[_-]+\s?([a-zA-Z]{1,3}\d{0,2})(:.+)", r"\1\3\n%add:\t\2", s)     
     s = re.sub(r"(\*[a-zA-Z]{1,3}\d{0,2})[_-]+\s?([a-zA-Z]{1,3}\d{0,2})(\s.+)", r"\1\3\n%add:\t\2", s)
-    
+
   
     s = re.sub(r"&=\s+", "&=", s)
     s = re.sub(r"\+''", r'+"', s)
     s = re.sub(r"(@New Episode):\s(.+$)", r"\1\n%sit:\t\2", s)
     
     # hashtag in KULLD corpus is equivalent to (.) which is CHAT for notation for pauses.
-    s = re.sub(r"#", r"(.)", s) 
+    s = re.sub(r"#", r"(.)", s)
+    s = re.sub(r"(\S)\(\.\)", r"\1 (.)", s)
     
     # repetitions
     s = re.sub(r"\[[X\*×x]\s*(\d)\]", r"[x \1]", s)
     
     # many uses of "@" (plus following code) are inconsistent and are not CHAT compliant. cf. issue #86
+    s = re.sub(r"(\w)@o\w+?([\s\.\?!])", r"\1@o\2", s)
+    s = re.sub(r"(\w)@f\w+?([\s\.\?!])", r"\1@f\2", s)
+    s = re.sub(r"(\w)@i\w+?([\s\.\?!])", r"\1@i\2", s)
+    s = re.sub(r"(\w)@c\w+?([\s\.\?!])", r"\1@c\2", s)
+    s = re.sub(r"(\w)@e\w+?([\s\.\?!])", r"\1@s:eng\2", s)
+    s = re.sub(r"(\w)@si\w+?([\s\.\?!])", r"\1@si\2", s)
+    s = re.sub(r"(\w)@l\w+?([\s\.\?!])", r"\1@l\2", s)
+    s = re.sub(r"@s:ge", r"@s:deu", s)
+    s = re.sub(r"@e|@s:e|@s:E|@eng|@en|@se|@s:eemi|@s\s", r"@s:eng", s)
+    s = re.sub(r"@fp", r"@i", s)
+    s = re.sub(r"@fi", r"@f", s)
+    s = re.sub(r"@y", r"@o", s)
+    s = re.sub(r"@r", r"@i", s)
+    s = re.sub(r"@:i", r"@i", s)
+    s = re.sub(r"@ì", r"@i", s)
+    s = re.sub(r"@þ", r"@i", s)
+    s = re.sub(r"@Ý", r"@i", s)
+    s = re.sub(r"(\W)ha:m([^\w@])", r"\1ha:m@i\2", s)
+    s = re.sub(r"ha:m@i_ha:m@i_...ha:m@i", r"ha:m@i ha:m@i ... ha:m@i", s)
+    s = re.sub(r"ha:m@i_ha:m@i_ha:m@i", r"ha:m@i ha:m@i ha:m@i ha:m@i", s)
+    s = re.sub(r"ha:m@i_ha:m@i_ha:m@i_ha:m@i_ha:m@i_ha:m@i", r"ha:m@i ha:m@i ha:m@i ha:m@i ha:m@i ha:m@i", s)
     s = re.sub(r"(@fp|@e|@s|@oın|@İ|@lsi|@i_ham@i_ham|@oı|@s|@ı|@fmı|@fi|@s|@i_ham@i_ha:m|@omı|@oa|@ia|@fmi|@cmı|@y|@r|@oını|@l'in|@imi|@i_ham@i_ham@i_ham@i_ham@i_ham|@fb|@eng|@eın|@oe|@m|@lyi|@imı|@ie|@:i|@fyı|@fnı|@fa|@en|@eler|@e|@sit|@si_kızını|@oü|@o_şupur|@omu|@olatmadık|@lidi|@is|@iksin|@i_hey@i_hey|@i_ham@i_ham@i_ham@i_ham@i_ham@i_ham|@i_ham@i_ham@i_ham@i_ham|@i_ham@i_ham@i_ham|@i_ham@i_ham|@i_ham@i_ha:m_ham@i_ham@i_ha:m|@ie|@i_benim_kuzum|@ì|@fmu|@fler|@elerde|@e_bye@e|@cnın|@c:e|@yu|@verme|@tıtı|@swi|@S-QUE|@simu|@si_kıvrıla|@se|@ş|@o'yi|@ou|@o_şıkır@o_şıkır|@o_miyav|@olerle|@olatmadık|@oların|@oları|@olar|@ola|@o_kırt@o_kırt@o_kırt@o_kırt|@o_kırt@o_kırt|@o_kırt|@oına|@oımız|@o_huppur|@o&hav|@o\[/\]hav|@o_havmı|@o_ham@o_ham@o_ham|@o_fırıl|@odan|@o_cuf@o_cuf|@ob|@ö|@mı|@lylen|@lsi|@l\^si|@lni|@kurmasınlar|@köpek|@kızım|@i_uf|@i_tu|@ir|@int|@inmi|@inı|@i_ne_güzel|@imuş|@im|@iktim|@iktim|@ikmisin|@ikmisin|@ii\(y\)im|@iives|@i_ı@i_ı@i_ı|@i_ı@i_ı|@i_ı|@iıhı|@i_ıh|@i@ie|@iı|@ii|@ihıhı|@i_hıh|@ihıha|@i_hı|@ihı|@,ıh|@i_ham@i_ham@i_ham@i_ham@i_ham@i_ham@i_ham|@i_ham@i_ham@i_ham@i_ha:m_ham@i_ham@i_ham@i_ham@i_ha:m|@i_ham@i_ham@i_ham@i_ha:m|@i_ham@i_ham@i_ham@i_ha|@i_ham|@iğinmi|@iee|@iee|@iee|@ie|@i_benim_yy_bunu_ben_yapalım|@iama|@hav|@ha|@h|@fyü|@fylamı|@fyi|@f_yapıyo\(r|@fya|@ftan|@fsını|@fsini|@fsı|@f_oldu|@foldu|@fo|@fnin|@fmü|@flara|@fı|@f_ham|@fbıdı|@eye|@:e's|@erın|@en|@emi|@eların|@elar|@ede|@ea|@ea|@e|@e|@dı|@da|@cuna|@cü|@cmi|@clarmı|@c_kut:u|@c_by:e@e|@c_adamalar|@bur\(a\)da|@b=&laugh|@bi|@b_ga|@bak|@babbab|@ba|@\[b26\]i|@ai|@0)", r"", s)
     s = re.sub(r"@(\W+)", r"\1", s) #gets rid of "@" at the end of words
     
@@ -113,10 +137,11 @@ def clean_chat_line(s):
     s = re.sub(r'(\S+)\s\["\]', r"'\1'", s)
     
     ######### check CHAT manual, this might be a dirty fix for legitimate CHAT with an utterance delimiter missing
-    s = re.sub(r'\+/([^/])', r'+//\1', s) 
+    s = re.sub(r'\+/([^/\.])', r'+//\1', s) 
     
     s = re.sub(r"\+//\s([!\?\.])", r"+//\1", s)
     s = re.sub(r"\+//\n", r"+//.\n", s)
+    s = re.sub(r"(\S)\+//", r"\1 +//", s)
     
     # keep this order - fixes replacements in square brackets    
     s = re.sub(r"\[:\s*(\w)", r"[: \1", s)
@@ -133,6 +158,7 @@ def clean_chat_line(s):
     s = re.sub(r"([!\?\.])(\s*\[.+?\]\s*?)$", r"\2\1", s) 
     
     # deletes redundant repetition marker (milk [/] milk = milk milk) since it often causes problems for CHATTER in combination with \W characters
+    #s = re.sub(r"<(.+?)>\s*\[\s*/\s*\]\s*<(.+?)>", r"\1 \2", s)
     s = re.sub(r"\[\s*/\s*\]", r"", s)
     
     # deletes tabs in utterance or %xmor tiers
@@ -140,16 +166,31 @@ def clean_chat_line(s):
     
     s = re.sub(r"\+\.+", r"+...", s)
     s = re.sub(r"([\*%]...:\t)(:|t:)", r"\1", s)
-    #s = re.sub(r"(^\*.+?)\s(\w+?)&", r"\1 \2", s)
+    s = re.sub(r"(^\*.+?)\s(\w+?)&", r"\1 \2", s)
     
-    # gets rid of duplicate dependent tiers
-    s = re.sub(r"%exp:\s*(.+?)\n%exp:\s*(.+?)$", r"%exp:\t\1 \2", s)
-    s = re.sub(r"%exp:\s*(.+?)\n%exp:\s*(.+?)$", r"%exp:\t\1 \2", s) # repetition for triplicate tiers
-    s = re.sub(r"%act:\s*(.+?)\n%act:\s*(.+?)$", r"%act:\t\1 \2", s)
-    s = re.sub(r"%act:\s*(.+?)\n%act:\s*(.+?)$", r"%act:\t\1 \2", s) # repetition for triplicate tiers
+    s = re.sub(r"(\w)\s_\s(\w)", r"\1_\2", s)
+    s = re.sub(r"(\w)\s_(\w)", r"\1_\2", s)
+    s = re.sub(r"(\w)_\s(\w)", r"\1_\2", s)
+    
+    s = re.sub(r":\t,,\s*", r":\t", s)
+    s = re.sub(r",,", r",", s)
+    
+    s = re.sub(r"\[=!\]\s*\.?\s*$", r"[!] .", s)
+    s = re.sub(r"\[=!\]", r"[!]", s)
+    s = re.sub(r"<(.+?)>\s\(\.\)\s<(.+?)>", r"\1 (.) \2", s)
+    s = re.sub(r"<(.+?)>\s\(\.\)", r"\1 (.)", s)
+    s = re.sub(r"^(%exp:)\s+", r"\1\t", s)
+    s = re.sub(r"^(%sit:)\s+", r"\1\t", s)
+    s = re.sub(r"^(%act:)\s+", r"\1\t", s)
+    s = re.sub(r"^(%xmor:)\s+", r"\1\t", s)
+    s = re.sub(r"\[/\[", r"", s)
+    s = re.sub(r"\*+?\s+\n", r".\n", s)
+    s = re.sub(r"\*+?\n", r".\n", s)
+    s = re.sub(r"\*CAM\*MOT:	<bi\(r\) kardeş> \[/\] bir kız kardeşim var \.", r"*CAM:	bi(r) kardeş bir kız kardeşim var .\n%add:\tMOT", s)
+    s = re.sub(r"^(\*.+?[^\[])\*+", r"", s)
+
     
     
-        
     """
     s = re.sub("(^[A-Z]{3}\-[A-Z]{3}:)", r"*\1", s) # MOM-CHI:
     s = re.sub("(^\*[A-Z]{3})(-)(:)", r"\1\3", s) # *MOT-:
