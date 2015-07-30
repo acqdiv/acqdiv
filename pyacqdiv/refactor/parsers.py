@@ -90,12 +90,12 @@ class ToolboxParser(SessionParser):
     def __init__(self, config, file_path):
         SessionParser.__init__(self, config, file_path)
 
-        # Ugly hack
+        # init metadata file object -- hack to get the separate metadata file path
         temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
         self.metadata_file_path = temp.replace(".txt", ".imdi")
-
-        # init body and metadata file objects? (then don't have to do for every instance call)
         self.metadata_parser = Imdi(self.metadata_file_path)
+
+        # open a toolbox option given a file path
 
     def get_session_metadata(self):
         # Do toolbox-specific parsing of session metadata.
@@ -112,6 +112,8 @@ class ToolboxParser(SessionParser):
     def next_utterance(self):
         # Do toolbox-specific parsing of utterances.
         # The config so it knows what symbols to look for.
+
+        # for utterance in self.
         pass
 
 class ChatXMLParser(SessionParser):

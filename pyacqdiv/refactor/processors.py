@@ -11,11 +11,11 @@ from database_backend import *
 
 # If it turns out that these really don't do anything but the loops, we can get rid of
 # the Corp[us|ora]Processor classes and just make them, well, loops. In some function.
-class CorporaProcessor(object):
-    def process_corpora(self, config):
-        for corpus_config in config:
-            c = CorpusProcessor(corpus_config)
-            c.process_corpus()
+# class CorporaProcessor(object):
+#    def process_corpora(self, config):
+#        for corpus_config in config:
+#            c = CorpusProcessor(corpus_config)
+#            c.process_corpus()
 
 
 class CorpusProcessor(object):
@@ -80,11 +80,13 @@ class SessionProcessor(object):
         # I think it makes sense to construct/add it here, since this is where
         # we do database stuff, and not in the parser (there's no reason the parser
         # should have to know about primary keys - it's a parser, not a db)
+
         """
-        utterances = []
+        self.utterances = []
         for u in self.parser.next_utterance():
-            utterances.append(u)
+            self.utterances.append(u)
         """
+
         # Then write it to the backend.
         # commit(session_metadata, speakers, utterances)
 

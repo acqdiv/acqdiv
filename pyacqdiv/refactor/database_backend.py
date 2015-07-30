@@ -70,6 +70,8 @@ class Speaker(Base):
         return "Speaker(%s)" % (self.speaker_label)
 
 
+
+
 """"
 class Model(sa.ext.declarative.declarative_base()):
 
