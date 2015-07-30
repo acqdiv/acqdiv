@@ -69,6 +69,25 @@ class Speaker(Base):
     def __repr__(self):
         return "Speaker(%s)" % (self.speaker_label)
 
+class Utterance(Base):
+    __tablename__ = 'utterance'
+
+    id = Column(Text, primary_key=True)
+    parent_id = Column(Text, ForeignKey('session.session_id'))
+    speaker_id = Column(Text, nullable=False, unique=False)
+    #speaker_label = Column(Text, nullable=True, unique=False)
+    timestamp_start = Column(Text, nullable=True, unique=False)
+    timestamp_end = Column(Text, nullable=True, unique=False)
+    u_orthographic = Column(Text, nullable=True, unique=False)
+    u_phonetic = Column(Text, nullable=True, unique=False)
+    sentence_type = Column(Text, nullable=True, unique=False)
+    translation = Column(Text, nullable=True, unique=False)
+    comment = Column(Text, nullable=True, unique=False)
+    #Morphemes = sa.Column(sa.Text, nullable=False, unique=False) # concatenated MorphemeIDs per utterance
+    #Words = sa.Column(sa.Text, nullable=False, unique=True) # concatenated WordIDs per utterance
+
+    #Session = sa.relationship('Session', backref=backref('Utterances', order_by=id))
+
 
 
 

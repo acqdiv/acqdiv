@@ -24,6 +24,8 @@ class Parser(object):
         self.metadata['__attrs__']['Cname'] = re.sub(r'\.xml.*|\.imdi.*', "", os.path.basename(str(self.path)))
 
         # special case for Indonesian -- what's this?
+        # # Explanation: this converts the session ID to the same format as in the body files
+        # # Unless that issue was fixed in another way we will probably still want it
         # if self.corpus == "Indonesian":
         #    match = re.match(r"(\w{3})-\d{2}(\d{2})-(\d{2})-(\d{2})",self.metadata['__attrs__']['Cname'])
        #     self.metadata['__attrs__']['Cname'] = match.group(1).upper() + '-' + match.group(4) + match.group(3) + match.group(2)

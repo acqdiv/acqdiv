@@ -3,7 +3,7 @@ from database_backend import *
 from parselib import *
 
 class Factory(object):
-    def __init__(self, config):
+    def __init__(self, config=None):
         self.config = config
 
     # The following two are basically API prototypes
@@ -16,7 +16,7 @@ class Factory(object):
 
 
 class XmlUtteranceFactory(Factory):
-    def __init__(self, config):
+    def __init__(self, config=None):
         super().__init__()
 
     def __parse(self, data):
@@ -27,14 +27,14 @@ class XmlUtteranceFactory(Factory):
         self.raw = data
         self.u = Utterance()
 
-        self.__get_u_data()
-        self.__make_words()
+        self._get_u_data()
+        #self._clean_words()
 
-    def __get_u_data(self):
+    def _get_u_data(self):
 
-        # get self.rawtterance ID and speaker ID
-        self.u.ID = self.raw.attrib['uID']
-        self.u.SpeakerID = self.raw.attrib['who']
+        # get utterance ID and speaker ID
+        self.u.id = self.raw.attrib['uID']
+        self.u.speaker_id = self.raw.attrib['who']
 
         # various optional tags self.rawnder <u>
         # sentence type
@@ -46,7 +46,7 @@ class XmlUtteranceFactory(Factory):
                 creadd(self.udata, 'warnings', 'not glossed')
             # other sentence types: get JSON equivalent from dic
             else:
-                self.u.SentenceType = t_correspondences[sentence_type.attrib['type']]
+                self.u.sentence_type = t_correspondences[sentence_type.attrib['type']]
             
         # check for empty utterances, add warning
         if self.raw.find('.//w') is None:
@@ -54,18 +54,37 @@ class XmlUtteranceFactory(Factory):
             # in the Japanese corpora there is a special subtype of empty self.rawtterance containing the event tag <e> 
             # (for laughing, coughing etc.) -> sentence type
             if self.raw.find('e'): 
-                self.u.SentenceType = 'action'
+                self.u.sentence_type = 'action'
         
         # time stamps
         time_stamp = self.raw.find('media')
         if time_stamp is not None:
-            self.u.TimeStampStart = time_stamp.attrib['start']
-            self.u.TimeStampEnd = time_stamp.attrib['end']
+            self.u.timestamp_start = time_stamp.attrib['start']
+            self.u.timestamp_end = time_stamp.attrib['end']
 
-    def __make_words(self):
+        # standard dependent tiers
+        for dependent_tier in xml_dep_correspondences:
+            tier = self.raw.find("a[@type='" + dependent_tier + "']")
+            if tier is not None:
+                try:
+                    xml_dep_correspondences[dependent_tier](self.u, tier.text)
+                    #TODO: put this in yucatec parser
+                    #if corpus_name == 'Yucatec' and tier_name_JSON == 'english':
+                    #    tier_name_db = 'spanish'
+                except AttributeError:
+                    print("Skipping file " + self.file_path)
+                    print("Error: {0}".format(e))
+                        
+        # extended dependent tiers
+        for extension in xml_ext_correspondences:
+            tier = self.raw.find("a[@type='extension'][@flavor='" + extension + "']")
+            if tier is not None: 
+                xml_ext_correspondences[extension](self.u, tier.text)
+
+
+    def _clean_words(self):
         # can we reduce this to one instance of self.raw.findall()?
         # that would be very helpful
-        wf = self.config['word_factory'](self.config['wf_config'], self)
         for w in self.raw.findall('w'):
             if 'type' in w.attrib and w.attrib['type'] == 'omission':
                 self.raw.remove(w)
@@ -90,7 +109,7 @@ class XmlUtteranceFactory(Factory):
             if w.text:
                 # where the orthography tier is missing in Cree, <w> is not empty but contains 'missingortho' -> remove this
                 w.text = re.sub('missingortho', '', w.text)
-                # Sometimes words may be partially self.raw.transcribed (-xxx, xxx-, -xxx-) - transform this, too
+                # Sometimes words may be partially untranscribed (-xxx, xxx-, -xxx-) - transform this, too
                 w.text = re.sub('\-?xxx\-?', '???', w.text)
                 # only in Cree: morpheme boundaries in <w> are indicated by '_' -> remove these, segments are also given in the morphology tiers. Other corpora can have '_' in <w>, too, but there it's meaningful (e.g. for concatenating the parts of a book title treated as a single word), so only check Cree!
                 # TODO: put the below in the Cree parser
@@ -107,7 +126,7 @@ class XmlUtteranceFactory(Factory):
             w_actual = w.text
             w_target = w.text
 
-            # fragments: actual pronunciation remains, target pronunciation is '???' as with self.raw.transcribed words. No glosses. This may occasionally be overwritten by a <replacement> further down.
+            # fragments: actual pronunciation remains, target pronunciation is '???' as with untranscribed words. No glosses. This may occasionally be overwritten by a <replacement> further down.
             if 'type' in w.attrib and w.attrib['type'] == 'fragment':
                 w.attrib['target'] = '???'
                 w.attrib['glossed'] = 'no'
@@ -262,16 +281,18 @@ class XmlUtteranceFactory(Factory):
             if 'transcribed' in w.attrib and w.attrib['transcribed'] == 'insecure':
                 creadd(self.udata['words'][word_index], 'warnings', 'transcription insecure')            
 
-            yield wf.make_word(w)
-
-    def __make(self):
-        pass
 
     # TODO: this was throwing some error, so i commented it out
     # def make_utterance(self, self.raw):
-    def make_utterance(self):
+    def make_utterance(self, u):
         self.__parse(u)
         return self.u
+
+    def next_word(self):
+        wf = self.config['word_factory'](self)
+        for w in self.words:
+            yield wf.make_word(w)
+
 
 def XmlWordFactory(Factory):
     def __init__(self, config, utterance):
@@ -283,21 +304,3 @@ def XmlWordFactory(Factory):
 
         # bunch of things happen here
                         
-        # standard dependent tiers
-        for dependent_tier in xml_dep_correspondences:
-            tier = self.raw.find("a[@type='" + dependent_tier + "']")
-            if tier is not None:
-                try:
-                    tier_name_JSON = xml_dep_correspondences[dependent_tier]
-                    if corpus_name == 'Yucatec' and tier_name_JSON == 'english':
-                        tier_name_JSON = 'spanish'
-                    creadd(corpus[text_id][utterance_index], tier_name_JSON, tier.text)
-                except AttributeError:
-                    pass
-                        
-        # extended dependent tiers
-        for extension in xml_ext_correspondences:
-            tier = self.raw.find("a[@type='extension'][@flavor='" + extension + "']")
-            if tier is not None: 
-                tier_name_JSON = xml_ext_correspondences[extension]
-                corpus[text_id][utterance_index][tier_name_JSON] = tier.text

@@ -16,7 +16,8 @@ if __name__=="__main__":
     create_tables(engine)
 
     # corpora
-    configs = ['Chintang.ini', 'Cree.ini']
+    #configs = ['Chintang.ini', 'Cree.ini']
+    configs = ['Cree.ini']
     for config in configs:
         # Parse the config file and call the sessions processor
         cfg = CorpusConfigParser()
