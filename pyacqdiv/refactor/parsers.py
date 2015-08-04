@@ -159,7 +159,7 @@ class ChatXMLParser(SessionParser):
         uf = XmlUtteranceFactory()
 
         for u in self.root.findall('.//u'):
-            yield uf.make_utterance(u)
+            yield uf.make_utterance(u), uf.next_word
     
         # sample utterance processing call
         # ideally we'd just have to implement UtteranceFactory and be done here

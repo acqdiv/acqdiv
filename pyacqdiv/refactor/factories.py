@@ -288,19 +288,31 @@ class XmlUtteranceFactory(Factory):
         self.__parse(u)
         return self.u
 
-    def next_word(self):
-        wf = self.config['word_factory'](self)
-        for w in self.words:
+    def next_word(self, u):
+        #words = self._clean_words()
+        #wf = self.config['word_factory'](self)
+        words = self.raw.findall('.//w')
+        wf = XmlWordFactory(u)
+        for w in words:
             yield wf.make_word(w)
 
 
-def XmlWordFactory(Factory):
-    def __init__(self, config, utterance):
-        super().__init__()
+class XmlWordFactory(Factory):
+    def __init__(self, utterance, config=None):
         self.parent = utterance
+        self.config = config
 
-    def __parse(self, w):
+    def _parse(self, w):
         word = Word()
+        word.word = w.text
+        word.parent_id = self.parent.id
+        return word
+
+    def make_word(self, w):
+        return self._parse(w)
+
+        
+
 
         # bunch of things happen here
                         

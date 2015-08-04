@@ -88,6 +88,16 @@ class Utterance(Base):
 
     #Session = sa.relationship('Session', backref=backref('Utterances', order_by=id))
 
+class Word(Base):
+    __tablename__ = 'words'
+
+    # fk...
+    # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
+    id = Column(Text, primary_key=True)
+    word = Column(Text, nullable=True, unique=False)
+    parent_id = Column(Text, ForeignKey('utterance.id'))
+    #Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
+
 
 
 
@@ -165,15 +175,6 @@ class Utterance(Model):
 
     Session = sa.relationship('Session', backref=backref('Utterances', order_by=id))
 
-class Word(Model):
-    __tablename__ = 'Words'
-
-    # fk...
-    # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
-    ID = sa.Column(sa.Text, nullable=False, unique=True)
-    Word = sa.Column(sa.Text, nullable=False, unique=True)
-    UtteranceID = sa.Column(sa.Text, ForeignKey('Utterances.ID'))
-    Utterance = sa.relationship('Utterance',  backref=backref('Words', order_by=ID))
 
 class Morpheme(Model):
     __tablename__ = 'Morphemes'
