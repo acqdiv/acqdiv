@@ -44,30 +44,27 @@ def clean_chat_line(s):
 
 
     ### LINE CLEANING ###
-    s=re.sub(r"^\.(.*)", r"\1", s) # remove a dot at the beginning of a line
+    s=re.sub(r"^\.\s*([\*%])", r"\1", s) # remove a dot and/or spaces at the beginning of a line
     s=re.sub(r"<\s*Sandi y Armando\s*>", r"", s)
-    s=re.sub(r"^< (.*) >", r"%com:\t\1", s) # place lines with comments in < > into a %com tier
     s=re.sub(r"¡$", r"!", s) # at the end of a line, "¡" has to be "!"
     s=re.sub(r"\-x\-x\-x\-", r"", s)
 
 
     ### TIER CLEANING ###
-    # At the end existing tiers will be: *XYZ:, %pho:, %xmor:, %spa:, %sit:, %exp:, %com:
+    # At the end existing tiers will be: *XYZ:, %pho:, %xmor:, %spa:, %sit:, %exp:, %com:, %cod:
 
-    # big tier cleaning done in scripts/edit_yua.py
+    # Big tier cleaning done in acqdiv/scripts/edit_yua.py
+
     s=re.sub(r"\*SEÑ:", r"*UNK:", s)
     s=re.sub(r"@Pía un pollito.", r"%sit:\tPía un pollito.", s)
+    #s=re.sub(r"^(\*[A-Z]{3}:\t)(.*)/", r"\1\2", s) # remove "/" in *PARTICIPANT tiers ### check again after running chatter. maybe they are allowed.
 
-    s=re.sub(r"^(%pho:)(.*)/(.*)/", r"\1\2\3", s) # remove "/" twice in %pho tiers
-    s=re.sub(r"^(%pho:)(.*)/", r"\1\2", s) # remove "/" once in %pho tiers
-    s=re.sub(r"^n$", r"", s) # remove lines which have only "n"
-    s=re.sub(r"%pho:\t!", r"%pho:\t", s) # remove "!" at the beginning of a %pho tier
-    s=re.sub(r"^(.*)\*$", r"\1", s) # remove asterisk at the end of a line
-    #s=re.sub(r"^\s+\.$", r"", s) # remove lines which have only " ."
-    s=re.sub(r"^\s+\t+\.$", r"", s) # remove lines which have only " ." # the previous rule doesn't work due to the extra white space added at line start.
-    #s=re.sub(r"^\n$", r"", s) # remove empty lines # not needed anymore; it is done somewhere else in the cleaning
-    s=re.sub(r"(%xmor:)(.*)\\", r"\1\2\|", s) # in %xmor tiers, replace "\" with "|"
-
+    ##### rewrite these three, they are wrong.
+    '''
+    s=re.sub(r"^(\*[A-Z]{3}:\t)(.*?)[^(\?|\!|\.)]$", r"\1\2.", s) # add a dot at the end of every *PARTICIPANT tier which doesn't end in "?", "!" or "."
+    s=re.sub(r"^(%[a-z]{3}:\t)(.*?)[^(\?|\!|\.)]$", r"\1\2.", s) # add a dot at the end of every %xxx tier which doesn't end in "?", "!" or "."
+    s=re.sub(r"^(%xmor:\t)(.*?)[^(\?|\!|\.)]$", r"\1\2.", s) # add a dot at the end of every %xmor tier which doesn't end in "?", "!" or "."
+    '''
 
     ### CHARACTER CLEANING ###
     # cf. ../notes/yua-chars.ods for notes on characters that need manual attention and/or need to be interpreted by Barbara (corpus owner)
@@ -90,7 +87,7 @@ def clean_chat_line(s):
     
     s=re.sub(r" ", r"á", s) # weird whitespace. Fine to run this rule on all files.
     s=re.sub(r"‚", r"é", s) # specific comma. Fine to run this rule on all files.
-    #s=re.sub(r"", r"í", s)
+    #s=re.sub(r"¡", r"í", s) # to be done manually
     s=re.sub("¢", "ó", s)
     s=re.sub("£", "ú", s)
     s=re.sub("¤", "ñ", s)
@@ -100,10 +97,10 @@ def clean_chat_line(s):
     #s=re.sub(r"’", r"í", s) ####### apostrophe/inverted comma involved. Pending.
     s=re.sub(r"—", r"ó", s)
     s=re.sub(r"œ", r"ú", s)
-    #s=re.sub(r"–", r"ñ", s) # will be done manually
+    #s=re.sub(r"–", r"ñ", s) # to be done manually
 
     s=re.sub(r"ב", r"á", s)
-    s=re.sub(r"י", r"é", s) # specific apostrophe. Fine to rule this rule on all files
+    s=re.sub(r"י", r"é", s) # specific apostrophe. Fine to rule this rule on all files.
     s=re.sub(r"ם", r"í", s)
     s=re.sub(r"ף", r"ó", s)
     s=re.sub(r"ת", r"ú", s)
@@ -182,19 +179,17 @@ def clean_chat_line(s):
     s = re.sub("^@Sex.*", "", s)
     '''
 
-
-    # The following block is commented out for the moment. As long as chatter doesn't complain, these are not needed.
-    '''
     if s.startswith("*"):
-        s = re.sub("##", "", s)
-        s = re.sub("#", "", s)
-        s = re.sub("(\\S)\-(\\S)", "\\1\\2", s) # remove hyphen between non-empty characters
-        #s = re.sub("^\\s*\\d+\\s+(?=[\*%])", "", s) # done in edit_yua.py
+        s=re.sub("##", "", s)
+        s=re.sub("#", "", s)
+        #s = re.sub("(\\S)\-(\\S)", "\\1\\2", s) # remove hyphen between non-empty characters
 
         # added by rabart
-        s = re.sub('\-?0', '', s)
-        s = re.sub('(?<=\\w)&(?=[au])', '', s)
-    '''
+        #s = re.sub('\-?0', '', s)
+        #s = re.sub('(?<=\\w)&(?=[au])', '', s)
+
+    if s.startswith("%pho"):
+        s=s.lower() # no capital letters allowed in %pho tiers
 
 
     # The following block is commented out for the moment, as these characters seem to be allowed, and have a meaning.
