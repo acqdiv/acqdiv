@@ -27,7 +27,8 @@ def chat(language, participants, ids, filename, sessions, lines):
 def repair_lines(lines):
     for i, e in reversed(list(enumerate(lines))):
         if i > 0 and not e.startswith(("*", "%", "@")):
-            lines[i-1] += " "+lines.pop(i)
+            lines[i-1] = lines[i-1].strip()
+            lines[i-1] += " "+lines.pop(i).strip()
     return lines
 
 def normalize(text):
