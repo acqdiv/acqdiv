@@ -25,7 +25,6 @@ def clean_chat_line(s):
     s=re.sub(r"\( finaliza \)", r"@End", s)
     '''
 
-
     s = re.sub("(^[\*%]\S+\t+[^\t]+)\t", "\1", s)
     s = re.sub("(\w)['’ʼ]", "\\1ʔ", s)
     s = re.sub("['’ʼ](\w)", "ʔ\\1", s)
@@ -54,6 +53,20 @@ def clean_chat_line(s):
     # At the end existing tiers will be: *XYZ:, %pho:, %xmor:, %spa:, %sit:, %exp:, %com:, %cod:
 
     # Big tier cleaning done in acqdiv/scripts/edit_yua.py
+
+    s=re.sub(r"(%pho:)(.*)/(.*)/", r"\1\2\3", s) # remove "/" twice in %pho tiers
+    s=re.sub(r"(%pho:)(.*)/", r"\1\2", s) # remove "/" once in %pho tiers
+
+    s=re.sub(r"%mor:", r"%xmor:", s)
+    #s=re.sub(r"%pho:", r"%xpho:", s)
+
+    if s.startswith("%pho"):
+         s=re.sub(r"\s[\.\?\!;,]+$", r"", s) # remove dot/ending mark in %pho tiers
+
+    '''
+    if s.startswith("%xmor"):
+         s=re.sub(r"\s([\.\?\!;,]+)$", r"\1", s) # remove dot/ending mark in %mor tiers
+    '''
 
     s=re.sub(r"\*SEÑ:", r"*UNK:", s)
     s=re.sub(r"@Pía un pollito.", r"%sit:\tPía un pollito.", s)
