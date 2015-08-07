@@ -19,7 +19,7 @@ class XmlUtteranceFactory(Factory):
     def __init__(self, config=None):
         super().__init__()
 
-    def __parse(self, data):
+    def _parse(self, data):
         # this is where a lot of actual work is done
         # the question still is where we put actual corpus-specific function pointers
         # which are pretty necessary if we want to keep our modules small
@@ -285,7 +285,7 @@ class XmlUtteranceFactory(Factory):
     # TODO: this was throwing some error, so i commented it out
     # def make_utterance(self, self.raw):
     def make_utterance(self, u):
-        self.__parse(u)
+        self._parse(u)
         return self.u
 
     def next_word(self, u):
@@ -310,6 +310,25 @@ class XmlWordFactory(Factory):
 
     def make_word(self, w):
         return self._parse(w)
+
+    def next_morpheme(self, w):
+        mf = XmlMorphemeFactory(w)
+        return None
+
+
+class XmlMorphemeFactory(Factory):
+    def __init__(self, word, config=None):
+        self.parent = word
+        self.config = config
+
+    def _parse(self, m):
+        mor = Morpheme()
+        mor.morpheme = m.text
+        mor.parent_id = self.parent.id
+        return mor
+
+    def make_morpheme(self, m):
+        return self._parse(m)
 
         
 
