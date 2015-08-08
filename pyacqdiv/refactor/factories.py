@@ -1,3 +1,5 @@
+import re
+
 import xml.etree.ElementTree as ET
 from database_backend import *
 from parselib import *
@@ -28,7 +30,7 @@ class XmlUtteranceFactory(Factory):
         self.u = Utterance()
 
         self._get_u_data()
-        #self._clean_words()
+        self._clean_words()
 
     def _get_u_data(self):
 
@@ -192,98 +194,9 @@ class XmlUtteranceFactory(Factory):
         
         # EOF replacements
 
-        # TODO: figure out whether we can put the <g> tag routines in the corpus parsers
-                
-        # group tags <g> surround a couple of heterogeneous constructions
-        # these have to be dealt with last because repetitions belong here and everything that's been done above may be repeated
-        for g in self.raw.findall('.//g'):
-            words = g.findall('.//w')
-            
-            # guesses at target word, e.g. <g><w>taaniu</w><ga type="alternative">nanii</ga></g>. Occasionally there may be several targets, in which case only self.raw.e the first one. 
-            target_guess = g.find('.//ga[@type="alternative"]')
-            if target_guess is not None:
-                words[0].attrib['target'] = target_guess.text
-            
-            # repetitions, e.g. <g><w>shoo</w><w>boo</w><r times="3"></g>: insert as many <w> groups as indicated by attrib "times" of <r>, minus 1 (-> example goes to "shoo boo shoo boo shoo boo")
-            repetitions = g.find('r')
-            if repetitions is not None:
-                for i in range(0, int(repetitions.attrib['times'])-1):
-                    for w in words:
-                        new_elem = ET.SubElement(g, 'w')
-                        new_elem.text = w.text
-                        # Japanese MiiPro only: repeated elements are only glossed once -> mark the word as "to be repeated" here; the morphology routine will see this and repeat the corresponding glosses. Turkish also has cases where repeated elements are only glossed once but is inconsistent; glossed repetitions seem to be more frequent overall. 
-                        if corpus_name == 'Japanese_MiiPro':
-                            new_elem.attrib['glossed'] = 'repeated'
-                        new_elem.attrib['target'] = w.attrib['target']
-                        mor = w.find('mor')
-                        if mor is not None:
-                            new_elem.insert(0, mor)
+        # TODO: g tag routines go after this
+        # these have to be separate methods because they have corpus-dependent parts
 
-            # retracings, e.g. <g><w formType="UNIBET">shou</w><w formType="UNIBET">shou</w><k type="retracing"/></g>: search for <w> with same text and self.raw.e gloss from there; if not available set attribute 'glossed' to 'ahead'. Skip this step for Inuktitut, where retracings are regularly glossed. 
-            if corpus_name != 'Inuktitut':
-                retracings = g.find('k[@type="retracing"]')
-                retracings_wc = g.find('k[@type="retracing with correction"]')
-                if (retracings is not None) or (retracings_wc is not None):
-                    for w in words: 
-                        # Japanese Miyata: morphology is coded as structured XML, so matching glosses can already be searched for and inserted at this point
-                        if corpus_name == 'Japanese_Miyata':
-                            # get all elements with the same text
-                            elems_with_same_text = [elem for elem in self.raw.iter() if elem.text == w.text]
-                            for elem in elems_with_same_text:
-                                # only look at <w> 
-                                if elem.tag == 'w':
-                                    mor = elem.find('mor')
-                                    # if there is <mor>, insert below the retraced word
-                                    if mor is not None:
-                                        w.insert(0, mor)
-                        # Japanese MiiPro and Turkish: morphology is coded CHAT style, so missing glosses can only be repeated later -> mark <w> 
-                        elif corpus_name == 'Japanese_MiiPro' or corpus_name == 'Turkish_KULLD':
-                            w.attrib['glossed'] = 'ahead'
-                    
-            # guessed transcriptions: add warning
-            guesses = g.find('k[@type="best guess"]')
-            if guesses is not None:
-                for w in words:
-                    w.attrib['transcribed'] = 'insecure'
-        # EOF <g> (repetitions, retracings, ...)
-               
-        # remember number of (glossed!) words to check alignment later
-        words = self.raw.findall('.//w')
-        self.raw.glossed_words = self.raw.findall('.//w[@glossed="no"]')
-        self.udata['length_in_words'] = len(words) - len(unglossed_words)
-        
-        # write words to corpus dic
-        # corpus[text_id][utterance_index]['words'] is a list of words; initial index is -1
-        # TODO: this is where our factory routines should come in
-        corpus[text_id][utterance_index]['words'] = []
-        word_index = -1
-        
-        for w in words:
-            # count self.raw. word index, extend list if necessary
-            word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
-            
-            # TODO: is this needed? if yes, this goes in the corpus-specific parsers
-            ## <w> is in all corpora except Yucatec the "full_word". In Yucatec <w> corresponds to "full_word_target". 
-            #if corpus_name != 'Yucatec':
-            #    corpus[text_id][utterance_index]['words'][word_index]['full_word'] = w.text
-            #    corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.attrib['target']            
-            #elif corpus_name == 'Yucatec':
-            #    corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = w.text
-            #    corpus[text_id][utterance_index]['words'][word_index]['full_word'] = '???'
-                
-            # pass down warnings
-            if 'glossed' in w.attrib and w.attrib['glossed'] == 'no':
-                creadd(self.udata['words'][word_index], 'warnings', 'not glossed')
-            if 'glossed' in w.attrib and w.attrib['glossed'] == 'repeated':
-                creadd(self.udata['words'][word_index], 'warnings', 'not glossed; repeat')
-            if 'glossed' in w.attrib and w.attrib['glossed'] == 'ahead':
-                creadd(self.udata['words'][word_index], 'warnings', 'not glossed; search ahead')
-            if 'transcribed' in w.attrib and w.attrib['transcribed'] == 'insecure':
-                creadd(self.udata['words'][word_index], 'warnings', 'transcription insecure')            
-
-
-    # TODO: this was throwing some error, so i commented it out
-    # def make_utterance(self, self.raw):
     def make_utterance(self, u):
         self._parse(u)
         return self.u
@@ -312,8 +225,7 @@ class XmlWordFactory(Factory):
         return self._parse(w)
 
     def next_morpheme(self, w):
-        mf = XmlMorphemeFactory(w)
-        return None
+        pass
 
 
 class XmlMorphemeFactory(Factory):
