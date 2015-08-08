@@ -194,8 +194,51 @@ class XmlUtteranceFactory(Factory):
         
         # EOF replacements
 
-        # TODO: g tag routines go after this
-        # these have to be separate methods because they have corpus-dependent parts
+        #g tags:
+        self._resolve_groups()
+
+    def _resolve_groups(self):
+        for g in self.raw.findall('.//g'):
+            words = g.findall('.//w')
+            self._resolve_guesses(g, words)
+            self._resolve_replacements(g, words)
+            self._resolve_retracings(g, words)
+            self._warn_transcriptions(g, words)
+
+    def _resolve_guesses(self, g, words):
+        # guesses at target word, e.g. <g><w>taaniu</w><ga type="alternative">nanii</ga></g>. Occasionally there may be several targets, in which case only use the first one. 
+        target_guess = g.find('.//ga[@type="alternative"]')
+        if target_guess is not None:
+            words[0].attrib['target'] = target_guess.text
+
+    def _resolve_replacements(self, g, words):
+            # repetitions, e.g. <g><w>shoo</w><w>boo</w><r times="3"></g>: insert as many <w> groups as indicated by attrib "times" of <r>, minus 1 (-> example goes to "shoo boo shoo boo shoo boo")
+            #TODO @override JPN_MiiPro
+            repetitions = g.find('r')
+            if repetitions is not None:
+                for i in range(0, int(repetitions.attrib['times'])-1):
+                    for w in words:
+                        new_elem = ET.SubElement(g, 'w')
+                        new_elem.text = w.text
+                        # Japanese MiiPro only: repeated elements are only glossed once -> mark the word as "to be repeated" here; the morphology routine will see this and repeat the corresponding glosses. Turkish also has cases where repeated elements are only glossed once but is inconsistent; glossed repetitions seem to be more frequent overall. 
+                        #if corpus_name == 'Japanese_MiiPro':
+                        #    new_elem.attrib['glossed'] = 'repeated'
+                        #new_elem.attrib['target'] = w.attrib['target']
+                        #mor = w.find('mor')
+                        #if mor is not None:
+                        #    new_elem.insert(0, mor)
+
+    def _resolve_retracings(self, g, words):
+        # retracings, e.g. <g><w formType="UNIBET">shou</w><w formType="UNIBET">shou</w><k type="retracing"/></g>: search for <w> with same text and self.raw.e gloss from there; if not available set attribute 'glossed' to 'ahead'. Skip this step for Inuktitut, where retracings are regularly glossed. 
+        # these are corpus-specific, so this method is defined at the XML level only for API completeness
+        pass
+
+    def _warn_transcriptions(self, g, words):
+        # guessed transcriptions: add warning
+        guesses = g.find('k[@type="best guess"]')
+        if guesses is not None:
+            for w in words:
+                w.attrib['transcribed'] = 'insecure'
 
     def make_utterance(self, u):
         self._parse(u)
