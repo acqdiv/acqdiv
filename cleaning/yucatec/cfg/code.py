@@ -5,26 +5,6 @@ def clean_chat_line(s):
 
     ### IMPORTANT NOTE: careful with all rules involving "¡", "¿", apostrophe/inverted comma. Check that ordering is correct
 
-
-    # unification of @Begin and @End lines. -> Commented out since these will be dealt with by the header cleaner.
-    '''
-    s=re.sub(r"La @Begin", r"@Begin", s)    
-    s=re.sub(r"@Begi$", r"@Begin", s)
-    s=re.sub(r"@Begin:", r"@Begin", s)
-    s=re.sub(r"^Begin", r"@Begin", s)
-    s=re.sub(r"@Fin$", r"@End", s)
-    s=re.sub(r"^FIN$", r"@End", s)
-    s=re.sub(r"@End\.", r"@End", s)
-    s=re.sub(r"@End \.", r"@End", s)
-    s=re.sub(r"@End:", r"@End", s)
-    s=re.sub(r"@End :", r"@End", s)
-    s=re.sub(r"@End ", r"@End", s)
-    s=re.sub(r"@end\.", r"@End", s)
-    s=re.sub(r"@ End", r"@End", s)
-    s=re.sub(r"\( FINALIZA \)", r"@End", s)
-    s=re.sub(r"\( finaliza \)", r"@End", s)
-    '''
-
     s = re.sub("(^[\*%]\S+\t+[^\t]+)\t", "\1", s)
     s = re.sub("(\w)['’ʼ]", "\\1ʔ", s)
     s = re.sub("['’ʼ](\w)", "ʔ\\1", s)
@@ -44,33 +24,50 @@ def clean_chat_line(s):
 
     ### LINE CLEANING ###
     s=re.sub(r"^\.\s*([\*%])", r"\1", s) # remove a dot and/or spaces at the beginning of a line
-    s=re.sub(r"<\s*Sandi y Armando\s*>", r"", s)
-    s=re.sub(r"¡$", r"!", s) # at the end of a line, "¡" has to be "!"
-    s=re.sub(r"\-x\-x\-x\-", r"", s)
 
 
     ### TIER CLEANING ###
     # At the end existing tiers will be: *XYZ:, %pho:, %xmor:, %spa:, %sit:, %exp:, %com:, %cod:
 
-    # Big tier cleaning done in acqdiv/scripts/yucatec/edit_yua.py
+    # Big line and tier cleaning done in acqdiv/scripts/yucatec/edit_yua.py
 
-    if s.startswith("%pho"):
-         s=re.sub(r"\s[\.\?\!;,]+$", r"", s) # remove dot/ending mark in %pho tiers
+    s=re.sub(r"\*SEÑ:", r"*UNK:", s)
+    s=re.sub(r"@Pía un pollito.", r"%sit:\tPía un pollito.", s)
+
+    # all tier names must be followed by a tab before the tier content starts (this block has to be in both edit_yua.py and code.py)
+    #s=re.sub(r"(%[a-z]{3,4}:)\s*(.*?)$", r"\1\t\2\n", s)
+    #s=re.sub(r"(\*[A-Z]{3}:)\s*(.*?)$", r"\1\t\2", s)
+    #s=re.sub(r"(%[a-z]{3,4}:)\s*(.*?)$", r"\1\t\2", s)
+    s=re.sub(r"(\*[A-Z]{3}:)\s*$", r"\1\t\n", s)
+    s=re.sub(r"(%[a-z]{3,4}:)\s*$", r"\1\t\n", s)
+    #s=re.sub(r"(\*[A-Z]{3}:)([A-Za-z]+)", r"\1\t\2", s)
+    #s=re.sub(r"(%[a-z]{3,4}:)([A-Za-z]+)", r"\1\t\2", s)
+    s=re.sub(r"(\*[A-Z]{3}:) *([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
+    s=re.sub(r"(%[a-z]{3,4}:) *([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
+    #s=re.sub(r"(\*[A-Z]{3}:) *([A-Za-z\[\(¡]*)", r"\1\t\2", s)
+    #s=re.sub(r"(%[a-z]{3,4}:) *([A-Za-z\[\(¡])", r"\1\t\2", s)
+    s=re.sub(r"(\*[A-Z]{3}:)\s*\n", r"\1\t\n", s)
+    s=re.sub(r"(%[a-z]{3,4}:)\s*\n", r"\1\t\n", s)
+    s=re.sub(r"(\*[A-Z]{3}:)\t\t([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
 
     '''
     if s.startswith("%xmor"):
          s=re.sub(r"\s([\.\?\!;,]+)$", r"\1", s) # remove dot/ending mark in %mor tiers
     '''
 
-    s=re.sub(r"\*SEÑ:", r"*UNK:", s)
-    s=re.sub(r"@Pía un pollito.", r"%sit:\tPía un pollito.", s)
+    if s.endswith(" "):
+         s=re.sub(r" $\n", r"\n", s) # remove whitespaces at the end of lines
 
+    #s=re.sub(r"(%xmor:\t)$\n", r"\1.\n", s) # add a dot at the end of an empty %xmor tier without terminator
+    s=re.sub(r"^%xmor:\t\s*$", r"", s) # remove empty %xmor tiers
+    s=re.sub(r"^%xpho:\t\s*$", r"", s) # remove empty %xpho tiers
+    s=re.sub(r"^%spa:\t\s*$", r"", s) # remove empty %spa tiers
 
-    ##### rewrite these three, they are wrong.
+    s=re.sub(r"@End", r"@End\n", s) # add a newline after @End
+
     '''
-    s=re.sub(r"^(\*[A-Z]{3}:\t)(.*?)[^(\?|\!|\.)]$", r"\1\2.", s) # add a dot at the end of every *PARTICIPANT tier which doesn't end in "?", "!" or "."
-    s=re.sub(r"^(%[a-z]{3}:\t)(.*?)[^(\?|\!|\.)]$", r"\1\2.", s) # add a dot at the end of every %xxx tier which doesn't end in "?", "!" or "."
-    s=re.sub(r"^(%xmor:\t)(.*?)[^(\?|\!|\.)]$", r"\1\2.", s) # add a dot at the end of every %xmor tier which doesn't end in "?", "!" or "."
+    if s.startswith("%pho"):
+         s=re.sub(r"\s[\.\?\!;,]+$\n", r"\n", s) # remove dot/ending mark in %pho tiers
     '''
 
     ### CHARACTER CLEANING ###
@@ -93,6 +90,7 @@ def clean_chat_line(s):
     s=re.sub(r"с", r"ñ", s)
     
     s=re.sub(r" ", r"á", s) # weird whitespace. Fine to run this rule on all files.
+    #s=re.sub(r":á(?=\w)", r":\t", s)
     s=re.sub(r"‚", r"é", s) # specific comma. Fine to run this rule on all files.
     #s=re.sub(r"¡", r"í", s) # to be done manually
     s=re.sub("¢", "ó", s)
@@ -128,15 +126,14 @@ def clean_chat_line(s):
     s=re.sub("ń", "ñ", s)
 
     # dieresis
-    s=re.sub(r"^%spa:[\s|\t]+¨(.*)\?", r"%spa:\t¿\1\?", s) # replace a dieresis at the beginning of a %spa tier with "¿"
-    s=re.sub(r"^(%pho:[\s|\t]+)¨", r"\1", s) # remove the dieresis at the beginning of a %pho tier
-    s=re.sub(r"^(\*[A-Z]{3}:[\s|\t]+)¨", r"\1", s) # remove the dieresis at the beginning of a *PARTICIPANT tier
+    s=re.sub(r"^(%spa:\t+)¨(.*)\?", r"\1¿\2?", s) # replace a dieresis at the beginning of a %spa tier with "¿"
+    s=re.sub(r"^(%xpho:\t+)¨", r"\1", s) # remove the dieresis at the beginning of a %pho tier
+    s=re.sub(r"^(\*[A-Z]{3}:\t+)¨", r"\1", s) # remove the dieresis at the beginning of a *PARTICIPANT tier
 
     # inverted question mark "¿"
     s=re.sub(r"^(\*[A-Z]{3}:)(.*)¿(.*)$", r"\1\2\3", s) # not allowed in a *PARTICIPANT tier
-    s=re.sub(r"^(%pho:)(.*)¿(.*)$", r"\1\2\3", s) # not allowed in a %pho tier
-    s=re.sub(r"^(%spa:)(.*)¿$", r"\1\2\?", s) # at the end of a %spa tier, "¿" has to be "?"
-
+    s=re.sub(r"^(%xpho:\t)(.*)¿(.*)$", r"\1\2\3", s) # not allowed in a %pho tier
+    s=re.sub(r"^(%spa:\t)(.*)¿$", r"\1\2\?", s) # at the end of a %spa tier, "¿" has to be "?"
 
 
     '''
@@ -169,7 +166,6 @@ def clean_chat_line(s):
     s=re.sub("laìz", "lápiz", s)
 
 
-
     #cleanup unwanted tiers -> Commented out. Done somewhere else in the cleaning
     #added by chysi
     '''
@@ -195,7 +191,7 @@ def clean_chat_line(s):
         #s = re.sub('\-?0', '', s)
         #s = re.sub('(?<=\\w)&(?=[au])', '', s)
 
-    if s.startswith("%pho"):
+    if s.startswith("%xpho"):
         s=s.lower() # no capital letters allowed in %pho tiers
 
 

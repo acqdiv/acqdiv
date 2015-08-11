@@ -62,6 +62,7 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"\*fil", r"*FIL:", line)
                 line=re.sub(r"fil:", r"*FIL:", line)
                 line=re.sub(r"\*FIl:", r"*FIL:", line)
+                line=re.sub(r"fIL:", r"*FIL:", line)
                 line=re.sub(r"%FIL:", r"*FIL:", line)
                 line=re.sub(r"\*FIL;", r"*FIL:", line)
                 line=re.sub(r"[^\*]FIL:", r"*FIL:", line)
@@ -92,14 +93,15 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"(\*[A-Z]{3}) :", r"\1:", line) # remove a space between the participant's code and the colon
                 line=re.sub(r"\(\s?(\*[A-Z]{3})\s?\):", r"\1:", line) # participant codes with form e.g. "(*ARM):" or "( *SAN ):" should be transformed into "*ARM:"
 
-                #unification %pho tier
-                line=re.sub(r"\*pho:", r"%pho:", line)
-                line=re.sub(r"%fon:", r"%pho:", line)
-                line=re.sub(r"%pho\.", r"%pho:", line)
-                line=re.sub(r"%pho :", r"%pho:", line) # note that it is not the usual whitespace
-                line=re.sub(r"%pho;", r"%pho:", line)
-                line=re.sub(r"^pho:", r"%pho:", line)
-                line=re.sub(r"%PHO:", r"%pho:", line)
+                #unification %xpho tier
+                line=re.sub(r"\*pho:", r"%xpho:", line)
+                line=re.sub(r"%fon:", r"%xpho:", line)
+                line=re.sub(r"%pho\.", r"%xpho:", line)
+                line=re.sub(r"%pho :", r"%xpho:", line) # note that it is not the usual whitespace
+                line=re.sub(r"%pho;", r"%xpho:", line)
+                line=re.sub(r"^pho:", r"%xpho:", line)
+                line=re.sub(r"%PHO:", r"%xpho:", line)
+                line=re.sub(r"%pho:", r"%xpho:", line)
 
                 #unification %xmor tier
                 line=re.sub(r"%MOR:", r"%xmor:", line)
@@ -149,20 +151,18 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"¿\?\?\?", r"?", line)
                 line=re.sub(r"¿\?\?", r"?", line)
                 line=re.sub(r"\?{2,9}", r"?", line)
+                line=re.sub(r"\-x\-x\-x\-", r"", line)
+                line=re.sub(r"<\s*Sandi y Armando\s*>", r"", line)
 
                 line=re.sub(r"^\s*[0-9]+\s*(\*[A-Z]{3}:)", r"\1", line) # remove spaces, numbers and/or spaces before *PARTICIPANT tiers
                 line=re.sub(r"^\s*[0-9]{3}:\s*(\*[A-Z]{3}:)", r"\1", line)
                 line=re.sub(r"^\s*[0-9]+\s*(%[a-z]{3,4}:)", r"\1", line) # remove spaces, numbers and/or spaces before %xxx and %xmor tiers
-                #line=re.sub(r"^\s*[0-9]+\s*(%xmor:)", r"\1", line) # remove spaces, numbers and/or spaces before %xmor tiers
-                line=re.sub(r"^\s*(\*[A-Z]{3}:)", r"\1", line) # remove spaces before *PARTICIPANT tiers
-                line=re.sub(r"^\s*(%[a-z]{3,4}:)", r"\1", line) # remove spaces before %xxx and %xmor tiers
-                #line=re.sub(r"^\s*(%xmor:)", r"\1", line) # remove spaces before %xmor tiers
-                #line=re.sub(r"^\t+(\*[A-Z]{3}:)", r"\1", line) # remove tabs before *PARTICIPANT tiers
-                #line=re.sub(r"^\t+(%[a-z]{3}:)", r"\1", line) # remove tabs before %xxx tiers
-                #line=re.sub(r"^\t+(%xmor:)", r"\1", line) # remove tabs before %xmor tiers
+                line=re.sub(r"^\s*(\*[A-Z]{3}:)", r"\1", line) # remove spaces or tabs before *PARTICIPANT tiers
+                line=re.sub(r"^\s*(%[a-z]{3,4}:)", r"\1", line) # remove spaces or tabs before %xxx and %xmor tiers
                 line=re.sub(r"^\s*[0-9]+\s*$", r"", line) # remove numbers and/or spaces alone in a line
                 line=re.sub(r"^\t*[0-9]+\t*$", r"", line) # remove numbers and/or tabs alone in a line
                 line=re.sub(r"^\s*([%|\*])", r"\1", line) # remove all spaces before the beginning of a tier
+
 
                 # place two different tiers that were in one line into two different lines
                 line=re.sub(r"%(.*?)(\*[A-Z]{3}:)", r"%\1\n\2", line)
@@ -172,48 +172,53 @@ for root, dirs, files in os.walk(input_dir):
                 #line=re.sub(r"(\*[A-Z]{3}:)\s*(.*?)$", r"\1\t\2\n", line)
                 line=re.sub(r"%(.*?)%(.*?)%", r"%\1\n%\2\n%", line)
 
+
                 # all tier names must be followed by a tab before the tier content starts
-                #line=re.sub(r"(%[a-z]{3}:)\s*(.*?)$", r"\1\t\2\n", line)
-                #line=re.sub(r"(%[a-z]{4}:)\s*(.*?)$", r"\1\t\2\n", line)
+                #line=re.sub(r"(%[a-z]{3,4}:)\s*(.*?)$", r"\1\t\2\n", line)
                 #line=re.sub(r"(\*[A-Z]{3}:)\s*(.*?)$", r"\1\t\2", line)
-                #line=re.sub(r"(%[a-z]{3}:)\s*(.*?)$", r"\1\t\2", line)
-                #line=re.sub(r"(%[a-z]{4}:)\s*(.*?)$", r"\1\t\2", line)
+                #line=re.sub(r"(%[a-z]{3,4}:)\s*(.*?)$", r"\1\t\2", line)
                 line=re.sub(r"(\*[A-Z]{3}:)\s*$", r"\1\t\n", line)
                 line=re.sub(r"(%[a-z]{3,4}:)\s*$", r"\1\t\n", line)
                 #line=re.sub(r"(\*[A-Z]{3}:)([A-Za-z]+)", r"\1\t\2", line)
                 #line=re.sub(r"(%[a-z]{3,4}:)([A-Za-z]+)", r"\1\t\2", line)
-                line=re.sub(r"(\*[A-Z]{3}:) *([A-Za-z\[\(¡]+)", r"\1\t\2", line)
-                line=re.sub(r"(%[a-z]{3,4}:) *([A-Za-z\[\(¡]+)", r"\1\t\2", line)
+                line=re.sub(r"(\*[A-Z]{3}:) *([A-Za-z\[\(¡\?]+)", r"\1\t\2", line)
+                line=re.sub(r"(%[a-z]{3,4}:) *([A-Za-z\[\(¡\?]+)", r"\1\t\2", line)
                 #line=re.sub(r"(\*[A-Z]{3}:) *([A-Za-z\[\(¡]*)", r"\1\t\2", line)
                 #line=re.sub(r"(%[a-z]{3,4}:) *([A-Za-z\[\(¡])", r"\1\t\2", line)
                 line=re.sub(r"(\*[A-Z]{3}:)\s*\n", r"\1\t\n", line)
                 line=re.sub(r"(%[a-z]{3,4}:)\s*\n", r"\1\t\n", line)
+                line=re.sub(r"(\*[A-Z]{3}:)\t\t([A-Za-z\[\(¡\?]+)", r"\1\t\2", line)
 
-                if line.startswith("%pho"):
-                    line=re.sub(r"\s[\.\?\!;,]+$", r"", line) # remove dot/ending mark in %pho tiers
+                if line.startswith("%xpho"):
                     line=re.sub(r"\-", r"", line) # remove "-" in %pho tiers
-                    line=re.sub(r"\.", r"", line) # remove dots in tier content in %pho tiers
+                    line=re.sub(r"\.", r"", line) # remove dots in %pho tiers
+                    line=re.sub(r"\/", r"", line) # remove "/" in %pho tiers
+                    #line=re.sub(r" $\n", r"\n", line) # remove whitespaces at the end of %pho tiers
+                    line=re.sub(r"\s[\.\?\!;,]+\s*$\n", r"\n", line) # remove dot/ending mark in %pho tiers
+
 
                 if line.startswith("*"):
                     line=re.sub(r"/", r"", line) # remove "/" in *PARTICIPANT tiers
+                    line=re.sub(r"\+", r" ", line)
+                    line=re.sub(r"(\*[A-Z]{3}:\t)$\n", r"\1.\n", line)
 
-                line=re.sub(r"(%pho:)(.*)/(.*)/", r"\1\2\3", line) # remove "/" twice in %pho tiers
-                line=re.sub(r"(%pho:)(.*)/", r"\1\2", line) # remove "/" once in %pho tiers
-                #line=re.sub(r"(\*[A-Z]{3})(.*?)/", r"\1\2", line) # remove "/" in *PARTICIPANT tiers
+
+                #line=re.sub(r"(%pho:)(.*)/(.*)/", r"\1\2\3", line) # remove "/" twice in %pho tiers
+                #line=re.sub(r"(%pho:)(.*)/", r"\1\2", line) # remove "/" once in %pho tiers
+                #line=re.sub(r"(\*[A-Z]{3}:\t)(.*?)/", r"\1\2", line) # remove "/" in *PARTICIPANT tiers
                 line=re.sub(r"\s*n$", r"", line) # remove lines which have only "n"
-                line=re.sub(r"(%pho:\s*)!", r"\1", line) # remove "!" at the beginning of a %pho tier
+                line=re.sub(r"(%xpho:\s*)!", r"\1", line) # remove "!" at the beginning of a %pho tier
                 line=re.sub(r"(\*[A-Z]{3}:\s*)\?[^$]", r"\1", line) # remove "?" at the beginning of a *PARTICIPANT tier
                 line=re.sub(r"(\*[A-Z]{3}:\s*)\!", r"\1", line) # remove "!" at the beginning of a *PARTICIPANT tier
-                line=re.sub(r"(%spa:\s*)\?[^$]", r"\1", line) # remove "?" at the beginning of a %spa tier
-                line=re.sub(r"(%spa:\s*)\?[^$]", r"\1", line) # remove "?" at the beginning of a %spa tier, again
+                #line=re.sub(r"(%spa:\s*)\?[^$]", r"\1", line) # remove "?" at the beginning of a %spa tier
+                #line=re.sub(r"(%spa:\s*)\?[^$]", r"\1", line) # remove "?" at the beginning of a %spa tier, again
                 line=re.sub(r"(%spa:\s*)\![^$]", r"\1", line) # remove "!" at the beginning of a %spa tier
-                line=re.sub(r"(%xmor:\s*)\?", r"\1", line) # remove "?" at the beginning of a %xmor tier
+                line=re.sub(r"(%xmor:\s*)\?", r"\1.", line) # replace "?" at the beginning of a %xmor tier with a dot
                 line=re.sub(r"^(.*)\*$", r"\1\n", line) # remove asterisk at the end of a line
                 line=re.sub(r"^\s*\.$", r"", line) # remove lines which have only " ."
                 line=re.sub(r"(%xmor:)(.*)\\", r"\1\2\|", line) # in %xmor tiers, replace "\" with "|"
+                line=re.sub(r"¡$", r"!", line) # at the end of a line, "¡" has to be "!"
 
-
-                #line=re.sub(r"(\*[A-Z]{3}:)(.*)\?[^$]", r"\1\2?", line) # trim all weird characters that appear at the end of a *PARTICIPANT tier, after "?"
 
 
                 #line = re.sub('^\d*\s+(?=[\*%])', '', line)
