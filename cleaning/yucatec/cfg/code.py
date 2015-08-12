@@ -27,12 +27,13 @@ def clean_chat_line(s):
 
 
     ### TIER CLEANING ###
-    # At the end existing tiers will be: *XYZ:, %pho:, %xmor:, %spa:, %sit:, %exp:, %com:, %cod:
+    # At the end existing tiers will be: *XYZ:, %xpho:, %xmor:, %spa:, %sit:, %exp:, %com:, %cod:
 
     # Big line and tier cleaning done in acqdiv/scripts/yucatec/edit_yua.py
 
     s=re.sub(r"\*SEÑ:", r"*UNK:", s)
     s=re.sub(r"@Pía un pollito.", r"%sit:\tPía un pollito.", s)
+    s=re.sub(r"@Nefi burla a Aamando.", r"%sit:\tNeifi burla a Armando.", s)
 
     # all tier names must be followed by a tab before the tier content starts (this block has to be in both edit_yua.py and code.py)
     #s=re.sub(r"(%[a-z]{3,4}:)\s*(.*?)$", r"\1\t\2\n", s)
@@ -42,8 +43,8 @@ def clean_chat_line(s):
     s=re.sub(r"(%[a-z]{3,4}:)\s*$", r"\1\t\n", s)
     #s=re.sub(r"(\*[A-Z]{3}:)([A-Za-z]+)", r"\1\t\2", s)
     #s=re.sub(r"(%[a-z]{3,4}:)([A-Za-z]+)", r"\1\t\2", s)
-    s=re.sub(r"(\*[A-Z]{3}:) *([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
-    s=re.sub(r"(%[a-z]{3,4}:) *([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
+    s=re.sub(r"(\*[A-Z]{3}:) *\t* *([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
+    s=re.sub(r"(%[a-z]{3,4}:) *\t* *([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
     #s=re.sub(r"(\*[A-Z]{3}:) *([A-Za-z\[\(¡]*)", r"\1\t\2", s)
     #s=re.sub(r"(%[a-z]{3,4}:) *([A-Za-z\[\(¡])", r"\1\t\2", s)
     s=re.sub(r"(\*[A-Z]{3}:)\s*\n", r"\1\t\n", s)
@@ -62,6 +63,8 @@ def clean_chat_line(s):
     s=re.sub(r"^%xmor:\t\s*$", r"", s) # remove empty %xmor tiers
     s=re.sub(r"^%xpho:\t\s*$", r"", s) # remove empty %xpho tiers
     s=re.sub(r"^%spa:\t\s*$", r"", s) # remove empty %spa tiers
+
+    s=re.sub(r"^([\*%])(.*?),$", r"\1\2.", s) # replace a comma at the end of a line with a dot
 
     s=re.sub(r"@End", r"@End\n", s) # add a newline after @End
 
@@ -88,9 +91,9 @@ def clean_chat_line(s):
     s=re.sub(r"у", r"ó", s)
     s=re.sub(r"ъ", r"ú", s)
     s=re.sub(r"с", r"ñ", s)
-    
-    s=re.sub(r" ", r"á", s) # weird whitespace. Fine to run this rule on all files.
-    #s=re.sub(r":á(?=\w)", r":\t", s)
+
+    s=re.sub(r"está ", r"está", s) # remove weird whitespace after "está"
+    s=re.sub(r" ", r"á", s) # weird whitespace. Fine to run this rule on all files at this position (careful with all rules involving weird whitespace!! order very important!).
     s=re.sub(r"‚", r"é", s) # specific comma. Fine to run this rule on all files.
     #s=re.sub(r"¡", r"í", s) # to be done manually
     s=re.sub("¢", "ó", s)

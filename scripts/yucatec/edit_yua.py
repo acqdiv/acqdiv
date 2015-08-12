@@ -55,8 +55,10 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"dav:", r"*DAV:", line)
                 line=re.sub(r"[^\*]DAV:", r"*DAV:", line)
                 line=re.sub(r"\*san:", r"*SAN:", line)
+                line=re.sub(r"^SAN:", r"*SAN:", line)
                 line=re.sub(r"%SAN:", r"*SAN:", line)
                 line=re.sub(r"[^\*]SAN:", r"*SAN:", line)
+                line=re.sub(r"\*SAN :", r"*SAN:", line) # note that it is not the normal whitespace
                 line=re.sub(r"\*\s+FIL:", r"*FIL:", line)
                 line=re.sub(r"\*fil:", r"*FIL:", line)
                 line=re.sub(r"\*fil", r"*FIL:", line)
@@ -74,6 +76,7 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"%ARM:", r"*ARM:", line)
                 line=re.sub(r"\*ARM;", r"*ARM:", line)
                 line=re.sub(r"[^\*]ARM:", r"*ARM:", line)
+                line=re.sub(r"\*ARMcuatro", r"*ARM:\tcuatro", line)
                 line=re.sub(r"\*mar:", r"*MAR:", line)
                 line=re.sub(r"\*sab:", r"*SAB:", line)
                 line=re.sub(r"\*NEF[^:]", r"*NEF:", line)
@@ -85,8 +88,10 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"\*lor:", r"*LOR:", line)
                 line=re.sub(r"[^\*]LOR:", r"*LOR:", line)
                 line=re.sub(r"\*:", r"*UNK:", line)
+                line=re.sub(r"\*CAR", r"*CAR:", line)
                 line=re.sub(r"^\s+:\s$", r"*UNK:", line) # replace ":" at the beginning of a line, with some spaces before and after, with *UNK:
                 line=re.sub(r"\*\?:", r"*UNK:", line) # replace "*?:" with "*UNK:"
+                line=re.sub(r"\* \?:", r"*UNK:", line) # replace "* ?:" with "*UNK:"
                 line=re.sub(r"\(\s+\):", r"*UNK:", line) # replace "(    ):" with "*UNK:"
                 line=re.sub(r"xxx:", r"*UNK:", line) # replace "xxx:" with "*UNK:"
                 line=re.sub(r"\*XXX:", r"*UNK:", line) # replace "*XXX:" with "*UNK:"
@@ -129,6 +134,7 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"%esp:", r"%spa:", line)
                 line=re.sub(r"%\*esp:", r"%spa:", line)
                 line=re.sub(r"\*esp:", r"%spa:", line)
+                line=re.sub(r"%:", r"%spa:", line)
 
                 line=re.sub(r"%ENG:", r"%spa:", line)
                 line=re.sub(r"%eng:", r"%spa:", line)
@@ -136,6 +142,7 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"%eng\.", r"%spa:", line)
                 line=re.sub(r"%engL:", r"%spa:", line)
                 line=re.sub(r"%eng :", r"%spa:", line)
+                line=re.sub(r"%eng: ", r"%spa:\t", line) # note that it is not the usual whitespace
                 line=re.sub(r"%eng", r"%spa:", line)
 
                 # %com and %sit tiers
@@ -150,7 +157,7 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"\s\.\.\s", r"...", line)
                 line=re.sub(r"¿\?\?\?", r"?", line)
                 line=re.sub(r"¿\?\?", r"?", line)
-                line=re.sub(r"\?{2,9}", r"?", line)
+                line=re.sub(r"\?{2,3,4,5,6,7,8,9}", r"?", line)
                 line=re.sub(r"\-x\-x\-x\-", r"", line)
                 line=re.sub(r"<\s*Sandi y Armando\s*>", r"", line)
 
@@ -173,7 +180,7 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"%(.*?)%(.*?)%", r"%\1\n%\2\n%", line)
 
 
-                # all tier names must be followed by a tab before the tier content starts
+                # all tier names must be followed by a tab before the tier content starts (this block has to be in both edit_yua.py and code.py)
                 #line=re.sub(r"(%[a-z]{3,4}:)\s*(.*?)$", r"\1\t\2\n", line)
                 #line=re.sub(r"(\*[A-Z]{3}:)\s*(.*?)$", r"\1\t\2", line)
                 #line=re.sub(r"(%[a-z]{3,4}:)\s*(.*?)$", r"\1\t\2", line)
@@ -181,13 +188,14 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"(%[a-z]{3,4}:)\s*$", r"\1\t\n", line)
                 #line=re.sub(r"(\*[A-Z]{3}:)([A-Za-z]+)", r"\1\t\2", line)
                 #line=re.sub(r"(%[a-z]{3,4}:)([A-Za-z]+)", r"\1\t\2", line)
-                line=re.sub(r"(\*[A-Z]{3}:) *([A-Za-z\[\(¡\?]+)", r"\1\t\2", line)
-                line=re.sub(r"(%[a-z]{3,4}:) *([A-Za-z\[\(¡\?]+)", r"\1\t\2", line)
+                line=re.sub(r"(\*[A-Z]{3}:) *\t* *([A-Za-z\[\(¡\?]+)", r"\1\t\2", line)
+                line=re.sub(r"(%[a-z]{3,4}:) *\t* *([A-Za-z\[\(¡\?]+)", r"\1\t\2", line)
                 #line=re.sub(r"(\*[A-Z]{3}:) *([A-Za-z\[\(¡]*)", r"\1\t\2", line)
                 #line=re.sub(r"(%[a-z]{3,4}:) *([A-Za-z\[\(¡])", r"\1\t\2", line)
                 line=re.sub(r"(\*[A-Z]{3}:)\s*\n", r"\1\t\n", line)
                 line=re.sub(r"(%[a-z]{3,4}:)\s*\n", r"\1\t\n", line)
                 line=re.sub(r"(\*[A-Z]{3}:)\t\t([A-Za-z\[\(¡\?]+)", r"\1\t\2", line)
+                line=re.sub(r"(%spa:)\t\t([A-Za-z\[\(¡\?]+)", r"\1\t\2", line)
 
                 if line.startswith("%xpho"):
                     line=re.sub(r"\-", r"", line) # remove "-" in %pho tiers
@@ -195,12 +203,18 @@ for root, dirs, files in os.walk(input_dir):
                     line=re.sub(r"\/", r"", line) # remove "/" in %pho tiers
                     #line=re.sub(r" $\n", r"\n", line) # remove whitespaces at the end of %pho tiers
                     line=re.sub(r"\s[\.\?\!;,]+\s*$\n", r"\n", line) # remove dot/ending mark in %pho tiers
-
+                    line=re.sub(r" ", r"", line) # remove weird whitespaces in %pho tiers
 
                 if line.startswith("*"):
                     line=re.sub(r"/", r"", line) # remove "/" in *PARTICIPANT tiers
                     line=re.sub(r"\+", r" ", line)
-                    line=re.sub(r"(\*[A-Z]{3}:\t)$\n", r"\1.\n", line)
+                    line=re.sub(r"(\*[A-Z]{3}:\t)$\n", r"\1.\n", line) # add a dot at the end of empty *PARTICIPANT tiers
+                    line=re.sub(r"\.\.\.", r" (...) ", line)
+                    line=re.sub(r"¿", r"", line) # remove "¿" in *PARTICIPANT tiers
+                    line=re.sub(r"¡", r"", line) # remove "¡" in *PARTICIPANT tiers
+
+                if line.startswith("%spa"):
+                    line=re.sub(r"¿", r"", line) # remove "¿" in %spa tiers
 
 
                 #line=re.sub(r"(%pho:)(.*)/(.*)/", r"\1\2\3", line) # remove "/" twice in %pho tiers
