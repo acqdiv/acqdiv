@@ -59,6 +59,8 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"%SAN:", r"*SAN:", line)
                 line=re.sub(r"[^\*]SAN:", r"*SAN:", line)
                 line=re.sub(r"\*SAN :", r"*SAN:", line) # note that it is not the normal whitespace
+                line=re.sub(r"[^*a]san:", r"*SAN:", line)
+                line=re.sub(r"\*SAM:", r"*SAN:", line)
                 line=re.sub(r"\*\s+FIL:", r"*FIL:", line)
                 line=re.sub(r"\*fil:", r"*FIL:", line)
                 line=re.sub(r"\*fil", r"*FIL:", line)
@@ -137,12 +139,12 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"%:", r"%spa:", line)
 
                 line=re.sub(r"%ENG:", r"%spa:", line)
+                line=re.sub(r"%eng: ", r"%spa:	", line) # note that it is not the usual whitespace
                 line=re.sub(r"%eng:", r"%spa:", line)
                 line=re.sub(r"%eng;", r"%spa:", line)
                 line=re.sub(r"%eng\.", r"%spa:", line)
                 line=re.sub(r"%engL:", r"%spa:", line)
                 line=re.sub(r"%eng :", r"%spa:", line)
-                line=re.sub(r"%eng: ", r"%spa:\t", line) # note that it is not the usual whitespace
                 line=re.sub(r"%eng", r"%spa:", line)
 
                 # %com and %sit tiers
