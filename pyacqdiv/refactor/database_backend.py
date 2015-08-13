@@ -98,6 +98,19 @@ class Word(Base):
     parent_id = Column(Text, ForeignKey('utterance.id'))
     #Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
 
+class Morpheme(Base):
+    __tablename__ = 'morphemes'
+
+    # fk...
+    # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
+    id = Column(Text, primary_key=True)
+    parent_id = Column(Text, ForeignKey('utterance.id'))
+    morpheme = Column(Text, nullable=True, unique=False)
+    morpheme_target = Column(Text, nullable=True, unique=False)
+    gloss = Column(Text, nullable=True, unique=False)
+    pos = Column(Text, nullable=True, unique=False)
+
+
 
 
 

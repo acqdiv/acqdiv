@@ -28,6 +28,7 @@ class XmlUtteranceFactory(Factory):
 
         self.raw = data
         self.u = Utterance()
+        self.udata = Vividict()
 
         self._get_u_data()
         self._clean_words()
@@ -252,6 +253,9 @@ class XmlUtteranceFactory(Factory):
         for w in words:
             yield wf.make_word(w)
 
+    def next_morpheme(self, u):
+        pass
+
 
 class XmlWordFactory(Factory):
     def __init__(self, utterance, config=None):
@@ -267,10 +271,6 @@ class XmlWordFactory(Factory):
     def make_word(self, w):
         return self._parse(w)
 
-    def next_morpheme(self, w):
-        pass
-
-
 class XmlMorphemeFactory(Factory):
     def __init__(self, word, config=None):
         self.parent = word
@@ -278,7 +278,10 @@ class XmlMorphemeFactory(Factory):
 
     def _parse(self, m):
         mor = Morpheme()
-        mor.morpheme = m.text
+        mor.morpheme = m['segments'] if type(m['segments']) is str else None 
+        mor.morpheme_target = m['segments_target'] if type(m['segments_target']) is str else None 
+        mor.pos = m['pos_target'] if type(m['pos_target']) is str else None 
+        mor.gloss = m['glosses_target'] if type(m['glosses_target']) is str else None 
         mor.parent_id = self.parent.id
         return mor
 

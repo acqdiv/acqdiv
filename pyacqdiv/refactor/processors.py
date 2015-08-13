@@ -2,7 +2,7 @@
 """
 
 import sys
-from itertools import count
+import itertools as it
 
 from sqlalchemy.orm import sessionmaker
 
@@ -85,7 +85,8 @@ class SessionProcessor(object):
         #TODO(chysi): this doesn't look like a generator to me!!!
         self.utterances = []
         self.words = []
-        for u, words in self.parser.next_utterance():
+        self.morphemes = []
+        for u, words, morphemes in self.parser.next_utterance():
             u.parent_id = self.file_path
             #TODO: u.ids counted per session
             # we need a better way of making them unique across corpora
@@ -93,10 +94,14 @@ class SessionProcessor(object):
             u.id = u.parent_id + "_" + u.id
             self.utterances.append(u)
 
-            for w, i in zip(words(u), count()):
+            for w, m, i in it.takewhile(lambda x: x[0] and x[1], it.zip_longest(words(u), morphemes(u), it.count())):
                 w.parent_id = u.id
                 w.id = u.id + 'w' + str(i)
                 self.words.append(w)
+                m.parent_id = u.id
+                m.id = u.id + 'm' + str(i)
+                self.morphemes.append(m)
+
         # Then write it to the backend.
         # commit(session_metadata, speakers, utterances)
 
@@ -114,6 +119,7 @@ class SessionProcessor(object):
             session.add_all(self.speaker_entries)
             session.add_all(self.utterances)
             session.add_all(self.words)
+            session.add_all(self.morphemes)
             session.commit()
             # self.db_session.add(session_metadata)
             # self.db_session.add_all(self.speakers)
