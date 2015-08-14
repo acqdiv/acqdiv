@@ -13,6 +13,7 @@ from factories import *
 
 # TODO: integrate the Corpus specific parsing routines from the body parser
 # TODO: integrate the metadata parsing
+from toolbox import ToolboxFile
 
 
 class CorpusConfigParser(configparser.ConfigParser):
@@ -47,7 +48,8 @@ class CorpusConfigParser(configparser.ConfigParser):
         # Load up a dictionary of 'peculiarities'; these map the 'local'
         # symbols used in the corpus to the 'standard' symbols.
         # TODO: fix the inline commenting "#"
-        self.peculiarities = dict(self.items('peculiarities'))
+        # TODO: peculiarities moved to [record_tiers]
+        # self.peculiarities = dict(self.items('peculiarities'))
         self.format = self['corpus']['format']
 
         # ...And now any other additional things you want to do on
@@ -72,6 +74,10 @@ class SessionParser(object):
         self.file_path = file_path
         # SessionParser.create_parser(self.config, self.file_path)
 
+    # TODO: get SHA1 fingerprint of file -- provides unique data ID for db
+    def sha1(self):
+        pass
+
     # To be overridden in subclasses.
     # Session metadata for the Sessions table in the db
     def get_session_metadata(self):
@@ -85,18 +91,23 @@ class SessionParser(object):
     def next_utterance(self):
         pass
 
+    # Generator to yield Utterances for the Utterance table in the db
+    def next_record(self):
+        pass
+
 class ToolboxParser(SessionParser):
-    """ For Chintang, Indonesian, Russian, & Dene  """
+    """ For Chintang, Indonesian, Russian, & potentially Dene  """
 
     def __init__(self, config, file_path):
         SessionParser.__init__(self, config, file_path)
 
-        # init metadata file object -- hack to get the separate metadata file path
+        # deal with the session body utterance, etc. data
+        self.session_file = ToolboxFile(self.config, self.file_path)
+
+        # deal with the metadata -- hack to get the separate metadata file paths for IMDIs
         temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
         self.metadata_file_path = temp.replace(".txt", ".imdi")
         self.metadata_parser = Imdi(self.metadata_file_path)
-
-        # open a toolbox option given a file path
 
     def get_session_metadata(self):
         # Do toolbox-specific parsing of session metadata.
@@ -104,13 +115,21 @@ class ToolboxParser(SessionParser):
         # The config so it knows what symbols to look for.
         return self.metadata_parser.metadata['session']
 
-    # Generator to yield participants metadata for the Speaker table in the db
     def next_speaker(self):
+        """ Yield participants metadata for the Speaker table in the db """
         for speaker in self.metadata_parser.metadata['participants']:
             yield speaker
 
-    # Note: make sure this is overriding the superclass.parse. Need a keyword?
+    def next_record(self):
+        """ Yield session level data: returns ordered dictionary of config file record_tiers """
+        for record in self.session_file:
+            yield record
+
+    # see next_record
     def next_utterance(self):
+        # for utterance in self.body():
+        #    yield utterance
+
         # Do toolbox-specific parsing of utterances.
         # The config so it knows what symbols to look for.
 
@@ -152,7 +171,6 @@ class ChatXMLParser(SessionParser):
         #    attrib = elem.attrib
         #    #God knows what those are good for. Debugging?
 
-    # Note: make sure this is overriding the superclass.parse. Need a keyword?
     def next_utterance(self):
         # Do xml-specific parsing of utterances.
         # The config so it knows what symbols to look for.
