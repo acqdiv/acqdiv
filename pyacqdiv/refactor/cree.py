@@ -1,37 +1,19 @@
-import parsers
 import factories
+import re
 from parselib import *
-
-class CreeParser(parsers.ChatXMLParser):
-
-    def next_utterance(self):
-
-        uf = CreeUtteranceFactory()
-        
-        for u in self.root.findall('.//u'):
-            yield uf.make_utterance(u), uf.next_word
-
 
 class CreeUtteranceFactory(factories.XmlUtteranceFactory):
 
-    def next_word(self, u):
-        #words = self._clean_words()
-        #wf = self.config['word_factory'](self)
-        words = self.raw.findall('.//w')
-        wf = CreeWordFactory(u)
-        for w in words:
-            yield wf.make_word(w)
-
-    def next_gloss(self, u):
+    def next_morpheme(self, u):
         # Cree has four different morphology tiers that may be aligned with words <w> and require parsing
         # In order to compare the morphology tiers (e.g. for alignment), they have to be stored in a temporary Vividict before they can be added to the corpus dic
-        mf = CreeMorphemeFactory(u)
+        mf = factories.XmlMorphemeFactory(u)
         morphology = Vividict()
            
         # split morphology tiers into words
         any_morphology = False
         for morph_tier in ('tarmor', 'actmor', 'mormea', 'mortyp'):
-            tier = u.find("a[@type='extension'][@flavor='" + morph_tier + "']")
+            tier = self.raw.find("a[@type='extension'][@flavor='" + morph_tier + "']")
             if tier is not None:
                 any_morphology = True
                 tier_name_JSON = xml_other_correspondences[morph_tier]
@@ -59,9 +41,9 @@ class CreeUtteranceFactory(factories.XmlUtteranceFactory):
                 
                 # check alignment with words that were found in <w> 
                 if len(words) != self.udata['length_in_words']:
-                    print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ': general word tier <w> has ' 
-                        + str(self.udata['length_in_words']) + ' words vs ' + str(len(words)) + ' in "' + morph_tier + '" (= ' 
-                        + tier_name_JSON + ')')
+                    #print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ': general word tier <w> has ' 
+                    #    + str(self.udata['length_in_words']) + ' words vs ' + str(len(words)) + ' in "' + morph_tier + '" (= ' 
+                    #    + tier_name_JSON + ')')
                     creadd(self.udata, 'warnings', 'broken alignment full_word : ' + tier_name_JSON)
                                         
                 # split words into morphemes, add to temporary Vividict
@@ -89,16 +71,16 @@ class CreeUtteranceFactory(factories.XmlUtteranceFactory):
         for morph_tier in ('mortyp', 'mormea', 'tarmor', 'actmor'):
             tier_name_JSON = xml_other_correspondences[morph_tier]
             if len(morphology[morph_tier]) != max_length_words and len(morphology[morph_tier]) != 0:
-                print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ': there should be ' 
-                    + str(max_length_words) + ' words in all tiers, but ' + morph_tier + ' (=' + tier_name_JSON + ') has only ' 
-                    + str(len(morphology[morph_tier]))) 
+                #print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ': there should be ' 
+                #    + str(max_length_words) + ' words in all tiers, but ' + morph_tier + ' (=' + tier_name_JSON + ') has only ' 
+                #    + str(len(morphology[morph_tier]))) 
                 creadd(self.udata, 'warnings', 'broken alignment between morphology tiers - word numbers don\'t match. Check' + tier_name_JSON)
             
         # go through words
-        for word_index in range(-1, max_length_words):
+        for word_index in range(0, max_length_words):
             
             # count up word index, extend list if necessary
-            word_index = list_index_up(word_index, self.udata['words'])
+            #word_index = list_index_up(word_index, self.udata['words'])
             
             # self.udata['words'][word_index]['morphemes'] is a list of morphemes
             self.udata['words'][word_index]['morphemes'] = []
@@ -108,21 +90,36 @@ class CreeUtteranceFactory(factories.XmlUtteranceFactory):
                 tier_name_JSON = xml_other_correspondences[morph_tier]
                 # check morpheme alignment
                 if len(morphology[morph_tier][word_index]) != max_length_morphemes and len(morphology[morph_tier][word_index]) != 0:
-                    print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ', word ' + str(word_index) + ': there should be ' 
-                        + str(max_length_morphemes) + ' morphemes in all tiers, but ' + morph_tier + ' (=' + tier_name_JSON + ') has only ' 
-                        + str(len(morphology[morph_tier][word_index])) + ' for this word')
+                   # print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ', word ' + str(word_index) + ': there should be ' 
+                   #     + str(max_length_morphemes) + ' morphemes in all tiers, but ' + morph_tier + ' (=' + tier_name_JSON + ') has only ' 
+                   #     + str(len(morphology[morph_tier][word_index])) + ' for this word')
                     creadd(self.udata['words'][word_index], 'warnings', 'broken alignment between morphology tiers - morpheme numbers don\'t match. Check ' + tier_name_JSON)    
+                # add morphemes to corpus dic
+                # set morpheme index
+                morpheme_index = -1
                 
-
-                
-                for m in morphology[morph_tier][word_index]:
+                while morpheme_index < (max_length_morphemes-1):
+                    
+                    morpheme_index += 1
+                    # check if list in Vividict is too short for present index
+                    if len(self.udata['words'][word_index]['morphemes']) <= morpheme_index:
+                        # if it is, append empty element to list to extend index
+                        self.udata['words'][word_index]['morphemes'].append(Vividict())
+                    
+                    m = morphology[morph_tier][word_index][morpheme_index]
                     if m:
                         # check for "?" attached to gloss; replace by warning that gloss is insecure
                         if re.search('\\w\?', morphology[morph_tier][word_index][morpheme_index]):
                              creadd(self.udata['words'][word_index]['morphemes'][morpheme_index], 'warnings', 'gloss insecure for tier ' + tier_name_JSON)
                              m = re.sub('\?', '', m)
+                        self.udata['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = m
 
-                        yield mf.make_morpheme(m)
+        for word_index in range(0, max_length_words):
+            for m in self.udata['words'][word_index]['morphemes']:
+                yield mf.make_morpheme(m)
+
+        # EOF word loop
+    # EOF Cree                    
 
     def _resolve_groups(self):
         super()._resolve_groups()
@@ -131,7 +128,7 @@ class CreeUtteranceFactory(factories.XmlUtteranceFactory):
     def _resolve_phonetic(self):
         for variant in ('actual', 'model'):
             tier_name_JSON = xml_other_correspondences[variant]
-            block = u.find('.//' + variant)
+            block = self.raw.find('.//' + variant)
             if block is not None:
                 words = {}
                 for w in block.findall('pw'):

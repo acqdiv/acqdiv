@@ -6,6 +6,7 @@ import configparser
 import glob
 import re
 import xml.etree.ElementTree as ET
+import cree
 
 from metadata import Imdi, Chat
 from factories import *
@@ -51,6 +52,7 @@ class CorpusConfigParser(configparser.ConfigParser):
         # TODO: peculiarities moved to [record_tiers]
         # self.peculiarities = dict(self.items('peculiarities'))
         self.format = self['corpus']['format']
+        self.corpus = self['corpus']['corpus']
 
         # ...And now any other additional things you want to do on
         # configfile load time.
@@ -61,13 +63,18 @@ class SessionParser(object):
 
     @staticmethod
     def create_parser(config, file_path):
+        corpus = config.corpus
         format = config.format
 
-        if format == "ChatXML":
-            return ChatXMLParser(config, file_path)
-        if format == "Toolbox":
-            return ToolboxParser(config, file_path)
-        assert 0, "Unknown format type: " + format
+        if corpus == "Cree":
+            return CreeParser(config, file_path)
+        else:
+            print("Unknown Corpus. Defaulting...")
+            if format == "ChatXML":
+                return ChatXMLParser(config, file_path)
+            if format == "Toolbox":
+                return ToolboxParser(config, file_path)
+            assert 0, "Unknown format type: " + format
 
     def __init__(self, config, file_path):
         self.config = config
@@ -177,8 +184,17 @@ class ChatXMLParser(SessionParser):
         uf = XmlUtteranceFactory()
 
         for u in self.root.findall('.//u'):
-            yield uf.make_utterance(u), uf.next_word
+            yield uf.make_utterance(u), uf.next_word, uf.next_morpheme
     
         # sample utterance processing call
         # ideally we'd just have to implement UtteranceFactory and be done here
         # also I supposed by "we" we mean "chysi"
+
+class CreeParser(ChatXMLParser):
+
+    def next_utterance(self):
+
+        uf = cree.CreeUtteranceFactory()
+        
+        for u in self.root.findall('.//u'):
+            yield uf.make_utterance(u), uf.next_word, uf.next_morpheme
