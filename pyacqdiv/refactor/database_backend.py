@@ -119,6 +119,16 @@ class Morpheme(Base):
     gloss = Column(Text, nullable=True, unique=False)
     pos = Column(Text, nullable=True, unique=False)
 
+class Warnings(Base):
+    """ Table for warnings found in parsing (should be record/multiple levels?)
+    """
+    __tablename__ = 'warnings'
+    id = Column(Text, primary_key=True)
+    parent_id = Column(Text, ForeignKey('utterance.id'))
+    warning = Column(Text, nullable=True, unique=False)
+
+    # Types of data errors in Toolbox files from Toolbox parsing:
+    # missing records (/ref)
 
 
 
