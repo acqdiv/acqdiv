@@ -102,7 +102,7 @@ class SessionProcessor(object):
                 u.id = u.parent_id + "_" + u.id
                 self.utterances.append(u)
 
-                for w, m, i in it.takewhile(lambda x: x[0] and x[1], it.zip_longest(words(u), morphemes(u), it.count())):
+                for w, m, i in it.takewhile(lambda x: x[0] or x[1], it.zip_longest(words(u), morphemes(u), it.count())):
                     w.parent_id = u.id
                     w.id = u.id + 'w' + str(i)
                     self.words.append(w)
