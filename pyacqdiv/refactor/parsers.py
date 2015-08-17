@@ -1,6 +1,7 @@
 """ Parsers for CHAT XML and Toolbox files for acqdiv corpora, and an acqdiv config file parser.
 """
 
+import os
 import sys
 import configparser
 import glob
@@ -69,7 +70,7 @@ class SessionParser(object):
         if corpus == "Cree":
             return CreeParser(config, file_path)
         else:
-            print("Unknown Corpus. Defaulting...")
+            # print("Unknown Corpus. Defaulting...")
             if format == "ChatXML":
                 return ChatXMLParser(config, file_path)
             if format == "Toolbox":
@@ -114,6 +115,13 @@ class ToolboxParser(SessionParser):
         # deal with the metadata -- hack to get the separate metadata file paths for IMDIs
         temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
         self.metadata_file_path = temp.replace(".txt", ".imdi")
+
+        # check for missing metadata files
+        """
+        if not os.path.isfile(self.metadata_file_path):
+            print("MISSING FILE:", self.metadata_file_path)
+            sys.exit(1)
+        """
         self.metadata_parser = Imdi(self.metadata_file_path)
 
     def get_session_metadata(self):
@@ -123,25 +131,18 @@ class ToolboxParser(SessionParser):
         return self.metadata_parser.metadata['session']
 
     def next_speaker(self):
-        """ Yield participants metadata for the Speaker table in the db """
+        """ Yield participants metadata for the Speaker table in the db
+        :return dictionary
+        """
         for speaker in self.metadata_parser.metadata['participants']:
             yield speaker
 
-    def next_record(self):
-        """ Yield session level data: returns ordered dictionary of config file record_tiers """
+    def next_utterance(self):
+        """ Yield session level utterance data:
+        returns ordered dictionary of config file record_tiers
+        """
         for record in self.session_file:
             yield record
-
-    # see next_record
-    def next_utterance(self):
-        # for utterance in self.body():
-        #    yield utterance
-
-        # Do toolbox-specific parsing of utterances.
-        # The config so it knows what symbols to look for.
-
-        # for utterance in self.
-        pass
 
 class ChatXMLParser(SessionParser):
     """ For Cree, Inuktitut, MiiPro, Miyata, Sesotho, Turkish, & Yucatec """
