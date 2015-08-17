@@ -38,9 +38,12 @@ def clean_chat_line(s):
          s=re.sub(r"/", r"", s) # remove "/" in *PARTICIPANT tiers
          s=re.sub(r"\+", r" ", s)
          s=re.sub(r"(\*[A-Z]{3}:\t)$\n", r"\1.\n", s) # add a dot at the end of empty *PARTICIPANT tiers
-         s=re.sub(r"\.\.\.", r" (...) ", s)
+         #s=re.sub(r"[^\(]\.\.\.[^\)]", r" (...) ", s)
+         #s=re.sub(r"\S\.\.\.\S", r" (...) ", s)
+         s=re.sub(r"([A-Z a-z])\.\.\.([A-Z a-z])", r"\1 (...) \2", s)
          s=re.sub(r"¿", r"", s) # remove "¿" in *PARTICIPANT tiers
          s=re.sub(r"¡", r"", s) # remove "¡" in *PARTICIPANT tiers
+         #s=re.sub(r"\.(.+)", r"", s) # no dots allowed in *PARTICIPANT tiers; replacing them by a comma
 
     if s.startswith("%spa"):
          s=re.sub(r"¿", r"", s) # remove "¿" in %spa tiers
@@ -56,6 +59,13 @@ def clean_chat_line(s):
     s=re.sub(r"@Pía un pollito.", r"%sit:\tPía un pollito.", s)
     s=re.sub(r"@Nefi burla a Aamando.", r"%sit:\tNeifi burla a Armando.", s)
 
+    s=re.sub(r"(\*[A-Z]{3}:)(.*?)\t$", r"\1\2", s) # remove tabs at the end of *PARTICIPANT tiers
+    s=re.sub(r"(%[a-z]{3,4}:)(.*?)\t$", r"\1\2", s) # remove tabs at the end of %xxx(x) tiers
+
+    if s.endswith((" ")):
+         s=re.sub(r" $\n", r"\n", s) # remove whitespaces at the end of lines
+
+
     # all tier names must be followed by a tab before the tier content starts (this block has to be in both edit_yua.py and code.py)
     #s=re.sub(r"(%[a-z]{3,4}:)\s*(.*?)$", r"\1\t\2\n", s)
     #s=re.sub(r"(\*[A-Z]{3}:)\s*(.*?)$", r"\1\t\2", s)
@@ -64,18 +74,16 @@ def clean_chat_line(s):
     s=re.sub(r"(%[a-z]{3,4}:)\s*$", r"\1\t\n", s)
     #s=re.sub(r"(\*[A-Z]{3}:)([A-Za-z]+)", r"\1\t\2", s)
     #s=re.sub(r"(%[a-z]{3,4}:)([A-Za-z]+)", r"\1\t\2", s)
-    s=re.sub(r"(\*[A-Z]{3}:) *\t* *([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
-    s=re.sub(r"(%[a-z]{3,4}:) *\t* *([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
+    s=re.sub(r"(\*[A-Z]{3}:) *\t* *([A-Za-záéíóú\[\(¡\?]+)", r"\1\t\2", s)
+    s=re.sub(r"(%[a-z]{3,4}:) *\t* *([A-Za-záéíóú\[\(¡\?]+)", r"\1\t\2", s)
     #s=re.sub(r"(\*[A-Z]{3}:) *([A-Za-z\[\(¡]*)", r"\1\t\2", s)
     #s=re.sub(r"(%[a-z]{3,4}:) *([A-Za-z\[\(¡])", r"\1\t\2", s)
     s=re.sub(r"(\*[A-Z]{3}:)\s*\n", r"\1\t\n", s)
     s=re.sub(r"(%[a-z]{3,4}:)\s*\n", r"\1\t\n", s)
     s=re.sub(r"(\*[A-Z]{3}:)\t\t([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
+    s=re.sub(r"(\*[A-Z]{3}:) *\.$", r"\1\t.", s)
+    s=re.sub(r"(%[a-z]{3,4}:) *\.$", r"\1\t.", s)
 
-
-    
-    if s.endswith((" ")):
-         s=re.sub(r" $\n", r"\n", s) # remove whitespaces at the end of lines
 
     #s=re.sub(r"(%xmor:\t)$\n", r"\1.\n", s) # add a dot at the end of an empty %xmor tier without terminator
     s=re.sub(r"^%xmor:\t\s*$", r"", s) # remove empty %xmor tiers
@@ -83,8 +91,12 @@ def clean_chat_line(s):
     s=re.sub(r"^%spa:\t\s*$", r"", s) # remove empty %spa tiers
 
     s=re.sub(r"^([\*%])(.*?),$", r"\1\2.", s) # replace a comma at the end of a line with a dot
+    s=re.sub(r"(%spa)(.*?)([^\.\!\?])$", r"\1\2\3.", s) # add a dot at the end of %spa tiers when there is no proper terminator
+    s=re.sub(r"(\*[A-Z]{3})(.*?)([^\.\!\?])$", r"\1\2\3.", s) # add a dot at the end of *PARTICIPANT tiers when there is no proper terminator
+    s=re.sub(r"(%xmor:\t)(.*?)\t", r"\1\2 ", s) # replace a tab in the content of an %xmor tier with a space
 
     s=re.sub(r"@End", r"@End\n", s) # add a newline after @End
+
 
 
     ### CHARACTER CLEANING ###
@@ -151,6 +163,8 @@ def clean_chat_line(s):
     s=re.sub(r"^(\*[A-Z]{3}:)(.*)¿(.*)$", r"\1\2\3", s) # not allowed in a *PARTICIPANT tier
     s=re.sub(r"^(%xpho:\t)(.*)¿(.*)$", r"\1\2\3", s) # not allowed in a %pho tier
     s=re.sub(r"^(%spa:\t)(.*)¿$", r"\1\2\?", s) # at the end of a %spa tier, "¿" has to be "?"
+
+    s=re.sub(r"¿", r"", s) # "¿" not allowed anywhere
 
 
     '''
@@ -230,8 +244,7 @@ def clean_chat_line(s):
     s=re.sub(r"(\*[A-Z]{3}:)\t\t([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
     '''
 
-    s=re.sub(r"(\*[A-Z]{3}:)(.*?)\t$", r"\1\2", s) # remove tabs at the end of *PARTICIPANT tiers
-    s=re.sub(r"(%[a-z]{3,4}:)(.*?)\t$", r"\1\2", s) # remove tabs at the end of %xxx(x) tiers
+
 
     # The following block is commented out for the moment, as these characters seem to be allowed, and have a meaning.
     '''

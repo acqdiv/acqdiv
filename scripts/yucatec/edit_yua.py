@@ -32,6 +32,7 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"\*PEPE:", r"*PEP:", line)
                 line=re.sub(r"\*ABUE:", r"*ABU:", line)
                 line=re.sub(r"\*MARI:", r"*MAR:", line)
+                line=re.sub(r"\*MAR[^:]", r"*MAR:", line)
                 line=re.sub(r"\*CHIC:", r"*CHI:", line)
                 line=re.sub(r"\*SANI:", r"*SAN:", line)
                 line=re.sub(r"\*ABUELA:", r"*ABU:", line)
@@ -108,6 +109,7 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"%pho;", r"%xpho:", line)
                 line=re.sub(r"^pho:", r"%xpho:", line)
                 line=re.sub(r"%PHO:", r"%xpho:", line)
+                line=re.sub(r"% pho:", r"%xpho:", line)
                 line=re.sub(r"%pho:", r"%xpho:", line)
 
                 #unification %xmor tier
@@ -190,14 +192,16 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"(%[a-z]{3,4}:)\s*$", r"\1\t\n", line)
                 #line=re.sub(r"(\*[A-Z]{3}:)([A-Za-z]+)", r"\1\t\2", line)
                 #line=re.sub(r"(%[a-z]{3,4}:)([A-Za-z]+)", r"\1\t\2", line)
-                line=re.sub(r"(\*[A-Z]{3}:) *\t* *([A-Za-z\[\(¡\?]+)", r"\1\t\2", line)
-                line=re.sub(r"(%[a-z]{3,4}:) *\t* *([A-Za-z\[\(¡\?]+)", r"\1\t\2", line)
+                line=re.sub(r"(\*[A-Z]{3}:) *\t* *([A-Za-záéíóú\[\(¡\?]+)", r"\1\t\2", line)
+                line=re.sub(r"(%[a-z]{3,4}:) *\t* *([A-Za-záéíóú\[\(¡\?]+)", r"\1\t\2", line)
                 #line=re.sub(r"(\*[A-Z]{3}:) *([A-Za-z\[\(¡]*)", r"\1\t\2", line)
                 #line=re.sub(r"(%[a-z]{3,4}:) *([A-Za-z\[\(¡])", r"\1\t\2", line)
                 line=re.sub(r"(\*[A-Z]{3}:)\s*\n", r"\1\t\n", line)
                 line=re.sub(r"(%[a-z]{3,4}:)\s*\n", r"\1\t\n", line)
                 line=re.sub(r"(\*[A-Z]{3}:)\t\t([A-Za-z\[\(¡\?]+)", r"\1\t\2", line)
                 line=re.sub(r"(%spa:)\t\t([A-Za-z\[\(¡\?]+)", r"\1\t\2", line)
+                line=re.sub(r"(\*[A-Z]{3}:) *\.$", r"\1\t.", line)
+                line=re.sub(r"(%[a-z]{3,4}:) *\.$", r"\1\t.", line)
 
                 if line.startswith("%xpho"):
                     line=re.sub(r"\-", r"", line) # remove "-" in %pho tiers
