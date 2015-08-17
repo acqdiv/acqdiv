@@ -34,9 +34,8 @@ class XmlUtteranceFactory(Factory):
         self._clean_words()
 
     def _get_u_data(self):
-
         # get utterance ID and speaker ID
-        self.u.id = self.raw.attrib['uID']
+        self.u.utterance_id = self.raw.attrib['uID']
         self.u.speaker_id = self.raw.attrib['who']
 
         # various optional tags self.rawnder <u>
