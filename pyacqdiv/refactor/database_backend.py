@@ -74,19 +74,28 @@ class Utterance(Base):
 
     id = Column(Text, primary_key=True)
     parent_id = Column(Text, ForeignKey('session.session_id'))
-    speaker_id = Column(Text, nullable=False, unique=False)
+    speaker_id = Column(Text, nullable=True, unique=False)
     #speaker_label = Column(Text, nullable=True, unique=False)
+    utterance_id = Column(Text, nullable=True, unique=False)
     timestamp_start = Column(Text, nullable=True, unique=False)
     timestamp_end = Column(Text, nullable=True, unique=False)
-    u_orthographic = Column(Text, nullable=True, unique=False)
-    u_phonetic = Column(Text, nullable=True, unique=False)
+    u_orthographic = Column(Text, nullable=True, unique=False) # orthographic utterance
+    u_phonetic = Column(Text, nullable=True, unique=False) # phonetic utterance
+    morpheme = Column(Text, nullable=True, unique=False) # morpheme line
+    word = Column(Text, nullable=True, unique=False) # words line
+    pos = Column(Text, nullable=True, unique=False) # parts of speech line
     sentence_type = Column(Text, nullable=True, unique=False)
     translation = Column(Text, nullable=True, unique=False)
     comment = Column(Text, nullable=True, unique=False)
+    addressee = Column(Text, nullable=True, unique=False) # exists at least in Russian
+    gloss = Column(Text, nullable=True, unique=False) # what to do with the "gloss"?
+
     #Morphemes = sa.Column(sa.Text, nullable=False, unique=False) # concatenated MorphemeIDs per utterance
     #Words = sa.Column(sa.Text, nullable=False, unique=True) # concatenated WordIDs per utterance
 
     #Session = sa.relationship('Session', backref=backref('Utterances', order_by=id))
+
+
 
 class Word(Base):
     __tablename__ = 'words'
@@ -97,6 +106,29 @@ class Word(Base):
     word = Column(Text, nullable=True, unique=False)
     parent_id = Column(Text, ForeignKey('utterance.id'))
     #Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
+
+class Morpheme(Base):
+    __tablename__ = 'morphemes'
+
+    # fk...
+    # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
+    id = Column(Text, primary_key=True)
+    parent_id = Column(Text, ForeignKey('utterance.id'))
+    morpheme = Column(Text, nullable=True, unique=False)
+    morpheme_target = Column(Text, nullable=True, unique=False)
+    gloss = Column(Text, nullable=True, unique=False)
+    pos = Column(Text, nullable=True, unique=False)
+
+class Warnings(Base):
+    """ Table for warnings found in parsing (should be record/multiple levels?)
+    """
+    __tablename__ = 'warnings'
+    id = Column(Text, primary_key=True)
+    parent_id = Column(Text, ForeignKey('utterance.id'))
+    warning = Column(Text, nullable=True, unique=False)
+
+    # Types of data errors in Toolbox files from Toolbox parsing:
+    # missing records (/ref)
 
 
 

@@ -17,7 +17,8 @@ if __name__=="__main__":
 
     # corpora
     #configs = ['Chintang.ini', 'Cree.ini']
-    configs = ['Cree.ini']
+    configs = ['Chintang.ini']
+    #configs = ['Cree.ini']
     for config in configs:
         # Parse the config file and call the sessions processor
         cfg = CorpusConfigParser()

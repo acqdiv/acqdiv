@@ -5,7 +5,7 @@ def clean_chat_line(s):
 
     ### IMPORTANT NOTE: careful with all rules involving "¡", "¿", apostrophe/inverted comma. Check that ordering is correct
 
-    s = re.sub("(^[\*%]\S+\t+[^\t]+)\t", "\1", s)
+    #s = re.sub("(^[\*%]\S+\t+[^\t]+)\t", "\1", s)
     s = re.sub("(\w)['’ʼ]", "\\1ʔ", s)
     s = re.sub("['’ʼ](\w)", "ʔ\\1", s)
     s = re.sub("(\w)['’ʼ](\w)", "\\1ʔ\\2", s)
@@ -24,6 +24,27 @@ def clean_chat_line(s):
 
     ### LINE CLEANING ###
     s=re.sub(r"^\.\s*([\*%])", r"\1", s) # remove a dot and/or spaces at the beginning of a line
+
+
+    if s.startswith("%xpho"):
+         s=re.sub(r"\-", r"", s) # remove "-" in %pho tiers
+         s=re.sub(r"\.", r"", s) # remove dots in %pho tiers
+         s=re.sub(r"\/", r"", s) # remove "/" in %pho tiers
+         #s=re.sub(r" $\n", r"\n", s) # remove whitespaces at the end of %pho tiers
+         s=re.sub(r"\s[\.\?\!;,]+\s*$\n", r"\n", s) # remove dot/ending mark in %pho tiers
+         s=re.sub(r" ", r"", s) # remove weird whitespaces in %pho tiers
+
+    if s.startswith("*"):
+         s=re.sub(r"/", r"", s) # remove "/" in *PARTICIPANT tiers
+         s=re.sub(r"\+", r" ", s)
+         s=re.sub(r"(\*[A-Z]{3}:\t)$\n", r"\1.\n", s) # add a dot at the end of empty *PARTICIPANT tiers
+         s=re.sub(r"\.\.\.", r" (...) ", s)
+         s=re.sub(r"¿", r"", s) # remove "¿" in *PARTICIPANT tiers
+         s=re.sub(r"¡", r"", s) # remove "¡" in *PARTICIPANT tiers
+
+    if s.startswith("%spa"):
+         s=re.sub(r"¿", r"", s) # remove "¿" in %spa tiers
+
 
 
     ### TIER CLEANING ###
@@ -51,12 +72,9 @@ def clean_chat_line(s):
     s=re.sub(r"(%[a-z]{3,4}:)\s*\n", r"\1\t\n", s)
     s=re.sub(r"(\*[A-Z]{3}:)\t\t([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
 
-    '''
-    if s.startswith("%xmor"):
-         s=re.sub(r"\s([\.\?\!;,]+)$", r"\1", s) # remove dot/ending mark in %mor tiers
-    '''
 
-    if s.endswith(" "):
+    
+    if s.endswith((" ")):
          s=re.sub(r" $\n", r"\n", s) # remove whitespaces at the end of lines
 
     #s=re.sub(r"(%xmor:\t)$\n", r"\1.\n", s) # add a dot at the end of an empty %xmor tier without terminator
@@ -68,10 +86,6 @@ def clean_chat_line(s):
 
     s=re.sub(r"@End", r"@End\n", s) # add a newline after @End
 
-    '''
-    if s.startswith("%pho"):
-         s=re.sub(r"\s[\.\?\!;,]+$\n", r"\n", s) # remove dot/ending mark in %pho tiers
-    '''
 
     ### CHARACTER CLEANING ###
     # cf. ../notes/yua-chars.ods for notes on characters that need manual attention and/or need to be interpreted by Barbara (corpus owner)
@@ -129,7 +143,7 @@ def clean_chat_line(s):
     s=re.sub("ń", "ñ", s)
 
     # dieresis
-    s=re.sub(r"^(%spa:\t+)¨(.*)\?", r"\1¿\2?", s) # replace a dieresis at the beginning of a %spa tier with "¿"
+    s=re.sub(r"^(%spa:\t+)¨(.*)\?", r"\1\2?", s) # remove the dieresis at the beginning of a %spa tier
     s=re.sub(r"^(%xpho:\t+)¨", r"\1", s) # remove the dieresis at the beginning of a %pho tier
     s=re.sub(r"^(\*[A-Z]{3}:\t+)¨", r"\1", s) # remove the dieresis at the beginning of a *PARTICIPANT tier
 
@@ -185,6 +199,7 @@ def clean_chat_line(s):
     s = re.sub("^@Sex.*", "", s)
     '''
 
+
     if s.startswith("*"):
         s=re.sub("##", "", s)
         s=re.sub("#", "", s)
@@ -197,6 +212,26 @@ def clean_chat_line(s):
     if s.startswith("%xpho"):
         s=s.lower() # no capital letters allowed in %pho tiers
 
+    '''
+    # all tier names must be followed by a tab before the tier content starts (this block has to be in both edit_yua.py and code.py)
+    #s=re.sub(r"(%[a-z]{3,4}:)\s*(.*?)$", r"\1\t\2\n", s)
+    #s=re.sub(r"(\*[A-Z]{3}:)\s*(.*?)$", r"\1\t\2", s)
+    #s=re.sub(r"(%[a-z]{3,4}:)\s*(.*?)$", r"\1\t\2", s)
+    s=re.sub(r"(\*[A-Z]{3}:)\s*$", r"\1\t\n", s)
+    s=re.sub(r"(%[a-z]{3,4}:)\s*$", r"\1\t\n", s)
+    #s=re.sub(r"(\*[A-Z]{3}:)([A-Za-z]+)", r"\1\t\2", s)
+    #s=re.sub(r"(%[a-z]{3,4}:)([A-Za-z]+)", r"\1\t\2", s)
+    s=re.sub(r"(\*[A-Z]{3}:) *\t* *([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
+    s=re.sub(r"(%[a-z]{3,4}:) *\t* *([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
+    #s=re.sub(r"(\*[A-Z]{3}:) *([A-Za-z\[\(¡]*)", r"\1\t\2", s)
+    #s=re.sub(r"(%[a-z]{3,4}:) *([A-Za-z\[\(¡])", r"\1\t\2", s)
+    s=re.sub(r"(\*[A-Z]{3}:)\s*\n", r"\1\t\n", s)
+    s=re.sub(r"(%[a-z]{3,4}:)\s*\n", r"\1\t\n", s)
+    s=re.sub(r"(\*[A-Z]{3}:)\t\t([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
+    '''
+
+    s=re.sub(r"(\*[A-Z]{3}:)(.*?)\t$", r"\1\2", s) # remove tabs at the end of *PARTICIPANT tiers
+    s=re.sub(r"(%[a-z]{3,4}:)(.*?)\t$", r"\1\2", s) # remove tabs at the end of %xxx(x) tiers
 
     # The following block is commented out for the moment, as these characters seem to be allowed, and have a meaning.
     '''
@@ -207,5 +242,9 @@ def clean_chat_line(s):
         s = re.sub('[\(\)]\\s*', '', s) # delete brackets and following spaces
         s = re.sub('%eng:\\s+', '%eng:\\t', s) # replace any spaces left by tab
     '''
+
+    if s.startswith("*"):
+        s=re.sub(r"(\(\.\.\.\))$", r"\1.", s) # add a dot at the end of *PARTICIPANT tiers ending in "(...)"
+
 
     return s
