@@ -77,6 +77,7 @@ class ToolboxFile(object):
                 self.header, self.footer = header, footer
                 """
 
+
     def make_rec(self, data):
         return data.decode(self.encoding)
 
@@ -111,11 +112,11 @@ if __name__ == "__main__":
 
     cfg = CorpusConfigParser()
 
-    # cfg.read("Chintang.ini")
-    # f = "../../corpora/Chintang/toolbox/CLDLCh1R01S02.txt"
+    cfg.read("Chintang.ini")
+    f = "../../corpora/Chintang/toolbox/CLDLCh1R01S02.txt"
 
-    cfg.read("Russian.ini")
-    f = "../../corpora/Russian/toolbox/A00210817.txt"
+    # cfg.read("Russian.ini")
+    # f = "../../corpora/Russian/toolbox/A00210817.txt"
 
     t = ToolboxFile(cfg, f)
     for record in t:

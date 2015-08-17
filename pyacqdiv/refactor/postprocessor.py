@@ -19,3 +19,5 @@ session = Session()
 
 for instance in session.query(Utterance).order_by(Utterance.id):
     print(instance.word)
+
+session.close()
