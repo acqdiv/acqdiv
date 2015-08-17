@@ -49,7 +49,14 @@ class SessionProcessor(object):
         self.language = self.config['corpus']['language']
         self.corpus = self.config['corpus']['corpus']
         self.format = self.config['corpus']['format']
+
+        # attach session file path to config
+        filename = os.path.splitext(os.path.basename(self.file_path))[0]
+        self.config.set('paths', 'filename', filename)
+
+        # start up db session
         self.Session = sessionmaker(bind=engine)
+
 
     def process_session(self):
         # Config contains map of standard label -> local label.
@@ -129,8 +136,8 @@ class SessionProcessor(object):
             session.add(self.session_entry)
             session.add_all(self.speaker_entries)
             session.add_all(self.utterances)
-            session.add_all(self.words)
-            session.add_all(self.morphemes)
+            # session.add_all(self.words)
+            # session.add_all(self.morphemes)
             session.commit()
             # self.db_session.add(session_metadata)
             # self.db_session.add_all(self.speakers)

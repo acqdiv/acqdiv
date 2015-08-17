@@ -16,10 +16,9 @@ class ToolboxFile(object):
 
     def __init__(self, config, file_path):
         self.path = file_path
-        filename = os.path.basename(self.path)
-        self.session_id = os.path.splitext(filename)[0]
         self.config = config
-        self.record_marker = config['record_tiers']['record_marker']
+        self.session_id = self.config['record_tiers']['record_marker']
+        self.record_marker = self.config['record_tiers']['record_marker']
 
         #self.tier_matches = collections.OrderedDict()
         #for k, v in self.config['record_tiers'].items():
@@ -60,6 +59,7 @@ class ToolboxFile(object):
                         content = "None"
                         if len(tokens) > 1:
                             content = tokens[1].decode()
+                            content = re.sub('\\s+', ' ', content)
 
                         if field_marker in self.field_markers:
                             utterances[self.config['record_tiers'][field_marker]] = content

@@ -17,6 +17,12 @@ engine = db_connect()
 Session = sessionmaker(bind=engine)
 session = Session()
 
+# Post processing of Toolbox Utterance data
+
+# Russian & Indonesian: garbage imported from CHAT
+content = re.sub('xxx?|www', '???', content)
+
+
 for instance in session.query(Utterance).order_by(Utterance.id):
     print(instance.word)
 
