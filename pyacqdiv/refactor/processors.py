@@ -77,16 +77,17 @@ class SessionProcessor(object):
             d['parent_id'] = self.file_path
             self.speaker_entries.append(Speaker(**d))
 
-        self.records = []
-        for record in self.parser.next_record():
-            self.records.append(Utterance(**record))
+        # Get toolbox utterance level data
+        self.utterances = []
+        for utterance in self.parser.next_utterance():
+            self.utterances.append(Utterance(**utterance))
 
         # TODO(stiv): Need to add to each utterance some kind of joining key.
         # I think it makes sense to construct/add it here, since this is where
         # we do database stuff, and not in the parser (there's no reason the parser
         # should have to know about primary keys - it's a parser, not a db)
 
-        """ @CHYSI: THIS FAILS WHEN ! CREE -- commenting out:
+        """
         #TODO(chysi): this doesn't look like a generator to me!!!
         self.utterances = []
         self.words = []
@@ -106,10 +107,11 @@ class SessionProcessor(object):
                 m.parent_id = u.id
                 m.id = u.id + 'm' + str(i)
                 self.morphemes.append(m)
+        """
 
         # Then write it to the backend.
         # commit(session_metadata, speakers, utterances)
-        """
+
 
     def commit(self):
         # def commit(self, session_metadata, speakers, utterances):
@@ -124,8 +126,8 @@ class SessionProcessor(object):
             session.add(self.session_entry)
             session.add_all(self.speaker_entries)
             session.add_all(self.utterances)
-            session.add_all(self.words)
-            session.add_all(self.morphemes)
+            # session.add_all(self.words)
+            # session.add_all(self.morphemes)
             session.commit()
             # self.db_session.add(session_metadata)
             # self.db_session.add_all(self.speakers)
