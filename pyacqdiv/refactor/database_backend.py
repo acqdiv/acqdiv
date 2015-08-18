@@ -52,7 +52,7 @@ class Session(Base):
 
 
 class Speaker(Base):
-    # TODO: we will have to make a link between
+    # TODO: we will have to make a link between speakers and speakers in each session/record/utterance
 
     __tablename__ = 'speaker'
 

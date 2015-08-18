@@ -20,8 +20,8 @@ if __name__=="__main__":
 
     # configs = ['Chintang.ini', 'Cree.ini', 'Russian.ini']
     # configs = ['Chintang.ini']
-    # configs = ['Cree.ini']
-    configs = ['Indonesian.ini']
+    configs = ['Cree.ini']
+    # configs = ['Indonesian.ini']
     # configs = ['Russian.ini']
 
     for config in configs:

@@ -7,8 +7,10 @@
 #  - additionally calculated stuff like AgeInDays?
 #  - morphological label unification
 #  - BB's wish for MorphemeID+MorphemeID, WordID+WordID, etc.
+#  - deal with age conversion, etc.
 
 # TODO: identify body parsing errors and fixes
+
 
 from sqlalchemy.orm import sessionmaker
 from database_backend import *
