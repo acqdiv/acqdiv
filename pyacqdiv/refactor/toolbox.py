@@ -38,7 +38,7 @@ class ToolboxFile(object):
 
         # TODO: get sentence type, etc...
 
-
+    # TODO: return utterances, words, morphemes, as ordered dictionaries?
     def __iter__(self):
         record_marker = re.compile(br'\\ref')
         with open (self.path, 'rb') as f:
@@ -88,6 +88,15 @@ class ToolboxFile(object):
 class Record(collections.OrderedDict):
     """ Toolbox records in file """
     # report if record is missing
+    def __init__(**kwargs):
+        pass
+
+    def clean(self):
+        # use Robert's cleaning functions
+        pass
+
+class UtteranceType(object):
+    # form to function mapping from punctuation to sentence type
     pass
 
 
@@ -112,11 +121,15 @@ if __name__ == "__main__":
 
     cfg = CorpusConfigParser()
 
-    cfg.read("Chintang.ini")
-    f = "../../corpora/Chintang/toolbox/CLDLCh1R01S02.txt"
+    # cfg.read("Chintang.ini")
+    # f = "../../corpora/Chintang/toolbox/CLDLCh1R01S02.txt"
 
     # cfg.read("Russian.ini")
     # f = "../../corpora/Russian/toolbox/A00210817.txt"
+
+    cfg.read("Indonesian.ini")
+    f = "../../corpora/Indonesian/toolbox/HIZ-010601.txt"
+
 
     t = ToolboxFile(cfg, f)
     for record in t:

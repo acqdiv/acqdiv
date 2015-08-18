@@ -113,10 +113,22 @@ class ToolboxParser(SessionParser):
         self.session_file = ToolboxFile(self.config, self.file_path)
 
         # deal with the metadata -- hack to get the separate metadata file paths for IMDIs
-        temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
-        self.metadata_file_path = temp.replace(".txt", ".imdi")
+        # decision time: IMDI (Russian and Chintang) or XML (Indonesian)
+        if self.config['metadata']['type'] == "XML":
+            temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
+            self.metadata_file_path = temp.replace(".txt", ".xml")
+            self.metadata_parser = Chat(self.metadata_file_path)
 
-        # check for missing metadata files
+        elif self.config['metadata']['type'] == "IMDI":
+            temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
+            self.metadata_file_path = temp.replace(".txt", ".imdi")
+            self.metadata_parser = Imdi(self.metadata_file_path)
+
+        else:
+            assert 0, "Unknown format type: "#  + format
+
+
+        # a check for missing metadata files
         """
         if not os.path.isfile(self.metadata_file_path):
             print("MISSING FILE:", self.metadata_file_path)
