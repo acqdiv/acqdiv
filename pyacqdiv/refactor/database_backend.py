@@ -35,6 +35,7 @@ class Session(Base):
     __tablename__ = 'session'
 
     id = Column(Integer, primary_key=True)
+    # session_id = Column(Text, nullable=True, unique=False)
     session_id = Column(Text, nullable=False, unique=False)
     transcript_id = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
@@ -51,7 +52,7 @@ class Session(Base):
 
 
 class Speaker(Base):
-    # TODO: we will have to make a link between
+    # TODO: we will have to make a link between speakers and speakers in each session/record/utterance
 
     __tablename__ = 'speaker'
 
@@ -69,24 +70,68 @@ class Speaker(Base):
     def __repr__(self):
         return "Speaker(%s)" % (self.speaker_label)
 
+
 class Utterance(Base):
     __tablename__ = 'utterance'
 
-    id = Column(Text, primary_key=True)
+    id = Column(Integer, primary_key=True)
     parent_id = Column(Text, ForeignKey('session.session_id'))
-    speaker_id = Column(Text, nullable=False, unique=False)
-    #speaker_label = Column(Text, nullable=True, unique=False)
+    speaker_id = Column(Text, nullable=True, unique=False)
+    speaker_label = Column(Text, nullable=True, unique=False)
+    utterance_id = Column(Text, nullable=True, unique=False)
     timestamp_start = Column(Text, nullable=True, unique=False)
     timestamp_end = Column(Text, nullable=True, unique=False)
-    u_orthographic = Column(Text, nullable=True, unique=False)
-    u_phonetic = Column(Text, nullable=True, unique=False)
+    u_orthographic = Column(Text, nullable=True, unique=False) # orthographic utterance
+    u_phonetic = Column(Text, nullable=True, unique=False) # phonetic utterance
+    morpheme = Column(Text, nullable=True, unique=False) # morpheme line
+    word = Column(Text, nullable=True, unique=False) # words line
+    pos = Column(Text, nullable=True, unique=False) # parts of speech line
     sentence_type = Column(Text, nullable=True, unique=False)
     translation = Column(Text, nullable=True, unique=False)
     comment = Column(Text, nullable=True, unique=False)
+    addressee = Column(Text, nullable=True, unique=False) # exists at least in Russian
+    gloss = Column(Text, nullable=True, unique=False) # what to do with the "gloss"?
+
     #Morphemes = sa.Column(sa.Text, nullable=False, unique=False) # concatenated MorphemeIDs per utterance
     #Words = sa.Column(sa.Text, nullable=False, unique=True) # concatenated WordIDs per utterance
 
     #Session = sa.relationship('Session', backref=backref('Utterances', order_by=id))
+
+class Word(Base):
+    __tablename__ = 'words'
+
+    # fk...
+    # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
+    id = Column(Integer, primary_key=True)
+    word_id = Column(Text, nullable=True, unique=False)
+    word = Column(Text, nullable=True, unique=False)
+    parent_id = Column(Text, ForeignKey('utterance.id'))
+    #Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
+
+class Morpheme(Base):
+    __tablename__ = 'morphemes'
+
+    # fk...
+    # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
+    id = Column(Integer, primary_key=True)
+    morpheme_id = Column(Text, nullable=True, unique=False)
+    parent_id = Column(Text, ForeignKey('utterance.id'))
+    morpheme = Column(Text, nullable=True, unique=False)
+    morpheme_target = Column(Text, nullable=True, unique=False)
+    gloss = Column(Text, nullable=True, unique=False)
+    pos = Column(Text, nullable=True, unique=False)
+
+class Warnings(Base):
+    # Table for warnings found in parsing (should be record/multiple levels?)
+    # Types of data errors in Toolbox files from Toolbox parsing:
+    # missing records (/ref)
+
+    __tablename__ = 'warnings'
+
+    id = Column(Text, primary_key=True)
+    parent_id = Column(Text, ForeignKey('utterance.id'))
+    warning = Column(Text, nullable=True, unique=False)
+
 
 
 
@@ -165,15 +210,6 @@ class Utterance(Model):
 
     Session = sa.relationship('Session', backref=backref('Utterances', order_by=id))
 
-class Word(Model):
-    __tablename__ = 'Words'
-
-    # fk...
-    # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
-    ID = sa.Column(sa.Text, nullable=False, unique=True)
-    Word = sa.Column(sa.Text, nullable=False, unique=True)
-    UtteranceID = sa.Column(sa.Text, ForeignKey('Utterances.ID'))
-    Utterance = sa.relationship('Utterance',  backref=backref('Words', order_by=ID))
 
 class Morpheme(Model):
     __tablename__ = 'Morphemes'

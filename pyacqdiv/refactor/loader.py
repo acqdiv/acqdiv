@@ -4,20 +4,26 @@
 from processors import *
 from parsers import *
 from database_backend import *
+import time
 
 # TODO: setup the config files, e.g. Chintang.ini, Cree.ini...
 #  - define the corpus/session-specific attributes in each config; see example in Chintang
 #  - integrate metadata stuff
 
 if __name__=="__main__":
-    # Initialize database connection and drop and then create tables.
+    start_time = time.time()
+
+    # Initialize database connection and drop and then create tables on each call.
     # http://docs.sqlalchemy.org/en/latest/orm/session_basics.html#session-faq-whentocreate
     engine = db_connect()
     create_tables(engine)
 
-    # corpora
-    #configs = ['Chintang.ini', 'Cree.ini']
+    # configs = ['Chintang.ini', 'Cree.ini', 'Russian.ini']
+    # configs = ['Chintang.ini']
     configs = ['Cree.ini']
+    # configs = ['Indonesian.ini']
+    # configs = ['Russian.ini']
+
     for config in configs:
         # Parse the config file and call the sessions processor
         cfg = CorpusConfigParser()
@@ -27,11 +33,6 @@ if __name__=="__main__":
         c = CorpusProcessor(cfg, engine)
         c.process_corpus()
 
+        # TODO: call the post-processor
 
-# TODO postprocessing tasks:
-#  - metadata label unification?
-#  - date reformatting from the all the various input formats...
-#  - additionally calculated stuff like AgeInDays?
-#  - morphological label unification (i don't think this should be
-#    in the parser, but in a separate post-processing module
-#  - BB's wish for MorphemeID+MorphemeID, WordID+WordID, etc.
+    print("--- %s seconds ---" % (time.time() - start_time))

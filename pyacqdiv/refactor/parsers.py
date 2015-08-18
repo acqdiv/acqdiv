@@ -1,11 +1,13 @@
 """ Parsers for CHAT XML and Toolbox files for acqdiv corpora, and an acqdiv config file parser.
 """
 
+import os
 import sys
 import configparser
 import glob
 import re
 import xml.etree.ElementTree as ET
+import cree
 
 from metadata import Imdi, Chat
 from factories import *
@@ -13,6 +15,7 @@ from factories import *
 
 # TODO: integrate the Corpus specific parsing routines from the body parser
 # TODO: integrate the metadata parsing
+from toolbox import ToolboxFile
 
 
 class CorpusConfigParser(configparser.ConfigParser):
@@ -47,8 +50,10 @@ class CorpusConfigParser(configparser.ConfigParser):
         # Load up a dictionary of 'peculiarities'; these map the 'local'
         # symbols used in the corpus to the 'standard' symbols.
         # TODO: fix the inline commenting "#"
-        self.peculiarities = dict(self.items('peculiarities'))
+        # TODO: peculiarities moved to [record_tiers]
+        # self.peculiarities = dict(self.items('peculiarities'))
         self.format = self['corpus']['format']
+        self.corpus = self['corpus']['corpus']
 
         # ...And now any other additional things you want to do on
         # configfile load time.
@@ -59,18 +64,27 @@ class SessionParser(object):
 
     @staticmethod
     def create_parser(config, file_path):
+        corpus = config.corpus
         format = config.format
 
-        if format == "ChatXML":
-            return ChatXMLParser(config, file_path)
-        if format == "Toolbox":
-            return ToolboxParser(config, file_path)
-        assert 0, "Unknown format type: " + format
+        if corpus == "Cree":
+            return CreeParser(config, file_path)
+        else:
+            # print("Unknown Corpus. Defaulting...")
+            if format == "ChatXML":
+                return ChatXMLParser(config, file_path)
+            if format == "Toolbox":
+                return ToolboxParser(config, file_path)
+            assert 0, "Unknown format type: " + format
 
     def __init__(self, config, file_path):
         self.config = config
         self.file_path = file_path
         # SessionParser.create_parser(self.config, self.file_path)
+
+    # TODO: get SHA1 fingerprint of file -- provides unique data ID for db
+    def sha1(self):
+        pass
 
     # To be overridden in subclasses.
     # Session metadata for the Sessions table in the db
@@ -85,18 +99,42 @@ class SessionParser(object):
     def next_utterance(self):
         pass
 
+    # Generator to yield Utterances for the Utterance table in the db
+    def next_record(self):
+        pass
+
 class ToolboxParser(SessionParser):
-    """ For Chintang, Indonesian, Russian, & Dene  """
+    """ For Chintang, Indonesian, Russian, & potentially Dene  """
 
     def __init__(self, config, file_path):
         SessionParser.__init__(self, config, file_path)
 
-        # init metadata file object -- hack to get the separate metadata file path
-        temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
-        self.metadata_file_path = temp.replace(".txt", ".imdi")
-        self.metadata_parser = Imdi(self.metadata_file_path)
+        # deal with the session body utterance, etc. data
+        self.session_file = ToolboxFile(self.config, self.file_path)
 
-        # open a toolbox option given a file path
+        # deal with the metadata -- hack to get the separate metadata file paths for IMDIs
+        # decision time: IMDI (Russian and Chintang) or XML (Indonesian)
+        if self.config['metadata']['type'] == "XML":
+            temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
+            self.metadata_file_path = temp.replace(".txt", ".xml")
+            self.metadata_parser = Chat(self.metadata_file_path)
+
+        elif self.config['metadata']['type'] == "IMDI":
+            temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
+            self.metadata_file_path = temp.replace(".txt", ".imdi")
+            self.metadata_parser = Imdi(self.metadata_file_path)
+
+        else:
+            assert 0, "Unknown format type: "#  + format
+
+
+        # a check for missing metadata files
+        """
+        if not os.path.isfile(self.metadata_file_path):
+            print("MISSING FILE:", self.metadata_file_path)
+            sys.exit(1)
+        """
+        self.metadata_parser = Imdi(self.metadata_file_path)
 
     def get_session_metadata(self):
         # Do toolbox-specific parsing of session metadata.
@@ -104,18 +142,19 @@ class ToolboxParser(SessionParser):
         # The config so it knows what symbols to look for.
         return self.metadata_parser.metadata['session']
 
-    # Generator to yield participants metadata for the Speaker table in the db
     def next_speaker(self):
+        """ Yield participants metadata for the Speaker table in the db
+        :return dictionary
+        """
         for speaker in self.metadata_parser.metadata['participants']:
             yield speaker
 
-    # Note: make sure this is overriding the superclass.parse. Need a keyword?
     def next_utterance(self):
-        # Do toolbox-specific parsing of utterances.
-        # The config so it knows what symbols to look for.
-
-        # for utterance in self.
-        pass
+        """ Yield session level utterance data:
+        returns ordered dictionary of config file record_tiers
+        """
+        for record in self.session_file:
+            yield record
 
 class ChatXMLParser(SessionParser):
     """ For Cree, Inuktitut, MiiPro, Miyata, Sesotho, Turkish, & Yucatec """
@@ -152,15 +191,23 @@ class ChatXMLParser(SessionParser):
         #    attrib = elem.attrib
         #    #God knows what those are good for. Debugging?
 
-    # Note: make sure this is overriding the superclass.parse. Need a keyword?
     def next_utterance(self):
         # Do xml-specific parsing of utterances.
         # The config so it knows what symbols to look for.
         uf = XmlUtteranceFactory()
 
         for u in self.root.findall('.//u'):
-            yield uf.make_utterance(u)
+            yield uf.make_utterance(u), uf.next_word, uf.next_morpheme
     
         # sample utterance processing call
         # ideally we'd just have to implement UtteranceFactory and be done here
         # also I supposed by "we" we mean "chysi"
+
+class CreeParser(ChatXMLParser):
+
+    def next_utterance(self):
+
+        uf = cree.CreeUtteranceFactory()
+        
+        for u in self.root.findall('.//u'):
+            yield uf.make_utterance(u), uf.next_word, uf.next_morpheme

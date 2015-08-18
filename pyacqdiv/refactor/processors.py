@@ -2,6 +2,7 @@
 """
 
 import sys
+import itertools as it
 
 from sqlalchemy.orm import sessionmaker
 
@@ -47,7 +48,15 @@ class SessionProcessor(object):
         self.file_path = file_path
         self.language = self.config['corpus']['language']
         self.corpus = self.config['corpus']['corpus']
+        self.format = self.config['corpus']['format']
+
+        # attach session file path to config
+        filename = os.path.splitext(os.path.basename(self.file_path))[0]
+        self.config.set('paths', 'filename', filename)
+
+        # start up db session
         self.Session = sessionmaker(bind=engine)
+
 
     def process_session(self):
         # Config contains map of standard label -> local label.
@@ -76,22 +85,44 @@ class SessionProcessor(object):
             d['parent_id'] = self.file_path
             self.speaker_entries.append(Speaker(**d))
 
+        # Body parsing
+        if self.format == "Toolbox":
+            self.utterances = []
+            for utterance in self.parser.next_utterance():
+                self.utterances.append(Utterance(**utterance))
+
         # TODO(stiv): Need to add to each utterance some kind of joining key.
         # I think it makes sense to construct/add it here, since this is where
         # we do database stuff, and not in the parser (there's no reason the parser
         # should have to know about primary keys - it's a parser, not a db)
 
-        #TODO(chysi): this doesn't look like a generator to me!!!
-        self.utterances = []
-        for u in self.parser.next_utterance():
-            u.parent_id = self.file_path
-            #TODO: u.ids counted per session
-            # we need a better way of making them unique across corpora
-            #dirty, dirty hack:
-            u.id = u.parent_id + "_" + u.id
-            self.utterances.append(u)
+        elif self.format == "ChatXML":
+            #TODO(chysi): this doesn't look like a generator to me!!!
+            self.utterances = []
+            self.words = []
+            self.morphemes = []
+            for u, words, morphemes in self.parser.next_utterance():
+                u.parent_id = self.file_path
+                #TODO: u.ids counted per session
+                # we need a better way of making them unique across corpora
+                #dirty, dirty hack:
+                u.utterance_id = u.parent_id + "_" + u.utterance_id
+                self.utterances.append(u)
+
+                for w, m, i in it.takewhile(lambda x: x[0] and x[1], it.zip_longest(words(u), morphemes(u), it.count())):
+                    w.parent_id = u.utterance_id
+                    w.word_id = u.utterance_id + 'w' + str(i)
+                    self.words.append(w)
+                    m.parent_id = u.utterance_id
+                    m.morpheme_id = u.utterance_id + 'm' + str(i)
+                    self.morphemes.append(m)
+
+        else:
+            raise Exception("Error: unknown corpus format!")
+
         # Then write it to the backend.
         # commit(session_metadata, speakers, utterances)
+
 
     def commit(self):
         # def commit(self, session_metadata, speakers, utterances):
@@ -106,6 +137,8 @@ class SessionProcessor(object):
             session.add(self.session_entry)
             session.add_all(self.speaker_entries)
             session.add_all(self.utterances)
+            # session.add_all(self.words)
+            # session.add_all(self.morphemes)
             session.commit()
             # self.db_session.add(session_metadata)
             # self.db_session.add_all(self.speakers)
