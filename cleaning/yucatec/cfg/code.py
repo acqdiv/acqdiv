@@ -153,6 +153,7 @@ def clean_chat_line(s):
     s=re.sub("hńn", "hnn", s) #
     s=re.sub("dińo", "dino", s)
     s=re.sub("ń", "ñ", s)
+    s=re.sub("ò", "ó", s)
 
     # dieresis
     s=re.sub(r"^(%spa:\t+)¨(.*)\?", r"\1\2?", s) # remove the dieresis at the beginning of a %spa tier
