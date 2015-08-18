@@ -102,7 +102,8 @@ class Word(Base):
 
     # fk...
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
-    id = Column(Text, primary_key=True)
+    id = Column(Integer, primary_key=True)
+    word_id = Column(Text, nullable=True, unique=False)
     word = Column(Text, nullable=True, unique=False)
     parent_id = Column(Text, ForeignKey('utterance.id'))
     #Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
@@ -112,7 +113,8 @@ class Morpheme(Base):
 
     # fk...
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
-    id = Column(Text, primary_key=True)
+    id = Column(Integer, primary_key=True)
+    morpheme_id = Column(Text, nullable=True, unique=False)
     parent_id = Column(Text, ForeignKey('utterance.id'))
     morpheme = Column(Text, nullable=True, unique=False)
     morpheme_target = Column(Text, nullable=True, unique=False)

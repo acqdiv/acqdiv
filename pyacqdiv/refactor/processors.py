@@ -108,12 +108,13 @@ class SessionProcessor(object):
                 #dirty, dirty hack:
                 u.utterance_id = u.parent_id + "_" + u.utterance_id
                 self.utterances.append(u)
+
                 for w, m, i in it.takewhile(lambda x: x[0] and x[1], it.zip_longest(words(u), morphemes(u), it.count())):
                     w.parent_id = u.utterance_id
-                    w.id = u.utterance_id + 'w' + str(i)
+                    w.word_id = u.utterance_id + 'w' + str(i)
                     self.words.append(w)
                     m.parent_id = u.utterance_id
-                    m.id = u.utterance_id + 'm' + str(i)
+                    m.morpheme_id = u.utterance_id + 'm' + str(i)
                     self.morphemes.append(m)
 
         else:

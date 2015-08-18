@@ -23,6 +23,7 @@ if __name__=="__main__":
     # configs = ['Cree.ini']
     configs = ['Indonesian.ini']
     # configs = ['Russian.ini']
+
     for config in configs:
         # Parse the config file and call the sessions processor
         cfg = CorpusConfigParser()
