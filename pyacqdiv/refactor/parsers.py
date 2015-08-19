@@ -124,12 +124,11 @@ class ToolboxParser(SessionParser):
             temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
             self.metadata_file_path = temp.replace(".txt", ".imdi")
             self.metadata_parser = Imdi(self.metadata_file_path)
-
         else:
             assert 0, "Unknown metadata format type: "#  + format
 
 
-        # a check for missing metadata files
+        # check for missing metadata files?
         """
         if not os.path.isfile(self.metadata_file_path):
             print("MISSING FILE:", self.metadata_file_path)
@@ -141,8 +140,14 @@ class ToolboxParser(SessionParser):
         # Do toolbox-specific parsing of session metadata.
         # Presumably we will have to look for the metadata file in the config.
         # The config so it knows what symbols to look for.
-        # return self.metadata_parser.metadata['session']
-        return self.metadata_parser.metadata['__attrs__']
+
+        # this is an ugly hack due to the Indonesian corpus (body=Toolbox, but meta=XML)
+        if self.metadata_parser.__class__.__name__ == "Imdi":
+            return self.metadata_parser.metadata['session']
+        elif self.metadata_parser.__class__.__name__ == "Chat":
+            return self.metadata_parser.metadata['__attrs__']
+        else:
+            assert 0, "Unknown metadata format type: "#  + format
 
     def next_speaker(self):
         """ Yield participants metadata for the Speaker table in the db
