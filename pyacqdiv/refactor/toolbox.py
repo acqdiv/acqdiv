@@ -38,6 +38,7 @@ class ToolboxFile(object):
 
         # TODO: get sentence type, etc...
 
+    # TODO: skip the first metadata rows (they include \ref, but they include crap)
     # TODO: return utterances, words, morphemes, as ordered dictionaries?
     def __iter__(self):
         record_marker = re.compile(br'\\ref')
@@ -129,7 +130,6 @@ if __name__ == "__main__":
 
     cfg.read("Indonesian.ini")
     f = "../../corpora/Indonesian/toolbox/HIZ-010601.txt"
-
 
     t = ToolboxFile(cfg, f)
     for record in t:

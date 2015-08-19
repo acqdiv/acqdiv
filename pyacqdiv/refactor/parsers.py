@@ -24,14 +24,14 @@ class CorpusConfigParser(configparser.ConfigParser):
     optionxform = str # preserves case
 
     # TODO: identify whether we want (extended) interolation, ordered dicts, inline commenting, etc.
-#    _dict_type = collections.OrderedDict
-#    _inline_comment_prefixes = ('#',)
-#    _interpolation = configparser.ExtendedInterpolation()
+    #    _dict_type = collections.OrderedDict
+    #    _inline_comment_prefixes = ('#',)
+    #    _interpolation = configparser.ExtendedInterpolation()
 
-#    def __init__(self, defaults=None):
-#        super(Config, self).__init__(defaults, dict_type=self._dict_type,
-#            inline_comment_prefixes=self._inline_comment_prefixes,
-#            interpolation=self._interpolation)
+    #    def __init__(self, defaults=None):
+    #        super(Config, self).__init__(defaults, dict_type=self._dict_type,
+    #            inline_comment_prefixes=self._inline_comment_prefixes,
+    #            interpolation=self._interpolation)
 
     def __init__(self):
         super().__init__()
@@ -67,6 +67,7 @@ class SessionParser(object):
         corpus = config.corpus
         format = config.format
 
+        # this seeems a bit nasty
         if corpus == "Cree":
             return CreeParser(config, file_path)
         else:
@@ -100,8 +101,8 @@ class SessionParser(object):
         pass
 
     # Generator to yield Utterances for the Utterance table in the db
-    def next_record(self):
-        pass
+    # def next_record(self):
+    #    pass
 
 class ToolboxParser(SessionParser):
     """ For Chintang, Indonesian, Russian, & potentially Dene  """
@@ -109,12 +110,12 @@ class ToolboxParser(SessionParser):
     def __init__(self, config, file_path):
         SessionParser.__init__(self, config, file_path)
 
-        # deal with the session body utterance, etc. data
+        # Session body for utterances, etc.
         self.session_file = ToolboxFile(self.config, self.file_path)
 
-        # deal with the metadata -- hack to get the separate metadata file paths for IMDIs
-        # decision time: IMDI (Russian and Chintang) or XML (Indonesian)
+        # Metadata
         if self.config['metadata']['type'] == "XML":
+            # hack to get the separate metadata file paths for IMDIs
             temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
             self.metadata_file_path = temp.replace(".txt", ".xml")
             self.metadata_parser = Chat(self.metadata_file_path)
@@ -125,7 +126,7 @@ class ToolboxParser(SessionParser):
             self.metadata_parser = Imdi(self.metadata_file_path)
 
         else:
-            assert 0, "Unknown format type: "#  + format
+            assert 0, "Unknown metadata format type: "#  + format
 
 
         # a check for missing metadata files
@@ -134,13 +135,14 @@ class ToolboxParser(SessionParser):
             print("MISSING FILE:", self.metadata_file_path)
             sys.exit(1)
         """
-        self.metadata_parser = Imdi(self.metadata_file_path)
+        # self.metadata_parser = Imdi(self.metadata_file_path)
 
     def get_session_metadata(self):
         # Do toolbox-specific parsing of session metadata.
         # Presumably we will have to look for the metadata file in the config.
         # The config so it knows what symbols to look for.
-        return self.metadata_parser.metadata['session']
+        # return self.metadata_parser.metadata['session']
+        return self.metadata_parser.metadata['__attrs__']
 
     def next_speaker(self):
         """ Yield participants metadata for the Speaker table in the db

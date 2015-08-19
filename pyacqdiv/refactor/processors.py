@@ -3,7 +3,6 @@
 
 import sys
 import itertools as it
-
 from sqlalchemy.orm import sessionmaker
 
 from parsers import *
@@ -12,13 +11,6 @@ from database_backend import *
 
 # If it turns out that these really don't do anything but the loops, we can get rid of
 # the Corp[us|ora]Processor classes and just make them, well, loops. In some function.
-# class CorporaProcessor(object):
-#    def process_corpora(self, config):
-#        for corpus_config in config:
-#            c = CorpusProcessor(corpus_config)
-#            c.process_corpus()
-
-
 class CorpusProcessor(object):
     """ Handler for processing each session file in particular corpus
     """
@@ -34,6 +26,7 @@ class CorpusProcessor(object):
             s.process_session()
             s.commit()
 
+    # TODO: should we add the corpus level data, e.g. metadata, to the database here?
 
 class SessionProcessor(object):
     """ SessionProcessor invokes a parser to get the extracted data, and then interacts
@@ -65,23 +58,30 @@ class SessionProcessor(object):
         # Now start asking the parser for stuff...
 
         # Get session metadata via labels defined in corpus config and create Session instance
-        # TODO: deal with IMDI's dict in dict encoding of location:
-        # address = session_metadata['location']['address'],
-        # continent = session_metadata['location']['continent'],
-        # country = session_metadata['location']['country']
         session_metadata = self.parser.get_session_metadata()
         d = {}
-        for k, v in self.config['session_labels'].items():
-            d[k] = session_metadata[v]
+        for k, v in session_metadata.items():
+            if not k in self.config['session_labels']:
+                continue
+            db_column_name = self.config['session_labels'][k]
+            d[db_column_name] = v
         d['session_id'] = self.file_path
         self.session_entry = Session(**d)
 
-        # Get speaker metadata
+        # TODO: deal with IMDI's dict in dict encoding of location (perhaps in CorpusConfigProcessor):
+        # address = session_metadata['location']['address'],
+        # continent = session_metadata['location']['continent'],
+        # country = session_metadata['location']['country']
+
+        # Get speaker metadata; capture data specified in corpus config
         self.speaker_entries = []
         for speaker in self.parser.next_speaker():
             d = {}
-            for k, v in self.config['speaker_labels'].items():
-                d[k] = speaker[v]
+            for k, v in speaker.items():
+                if not k in self.config['speaker_labels']:
+                    continue
+                db_column_name = self.config['speaker_labels'][k]
+                d[db_column_name] = v
             d['parent_id'] = self.file_path
             self.speaker_entries.append(Speaker(**d))
 

@@ -65,6 +65,7 @@ class Speaker(Base):
     birthdate = Column(Text, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
     role = Column(Text, nullable=True, unique=False)
+    language = Column(Text, nullable=True, unique=False)
 
     # optional pretty formatting
     def __repr__(self):
