@@ -95,7 +95,7 @@ def clean_chat_line(s):
     s=re.sub(r"(\*[A-Z]{3})(.*?)([^\.\!\?])$", r"\1\2\3.", s) # add a dot at the end of *PARTICIPANT tiers when there is no proper terminator
     s=re.sub(r"(%xmor:\t)(.*?)\t", r"\1\2 ", s) # replace a tab in the content of an %xmor tier with a space
 
-    s=re.sub(r"@End", r"@End\n", s) # add a newline after @End
+    #s=re.sub(r"@End", r"@End\n", s) # add a newline after @End
 
 
 

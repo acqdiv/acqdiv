@@ -102,6 +102,7 @@ for root, dirs, files in os.walk(input_dir):
                 line=re.sub(r"\* NEI:", r"*NEI:", line)
                 line=re.sub(r"[^\*]NEI:", r"*NEI:", line)
                 line=re.sub(r"\*lor:", r"*LOR:", line)
+                line=re.sub(r"\*LOR\.", r"*LOR:", line)
                 line=re.sub(r"[^\*]LOR:", r"*LOR:", line)
                 line=re.sub(r"\*:", r"*UNK:", line)
                 line=re.sub(r"\*CAR", r"*CAR:", line)
