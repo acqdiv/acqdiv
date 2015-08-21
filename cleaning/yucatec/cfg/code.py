@@ -95,7 +95,7 @@ def clean_chat_line(s):
     s=re.sub(r"(\*[A-Z]{3})(.*?)([^\.\!\?])$", r"\1\2\3.", s) # add a dot at the end of *PARTICIPANT tiers when there is no proper terminator
     s=re.sub(r"(%xmor:\t)(.*?)\t", r"\1\2 ", s) # replace a tab in the content of an %xmor tier with a space
 
-    #s=re.sub(r"@End", r"@End\n", s) # add a newline after @End
+    s=re.sub(r"@End", r"@End\n", s) # add a newline after @End
 
 
 
@@ -196,6 +196,7 @@ def clean_chat_line(s):
     s=re.sub("quë", "qué", s)
     s=re.sub("Cárga,e", "Cárgame", s)
     s=re.sub("laìz", "lápiz", s)
+    s=re.sub("…", "...", s)
 
 
     #cleanup unwanted tiers -> Commented out. Done somewhere else in the cleaning
@@ -227,24 +228,6 @@ def clean_chat_line(s):
     if s.startswith("%xpho"):
         s=s.lower() # no capital letters allowed in %pho tiers
 
-    '''
-    # all tier names must be followed by a tab before the tier content starts (this block has to be in both edit_yua.py and code.py)
-    #s=re.sub(r"(%[a-z]{3,4}:)\s*(.*?)$", r"\1\t\2\n", s)
-    #s=re.sub(r"(\*[A-Z]{3}:)\s*(.*?)$", r"\1\t\2", s)
-    #s=re.sub(r"(%[a-z]{3,4}:)\s*(.*?)$", r"\1\t\2", s)
-    s=re.sub(r"(\*[A-Z]{3}:)\s*$", r"\1\t\n", s)
-    s=re.sub(r"(%[a-z]{3,4}:)\s*$", r"\1\t\n", s)
-    #s=re.sub(r"(\*[A-Z]{3}:)([A-Za-z]+)", r"\1\t\2", s)
-    #s=re.sub(r"(%[a-z]{3,4}:)([A-Za-z]+)", r"\1\t\2", s)
-    s=re.sub(r"(\*[A-Z]{3}:) *\t* *([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
-    s=re.sub(r"(%[a-z]{3,4}:) *\t* *([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
-    #s=re.sub(r"(\*[A-Z]{3}:) *([A-Za-z\[\(¡]*)", r"\1\t\2", s)
-    #s=re.sub(r"(%[a-z]{3,4}:) *([A-Za-z\[\(¡])", r"\1\t\2", s)
-    s=re.sub(r"(\*[A-Z]{3}:)\s*\n", r"\1\t\n", s)
-    s=re.sub(r"(%[a-z]{3,4}:)\s*\n", r"\1\t\n", s)
-    s=re.sub(r"(\*[A-Z]{3}:)\t\t([A-Za-z\[\(¡\?]+)", r"\1\t\2", s)
-    '''
-
 
 
     # The following block is commented out for the moment, as these characters seem to be allowed, and have a meaning.
@@ -258,7 +241,14 @@ def clean_chat_line(s):
     '''
 
     if s.startswith("*"):
-        s=re.sub(r"(\(\.\.\.\))$", r"\1.", s) # add a dot at the end of *PARTICIPANT tiers ending in "(...)"
+        s=re.sub(r"\.", r"", s) # removing dots in *PARTICIPANT tiers
+        s=re.sub(r"\!", r"", s) # removing closing exclamation marks in *PARTICIPANT tiers
+        s=re.sub(r"\?", r"", s) # removing closing question marks in *PARTICIPANT tiers
+        if not s.endswith((".","!","?")):
+            s=re.sub(r"$", r".", s) # add a dot at the end of *PARTICIPANT tiers
+            #s=re.sub(r"(\(\.\.\.\))$", r"\1.", s) # add a dot at the end of *PARTICIPANT tiers ending in "(...)"
+
+    s=re.sub(r"(\*[A-Z]{3}:\t)\.\n(%xpho:\t)(.*?)\n", r"\1\3.\n\2\3\n", s) # paste content of %pho tiers into emtpy *PARTICIPANT tiers 
 
 
     return s
