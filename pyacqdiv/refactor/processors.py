@@ -37,15 +37,18 @@ class SessionProcessor(object):
 
     def __init__(self, cfg, file_path, engine):
         # Init parser with corpus config. Pass in file path to process. Create sqla session.
+        # Probably don't need to be too self-ish here...
         self.config = cfg
         self.file_path = file_path
         self.language = self.config['corpus']['language']
         self.corpus = self.config['corpus']['corpus']
         self.format = self.config['corpus']['format']
+        # get filename
+        self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
 
-        # attach session file path to config
-        filename = os.path.splitext(os.path.basename(self.file_path))[0]
-        self.config.set('paths', 'filename', filename)
+        # attach session file path to config?
+        # filename = os.path.splitext(os.path.basename(self.file_path))[0]
+        # self.config.set('paths', 'filename', filename)
 
         # start up db session
         self.Session = sessionmaker(bind=engine)
@@ -65,7 +68,7 @@ class SessionProcessor(object):
                 continue
             db_column_name = self.config['session_labels'][k]
             d[db_column_name] = v
-        d['session_id'] = self.file_path
+        d['session_id'] = self.filename
         self.session_entry = Session(**d)
 
         # TODO: deal with IMDI's dict in dict encoding of location (perhaps in CorpusConfigProcessor):
@@ -82,14 +85,19 @@ class SessionProcessor(object):
                     continue
                 db_column_name = self.config['speaker_labels'][k]
                 d[db_column_name] = v
-            d['parent_id'] = self.file_path
+            d['parent_id'] = self.filename
             self.speaker_entries.append(Speaker(**d))
 
         # Body parsing
         if self.format == "Toolbox":
             self.utterances = []
             for utterance in self.parser.next_utterance():
+                utterance['parent_id'] = self.filename
+                utterance['corpus'] = self.corpus
+                # TODO: determine utterance type from config
+                utterance['utterance_type'] = self.config['utterance']['type']
                 self.utterances.append(Utterance(**utterance))
+                # print(utterance)
 
         # TODO(stiv): Need to add to each utterance some kind of joining key.
         # I think it makes sense to construct/add it here, since this is where

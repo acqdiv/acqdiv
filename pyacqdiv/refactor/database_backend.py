@@ -76,23 +76,26 @@ class Utterance(Base):
     __tablename__ = 'utterance'
 
     id = Column(Integer, primary_key=True)
+    corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
     parent_id = Column(Text, ForeignKey('session.session_id'))
+    utterance_id = Column(Text, nullable=True, unique=False)
+    utterance_type = Column(Text, nullable=True, unique=False)
+    utterance = Column(Text, nullable=True, unique=False)
+    utterance_cleaned = Column(Text, nullable=True, unique=False)
+    morpheme = Column(Text, nullable=True, unique=False) # morpheme line
+    # word = Column(Text, nullable=True, unique=False) # words line? what is Robert's "full_word"? replace with utterance field
+    pos = Column(Text, nullable=True, unique=False) # parts of speech line
     speaker_id = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False)
-    utterance_id = Column(Text, nullable=True, unique=False)
-    timestamp_start = Column(Text, nullable=True, unique=False)
-    timestamp_end = Column(Text, nullable=True, unique=False)
     u_orthographic = Column(Text, nullable=True, unique=False) # orthographic utterance
     u_phonetic = Column(Text, nullable=True, unique=False) # phonetic utterance
-    morpheme = Column(Text, nullable=True, unique=False) # morpheme line
-    word = Column(Text, nullable=True, unique=False) # words line
-    pos = Column(Text, nullable=True, unique=False) # parts of speech line
     sentence_type = Column(Text, nullable=True, unique=False)
     translation = Column(Text, nullable=True, unique=False)
+    timestamp_start = Column(Text, nullable=True, unique=False)
+    timestamp_end = Column(Text, nullable=True, unique=False)
     comment = Column(Text, nullable=True, unique=False)
     addressee = Column(Text, nullable=True, unique=False) # exists at least in Russian
     gloss = Column(Text, nullable=True, unique=False) # what to do with the "gloss"?
-
     #Morphemes = sa.Column(sa.Text, nullable=False, unique=False) # concatenated MorphemeIDs per utterance
     #Words = sa.Column(sa.Text, nullable=False, unique=True) # concatenated WordIDs per utterance
 

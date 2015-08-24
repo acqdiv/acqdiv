@@ -161,6 +161,9 @@ class ToolboxParser(SessionParser):
         returns ordered dictionary of config file record_tiers
         """
         for record in self.session_file:
+#            print()
+#            print("record:", record)
+#            print()
             yield record
 
 class ChatXMLParser(SessionParser):

@@ -182,7 +182,19 @@ class Chat(Parser):
 if __name__=="__main__":
     # TODO: we need some serious tests
     # from parsers import *
+
     """
+    print("INDONESIAN:")
+    # cfg = CorpusConfigParser()
+    # cfg.read("Indonesian.ini")
+    f = "../../corpora/Indonesian/metadata/HIZ-010601.xml"
+    # chat = Chat(cfg, f)
+    chat = Chat(f)
+    for i in chat.metadata:
+        print(i)
+        print(chat.metadata[i])
+        print()
+
     print("CHINTANG:")
     imdi = Imdi("../../corpora/Chintang/metadata/CLDLCh1R01S01.imdi")
     for k, v in imdi.metadata.items():
@@ -198,23 +210,14 @@ if __name__=="__main__":
         print(chat.metadata[i])
         print()
     print("####")
+    """
 
     print("RUSSIAN:")
     imdi = Imdi("../../corpora/Russian/metadata/A00210817.imdi")
-    for k, v in imdi.metadata['session'].items():
+    for k, v in imdi.metadata.items():
         print(k, v)
         print()
     # print(imdi.metadata['session']['location']['address'])
     print("#####################")
-    """
 
-    print("INDONESIAN:")
-    # cfg = CorpusConfigParser()
-    # cfg.read("Indonesian.ini")
-    f = "../../corpora/Indonesian/metadata/HIZ-010601.xml"
-    # chat = Chat(cfg, f)
-    chat = Chat(f)
-    for i in chat.metadata:
-        print(i)
-        print(chat.metadata[i])
-        print()
+
