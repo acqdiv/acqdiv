@@ -1088,14 +1088,14 @@ def parse_xml(file_name, corpus_name):
                     for gloss in glosses:
                         # replace special characters
                         # n^ prefixed to all noun class glosses: delete
-                        gloss = re.sub('[nN]\^(?=\\d)', '', gloss)
+                        #gloss = re.sub('[nN]\^(?=\\d)', '', gloss)
                         # n^ prefixed to all proper names: replace by 'a_', lowercase label
                         gloss = re.sub('[nN]\^([gG]ame|[nN]ame|[pP]lace|[sS]ong)', 'a_\\1', gloss)
                         if re.search('a_(Game|Name|Place|Song)', gloss): gloss = gloss.lower()
                         # t^ and m^ prefixed to affixes: replace by more explicit labels, also replace '_' by more standard '.'
-                        gloss = re.sub('t\^(p|f\\d|np)_', 'temp.\\1.', gloss)
-                        gloss = re.sub('t\^', 'temp.', gloss)
-                        gloss = re.sub('m\^', 'mood.', gloss)
+                        #gloss = re.sub('t\^(p|f\\d|np)_', 'temp.\\1.', gloss)
+                        #gloss = re.sub('t\^', 'temp.', gloss)
+                        #gloss = re.sub('m\^', 'mood.', gloss)
                         # replace noun class numbers by more standard Roman numbers; exception are [12][sp] (= SAP) and f\d (= FUT)
                         num_dic = {'0' : '0', '1' : 'I', '2' : 'II', '3' : 'III', '4' : 'IV', '5' : 'V', '6' : 'VI', '7' : 'VII', '8' : 'VIII', '9' : 'IX', 
                             '10' : 'X', '11' : 'XI', '12' : 'XII', '13' : 'XIII', '14' : 'XIV', '15' : 'XV', '16' : 'XVI', '17' : 'XVII', '18' : 'XVIII', 
@@ -1103,7 +1103,7 @@ def parse_xml(file_name, corpus_name):
                         reverse_num_dic = {'I' : '1', 'II' : '2', 'III' : '3', 'IV' : '4', 'V' : '5'}
                         for n in re.findall('((?<!f)\\d+(?![sp]))', gloss):
                             gloss = re.sub(n, num_dic[n], gloss)
-                            gloss = re.sub('irg', '.IRR', gloss)
+                        #    gloss = re.sub('irg', '.IRR', gloss)
                         
                         # check whether present element is the stem; if no, set POS to prefix/suffix
                         pos = ''
