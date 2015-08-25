@@ -99,6 +99,7 @@ class SessionProcessor(object):
         self.morphemes = []
 
         if self.format == "Toolbox":
+            # Utterance parsing
             for utterance in self.parser.next_utterance():
                 utterance['parent_id'] = self.filename
                 utterance['corpus'] = self.corpus
@@ -106,6 +107,9 @@ class SessionProcessor(object):
                 utterance['utterance_type'] = self.config['utterance']['type']
                 self.utterances.append(Utterance(**utterance))
                 # print(utterance)
+            # TODO: word parsing
+
+            # TODO: morpheme parsing
 
         elif self.format == "ChatXML":
             #TODO(chysi): this doesn't look like a generator to me!!!

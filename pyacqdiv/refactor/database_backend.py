@@ -69,7 +69,7 @@ class Speaker(Base):
 
     # optional pretty formatting
     def __repr__(self):
-        return "Speaker(%s)" % (self.speaker_label)
+        return "Speaker(%s)" % (self.name)
 
 
 class Utterance(Base):
@@ -83,7 +83,7 @@ class Utterance(Base):
     utterance = Column(Text, nullable=True, unique=False)
     utterance_cleaned = Column(Text, nullable=True, unique=False)
     morpheme = Column(Text, nullable=True, unique=False) # morpheme line
-    word = Column(Text, nullable=True, unique=False) # words line? what is Robert's "full_word"? replace with utterance field
+    word = Column(Text, nullable=True, unique=False) # words line? what is Robert's "full_word"?
     pos = Column(Text, nullable=True, unique=False) # parts of speech line
     speaker_id = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False)
@@ -96,6 +96,8 @@ class Utterance(Base):
     comment = Column(Text, nullable=True, unique=False)
     addressee = Column(Text, nullable=True, unique=False) # exists at least in Russian
     gloss = Column(Text, nullable=True, unique=False) # what to do with the "gloss"?
+    warnings = Column(Text, nullable=True, unique=False) # Robert's warnings!
+
     #Morphemes = sa.Column(sa.Text, nullable=False, unique=False) # concatenated MorphemeIDs per utterance
     #Words = sa.Column(sa.Text, nullable=False, unique=True) # concatenated WordIDs per utterance
 

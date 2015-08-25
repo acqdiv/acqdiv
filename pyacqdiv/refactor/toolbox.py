@@ -62,7 +62,7 @@ class ToolboxFile(object):
                 for ma in record_marker.finditer(data, ma.end()):
                     utterances = collections.OrderedDict()
                     # utterances['session_id'] = self.session_id
-                    words = collections.OrderedDict()
+                    # words = collections.OrderedDict()
                     # words['session_id'] = self.session_id
 
                     # process each record:
@@ -101,6 +101,9 @@ class ToolboxFile(object):
 
                     # TODO: add in the morpheme parsing and inference
 
+                    # print(utterances)
+                    # TODO: return three dictionaries...
+                    # yield utterances, words, morphemes
                     yield utterances
                     pos = ma.start()
 
@@ -146,6 +149,8 @@ class ToolboxFile(object):
             else:
                 return
 
+        # TODO: is there Chintang utterance/sentence type?
+
     # TODO: move this to a cleaning module that's imported, e.g. from pyclean import * as pyclean
     def clean_utterance(self, utterance):
         """ Clean up corpus-specific utterances
@@ -176,6 +181,12 @@ class ToolboxFile(object):
         # TODO: incorporate (if there is) any Chintang corpus specific cleaning, etc.
         if self.config['corpus']['corpus'] == "Chintang":
             return utterance
+
+    def do_inference(self, utterances_dictionary):
+        if self.config['corpus']['corpus'] == "Russian":
+            # TODO: do the Russian words / morphemes inference
+            pass
+        return utterances
 
     def get_morphemes(self):
         """ Do the Toolbox corpus-specific morpheme processing
