@@ -40,8 +40,8 @@ class ToolboxFile(object):
         for k, v in self.config['record_tiers'].items():
             self.field_markers.append(k)
 
-        print("FIELD MARKERS")
-        print(self.field_markers)
+        # print("FIELD MARKERS")
+        # print(self.field_markers)
 
         # collect the warnings
         self.warnings = collections.OrderedDict()
@@ -65,8 +65,6 @@ class ToolboxFile(object):
                     words = collections.OrderedDict()
                     # words['session_id'] = self.session_id
 
-                    # TODO: build in the rules system per corpus...
-
                     # process each record:
                     record = data[pos:ma.start()]
                     tiers = self.tier_separator.split(record)
@@ -84,17 +82,24 @@ class ToolboxFile(object):
                         if field_marker in self.field_markers:
                             utterances[self.config['record_tiers'][field_marker]] = content
 
-                    # print(utterances)
+                    # we need to choose either the phonetic or orthographic transcription
+                    # for the general 'utterance' field (from config); also add its type
+                    utterances['utterance'] = utterances[self.config['utterance']['field']]
+                    utterances['utterance_type'] = self.config['utterance']['type']
 
+                    # TODO: build in the rules system per corpus...
                     # clean up utterance, add new data via Robert inferences, etc.
                     # here we can just pass around the session utterance dictionary
                     utterances['sentence_type'] = self.get_sentence_type(utterances['utterance'])
                     utterances['utterance_cleaned'] = self.clean_utterance(utterances['utterance'])
 
+                    # TODO: add in the words parsing (and inference?)
                     # how to handle this specifically?
                     # needs to live outside of utterance?
                     words = self.get_words(utterances) # pass the dictionary
                     # utterances['utterance_cleaned'] = self.clean_utterance(utterances['utterance'])
+
+                    # TODO: add in the morpheme parsing and inference
 
                     yield utterances
                     pos = ma.start()
@@ -114,9 +119,9 @@ class ToolboxFile(object):
         """ Do the Toolbox corpus-specific word processing
         :return:
         """
-        print(self.config['corpus']['corpus'])
-        print(utterances)
-        print()
+        # print(self.config['corpus']['corpus'])
+        # print(utterances)
+        # print()
         return utterances
 
     def get_sentence_type(self, utterance):
@@ -166,11 +171,11 @@ class ToolboxFile(object):
         if self.config['corpus']['corpus'] == "Indonesian":
             # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1633-L1648
             # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1657-L1661
-            pass
+            return utterance
 
         # TODO: incorporate (if there is) any Chintang corpus specific cleaning, etc.
         if self.config['corpus']['corpus'] == "Chintang":
-            pass
+            return utterance
 
     def get_morphemes(self):
         """ Do the Toolbox corpus-specific morpheme processing

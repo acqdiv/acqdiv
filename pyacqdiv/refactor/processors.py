@@ -88,9 +88,13 @@ class SessionProcessor(object):
             d['parent_id'] = self.filename
             self.speaker_entries.append(Speaker(**d))
 
+
         # Body parsing
+        self.utterances = []
+        self.words = []
+        self.morphemes = []
+
         if self.format == "Toolbox":
-            self.utterances = []
             for utterance in self.parser.next_utterance():
                 utterance['parent_id'] = self.filename
                 utterance['corpus'] = self.corpus
@@ -106,9 +110,6 @@ class SessionProcessor(object):
 
         elif self.format == "ChatXML":
             #TODO(chysi): this doesn't look like a generator to me!!!
-            self.utterances = []
-            self.words = []
-            self.morphemes = []
             for u, words, morphemes in self.parser.next_utterance():
                 u.parent_id = self.file_path
                 #TODO: u.ids counted per session
@@ -145,8 +146,8 @@ class SessionProcessor(object):
             session.add(self.session_entry)
             session.add_all(self.speaker_entries)
             session.add_all(self.utterances)
-            # session.add_all(self.words)
-            # session.add_all(self.morphemes)
+            session.add_all(self.words)
+            session.add_all(self.morphemes)
             session.commit()
             # self.db_session.add(session_metadata)
             # self.db_session.add_all(self.speakers)

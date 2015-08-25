@@ -83,7 +83,7 @@ class Utterance(Base):
     utterance = Column(Text, nullable=True, unique=False)
     utterance_cleaned = Column(Text, nullable=True, unique=False)
     morpheme = Column(Text, nullable=True, unique=False) # morpheme line
-    # word = Column(Text, nullable=True, unique=False) # words line? what is Robert's "full_word"? replace with utterance field
+    word = Column(Text, nullable=True, unique=False) # words line? what is Robert's "full_word"? replace with utterance field
     pos = Column(Text, nullable=True, unique=False) # parts of speech line
     speaker_id = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False)

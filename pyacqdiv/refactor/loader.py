@@ -18,10 +18,11 @@ if __name__=="__main__":
     engine = db_connect()
     create_tables(engine)
 
-    # configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Russian.ini']
+    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Russian.ini']
+    # configs = ['Cree.ini', 'Indonesian.ini', 'Russian.ini']
     # configs = ['Chintang.ini']
     # configs = ['Cree.ini']
-    configs = ['Indonesian.ini']
+    # configs = ['Indonesian.ini']
     # configs = ['Russian.ini']
 
     for config in configs:
