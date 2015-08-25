@@ -60,7 +60,7 @@ class SessionProcessor(object):
 
         # Now start asking the parser for stuff...
 
-        # Get session metadata via labels defined in corpus config and create Session instance
+        # Get session metadata (via labels defined in corpus config)
         session_metadata = self.parser.get_session_metadata()
         d = {}
         for k, v in session_metadata.items():
@@ -88,8 +88,12 @@ class SessionProcessor(object):
             d['parent_id'] = self.filename
             self.speaker_entries.append(Speaker(**d))
 
+        # TODO(stiv): Need to add to each utterance some kind of joining key.
+        # I think it makes sense to construct/add it here, since this is where
+        # we do database stuff, and not in the parser (there's no reason the parser
+        # should have to know about primary keys - it's a parser, not a db)
 
-        # Body parsing
+        # CHATXML | Toolbox body parsing begins...
         self.utterances = []
         self.words = []
         self.morphemes = []
@@ -102,11 +106,6 @@ class SessionProcessor(object):
                 utterance['utterance_type'] = self.config['utterance']['type']
                 self.utterances.append(Utterance(**utterance))
                 # print(utterance)
-
-        # TODO(stiv): Need to add to each utterance some kind of joining key.
-        # I think it makes sense to construct/add it here, since this is where
-        # we do database stuff, and not in the parser (there's no reason the parser
-        # should have to know about primary keys - it's a parser, not a db)
 
         elif self.format == "ChatXML":
             #TODO(chysi): this doesn't look like a generator to me!!!
@@ -129,7 +128,7 @@ class SessionProcessor(object):
         else:
             raise Exception("Error: unknown corpus format!")
 
-        # Then write it to the backend.
+        # Now write the database to the backend.
         # commit(session_metadata, speakers, utterances)
 
 
