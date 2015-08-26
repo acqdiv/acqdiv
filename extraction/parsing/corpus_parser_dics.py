@@ -47,12 +47,14 @@ t_correspondences = {
     'e' : 'exclamation', # CHAT !
     '!' : 'exclamation',
  	'trail off' : 'trail off', # CHAT +...
+    'trail off question' : 'trail off question', # CHAT +...?
  	'interruption' : 'interruption', # CHAT +/.
  	'self interruption' : 'self interruption', # CHAT +//.
  	'quotation precedes' : 'quotation precedes', # CHAT +".
  	'quotation next line' : 'quotation next line', # CHAT +"/.
  	'interruption question' : 'interruption question', # CHAT +/?
-    'broken for coding' : 'default' # Inuktitut corpus only, = not glossed
+    'broken for coding' : 'default', # Inuktitut corpus only, = not glossed
+    'question exclamation' : 'question' # prob. Inuktitut corpus only, derives from '?!!' in the CHAT source and should be cleaned there
 }
 
 # correspondences between Toolbox utterance-level tiers and JSON
