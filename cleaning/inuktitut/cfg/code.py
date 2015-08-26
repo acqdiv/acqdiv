@@ -505,6 +505,8 @@ def clean_chat_line(s):
         s = re.sub("%tim:(\tALI)", "%add:\\1", s)
         s = re.sub("%tim:(\tDAN)", "%add:\\1", s)
         s = re.sub("%tim:(\tLOU)", "%add:\\1", s)
+        s = re.sub("\?", "", s)
+        s = re.sub(";", ":", s)
 
     if s.startswith("%add"):
         s = re.sub("(%add:\tMAR) %sit:", "\\1", s)
