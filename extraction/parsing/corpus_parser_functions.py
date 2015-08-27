@@ -1087,23 +1087,11 @@ def parse_xml(file_name, corpus_name):
                         
                     for gloss in glosses:
                         # replace special characters
-                        # n^ prefixed to all noun class glosses: delete
+                        # n^ prefixed to all noun class glosses is completely redundant, so delete
                         gloss = re.sub('[nN]\^(?=\\d)', '', gloss)
                         # n^ prefixed to all proper names: replace by 'a_', lowercase label
                         gloss = re.sub('[nN]\^([gG]ame|[nN]ame|[pP]lace|[sS]ong)', 'a_\\1', gloss)
                         if re.search('a_(Game|Name|Place|Song)', gloss): gloss = gloss.lower()
-                        # t^ and m^ prefixed to affixes: replace by more explicit labels, also replace '_' by more standard '.'
-                        gloss = re.sub('t\^(p|f\\d|np)_', 'temp.\\1.', gloss)
-                        gloss = re.sub('t\^', 'temp.', gloss)
-                        gloss = re.sub('m\^', 'mood.', gloss)
-                        # replace noun class numbers by more standard Roman numbers; exception are [12][sp] (= SAP) and f\d (= FUT)
-                        num_dic = {'0' : '0', '1' : 'I', '2' : 'II', '3' : 'III', '4' : 'IV', '5' : 'V', '6' : 'VI', '7' : 'VII', '8' : 'VIII', '9' : 'IX', 
-                            '10' : 'X', '11' : 'XI', '12' : 'XII', '13' : 'XIII', '14' : 'XIV', '15' : 'XV', '16' : 'XVI', '17' : 'XVII', '18' : 'XVIII', 
-                            '19' : 'XIX', '20' : 'XX', '21' : 'XXI', '22' : 'XXII'}
-                        reverse_num_dic = {'I' : '1', 'II' : '2', 'III' : '3', 'IV' : '4', 'V' : '5'}
-                        for n in re.findall('((?<!f)\\d+(?![sp]))', gloss):
-                            gloss = re.sub(n, num_dic[n], gloss)
-                            gloss = re.sub('irg', '.IRR', gloss)
                         
                         # check whether present element is the stem; if no, set POS to prefix/suffix
                         pos = ''
@@ -1518,10 +1506,6 @@ def parse_toolbox(file_name, corpus_name):
     with open(file_name) as file:
         # read file into a single string
         text = file.read()
-        # get rid of BOM if present; otherwise Python will treat this like a character under UTF-8
-        text = re.sub(u'\ufeff', '', text)
-        # get rid of other weird stuff
-        text = re.sub('', '', text)
                 
         # split by at least two \n to get records (approximating utterances)
         utterances = re.split('\\n{2,}', text)
@@ -1553,8 +1537,6 @@ def parse_toolbox(file_name, corpus_name):
                     # edit field markers and contents
                     # all: redundant spaces
                     content = re.sub('\\s+', ' ', content)
-                    # Chintang: inconsistent field markers
-                    field_marker = re.sub('TOS', 'tos', field_marker)
                     # Russian & Indonesian: garbage imported from CHAT
                     content = re.sub('xxx?|www', '???', content)
                     
@@ -1572,7 +1554,6 @@ def parse_toolbox(file_name, corpus_name):
                     continue
                 
                 # corpus-specific measures: extract utterance ID; clean tiers BEFORE doing any splits
-                
                 if corpus_name is 'Chintang':
                     structure = re.search('.*\.(\\d+\.?[a-z]?)$', record['ref'])
                     if structure is not None: utterance_id = structure.group(1)
@@ -1601,16 +1582,6 @@ def parse_toolbox(file_name, corpus_name):
                     # stuff only found in \text
                     if 'text' in record.keys():  
                         
-                        # comments [= ...]: relocate to separate tier. It's important ro re.escape the match so the [] are interpreted literally!
-                        for comment, content in re.findall('(\[=\\s+([^\]]{2,})\])', record['text']):
-                            record['text'] = re.sub(re.escape(comment), '', record['text'])  
-                            if not 'comments' in corpus[text_id][utterance_index]:
-                                corpus[text_id][utterance_index]['comments'] = content
-                            else:
-                                corpus[text_id][utterance_index]['comments'] += '; ' + content
-                        # overlaps [...]: remove completely, they are always transcribed twice
-                        for overlap in re.findall('\[[a-z][^\]]+\]', record['text']):        
-                            record['text'] = re.sub(re.escape(overlap), '', record['text'])
                         # guesses at intended form [=? ...]: this is used rarely (78 times overall), so it's easier to turn it into a comment than to convert it to a full_word_target
                         for target in re.findall('\[=\?\s+[^\]]+\]', record['text']):
                             record['text'] = re.sub(re.escape(target), '', record['text'])
@@ -1620,17 +1591,10 @@ def parse_toolbox(file_name, corpus_name):
                                 corpus[text_id][utterance_index]['comments'] += '; ' + 'intended form might have been "' + target + '"'
                         # various undocumented markers starting with +, only partially well-formed CHAT, e.g. +//, +., [+]: delete
                         record['text'] = re.sub('\+\S+|\[\s*\+\]|\[\]|\[|\]', '', record['text'])
-                        # other undocumented markers: delete
-                        record['text'] = re.sub('&lt;', '', record['text'])
-                    
-                    # stuff only found in \mor
-                    if 'mor' in record.keys():
-                        record['mor'] = re.sub('<NA: [^>]+>', '', record['mor'])
-                
+                                    
                 # EOF Russian checks
                 
                 elif corpus_name is 'Indonesian':
-                    # TODO speaker codes in Indonesian often have code of target child suffixed to them (e.g. CHI -> CHIHIZ). These suffixes are not present in the complete metadata, so remove them!
                     structure = re.search('^(\\d+)$', record['ref'])
                     if structure is not None: utterance_id = structure.group(1)
                     
@@ -1639,8 +1603,6 @@ def parse_toolbox(file_name, corpus_name):
                         continue
                 
                     # Indonesian \tx and \pho regularly contain garbage taken over from CHAT -> clean BEFORE word/morpheme splits!    
-                    if 'pho' in record.keys():
-                        record['pho'] = re.sub('\.$|\.\.\.', '', record['pho'])
                     if 'tx' in record.keys():
                         # insecure transcriptions marked by [?]
                         if re.search('\[\?\]', record['tx']):
@@ -1656,7 +1618,6 @@ def parse_toolbox(file_name, corpus_name):
                             corpus[text_id][utterance_index]['sentence_type'] = 'imperative'    
                         # delete any garbage
                         record['tx'] = re.sub('[‘’\'“”\"\.!,;:\+\/]|\?$|\.\.\.|\[\?\]|<|>', '', record['tx'])
-                        record['tx'] = re.sub('^0$', '', record['tx'])
                         if record['tx'] is '':
                             record.pop('tx')
                         

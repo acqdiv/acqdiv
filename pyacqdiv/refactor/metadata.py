@@ -13,6 +13,10 @@ DEBUG = 1 # TODO: move debug to standard logging module
 class Parser(object):
     """ Base metadata parser class
     """
+    # do we need to pass in the config?
+    # def __init__(self, config, path):
+        # self.config = config
+
     def __init__(self, path):
         self.path = path
         self.tree = objectify.parse(path)
@@ -23,13 +27,19 @@ class Parser(object):
                     }
         self.metadata['__attrs__']['Cname'] = re.sub(r'\.xml.*|\.imdi.*', "", os.path.basename(str(self.path)))
 
-        # special case for Indonesian -- what's this?
-        # # Explanation: this converts the session ID to the same format as in the body files
-        # # Unless that issue was fixed in another way we will probably still want it
-        # if self.corpus == "Indonesian":
-        #     match = re.match(r"(\w{3})-\d{2}(\d{2})-(\d{2})-(\d{2})",self.metadata['__attrs__']['Cname'])
-        #     self.metadata['__attrs__']['Cname'] = match.group(1).upper() + '-' + match.group(4) + match.group(3) + match.group(2)
-        # self.metadata['__attrs__']['schemaLocation'] = self.metadata['__attrs__'].pop('{http://www.w3.org/2001/XMLSchema-instance}schemaLocation')
+        # Special case for Indonesian
+        # Explanation: this converts the session ID to the same format as in the body files
+        # Unless that issue was fixed in another way we will probably still want it
+
+        # TODO: figure out what's going wrong with Indonesian
+        """
+        print(self.metadata['__attrs__']['Cname'])
+
+        if self.config['corpus'] == "Indonesian":
+            match = re.match(r"(\w{3})-\d{2}(\d{2})-(\d{2})-(\d{2})",self.metadata['__attrs__']['Cname'])
+            self.metadata['__attrs__']['Cname'] = match.group(1).upper() + '-' + match.group(4) + match.group(3) + match.group(2)
+        self.metadata['__attrs__']['schemaLocation'] = self.metadata['__attrs__'].pop('{http://www.w3.org/2001/XMLSchema-instance}schemaLocation')
+        """
 
         # assert existing_dir(self.input_path())
 
@@ -69,6 +79,11 @@ class Imdi(Parser):
 
     # Do we want to load up this dictionary of everything on init
     # so that the caller has to deal with the db-specific parsing?
+
+    # do we need to pass in the config?
+    # def __init__(self, config, path):
+    #    Parser.__init__(self, config, path)
+
     def __init__(self, path):
         Parser.__init__(self, path)
         self.metadata["participants"] = self.get_participants()
@@ -141,11 +156,18 @@ class Imdi(Parser):
 
 class Chat(Parser):
     """ subclass of metadata.Parser class to deal with CHAT XML metadata extraction """
+    # do we need to pass in the config?
+    # def __init__(self, config, path):
+        # Parser.__init__(self, config, path)
+
     def __init__(self, path):
         Parser.__init__(self, path)
         self.metadata["participants"] = self.get_participants(self.root)
         self.metadata["comments"] = self.get_comments(self.root)
+        self.metadata["comments"] = self.get_comments(self.root)
         # self.write_json(self.metadata)
+
+    # TODO: where is the get_sessions stuff? in the unifier?
 
     def get_participants(self, root):
         return [self.parse_attrs(p) for p in root.Participants.participant]
@@ -159,15 +181,43 @@ class Chat(Parser):
 
 if __name__=="__main__":
     # TODO: we need some serious tests
+    # from parsers import *
+
+    """
+    print("INDONESIAN:")
+    # cfg = CorpusConfigParser()
+    # cfg.read("Indonesian.ini")
+    f = "../../corpora/Indonesian/metadata/HIZ-010601.xml"
+    # chat = Chat(cfg, f)
+    chat = Chat(f)
+    for i in chat.metadata:
+        print(i)
+        print(chat.metadata[i])
+        print()
+
+    print("CHINTANG:")
+    imdi = Imdi("../../corpora/Chintang/metadata/CLDLCh1R01S01.imdi")
+    for k, v in imdi.metadata.items():
+        print(k, v)
+        print()
+    # print(imdi.metadata['session']['location']['address'])
+    print("#########################")
+
+    print("CREE:")
     chat = Chat("../../corpora/Cree/xml/Ani/2005-03-08.xml")
     for i in chat.metadata:
         print(i)
         print(chat.metadata[i])
         print()
+    print("####")
     """
-    imdi = Imdi("../../corpora/Chintang/metadata/CLDLCh2R01S02.imdi")
-    for k, v in imdi.metadata['session'].items():
+
+    print("RUSSIAN:")
+    imdi = Imdi("../../corpora/Russian/metadata/A00210817.imdi")
+    for k, v in imdi.metadata.items():
         print(k, v)
-    print()
-    print(imdi.metadata['session']['location']['address'])
-    """
+        print()
+    # print(imdi.metadata['session']['location']['address'])
+    print("#####################")
+
+
