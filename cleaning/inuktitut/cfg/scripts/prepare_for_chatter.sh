@@ -1,7 +1,7 @@
 # /bin/bash
 
 # Causes shell to echo everything it is executing in stdout.
-set -v
+#set -v
 
 ./run_acqdiv.sh
 ./run_timfix.sh
