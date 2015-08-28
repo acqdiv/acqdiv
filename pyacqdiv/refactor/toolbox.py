@@ -82,6 +82,7 @@ class ToolboxFile(object):
                         if field_marker in self.field_markers:
                             utterances[self.config['record_tiers'][field_marker]] = content
 
+                    # print(utterances)
                     # we need to choose either the phonetic or orthographic transcription
                     # for the general 'utterance' field (from config); also add its type
                     utterances['utterance'] = utterances[self.config['utterance']['field']]

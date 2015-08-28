@@ -166,6 +166,11 @@ class ToolboxParser(SessionParser):
 #            print()
             yield record
 
+class JsonParser(SessionParser):
+    """ Parser for JSON output from Robert's body parser
+    """
+    pass
+
 class ChatXMLParser(SessionParser):
     """ For Cree, Inuktitut, MiiPro, Miyata, Sesotho, Turkish, & Yucatec """
 
