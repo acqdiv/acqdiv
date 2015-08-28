@@ -77,6 +77,7 @@ class ToolboxFile(object):
                             content = tokens[1].decode()
                             content = re.sub('\\s+', ' ', content)
                             content = content.strip()
+                            
 
                         # TODO: this needs to be moved to the end, i.e. return just what is specified in the config
                         if field_marker in self.field_markers:
@@ -96,6 +97,7 @@ class ToolboxFile(object):
                     #except KeyError:
                     #    utterances['utterance'] = "None"
                     #    utterances['utterance_type'] = "None"
+                    #    self.warnings['warnings'] = 'empty utterance' # <<-- add warning here?
 
                     # TODO: build in the rules system per corpus...
                     # clean up utterance, add new data via Robert inferences, etc.
@@ -107,6 +109,21 @@ class ToolboxFile(object):
                     # how to handle this specifically?
                     # needs to live outside of utterance?
                     words = self.get_words(utterances) # pass the dictionary
+                    #morphemes = self.get_morphemes(utterances)
+                    #comments = self.get_comments(utterances)
+                    print("words")
+                    print(words)
+                    ##for k, v in words.items():
+                    ##    print(len(v))
+                    #print("morphemes")
+                    #print(morphemes)
+                    #for k, v in morphemes.items():
+                    #    print(len(v))
+                    
+                    #print("comments")
+                    #print(comments)
+                    
+                    
                     # utterances['utterance_cleaned'] = self.clean_utterance(utterances['utterance'])
 
                     # TODO: add in the morpheme parsing and inference
@@ -114,6 +131,7 @@ class ToolboxFile(object):
                     # print(utterances)
                     # TODO: return three dictionaries...
                     # yield utterances, words, morphemes
+                    #print(utterances)
                     yield utterances
                     pos = ma.start()
 
@@ -132,10 +150,79 @@ class ToolboxFile(object):
         """ Do the Toolbox corpus-specific word processing
         :return:
         """
-        # print(self.config['corpus']['corpus'])
-        # print(utterances)
-        # print()
-        return utterances
+        words = collections.defaultdict(list)
+        words = collections.OrderedDict()
+        wordcounter = 0
+        for k, v in utterances.items():
+            my_words = utterances['utterance_cleaned']
+            parent_id = utterances['utterance_id']
+            word_id = parent_id+'_w'+str(wordcounter)
+            
+            if self.config['corpus']['corpus'] == "Russian":
+                #exclude comments from words
+                words_comments = re.search('(.*?)(\[=.*?\])', my_words) 
+                if words_comments:
+                    my_words = words_comments.group(1).replace("&lt;","").split()
+                    for word in my_words:
+                        words[parent_id] =  my_words
+                        return words
+                    
+                else:
+                    my_words = my_words.replace("&lt;","").split()
+                    for word in my_words:
+                        words[parent_id] = my_words
+                        return words
+                    
+                    
+            #@bambooforest, I thought a possible structure for the words dictionary would be sth like:
+            #
+            ## {utterance_id:[(word_id,word),(word_id,word),...], utterance_id:[(word_id,word), (word_id,word)]}
+            #
+            # I tried the things below, but I keep getting an KeyError that I don't understand:
+            # When words is declared as defaultdict(list), then sth like words[parent_id].append(word_id,word) should be possible, non?
+            # I don't understand why it keeps throwing that error...
+            
+            #if self.config['corpus']['corpus'] == "Russian":
+            #    #exclude comments from words
+            #    words_comments = re.search('(.*?)(\[=.*?\])', my_words) 
+            #    if words_comments:
+            #        my_words = words_comments.group(1).replace("&lt;","").split()
+            #        for word in my_words:
+            #            wordcounter+=1
+            #            words[parent_id].append(word_id,word)
+            #           
+            #            return words
+            #    else:
+            #        my_words = my_words.replace("&lt;","").split()
+            #        for word in my_words:
+            #            wordcounter+=1
+            #            words[parent_id].append(word_id,word)
+            #            wordcounter+=1
+            #            return words
+                    
+                    
+    ## TODO, change, crap for now...
+    #def get_comments(self,utterances):
+    #    """ Do Toolbox corpus-specific comments catching
+    #    :return: OrderedDict of comments
+    #    """
+    #    comments = collections.OrderedDict()
+    #    for k, v in utterances.items():
+    #        #get comments in Russian
+    #        my_words = utterances['utterance_cleaned']
+    #        if self.config['corpus']['corpus'] == "Russian":
+    #            my_comments = re.search('(.*?)(\[=.*?\])', my_words) 
+    #            if my_comments:
+    #                return my_comments
+                
+                #    comments[k] = my_comments.group(2)
+                #    return comments
+                #else:
+                #    comments[k] = "None"
+                #    return comments
+                    
+                
+            
 
     def get_sentence_type(self, utterance):
         """ Get utterance type (aka sentence type)
@@ -198,11 +285,22 @@ class ToolboxFile(object):
             pass
         return utterances
 
-    def get_morphemes(self):
-        """ Do the Toolbox corpus-specific morpheme processing
-        :return:
-        """
-        pass
+    ## TODO, change, crap for now
+    #def get_morphemes(self, utterances):
+    #    """ Do the Toolbox corpus-specific morpheme processing
+    #    :return:
+    #    """
+        #morphemes = collections.OrderedDict()
+        #for k, v in utterances.items():
+        #    try:
+        #        morphs = utterances['morpheme']
+        #        #delete punctuation (as is done for clean_utterance with \text tiers)
+        #        morphs_cleaned = re.sub('[‘’\'“”\"\.!,:\+\/]+|(?<=\\s)\?(?=\\s|$)', '',morphs)
+        #        morphs_cleaned = morphs_cleaned.split()
+        #        morphemes[v] = morphs_cleaned
+        #        return morphemes
+        #    except KeyError:
+        #        morphemes[v] = "None"
 
     # probably not needed
     def make_rec(self, data):
