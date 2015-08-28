@@ -84,8 +84,17 @@ class ToolboxFile(object):
 
                     # we need to choose either the phonetic or orthographic transcription
                     # for the general 'utterance' field (from config); also add its type
+                    
+                    #TODO: the below two lines rais the error discussed in https://github.com/uzling/acqdiv/issues/154, possible workaround: lines 92-98.
                     utterances['utterance'] = utterances[self.config['utterance']['field']]
                     utterances['utterance_type'] = self.config['utterance']['type']
+                
+                    #try:
+                    #    utterances['utterance'] = utterances[self.config['utterance']['field']]
+                    #    utterances['utterance_type'] = self.config['utterance']['type']
+                    #except KeyError:
+                    #    utterances['utterance'] = "None"
+                    #    utterances['utterance_type'] = "None"
 
                     # TODO: build in the rules system per corpus...
                     # clean up utterance, add new data via Robert inferences, etc.
