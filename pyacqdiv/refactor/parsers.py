@@ -7,10 +7,12 @@ import configparser
 import glob
 import re
 import xml.etree.ElementTree as ET
-import cree
+import json
+from pprint import pprint
 
 from metadata import Imdi, Chat
 from factories import *
+import cree
 
 
 # TODO: integrate the Corpus specific parsing routines from the body parser
@@ -166,10 +168,6 @@ class ToolboxParser(SessionParser):
 #            print()
             yield record
 
-class JsonParser(SessionParser):
-    """ Parser for JSON output from Robert's body parser
-    """
-    pass
 
 class ChatXMLParser(SessionParser):
     """ For Cree, Inuktitut, MiiPro, Miyata, Sesotho, Turkish, & Yucatec """
@@ -219,10 +217,33 @@ class ChatXMLParser(SessionParser):
         # also I supposed by "we" we mean "chysi"
 
 class CreeParser(ChatXMLParser):
-
+    """ Cazim's attempt at a Cree corpus specific subclass parser
+    """
     def next_utterance(self):
-
         uf = cree.CreeUtteranceFactory()
-        
         for u in self.root.findall('.//u'):
             yield uf.make_utterance(u), uf.next_word, uf.next_morpheme
+
+
+class JsonParser(SessionParser):
+    """ Parser for JSON output from Robert's body parser
+    """
+    def __init__(self, config, file_path):
+        SessionParser.__init__(self, config, file_path)
+        with open(file_path) as data_file:
+            data = json.load(data_file)
+        pprint(data)
+
+
+if __name__ == "__main__":
+    import time
+    start_time = time.time()
+
+    from parsers import CorpusConfigParser
+    cfg = CorpusConfigParser()
+    cfg.read("Cree.ini")
+    f = "../../parsed/Cree/2006-10-18.json"
+    c = JsonParser(cfg, f)
+
+    print()
+    print("--- %s seconds ---" % (time.time() - start_time))
