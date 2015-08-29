@@ -100,14 +100,24 @@ class SessionProcessor(object):
 
         if self.format == "Toolbox":
             # Utterance parsing
-            for utterance in self.parser.next_utterance():
+            for utterance, word in self.parser.next_utterance():
                 utterance['parent_id'] = self.filename
                 utterance['corpus'] = self.corpus
                 # TODO: determine utterance type from config
                 utterance['utterance_type'] = self.config['utterance']['type']
                 self.utterances.append(Utterance(**utterance))
-                # print(utterance)
+                #print(utterance)
+                
             # TODO: word parsing
+                words_for_db = collections.OrderedDict()
+                for k,v, in word.items():
+                    words_for_db['parent_id'] = k
+                    for w_id,w in v:
+                        words_for_db['word_id'] = w_id
+                        words_for_db['word'] = w           
+                        self.words.append(Word(**words_for_db))
+            
+                
 
             # TODO: morpheme parsing
 
