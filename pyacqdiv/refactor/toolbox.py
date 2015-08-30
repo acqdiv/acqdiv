@@ -111,15 +111,8 @@ class ToolboxFile(object):
                     words = self.get_words(utterances) # pass the dictionary
                     #morphemes = self.get_morphemes(utterances)
                     #comments = self.get_comments(utterances)
-                    print("words")
-                    print(words)
-                    ##for k, v in words.items():
-                    ##    print(len(v))
                     #print("morphemes")
                     #print(morphemes)
-                    #for k, v in morphemes.items():
-                    #    print(len(v))
-                    
                     #print("comments")
                     #print(comments)
                     
@@ -132,7 +125,7 @@ class ToolboxFile(object):
                     # TODO: return three dictionaries...
                     # yield utterances, words, morphemes
                     #print(utterances)
-                    yield utterances
+                    yield utterances, words
                     pos = ma.start()
 
                 """
@@ -148,15 +141,17 @@ class ToolboxFile(object):
 
     def get_words(self, utterances):
         """ Do the Toolbox corpus-specific word processing
-        :return:
+        :param utterance:
+        :return: {utterance_id:[(word_id,word),(word_id,word),...], utterance_id:[(word_id,word), (word_id,word)]}
         """
         words = collections.defaultdict(list)
         words = collections.OrderedDict()
         wordcounter = 0
+        
         for k, v in utterances.items():
-            my_words = utterances['utterance_cleaned']
-            parent_id = utterances['utterance_id']
-            word_id = parent_id+'_w'+str(wordcounter)
+            my_words = utterances['utterance_cleaned'] # the cleaned utterances
+            parent_id = utterances['utterance_id'] # the utterance_id which serves as parent_id in the Words table in the db
+            words[parent_id] = [] ## <<-- this "hack" (?) was needed in order to get the desired dictionary structure (it's probably not very elegant)
             
             if self.config['corpus']['corpus'] == "Russian":
                 #exclude comments from words
@@ -164,42 +159,18 @@ class ToolboxFile(object):
                 if words_comments:
                     my_words = words_comments.group(1).replace("&lt;","").split()
                     for word in my_words:
-                        words[parent_id] =  my_words
-                        return words
-                    
+                        wordcounter+=1
+                        word_id = parent_id+'_w'+str(wordcounter) # word_id for words in Words table in db
+                        words[parent_id].append((word_id,word))
+                       
                 else:
                     my_words = my_words.replace("&lt;","").split()
                     for word in my_words:
-                        words[parent_id] = my_words
-                        return words
-                    
-                    
-            #@bambooforest, I thought a possible structure for the words dictionary would be sth like:
-            #
-            ## {utterance_id:[(word_id,word),(word_id,word),...], utterance_id:[(word_id,word), (word_id,word)]}
-            #
-            # I tried the things below, but I keep getting an KeyError that I don't understand:
-            # When words is declared as defaultdict(list), then sth like words[parent_id].append(word_id,word) should be possible, non?
-            # I don't understand why it keeps throwing that error...
-            
-            #if self.config['corpus']['corpus'] == "Russian":
-            #    #exclude comments from words
-            #    words_comments = re.search('(.*?)(\[=.*?\])', my_words) 
-            #    if words_comments:
-            #        my_words = words_comments.group(1).replace("&lt;","").split()
-            #        for word in my_words:
-            #            wordcounter+=1
-            #            words[parent_id].append(word_id,word)
-            #           
-            #            return words
-            #    else:
-            #        my_words = my_words.replace("&lt;","").split()
-            #        for word in my_words:
-            #            wordcounter+=1
-            #            words[parent_id].append(word_id,word)
-            #            wordcounter+=1
-            #            return words
-                    
+                        wordcounter+=1
+                        word_id = parent_id+'_w'+str(wordcounter) # word_id for words in Words table in db
+                        words[parent_id].append((word_id,word))
+
+            return words                    
                     
     ## TODO, change, crap for now...
     #def get_comments(self,utterances):
