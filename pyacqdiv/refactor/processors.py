@@ -97,18 +97,20 @@ class SessionProcessor(object):
         self.utterances = []
         self.words = []
         self.morphemes = []
+        self.warnings = []
 
         if self.format == "Toolbox":
             # Utterance parsing
-            for utterance, word in self.parser.next_utterance():
+            for utterance, word, morpheme, warning in self.parser.next_utterance():
                 utterance['parent_id'] = self.filename
                 utterance['corpus'] = self.corpus
                 # TODO: determine utterance type from config
                 utterance['utterance_type'] = self.config['utterance']['type']
                 self.utterances.append(Utterance(**utterance))
                 #print(utterance)
+                #print(warning)
                 
-            # TODO: word parsing
+                # word parsing
                 words_for_db = collections.OrderedDict()
                 for k,v, in word.items():
                     words_for_db['parent_id'] = k
@@ -116,10 +118,27 @@ class SessionProcessor(object):
                         words_for_db['word_id'] = w_id
                         words_for_db['word'] = w           
                         self.words.append(Word(**words_for_db))
-            
+                        
+                # warnings
+                # TODO: @bambooforest, could you please check why this fails? The error I get is:
+                # sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: warnings.id [SQL: 'INSERT INTO warnings (parent_id, warning) VALUES (?, ?)'] [parameters: ('A00210817_1', None)]
+                # plus: I'm not sure yet if the output is correct, see toolbox.py #L46-50 for the desired structure (good?)
+                #   self.warnings.append(Warnings(**warning))
                 
+                    
 
-            # TODO: morpheme parsing
+                # morpheme parsing
+                morphemes_for_db = collections.OrderedDict()
+                for k,v in morpheme.items():
+                    morphemes_for_db['parent_id'] = k
+                    if not v == 'None':
+                        for morph_id,morph in v:
+                            morphemes_for_db['morpheme_id'] = morph_id
+                            morphemes_for_db['morpheme'] = morph
+                            self.morphemes.append(Morpheme(**morphemes_for_db))
+                    else:
+                        pass
+                    
 
         elif self.format == "ChatXML":
             #TODO(chysi): this doesn't look like a generator to me!!!
@@ -161,6 +180,7 @@ class SessionProcessor(object):
             session.add_all(self.utterances)
             session.add_all(self.words)
             session.add_all(self.morphemes)
+            session.add_all(self.warnings)
             session.commit()
             # self.db_session.add(session_metadata)
             # self.db_session.add_all(self.speakers)
