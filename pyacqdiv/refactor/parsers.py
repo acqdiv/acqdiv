@@ -120,12 +120,12 @@ class ToolboxParser(SessionParser):
             # hack to get the separate metadata file paths for IMDIs
             temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
             self.metadata_file_path = temp.replace(".txt", ".xml")
-            self.metadata_parser = Chat(self.metadata_file_path)
+            self.metadata_parser = Chat(self.config, self.metadata_file_path)
 
         elif self.config['metadata']['type'] == "IMDI":
             temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
             self.metadata_file_path = temp.replace(".txt", ".imdi")
-            self.metadata_parser = Imdi(self.metadata_file_path)
+            self.metadata_parser = Imdi(self.config, self.metadata_file_path)
         else:
             assert 0, "Unknown metadata format type: "#  + format
 
@@ -183,7 +183,7 @@ class ChatXMLParser(SessionParser):
         # I don't know what it's good for yet but I'm putting it in here until
         # we can figure out what rsk uses it for in his parser
         # and whether we need it.
-        self.pmap = {c:p for p in self.tree.iter() for c in p}
+        #self.pmap = {c:p for p in self.tree.iter() for c in p}
         self.clean_tree()
 
     def get_session_metadata(self):
@@ -212,10 +212,6 @@ class ChatXMLParser(SessionParser):
         for u in self.root.findall('.//u'):
             yield uf.make_utterance(u), uf.next_word, uf.next_morpheme
     
-        # sample utterance processing call
-        # ideally we'd just have to implement UtteranceFactory and be done here
-        # also I supposed by "we" we mean "chysi"
-
 class CreeParser(ChatXMLParser):
     """ Cazim's attempt at a Cree corpus specific subclass parser
     """

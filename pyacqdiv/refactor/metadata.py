@@ -17,8 +17,9 @@ class Parser(object):
     # def __init__(self, config, path):
         # self.config = config
 
-    def __init__(self, path):
+    def __init__(self, config, path):
         self.path = path
+        self.config = config
         self.tree = objectify.parse(path)
         self.root = self.tree.getroot()
 
@@ -26,6 +27,7 @@ class Parser(object):
             '__attrs__': self.parse_attrs(self.root),
                     }
         self.metadata['__attrs__']['Cname'] = re.sub(r'\.xml.*|\.imdi.*', "", os.path.basename(str(self.path)))
+        self.unifier = Unifier(self.metadata, self.config)
 
         # Special case for Indonesian
         # Explanation: this converts the session ID to the same format as in the body files
@@ -84,12 +86,13 @@ class Imdi(Parser):
     # def __init__(self, config, path):
     #    Parser.__init__(self, config, path)
 
-    def __init__(self, path):
-        Parser.__init__(self, path)
+    def __init__(self, config, path):
+        Parser.__init__(self, config, path)
         self.metadata["participants"] = self.get_participants()
         self.metadata["session"] = self.get_session_data()
         self.metadata["project"] = self.get_project_data(self.root)
         self.metadata["media"] = self.get_media_data(self.root)
+        self.unifier.unify()
 
     def get_participants(self):
         """
@@ -160,11 +163,12 @@ class Chat(Parser):
     # def __init__(self, config, path):
         # Parser.__init__(self, config, path)
 
-    def __init__(self, path):
-        Parser.__init__(self, path)
+    def __init__(self, config, path):
+        Parser.__init__(self, config, path)
         self.metadata["participants"] = self.get_participants(self.root)
         self.metadata["comments"] = self.get_comments(self.root)
         self.metadata["comments"] = self.get_comments(self.root)
+        self.unifier.unify()
         # self.write_json(self.metadata)
 
     # TODO: where is the get_sessions stuff? in the unifier?
@@ -178,6 +182,33 @@ class Chat(Parser):
             return {c.attrib['type']: str(c) for c in root.comment}
         except:
             pass
+
+class Unifier():
+
+    def __init__(self,metadict,cfg):
+
+        self.metadata = metadict
+        self.config = cfg
+        #if 'IMDI' in self.metadata["__attrs__"]['schemaLocation']:
+        #    self.metatype = 'IMDI'
+        #else:
+        #    self.metatype = 'XML'
+        #self.null = ["Unknown", "Unspecified", "None"]
+
+    def unify(self):
+        if self.config['corpus']['format'] == "IMDI":
+            for tier in self.config['session_labels']:
+                self.metadata['session'][self.config['session_labels'][tier]] = self.metadata['session'].pop(tier) if tier in self.metadata['session'] else None
+
+        else:
+            self.metadata['session'] = {}
+            for tier in self.config['session_labels']:
+                self.metadata['session'][self.config['session_labels'][tier]] = self.metadata['__attrs__'].pop(tier) if tier in self.metadata['__attrs__'] else None
+
+        for i in range(len(self.metadata['participants'])):
+            for tier in self.config['speaker_labels']:
+                self.metadata['participants'][i][self.config['speaker_labels'][tier]] = self.metadata['participants'][i].pop(tier) if tier in self.metadata['participants'][i] else None
+
 
 if __name__=="__main__":
     # TODO: we need some serious tests
@@ -212,12 +243,6 @@ if __name__=="__main__":
     print("####")
     """
 
-    print("RUSSIAN:")
-    imdi = Imdi("../../corpora/Russian/metadata/A00210817.imdi")
-    for k, v in imdi.metadata.items():
-        print(k, v)
-        print()
-    # print(imdi.metadata['session']['location']['address'])
-    print("#####################")
+
 
 
