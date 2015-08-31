@@ -69,15 +69,17 @@ class SessionParser(object):
         corpus = config.corpus
         format = config.format
 
-        # this seeems a bit nasty
-        if corpus == "Cree":
-            return CreeParser(config, file_path)
-        else:
-            # print("Unknown Corpus. Defaulting...")
-            if format == "ChatXML":
+        # TODO: update when we dump using JSON
+        if format == "ChatXML":
+            if corpus == "Cree":
+                return CreeParser(config, file_path)
+            else:
                 return ChatXMLParser(config, file_path)
-            if format == "Toolbox":
-                return ToolboxParser(config, file_path)
+        elif format == "Toolbox":
+            return ToolboxParser(config, file_path)
+        elif format == "JSON":
+            return JsonParser(config, file_path)
+        else:
             assert 0, "Unknown format type: " + format
 
     def __init__(self, config, file_path):
@@ -174,7 +176,7 @@ class ChatXMLParser(SessionParser):
 
     def __init__(self, config, file_path):
         SessionParser.__init__(self, config, file_path)
-        self.metadata_parser = Chat(self.file_path)
+        self.metadata_parser = Chat(config, self.file_path)
         #TODO: can this be a self.body_parser() or something?
         with open(self.file_path, 'r') as xml:
             self.tree = ET.parse(xml)
@@ -223,12 +225,67 @@ class CreeParser(ChatXMLParser):
 
 class JsonParser(SessionParser):
     """ Parser for JSON output from Robert's body parser
+
+    # TODO:
+        - what to do with the stars?
+            - "phonetic": "* * *",
+            - "phonetic_target": "* * *",
+
     """
     def __init__(self, config, file_path):
         SessionParser.__init__(self, config, file_path)
+
+        self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
+        # load the data
         with open(file_path) as data_file:
-            data = json.load(data_file)
-        pprint(data)
+            self.data = json.load(data_file)
+
+        # TODO: update when no longer using JSON
+        temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
+        self.metadata_file_path = temp.replace(".json", ".xml")
+        self.metadata_parser = Chat(self.config, self.metadata_file_path)
+
+    def next_utterance(self):
+        for record in self.data[self.filename]:
+            utterance = collections.OrderedDict()
+            words = []
+            for k in record:
+                # Get just the corpus-specified utterance mappings
+                if k in self.config['json_mappings']:
+                    label = self.config['json_mappings'][k]
+                    utterance[label] = record[k]
+                # TODO: Robert doesn't output the whole utterance, recreate it
+                # gather up the words ^^
+                full_utterance = []
+                d = collections.OrderedDict()
+                if k == 'words':
+                    for word in record['words']:
+                        w = self.config['json_mappings']['word']
+                        if w in word:
+                            d[self.config['json_mappings']['full_word']] = word[w]
+                            full_utterance.append(word[w])
+                            if 'utterance_id' in utterance:
+                                d['utterance_id'] = utterance['utterance_id']
+                        words.append(d)
+                        # TODO: deal with morphemes and recreate the full string
+                utterance['utterance_cleaned'] = " ".join(full_utterance)
+            print(utterance)
+            print(words)
+            print()
+            yield utterance, words
+
+    # TODO: this will have to be removed (copied from ChatXML for the time being)
+    def get_session_metadata(self):
+        # Do xml-specific parsing of session metadata.
+        # The config so it knows what symbols to look for.
+        return self.metadata_parser.metadata['__attrs__']
+
+    def next_speaker(self):
+        """ Yield participants metadata for the Speaker table in the db
+        :return dictionary
+        """
+        for speaker in self.metadata_parser.metadata['participants']:
+            yield speaker
 
 
 if __name__ == "__main__":
@@ -237,9 +294,10 @@ if __name__ == "__main__":
 
     from parsers import CorpusConfigParser
     cfg = CorpusConfigParser()
-    cfg.read("Cree.ini")
-    f = "../../parsed/Cree/2006-10-18.json"
+    cfg.read("CreeJSON.ini")
+    f = "../../corpora/Cree/json/Ani/2006-10-18.json"
     c = JsonParser(cfg, f)
+    c.next_utterance() # why doesn't this work?
 
     print()
     print("--- %s seconds ---" % (time.time() - start_time))

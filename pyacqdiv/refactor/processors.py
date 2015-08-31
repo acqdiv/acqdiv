@@ -116,10 +116,14 @@ class SessionProcessor(object):
                         words_for_db['word_id'] = w_id
                         words_for_db['word'] = w           
                         self.words.append(Word(**words_for_db))
-            
-                
 
             # TODO: morpheme parsing
+
+        elif self.format == "JSON":
+            for u in self.parser.next_utterance():
+                print(u)
+            #    for utterance, words in self.parser.next_utterance():
+            #        pass
 
         elif self.format == "ChatXML":
             #TODO(chysi): this doesn't look like a generator to me!!!
