@@ -48,26 +48,6 @@ class Parser(object):
     def parse_attrs(self, e):
         return {k: e.attrib[k] for k in e.keys()}
 
-    def validate(self, src, schema):
-        """ validate a set of xml files """
-        # can be done from the command line given xmllint and an xsd:
-        # xmllint --noout --schema IMDI_3.0.xsd 
-        pass
-
-    def corpora_metadata(self, src):
-        """ extract corpus level (.cdc) metadata from chat corpora """
-        # see acqdiv/extraction/metadata/corpora.py
-        pass
-
-    def sessions_metadata(self, src):
-        """ extract sesssion level metadata from chat xml corpora using NLTK """
-        # see acqdiv/extraction/metadata/sessions.py
-        pass
-
-    def get_participants(self):
-        """ get participants; metadata type specific methods in the subclasses """
-        pass
-
     def get_everything(self, root):
         """ method returns a list of all tag text tuples """
         everything = []

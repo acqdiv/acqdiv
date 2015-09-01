@@ -246,6 +246,8 @@ class JsonParser(SessionParser):
         self.metadata_parser = Chat(self.config, self.metadata_file_path)
 
     def next_utterance(self):
+        #I'm not gonna mess with it but this seems to be meant for loading whole-corpus files 
+        #and doesn't work with the test session file
         for record in self.data[self.filename]:
             utterance = collections.OrderedDict()
             words = []
@@ -297,7 +299,10 @@ if __name__ == "__main__":
     cfg.read("CreeJSON.ini")
     f = "../../corpora/Cree/json/Ani/2006-10-18.json"
     c = JsonParser(cfg, f)
-    c.next_utterance() # why doesn't this work?
+    #c.next_utterance() # why doesn't this work?
+    #because it's a generator and you really should be doing 
+    next(c.next_utterance())
+    #the original call creates a generator object, but doesn't do anything with it!
 
     print()
     print("--- %s seconds ---" % (time.time() - start_time))
