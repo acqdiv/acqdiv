@@ -47,7 +47,7 @@ class ToolboxFile(object):
         # colletc all warnings in an ordered dict with the following structure:
         # {utterance_id:[warning_a,warning_b,warning_c,...], utterance_id:[warning_a,warning_b,warning_c],...}
         self.warnings = collections.OrderedDict()
-        self.warnings['warning'] = []
+        #self.warnings['warning'] = []
         
 
     # TODO: return utterances, words, morphemes, as ordered dictionaries?
@@ -109,17 +109,16 @@ class ToolboxFile(object):
                     utterances['utterance_cleaned'] = self.clean_utterance(utterances['utterance'])
                     
                     # utterances['utterance_cleaned'] = self.clean_utterance(utterances['utterance'])
-                    #print(utterances)
+                    # print(utterances)
 
                     # TODO: add in the words parsing (and inference?)
                     # how to handle this specifically?
                     # needs to live outside of utterance?
                     words = self.get_words(utterances) # pass the dictionary
-                    # print(words)
-                    #comments = self.get_comments(utterances)
+                    #print('words')
+                    #print(words)
                     
-                    
-                    
+                                    
                     ## add parent_id to warnings
                     self.warnings['parent_id'] = utterances['utterance_id']
                     # print(self.warnings)
@@ -128,13 +127,15 @@ class ToolboxFile(object):
 
                     # TODO: add in the morpheme parsing and inference
                     morphemes = self.get_morphemes(utterances)
-                    # print(morphemes)
+                    #print('morphemes')
+                    #print(morphemes)
                     
+                    inferences = self.do_inference(utterances)
 
                     # print(utterances)
                     # TODO: return three dictionaries...
                     # yield utterances, words, morphemes
-                    yield utterances, words, morphemes, self.warnings
+                    yield utterances, words, morphemes, inferences, self.warnings
                     pos = ma.start()
 
                 """
@@ -148,68 +149,23 @@ class ToolboxFile(object):
                 self.header, self.footer = header, footer
                 """
 
-    def get_words(self, utterances):
+    def get_words(self,utterances):
         """ Do the Toolbox corpus-specific word processing
-        :param utterance:
-        :return: {utterance_id:[(word_id,word),(word_id,word),...], utterance_id:[(word_id,word), (word_id,word)]}
+        :param utterance: ordered dictionary
+        :return: list of ordered dictionaries with word and parent utterance id
         """
-        words = collections.defaultdict(list)
-        words = collections.OrderedDict()
-        wordcounter = 0
-        
-        for k, v in utterances.items():
-            my_words = utterances['utterance_cleaned'] # the cleaned utterances
-            parent_id = utterances['utterance_id'] # the utterance_id which serves as parent_id in the Words table in the db
-            words[parent_id] = [] ## <<-- this "hack" (?) was needed in order to get the desired dictionary structure (it's probably not very elegant)
-            my_words_list = my_words.split(' ')
-            
-            if self.config['corpus']['corpus'] == "Russian":
-                #exclude comments from words
-                words_comments = re.search('(.*?)(\[=.*?\])', my_words) 
-                if words_comments:
-                    my_comments = words_comments.group(2).replace("=","")
-                    my_words = words_comments.group(1).replace("&lt;","").split()
-                    for word in my_words:
-                        wordcounter+=1
-                        word_id = parent_id+'_w'+str(wordcounter) # word_id for words in Words table in db
-                        words[parent_id].append((word_id,word))
-                       
-                else:
-                    my_words = my_words.replace("&lt;","").split()
-                    for word in my_words:
-                        wordcounter+=1
-                        word_id = parent_id+'_w'+str(wordcounter) # word_id for words in Words table in db
-                        words[parent_id].append((word_id,word))
-                        
-            else:
-                for word in my_words_list:
-                    wordcounter+=1
-                    word_id = parent_id+'_w'+str(wordcounter)
-                    words[parent_id].append((word_id,word))
-                        
-            return words
+        result = []
+        words = utterances['utterance_cleaned'].split()
+        # TODO: make sure to deal with the comment handling, etc., e.g.:
+        # if self.config['corpus']['corpus'] == "Russian":
+            # words_comments = re.search('(.*?)(\[=.*?\])', my_words)
+        for word in words:
+            d = collections.OrderedDict()
+            d['word'] = word
+            d['parent_id'] = utterances['utterance_id']
+            result.append(d)
+        return result
 
-    
-    ## lingdp: not needed? (probably not, as this is already dealt with on utterance level!)
-    #def get_comments(self,utterances):
-    #    """ Do Toolbox corpus-specific comments catching
-    #     :param utterance:
-    #    :return: {utterance_id:comment, utterance_id:comment,...}
-    #    """
-    #    comments = collections.OrderedDict()
-    #    for k, v in utterances.items():
-    #        #get comments in Russian
-    #        my_words = utterances['utterance_cleaned']
-    #        if self.config['corpus']['corpus'] == "Russian":
-    #            my_comments = re.search('(.*?)(\[=.*?\])', my_words) 
-    #            if my_comments:                
-    #                comments[v] = re.sub('[\[\]]','',my_comments.group(2)).replace("= ","")
-    #            else:
-    #                comments[v] = "NULL"
-    #        
-    #        return comments
-                    
-                
             
 
     def get_sentence_type(self, utterance):
@@ -247,17 +203,18 @@ class ToolboxFile(object):
         if utterance != 'None' or utterance != '':
             if self.config['corpus']['corpus'] == "Russian":
                 # delete punctuation in \pho and \text tiers
-                utterance = re.sub('[‘’\'“”\"\.!,:\+\/]+|(?<=\\s)\?(?=\\s|$)', '', utterance)
+                utterance = re.sub('[‘’\'“”\"\.!,:\+\/]+|(&lt; )|(?<=\\s)\?(?=\\s|$)', '', utterance)
                 utterance = re.sub('\\s\-\\s', ' ', utterance)
+                #utterance = utterance.replace('\s\s', ' ')
     
                 # Insecure transcriptions [?], [=( )?], [xxx]: add warning, delete marker
                 # Note that [xxx] usually replaces a complete utterance and is non-aligned,
                 # in contrast to xxx without brackets, which can be counted as a word
-                if re.search('\[(\s*=?\s*\?\s*|\s*xxx\s*)\]', utterance): ## TODO: I think this doesn't match what it should? (check again!)
-                #if re.search('\[\s*=?.*?\]', utterance):
-                    utterance = re.sub('\[\s*=?\s*\?\s*\]','',utterance)  ## TODO: again, I think this doesn't match what it should... (check again!)
-                    #utterance = re.sub('\[\s*=?.*?\]', '', utterance)
-                    self.warnings['warning'].append('transcription insecure')
+                #if re.search('\[(\s*=?\s*\?\s*|\s*xxx\s*)\]', utterance): ## TODO: I think this doesn't match what it should? (a . missing? check line below)
+                if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
+                    #utterance = re.sub('\[\s*=?\s*\?\s*\]','',utterance)  ## TODO: again, I think this doesn't match what it should... (check line below)
+                    utterance = re.sub('\[\s*=?.*?\]', '', utterance)
+                    self.warnings['warning'] ='transcription insecure'
                 return utterance
 
             # TODO: incorporate the Indonesian stuff
@@ -271,9 +228,9 @@ class ToolboxFile(object):
                 # cf. https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1605-1610
                 if re.search('\[\?\]', utterance):
                     utterance = re.sub('\[\?\]', '', utterance)
-                    self.warnings['warning'].append('transcription insecure')
+                    self.warnings['warning'] ='transcription insecure'
                 
-                #TODO: what about the stuff in some Indonesian sessions that is actually metadata info? How to get rid of that?
+                #TODO: what about the first couple of lines in some Indonesian sessions that is actually metadata info? How to get rid of that?
                 # cf.: https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1601-1603
                 return utterance
     
@@ -285,41 +242,121 @@ class ToolboxFile(object):
         else:
             self.warnings['warning'].append('empty utterance')
 
-    def do_inference(self, utterances_dictionary):
+    def do_inference(self, utterances):
+        result = []
+        #morphs = get_morphemes(utterances)
         if self.config['corpus']['corpus'] == "Russian":
             # TODO: do the Russian words / morphemes inference
+            if 'pos' in utterances.keys():
+            # remove PUNCT pos
+            #if self.config['corpus']['corpus'] == "Russian":
+                pos_cleaned = utterances['pos'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
+                
+                #The Russian tier \mor contains both glosses and POS, separated by "-" or ":". Method for distinguishing and extracting them:
+                #* 1) If there is no ":" in a word string, gloss and POS are identical (most frequently the case with PCL 'particle').
+                #* 2) Sub-POS are always separated by "-" (e.g. PRO-DEM-NOUN), subglosses are always separated by ":" (e.g. PST:SG:F). What varies, though, is the character that separates POS from glosses in the word string:
+                #* If the POS is V ('verb') or ADJ ('adjective'), the glosses start behind the first "-", e.g. V-PST:SG:F:IRREFL:IPFV -> POS V, gloss PST.SG.F.IRREFL.IPFV
+                #* 3) For all other POS, the glosses start behind the first ":", e.g. PRO-DEM-NOUN:NOM:SG -> POS PRO.DEM.NOUN, gloss NOM.SG
+    
+                for pos in pos_cleaned:
+                    d = collections.OrderedDict()
+                    ## 1)
+                    if ':' not in pos:
+                        d['parent_id'] = utterances['utterance_id']
+                        d['pos'] = pos
+                        d['gloss'] = pos
+                        result.append(d)
+                    ## 2)
+                    elif pos.startswith('V') or pos.startswith('ADJ'):
+                        match_verb_adj = re.search('(V|ADJ)-(.*$)', pos)
+                        if match_verb_adj:
+                            d['parent_id'] = utterances['utterance_id']
+                            d['pos'] = match_verb_adj.group(1)
+                            d['gloss'] = match_verb_adj.group(2)
+                            result.append(d)
+                    ## 3)
+                    else:
+                        match_gloss_pos = re.search('(^[^(V|ADJ)].*?):(.*$)', pos)
+                        if match_gloss_pos:
+                            d['parent_id'] = utterances['utterance_id']
+                            d['pos'] = match_gloss_pos.group(1)
+                            d['gloss'] = match_gloss_pos.group(2)
+                            result.append(d)
+                            
+            else:
+                d = collections.OrderedDict()
+                d['pos'] = 'None'
+                d['gloss'] = 'None'
+                d['parent_id'] = utterances['utterance_id']
+                result.append(d)
+                self.warnings['warning'].append('not glossed!')
+                        
+        # TODO: Indonesian specific morpheme/inference stuff
+        elif self.config['corpus']['corpus'] == "Indonesian":
             pass
-        return utterances
+        
+        # TODO: Chintang specific morpheme/inference stuff
+        elif self.config['corpus']['corpus'] == "Chintang":
+            pass
+        
+        return result
 
     ## TODO, change, crap for now
     def get_morphemes(self, utterances):
         """ Do the Toolbox corpus-specific morpheme processing
-        :return: {utterance_id:[(morpheme_id,morpheme),(morpheme_id,morpheme),...], utterance_id:[(morpheme_id,morpheme), (morpheme_id,morpheme)]}
+        :return: (so far) list of ordered dictionaries with morpheme and parent utterance id
         """
-        morphemes = collections.OrderedDict()
-        parent_id = utterances['utterance_id'] # the utterance_id which serves as parent_id in the Morpheme table in the db
-        morphemes[parent_id] = []
-        morphcounter = 0
+        result = []
         
-        for k, v in utterances.items():
-            try:
-                morphs = utterances['morpheme']
-                #delete punctuation (as is done for clean_utterance with \text tiers)
-                #morphs_cleaned = re.sub('[‘’\'“”\"\.!,:\+\/]+|(?<=\\s)\?(?=\\s|$)', '',morphs)
-                morphs_list = morphs.split()
-                #morphemes[v] = morphs_cleaned
-                for morpheme in morphs_list:
-                    morphcounter+=1
-                    morpheme_id = parent_id+'_m'+str(morphcounter)
-                    morphemes[parent_id].append((morpheme_id,morpheme))
+        if 'morpheme' in utterances.keys():
+            # remove punctuation from morphemes!
+            if self.config['corpus']['corpus'] == "Russian":
+                morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\-\?\+\/]', '', utterances['morpheme'])
+                morphemes = morphemes_cleaned.split()
                 
-            except KeyError:
-                # add warning if any morphology tiers are missing or empty,
-                # cf.: https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1642-L1645
-                morphemes[v] = "None"
-                self.warnings['warning'].append('not glossed')
+                for morpheme in morphemes:
+                    # Note that there is no "morpheme_target" for Russian
+                    d = collections.OrderedDict()
+                    d['morpheme'] = morpheme
+                    d['parent_id'] = utterances['utterance_id']
+                    result.append(d)
+                    
+            ## TODO: Indonesian specific morpheme stuff!!
+            elif self.config['corpus']['corpus'] == "Indonesian":
+                # remove punctuation
+                morhphemes_Indonesian = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['morpheme'])
+                morphemes = morhphemes_Indonesian.split()
                 
-            return morphemes
+                for morpheme in morphemes:
+                    d = collections.OrderedDict()
+                    d['morpheme'] = morpheme
+                    d['parent_id'] = utterances['utterance_id']
+                    result.append(d)
+                
+            #
+            ## TODO: Chintang specific morpheme stuff!!
+            elif self.config['corpus']['corpus'] == "Chintang":
+                # remove punctuation
+                morhphemes_Chintang = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['morpheme'])
+                morphemes = morhphemes_Chintang.split()
+                
+                for morpheme in morphemes:
+                    d = collections.OrderedDict()
+                    d['morpheme'] = morpheme
+                    d['parent_id'] = utterances['utterance_id']
+                    result.append(d)
+            
+        else:
+            d = collections.OrderedDict()
+            #d['morpheme'] = 'None'
+            d['parent_id'] = utterances['utterance_id']
+            result.append(d)
+            self.warnings['warning'] = 'morpheme missing!'
+            
+                
+        return result
+
+
 
     # probably not needed
     def make_rec(self, data):

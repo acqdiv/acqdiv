@@ -101,43 +101,48 @@ class SessionProcessor(object):
 
         if self.format == "Toolbox":
             # Utterance parsing
-            for utterance, word, morpheme, warning in self.parser.next_utterance():
+            for utterance, words, morphemes, inferences, warnings in self.parser.next_utterance():
                 utterance['parent_id'] = self.filename
                 utterance['corpus'] = self.corpus
                 # TODO: determine utterance type from config
                 utterance['utterance_type'] = self.config['utterance']['type']
                 self.utterances.append(Utterance(**utterance))
-                #print(utterance)
-                #print(warning)
+               # print(inferences)
                 
                 # word parsing
-                words_for_db = collections.OrderedDict()
-                for k,v, in word.items():
-                    words_for_db['parent_id'] = k
-                    for w_id,w in v:
-                        words_for_db['word_id'] = w_id
-                        words_for_db['word'] = w           
-                        self.words.append(Word(**words_for_db))
-                        
-                # warnings
-                # TODO: @bambooforest, could you please check why this fails? The error I get is:
-                # sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: warnings.id [SQL: 'INSERT INTO warnings (parent_id, warning) VALUES (?, ?)'] [parameters: ('A00210817_1', None)]
-                # plus: I'm not sure yet if the output is correct, see toolbox.py #L46-50 for the desired structure (good?)
-                #   self.warnings.append(Warnings(**warning))
-                
+                for word in words:
+                    self.words.append(Word(**word))
                     
-
-                # morpheme parsing
-                morphemes_for_db = collections.OrderedDict()
-                for k,v in morpheme.items():
-                    morphemes_for_db['parent_id'] = k
-                    if not v == 'None':
-                        for morph_id,morph in v:
-                            morphemes_for_db['morpheme_id'] = morph_id
-                            morphemes_for_db['morpheme'] = morph
-                            self.morphemes.append(Morpheme(**morphemes_for_db))
-                    else:
-                        pass
+                # morpheme parsing | not-so-nice-solution (@bambooforest, I know, I know, no iterating over dictionaries, but this was the only way I managed to get all the info into the Morpheme-table)
+                # not so nice solution (that works at least): inference and morpheme parsing at once with ugly iterating over dictionary (at least it populates the db)
+                if utterance['corpus'] == 'Russian':
+                    morphemes_inferences = collections.OrderedDict()
+                    for (morpheme,inference) in zip(morphemes,inferences):
+                        morphemes_inferences['parent_id'] = morpheme['parent_id']
+                        morphemes_inferences['morpheme'] = morpheme['morpheme']
+                        morphemes_inferences['pos'] = inference['pos']
+                        morphemes_inferences['gloss'] = inference['gloss']
+                        self.morphemes.append(Morpheme(**morphemes_inferences))
+                
+                ## nicer solution, dsnt work for Russian and still needs to be checked for inference for Chintang and Indonesian -------------------------------------------------- 
+                elif utterance['corpus'] in ['Chintang', 'Indonesian']:
+                    # morpheme parsing
+                    for morpheme in morphemes:
+                        self.morphemes.append(Morpheme(**morpheme))
+                    
+                    # inference parsing
+                    for inference in inferences:
+                       self.morphemes.append(Morpheme(**inference)) ## <<-- THIS only "appends" to Morpheme table, how can I insert this data by using the same parent_id key??
+                ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+                
+                
+                
+                # warnings
+                ## TODO: that doesn't work yet (plus, the things I'm doing in toolbox.py for warnings do not render a correct structure -- I'll hv to check that again!) 
+                #print(warnings)
+                #self.warnings.append(Warnings(**warnings))
+                ## This fails with the following error:
+                ##sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: warnings.id [SQL: 'INSERT INTO warnings (parent_id, warning) VALUES (?, ?)'] [parameters: ('A00210817_1', None)]
                     
 
         elif self.format == "ChatXML":
@@ -180,6 +185,7 @@ class SessionProcessor(object):
             session.add_all(self.utterances)
             session.add_all(self.words)
             session.add_all(self.morphemes)
+            #session.merge(self.morphemes)
             session.add_all(self.warnings)
             session.commit()
             # self.db_session.add(session_metadata)
