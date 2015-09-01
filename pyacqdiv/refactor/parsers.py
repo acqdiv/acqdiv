@@ -7,10 +7,12 @@ import configparser
 import glob
 import re
 import xml.etree.ElementTree as ET
-import cree
+import json
+from pprint import pprint
 
 from metadata import Imdi, Chat
 from factories import *
+import cree
 
 
 # TODO: integrate the Corpus specific parsing routines from the body parser
@@ -67,15 +69,17 @@ class SessionParser(object):
         corpus = config.corpus
         format = config.format
 
-        # this seeems a bit nasty
-        if corpus == "Cree":
-            return CreeParser(config, file_path)
-        else:
-            # print("Unknown Corpus. Defaulting...")
-            if format == "ChatXML":
+        # TODO: update when we dump using JSON
+        if format == "ChatXML":
+            if corpus == "Cree":
+                return CreeParser(config, file_path)
+            else:
                 return ChatXMLParser(config, file_path)
-            if format == "Toolbox":
-                return ToolboxParser(config, file_path)
+        elif format == "Toolbox":
+            return ToolboxParser(config, file_path)
+        elif format == "JSON":
+            return JsonParser(config, file_path)
+        else:
             assert 0, "Unknown format type: " + format
 
     def __init__(self, config, file_path):
@@ -118,12 +122,12 @@ class ToolboxParser(SessionParser):
             # hack to get the separate metadata file paths for IMDIs
             temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
             self.metadata_file_path = temp.replace(".txt", ".xml")
-            self.metadata_parser = Chat(self.metadata_file_path)
+            self.metadata_parser = Chat(self.config, self.metadata_file_path)
 
         elif self.config['metadata']['type'] == "IMDI":
             temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
             self.metadata_file_path = temp.replace(".txt", ".imdi")
-            self.metadata_parser = Imdi(self.metadata_file_path)
+            self.metadata_parser = Imdi(self.config, self.metadata_file_path)
         else:
             assert 0, "Unknown metadata format type: "#  + format
 
@@ -166,12 +170,13 @@ class ToolboxParser(SessionParser):
 #            print()
             yield record
 
+
 class ChatXMLParser(SessionParser):
     """ For Cree, Inuktitut, MiiPro, Miyata, Sesotho, Turkish, & Yucatec """
 
     def __init__(self, config, file_path):
         SessionParser.__init__(self, config, file_path)
-        self.metadata_parser = Chat(self.file_path)
+        self.metadata_parser = Chat(config, self.file_path)
         #TODO: can this be a self.body_parser() or something?
         with open(self.file_path, 'r') as xml:
             self.tree = ET.parse(xml)
@@ -180,7 +185,7 @@ class ChatXMLParser(SessionParser):
         # I don't know what it's good for yet but I'm putting it in here until
         # we can figure out what rsk uses it for in his parser
         # and whether we need it.
-        self.pmap = {c:p for p in self.tree.iter() for c in p}
+        #self.pmap = {c:p for p in self.tree.iter() for c in p}
         self.clean_tree()
 
     def get_session_metadata(self):
@@ -209,15 +214,90 @@ class ChatXMLParser(SessionParser):
         for u in self.root.findall('.//u'):
             yield uf.make_utterance(u), uf.next_word, uf.next_morpheme
     
-        # sample utterance processing call
-        # ideally we'd just have to implement UtteranceFactory and be done here
-        # also I supposed by "we" we mean "chysi"
-
 class CreeParser(ChatXMLParser):
-
+    """ Cazim's attempt at a Cree corpus specific subclass parser
+    """
     def next_utterance(self):
-
         uf = cree.CreeUtteranceFactory()
-        
         for u in self.root.findall('.//u'):
             yield uf.make_utterance(u), uf.next_word, uf.next_morpheme
+
+
+class JsonParser(SessionParser):
+    """ Parser for JSON output from Robert's body parser
+
+    # TODO:
+        - what to do with the stars?
+            - "phonetic": "* * *",
+            - "phonetic_target": "* * *",
+
+    """
+    def __init__(self, config, file_path):
+        SessionParser.__init__(self, config, file_path)
+
+        self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
+        # load the data
+        with open(file_path) as data_file:
+            self.data = json.load(data_file)
+
+        # TODO: update when no longer using JSON
+        temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
+        self.metadata_file_path = temp.replace(".json", ".xml")
+        self.metadata_parser = Chat(self.config, self.metadata_file_path)
+
+    def next_utterance(self):
+        for record in self.data[self.filename]:
+            utterance = collections.OrderedDict()
+            words = []
+            for k in record:
+                # Get just the corpus-specified utterance mappings
+                if k in self.config['json_mappings']:
+                    label = self.config['json_mappings'][k]
+                    utterance[label] = record[k]
+                # TODO: Robert doesn't output the whole utterance, recreate it
+                # gather up the words ^^
+                full_utterance = []
+                d = collections.OrderedDict()
+                if k == 'words':
+                    for word in record['words']:
+                        w = self.config['json_mappings']['word']
+                        if w in word:
+                            d[self.config['json_mappings']['full_word']] = word[w]
+                            full_utterance.append(word[w])
+                            if 'utterance_id' in utterance:
+                                d['utterance_id'] = utterance['utterance_id']
+                        words.append(d)
+                        # TODO: deal with morphemes and recreate the full string
+                utterance['utterance_cleaned'] = " ".join(full_utterance)
+            print(utterance)
+            print(words)
+            print()
+            yield utterance, words
+
+    # TODO: this will have to be removed (copied from ChatXML for the time being)
+    def get_session_metadata(self):
+        # Do xml-specific parsing of session metadata.
+        # The config so it knows what symbols to look for.
+        return self.metadata_parser.metadata['__attrs__']
+
+    def next_speaker(self):
+        """ Yield participants metadata for the Speaker table in the db
+        :return dictionary
+        """
+        for speaker in self.metadata_parser.metadata['participants']:
+            yield speaker
+
+
+if __name__ == "__main__":
+    import time
+    start_time = time.time()
+
+    from parsers import CorpusConfigParser
+    cfg = CorpusConfigParser()
+    cfg.read("CreeJSON.ini")
+    f = "../../corpora/Cree/json/Ani/2006-10-18.json"
+    c = JsonParser(cfg, f)
+    c.next_utterance() # why doesn't this work?
+
+    print()
+    print("--- %s seconds ---" % (time.time() - start_time))

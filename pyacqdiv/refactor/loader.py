@@ -18,12 +18,13 @@ if __name__=="__main__":
     engine = db_connect()
     create_tables(engine)
 
-    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Russian.ini']
+    # configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Russian.ini']
     # configs = ['Cree.ini', 'Indonesian.ini', 'Russian.ini']
     # configs = ['Chintang.ini']
     # configs = ['Cree.ini']
     # configs = ['Indonesian.ini']
     # configs = ['Russian.ini']
+    configs = ['CreeJSON.ini']
 
     for config in configs:
         # Parse the config file and call the sessions processor

@@ -9,8 +9,6 @@ import contextlib
 import mmap
 import re
 
-from parselib import t_correspondences as sentence_types
-
 class ToolboxFile(object):
     """ Toolbox Standard Format text file as iterable over records """
 
@@ -19,7 +17,6 @@ class ToolboxFile(object):
     def __init__(self, config, file_path):
         self.path = file_path
         self.config = config
-        # what is this?
         self.session_id = self.config['record_tiers']['record_marker']
         self.record_marker = self.config['record_tiers']['record_marker']
 
@@ -34,14 +31,12 @@ class ToolboxFile(object):
 
         # self.record_separator = re.compile(b'\\n{2,}')
         self.tier_separator = re.compile(b'\n')
-
-        # so we don't have to check the config on each iteration
         self.field_markers = []
+
         for k, v in self.config['record_tiers'].items():
             self.field_markers.append(k)
 
-        # print("FIELD MARKERS")
-        # print(self.field_markers)
+        # TODO: get sentence type, etc...
 
         # collect the warnings
         # colletc all warnings in an ordered dict with the following structure:
@@ -50,26 +45,17 @@ class ToolboxFile(object):
         #self.warnings['warning'] = []
         
 
-    # TODO: return utterances, words, morphemes, as ordered dictionaries?
     def __iter__(self):
-        # TODO: move some of this stuff outside of the iterator, i.e. compile once the regexes
         record_marker = re.compile(br'\\ref')
         with open (self.path, 'rb') as f:
             with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as data:
-                # TODO: skip the first metadata rows (they include \ref, but they include crap)
-                # e.g. for Indonesian:
-                # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1637-L1639
-
                 ma = record_marker.search(data)
                 header = data[:ma.start()].decode()
                 pos = ma.start()
                 for ma in record_marker.finditer(data, ma.end()):
                     utterances = collections.OrderedDict()
                     # utterances['session_id'] = self.session_id
-                    # words = collections.OrderedDict()
-                    # words['session_id'] = self.session_id
 
-                    # process each record:
                     record = data[pos:ma.start()]
                     tiers = self.tier_separator.split(record)
                     for tier in tiers:
@@ -80,10 +66,7 @@ class ToolboxFile(object):
                         if len(tokens) > 1:
                             content = tokens[1].decode()
                             content = re.sub('\\s+', ' ', content)
-                            content = content.strip()
-                            
 
-                        # TODO: this needs to be moved to the end, i.e. return just what is specified in the config
                         if field_marker in self.field_markers:
                             utterances[self.config['record_tiers'][field_marker]] = content
 
@@ -137,7 +120,6 @@ class ToolboxFile(object):
                     # yield utterances, words, morphemes
                     yield utterances, words, morphemes, inferences, self.warnings
                     pos = ma.start()
-
                 """
                 ma = self._separator.search(data, pos)
                 if ma is None:
@@ -362,7 +344,6 @@ class ToolboxFile(object):
     def make_rec(self, data):
         return data.decode(self.encoding)
 
-    # This is a nice way to print stuff for a class
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.path)
 
@@ -370,15 +351,6 @@ class ToolboxFile(object):
 class Record(collections.OrderedDict):
     """ Toolbox records in file """
     # report if record is missing
-    def __init__(**kwargs):
-        pass
-
-    def clean(self):
-        # use Robert's cleaning functions
-        pass
-
-class UtteranceType(object):
-    # form to function mapping from punctuation to sentence type
     pass
 
 
@@ -403,19 +375,15 @@ if __name__ == "__main__":
 
     cfg = CorpusConfigParser()
 
-    # cfg.read("Chintang.ini")
-    # f = "../../corpora/Chintang/toolbox/CLDLCh1R01S02.txt"
+    cfg.read("Chintang.ini")
+    f = "../../corpora/Chintang/toolbox/CLDLCh1R01S02.txt"
 
-    cfg.read("Russian.ini")
-    f = "../../corpora/Russian/toolbox/A00210817.txt"
-
-    # cfg.read("Indonesian.ini")
-    # f = "../../corpora/Indonesian/toolbox/HIZ-010601.txt"
+    # cfg.read("Russian.ini")
+    # f = "../../corpora/Russian/toolbox/A00210817.txt"
 
     t = ToolboxFile(cfg, f)
     for record in t:
-        pass
-        # print(record)
+        print(record)
         #for k, v in record.items():
         #    print(k, "\t", v)
 

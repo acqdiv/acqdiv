@@ -56,6 +56,8 @@ def clean_chat_line(s):
     # Big line and tier cleaning done in acqdiv/scripts/yucatec/edit_yua.py
 
     s=re.sub(r"\*SEÑ:", r"*UNK:", s)
+    s=re.sub(r"\*EXT:", r"*UNK:", s)
+    s=re.sub(r"\*MEC:", r"*FIL:", s)
     s=re.sub(r"@Pía un pollito.", r"%sit:\tPía un pollito.", s)
     s=re.sub(r"@Nefi burla a Aamando.", r"%sit:\tNeifi burla a Armando.", s)
 

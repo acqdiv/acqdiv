@@ -145,6 +145,13 @@ class SessionProcessor(object):
                 ##sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: warnings.id [SQL: 'INSERT INTO warnings (parent_id, warning) VALUES (?, ?)'] [parameters: ('A00210817_1', None)]
                     
 
+            
+        elif self.format == "JSON":
+            for u in self.parser.next_utterance():
+                print(u)
+            #    for utterance, words in self.parser.next_utterance():
+            #        pass
+
         elif self.format == "ChatXML":
             #TODO(chysi): this doesn't look like a generator to me!!!
             for u, words, morphemes in self.parser.next_utterance():
