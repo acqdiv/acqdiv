@@ -492,8 +492,6 @@ def parse_xml(file_name, corpus_name):
                     # delete brackets in "tarmor" and "actmor"
                     if morph_tier == 'tarmor' or morph_tier == 'actmor':
                         tier.text = re.sub('[\(\)]', '', tier.text)
-                    # replace "," (separator between gloss and subgloss) by "."
-                    tier.text = re.sub(',', '.', tier.text)
 
                     # split into words
                     words = re.split('\\s+', tier.text)
@@ -716,7 +714,6 @@ def parse_xml(file_name, corpus_name):
         # EOF Inuktitut 
                                                            
         elif corpus_name == 'Japanese_MiiPro':
-            # TODO quotations are marked by <quotation type="begin"></quotation> and <quotation type="end"></quotation>. The complete group is represented in the morphology tier trn by n|quote, so all words in the group except the first should have an attribute 'not glossed', similar to fragments, replacements, and retracings. It will be difficult to include these because the quoted elements are hard to catch in XPath. 
                         
             # parse the morphology tier trn
             morphology = u.find("a[@type='extension'][@flavor='trn']")
@@ -726,7 +723,7 @@ def parse_xml(file_name, corpus_name):
                 morphology.text = re.sub('(^|\\s)tag\|\\S+(\\s|$)', '\\1\\2', morphology.text)
                 morphology.text = re.sub('\\s+$', '', morphology.text)
                                 
-                # split trn tier into words, reset counter to 0
+                # split trn tier into words, reset counter
                 words = re.split('\\s+', morphology.text)
                 word_index = -1
                 
@@ -947,9 +944,6 @@ def parse_xml(file_name, corpus_name):
                             clitics = re.sub('_', '.', clitics)
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index+1]['glosses_target'] = clitics
                         stem_gloss = menx.text
-                        # compound glosses sometimes have "_" as separator -> replace by "=" as for segment; "." in case of honorific suppletivisms
-                        stem_gloss = re.sub('_HON', '.HON', stem_gloss)
-                        stem_gloss = re.sub('_', '=', stem_gloss)
                     
                     # count up morpheme index, extend list if necessary
                     morpheme_index = list_index_up(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
@@ -1086,13 +1080,6 @@ def parse_xml(file_name, corpus_name):
                     morpheme_index = -1
                         
                     for gloss in glosses:
-                        # replace special characters
-                        # n^ prefixed to all noun class glosses is completely redundant, so delete
-                        gloss = re.sub('[nN]\^(?=\\d)', '', gloss)
-                        # n^ prefixed to all proper names: replace by 'a_', lowercase label
-                        gloss = re.sub('[nN]\^([gG]ame|[nN]ame|[pP]lace|[sS]ong)', 'a_\\1', gloss)
-                        if re.search('a_(Game|Name|Place|Song)', gloss): gloss = gloss.lower()
-                        
                         # check whether present element is the stem; if no, set POS to prefix/suffix
                         pos = ''
                         if len(glosses)==1 or re.search('(n|v|id)\^|\(\d', gloss) or re.match('(aj$|nm$|ps\d+)', gloss):
@@ -1103,12 +1090,9 @@ def parse_xml(file_name, corpus_name):
                             pos = 'sfx'
                         
                         # get remaining POS and remove indicators and other clutter in the morpheme string
-                        pos_dic = {'aj' : 'adj', 'av' : 'adv', 'cd' : 'ptcl', 'cj' : 'conj', 'cm' : 'ptcl', 'd' : 'dem', 
-                            'ht' : 'ptcl', 'ij' : 'intj', 'loc' : 'ptcl', 'lr' : 'rel', 'ng' : 'ptcl', 'nm' : 'num', 'obr' : 'rel',
-                            'or' : 'rel', 'pn' : 'pro', 'pr' : 'prep', 'ps' : 'poss', 'q' : 'ptcl',
-                            'sr' : 'rel', 'wh' : 'intrg'}
-                        gloss_dic = {'cd' : 'COND', 'cm' : 'COMP', 'ht' : 'HORT', 'loc' : 'LOC', 'ng' : 'NEG', 
-                            'obr' : 'REL.OBL', 'or' : 'REL.OBJ', 'q' : 'Q', 'rl' : 'REL.LOC', 'sr' : 'REL.SUBJ'}
+                        pos_dic = {'aj' : 'adj',  'av' : 'adv',  'cd' : 'ptcl',  'cj' : 'conj',  'cm' : 'ptcl',  'd' : 'dem',  'ht' : 'ptcl',  'ij' : 'intj',  
+                            'loc' : 'ptcl',  'lr' : 'rel',  'ng' : 'ptcl',  'nm' : 'num',  'obr' : 'rel', 'or' : 'rel',  'pn' : 'pro',  'pr' : 'prep',  
+                            'ps' : 'poss', 'q' : 'ptcl', 'sr' : 'rel',  'wh' : 'intrg'}
                         # affixes already have their POS, but replace '_' as concatenator by more standard '.'
                         if pos=='pfx' or pos=='sfx':
                             gloss = re.sub('_', '.', gloss)
@@ -1116,36 +1100,31 @@ def parse_xml(file_name, corpus_name):
                         elif re.search('[vs]\^', gloss): 
                             pos = 'v'
                             gloss = re.sub('[vs]\^', '', gloss)
-                        # nouns have their class indicated in brackets, proper names start with 'a_' (< earlier 'n^'); some nouns with suppletive possession only have "ps/"
-                        elif re.search('\((\\d+|[IVX]+)', gloss) or re.search('a_[a-z]{2,}', gloss) or re.search('^ps\/', gloss):
+                        # nouns start with "n^" (default) or "ps/" (suppletive possession); remove these after setting POS
+                        elif re.search('^n\^', gloss) or re.search('^ps\/', gloss):
                             pos = 'n'
-                            gloss = re.sub('^ps(\d+)\/', '\\1.POSS.', gloss)
-                            gloss = re.sub('^ps\/', 'POSS.', gloss)
+                            # n^ prefixed to all noun class glosses is completely redundant, so delete
+                            gloss = re.sub('[nN]\^(?=\\d)', '', gloss)
+                            # n^ prefixed to all proper names: replace by 'a_', lowercase label
+                            text = re.sub('[nN]\^([gG]ame|[nN]ame|[pP]lace|[sS]ong)', 'a_\\1', text)
+                            if re.search('a_(Game|Name|Place|Song)', gloss): gloss = gloss.lower()                            
                         # words with nominal concord
                         elif re.search('^(d|lr|obr|or|pn|ps|sr)\d+', gloss):
                             pos_match = re.search('^(d|lr|obr|or|pn|ps|sr)\d+', gloss)
-                            old_pos = pos_match.group(1)
-                            pos = pos_dic[old_pos]                            
-                            gloss = re.sub(old_pos, '', gloss)
+                            pos = pos_match.group(1)
+                            gloss = re.sub(pos, '', gloss)
                         # various particles, mostly without a precise gloss
                         elif re.search('^(aj|av|cd|cj|cm|ht|ij|loc|lr|ng|nm|obr|or|pr|q|sr|wh)$', gloss):
-                            pos = pos_dic[gloss]
-                            if gloss in gloss_dic:
-                                gloss = gloss_dic[gloss]
-                            else:    
-                                gloss = '???'
+                            pos = gloss
                         # free person markers (rare)
                         elif re.search('^sm\d+[sp]?$', gloss):
                             pos = 'afx.detached'
-                            gloss = re.sub('sm', '', gloss)
                         # copula
                         elif re.search('^cp|cp$', gloss):
                             pos = 'cop'
-                            gloss = re.sub('cp', 'COP.', gloss)
                         # ideophones
                         elif re.search('id\^', gloss): 
                             pos = 'ideoph'
-                            gloss = re.sub('id\^', '', gloss)
                         # punctuation marks
                         elif re.search('^[.!\?]$', gloss):
                             pos = 'punct'
@@ -1167,7 +1146,6 @@ def parse_xml(file_name, corpus_name):
                         else: 
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = ''
                 
-                    
                     # check if morpheme list has been filled; if not delete key
                     if corpus[text_id][utterance_index]['words'][word_index]['morphemes'] == []:
                         del corpus[text_id][utterance_index]['words'][word_index]['morphemes']
@@ -1292,7 +1270,6 @@ def parse_xml(file_name, corpus_name):
                         
                 # EOF word loop
                 
-                
                 # remember length of morphology tier in words
                 length_morphology = len(words)
                 
@@ -1357,8 +1334,7 @@ def parse_xml(file_name, corpus_name):
                                 
                 # split mor tier into words, reset counter to 0
                 word_index = -1
-                words = re.split('[\\s+&]', morphology.text)
-                
+                words = re.split('[\\s+&]', morphology.text)                
                 
                 for w in words:
                     
@@ -1481,7 +1457,6 @@ def parse_xml(file_name, corpus_name):
             elif morphology is None:
                 creadd(corpus[text_id][utterance_index], 'warnings', 'not glossed')
                 
-        
         # EOF Yucatec
         
         # check if word list has been filled; if not delete key
