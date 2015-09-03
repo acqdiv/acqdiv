@@ -97,28 +97,82 @@ class SessionProcessor(object):
         self.utterances = []
         self.words = []
         self.morphemes = []
+        self.warnings = []
 
         if self.format == "Toolbox":
             # Utterance parsing
-            for utterance, word in self.parser.next_utterance():
+            for utterance, words, morphemes, inferences, warnings in self.parser.next_utterance():
                 utterance['parent_id'] = self.filename
                 utterance['corpus'] = self.corpus
                 # TODO: determine utterance type from config
                 utterance['utterance_type'] = self.config['utterance']['type']
                 self.utterances.append(Utterance(**utterance))
-                #print(utterance)
+               # print(inferences)
                 
-            # TODO: word parsing
-                words_for_db = collections.OrderedDict()
-                for k,v, in word.items():
-                    words_for_db['parent_id'] = k
-                    for w_id,w in v:
-                        words_for_db['word_id'] = w_id
-                        words_for_db['word'] = w           
-                        self.words.append(Word(**words_for_db))
+                # word parsing
+                for word in words:
+                    self.words.append(Word(**word))
+                    
+                # morpheme parsing | not-so-nice-solution (@bambooforest, I know, I know, no iterating over dictionaries, but this was the only way I managed to get all the info into the Morpheme-table)
+                # not so nice solution (that works at least): inference and morpheme parsing at once with ugly iterating over dictionary (at least it populates the db)
+                if utterance['corpus'] == 'Russian':
+                    morphemes_inferences = collections.OrderedDict()
+                    for (morpheme,inference) in zip(morphemes,inferences):
+                        morphemes_inferences['parent_id'] = morpheme['parent_id']
+                        morphemes_inferences['morpheme'] = morpheme['morpheme']
+                        morphemes_inferences['pos'] = inference['pos']
+                        morphemes_inferences['gloss'] = inference['gloss']
+                        self.morphemes.append(Morpheme(**morphemes_inferences))
+                
+                elif utterance['corpus'] == 'Chintang':
+                    ##----------------------------------------------------------------------------------
+                    ## crap below, dsnt work
+                    #morphemes_inferences = collections.OrderedDict()
+                    #for inference in inferences:
+                    #    morphemes_inferences['parent_id'] = inference['parent_id']
+                    #    morphemes_inferences['morpheme_target'] = inference['morpheme_target']
+                    #    morphemes_inferences['pos'] = inference['pos']
+                    #    morphemes_inferences['gloss'] = inference['gloss']
+                    #    morphemes_inferences['morpheme_id'] = inference['morpheme_id']
+                    #    for morpheme in morphemes:
+                    #        morphemes_inferences['morpheme'] = morpheme['morpheme']
+                    #    
+                    #    self.morphemes.append(Morpheme(**morphemes_inferences))
+                    ##----------------------------------------------------------------------------------
+            
+            
+            
+                    # Q lindp: Do we need this in Chintang when we have morpheme_target? I don't really understand the distinction between "morpheme" and "morpheme_target"
+                    # If we need it, then I don't know how to insert it correctly into the db (cf. my failed attempt above)
+                    ## morpheme parsing
+                    #for morpheme in morphemes:
+                    #    self.morphemes.append(Morpheme(**morpheme))
+                    
+                    ## inference parsing
+                    for inference in inferences:
+                       self.morphemes.append(Morpheme(**inference)) ## <<-- THIS only "appends" to Morpheme table, how can I insert this data by using the same parent_id key??
+                    ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+                
+                
+                
+                elif utterance['corpus'] == 'Indonesian':
+                    for (morpheme,inference) in zip(morphemes,inferences):
+                        morphemes_inferences = collections.OrderedDict()
+                        morphemes_inferences['parent_id'] = morpheme['parent_id']
+                        morphemes_inferences['morpheme'] = morpheme['morpheme']
+                        morphemes_inferences['gloss'] = inference['gloss']                        
+                        self.morphemes.append(Morpheme(**morphemes_inferences))
+                    
+                
+                # warnings
+                ## TODO: that doesn't work yet (plus, the things I'm doing in toolbox.py for warnings do not render a correct structure -- I'll hv to check that again!) 
+                #print(warnings)
+                #self.warnings.append(Warnings(**warnings))
+                ## This fails with the following error:
+                ##sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: warnings.id [SQL: 'INSERT INTO warnings (parent_id, warning) VALUES (?, ?)'] [parameters: ('A00210817_1', None)]
+                    
 
-            # TODO: morpheme parsing
-
+            
         elif self.format == "JSON":
             for u in self.parser.next_utterance():
                 print(u)
@@ -165,6 +219,8 @@ class SessionProcessor(object):
             session.add_all(self.utterances)
             session.add_all(self.words)
             session.add_all(self.morphemes)
+            #session.merge(self.morphemes)
+            session.add_all(self.warnings)
             session.commit()
             # self.db_session.add(session_metadata)
             # self.db_session.add_all(self.speakers)
