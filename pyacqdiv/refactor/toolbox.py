@@ -157,8 +157,8 @@ class ToolboxFile(object):
         """
         if self.config['corpus']['corpus'] == "Russian":
             match_punctuation = re.search('([\.\?!])$', utterance)
-            if match_punctuation is not None:
-                return sentence_types[match_punctuation.group(1)]
+            #if match_punctuation is not None:
+            #    return sentence_types[match_punctuation.group(1)]  ##@bambooforest, I get an error here: NameError: name 'sentence_types' is not defined
             return
 
         # does this logic make any sense? why not, if, if, if, fuck it return?
@@ -271,19 +271,64 @@ class ToolboxFile(object):
                 d['gloss'] = 'None'
                 d['parent_id'] = utterances['utterance_id']
                 result.append(d)
-                self.warnings['warning'].append('not glossed!')
+                self.warnings['warning'] = 'not glossed!'
+                
+                
                         
-        # TODO: Indonesian specific morpheme/inference stuff
+        # Indonesian specific morpheme/inference stuff
         elif self.config['corpus']['corpus'] == "Indonesian":
-            pass
+            if 'gloss' in utterances.keys():
+                glosses_Indonesian = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['gloss'])
+                glosses = glosses_Indonesian.split()
+                for gloss in glosses:
+                    d = collections.OrderedDict()
+                    d['parent_id'] = utterances['utterance_id']
+                    d['gloss'] = gloss
+                    result.append(d)
+            else:
+                d = collections.OrderedDict()
+                d['pos'] = 'None'
+                d['gloss'] = 'None'
+                d['parent_id'] = utterances['utterance_id']
+                result.append(d)
+                self.warnings['warning'] = 'not glossed!'
+                
+                
         
         # TODO: Chintang specific morpheme/inference stuff
         elif self.config['corpus']['corpus'] == "Chintang":
-            pass
+            if 'morpheme' in utterances.keys():
+                morphemes_target_Chintang = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['morpheme'])
+                morphemes_Chintang = morphemes_Chintang = re.sub('(\s\-)|(\-\s)','-', morphemes_target_Chintang)
+                glosses_Chintang = utterances['gloss']
+                pos_Chintang = utterances['pos']
+                morphemes = morphemes_Chintang.split()
+                morphemes_targets = morphemes_target_Chintang.split()
+                glosses_targets = glosses_Chintang.split()
+                pos_targets = pos_Chintang.split()
+                morphemes_target_counter = 0
+                
+                for (morpheme_target, gloss,pos) in zip(morphemes_targets, glosses_targets,pos_targets):
+                    morphemes_target_counter += 1
+                    d = collections.OrderedDict()
+                    d['parent_id'] = utterances['utterance_id']
+                    #d['morpheme_id'] = str(utterances['utterance_id'])+'_'+str(morphemes_target_counter) ## needed?
+                    d['morpheme_target'] = morpheme_target
+                    d['gloss'] = gloss
+                    d['pos'] = pos
+                    result.append(d)
+            else:
+                d = collections.OrderedDict()
+                d['morpheme_target'] = 'None'
+                d['parent_id'] = utterances['utterance_id']
+                d['morpheme_id'] = 'None' ## needed??
+                d['gloss'] = 'None'
+                d['pos'] = 'None'
+                result.append(d)
+                self.warnings['warning'] ='not glossed!'
         
         return result
 
-    ## TODO, change, crap for now
     def get_morphemes(self, utterances):
         """ Do the Toolbox corpus-specific morpheme processing
         :return: (so far) list of ordered dictionaries with morpheme and parent utterance id
@@ -291,11 +336,11 @@ class ToolboxFile(object):
         result = []
         
         if 'morpheme' in utterances.keys():
-            # remove punctuation from morphemes!
+            # Russian specific morpheme stuff
             if self.config['corpus']['corpus'] == "Russian":
+                # remove punctuation from morphemes!
                 morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\-\?\+\/]', '', utterances['morpheme'])
                 morphemes = morphemes_cleaned.split()
-                
                 for morpheme in morphemes:
                     # Note that there is no "morpheme_target" for Russian
                     d = collections.OrderedDict()
@@ -303,38 +348,34 @@ class ToolboxFile(object):
                     d['parent_id'] = utterances['utterance_id']
                     result.append(d)
                     
-            ## TODO: Indonesian specific morpheme stuff!!
+            ## Indonesian specific morpheme stuff
             elif self.config['corpus']['corpus'] == "Indonesian":
                 # remove punctuation
                 morhphemes_Indonesian = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['morpheme'])
                 morphemes = morhphemes_Indonesian.split()
-                
                 for morpheme in morphemes:
                     d = collections.OrderedDict()
                     d['morpheme'] = morpheme
                     d['parent_id'] = utterances['utterance_id']
                     result.append(d)
                 
-            #
-            ## TODO: Chintang specific morpheme stuff!!
+            ## Chintang specific morpheme stuff
             elif self.config['corpus']['corpus'] == "Chintang":
                 # remove punctuation
-                morhphemes_Chintang = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['morpheme'])
-                morphemes = morhphemes_Chintang.split()
-                
+                morphemes_Chintang = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['morpheme'])
+                morphemes_Chintang = re.sub('(\s\-)|(\-\s)','-', morphemes_Chintang)
+                morphemes = morphemes_Chintang.split()
                 for morpheme in morphemes:
                     d = collections.OrderedDict()
                     d['morpheme'] = morpheme
                     d['parent_id'] = utterances['utterance_id']
-                    result.append(d)
-            
+                    result.append(d)    
         else:
             d = collections.OrderedDict()
-            #d['morpheme'] = 'None'
+            d['morpheme'] = 'None'
             d['parent_id'] = utterances['utterance_id']
             result.append(d)
             self.warnings['warning'] = 'morpheme missing!'
-            
                 
         return result
 
