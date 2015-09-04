@@ -8,6 +8,7 @@ import collections
 import contextlib
 import mmap
 import re
+from itertools import zip_longest
 
 class ToolboxFile(object):
     """ Toolbox Standard Format text file as iterable over records """
@@ -199,7 +200,7 @@ class ToolboxFile(object):
                     self.warnings['warning'] ='transcription insecure'
                 return utterance
 
-            # TODO: incorporate the Indonesian stuff
+            # incorporate the Indonesian stuff
             if self.config['corpus']['corpus'] == "Indonesian":
                 # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1633-L1648
                 # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1657-L1661
@@ -308,22 +309,22 @@ class ToolboxFile(object):
                 pos_targets = pos_Chintang.split()
                 morphemes_target_counter = 0
                 
-                for (morpheme_target, gloss,pos) in zip(morphemes_targets, glosses_targets,pos_targets):
+                for (morpheme_target, gloss,pos) in zip_longest(morphemes_targets, glosses_targets,pos_targets):
                     morphemes_target_counter += 1
                     d = collections.OrderedDict()
                     d['parent_id'] = utterances['utterance_id']
                     #d['morpheme_id'] = str(utterances['utterance_id'])+'_'+str(morphemes_target_counter) ## needed?
-                    d['morpheme_target'] = morpheme_target
+                    d['morpheme'] = morpheme_target
                     d['gloss'] = gloss
                     d['pos'] = pos
                     result.append(d)
             else:
                 d = collections.OrderedDict()
-                d['morpheme_target'] = 'None'
+                d['morpheme'] = ''
                 d['parent_id'] = utterances['utterance_id']
-                d['morpheme_id'] = 'None' ## needed??
-                d['gloss'] = 'None'
-                d['pos'] = 'None'
+                #d['morpheme_id'] = '' ## needed??
+                d['gloss'] = ''
+                d['pos'] = ''
                 result.append(d)
                 self.warnings['warning'] ='not glossed!'
         
