@@ -111,6 +111,7 @@ class Word(Base):
     id = Column(Integer, primary_key=True)
     word_id = Column(Text, nullable=True, unique=False)
     word = Column(Text, nullable=True, unique=False)
+    word_target = Column(Text, nullable=True, unique=False)
     parent_id = Column(Text, ForeignKey('utterance.id'))
     #Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
     warning = Column(Text, nullable=True, unique=False)
