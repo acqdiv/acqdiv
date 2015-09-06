@@ -277,14 +277,13 @@ class JsonParser(SessionParser):
                             d[self.config['json_mappings']['full_word']] = word[word_target_label]
                             full_utterance.append(word[word_target_label])
 
-                        # TODO: by here we're not sure if we've already encounted the keys below...
+                        if 'warnings' in word:
+                            d[self.config['json_mappings']['warnings']] = word['warnings']
+
                         if 'utterance_id' in utterance:
                             d['parent_id'] = utterance['utterance_id']
-                        if 'warnings' in utterance:
-                            d[self.config['json_mappings']['warnings']] = utterance['warnings']
-
                         words.append(d)
-
+                        
                         # morphemes{} parsing within word[] and extraction of .ini specified db columns
                         # morphemes are also a key:[] pair in words{}; morphemes: [segment:'ga', pos_target:'Eng']...
                         if 'morphemes' in word:
@@ -299,10 +298,8 @@ class JsonParser(SessionParser):
                                             # print(e[k_json_mappings_morphemes])
                                     if len(d2) > 0:
                                         morphemes.append(d2)
-
                 # Recreate the full utterance string
                 utterance['utterance_cleaned'] = " ".join(full_utterance)
-            print(utterance)
             yield utterance, words, morphemes
 
     # TODO: this will have to be removed (copied from ChatXML for the time being)
