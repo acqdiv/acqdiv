@@ -224,7 +224,8 @@ class CreeParser(ChatXMLParser):
 
 
 class JsonParser(SessionParser):
-    """ Parser for JSON output from Robert's body parser
+    """ Parser for JSON output from:
+    https://github.com/uzling/acqdiv/tree/master/extraction/parsing
 
     # TODO:
         - what to do with the stars?
@@ -235,8 +236,8 @@ class JsonParser(SessionParser):
     def __init__(self, config, file_path):
         SessionParser.__init__(self, config, file_path)
 
-        self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
         # load the data
+        self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
         with open(file_path) as data_file:
             self.data = json.load(data_file)
 
@@ -246,35 +247,63 @@ class JsonParser(SessionParser):
         self.metadata_parser = Chat(self.config, self.metadata_file_path)
 
     def next_utterance(self):
-        #I'm not gonna mess with it but this seems to be meant for loading whole-corpus files 
-        #and doesn't work with the test session file
+        """ Get each utterance from Robert's JSON output
+        :return: utterance{}, words[word{}, word{}]
+        """
+        # Robert's JSON output is a dictionary: {key (filename): [u1{...}, u2{...}]}
+        #  here we iterate over the utterances (each record)
         for record in self.data[self.filename]:
             utterance = collections.OrderedDict()
             words = []
+            morphemes = []
+
+            # iterate over the utterance keys in the json parsed object and grab what is specified in the .ini
             for k in record:
-                # Get just the corpus-specified utterance mappings
                 if k in self.config['json_mappings']:
                     label = self.config['json_mappings'][k]
                     utterance[label] = record[k]
-                # TODO: Robert doesn't output the whole utterance, recreate it
-                # gather up the words ^^
+
+                # TODO: Robert doesn't output the whole utterance, recreate it by gathering up the words
                 full_utterance = []
+
+                # Robert's {words:[]} is a list of dictionaries with keys like "full_word_target"
                 d = collections.OrderedDict()
                 if k == 'words':
                     for word in record['words']:
-                        w = self.config['json_mappings']['word']
-                        if w in word:
-                            d[self.config['json_mappings']['full_word']] = word[w]
-                            full_utterance.append(word[w])
-                            if 'utterance_id' in utterance:
-                                d['utterance_id'] = utterance['utterance_id']
+                        # this assigns the "proper" word target (corpus-specific) to the db, e.g. word <- full_word_target
+                        # and recreates the "full word" utterance
+                        word_target_label = self.config['json_mappings']['word']
+                        if word_target_label in word:
+                            d[self.config['json_mappings']['full_word']] = word[word_target_label]
+                            full_utterance.append(word[word_target_label])
+
+                        # TODO: by here we're not sure if we've already encounted the keys below...
+                        if 'utterance_id' in utterance:
+                            d['parent_id'] = utterance['utterance_id']
+                        if 'warnings' in utterance:
+                            d[self.config['json_mappings']['warnings']] = utterance['warnings']
+
                         words.append(d)
-                        # TODO: deal with morphemes and recreate the full string
+
+                        # morphemes{} parsing within word[] and extraction of .ini specified db columns
+                        # morphemes are also a key:[] pair in words{}; morphemes: [segment:'ga', pos_target:'Eng']...
+                        if 'morphemes' in word:
+                            d2 = collections.OrderedDict()
+                            if len(word['morphemes']) > 0: # skip empty lists in the json
+                                for e in word['morphemes']: # iter over morpheme dicts
+                                    for k_json_mappings_morphemes in self.config['json_mappings_morphemes']:
+                                        if k_json_mappings_morphemes in e:
+                                            d2[self.config['json_mappings_morphemes'][k_json_mappings_morphemes]] = \
+                                            e[k_json_mappings_morphemes]
+
+                                            # print(e[k_json_mappings_morphemes])
+                                    if len(d2) > 0:
+                                        morphemes.append(d2)
+
+                # Recreate the full utterance string
                 utterance['utterance_cleaned'] = " ".join(full_utterance)
             print(utterance)
-            print(words)
-            print()
-            yield utterance, words
+            yield utterance, words, morphemes
 
     # TODO: this will have to be removed (copied from ChatXML for the time being)
     def get_session_metadata(self):
