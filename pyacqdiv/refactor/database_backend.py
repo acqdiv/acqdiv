@@ -53,7 +53,6 @@ class Session(Base):
 
 class Speaker(Base):
     # TODO: we will have to make a link between speakers and speakers in each session/record/utterance
-
     __tablename__ = 'speaker'
 
     id = Column(Integer, primary_key=True)
@@ -77,6 +76,8 @@ class Utterance(Base):
 
     id = Column(Integer, primary_key=True)
     corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
+    # should probably be called:
+    # session_id = Column(Text, ForeignKey('session.session_id'))
     parent_id = Column(Text, ForeignKey('session.session_id'))
     utterance_id = Column(Text, nullable=True, unique=False)
     utterance_type = Column(Text, nullable=True, unique=False)
@@ -104,13 +105,17 @@ class Utterance(Base):
     #Session = sa.relationship('Session', backref=backref('Utterances', order_by=id))
 
 class Word(Base):
+    # TODO: should we do unique word id assignment in post-processing?
     __tablename__ = 'words'
 
     # fk...
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     id = Column(Integer, primary_key=True)
+    # SM: i'm thinking the word_id is redundant if it's just session|utterance + id counter
+    # TODO: see postprocessor.py
     word_id = Column(Text, nullable=True, unique=False)
     word = Column(Text, nullable=True, unique=False)
+    word_target  = Column(Text, nullable=True, unique=False)
     parent_id = Column(Text, ForeignKey('utterance.id'))
     #Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
     warning = Column(Text, nullable=True, unique=False)
@@ -121,12 +126,17 @@ class Morpheme(Base):
     # fk...
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     id = Column(Integer, primary_key=True)
+    # TODO: see postprocessor.py
     morpheme_id = Column(Text, nullable=True, unique=False)
     parent_id = Column(Text, ForeignKey('utterance.id'))
     morpheme = Column(Text, nullable=True, unique=False)
     morpheme_target = Column(Text, nullable=True, unique=False)
     gloss = Column(Text, nullable=True, unique=False)
+    gloss_target = Column(Text, nullable=True, unique=False)
     pos = Column(Text, nullable=True, unique=False)
+    pos_target = Column(Text, nullable=True, unique=False)
+    segment = Column(Text, nullable=True, unique=False)
+    segment_target = Column(Text, nullable=True, unique=False)
 
 class Warnings(Base):
     # Table for warnings found in parsing (should be record/multiple levels?)
