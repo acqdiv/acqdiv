@@ -119,11 +119,18 @@ class SessionProcessor(object):
                 # not so nice solution (that works at least): inference and morpheme parsing at once with ugly iterating over dictionary (at least it populates the db)
                 if utterance['corpus'] == 'Russian':
                     morphemes_inferences = collections.OrderedDict()
-                    for (morpheme,inference) in zip(morphemes,inferences):
-                        morphemes_inferences['parent_id'] = morpheme['parent_id']
-                        morphemes_inferences['morpheme'] = morpheme['morpheme']
-                        morphemes_inferences['pos'] = inference['pos']
-                        morphemes_inferences['gloss'] = inference['gloss']
+                    for (morpheme,inference) in it.zip_longest(morphemes,inferences):
+                        try:
+                            morphemes_inferences['parent_id'] = morpheme['parent_id']
+                            morphemes_inferences['morpheme'] = morpheme['morpheme']
+                            morphemes_inferences['pos'] = inference['pos']
+                            morphemes_inferences['gloss'] = inference['gloss']
+                        except TypeError:
+                            morphemes_inferences['parent_id'] = ''
+                            morphemes_inferences['morpheme'] = ''
+                            morphemes_inferences['pos'] = ''
+                            morphemes_inferences['gloss'] = ''
+                            
                         self.morphemes.append(Morpheme(**morphemes_inferences))
                 
                 elif utterance['corpus'] == 'Chintang':
@@ -158,7 +165,7 @@ class SessionProcessor(object):
                 
                 
                 elif utterance['corpus'] == 'Indonesian':
-                    for (morpheme,inference) in zip(morphemes,inferences):
+                    for (morpheme,inference) in it.zip_longest(morphemes,inferences):
                         morphemes_inferences = collections.OrderedDict()
                         morphemes_inferences['parent_id'] = morpheme['parent_id']
                         morphemes_inferences['morpheme'] = morpheme['morpheme']

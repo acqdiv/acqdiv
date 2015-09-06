@@ -53,6 +53,7 @@ class Session(Base):
 
 class Speaker(Base):
     # TODO: we will have to make a link between speakers and speakers in each session/record/utterance
+
     __tablename__ = 'speaker'
 
     id = Column(Integer, primary_key=True)
@@ -115,7 +116,7 @@ class Word(Base):
     # TODO: see postprocessor.py
     word_id = Column(Text, nullable=True, unique=False)
     word = Column(Text, nullable=True, unique=False)
-    word_target  = Column(Text, nullable=True, unique=False)
+    word_target = Column(Text, nullable=True, unique=False)
     parent_id = Column(Text, ForeignKey('utterance.id'))
     #Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
     warning = Column(Text, nullable=True, unique=False)
