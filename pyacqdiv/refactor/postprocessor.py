@@ -17,17 +17,35 @@
 
 from sqlalchemy.orm import sessionmaker
 from database_backend import *
+import age
 
-engine = db_connect()
-Session = sessionmaker(bind=engine)
-session = Session()
+def db_apply(func, *args):
+    def update_session(*args):
+        engine = db_connect()
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        try:
+            func(session, *args)
+            session.commit()
+        except:
+            session.rollback()
+            print("an error is of occur")
+        session.close()
+    return update_session
 
 # Post processing of Toolbox Utterance data?
 
 # Russian & Indonesian: garbage imported from CHAT
-content = re.sub('xxx?|www', '???', content)
+#content = re.sub('xxx?|www', '???', content)
 
-for instance in session.query(Utterance).order_by(Utterance.id):
-    print(instance.word)
+#for instance in session.query(Utterance).order_by(Utterance.id):
+#    print(instance.word)
 
-session.close()
+@db_apply
+def update_age(session):
+    for speaker_age in session.query(Speaker.age).filter(Speaker.age != None):
+        age.format_xml_age(speaker_age)
+
+@db_apply
+def unify_glosses(session):
+    pass
