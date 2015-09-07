@@ -80,6 +80,7 @@ class Utterance(Base):
     # should probably be called:
     # session_id = Column(Text, ForeignKey('session.session_id'))
     parent_id = Column(Text, ForeignKey('session.session_id'))
+    warnings = Column(Text, nullable=True, unique=False) # Robert's warnings!
     utterance_id = Column(Text, nullable=True, unique=False)
     utterance_type = Column(Text, nullable=True, unique=False)
     utterance = Column(Text, nullable=True, unique=False)
@@ -98,7 +99,7 @@ class Utterance(Base):
     comment = Column(Text, nullable=True, unique=False)
     addressee = Column(Text, nullable=True, unique=False) # exists at least in Russian
     gloss = Column(Text, nullable=True, unique=False) # what to do with the "gloss"?
-    warnings = Column(Text, nullable=True, unique=False) # Robert's warnings!
+
 
     #Morphemes = sa.Column(sa.Text, nullable=False, unique=False) # concatenated MorphemeIDs per utterance
     #Words = sa.Column(sa.Text, nullable=False, unique=True) # concatenated WordIDs per utterance
