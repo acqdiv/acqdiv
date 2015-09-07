@@ -69,6 +69,8 @@ class SessionProcessor(object):
             db_column_name = self.config['session_labels'][k]
             d[db_column_name] = v
         d['session_id'] = self.filename
+        d['language'] = self.config['corpus']['language']
+        d['corpus'] = self.config['corpus']['corpus']
         self.session_entry = Session(**d)
 
         # TODO: deal with IMDI's dict in dict encoding of location (perhaps in CorpusConfigProcessor):
@@ -117,11 +119,18 @@ class SessionProcessor(object):
                 # not so nice solution (that works at least): inference and morpheme parsing at once with ugly iterating over dictionary (at least it populates the db)
                 if utterance['corpus'] == 'Russian':
                     morphemes_inferences = collections.OrderedDict()
-                    for (morpheme,inference) in zip(morphemes,inferences):
-                        morphemes_inferences['parent_id'] = morpheme['parent_id']
-                        morphemes_inferences['morpheme'] = morpheme['morpheme']
-                        morphemes_inferences['pos'] = inference['pos']
-                        morphemes_inferences['gloss'] = inference['gloss']
+                    for (morpheme,inference) in it.zip_longest(morphemes,inferences):
+                        try:
+                            morphemes_inferences['parent_id'] = morpheme['parent_id']
+                            morphemes_inferences['morpheme'] = morpheme['morpheme']
+                            morphemes_inferences['pos'] = inference['pos']
+                            morphemes_inferences['gloss'] = inference['gloss']
+                        except TypeError:
+                            morphemes_inferences['parent_id'] = ''
+                            morphemes_inferences['morpheme'] = ''
+                            morphemes_inferences['pos'] = ''
+                            morphemes_inferences['gloss'] = ''
+                            
                         self.morphemes.append(Morpheme(**morphemes_inferences))
                 
                 elif utterance['corpus'] == 'Chintang':
@@ -156,7 +165,7 @@ class SessionProcessor(object):
                 
                 
                 elif utterance['corpus'] == 'Indonesian':
-                    for (morpheme,inference) in zip(morphemes,inferences):
+                    for (morpheme,inference) in it.zip_longest(morphemes,inferences):
                         morphemes_inferences = collections.OrderedDict()
                         morphemes_inferences['parent_id'] = morpheme['parent_id']
                         morphemes_inferences['morpheme'] = morpheme['morpheme']
@@ -172,12 +181,20 @@ class SessionProcessor(object):
                 ##sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: warnings.id [SQL: 'INSERT INTO warnings (parent_id, warning) VALUES (?, ?)'] [parameters: ('A00210817_1', None)]
                     
 
-            
         elif self.format == "JSON":
-            for u in self.parser.next_utterance():
-                print(u)
-            #    for utterance, words in self.parser.next_utterance():
-            #        pass
+            for utterance, words, morphemes in self.parser.next_utterance():
+                utterance['parent_id'] = self.filename
+                utterance['corpus'] = self.corpus
+                # utterance['language'] = self.config['corpus']['language']
+                self.utterances.append(Utterance(**utterance))
+
+                for word in words:
+                    # TODO: add in session id?
+                    word['parent_id'] = utterance['utterance_id']
+                    self.words.append(Word(**word))
+
+                for morpheme in morphemes:
+                    self.morphemes.append(Morpheme(**morpheme))
 
         elif self.format == "ChatXML":
             #TODO(chysi): this doesn't look like a generator to me!!!
@@ -202,7 +219,6 @@ class SessionProcessor(object):
 
         # Now write the database to the backend.
         # commit(session_metadata, speakers, utterances)
-
 
     def commit(self):
         # def commit(self, session_metadata, speakers, utterances):
