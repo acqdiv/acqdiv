@@ -85,14 +85,15 @@ def parse_tim_line(line, line_number):
 
     return tim
 
-def fix_tim_tier(f):
+def fix_tim_tier(f, out_folder_name):
     folder_name = "output-timfix"
+    if (out_folder_name is not None):
+        folder_name = out_folder_name
 
     # Opens an output file with the same name as `f`, only in a new folder
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
     file_name_without_path = os.path.basename(f.name)
-    print("PROCESSING FILE: {}".format(file_name_without_path))
     out = open(folder_name + "/" + file_name_without_path, 'w')
 
     # Finds out the time "offset"
@@ -114,7 +115,7 @@ def fix_tim_tier(f):
         # Inserts line in output file
         out.write(line)
 
-def get_file_to_fix(arguments):
+def get_input_info(arguments):
     # If arguments, use that place to find files
     if (len(arguments) < 2):
         print_usage()
@@ -126,14 +127,18 @@ def get_file_to_fix(arguments):
         print("ERROR: Couldn't open file {}".format(arguments[1]))
         sys.exit(1)
 
-    return f
+    out_folder_name = None
+    if (len(arguments) == 3):
+        out_folder_name = arguments[2]
+
+    return f, out_folder_name
 
 def print_usage():
     print("Usage:")
-    print("\ttimfix.py <file_to_be_fixed>")
+    print("\ttimfix.py <file_to_be_fixed> <output_folder_name>")
 
 if __name__ == "__main__":
-    f = get_file_to_fix(sys.argv)
-    fix_tim_tier(f)
+    f, out_folder_name = get_input_info(sys.argv)
+    fix_tim_tier(f, out_folder_name)
 
 
