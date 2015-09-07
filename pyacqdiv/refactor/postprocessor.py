@@ -51,4 +51,7 @@ def update_age(session):
 
 @db_apply
 def unify_glosses(session):
-    pass
+    for morph in session.query(Morphemes):
+        # can you add a column that wasn't declared when the table was initialized? I don't think this is how it works
+        pass
+
