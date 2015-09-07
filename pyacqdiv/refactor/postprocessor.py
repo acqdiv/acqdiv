@@ -1,4 +1,4 @@
-""" Post-processing processes for acqdiv corpora
+""" Post-processing processes for ACQDIV corpora
 """
 
 # TODO: implement postprocessing tasks:
@@ -9,6 +9,7 @@
 #  - BB's wish for MorphemeID+MorphemeID, WordID+WordID, etc.
 #  - deal with age conversion, etc.
 #  - add additional inferred info, e.g. Russian ends_at time stamps
+#  - should we do unique word, morpheme, etc., id assignment in post-processing?
 
 # TODO: identify body parsing errors and fixes
 
@@ -36,8 +37,10 @@ def db_apply(func, *args):
 # Post processing of Toolbox Utterance data?
 
 # Russian & Indonesian: garbage imported from CHAT
+#  SM: i think this is done in the parser
 #content = re.sub('xxx?|www', '???', content)
 
+# example call (why is it so $^*%@* slow?)
 #for instance in session.query(Utterance).order_by(Utterance.id):
 #    print(instance.word)
 
