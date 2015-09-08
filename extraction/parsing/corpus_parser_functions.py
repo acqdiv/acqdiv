@@ -515,7 +515,7 @@ def parse_xml(file_name, corpus_name):
                                 m = 'sfx'
                             # English words are glossed as "Eng" -> replace this by the word itself (e.g. "two", gloss "Eng" -> "two", gloss "two")
                             if morph_tier == 'mormea' and m == 'Eng' and (word_index == len(corpus[text_id][utterance_index]['words'])-1):
-                                print('m now has gloss', m, '; goes to', corpus[text_id][utterance_index]['words'][word_index]['full_word'])
+                                m = corpus[text_id][utterance_index]['words'][word_index]['full_word']
                             # add morpheme to Vividict
                             morphology[morph_tier][word_index][morpheme_index] = m
                             morpheme_index += 1
