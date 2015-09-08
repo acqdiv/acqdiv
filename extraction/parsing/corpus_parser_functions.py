@@ -513,6 +513,9 @@ def parse_xml(file_name, corpus_name):
                             if morph_tier == 'mortyp' and m == 'IMP' and morphology['mormea'][word_index][morpheme_index]:
                                 morphology['mormea'][word_index][morpheme_index] += '.' + m
                                 m = 'sfx'
+                            # English words are glossed as "Eng" -> replace this by the word itself (e.g. "two", gloss "Eng" -> "two", gloss "two")
+                            if morph_tier == 'mormea' and m == 'Eng' and (word_index == len(corpus[text_id][utterance_index]['words'])-1):
+                                print('m now has gloss', m, '; goes to', corpus[text_id][utterance_index]['words'][word_index]['full_word'])
                             # add morpheme to Vividict
                             morphology[morph_tier][word_index][morpheme_index] = m
                             morpheme_index += 1
@@ -562,7 +565,6 @@ def parse_xml(file_name, corpus_name):
                         if len(corpus[text_id][utterance_index]['words'][word_index]['morphemes']) <= morpheme_index:
                             # if it is, append empty element to list to extend index
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'].append(Vividict())
-                            if(morpheme_index > 2): print('heyho', utterance_id, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
                         
                         m = morphology[morph_tier][word_index][morpheme_index]
                         if m:
@@ -592,19 +594,24 @@ def parse_xml(file_name, corpus_name):
             if (morphology is not None) and (not re.search('^xxx\.', morphology.text)):
                 
                 # remove CHAT garbage
-                morphology.text = re.sub('(?<=[\\s\\]])[\.\?!](?=\\s|$)', '', morphology.text) # utterance delimiters
-                morphology.text = re.sub('\[\+.*?\]', '', morphology.text) # postcodes in square brackets; these are not documented anywhere
+                morphology.text = re.sub('\[\+.*?\"\]', '', morphology.text) # postcodes in square brackets; these are not documented anywhere
                 morphology.text = re.sub('\[\/+\]', '', morphology.text) # repetition marker
-                morphology.text = re.sub('\+[\.,\?!;:\///]+', '', morphology.text) # other codes starting with "+"
-                morphology.text = re.sub('\[=![^\]]*\]', '', morphology.text) # comment on action
-                morphology.text = re.sub('\\s#\\s', ' ', morphology.text) # "#" probably marks pauses
-                morphology.text = re.sub('0\.', '', morphology.text) # empty utterance; this is already indicated on main tier
-                morphology.text = re.sub('(\\s|^)&(amp;)?\\S+', ' ', morphology.text) # fragments - these shouldn't appear on the gloss tier at all
                 morphology.text = re.sub('\[\*\]', '', morphology.text) # error coding
+                morphology.text = re.sub('\+[\.,\?!;:\///\"]+', '', morphology.text) # other codes starting with "+"
+                morphology.text = re.sub('\[\+.+?\]', '', morphology.text) # plus codes in square brackets
+                morphology.text = re.sub('\[\\s*=![^\]]*\]', '', morphology.text) # comment on action
+                morphology.text = re.sub('(^|\\s)[#\/](\\s|$)', ' ', morphology.text) # pause markers
+                morphology.text = re.sub('@e', '', morphology.text) # "English" tag is semantically not part of glosses -> delete
+                morphology.text = re.sub('(\\s|^)&(amp;)?(?P<form>\\S+)', ' ???|\g<form>^???', morphology.text) # occasional fragment glosses - convert to "POS and gloss unknown + form"
                 morphology.text = re.sub('\[=\?\\s+(\\S*?)\\s*\]', '[=?\\1]', morphology.text) # possible target to be processed further below; only remove initial space
                 morphology.text = re.sub('(\[=\?.*?\]\\s*)(\[=\?.*?\])+', '\\1', morphology.text) # in case of several possible targets, only keep the first
                 morphology.text = re.sub('[<>]|&[lg]t;', '', morphology.text) # useless XML entities; keep &amp; 
-                morphology.text = re.sub('xxx', '???|???^???', morphology.text) # words with unclear gloss
+                morphology.text = re.sub('(?<=[\\s\\]a-zA-Z\?])[\.!]+(?=\\s|$)', '', morphology.text) # utterance delimiters .!
+                morphology.text = re.sub('(?<=[\\s\\]a-zA-Z])\?(?=\\s|$)', '', morphology.text) # utterance delimiter ?                
+                morphology.text = re.sub('^\\s*[\?\.!]+\\s*$', '', morphology.text) # utterances consisting of delimiter(s) only
+                morphology.text = re.sub('xxx|\S+\?{2,}|\?{4,}', '???', morphology.text) # words with unclear gloss
+                morphology.text = re.sub('0\.', '', morphology.text) # empty utterance; this is already indicated on main tier
+                morphology.text = re.sub('\\b0\\b', '', morphology.text) # empty utterance
                 # insecure glosses [?]: add warning, then remove
                 if re.search('\[\?\]', morphology.text):
                      creadd(corpus[text_id][utterance_index], 'warnings', 'gloss insecure')
@@ -674,8 +681,9 @@ def parse_xml(file_name, corpus_name):
                                 # remove @e (marker for English words)
                                 gloss = re.sub('@', '', gloss)
                         else:
-                            print(file_name, utterance_index, ": gloss", m, "appears to be unstructured; morphemes:", morphemes)
-                            creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'contains unstructured morpheme')
+                            if not re.search('^\?\?\?$', m):
+                                print(file_name, utterance_index, ": gloss", m, "appears to be unstructured; morphemes:", morphemes)
+                                creadd(corpus[text_id][utterance_index]['words'][word_index], 'warnings', 'contains unstructured morpheme')
                         
                         # default: add morpheme to corpus dic
                         if not target_gloss:
@@ -1082,12 +1090,18 @@ def parse_xml(file_name, corpus_name):
                     for gloss in glosses:
                         # check whether present element is the stem; if no, set POS to prefix/suffix
                         pos = ''
-                        if len(glosses)==1 or re.search('(n|v|id)\^|\(\d', gloss) or re.match('(aj$|nm$|ps\d+)', gloss):
+                        if len(glosses)==1 or re.search('(v|id)\^|\(\d', gloss) or re.match('(aj$|nm$|ps\d+)', gloss):
                             passed_stem = True
                         elif passed_stem == False:
                             pos = 'pfx'
                         elif passed_stem == True:
                             pos = 'sfx'
+
+                        # n^ prefixed to all noun class glosses is completely redundant, so delete
+                        gloss = re.sub('[nN]\^(?=\\d)', '', gloss)
+                        # n^ prefixed to all proper names: replace by 'a_', lowercase label
+                        gloss = re.sub('[nN]\^([gG]ame|[nN]ame|[pP]lace|[sS]ong)', 'a_\\1', gloss)
+                        if re.search('a_(Game|Name|Place|Song)', gloss): gloss = gloss.lower()                            
                         
                         # get remaining POS and remove indicators and other clutter in the morpheme string
                         pos_dic = {'aj' : 'adj',  'av' : 'adv',  'cd' : 'ptcl',  'cj' : 'conj',  'cm' : 'ptcl',  'd' : 'dem',  'ht' : 'ptcl',  'ij' : 'intj',  
@@ -1100,14 +1114,9 @@ def parse_xml(file_name, corpus_name):
                         elif re.search('[vs]\^', gloss): 
                             pos = 'v'
                             gloss = re.sub('[vs]\^', '', gloss)
-                        # nouns start with "n^" (default) or "ps/" (suppletive possession); remove these after setting POS
-                        elif re.search('^n\^', gloss) or re.search('^ps\/', gloss):
+                        # nouns contains "(\d)" (default) or "ps/" (suppletive possession); remove these after setting POS
+                        elif re.search('\(\d+', gloss) or re.search('^ps\/', gloss):
                             pos = 'n'
-                            # n^ prefixed to all noun class glosses is completely redundant, so delete
-                            gloss = re.sub('[nN]\^(?=\\d)', '', gloss)
-                            # n^ prefixed to all proper names: replace by 'a_', lowercase label
-                            text = re.sub('[nN]\^([gG]ame|[nN]ame|[pP]lace|[sS]ong)', 'a_\\1', text)
-                            if re.search('a_(Game|Name|Place|Song)', gloss): gloss = gloss.lower()                            
                         # words with nominal concord
                         elif re.search('^(d|lr|obr|or|pn|ps|sr)\d+', gloss):
                             pos_match = re.search('^(d|lr|obr|or|pn|ps|sr)\d+', gloss)
@@ -1164,7 +1173,6 @@ def parse_xml(file_name, corpus_name):
         # EOF Sesotho        
 
         elif corpus_name == 'Turkish_KULLD':
-            # gets parsed very similar to Japanese_MiiPro, with only minor corpus specific changes
             # parse the morphology tier mor
             morphology = u.find("a[@type='extension'][@flavor='mor']")
             if morphology is not None:
@@ -1192,33 +1200,7 @@ def parse_xml(file_name, corpus_name):
                     # corpus[text_id][utterance_index]['words'][word_index]['morphemes'] is a list of morphemes; initial index is -1
                     corpus[text_id][utterance_index]['words'][word_index]['morphemes'] = []
                     morpheme_index = -1
-                    
-                    # first cut off prefix, it's always on the left edge of the complete word.  
-                    prefix = ''
-                    check_pfx = re.search('^(.+#)', w)
-                    if check_pfx:
-                        # count up morpheme index, extend list if necessary
-                        morpheme_index = list_index_up(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
-                        
-                        prefix = check_pfx.group(1) 
-                        w = w.lstrip(prefix)
-                        prefix = prefix.replace('#', '')
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = prefix
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = '???'
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'pfx'
-                        
-                    # cut off "supertags" prefixed to compounds, e.g. the 'num|' in num|+num|kyuu+num|juu. There are no words with more than 1 supertag.  
-                    check_compound = re.search('^[^\\+]+\\+(.*)', w)
-                    if check_compound:
-                        w = check_compound.group(1)
-                    
-                    # get stem gloss from the right edge of the complete word. There are no words with more than 1 stem gloss. 
-                    stem_gloss = '???'
-                    check_stem_gloss = re.search('(.+)=(\S+)$', w)
-                    if check_stem_gloss:
-                        w = check_stem_gloss.group(1)
-                        stem_gloss = check_stem_gloss.group(2)
-                    
+                                            
                     # split into compound elements (if applicable)
                     compound_elems = w.split('+')
                     for i in range(0, len(compound_elems)):
