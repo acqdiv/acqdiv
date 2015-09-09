@@ -115,8 +115,6 @@ class SessionProcessor(object):
                 for word in words:
                     self.words.append(Word(**word))
                     
-                # morpheme parsing | not-so-nice-solution (@bambooforest, I know, I know, no iterating over dictionaries, but this was the only way I managed to get all the info into the Morpheme-table)
-                # not so nice solution (that works at least): inference and morpheme parsing at once with ugly iterating over dictionary (at least it populates the db)
                 if utterance['corpus'] == 'Russian':
                     morphemes_inferences = collections.OrderedDict()
                     for (morpheme,inference) in it.zip_longest(morphemes,inferences):
@@ -130,46 +128,27 @@ class SessionProcessor(object):
                             morphemes_inferences['morpheme'] = ''
                             morphemes_inferences['pos'] = ''
                             morphemes_inferences['gloss'] = ''
-                            
                         self.morphemes.append(Morpheme(**morphemes_inferences))
                 
                 elif utterance['corpus'] == 'Chintang':
-                    ##----------------------------------------------------------------------------------
-                    ## crap below, dsnt work
-                    #morphemes_inferences = collections.OrderedDict()
-                    #for inference in inferences:
-                    #    morphemes_inferences['parent_id'] = inference['parent_id']
-                    #    morphemes_inferences['morpheme_target'] = inference['morpheme_target']
-                    #    morphemes_inferences['pos'] = inference['pos']
-                    #    morphemes_inferences['gloss'] = inference['gloss']
-                    #    morphemes_inferences['morpheme_id'] = inference['morpheme_id']
-                    #    for morpheme in morphemes:
-                    #        morphemes_inferences['morpheme'] = morpheme['morpheme']
-                    #    
-                    #    self.morphemes.append(Morpheme(**morphemes_inferences))
-                    ##----------------------------------------------------------------------------------
-            
-            
-            
-                    # Q lindp: Do we need this in Chintang when we have morpheme_target? I don't really understand the distinction between "morpheme" and "morpheme_target"
-                    # If we need it, then I don't know how to insert it correctly into the db (cf. my failed attempt above)
-                    ## morpheme parsing
-                    #for morpheme in morphemes:
-                    #    self.morphemes.append(Morpheme(**morpheme))
-                    
                     ## inference parsing
                     for inference in inferences:
                        self.morphemes.append(Morpheme(**inference)) ## <<-- THIS only "appends" to Morpheme table, how can I insert this data by using the same parent_id key??
                     ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
                 
                 
-                
                 elif utterance['corpus'] == 'Indonesian':
                     for (morpheme,inference) in it.zip_longest(morphemes,inferences):
-                        morphemes_inferences = collections.OrderedDict()
-                        morphemes_inferences['parent_id'] = morpheme['parent_id']
-                        morphemes_inferences['morpheme'] = morpheme['morpheme']
-                        morphemes_inferences['gloss'] = inference['gloss']                        
+                        try:
+                            morphemes_inferences = collections.OrderedDict()
+                            morphemes_inferences['parent_id'] = morpheme['parent_id']
+                            morphemes_inferences['morpheme'] = morpheme['morpheme']
+                            morphemes_inferences['gloss'] = inference['gloss']
+                        except TypeError:
+                            morphemes_inferences['parent_id'] = ''
+                            morphemes_inferences['morpheme'] = ''
+                            morphemes_inferences['pos'] = ''
+                            morphemes_inferences['gloss'] = ''
                         self.morphemes.append(Morpheme(**morphemes_inferences))
                     
                 
