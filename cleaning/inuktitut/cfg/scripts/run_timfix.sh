@@ -3,32 +3,36 @@
 # Causes shell to echo everything it is executing in stdout.
 #set -v
 
-# Where is the output folder of the "acqdiv clean"?
-FOLDER='../../.output/'
-if [ -n "$1" ]; then
-	FOLDER=$1
-fi
-echo "Folder: $FOLDER"
 
-# We want to create a copy of that folder (we will change those files).
-OUT_COPY='output'
-if [ -n "$2" ]; then
-	OUT_COPY=$2
+# Where do we want timfix.py to put its outputs?
+OUT_FOLDER='output'
+if [ -n "$1" ]; then
+	OUT_FOLDER=$1
 fi
-echo "Copy of the output folder: $OUT_COPY"
+
+# Where is the output folder of the "acqdiv clean"?
+OUT_ACQDIV='../../.output/'
+if [ -n "$2" ]; then
+	OUT_ACQDIV=$2
+fi
 
 
 # Deletes the output of the previous time this was executed
-rm -rf $OUT_COPY ${OUT_COPY}-xml
-cp $FOLDER ./$OUT_COPY -R
+rm -rf $OUT_FOLDER
 
-FILES=$(ls ${OUT_COPY})
+echo "Will fix %tim tier in the following files from folder: $OUT_ACQDIV"
+FILES=$(ls ${OUT_ACQDIV})
 echo $FILES
+echo "... and output the results in: $OUT_FOLDER"
 
 # Inserts a '\r' in the end of every file
 # (Chatter complains when this is not there)
 for i in $FILES
 do
-	./timfix.py ${OUT_COPY}/$i
+	echo "Fixing %tim tier in file: ${OUT_FOLDER}/$i"
+	./timfix.py ${OUT_ACQDIV}/$i $OUT_FOLDER
 done
+
+echo "Finished fixing %tim tier in all files"
+echo ""
 
