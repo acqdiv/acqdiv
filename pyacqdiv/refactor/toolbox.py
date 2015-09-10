@@ -39,7 +39,7 @@ class ToolboxFile(object):
 
         # TODO: get sentence type, etc...
 
-        # collect the warnings
+        # TODO (lingdp): get that warnings stuff going!
         # colletc all warnings in an ordered dict with the following structure:
         # {utterance_id:[warning_a,warning_b,warning_c,...], utterance_id:[warning_a,warning_b,warning_c],...}
         self.warnings = collections.OrderedDict()
@@ -74,17 +74,17 @@ class ToolboxFile(object):
                     # we need to choose either the phonetic or orthographic transcription
                     # for the general 'utterance' field (from config); also add its type
                     
-                    #TODO: the below two lines rais the error discussed in https://github.com/uzling/acqdiv/issues/154, possible workaround: lines 92-98.
-                    utterances['utterance'] = utterances[self.config['utterance']['field']]
-                    utterances['utterance_type'] = self.config['utterance']['type']
+                    #TODO: the below two lines rais the error discussed in https://github.com/uzling/acqdiv/issues/154.
+                    #utterances['utterance'] = utterances[self.config['utterance']['field']]
+                    #utterances['utterance_type'] = self.config['utterance']['type']
                 
-                    #try:
-                    #    utterances['utterance'] = utterances[self.config['utterance']['field']]
-                    #    utterances['utterance_type'] = self.config['utterance']['type']
-                    #except KeyError:
-                    #    utterances['utterance'] = "None"
-                    #    utterances['utterance_type'] = "None"
-                    #    self.warnings['warnings'] = 'empty utterance' # <<-- add warning here?
+                    try:
+                        utterances['utterance'] = utterances[self.config['utterance']['field']]
+                        utterances['utterance_type'] = self.config['utterance']['type']
+                    except KeyError:
+                        utterances['utterance'] = ""
+                        utterances['utterance_type'] = ""
+                        self.warnings['warnings'] = 'empty utterance' 
 
                     # TODO: build in the rules system per corpus...
                     # clean up utterance, add new data via Robert inferences, etc.
@@ -99,7 +99,6 @@ class ToolboxFile(object):
                     # how to handle this specifically?
                     # needs to live outside of utterance?
                     words = self.get_words(utterances) # pass the dictionary
-                    #print('words')
                     #print(words)
                     
                                     
@@ -288,21 +287,30 @@ class ToolboxFile(object):
                     result.append(d)
             else:
                 d = collections.OrderedDict()
-                d['pos'] = 'None'
-                d['gloss'] = 'None'
+                d['pos'] = ''
+                d['gloss'] = ''
                 d['parent_id'] = utterances['utterance_id']
                 result.append(d)
                 self.warnings['warning'] = 'not glossed!'
                 
                 
         
-        # TODO: Chintang specific morpheme/inference stuff
+        # Chintang specific morpheme/inference stuff
         elif self.config['corpus']['corpus'] == "Chintang":
             if 'morpheme' in utterances.keys():
                 morphemes_target_Chintang = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['morpheme'])
                 morphemes_Chintang = morphemes_Chintang = re.sub('(\s\-)|(\-\s)','-', morphemes_target_Chintang)
-                glosses_Chintang = utterances['gloss']
-                pos_Chintang = utterances['pos']
+                try:
+                    glosses_Chintang = utterances['gloss']
+                except KeyError:
+                    glosses_Chintang = ''
+                    self.warnings['warning'] = 'not glossed!'
+                try:    
+                    pos_Chintang = utterances['pos']
+                except KeyError:
+                    pos_Chintang = ''
+                    self.warnings['warning'] = 'pos missing!'
+                    
                 morphemes = morphemes_Chintang.split()
                 morphemes_targets = morphemes_target_Chintang.split()
                 glosses_targets = glosses_Chintang.split()
@@ -373,7 +381,7 @@ class ToolboxFile(object):
                     result.append(d)    
         else:
             d = collections.OrderedDict()
-            d['morpheme'] = 'None'
+            d['morpheme'] = ''
             d['parent_id'] = utterances['utterance_id']
             result.append(d)
             self.warnings['warning'] = 'morpheme missing!'
