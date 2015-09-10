@@ -99,7 +99,7 @@ class ToolboxFile(object):
                     # how to handle this specifically?
                     # needs to live outside of utterance?
                     words = self.get_words(utterances) # pass the dictionary
-                    #print(words)
+                    # print(words)
                     
                                     
                     ## add parent_id to warnings
@@ -141,11 +141,27 @@ class ToolboxFile(object):
         # TODO: make sure to deal with the comment handling, etc., e.g.:
         # if self.config['corpus']['corpus'] == "Russian":
             # words_comments = re.search('(.*?)(\[=.*?\])', my_words)
+        
         for word in words:
             d = collections.OrderedDict()
-            d['word'] = word
-            d['parent_id'] = utterances['utterance_id']
-            result.append(d)
+            if self.config['corpus']['corpus'] == 'Indonesian':
+                d['parent_id'] = utterances['utterance_id']
+                ## distinguish between word and word_target (après: https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1859-L1867)
+                if re.search('\(', word):
+                    d['word_target'] = re.sub('[\(\)]', '',word)
+                    d['word'] = re.sub('\([^\)]+\)', '', word)
+                    result.append(d)
+                # otherwise the target word is identical to the actual word
+                else:
+                    d['word_target'] = word
+                    d['word'] = word
+                    result.append(d)
+            else:
+                for word in words:
+                    d = collections.OrderedDict()
+                    d['word'] = word
+                    d['parent_id'] = utterances['utterance_id']
+                    result.append(d)
         return result
 
             
@@ -234,6 +250,7 @@ class ToolboxFile(object):
             #if self.config['corpus']['corpus'] == "Russian":
                 pos_cleaned = utterances['pos'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
                 
+                # get pos and gloss (après: https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1751-L1762)
                 #The Russian tier \mor contains both glosses and POS, separated by "-" or ":". Method for distinguishing and extracting them:
                 #* 1) If there is no ":" in a word string, gloss and POS are identical (most frequently the case with PCL 'particle').
                 #* 2) Sub-POS are always separated by "-" (e.g. PRO-DEM-NOUN), subglosses are always separated by ":" (e.g. PST:SG:F). What varies, though, is the character that separates POS from glosses in the word string:
@@ -267,8 +284,8 @@ class ToolboxFile(object):
                             
             else:
                 d = collections.OrderedDict()
-                d['pos'] = 'None'
-                d['gloss'] = 'None'
+                d['pos'] = ''
+                d['gloss'] = ''
                 d['parent_id'] = utterances['utterance_id']
                 result.append(d)
                 self.warnings['warning'] = 'not glossed!'
@@ -287,7 +304,6 @@ class ToolboxFile(object):
                     result.append(d)
             else:
                 d = collections.OrderedDict()
-                d['pos'] = ''
                 d['gloss'] = ''
                 d['parent_id'] = utterances['utterance_id']
                 result.append(d)
@@ -323,16 +339,18 @@ class ToolboxFile(object):
                     d['parent_id'] = utterances['utterance_id']
                     #d['morpheme_id'] = str(utterances['utterance_id'])+'_'+str(morphemes_target_counter) ## needed?
                     d['morpheme'] = morpheme_target
-                    d['gloss'] = gloss
-                    d['pos'] = pos
+                    d['segment_target'] = morpheme_target
+                    d['gloss_target'] = gloss
+                    d['pos_target'] = pos
                     result.append(d)
             else:
                 d = collections.OrderedDict()
                 d['morpheme'] = ''
+                d['segment_target'] = ''
                 d['parent_id'] = utterances['utterance_id']
                 #d['morpheme_id'] = '' ## needed??
-                d['gloss'] = ''
-                d['pos'] = ''
+                d['gloss_target'] = ''
+                d['pos_target'] = ''
                 result.append(d)
                 self.warnings['warning'] ='not glossed!'
         
@@ -354,6 +372,7 @@ class ToolboxFile(object):
                     # Note that there is no "morpheme_target" for Russian
                     d = collections.OrderedDict()
                     d['morpheme'] = morpheme
+                    d['segment_target'] = morpheme
                     d['parent_id'] = utterances['utterance_id']
                     result.append(d)
                     
@@ -365,6 +384,7 @@ class ToolboxFile(object):
                 for morpheme in morphemes:
                     d = collections.OrderedDict()
                     d['morpheme'] = morpheme
+                    d['segment'] = morpheme
                     d['parent_id'] = utterances['utterance_id']
                     result.append(d)
                 
