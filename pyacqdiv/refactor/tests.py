@@ -1,21 +1,34 @@
+#!/usr/bin/bash
+#-*- coding: utf-8 -*-
+
+# Test suite for the acqdiv processors and database
+
+import database_backend as db
 import metadata
 import parsers
+import postprocessor as pp
+import unittest
 
-cfg = parsers.CorpusConfigParser()
+# metadata tests
 
-print("RUSSIAN:")
-cfg.read("Russian.ini")
-imdi = metadata.Imdi(cfg, "../../corpora/Russian/metadata/IMDI/A00210817.imdi")
-for k, v in imdi.metadata.items():
-    print(k, v)
-    print()
-# print(imdi.metadata['session']['location']['address'])
-print("#####################")
+class TestMetadataParser(unittest.TestCase):
 
-print("CREE;")
-cfg.read("Cree.ini")
-xml = metadata.Chat(cfg, "../../corpora/Cree/xml/Ani/2005-09-14.xml")
-for k, v in xml.metadata.items():
-    print(k, v)
-    print()
-print("#####################")
+    def setUp(self):
+        self.cfg = parsers.CorpusConfigParser()
+
+class TestImdiParser(TestMetadataParser):
+
+    def setUp(self):
+        super().setUp()
+        self.cfg.read("Russian.ini")
+        self.imdi = metadata.Imdi(self.cfg, "../../corpora/Russian/metadata/A00210817.imdi")
+
+    def testBasicImdiParsing(self):
+        for k, v in self.imdi.metadata.items():
+            self.assertFalse(v == None)
+
+    def testImdiDateField(self):
+        self.assertFalse(self.imdi.metadata["session"]["date"] == None)
+
+if __name__ == "__main__":
+    unittest.main()

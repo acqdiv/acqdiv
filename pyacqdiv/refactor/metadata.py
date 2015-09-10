@@ -176,19 +176,17 @@ class Unifier():
         #self.null = ["Unknown", "Unspecified", "None"]
 
     def unify(self):
-        if self.config['corpus']['format'] == "IMDI":
+        if self.config['metadata']['type'] == "IMDI":
             for tier in self.config['session_labels']:
-                self.metadata['session'][self.config['session_labels'][tier]] = self.metadata['session'].pop(tier) if tier in self.metadata['session'] else None
+                self.metadata['session'][self.config['session_labels'][tier]] = self.metadata['session'].pop(tier, None)
 
         else:
             self.metadata['session'] = {}
             for tier in self.config['session_labels']:
-                self.metadata['session'][self.config['session_labels'][tier]] = self.metadata['__attrs__'].pop(tier) if tier in self.metadata['__attrs__'] else None
-
+                self.metadata['session'][self.config['session_labels'][tier]] = self.metadata['__attrs__'].pop(tier, None)
         for i in range(len(self.metadata['participants'])):
             for tier in self.config['speaker_labels']:
-                self.metadata['participants'][i][self.config['speaker_labels'][tier]] = self.metadata['participants'][i].pop(tier) if tier in self.metadata['participants'][i] else None
-
+                self.metadata['participants'][i][self.config['speaker_labels'][tier]] = self.metadata['participants'][i].pop(tier, None)
 
 if __name__=="__main__":
     # TODO: we need some serious tests

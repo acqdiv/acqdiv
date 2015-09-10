@@ -22,9 +22,12 @@ class CorpusProcessor(object):
         for session_file in self.cfg.session_files:
             print("Processing:", session_file)
             # Create a session based on the format type given in config.
-            s = SessionProcessor(self.cfg, session_file, self.engine)
-            s.process_session()
-            s.commit()
+            try:
+                s = SessionProcessor(self.cfg, session_file, self.engine)
+                s.process_session()
+                s.commit()
+            except OSError as oserr:
+                print("Error: {0}\nSkipping...".format(oserr))
 
     # TODO: should we add the corpus level data, e.g. metadata, to the database here?
 

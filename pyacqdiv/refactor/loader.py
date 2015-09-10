@@ -2,6 +2,7 @@
 """
 
 from processors import *
+from postprocessor import *
 from parsers import *
 from database_backend import *
 import time
@@ -18,12 +19,12 @@ if __name__=="__main__":
     engine = db_connect()
     create_tables(engine)
 
-    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Russian.ini', 'Japanese_Miyata.ini']
+    # configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Russian.ini', 'Japanese_Miyata.ini']
     # configs = ['Cree.ini', 'Indonesian.ini', 'Russian.ini']
     # configs = ['Chintang.ini']
     # configs = ['Cree.ini']
     # configs = ['Indonesian.ini']
-    # configs = ['Russian.ini']
+    configs = ['Russian.ini']
     # configs = ['CreeJSON.ini']
     # configs = ['Sesotho.ini']
     # configs = ['Japanese_Miyata.ini']
@@ -37,6 +38,9 @@ if __name__=="__main__":
         c = CorpusProcessor(cfg, engine)
         c.process_corpus()
 
-        # TODO: call the post-processor
+        #Do the postprocessing
+        update_age(cfg)
+        unify_glosses(cfg)
+
 
     print("--- %s seconds ---" % (time.time() - start_time))

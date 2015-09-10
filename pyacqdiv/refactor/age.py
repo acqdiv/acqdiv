@@ -43,13 +43,16 @@ def format_imdi_age(birthdate, sessiondate):
 
 def format_xml_age(age_str):
     age = re.match("P(\d*)Y(\d*)M(\d*)?D?", age_str)
-    years = age.group(1)
-    months = age.group(2)
-    if age.groups == 3:
-        days = age.group(3)
+    if age:
+        years = age.group(1)
+        months = age.group(2)
+        if age.groups == 3:
+            days = age.group(3)
+        else:
+            days = "0"
+        return("%s;%s.%s" % (years, months, days))
     else:
-        days = "0"
-    return("%s;%s.%s" % (years, months, days))
+        return 0
 
 def calculate_xml_days(age_str):
     age = re.match("(\d*);(\d*).(\d*)", age_str)
