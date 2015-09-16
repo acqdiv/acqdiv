@@ -22,12 +22,9 @@ class CorpusProcessor(object):
         for session_file in self.cfg.session_files:
             print("Processing:", session_file)
             # Create a session based on the format type given in config.
-            try:
-                s = SessionProcessor(self.cfg, session_file, self.engine)
-                s.process_session()
-                s.commit()
-            except OSError as oserr:
-                print("Error: {0}\nSkipping...".format(oserr))
+            s = SessionProcessor(self.cfg, session_file, self.engine)
+            s.process_session()
+            s.commit()
 
     # TODO: should we add the corpus level data, e.g. metadata, to the database here?
 
@@ -124,11 +121,12 @@ class SessionProcessor(object):
                         try:
                             morphemes_inferences['parent_id'] = morpheme['parent_id']
                             morphemes_inferences['morpheme'] = morpheme['morpheme']
+                            morphemes_inferences['segment'] = morpheme['segment_target']
                             morphemes_inferences['pos'] = inference['pos']
                             morphemes_inferences['gloss'] = inference['gloss']
                         except TypeError:
-                            morphemes_inferences['parent_id'] = ''
                             morphemes_inferences['morpheme'] = ''
+                            morphemes_inferences['segment'] = ''
                             morphemes_inferences['pos'] = ''
                             morphemes_inferences['gloss'] = ''
                         self.morphemes.append(Morpheme(**morphemes_inferences))
@@ -136,7 +134,7 @@ class SessionProcessor(object):
                 elif utterance['corpus'] == 'Chintang':
                     ## inference parsing
                     for inference in inferences:
-                       self.morphemes.append(Morpheme(**inference)) ## <<-- THIS only "appends" to Morpheme table, how can I insert this data by using the same parent_id key??
+                       self.morphemes.append(Morpheme(**inference)) 
                     ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
                 
                 
@@ -146,11 +144,11 @@ class SessionProcessor(object):
                             morphemes_inferences = collections.OrderedDict()
                             morphemes_inferences['parent_id'] = morpheme['parent_id']
                             morphemes_inferences['morpheme'] = morpheme['morpheme']
+                            morphemes_inferences['segment'] = morpheme['morpheme']
                             morphemes_inferences['gloss'] = inference['gloss']
                         except TypeError:
-                            morphemes_inferences['parent_id'] = ''
                             morphemes_inferences['morpheme'] = ''
-                            morphemes_inferences['pos'] = ''
+                            morphemes_inferences['segment'] = ''
                             morphemes_inferences['gloss'] = ''
                         self.morphemes.append(Morpheme(**morphemes_inferences))
                     

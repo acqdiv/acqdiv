@@ -18,8 +18,6 @@
 
 from sqlalchemy.orm import sessionmaker
 from database_backend import *
-from parsers import CorpusConfigParser as ccp
-import age
 
 def db_apply(func):
     def update_session(config, cfunc):
@@ -41,12 +39,13 @@ def db_apply(func):
 
 # Russian & Indonesian: garbage imported from CHAT
 #  SM: i think this is done in the parser
-#content = re.sub('xxx?|www', '???', content)
+content = re.sub('xxx?|www', '???', content)
 
 # example call (why is it so $^*%@* slow?)
-#for instance in session.query(Utterance).order_by(Utterance.id):
-#    print(instance.word)
+for instance in session.query(Utterance).order_by(Utterance.id):
+    print(instance.word)
 
+<<<<<<< HEAD
 
 def update_xml_age(session, config):
     corpus_name = config["corpus"]["corpus"]
