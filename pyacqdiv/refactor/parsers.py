@@ -323,7 +323,7 @@ if __name__ == "__main__":
     from parsers import CorpusConfigParser
     cfg = CorpusConfigParser()
     cfg.read("CreeJSON.ini")
-    f = "../../corpora/Cree/json/Ani/2006-10-18.json"
+    f = "../../corpora/Cree/json/Ani/2006-10-18.json"  ## ATTN: the folder structure on the server looks different now: corpora/Cree/json/.json
     c = JsonParser(cfg, f)
     #c.next_utterance() # why doesn't this work?
     #because it's a generator and you really should be doing 
