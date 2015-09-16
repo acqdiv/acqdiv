@@ -35,18 +35,6 @@ def db_apply(func):
             session.close()
     return update_session
 
-# Post processing of Toolbox Utterance data?
-
-# Russian & Indonesian: garbage imported from CHAT
-#  SM: i think this is done in the parser
-content = re.sub('xxx?|www', '???', content)
-
-# example call (why is it so $^*%@* slow?)
-for instance in session.query(Utterance).order_by(Utterance.id):
-    print(instance.word)
-
-<<<<<<< HEAD
-
 def update_xml_age(session, config):
     corpus_name = config["corpus"]["corpus"]
     for db_session_entry in session.query(Session).filter(Session.corpus == corpus_name):
