@@ -22,8 +22,9 @@ from parsers import CorpusConfigParser as ccp
 import age
 
 def db_apply(func):
-    def update_session(config):
-        engine = db_connect()
+    def update_session(config, cfunc):
+        # cfunc is the function that connects to the db
+        engine = cfunc()
         Session = sessionmaker(bind=engine)
         session = Session()
         try:
@@ -47,40 +48,61 @@ def db_apply(func):
 #    print(instance.word)
 
 
-def update_xml_age(session):
-    for row in session.query(Speaker).filter(Speaker.age != None):
-        nage = age.format_xml_age(row.age)
-        if nage != 0:
-            row.age = nage
+def update_xml_age(session, config):
+    corpus_name = config["corpus"]["corpus"]
+    for db_session_entry in session.query(Session).filter(Session.corpus == corpus_name):
+        sid = db_session_entry.session_id
+        for row in session.query(Speaker).filter(Speaker.age != None, Speaker.parent_id == sid):
+            nage = age.format_xml_age(row.age)
+            if nage:
+                row.age = nage
+                aid = age.calculate_xml_days(nage)
+                row.age_in_days = aid
 
-def update_imdi_age(session):
-    for row in session.query(Speaker).filter(Speaker.age.like("Un%"), ~Speaker.birthdate.like("Un%")):
-        srow = session.query(Session).filter(Session.session_id == row.parent_id).one()
-        try:
-            recdate = age.numerize_date(srow.date)
-            bdate = age.numerize_date(row.birthdate)
-            agelist = age.format_imdi_age(bdate, recdate)
-            row.age = agelist[0]
-            row.age_in_days = agelist[1]
-        except Exception as e:
-                print("Couldn't calculate age of speaker {0}".format(row.id))
-                print("Error: {0}".format(e))
+def update_imdi_age(session, config):
+    corpus_name = config["corpus"]["corpus"]
+    for db_session_entry in session.query(Session).filter(Session.corpus == corpus_name):
+        sid = db_session_entry.session_id
+        for db_speaker_entry in session.query(Speaker).filter(~Speaker.birthdate.like("Un%"),
+                Speaker.parent_id == sid):
+            try:
+                recdate = age.numerize_date(db_session_entry.date)
+                bdate = age.numerize_date(db_speaker_entry.birthdate)
+                ages = age.format_imdi_age(bdate, recdate)
+                db_speaker_entry.age = ages[0]
+                db_speaker_entry.age_in_days = ages[1]
+            except Exception as e:
+                    print("Couldn't calculate age of speaker {0}".format(db_speaker_entry.id))
+                    print("Error: {0}".format(e))
+        for db_speaker_entry in session.query(Speaker).filter(Speaker.age != None, ~Speaker.age.like("%Un%"), 
+                Speaker.birthdate.like("Un%"), Speaker.parent_id == sid):
+            try:
+                ages = age.clean_year_only_ages(db_speaker_entry.age)
+                db_speaker_entry.age = ages[0]
+                db_speaker_entry.age_in_days = ages[1]
+            except Exception as e:
+                    print("Couldn't calculate age of speaker {0}".format(db_speaker_entry.id))
+                    print("Error: {0}".format(e))
 
 @db_apply
 def update_age(session, config):
     if config["metadata"]["type"] == "IMDI":
-        update_imdi_age(session)
+        update_imdi_age(session, config)
     else:
-        update_xml_age(session)
+        update_xml_age(session, config)
 
 
 @db_apply
 def unify_glosses(session, config):
     for row in session.query(Morpheme):
         old_gloss = row.gloss
-        if old_gloss in config["gloss"]:
-            new_gloss = config["gloss"][old_gloss]
-            row.gloss = new_gloss
+        try:
+            if old_gloss in config["gloss"]:
+                new_gloss = config["gloss"][old_gloss]
+                row.gloss = new_gloss
+        except KeyError:
+            print("Error: .ini file for corpus {0} does not have gloss replacement rules configured!".format(config["corpus"]["corpus"]))
+            return
 
 if __name__ == "__main__":
     cfg = ccp()

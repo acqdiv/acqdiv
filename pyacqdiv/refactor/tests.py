@@ -44,8 +44,8 @@ def testLoadDatabase(configs, engine):
         c.process_corpus()
 
         print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
-        pp.update_age(cfg)
-        pp.unify_glosses(cfg)
+        pp.update_age(cfg, test_connect)
+        pp.unify_glosses(cfg, test_connect)
 
 # metadata tests
 
@@ -91,14 +91,14 @@ class PipelineTest(unittest.TestCase):
         engine = test_connect()
 
         cls.configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Russian.ini', 'Japanese_Miyata.ini']
-        # configs = ['Cree.ini', 'Indonesian.ini', 'Russian.ini']
-        # configs = ['Chintang.ini']
-        # configs = ['Cree.ini']
-        # configs = ['Indonesian.ini']
-        # configs = ['Russian.ini']
-        # configs = ['CreeJSON.ini']
-        # configs = ['Sesotho.ini']
-        # configs = ['Japanese_Miyata.ini']
+        # cls.configs = ['Cree.ini', 'Indonesian.ini', 'Russian.ini']
+        # cls.configs = ['Chintang.ini']
+        # cls.configs = ['Cree.ini']
+        # cls.configs = ['Indonesian.ini']
+        # cls.configs = ['Russian.ini']
+        # cls.configs = ['CreeJSON.ini']
+        # cls.configs = ['Sesotho.ini']
+        # cls.configs = ['Japanese_Miyata.ini']
 
         testLoadDatabase(cls.configs, engine)
 

@@ -252,7 +252,7 @@ class JsonParser(SessionParser):
         """
         # Robert's JSON output is a dictionary: {key (filename): [u1{...}, u2{...}]}
         #  here we iterate over the utterances (each record)
-        for record in self.data["CHAT"]["u"]:
+        for record in self.data[self.filename]:
             utterance = collections.OrderedDict()
             words = []
             morphemes = []
