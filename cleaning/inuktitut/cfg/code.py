@@ -169,8 +169,8 @@ def clean_chat_line(s):
         s = re.sub("\[A", "", s)
         s = re.sub(".46q", ".", s)
         s = re.sub("XXX", "xxx", s)
-        s = re.sub("&", "", s)
-        s = re.sub("&", "", s)
+        if (s.startswith("%eng")):
+            s = re.sub("&", "", s)
         s = re.sub("\(\?\)", "xxx", s)
 
         # Before replacing all quotes, removes cases of the type
