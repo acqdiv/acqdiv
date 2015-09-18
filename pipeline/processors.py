@@ -177,9 +177,6 @@ class SessionProcessor(object):
                             morphemes_inferences['gloss'] = ''
                             
                         self.morphemes.append(Morpheme(**morphemes_inferences))
-                        
-                    
-                    
 
         elif self.format == "JSON":
             for utterance, words, morphemes in self.parser.next_utterance():
