@@ -151,6 +151,7 @@ class Warnings(Base):
 
     #id = Column(Text, primary_key=True) ## @bambooforest Is that a mistake?
     id = Column(Integer,primary_key=True)
+    corpus = Column(Text, nullable=True, unique=False)
     parent_id = Column(Text, ForeignKey('utterance.id'))
     warning = Column(Text, nullable=True, unique=False)
 
