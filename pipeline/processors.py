@@ -124,8 +124,9 @@ class SessionProcessor(object):
                             morphemes_inferences['segment'] = morpheme['segment_target']
                             morphemes_inferences['pos'] = inference['pos']
                             morphemes_inferences['gloss'] = inference['gloss']
-                            morphemes_warnings['parent_id'] = morpheme['parent_id']
                             if 'warning' in inference.keys():
+                                morphemes_warnings['corpus'] = utterance['corpus']
+                                morphemes_warnings['parent_id'] = morpheme['parent_id']
                                 morphemes_warnings['warning'] = inference['warning']
                                 self.warnings.append(Warnings(**morphemes_warnings))
                         except TypeError:
@@ -148,6 +149,7 @@ class SessionProcessor(object):
                         morphemes_inferences['gloss_target'] = inference['gloss_target']
                         morphemes_inferences['pos_target'] = inference['pos_target']
                         if 'warning' in inference.keys():
+                            morphemes_warnings['corpus'] = utterance['corpus']
                             morphemes_warnings['parent_id'] = inference['parent_id']
                             morphemes_warnings['warning'] = inference['warning']
                             self.warnings.append(Warnings(**morphemes_warnings))
@@ -165,6 +167,7 @@ class SessionProcessor(object):
                             morphemes_inferences['segment'] = morpheme['morpheme']
                             morphemes_inferences['gloss'] = inference['gloss']
                             if 'warning' in inference.keys():
+                                morphemes_warnings['corpus'] = utterance['corpus']
                                 morphemes_warnings['parent_id'] = morpheme['parent_id']
                                 morphemes_warnings['warning'] = inference['warning']
                                 self.warnings.append(Warnings(**morphemes_warnings))
