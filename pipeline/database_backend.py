@@ -26,7 +26,7 @@ def db_connect():
 def create_tables(engine):
     """ """
     # Drop all the database tables first
-    Base.metadata.drop_all(bind=engine)
+    # Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(engine)
 
 # NOTE: apparently sqla Base objects do not need constructors; they seem to be discouraged

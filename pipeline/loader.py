@@ -24,9 +24,9 @@ if __name__=="__main__":
     # configs = ['Inuktitut.ini']
     # configs = ['Indonesian.ini']
     # configs = ['Japanese_Miyata.ini']
-    configs = ['Japanese_MiiPro.ini']
+    # configs = ['Japanese_MiiPro.ini']
     # configs = ['Russian.ini']
-    # configs = ['Sesotho.ini']
+    configs = ['Sesotho.ini']
 
 
     for config in configs:
