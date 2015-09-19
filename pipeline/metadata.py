@@ -183,8 +183,6 @@ class Unifier():
             self.metadata['session'] = {}
             for tier in self.config['session_labels']:
                 self.metadata['session'][self.config['session_labels'][tier]] = self.metadata['__attrs__'].pop(tier, None)
-                print(self.config['session_labels'][tier], self.metadata['session'][self.config['session_labels'][tier]])
-
 
         for i in range(len(self.metadata['participants'])):
             for tier in self.config['speaker_labels']:
