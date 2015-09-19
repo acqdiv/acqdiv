@@ -37,15 +37,15 @@ def testLoadDatabase(configs, engine):
         # Parse the config file and call the sessions processor
         cfg = parsers.CorpusConfigParser()
         cfg.read(config)
-        cfg.session_files = cfg.session_files[:8]
+        cfg.session_files = cfg.session_files[:4]
 
         # Process by parsing the files and adding extracted data to the db
         c = processors.CorpusProcessor(cfg, engine)
         c.process_corpus()
 
         print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
-        pp.update_age(cfg, test_connect)
-        pp.unify_glosses(cfg, test_connect)
+        pp.update_age(cfg, engine)
+        pp.unify_glosses(cfg, engine)
 
 # metadata tests
 
@@ -59,7 +59,7 @@ class TestImdiParser(TestMetadataParser):
     def setUp(self):
         super().setUp()
         self.cfg.read("Russian.ini")
-        self.imdi = metadata.Imdi(self.cfg, "../../corpora/Russian/metadata/A00210817.imdi")
+        self.imdi = metadata.Imdi(self.cfg, "../corpora/Russian/metadata/A00210817.imdi")
 
     def testBasicImdiParsing(self):
         for k, v in self.imdi.metadata.items():
@@ -73,7 +73,7 @@ class TestXMLParser(TestMetadataParser):
     def setUp(self):
         super().setUp()
         self.cfg.read("Cree.ini")
-        self.xml = metadata.Chat(self.cfg, "../../corpora/Cree/xml/Ani/2005-09-14.xml")
+        self.xml = metadata.Chat(self.cfg, "../corpora/Cree/xml/2005-09-14.xml")
 
     def testBasicXMLParsing(self):
         for k, v in self.xml.metadata.items():
@@ -90,7 +90,9 @@ class PipelineTest(unittest.TestCase):
         # http://docs.sqlalchemy.org/en/latest/orm/session_basics.html#session-faq-whentocreate
         engine = test_connect()
 
-        cls.configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Russian.ini', 'Japanese_Miyata.ini']
+        # cls.configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Russian.ini', 'Japanese_Miyata.ini']
+        cls.configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
+               'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
         # cls.configs = ['Cree.ini', 'Indonesian.ini', 'Russian.ini']
         # cls.configs = ['Chintang.ini']
         # cls.configs = ['Cree.ini']
@@ -108,26 +110,31 @@ class PipelineTest(unittest.TestCase):
         """
         session = test_make_session()
         self.assertEqual(len(session.query(func.count(db.Session.corpus), db.Session.corpus).group_by(db.Session.corpus).all()), len(PipelineTest.configs))
+        session.close()
 
     def testLppSpeakersOk(self):
 
         session = test_make_session()
         self.assertNotEqual(session.query(db.Speaker).count(), 0)
+        session.close()
 
     def testLppUtterancesOk(self):
 
         session = test_make_session()
         self.assertNotEqual(session.query(db.Utterance).count(), 0)
+        session.close()
 
     def testLppWordsOk(self):
 
         session = test_make_session()
         self.assertNotEqual(session.query(db.Word).count(), 0)
+        session.close()
 
     def testLppMorphemesOk(self):
 
         session = test_make_session()
         self.assertNotEqual(session.query(db.Morpheme).count(), 0)
+        session.close()
 
 
 if __name__ == "__main__":

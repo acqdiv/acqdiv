@@ -72,7 +72,7 @@ class Imdi(Parser):
         self.metadata["session"] = self.get_session_data()
         self.metadata["project"] = self.get_project_data(self.root)
         self.metadata["media"] = self.get_media_data(self.root)
-        self.unifier.unify()
+        #self.unifier.unify()
 
     def get_participants(self):
         """
@@ -178,36 +178,39 @@ class Unifier():
     def unify(self):
         if self.config['corpus']['format'] == "IMDI":
             for tier in self.config['session_labels']:
-                self.metadata['session'][self.config['session_labels'][tier]] = self.metadata['session'].pop(tier) if tier in self.metadata['session'] else None
-
+                self.metadata['session'][self.config['session_labels'][tier]] = self.metadata['session'].pop(tier, None)
         else:
             self.metadata['session'] = {}
             for tier in self.config['session_labels']:
-                self.metadata['session'][self.config['session_labels'][tier]] = self.metadata['__attrs__'].pop(tier) if tier in self.metadata['__attrs__'] else None
+                self.metadata['session'][self.config['session_labels'][tier]] = self.metadata['__attrs__'].pop(tier, None)
+                print(self.config['session_labels'][tier], self.metadata['session'][self.config['session_labels'][tier]])
+
 
         for i in range(len(self.metadata['participants'])):
             for tier in self.config['speaker_labels']:
-                self.metadata['participants'][i][self.config['speaker_labels'][tier]] = self.metadata['participants'][i].pop(tier) if tier in self.metadata['participants'][i] else None
-
+                self.metadata['participants'][i][self.config['speaker_labels'][tier]] = self.metadata['participants'][i].pop(tier, None)
 
 if __name__=="__main__":
     # TODO: we need some serious tests
-    # from parsers import *
+    from parsers import CorpusConfigParser as ccp
 
-    """
     print("INDONESIAN:")
     # cfg = CorpusConfigParser()
-    # cfg.read("Indonesian.ini")
-    f = "../../corpora/Indonesian/metadata/HIZ-010601.xml"
-    # chat = Chat(cfg, f)
-    chat = Chat(f)
+    cfg = ccp()
+    cfg.read("Indonesian.ini")
+    f = "../corpora/Indonesian/xml/HIZ-2001-06-01.xml"
+    chat = Chat(cfg, f)
+    # chat = Chat(f)
     for i in chat.metadata:
         print(i)
         print(chat.metadata[i])
         print()
+    print("#########################")
 
     print("CHINTANG:")
-    imdi = Imdi("../../corpora/Chintang/metadata/CLDLCh1R01S01.imdi")
+    cfg = ccp()
+    cfg.read("Chintang.ini")
+    imdi = Imdi(cfg, "../corpora/Chintang/metadata/CLDLCh1R01S01.imdi")
     for k, v in imdi.metadata.items():
         print(k, v)
         print()
@@ -215,14 +218,11 @@ if __name__=="__main__":
     print("#########################")
 
     print("CREE:")
-    chat = Chat("../../corpora/Cree/xml/Ani/2005-03-08.xml")
+    cfg = ccp()
+    cfg.read("Cree.ini")
+    chat = Chat(cfg, "../corpora/Cree/xml/2005-03-08.xml")
     for i in chat.metadata:
         print(i)
         print(chat.metadata[i])
         print()
-    print("####")
-    """
-
-
-
-
+    print("#########################")

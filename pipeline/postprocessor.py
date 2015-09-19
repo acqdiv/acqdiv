@@ -18,11 +18,11 @@
 
 from sqlalchemy.orm import sessionmaker
 from database_backend import *
+import age
 
 def db_apply(func):
-    def update_session(config, cfunc):
+    def update_session(config, engine):
         # cfunc is the function that connects to the db
-        engine = cfunc()
         Session = sessionmaker(bind=engine)
         session = Session()
         try:
@@ -90,10 +90,3 @@ def unify_glosses(session, config):
         except KeyError:
             print("Error: .ini file for corpus {0} does not have gloss replacement rules configured!".format(config["corpus"]["corpus"]))
             return
-
-if __name__ == "__main__":
-    cfg = ccp()
-    cfg.read("Russian.ini")
-
-    update_age(cfg)
-    unify_glosses(cfg)

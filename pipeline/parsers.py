@@ -23,7 +23,9 @@ from toolbox import ToolboxFile
 class CorpusConfigParser(configparser.ConfigParser):
     """ Config parser for corpus .ini files """
 
-    optionxform = str # preserves case
+    def optionxform(self, optionstr):
+        return optionstr
+
 
     # TODO: identify whether we want (extended) interolation, ordered dicts, inline commenting, etc.
     #    _dict_type = collections.OrderedDict
@@ -149,7 +151,7 @@ class ToolboxParser(SessionParser):
         if self.metadata_parser.__class__.__name__ == "Imdi":
             return self.metadata_parser.metadata['session']
         elif self.metadata_parser.__class__.__name__ == "Chat":
-            return self.metadata_parser.metadata['__attrs__']
+            return self.metadata_parser.metadata['session']
         else:
             assert 0, "Unknown metadata format type: "#  + format
 
@@ -191,7 +193,7 @@ class ChatXMLParser(SessionParser):
     def get_session_metadata(self):
         # Do xml-specific parsing of session metadata.
         # The config so it knows what symbols to look for.
-        return self.metadata_parser.metadata['__attrs__']
+        return self.metadata_parser.metadata['session']
 
     # Generator to yield Speakers for the Speaker table in the db
     def next_speaker(self):

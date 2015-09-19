@@ -60,7 +60,7 @@ class Speaker(Base):
     parent_id = Column(Integer, ForeignKey('session.session_id'))
     label = Column(Text, nullable=True, unique=False)
     name = Column(Text, nullable=True, unique=False)
-    # age_in_days = Column(Integer, nullable=True, unique=False)
+    age_in_days = Column(Integer, nullable=True, unique=False)
     age = Column(Text, nullable=True, unique=False)
     birthdate = Column(Text, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
