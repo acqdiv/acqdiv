@@ -64,10 +64,9 @@ class SessionProcessor(object):
         session_metadata = self.parser.get_session_metadata()
         d = {}
         for k, v in session_metadata.items():
-            if not k in self.config['session_labels']:
+            if not k in self.config['session_labels'].values():
                 continue
-            db_column_name = self.config['session_labels'][k]
-            d[db_column_name] = v
+            d[k] = v
         d['session_id'] = self.filename
         d['language'] = self.config['corpus']['language']
         d['corpus'] = self.config['corpus']['corpus']
@@ -83,10 +82,9 @@ class SessionProcessor(object):
         for speaker in self.parser.next_speaker():
             d = {}
             for k, v in speaker.items():
-                if not k in self.config['speaker_labels']:
+                if not k in self.config['speaker_labels'].values():
                     continue
-                db_column_name = self.config['speaker_labels'][k]
-                d[db_column_name] = v
+                d[k] = v
             d['parent_id'] = self.filename
             self.speaker_entries.append(Speaker(**d))
 

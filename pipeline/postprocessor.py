@@ -18,19 +18,75 @@
 
 from sqlalchemy.orm import sessionmaker
 from database_backend import *
+import age
 
-engine = db_connect()
-Session = sessionmaker(bind=engine)
-session = Session()
+def db_apply(func):
+    def update_session(config, engine):
+        # cfunc is the function that connects to the db
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        try:
+            func(session, config)
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            print("Error {0}: {1}".format(type(e), e))
+        finally:
+            session.close()
+    return update_session
 
-# Post processing of Toolbox Utterance data?
+def update_xml_age(session, config):
+    corpus_name = config["corpus"]["corpus"]
+    for db_session_entry in session.query(Session).filter(Session.corpus == corpus_name):
+        sid = db_session_entry.session_id
+        for row in session.query(Speaker).filter(Speaker.age != None, Speaker.parent_id == sid):
+            nage = age.format_xml_age(row.age)
+            if nage:
+                row.age = nage
+                aid = age.calculate_xml_days(nage)
+                row.age_in_days = aid
 
-# Russian & Indonesian: garbage imported from CHAT
-#  SM: i think this is done in the parser
-content = re.sub('xxx?|www', '???', content)
+def update_imdi_age(session, config):
+    corpus_name = config["corpus"]["corpus"]
+    for db_session_entry in session.query(Session).filter(Session.corpus == corpus_name):
+        sid = db_session_entry.session_id
+        for db_speaker_entry in session.query(Speaker).filter(~Speaker.birthdate.like("Un%"),
+                Speaker.parent_id == sid):
+            try:
+                recdate = age.numerize_date(db_session_entry.date)
+                bdate = age.numerize_date(db_speaker_entry.birthdate)
+                ages = age.format_imdi_age(bdate, recdate)
+                db_speaker_entry.age = ages[0]
+                db_speaker_entry.age_in_days = ages[1]
+            except Exception as e:
+                    print("Couldn't calculate age of speaker {0}".format(db_speaker_entry.id))
+                    print("Error: {0}".format(e))
+        for db_speaker_entry in session.query(Speaker).filter(Speaker.age != None, ~Speaker.age.like("%Un%"), 
+                Speaker.birthdate.like("Un%"), Speaker.parent_id == sid):
+            try:
+                ages = age.clean_year_only_ages(db_speaker_entry.age)
+                db_speaker_entry.age = ages[0]
+                db_speaker_entry.age_in_days = ages[1]
+            except Exception as e:
+                    print("Couldn't calculate age of speaker {0}".format(db_speaker_entry.id))
+                    print("Error: {0}".format(e))
 
-# example call (why is it so $^*%@* slow?)
-for instance in session.query(Utterance).order_by(Utterance.id):
-    print(instance.word)
+@db_apply
+def update_age(session, config):
+    if config["metadata"]["type"] == "IMDI":
+        update_imdi_age(session, config)
+    else:
+        update_xml_age(session, config)
 
-session.close()
+
+@db_apply
+def unify_glosses(session, config):
+    for row in session.query(Morpheme):
+        old_gloss = row.gloss
+        try:
+            if old_gloss in config["gloss"]:
+                new_gloss = config["gloss"][old_gloss]
+                row.gloss = new_gloss
+        except KeyError:
+            print("Error: .ini file for corpus {0} does not have gloss replacement rules configured!".format(config["corpus"]["corpus"]))
+            return

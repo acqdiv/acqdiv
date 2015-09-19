@@ -2,6 +2,7 @@
 """
 
 from processors import *
+from postprocessor import *
 from parsers import *
 from database_backend import *
 import time
@@ -40,6 +41,9 @@ if __name__ == "__main__":
         c = CorpusProcessor(cfg, engine)
         c.process_corpus()
 
-        # TODO: call the post-processor
+        #Do the postprocessing
+        print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
+        update_age(cfg, engine)
+        unify_glosses(cfg, engine)
 
     print("--- %s seconds ---" % (time.time() - start_time))
