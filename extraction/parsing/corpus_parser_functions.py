@@ -12,8 +12,6 @@ Author: Robert Schikowski <robert.schikowski@uzh.ch>
 '''
 
 TODO get rid of empty {}, [] in JSON: Chintang, Cree, Indonesian, Inuktitut, Japanese MiiPro, Japanese Miyata, Russian, Turkish. Sesotho doesn't have this problem, and Yucatec only has [].
-TODO unify alignment checks across corpora (esp. calculating length of utterance in words)
-TODO write error messages to log file (adapting paths)
 
 '''
 
@@ -822,9 +820,7 @@ def parse_xml(file_name, corpus_name):
                                 corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = suffix_form
                                 corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = suffix_gloss
                                 corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
-                                    
-
-                    
+                                
                     # check if morpheme list has been filled; if not delete key
                     if corpus[text_id][utterance_index]['words'][word_index]['morphemes'] == []:
                         del corpus[text_id][utterance_index]['words'][word_index]['morphemes']
@@ -1176,10 +1172,16 @@ def parse_xml(file_name, corpus_name):
             # parse the morphology tier mor
             morphology = u.find("a[@type='extension'][@flavor='mor']")
             if morphology is not None:
+                
                 # remove punctuation and tags
-                morphology.text = re.sub('(^|\\s)[\.\?!:\+\/]+(\\s|$)', '\\1\\2', morphology.text)
-                morphology.text = re.sub('(^|\\s)tag\|\\S+(\\s|$)', '\\1\\2', morphology.text)
+                morphology.text = re.sub('(^|\\s)[\.\?!:\+\/]+(\\s|$)', '\\1\\2', morphology.text) # utterance delimiters and codes
+                morphology.text = re.sub('(^|\\s)tag\|\\S+(\\s|$)', '\\1\\2', morphology.text) # tags
                 morphology.text = re.sub('\\s+$', '', morphology.text)
+                # other clutter
+                morphology.text = re.sub('&amp;', '.', morphology.text) # joins glosses
+                morphology.text = re.sub('\+', '_', morphology.text) # marks word number mismatches between orthography and morphology (but is less frequent than "_")
+                morphology.text = re.sub('([A-Z]\\S*):\\s+', '\\1', morphology.text) # POS tags gone astray: join with following word
+                morphology.text = re.sub('([^\|]+)\|([^\|]+)\|', '\\1/\\2|', morphology.text) # double POS tags: replace "|" by "/"
                                 
                 # split mor tier into words, reset counter to -1
                 words = re.split('\\s+',morphology.text)
@@ -1200,56 +1202,82 @@ def parse_xml(file_name, corpus_name):
                     # corpus[text_id][utterance_index]['words'][word_index]['morphemes'] is a list of morphemes; initial index is -1
                     corpus[text_id][utterance_index]['words'][word_index]['morphemes'] = []
                     morpheme_index = -1
-                                            
-                    # split into compound elements (if applicable)
-                    compound_elems = w.split('+')
-                    for i in range(0, len(compound_elems)):
+
+                    # when a word contains "_", it may code a single or two words. The following cases exist:
+
+                    # 1. shared tag+suffixes (PRO:INDEF|bir_şey) -> keep mor
+                    #   1.1 _ or + in <w> -> do nothing. 0 cases.
+                    #   1.2 two <w> -> fuse orth by "+". ~900 cases.
+                    # 2. separate tags+suffixes (V|N|tamir_V|et-IPFV-PL) -> split mor
+                    #   2.1 _ or + in <w> -> split orth, too. ~40 cases in corpus.
+                    #   2.2 two <w> -> keep orth. 0 cases.
+                    # only pervasive case is 1.2 -> deal with this, ignore the rest
+
+                    # check for "_" in morphological word ("+" is also possible but has been replaced by "_" further above)
+                    complex_mor = re.search('(\S+)_(\S+)', w)
+                    if complex_mor:
+                        (mor_w1,mor_w2) = (complex_mor.group(1),complex_mor.group(2))
                         
-                        # split into POS tag and gloss; add '=' as separator to posterior compound elements
-                        parts = compound_elems[i].partition('|')
-                        stem_pos = parts[0]
-                        gloss = parts[2]
-                        if i>0: gloss = '=' + gloss
+                        # sometimes the part after the "_" has its own POS tag and/or suffixes. Linguistically it would be better to treat these
+                        # cases as two words, but that would require further messing with <w>, so for the time being we remote the additional 
+                        # POS tags and treat the whole thing as one word
+                        # Note: there is a handful of cases (~10) where the mor word consists of three words. These are presently ignored (i.e. treated as if they were two words, e.g. Tom_ve_Jerry -> Tom_ve, Jerry).                        
+                        if re.search('\|', mor_w2) or (re.search('\-', mor_w1) and re.search('\-', mor_w2)):
+                            mor_w2 = re.sub('.*\|', '', mor_w2)
+                            w = mor_w1 + '-' + mor_w2
                         
-                        # split into stem and possible suffixes; split suffix chain if exists
-                        check_stem = re.search('^([^\\-]+)(.*)$', gloss)
-                        (stem, suffix_string) = ('', '')
-                        if check_stem:
+                        # next check in the orthography if there is a corresponding full word target and a following word
+                        if corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] \
+                        and len(corpus[text_id][utterance_index]['words']) > word_index+1 \
+                        and corpus[text_id][utterance_index]['words'][word_index+1]['full_word_target']:
+                            # finally check orthography of full_word_target for "_" or "+"
+                            complex_orth = re.search('[_\+]', corpus[text_id][utterance_index]['words'][word_index]['full_word_target'])
+                            if not complex_orth:
+                                corpus[text_id][utterance_index]['words'][word_index]['full_word'] = corpus[text_id][utterance_index]['words'][word_index]['full_word'] + '_' + corpus[text_id][utterance_index]['words'][word_index+1]['full_word']
+                                corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] = corpus[text_id][utterance_index]['words'][word_index]['full_word_target'] + '_' + corpus[text_id][utterance_index]['words'][word_index+1]['full_word_target']
+                                del corpus[text_id][utterance_index]['words'][word_index+1]
+                                
+                    # colon:
+                    #   in POS tag -> . (= subcategory)
+                    #   after stem -> . (= non-concatenative morphology)
+                    #   in suffix -> . (= subgloss)
+                    # ==> keep for now, this should be done by postprocessing
+                    
+                    # split into POS tag and gloss
+                    parts = w.partition('|')
+                    stem_pos = parts[0]
+                    gloss = parts[2]
+                
+                    # split into stem and possible suffixes; split suffix chain if exists
+                    check_stem = re.search('^([^\\-]+)(.*)$', gloss)
+                    (stem, suffix_string) = ('', '')
+                    if check_stem:
+                        # count up morpheme index, extend list if necessary
+                        morpheme_index = list_index_up(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
+                    
+                        stem = check_stem.group(1)
+                        suffix_string = check_stem.group(2)
+                
+                        # add stem, gloss (unknown), and POS for stem to corpus dic
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = '???'
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = stem_pos
+                
+                    if suffix_string:
+                        # drop first hyphen in suffix string so split() doesn't produce empty elements
+                        suffix_string = suffix_string.lstrip("-")
+                        for suffix_gloss in suffix_string.split('-'):
                             # count up morpheme index, extend list if necessary
                             morpheme_index = list_index_up(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
-                            
-                            stem = check_stem.group(1)
-                            suffix_string = check_stem.group(2)
-                            # Japanese MiiPro specialty: grammatical categories in suppletive forms are marked by '&' (e.g. da&POL = des); replace by '.'
-                            stem = stem.replace('&','.')
                         
-                            # add stem, suffixes, and POS for all to corpus dic
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = stem_pos
-                        
-                        if suffix_string:
-                            # drop first hyphen in suffix string so split() doesn't produce empty elements
-                            suffix_string = suffix_string.lstrip("-")
-                            for suffix_gloss in suffix_string.split('-'):
-                                # count up morpheme index, extend list if necessary
-                                morpheme_index = list_index_up(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
-                                
-                                # most suffixes don't have form glosses in MiiPro, but sometimes blocks of the type IMP:te are found, in which case IMP is the suffix gloss and -te is the suffix form. Only exception is [A-Z]:contr, which is not a stem gloss but indicates contractions.
-                                suffix_form = '???'
-                                check_suffix = re.search('^([A-Z]+):(\w+)$', suffix_gloss)
-                                if check_suffix and check_suffix.group(2) != 'contr':
-                                    suffix_gloss = check_suffix.group(1)
-                                    suffix_form = check_suffix.group(2)
-                                
-                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = suffix_form
-                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = suffix_gloss
-                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = '???'
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = suffix_gloss
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
 
-                    # check if morpheme list has been filled; if not delete key
-                    if corpus[text_id][utterance_index]['words'][word_index]['morphemes'] == []:
-                        del corpus[text_id][utterance_index]['words'][word_index]['morphemes']
-                        
+                # check if morpheme list has been filled; if not delete key
+                if corpus[text_id][utterance_index]['words'][word_index]['morphemes'] == []:
+                    del corpus[text_id][utterance_index]['words'][word_index]['morphemes']
+                    
                 # EOF word loop
                 
                 # remember length of morphology tier in words
@@ -1264,8 +1292,8 @@ def parse_xml(file_name, corpus_name):
                         # count up number of glossed words
                         length_morphology += 1
                         
-                        ## (1) repetitions: get morphology from preceding word 
-                        # this gets handeled as in Inuktitut.
+                        # (1) repetitions: get morphology from preceding word 
+                        # this is handled as in Inuktitut
                         
                         # (2) retracings: get morphology from any matching word further ahead
                         if re.search('not glossed; search ahead', corpus[text_id][utterance_index]['words'][i]['warnings']):
@@ -1715,7 +1743,6 @@ def parse_toolbox(file_name, corpus_name):
                 # EOF Chintang/Indonesian morpheme tiers
                 
                 elif corpus_name is 'Russian':
-                    # TODO Russian has clitics, marked by the separator ~
                     
                     for tier in tbx_mor_tier_correspondences[corpus_name].keys():
                         tier_name_JSON = tbx_mor_tier_correspondences[corpus_name][tier]
@@ -1760,8 +1787,6 @@ def parse_toolbox(file_name, corpus_name):
                                             match_pos_and_gloss = re.search('^(.*?):(.*)', m)
                                             pos = match_pos_and_gloss.group(1)
                                             gloss = match_pos_and_gloss.group(2)
-                                        pos = re.sub('\-', '.', pos)
-                                        gloss = re.sub(':', '.', gloss)
                                         ext_vivi(0, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][0][tier_name_JSON] = gloss
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][0]['pos_target'] = pos

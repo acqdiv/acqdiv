@@ -103,13 +103,12 @@ class SessionProcessor(object):
 
         if self.format == "Toolbox":
             # Utterance parsing
-            for utterance, words, morphemes, inferences, warnings in self.parser.next_utterance():
+            for utterance, words, morphemes, inferences in self.parser.next_utterance():    
                 utterance['parent_id'] = self.filename
                 utterance['corpus'] = self.corpus
                 # TODO: determine utterance type from config
                 utterance['utterance_type'] = self.config['utterance']['type']
                 self.utterances.append(Utterance(**utterance))
-               # print(inferences)
                 
                 # word parsing
                 for word in words:
@@ -117,6 +116,7 @@ class SessionProcessor(object):
                     
                 if utterance['corpus'] == 'Russian':
                     morphemes_inferences = collections.OrderedDict()
+                    morphemes_warnings = collections.OrderedDict()
                     for (morpheme,inference) in it.zip_longest(morphemes,inferences):
                         try:
                             morphemes_inferences['parent_id'] = morpheme['parent_id']
@@ -124,42 +124,59 @@ class SessionProcessor(object):
                             morphemes_inferences['segment'] = morpheme['segment_target']
                             morphemes_inferences['pos'] = inference['pos']
                             morphemes_inferences['gloss'] = inference['gloss']
+                            if 'warning' in inference.keys():
+                                morphemes_warnings['corpus'] = utterance['corpus']
+                                morphemes_warnings['parent_id'] = morpheme['parent_id']
+                                morphemes_warnings['warning'] = inference['warning']
+                                self.warnings.append(Warnings(**morphemes_warnings))
                         except TypeError:
                             morphemes_inferences['morpheme'] = ''
                             morphemes_inferences['segment'] = ''
                             morphemes_inferences['pos'] = ''
                             morphemes_inferences['gloss'] = ''
+                            
                         self.morphemes.append(Morpheme(**morphemes_inferences))
+                                 
                 
                 elif utterance['corpus'] == 'Chintang':
+                    morphemes_inferences = collections.OrderedDict()
+                    morphemes_warnings = collections.OrderedDict()
                     ## inference parsing
                     for inference in inferences:
-                       self.morphemes.append(Morpheme(**inference)) 
-                    ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
-                
+                        morphemes_inferences['parent_id'] = inference['parent_id']
+                        morphemes_inferences['morpheme'] = inference['morpheme']
+                        morphemes_inferences['segment_target'] = inference['morpheme']
+                        morphemes_inferences['gloss_target'] = inference['gloss_target']
+                        morphemes_inferences['pos_target'] = inference['pos_target']
+                        if 'warning' in inference.keys():
+                            morphemes_warnings['corpus'] = utterance['corpus']
+                            morphemes_warnings['parent_id'] = inference['parent_id']
+                            morphemes_warnings['warning'] = inference['warning']
+                            self.warnings.append(Warnings(**morphemes_warnings))
+                            
+                        self.morphemes.append(Morpheme(**morphemes_inferences))
+                                                        
                 
                 elif utterance['corpus'] == 'Indonesian':
+                    morphemes_warnings = collections.OrderedDict()
+                    morphemes_inferences = collections.OrderedDict()
                     for (morpheme,inference) in it.zip_longest(morphemes,inferences):
                         try:
-                            morphemes_inferences = collections.OrderedDict()
                             morphemes_inferences['parent_id'] = morpheme['parent_id']
                             morphemes_inferences['morpheme'] = morpheme['morpheme']
                             morphemes_inferences['segment'] = morpheme['morpheme']
                             morphemes_inferences['gloss'] = inference['gloss']
+                            if 'warning' in inference.keys():
+                                morphemes_warnings['corpus'] = utterance['corpus']
+                                morphemes_warnings['parent_id'] = morpheme['parent_id']
+                                morphemes_warnings['warning'] = inference['warning']
+                                self.warnings.append(Warnings(**morphemes_warnings))
                         except TypeError:
                             morphemes_inferences['morpheme'] = ''
                             morphemes_inferences['segment'] = ''
                             morphemes_inferences['gloss'] = ''
+                            
                         self.morphemes.append(Morpheme(**morphemes_inferences))
-                    
-                
-                # warnings
-                ## TODO: that doesn't work yet (plus, the things I'm doing in toolbox.py for warnings do not render a correct structure -- I'll hv to check that again!) 
-                #print(warnings)
-                #self.warnings.append(Warnings(**warnings))
-                ## This fails with the following error:
-                ##sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: warnings.id [SQL: 'INSERT INTO warnings (parent_id, warning) VALUES (?, ?)'] [parameters: ('A00210817_1', None)]
-                    
 
         elif self.format == "JSON":
             for utterance, words, morphemes in self.parser.next_utterance():
