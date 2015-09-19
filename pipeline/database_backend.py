@@ -26,7 +26,7 @@ def db_connect():
 def create_tables(engine):
     """ """
     # Drop all the database tables first
-    Base.metadata.drop_all(bind=engine)
+    # Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(engine)
 
 # NOTE: apparently sqla Base objects do not need constructors; they seem to be discouraged
@@ -150,6 +150,8 @@ class Warnings(Base):
 
     __tablename__ = 'warnings'
 
-    id = Column(Text, primary_key=True)
+    #id = Column(Text, primary_key=True) ## @bambooforest Is that a mistake?
+    id = Column(Integer,primary_key=True)
+    corpus = Column(Text, nullable=True, unique=False)
     parent_id = Column(Text, ForeignKey('utterance.id'))
     warning = Column(Text, nullable=True, unique=False)

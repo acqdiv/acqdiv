@@ -10,7 +10,7 @@ import time
 #  - define the corpus/session-specific attributes in each config; see example in Chintang
 #  - integrate metadata stuff
 
-if __name__=="__main__":
+if __name__ == "__main__":
     start_time = time.time()
 
     # Initialize database connection and drop and then create tables on each call.
@@ -18,15 +18,18 @@ if __name__=="__main__":
     engine = db_connect()
     create_tables(engine)
 
-    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Russian.ini', 'Japanese_Miyata.ini']
-    # configs = ['Cree.ini', 'Indonesian.ini', 'Russian.ini']
+    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
+               'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
+
     # configs = ['Chintang.ini']
     # configs = ['Cree.ini']
     # configs = ['Indonesian.ini']
-    # configs = ['Russian.ini']
-    # configs = ['CreeJSON.ini']
-    # configs = ['Sesotho.ini']
+    # configs = ['Inuktitut.ini']
     # configs = ['Japanese_Miyata.ini']
+    # configs = ['Japanese_MiiPro.ini']
+    # configs = ['Russian.ini']
+    # configs = ['Sesotho.ini']
+    # configs = ['Turkish.ini']
 
     for config in configs:
         # Parse the config file and call the sessions processor

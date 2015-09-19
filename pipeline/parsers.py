@@ -240,7 +240,6 @@ class JsonParser(SessionParser):
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
         with open(file_path) as data_file:
             self.data = json.load(data_file)
-
         # TODO: update when no longer using JSON
         temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
         self.metadata_file_path = temp.replace(".json", ".xml")
@@ -250,9 +249,17 @@ class JsonParser(SessionParser):
         """ Get each utterance from Robert's JSON output
         :return: utterance{}, words[word{}, word{}]
         """
-        # Robert's JSON output is a dictionary: {key (filename): [u1{...}, u2{...}]}
+        # Robert's JSON output is a dictionary: {key ("filename"): [u1{...}, u2{...}]}
         #  here we iterate over the utterances (each record)
-        for record in self.data[self.filename]:
+        # Warning: the dictionary's key IS NOT ALWAYS the same as the file name...
+        #  so we get the *key* (one json file per session; one key based on ID *or* filename)
+        #  and use that
+        x = self.data.keys() # in Py3 returns a dict_keys object, not a list!
+        keys = list(x)
+        assert(len(keys) == 1), "there is more than one key in the json file"
+        key = keys[0] # should only be one top-level key per json file
+
+        for record in self.data[key]:
             utterance = collections.OrderedDict()
             words = []
             morphemes = []
@@ -323,7 +330,7 @@ if __name__ == "__main__":
     from parsers import CorpusConfigParser
     cfg = CorpusConfigParser()
     cfg.read("CreeJSON.ini")
-    f = "../../corpora/Cree/json/Ani/2006-10-18.json"
+    f = "../../corpora/Cree/json/Ani/2006-10-18.json"  ## ATTN: the folder structure on the server looks different now: corpora/Cree/json/.json
     c = JsonParser(cfg, f)
     #c.next_utterance() # why doesn't this work?
     #because it's a generator and you really should be doing 

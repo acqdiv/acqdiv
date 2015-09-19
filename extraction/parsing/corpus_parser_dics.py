@@ -26,7 +26,8 @@ xml_dep_correspondences = {
 # correspondences between XML extended dependent tiers and JSON
 xml_ext_correspondences = {
     'pho' : 'phonetic',
-    'arg' : 'argument_coding'
+    'arg' : 'argument_coding',
+    'spa' : 'spanish'
 }
 # correspondences between other XML elements and JSON
 xml_other_correspondences = {
@@ -50,6 +51,7 @@ t_correspondences = {
     'trail off question' : 'trail off question', # CHAT +...?
  	'interruption' : 'interruption', # CHAT +/.
  	'self interruption' : 'self interruption', # CHAT +//.
+    'self interruption question' : 'self interruption question', # CHAT +//?
  	'quotation precedes' : 'quotation precedes', # CHAT +".
  	'quotation next line' : 'quotation next line', # CHAT +"/.
  	'interruption question' : 'interruption question', # CHAT +/?
