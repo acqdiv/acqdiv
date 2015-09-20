@@ -42,8 +42,8 @@ if __name__ == "__main__":
         c.process_corpus()
 
         #Do the postprocessing
-        #print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
-        #update_age(cfg, engine)
-        #unify_glosses(cfg, engine)
+        print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
+        update_age(cfg, engine)
+        unify_glosses(cfg, engine)
 
     print("--- %s seconds ---" % (time.time() - start_time))
