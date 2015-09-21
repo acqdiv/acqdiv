@@ -44,18 +44,18 @@ import errno
 
 
 
-# table with subdirectory and format for each corpus (root directory for this is "parsing/")
+# table with subdirectory and format for each corpus (as viewed from the uzling/acqdiv root)
 corpus_dic = {
-     'Cree' : {'dir' : 'Cree/', 'format' : 'XML'},
-     'Japanese_MiiPro' : {'dir' : 'Japanese_MiiPro/', 'format' : 'XML'},
-     'Japanese_Miyata' : {'dir' : 'Japanese_Miyata/', 'format' : 'XML'},
-     'Sesotho' : {'dir' : 'Sesotho/', 'format' : 'XML'},
-     'Inuktitut' : {'dir' : 'Inuktitut/', 'format' : 'XML'},
-     'Turkish_KULLD' : {'dir' : 'Turkish_KULLD/', 'format' : 'XML'},
-     'Chintang' : {'dir' : 'Chintang/', 'format' : 'Toolbox'},
-     'Indonesian' : {'dir' : 'Indonesian/', 'format' : 'Toolbox'},
-     'Russian' : {'dir' : 'Russian/', 'format' : 'Toolbox'},
-     'Yucatec' : {'dir' : 'Yucatec/', 'format' : 'XML'}
+     'Chintang' : {'dir' : 'Chintang/toolbox/', 'format' : 'Toolbox'},
+     'Cree' : {'dir' : 'Cree/xml/', 'format' : 'XML'},
+     'Indonesian' : {'dir' : 'Indonesian/toolbox/', 'format' : 'Toolbox'},
+     'Inuktitut' : {'dir' : 'Inuktitut/xml/', 'format' : 'XML'},
+     'Japanese_MiiPro' : {'dir' : 'Japanese_MiiPro/xml/', 'format' : 'XML'},
+     'Japanese_Miyata' : {'dir' : 'Japanese_Miyata/xml/', 'format' : 'XML'},
+     'Russian' : {'dir' : 'Russian/toolbox/', 'format' : 'Toolbox'},
+     'Sesotho' : {'dir' : 'Sesotho/xml/', 'format' : 'XML'},
+     'Turkish_KULLD' : {'dir' : 'Turkish_KULLD/xml/', 'format' : 'XML'},
+     'Yucatec' : {'dir' : 'Yucatec/xml/', 'format' : 'XML'}
 }
 
 # table with subdirectory and format for each corpus (root directory for this is "tests/")
@@ -85,7 +85,7 @@ def parser_one_json(corpus_name):
         corpus_object = parse_corpus(corpus_name, corpus_dic[corpus_name]['dir'], corpus_dic[corpus_name]['format'])        
         
         with open('parsed/'+corpus_name + '/' + corpus_name + '.json', 'w') as file:
-            json.dump(corpus_object, file, ensure_ascii=False)
+            json.dump(corpus_object, file, ensure_ascii=False, indent=4)
         #with open('parsed/'+corpus_name + '/' + corpus_name + '_prettyprint.txt', 'w') as file:
         #    # careful, sort_keys=True can cause memory errors with bigger corpora such as Japanese_MiiPro
         #    file.write(json.dumps(corpus_object, file, sort_keys=True, indent=4, ensure_ascii=False))
@@ -111,7 +111,7 @@ def parser_per_file(corpus_name):
                         
                         ## write outfiles with file name structure: filename.json or filename_prettyprint.txt
                         with open('parsed/'+corpus_name + '/'+ filename[:-4]+'.json', 'w') as file:
-                          json.dump(corpus_object, file, ensure_ascii=False)
+                          json.dump(corpus_object, file, ensure_ascii=False, indent=4)
                         #with open('parsed/'+corpus_name + '/'+ filename[:-4]+ '_prettyprint.txt', 'w') as file:
                         #  # careful, sort_keys=True can cause memory errors with bigger corpora such as Japanese_MiiPro
                         #  file.write(json.dumps(corpus_object, file, sort_keys=True, indent=4, ensure_ascii=False))
