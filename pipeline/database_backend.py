@@ -4,6 +4,7 @@
 # TODO: pull out the Speakers from Session info into a separate table
 # TODO: create the links between the database tables
 # http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#eager-loading
+# NOTE: apparently sqla Base objects do not need constructors; they seem to be discouraged
 
 from sqlalchemy import create_engine, Text, Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, backref
@@ -17,9 +18,9 @@ Base = declarative_base()
 
 def db_connect():
     """ Performs database connection. We can add a database settings
-    from settings.py later. Returns sqlalchemy engine instance.
+    in settings.py later. Returns sqlalchemy engine instance.
     """
-    # TODO: add postgres settings and change to postgres
+    # TODO: if we want to add postgres settings and change to postgres
     # return create_engine(URL(**settings.DATABASE))
     return create_engine('sqlite:///_acqdiv.sqlite3', echo=False)
 
@@ -29,23 +30,22 @@ def create_tables(engine):
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(engine)
 
-# NOTE: apparently sqla Base objects do not need constructors; they seem to be discouraged
-
 class Session(Base):
     __tablename__ = 'session'
 
     id = Column(Integer, primary_key=True)
     # session_id = Column(Text, nullable=True, unique=False)
-    session_id = Column(Text, nullable=False, unique=False)
+    session_id = Column(Text, nullable=False, unique=False) # filename
     transcript_id = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     corpus = Column(Text, nullable=True, unique=False)
     date = Column(Text, nullable=True, unique=False)
     genre = Column(Text, nullable=True, unique=False)
     situation = Column(Text, nullable=True, unique=False)
-    address = Column(Text, nullable=True, unique=False)
-    continent = Column(Text, nullable=True, unique=False)
-    country = Column(Text, nullable=True, unique=False)
+    # this stuff seems mostly blank... commenting out for now
+    # address = Column(Text, nullable=True, unique=False)
+    # continent = Column(Text, nullable=True, unique=False)
+    # country = Column(Text, nullable=True, unique=False)
 
     # foreign relationships
     speakers = relationship('Speaker', backref='session') #, lazy='dynamic')
@@ -53,11 +53,10 @@ class Session(Base):
 
 class Speaker(Base):
     # TODO: we will have to make a link between speakers and speakers in each session/record/utterance
-
     __tablename__ = 'speaker'
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('session.session_id'))
+    session_id_fk = Column(Integer, ForeignKey('session.session_id'))
     label = Column(Text, nullable=True, unique=False)
     name = Column(Text, nullable=True, unique=False)
     age_in_days = Column(Integer, nullable=True, unique=False)
@@ -79,12 +78,12 @@ class Utterance(Base):
     corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
     # should probably be called:
     # session_id = Column(Text, ForeignKey('session.session_id'))
-    parent_id = Column(Text, ForeignKey('session.session_id'))
+    session_id_fk = Column(Text, ForeignKey('session.session_id'))
     warnings = Column(Text, nullable=True, unique=False) # Robert's warnings!
-    utterance_id = Column(Text, nullable=True, unique=False)
-    utterance_type = Column(Text, nullable=True, unique=False)
-    utterance = Column(Text, nullable=True, unique=False)
-    utterance_cleaned = Column(Text, nullable=True, unique=False)
+    utterance_id = Column(Text, nullable=True, unique=False) # utterance id in original file
+    utterance_type = Column(Text, nullable=True, unique=False) # phonetic or orthographic
+    utterance = Column(Text, nullable=True, unique=False) # original utterance
+    utterance_cleaned = Column(Text, nullable=True, unique=False) # our cleaned-up utterance
     morpheme = Column(Text, nullable=True, unique=False) # morpheme line
     word = Column(Text, nullable=True, unique=False) # words line? what is Robert's "full_word"?
     pos = Column(Text, nullable=True, unique=False) # parts of speech line
@@ -113,16 +112,15 @@ class Word(Base):
     # fk...
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     id = Column(Integer, primary_key=True)
-    # SM: i'm thinking the word_id is redundant if it's just session|utterance + id counter
-    # TODO: see postprocessor.py
-    word_id = Column(Text, nullable=True, unique=False)
+    utterance_id_fk = Column(Text, ForeignKey('utterance.id'))
+    #Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
     word = Column(Text, nullable=True, unique=False)
     word_target = Column(Text, nullable=True, unique=False)
-    parent_id = Column(Text, ForeignKey('utterance.id'))
-    #Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
-    # TODO: double check that we're all using the same warning|s
-    warning = Column(Text, nullable=True, unique=False)
     warnings = Column(Text, nullable=True, unique=False)
+    # TODO: get unique words and assign ids in the postprocessor
+    word_id = Column(Text, nullable=True, unique=False)
+
+
 
 class Morpheme(Base):
     __tablename__ = 'morphemes'
@@ -130,8 +128,6 @@ class Morpheme(Base):
     # fk...
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     id = Column(Integer, primary_key=True)
-    # TODO: see postprocessor.py
-    morpheme_id = Column(Text, nullable=True, unique=False)
     parent_id = Column(Text, ForeignKey('utterance.id'))
     morpheme = Column(Text, nullable=True, unique=False)
     morpheme_target = Column(Text, nullable=True, unique=False)
@@ -142,6 +138,10 @@ class Morpheme(Base):
     pos_target = Column(Text, nullable=True, unique=False)
     segment = Column(Text, nullable=True, unique=False)
     segment_target = Column(Text, nullable=True, unique=False)
+    # TODO: get unique morphemes and assign ids in the postprocessor
+    morpheme_id = Column(Text, nullable=True, unique=False)
+
+
 
 class Warnings(Base):
     # Table for warnings found in parsing (should be record/multiple levels?)

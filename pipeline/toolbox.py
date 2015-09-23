@@ -140,7 +140,7 @@ class ToolboxFile(object):
         for word in words:
             d = collections.OrderedDict()
             if self.config['corpus']['corpus'] == 'Indonesian':
-                d['parent_id'] = utterances['utterance_id']
+                d['utterance_id_fk'] = utterances['utterance_id']
                 ## distinguish between word and word_target (après: https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1859-L1867)
                 if re.search('\(', word):
                     d['word_target'] = re.sub('[\(\)]', '',word)
@@ -154,7 +154,7 @@ class ToolboxFile(object):
             else:
                 d = collections.OrderedDict()
                 d['word'] = word
-                d['parent_id'] = utterances['utterance_id']
+                d['utterance_id_fk'] = utterances['utterance_id']
                 result.append(d)
         return result
 
