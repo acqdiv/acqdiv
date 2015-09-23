@@ -64,10 +64,9 @@ class SessionProcessor(object):
         session_metadata = self.parser.get_session_metadata()
         d = {}
         for k, v in session_metadata.items():
-            if not k in self.config['session_labels']:
+            if not k in self.config['session_labels'].values():
                 continue
-            db_column_name = self.config['session_labels'][k]
-            d[db_column_name] = v
+            d[k] = v
         d['session_id'] = self.filename
         d['language'] = self.config['corpus']['language']
         d['corpus'] = self.config['corpus']['corpus']
@@ -83,10 +82,9 @@ class SessionProcessor(object):
         for speaker in self.parser.next_speaker():
             d = {}
             for k, v in speaker.items():
-                if not k in self.config['speaker_labels']:
+                if not k in self.config['speaker_labels'].values():
                     continue
-                db_column_name = self.config['speaker_labels'][k]
-                d[db_column_name] = v
+                d[k] = v
             d['parent_id'] = self.filename
             self.speaker_entries.append(Speaker(**d))
 
@@ -124,8 +122,9 @@ class SessionProcessor(object):
                             morphemes_inferences['segment'] = morpheme['segment_target']
                             morphemes_inferences['pos'] = inference['pos']
                             morphemes_inferences['gloss'] = inference['gloss']
-                            morphemes_warnings['parent_id'] = morpheme['parent_id']
                             if 'warning' in inference.keys():
+                                morphemes_warnings['corpus'] = utterance['corpus']
+                                morphemes_warnings['parent_id'] = morpheme['parent_id']
                                 morphemes_warnings['warning'] = inference['warning']
                                 self.warnings.append(Warnings(**morphemes_warnings))
                         except TypeError:
@@ -142,15 +141,29 @@ class SessionProcessor(object):
                     morphemes_warnings = collections.OrderedDict()
                     ## inference parsing
                     for inference in inferences:
-                        morphemes_inferences['parent_id'] = inference['parent_id']
-                        morphemes_inferences['morpheme'] = inference['morpheme']
-                        morphemes_inferences['segment_target'] = inference['morpheme']
-                        morphemes_inferences['gloss_target'] = inference['gloss_target']
-                        morphemes_inferences['pos_target'] = inference['pos_target']
-                        if 'warning' in inference.keys():
-                            morphemes_warnings['parent_id'] = inference['parent_id']
-                            morphemes_warnings['warning'] = inference['warning']
-                            self.warnings.append(Warnings(**morphemes_warnings))
+                        try:
+                            morphemes_inferences['parent_id'] = inference['parent_id']
+                            morphemes_inferences['morpheme'] = inference['morpheme']
+                            morphemes_inferences['segment_target'] = inference['morpheme']
+                            morphemes_inferences['gloss_target'] = inference['gloss_target']
+                            morphemes_inferences['pos_target'] = inference['pos_target']
+                            if 'warning' in inference.keys():
+                                morphemes_warnings['corpus'] = utterance['corpus']
+                                morphemes_warnings['parent_id'] = inference['parent_id']
+                                morphemes_warnings['warning'] = inference['warning']
+                                self.warnings.append(Warnings(**morphemes_warnings))
+                                
+                        except KeyError:
+                            morphemes_inferences['morpheme'] = ''
+                            morphemes_inferences['segment'] = ''
+                            morphemes_inferences['pos'] = ''
+                            morphemes_inferences['gloss'] = ''
+                        
+                        except TypeError:
+                            morphemes_inferences['morpheme'] = ''
+                            morphemes_inferences['segment'] = ''
+                            morphemes_inferences['pos'] = ''
+                            morphemes_inferences['gloss'] = ''
                             
                         self.morphemes.append(Morpheme(**morphemes_inferences))
                                                         
@@ -165,6 +178,7 @@ class SessionProcessor(object):
                             morphemes_inferences['segment'] = morpheme['morpheme']
                             morphemes_inferences['gloss'] = inference['gloss']
                             if 'warning' in inference.keys():
+                                morphemes_warnings['corpus'] = utterance['corpus']
                                 morphemes_warnings['parent_id'] = morpheme['parent_id']
                                 morphemes_warnings['warning'] = inference['warning']
                                 self.warnings.append(Warnings(**morphemes_warnings))
@@ -174,9 +188,6 @@ class SessionProcessor(object):
                             morphemes_inferences['gloss'] = ''
                             
                         self.morphemes.append(Morpheme(**morphemes_inferences))
-                        
-                    
-                    
 
         elif self.format == "JSON":
             for utterance, words, morphemes in self.parser.next_utterance():

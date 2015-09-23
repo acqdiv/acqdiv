@@ -23,7 +23,9 @@ from toolbox import ToolboxFile
 class CorpusConfigParser(configparser.ConfigParser):
     """ Config parser for corpus .ini files """
 
-    optionxform = str # preserves case
+    def optionxform(self, optionstr):
+        return optionstr
+
 
     # TODO: identify whether we want (extended) interolation, ordered dicts, inline commenting, etc.
     #    _dict_type = collections.OrderedDict
@@ -149,7 +151,7 @@ class ToolboxParser(SessionParser):
         if self.metadata_parser.__class__.__name__ == "Imdi":
             return self.metadata_parser.metadata['session']
         elif self.metadata_parser.__class__.__name__ == "Chat":
-            return self.metadata_parser.metadata['__attrs__']
+            return self.metadata_parser.metadata['session']
         else:
             assert 0, "Unknown metadata format type: "#  + format
 
@@ -191,7 +193,7 @@ class ChatXMLParser(SessionParser):
     def get_session_metadata(self):
         # Do xml-specific parsing of session metadata.
         # The config so it knows what symbols to look for.
-        return self.metadata_parser.metadata['__attrs__']
+        return self.metadata_parser.metadata['session']
 
     # Generator to yield Speakers for the Speaker table in the db
     def next_speaker(self):
@@ -240,7 +242,6 @@ class JsonParser(SessionParser):
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
         with open(file_path) as data_file:
             self.data = json.load(data_file)
-
         # TODO: update when no longer using JSON
         temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
         self.metadata_file_path = temp.replace(".json", ".xml")
@@ -250,9 +251,17 @@ class JsonParser(SessionParser):
         """ Get each utterance from Robert's JSON output
         :return: utterance{}, words[word{}, word{}]
         """
-        # Robert's JSON output is a dictionary: {key (filename): [u1{...}, u2{...}]}
+        # Robert's JSON output is a dictionary: {key ("filename"): [u1{...}, u2{...}]}
         #  here we iterate over the utterances (each record)
-        for record in self.data[self.filename]:
+        # Warning: the dictionary's key IS NOT ALWAYS the same as the file name...
+        #  so we get the *key* (one json file per session; one key based on ID *or* filename)
+        #  and use that
+        x = self.data.keys() # in Py3 returns a dict_keys object, not a list!
+        keys = list(x)
+        assert(len(keys) == 1), "there is more than one key in the json file"
+        key = keys[0] # should only be one top-level key per json file
+
+        for record in self.data[key]:
             utterance = collections.OrderedDict()
             words = []
             morphemes = []
