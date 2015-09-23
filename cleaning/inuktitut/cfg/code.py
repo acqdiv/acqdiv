@@ -1,5 +1,9 @@
-def clean_filename(fname): 
-    return fname.rstrip(".NAC").rstrip(".XXS").rstrip(".XXX").rstrip(".MAY")
+def clean_filename(fname):
+    fname = re.sub("\.NAC", "", fname)
+    fname = re.sub("\.XXS", "", fname)
+    fname = re.sub("\.XXX", "", fname)
+    fname = re.sub("\.MAY", "", fname)
+    return fname
 
 def clean_chat_line(s):
 
