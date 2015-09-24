@@ -36,7 +36,6 @@ class Session(Base):
     id = Column(Integer, primary_key=True)
     # session_id = Column(Text, nullable=True, unique=False)
     session_id = Column(Text, nullable=False, unique=False) # filename
-    transcript_id = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     corpus = Column(Text, nullable=True, unique=False)
     date = Column(Text, nullable=True, unique=False)
@@ -46,6 +45,7 @@ class Session(Base):
     # address = Column(Text, nullable=True, unique=False)
     # continent = Column(Text, nullable=True, unique=False)
     # country = Column(Text, nullable=True, unique=False)
+    transcript_id = Column(Text, nullable=True, unique=False) # original file name via ID in XML files (Chintang, Cree, Indonesian & Russian)
 
     # foreign relationships
     speakers = relationship('Speaker', backref='session') #, lazy='dynamic')
@@ -98,7 +98,6 @@ class Utterance(Base):
     comment = Column(Text, nullable=True, unique=False)
     addressee = Column(Text, nullable=True, unique=False) # exists at least in Russian
     gloss = Column(Text, nullable=True, unique=False) # what to do with the "gloss"?
-
 
     #Morphemes = sa.Column(sa.Text, nullable=False, unique=False) # concatenated MorphemeIDs per utterance
     #Words = sa.Column(sa.Text, nullable=False, unique=True) # concatenated WordIDs per utterance
