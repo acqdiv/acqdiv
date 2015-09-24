@@ -228,6 +228,7 @@ class SessionProcessor(object):
         # Now write the database to the backend.
         # commit(session_metadata, speakers, utterances)
 
+
     def commit(self):
         # def commit(self, session_metadata, speakers, utterances):
         # TODO(stiv): Put some kind of namespace on the db session stuff, to distinguish

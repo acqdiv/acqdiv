@@ -283,9 +283,9 @@ class JsonParser(SessionParser):
                         # and recreates the "full word" utterance
                         word_target_label = self.config['json_mappings']['word']
                         if word_target_label in word:
-                            d[self.config['json_mappings']['full_word']] = word[word_target_label]
                             # this is a hack to skip empty dictionaries in Robert's parser's json output
                             if not type(word[word_target_label]) is dict:
+                                d[self.config['json_mappings']['full_word']] = word[word_target_label]
                                 full_utterance.append(word[word_target_label])
 
                         if 'warnings' in word:
@@ -294,7 +294,7 @@ class JsonParser(SessionParser):
                         if 'utterance_id' in utterance:
                             d['utterance_id_fk'] = utterance['utterance_id']
                         words.append(d)
-                        
+
                         # morphemes{} parsing within word[] and extraction of .ini specified db columns
                         # morphemes are also a key:[] pair in words{}; morphemes: [segment:'ga', pos_target:'Eng']...
                         if 'morphemes' in word:
