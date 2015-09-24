@@ -27,7 +27,7 @@ def db_connect():
 def create_tables(engine):
     """ """
     # Drop all the database tables first
-    Base.metadata.drop_all(bind=engine)
+    # Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(engine)
 
 class Session(Base):
@@ -42,7 +42,7 @@ class Session(Base):
     date = Column(Text, nullable=True, unique=False)
     genre = Column(Text, nullable=True, unique=False)
     situation = Column(Text, nullable=True, unique=False)
-    # this stuff seems mostly blank... commenting out for now
+    # this stuff seems mostly blank because we are not extracing metadata from the .cdc files
     # address = Column(Text, nullable=True, unique=False)
     # continent = Column(Text, nullable=True, unique=False)
     # country = Column(Text, nullable=True, unique=False)

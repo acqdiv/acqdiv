@@ -39,7 +39,7 @@ def update_xml_age(session, config):
     corpus_name = config["corpus"]["corpus"]
     for db_session_entry in session.query(Session).filter(Session.corpus == corpus_name):
         sid = db_session_entry.session_id
-        for row in session.query(Speaker).filter(Speaker.age != None, Speaker.parent_id == sid):
+        for row in session.query(Speaker).filter(Speaker.age != None, Speaker.session_id_fk == sid):
             nage = age.format_xml_age(row.age)
             if nage:
                 row.age = nage
@@ -51,7 +51,7 @@ def update_imdi_age(session, config):
     for db_session_entry in session.query(Session).filter(Session.corpus == corpus_name):
         sid = db_session_entry.session_id
         for db_speaker_entry in session.query(Speaker).filter(~Speaker.birthdate.like("Un%"),
-                Speaker.parent_id == sid):
+                Speaker.session_id_fk == sid):
             try:
                 recdate = age.numerize_date(db_session_entry.date)
                 bdate = age.numerize_date(db_speaker_entry.birthdate)
@@ -62,7 +62,7 @@ def update_imdi_age(session, config):
                     print("Couldn't calculate age of speaker {0}".format(db_speaker_entry.id))
                     print("Error: {0}".format(e))
         for db_speaker_entry in session.query(Speaker).filter(Speaker.age != None, ~Speaker.age.like("%Un%"), 
-                Speaker.birthdate.like("Un%"), Speaker.parent_id == sid):
+                Speaker.birthdate.like("Un%"), Speaker.session_id_fk == sid):
             try:
                 ages = age.clean_year_only_ages(db_speaker_entry.age)
                 db_speaker_entry.age = ages[0]
