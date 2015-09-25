@@ -57,14 +57,16 @@ class Speaker(Base):
 
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('session.session_id'))
-    label = Column(Text, nullable=True, unique=False)
+    # label = Column(Text, nullable=True, unique=False)
+    # TODO: add speaker id
+    speaker_id = Column(Text, nullable=True, unique=False)
     name = Column(Text, nullable=True, unique=False)
-    age_in_days = Column(Integer, nullable=True, unique=False)
     age = Column(Text, nullable=True, unique=False)
-    birthdate = Column(Text, nullable=True, unique=False)
+    age_in_days = Column(Integer, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
     role = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
+    birthdate = Column(Text, nullable=True, unique=False)
 
     # optional pretty formatting
     def __repr__(self):
@@ -85,7 +87,7 @@ class Utterance(Base):
     word = Column(Text, nullable=True, unique=False) # words line? what is Robert's "full_word"?
     pos = Column(Text, nullable=True, unique=False) # parts of speech line
     speaker_id = Column(Text, nullable=True, unique=False)
-    speaker_label = Column(Text, nullable=True, unique=False)
+    # speaker_label = Column(Text, nullable=True, unique=False) # -> speaker_id
     u_orthographic = Column(Text, nullable=True, unique=False) # orthographic utterance
     u_phonetic = Column(Text, nullable=True, unique=False) # phonetic utterance
     sentence_type = Column(Text, nullable=True, unique=False)
