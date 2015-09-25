@@ -89,35 +89,38 @@ class ToolboxFile(object):
                         #self.warnings['warnings'] = []
                         self.warnings['warnings'] = 'empty utterance'
                         
-
-                    # TODO: build in the rules system per corpus...
-                    # clean up utterance, add new data via Robert inferences, etc.
-                    # here we can just pass around the session utterance dictionary
-                    utterances['sentence_type'] = self.get_sentence_type(utterances['utterance'])
-                    utterances['utterance_cleaned'] = self.clean_utterance(utterances['utterance'])
-                    
-                    # utterances['utterance_cleaned'] = self.clean_utterance(utterances['utterance'])
-                    # print(utterances)
-
-                    
-                    words = self.get_words(utterances) # pass the dictionary
-                    #print(words)
-                    
-                                    
-                    ## add parent_id to warnings
-                    #self.warnings['parent_id'] = utterances['utterance_id']
-                    # print(self.warnings)
-                    
-                    ## morphemes
-                    morphemes = self.get_morphemes(utterances)
-                    
-                    ## morpheme, gloss, pos inferences
-                    inferences = self.do_inference(utterances)
-
-                    # print(utterances)
-                    # TODO: return three dictionaries...
-                    yield utterances, words, morphemes, inferences
-                    pos = ma.start()
+                    # Skip the first rows that contain metadata information
+                    # cf. https://github.com/uzling/acqdiv/issues/154
+                    if not utterances['utterance'].startswith('@'):
+                        
+                        # TODO: build in the rules system per corpus...
+                        # clean up utterance, add new data via Robert inferences, etc.
+                        # here we can just pass around the session utterance dictionary
+                        utterances['sentence_type'] = self.get_sentence_type(utterances['utterance'])
+                        utterances['utterance_cleaned'] = self.clean_utterance(utterances['utterance'])
+                        
+                        # utterances['utterance_cleaned'] = self.clean_utterance(utterances['utterance'])
+                        # print(utterances)
+    
+                        
+                        words = self.get_words(utterances) # pass the dictionary
+                        #print(words)
+                        
+                                        
+                        ## add parent_id to warnings
+                        #self.warnings['parent_id'] = utterances['utterance_id']
+                        # print(self.warnings)
+                        
+                        ## morphemes
+                        morphemes = self.get_morphemes(utterances)
+                        
+                        ## morpheme, gloss, pos inferences
+                        inferences = self.do_inference(utterances)
+    
+                        # print(utterances)
+                        # TODO: return three dictionaries...
+                        yield utterances, words, morphemes, inferences
+                        pos = ma.start()
                 """
                 ma = self._separator.search(data, pos)
                 if ma is None:
@@ -229,6 +232,7 @@ class ToolboxFile(object):
                 if re.search('\[\?\]', utterance):
                     utterance = re.sub('\[\?\]', '', utterance)
                     self.warnings['warning'] ='transcription insecure'
+                    
                 
                 #TODO: what about the first couple of lines in some Indonesian sessions that is actually metadata info? How to get rid of that?
                 # cf.: https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1601-1603
