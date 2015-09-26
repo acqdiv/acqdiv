@@ -39,11 +39,8 @@ class ToolboxFile(object):
 
         # TODO: get sentence type, etc...
 
-        # TODO (lingdp): get that warnings stuff going!
-        # colletc all warnings in an ordered dict with the following structure:
-        # {utterance_id:[warning_a,warning_b,warning_c,...], utterance_id:[warning_a,warning_b,warning_c],...}
+        # TODO: collect Robert's warnings 
         self.warnings = collections.OrderedDict()
-        #self.warnings['warning'] = []
         
 
     def __iter__(self):
@@ -81,14 +78,20 @@ class ToolboxFile(object):
                     try:
                         utterances['utterance'] = utterances[self.config['utterance']['field']]
                         utterances['utterance_type'] = self.config['utterance']['type']
-                        self.warnings['parent_id'] = utterances['utterance_id']
                     except KeyError:
                         utterances['utterance'] = ""
                         utterances['utterance_type'] = ""
-                        self.warnings['parent_id'] = utterances['utterance_id']
-                        #self.warnings['warnings'] = []
+                        utterances['warnings'] = 'empty utterance'
                         self.warnings['warnings'] = 'empty utterance'
-                        
+                    
+                    ## TODO: check if this really works for Russian (cannot be checked now as nothing gets loaded for RU into db (??))
+                    ## get broken alignment warning for Russian (possible because we have 1:1 word:morpheme correspondence in RU)
+                    #if self.config['corpus']['corpus'] == 'Russian':
+                    #    if len(utterances['morpheme']) != len(utterances['word']):
+                    #        utterances['warnings'] = 'alignment problem between morpheme:word'
+                    #    elif len(utterances['morpheme']) != len(utterances['gloss']):
+                    #        utterances['warnings'] = 'alignment problem between morpheme:gloss'
+                    
                     # Skip the first rows that contain metadata information
                     # cf. https://github.com/uzling/acqdiv/issues/154
                     if not utterances['utterance'].startswith('@'):
@@ -118,7 +121,6 @@ class ToolboxFile(object):
                         inferences = self.do_inference(utterances)
     
                         # print(utterances)
-                        # TODO: return three dictionaries...
                         yield utterances, words, morphemes, inferences
                         pos = ma.start()
                 """
@@ -139,7 +141,24 @@ class ToolboxFile(object):
         """
         result = []
         words = utterances['utterance_cleaned'].split()
-        
+        #morphemes = utterances['morpheme'].split()
+        #glosses = utterances['gloss'].split()
+        #if self.config['corpus']['corpus'] == 'Russian':
+        #    if len(words) != len(morphemes):
+        #        for word in words:
+        #            d = collections.OrderedDict()
+        #            d['word'] = word
+        #            d['utterance_id_fk'] = utterances['utterance_id']
+        #            d['warnings'] = 'broken alignment between word:morpheme'
+        #            result.append(d)
+        #    elif len(words) != len(gloss):
+        #        for word in words:
+        #            d = collections.OrderedDict()
+        #            d['word'] = word
+        #            d['utterance_id_fk'] = utterances['utterance_id']
+        #            d['warnings'] = 'broken alignment between word:gloss'
+        #            result.append(d)
+                    
         for word in words:
             d = collections.OrderedDict()
             if self.config['corpus']['corpus'] == 'Indonesian':
@@ -192,7 +211,8 @@ class ToolboxFile(object):
             else:
                 return
 
-        # TODO: is there Chintang utterance/sentence type?
+        # is there Chintang utterance/sentence type?
+        # lingp: according to the corpus_manual (p.9) there is no utterance/sentence type for Chintang.
 
     # TODO: move this to a cleaning module that's imported, e.g. from pyclean import * as pyclean
     def clean_utterance(self, utterance):
@@ -295,7 +315,7 @@ class ToolboxFile(object):
                 d['parent_id'] = utterances['utterance_id']
                 d['pos'] = ''
                 d['gloss'] = ''
-                d['warning'] = 'not glossed!'
+                d['warning'] = 'not glossed (pos:gloss do not macht)'
                 result.append(d)
                         
         # Indonesian specific morpheme/inference stuff
@@ -312,7 +332,7 @@ class ToolboxFile(object):
                 d = collections.OrderedDict()
                 d['parent_id'] = utterances['utterance_id']
                 d['gloss'] = ''
-                d['warning'] = 'not glossed!'
+                d['warning'] = 'not glossed (pos:gloss do not match)'
                 result.append(d)
                 
                 
@@ -329,15 +349,15 @@ class ToolboxFile(object):
                 except KeyError:
                     glosses_Chintang = ''
                     d['parent_id'] = utterances['utterance_id']
-                    d['warning'] = 'not glossed!'
-                    #self.warnings['warning'] = 'not glossed!'
+                    d['warning'] = 'not glossed (gloss missing)'
+                    #self.warnings['warning'] = 'not glossed'
                     result.append(d)
                 try:    
                     pos_Chintang = utterances['pos']
                 except KeyError:
                     pos_Chintang = ''
                     d['parent_id'] = utterances['utterance_id']
-                    d['warning'] = 'pos missing!'
+                    d['warning'] = 'pos missing'
                     #self.warnings['warning'] = 'pos missing!'
                     result.append(d)
                     
@@ -365,9 +385,9 @@ class ToolboxFile(object):
                 #d['morpheme_id'] = '' ## needed??
                 d['gloss_target'] = ''
                 d['pos_target'] = ''
-                d['warning'] = 'not glossed!'
+                d['warning'] = 'not glossed'
                 result.append(d)
-                #self.warnings['warning'] ='not glossed!'
+                #self.warnings['warning'] ='not glossed'
         
         return result
 
@@ -418,7 +438,7 @@ class ToolboxFile(object):
             d = collections.OrderedDict()
             d['morpheme'] = ''
             d['parent_id'] = utterances['utterance_id']
-            d['warning']  = 'morpheme missing!' 
+            d['warning']  = 'morpheme missing' 
             result.append(d)
             #self.warnings['warning'] = 'morpheme missing!'
                 
