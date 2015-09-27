@@ -78,17 +78,13 @@ class ToolboxFile(object):
                     try:
                         utterances['utterance'] = utterances[self.config['utterance']['field']]
                         utterances['utterance_type'] = self.config['utterance']['type']
-                        utterances['warnings'] = self.get_warnings(utterances['utterance'],utterances['morpheme'])
+                        #utterances['warnings'] = self.get_warnings(utterances['utterance'])
                     except KeyError:
                         utterances['utterance'] = ""
                         utterances['utterance_type'] = ""
                         utterances['warnings'] = 'empty utterance'
                         #self.warnings['warnings'] = 'empty utterance'
                     
-                    
-                    ### get comments
-                    utterances['comment'] = self.get_comments(utterances['utterance'])
-               
                     
                     
                     # Skip the first rows that contain metadata information
@@ -100,6 +96,12 @@ class ToolboxFile(object):
                         # here we can just pass around the session utterance dictionary
                         utterances['sentence_type'] = self.get_sentence_type(utterances['utterance'])
                         utterances['utterance_cleaned'] = self.clean_utterance(utterances['utterance'])
+                        
+                        ### get comments
+                        utterances['comment'] = self.get_comments(utterances['utterance'])
+                        
+                        ### get warnings
+                        utterances['warnings'] = self.get_warnings(utterances['utterance'])
                             
                         # words
                         words = self.get_words(utterances) # pass the dictionary
@@ -210,7 +212,7 @@ class ToolboxFile(object):
                 pass
             
                     
-    def get_warnings(self,utterance,morpheme):
+    def get_warnings(self,utterance):
         transcription_warning = ''
         if self.config['corpus']['corpus'] == "Russian":
             if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
