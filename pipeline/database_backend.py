@@ -62,6 +62,7 @@ class Speaker(Base):
     speaker_id = Column(Text, nullable=True, unique=False)
     name = Column(Text, nullable=True, unique=False)
     age = Column(Text, nullable=True, unique=False)
+    clean_age = Column(Text, nullable=True, unique=False)
     age_in_days = Column(Integer, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
     role = Column(Text, nullable=True, unique=False)
