@@ -2,19 +2,27 @@
 """
 
 # TODO: implement postprocessing tasks:
-#  - metadata label unification
-#  - date reformatting from the all the various input formats...
-#  - additionally calculated stuff like AgeInDays?
+#  - keep all original data and add new columns for calculated and inferred stuff
 #  - morphological label unification
-#  - BB's wish for MorphemeID+MorphemeID, WordID+WordID, etc.
-#  - deal with age conversion, etc.
+#  - calculate age (date reformatting ("P25Y", etc. ??)
+#  - calculate age_in_days
+#  - normalize all relevant column data, e.g.:
+#    role: target_child, Target Child, Target_child, etc. --> Target_Child (per CHAT specification!)
+#    gender: female, Female, etc. -> Female
+#    language: check that the language codes are correct (ie valid)
+#    birthday: is this normalize-able? is it important?
+#  - unique word, morpheme, etc., id assignment in post-processing, i.e.
+#    assign a unique ID to each unique word, morpheme, etc., and then populate a new column
+#  - remove these bullet points when you've implemented this stuff above, please!
+
+# for the future:
 #  - add additional inferred info, e.g. Russian ends_at time stamps
-#  - should we do unique word, morpheme, etc., id assignment in post-processing?
+#  - BB's wish for MorphemeID+MorphemeID, WordID+WordID, etc.
+#  - infer gender, etc., from things like "Grandmother" once these labels have been unified
+#  - infer blank cells from the (non-existent input data) existing data?
+#    e.g. in Russian Alja is gender x; Sabine is role y...
 
 # TODO: identify body parsing errors and fixes
-
-# TODO: infer blank cells from the (non-existent input data) existing data?
-#  e.g. in Russian Alja is gender x; Sabine is role y...
 
 from sqlalchemy.orm import sessionmaker
 from database_backend import *
@@ -39,7 +47,7 @@ def update_xml_age(session, config):
     corpus_name = config["corpus"]["corpus"]
     for db_session_entry in session.query(Session).filter(Session.corpus == corpus_name):
         sid = db_session_entry.session_id
-        for row in session.query(Speaker).filter(Speaker.age != None, Speaker.parent_id == sid):
+        for row in session.query(Speaker).filter(Speaker.age != None, Speaker.session_id_fk == sid):
             nage = age.format_xml_age(row.age)
             if nage:
                 row.age = nage
@@ -51,7 +59,7 @@ def update_imdi_age(session, config):
     for db_session_entry in session.query(Session).filter(Session.corpus == corpus_name):
         sid = db_session_entry.session_id
         for db_speaker_entry in session.query(Speaker).filter(~Speaker.birthdate.like("Un%"),
-                Speaker.parent_id == sid):
+                Speaker.session_id_fk == sid):
             try:
                 recdate = age.numerize_date(db_session_entry.date)
                 bdate = age.numerize_date(db_speaker_entry.birthdate)
@@ -62,7 +70,7 @@ def update_imdi_age(session, config):
                     print("Couldn't calculate age of speaker {0}".format(db_speaker_entry.id))
                     print("Error: {0}".format(e))
         for db_speaker_entry in session.query(Speaker).filter(Speaker.age != None, ~Speaker.age.like("%Un%"), 
-                Speaker.birthdate.like("Un%"), Speaker.parent_id == sid):
+                Speaker.birthdate.like("Un%"), Speaker.session_id_fk == sid):
             try:
                 ages = age.clean_year_only_ages(db_speaker_entry.age)
                 db_speaker_entry.age = ages[0]

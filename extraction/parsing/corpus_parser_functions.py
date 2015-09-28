@@ -244,9 +244,12 @@ def parse_xml(file_name, corpus_name):
                             w.text = t.tail
                         else:
                             w.text += t.tail
-            # CHAT www, xxx, yyy all have an attribute "untranscribed" in XML; unify text to '???'
+            # CHAT www, xxx, yyy all have an attribute "untranscribed/unintelligible" in XML; unify text to '???'
             if 'untranscribed' in w.attrib:
                 w.text = '???'
+                # three corpora don't have glosses for xxx words -> mark word
+                if corpus_name in ['Turkish', 'Japanese_MiiPro', 'Yucatec']:
+                    w.attrib['glossed'] = 'no'
             # other replacements
             if w.text:
                 # where the orthography tier is missing in Cree, <w> is not empty but contains 'missingortho' -> remove this
@@ -424,8 +427,6 @@ def parse_xml(file_name, corpus_name):
             if tier is not None:
                 try:
                     tier_name_JSON = xml_dep_correspondences[dependent_tier]
-                    if corpus_name == 'Yucatec' and tier_name_JSON == 'english':
-                        tier_name_JSON = 'spanish'
                     creadd(corpus[text_id][utterance_index], tier_name_JSON, tier.text)
                 except AttributeError:
                     pass
@@ -1350,104 +1351,93 @@ def parse_xml(file_name, corpus_name):
                     
                     # count up word index, extend list if necessary
                     word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
+                                        
+                    # some words in <w> have a warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
+                    # -> incremeent the <w> counter by one as long as the present morphological word is associated with the next <w>
+                    while('warnings' in corpus[text_id][utterance_index]['words'][word_index].keys() and
+                        re.search('not glossed', corpus[text_id][utterance_index]['words'][word_index]['warnings'])):
+                            word_index = list_index_up(word_index, corpus[text_id][utterance_index]['words'])
+                                                            
                     # corpus[text_id][utterance_index]['words'][word_index]['morphemes'] is a list of morphemes; initial index is -1
                     corpus[text_id][utterance_index]['words'][word_index]['morphemes'] = []
                     morpheme_index = -1
-                    # get proper names
-
-                    # pronouns, proper names etc.
-                    pron = re.search('^\d?.*?:.*?\|.*?$', w)
-                    if pron:
-                        morpheme_index = list_index_up(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
-                        stem_gloss = re.sub('\|.*','',w)
-                        stem = re.sub('.*\|','',w)
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
-                        
-                    # process words with neither prefixes nor suffixes
-                    if not '#' in w and not ':' in w:
-                        # count up morpheme index, extend list if necessary
-                        morpheme_index = list_index_up(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
-                        
-                        stem_gloss = re.sub('\|.*','',w)
-                        stem = re.sub('.*\|','',w)
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
                     
-                    # in order to get prefixes and suffixes: go through words on morpheme level and split on '#' or ':', preserving the delimiter!
-                    # get prefixes
-                    pfx_marker = re.search('#', w)
-                    # split on '#' and preserve '#'
-                    prefixes = '#,'.join(w.split('#')).split(',')
-                    morpheme_index = -1
-                    for w in prefixes:
-                        check_pfx = re.search('(.*)\|(.+#)',w)
-                        if check_pfx:
+                    # check for prefixes first (separator "#") and split them off
+                    check_pfx = re.search('(^.*)#(.*$)', w)
+                    if check_pfx is not None:
+                        prefix_string = check_pfx.group(1)
+                        # cut out prefixes from word for further processing below
+                        w = check_pfx.group(2)
+                        for pfx in prefix_string.split('#'):
                             # count up morpheme index, extend list if necessary
                             morpheme_index = list_index_up(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
-                            
-                            prefix = check_pfx.group(2).replace('#','')
-                            pfx_gloss = check_pfx.group(1)
-                            
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = prefix
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = pfx_gloss
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'pfx'
+                            pfx_struc = re.search('(.*)\|(.+)', pfx)
+                            # structured prefixes: part before "|" is gloss, part after is phonological form
+                            if pfx_struc is not None: 
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = pfx_struc.group(2)
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = pfx_struc.group(1)
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'pfx'
+                            # unstructured prefixes: whole block tends to be a gloss, but not necessarily so -> throw warning
+                            else:
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = '???'
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = pfx
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'pfx'
+                                print(file_name, ' u', utterance_index, ' w', word_index, ' m', morpheme_index, ' has no segment/gloss structure: ', pfx, sep='')
+                                creadd(corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index], 'warnings', 'no segment/gloss structure')
+                    # EOF prefixes
                     
-                    # get stem of words that contain prefix(es) and suffix(es)
-                    # 1) words that might have prefix and suffix
-                    stem_marker = re.search('(.*)?#(.*)\|(.*?):', w)
-                    if stem_marker:
-                        # count up morpheme index, extend list if necessary
-                        morpheme_index = list_index_up(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
-                        
-                        stem_gloss = re.sub('[\|:].*','',stem_marker.group(2))
-                        stem = re.sub('.*#','',stem_marker.group(3))
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
-                        
-                    # 2) words that only might have prefix
+                    # get stem: everything up to the first ":" (= suffix separator) or, if there are no suffixes, to the end of the word
+                    stem = ''
+                    suffix_string = ''
+                    check_sfx = re.search('(.*?):(.*$)', w)
+                    if check_sfx is not None: 
+                        stem = check_sfx.group(1)
+                        suffix_string = check_sfx.group(2)
                     else:
-                        stem_marker2 = re.search('(\|.*)?#(.*)\|(.*?)$', w)
-                        stem_marker3 = re.search('^(.*)\|(.*?)[:\|]', w)
-                        
-                        if stem_marker2:
+                        stem = w
+                    # count up morpheme index, extend list if necessary
+                    morpheme_index = list_index_up(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
+                    stem_struc = re.search('(.*)\|(.+)', stem)
+                    # structured stems
+                    if stem_struc is not None:
+                        # the part after the "|" is always the phonological form of the stem
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem_struc.group(2)
+                        # for most stems with lexical meaning the part before the "|" is a POS
+                        if stem_struc.group(1) in ['VT', 'DEICT', 'S', 'INT', 'N', 'INTERJ', 'ADV', 'V', 'VI', 'AUX', 'ADJ', 'DET', 'N:PROP', 'PREP', 'N.PROP', 'NUM', 'QUANT', 'DEM', 'CONJ', 'CLFR', 'CLFR.INAN', 'V:AUX']:
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = '???'
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = stem_struc.group(1)
+                        # for other stems it's a gloss
+                        else:
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_struc.group(1)
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'   
+                    # unstructured stems: whole block tends to be a gloss, but not necessarily so -> throw warning
+                    else:
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = '???'
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem
+                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
+                        print(file_name, ' u', utterance_index, ' w', word_index, ' m', morpheme_index, ' has no segment/gloss structure: ', stem, sep='')
+                        creadd(corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index], 'warnings', 'no segment/gloss structure')
+                    # EOF stem
+                                
+                    # if any suffixes were detected above, suffix_string contains them by now - otherwise it's empty
+                    if suffix_string:
+                        for sfx in suffix_string.split(':'):
                             # count up morpheme index, extend list if necessary
                             morpheme_index = list_index_up(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
-                            
-                            stem_gloss = re.sub('[\|:].*','',stem_marker2.group(2))
-                            stem = stem_marker2.group(3)
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
-                        
-                        elif stem_marker3:
-                            # count up morpheme index, extend list if necessary
-                            morpheme_index = list_index_up(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
-                            
-                            stem_gloss = re.sub('[\|:].*','',stem_marker3.group(1))
-                            stem = stem_marker3.group(2)
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_gloss
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
-                        
-                    # get suffixes            
-                    sfx_marker = re.search(':', w)
-                    # split on ':' and preserve ':'
-                    suffixes = ',:'.join(w.split(':')).split(',')
-                    for w in suffixes:
-                        check_suffix = re.search('(:.*)\|(-.*)', w)
-                        if check_suffix:
-                            # count up morpheme index, extend list if necessary
-                            morpheme_index = list_index_up(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
-                            
-                            suffix = check_suffix.group(2).replace('-','')
-                            sfx_gloss = check_suffix.group(1).replace(':','')
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = suffix
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = sfx_gloss
-                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
+                            sfx_struc = re.search('(.*)\|(.+)', sfx)
+                            # structured suffixes: part before "|" is gloss, part after is phonological form (+ redundant separator "-")
+                            if sfx_struc is not None: 
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = re.sub('^\-', '', sfx_struc.group(2))
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = sfx_struc.group(1)
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
+                            # unstructured suffixes: whole block tends to be a gloss, but not necessarily so -> throw warning
+                            else:
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = '???'
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = sfx
+                                corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = 'sfx'
+                                print(file_name, ' u', utterance_index, ' w', word_index, ' m', morpheme_index, ' has no segment/gloss structure: ', sfx, sep='')
+                                creadd(corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index], 'warnings', 'no segment/gloss structure')
+                    # EOF suffixes
                     
                     # check if morpheme list has been filled; if not delete key
                     if corpus[text_id][utterance_index]['words'][word_index]['morphemes'] == []:
