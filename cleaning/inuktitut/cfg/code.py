@@ -1,5 +1,9 @@
-def clean_filename(fname): 
-    return fname.rstrip(".NAC").rstrip(".XXS").rstrip(".XXX").rstrip(".MAY")
+def clean_filename(fname):
+    fname = re.sub("\.NAC", "", fname)
+    fname = re.sub("\.XXS", "", fname)
+    fname = re.sub("\.XXX", "", fname)
+    fname = re.sub("\.MAY", "", fname)
+    return fname
 
 def clean_chat_line(s):
 
@@ -369,6 +373,7 @@ def clean_chat_line(s):
     s = re.sub("@оIP0,16п", "", s)
     s = re.sub("оIP0,16п", "", s)
     s = re.sub("@оIP0,8п", "", s)
+    s = re.sub("о.*п", "", s)
 
     # Removes trash lines like "~" or "~"
     s = re.sub("^_$", "", s)
