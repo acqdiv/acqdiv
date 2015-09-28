@@ -129,16 +129,9 @@ class SessionProcessor(object):
                                 morphemes_warnings['warning'] = inference['warning']
                                 self.warnings.append(Warnings(**morphemes_warnings))
                         except TypeError:
-                            morphemes_inferences['morpheme'] = ''
-                            morphemes_inferences['segment'] = ''
-                            morphemes_inferences['pos'] = ''
-                            morphemes_inferences['gloss'] = ''
+                            continue
                         except KeyError:
-                            morphemes_inferences['morpheme'] = ''
-                            morphemes_inferences['segment'] = ''
-                            morphemes_inferences['pos'] = ''
-                            morphemes_inferences['gloss'] = ''
-                            
+                            continue
                         self.morphemes.append(Morpheme(**morphemes_inferences))
                                  
                 
@@ -160,16 +153,10 @@ class SessionProcessor(object):
                                 self.warnings.append(Warnings(**morphemes_warnings))
                                 
                         except KeyError:
-                            morphemes_inferences['morpheme'] = ''
-                            morphemes_inferences['segment'] = ''
-                            morphemes_inferences['pos'] = ''
-                            morphemes_inferences['gloss'] = ''
+                            continue
                         
                         except TypeError:
-                            morphemes_inferences['morpheme'] = ''
-                            morphemes_inferences['segment'] = ''
-                            morphemes_inferences['pos'] = ''
-                            morphemes_inferences['gloss'] = ''
+                            continue
                             
                         self.morphemes.append(Morpheme(**morphemes_inferences))
                                                         
@@ -189,13 +176,9 @@ class SessionProcessor(object):
                                 morphemes_warnings['warning'] = inference['warning']
                                 self.warnings.append(Warnings(**morphemes_warnings))
                         except TypeError:
-                            morphemes_inferences['morpheme'] = ''
-                            morphemes_inferences['segment'] = ''
-                            morphemes_inferences['gloss'] = ''
+                            continue
                         except KeyError:
-                            morphemes_inferences['morpheme'] = ''
-                            morphemes_inferences['segment'] = ''
-                            morphemes_inferences['gloss'] = ''
+                            continue
                             
                         self.morphemes.append(Morpheme(**morphemes_inferences))
 
