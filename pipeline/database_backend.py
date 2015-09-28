@@ -112,6 +112,7 @@ class Word(Base):
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     id = Column(Integer, primary_key=True)
     utterance_id_fk = Column(Text, ForeignKey('utterance.id'))
+    corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
     #Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
     word = Column(Text, nullable=True, unique=False)
     word_target = Column(Text, nullable=True, unique=False)
