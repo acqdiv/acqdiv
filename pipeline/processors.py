@@ -85,7 +85,7 @@ class SessionProcessor(object):
                 if not k in self.config['speaker_labels'].values():
                     continue
                 d[k] = v
-            d['parent_id'] = self.filename
+            d['session_id_fk'] = self.filename
             self.speaker_entries.append(Speaker(**d))
 
         # TODO(stiv): Need to add to each utterance some kind of joining key.
@@ -102,7 +102,7 @@ class SessionProcessor(object):
         if self.format == "Toolbox":
             # Utterance parsing
             for utterance, words, morphemes, inferences in self.parser.next_utterance():    
-                utterance['parent_id'] = self.filename
+                utterance['session_id_fk'] = self.filename
                 utterance['corpus'] = self.corpus
                 # TODO: determine utterance type from config
                 utterance['utterance_type'] = self.config['utterance']['type']
@@ -191,14 +191,14 @@ class SessionProcessor(object):
 
         elif self.format == "JSON":
             for utterance, words, morphemes in self.parser.next_utterance():
-                utterance['parent_id'] = self.filename
+                utterance['session_id_fk'] = self.filename
                 utterance['corpus'] = self.corpus
                 # utterance['language'] = self.config['corpus']['language']
                 self.utterances.append(Utterance(**utterance))
 
                 for word in words:
                     # TODO: add in session id?
-                    word['parent_id'] = utterance['utterance_id']
+                    word['utterance_id_fk'] = utterance['utterance_id']
                     self.words.append(Word(**word))
 
                 for morpheme in morphemes:
@@ -210,7 +210,7 @@ class SessionProcessor(object):
                 u.parent_id = self.file_path
                 #TODO: u.ids counted per session
                 # we need a better way of making them unique across corpora
-                #dirty, dirty hack:
+                # dirty, dirty hack:
                 u.utterance_id = u.parent_id + "_" + u.utterance_id
                 self.utterances.append(u)
 
@@ -227,6 +227,7 @@ class SessionProcessor(object):
 
         # Now write the database to the backend.
         # commit(session_metadata, speakers, utterances)
+
 
     def commit(self):
         # def commit(self, session_metadata, speakers, utterances):

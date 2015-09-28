@@ -20,17 +20,18 @@ if __name__ == "__main__":
     create_tables(engine)
 
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
-               'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
+              'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
 
-    # configs = ['Chintang.ini'] # fails
+    # configs = ['Chintang.ini']
     # configs = ['Cree.ini']
     # configs = ['Indonesian.ini']
     # configs = ['Inuktitut.ini']
-    # configs = ['Japanese_Miyata.ini']
     # configs = ['Japanese_MiiPro.ini'] # fails
+    # configs = ['Japanese_Miyata.ini']
     # configs = ['Russian.ini'] # missing metdata data; fails
     # configs = ['Sesotho.ini'] # fails on warnings hixa.json...
     # configs = ['Turkish.ini'] # fails on utterance_cleaned ekin10_30oct01_01-01-10.json
+    # configs = ['Yucatec.ini']
 
     for config in configs:
         # Parse the config file and call the sessions processor

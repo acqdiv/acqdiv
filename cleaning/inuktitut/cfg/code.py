@@ -373,6 +373,7 @@ def clean_chat_line(s):
     s = re.sub("@оIP0,16п", "", s)
     s = re.sub("оIP0,16п", "", s)
     s = re.sub("@оIP0,8п", "", s)
+    s = re.sub("о.*п", "", s)
 
     # Removes trash lines like "~" or "~"
     s = re.sub("^_$", "", s)
