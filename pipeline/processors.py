@@ -110,7 +110,7 @@ class SessionProcessor(object):
                 
                 # word parsing
                 for word in words:
-                    self.word['corpus'] = self.corpus
+                    word['corpus'] = self.corpus
                     self.words.append(Word(**word))
                     
                 if utterance['corpus'] == 'Russian':
