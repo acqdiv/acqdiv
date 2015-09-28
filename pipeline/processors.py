@@ -101,11 +101,11 @@ class SessionProcessor(object):
 
         if self.format == "Toolbox":
             # Utterance parsing
-            for utterance, words, morphemes, inferences in self.parser.next_utterance():    
+            for utterance, words, morphemes, inferences in self.parser.next_utterance():
                 utterance['session_id_fk'] = self.filename
                 utterance['corpus'] = self.corpus
                 # TODO: determine utterance type from config
-                utterance['utterance_type'] = self.config['utterance']['type']
+                utterance['utterance_type'] = self.config['utterance']['type']         
                 self.utterances.append(Utterance(**utterance))
                 
                 # word parsing
@@ -128,6 +128,11 @@ class SessionProcessor(object):
                                 morphemes_warnings['warning'] = inference['warning']
                                 self.warnings.append(Warnings(**morphemes_warnings))
                         except TypeError:
+                            morphemes_inferences['morpheme'] = ''
+                            morphemes_inferences['segment'] = ''
+                            morphemes_inferences['pos'] = ''
+                            morphemes_inferences['gloss'] = ''
+                        except KeyError:
                             morphemes_inferences['morpheme'] = ''
                             morphemes_inferences['segment'] = ''
                             morphemes_inferences['pos'] = ''
@@ -183,6 +188,10 @@ class SessionProcessor(object):
                                 morphemes_warnings['warning'] = inference['warning']
                                 self.warnings.append(Warnings(**morphemes_warnings))
                         except TypeError:
+                            morphemes_inferences['morpheme'] = ''
+                            morphemes_inferences['segment'] = ''
+                            morphemes_inferences['gloss'] = ''
+                        except KeyError:
                             morphemes_inferences['morpheme'] = ''
                             morphemes_inferences['segment'] = ''
                             morphemes_inferences['gloss'] = ''
