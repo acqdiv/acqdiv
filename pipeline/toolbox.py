@@ -97,9 +97,6 @@ class ToolboxFile(object):
                         utterances['sentence_type'] = self.get_sentence_type(utterances['utterance'])
                         utterances['utterance_cleaned'] = self.clean_utterance(utterances['utterance'])
                         
-                        ### get comments
-                        utterances['comment'] = self.get_comments(utterances['utterance'])
-                        
                         ### get warnings
                         utterances['warnings'] = self.get_warnings(utterances['utterance'])
                             
@@ -190,33 +187,15 @@ class ToolboxFile(object):
 
         # is there Chintang utterance/sentence type?
         # lingp: according to the corpus_manual (p.9) there is no utterance/sentence type for Chintang.
-        
-    def get_comments(self,utterance):
-        """ get corpus specific comments:
-        :param utterance:
-        :return:
-        """
-        comment = ''
-        if utterance != 'None' or utterance != '':
-            if self.config['corpus']['corpus'] == "Russian":
-                # guesses at intended form [=? ...]: this is used rarely (78 times overall), so it's easier to turn it into a comment than to convert it to a full_word_target
-                for target in re.findall('\[=\?\s+[^\]]+\]', utterance):
-                    target_clean = re.sub('["\[\]\?=]','',target)
-                    comment = 'intended form might have been "' + target_clean + '"'
-                return comment
-            
-            # I see comments extraction in corpus_parser_functions.py only for Russian and Inuktitut
-            # (cf. https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L602 and
-            #  https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1560-L1566)
-            else:
-                pass
             
                     
     def get_warnings(self,utterance):
         transcription_warning = ''
         if self.config['corpus']['corpus'] == "Russian":
             if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
-                transcription_warning = 'transcription insecure'
+                for target in re.findall('\[=\?\s+[^\]]+\]', utterance):
+                    target_clean = re.sub('["\[\]\?=]','',target)
+                    transcription_warning = 'transcription insecure (intended form might have been "' + target_clean +'")'
             return transcription_warning
                 
         if self.config['corpus']['corpus'] == "Indonesian":
