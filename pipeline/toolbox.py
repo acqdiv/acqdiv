@@ -190,13 +190,13 @@ class ToolboxFile(object):
             
                     
     def get_warnings(self,utterance):
-        transcription_warning = ''
+        #transcription_warning = ''
         if self.config['corpus']['corpus'] == "Russian":
             if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
                 for target in re.findall('\[=\?\s+[^\]]+\]', utterance):
                     target_clean = re.sub('["\[\]\?=]','',target)
                     transcription_warning = 'transcription insecure (intended form might have been "' + target_clean +'")'
-            return transcription_warning
+                    return transcription_warning
                 
         if self.config['corpus']['corpus'] == "Indonesian":
                 # Insecure transcription [?], add warning, delete marker
@@ -204,7 +204,7 @@ class ToolboxFile(object):
                 if re.search('\[\?\]', utterance):
                     utterance = re.sub('\[\?\]', '', utterance)
                     transcription_warning ='transcription insecure'
-                return transcription_warning
+                    return transcription_warning
                     
         else:
             pass
