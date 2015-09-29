@@ -118,14 +118,14 @@ class SessionProcessor(object):
                     morphemes_warnings = collections.OrderedDict()
                     for (morpheme,inference) in it.zip_longest(morphemes,inferences):
                         try:
-                            morphemes_inferences['parent_id'] = morpheme['parent_id']
+                            morphemes_inferences['utterance_id_fk'] = morpheme['utterance_id_fk']
                             morphemes_inferences['morpheme'] = morpheme['morpheme']
                             morphemes_inferences['segment'] = morpheme['segment_target']
                             morphemes_inferences['pos'] = inference['pos']
                             morphemes_inferences['gloss'] = inference['gloss']
                             if 'warning' in inference.keys():
                                 morphemes_warnings['corpus'] = utterance['corpus']
-                                morphemes_warnings['parent_id'] = morpheme['parent_id']
+                                morphemes_warnings['parent_id'] = morpheme['utterance_id_fk']
                                 morphemes_warnings['warning'] = inference['warning']
                                 self.warnings.append(Warnings(**morphemes_warnings))
                         except TypeError:
@@ -148,7 +148,7 @@ class SessionProcessor(object):
                     ## inference parsing
                     for inference in inferences:
                         try:
-                            morphemes_inferences['parent_id'] = inference['parent_id']
+                            morphemes_inferences['utterance_id_fk'] = inference['parent_id']
                             morphemes_inferences['morpheme'] = inference['morpheme']
                             morphemes_inferences['segment_target'] = inference['morpheme']
                             morphemes_inferences['gloss_target'] = inference['gloss_target']
@@ -179,7 +179,7 @@ class SessionProcessor(object):
                     morphemes_inferences = collections.OrderedDict()
                     for (morpheme,inference) in it.zip_longest(morphemes,inferences):
                         try:
-                            morphemes_inferences['parent_id'] = morpheme['parent_id']
+                            morphemes_inferences['utterance_id_fk'] = morpheme['utterance_id_fk']
                             morphemes_inferences['morpheme'] = morpheme['morpheme']
                             morphemes_inferences['segment'] = morpheme['morpheme']
                             morphemes_inferences['gloss'] = inference['gloss']
@@ -208,10 +208,12 @@ class SessionProcessor(object):
 
                 for word in words:
                     # TODO: add in session id?
+                    word['corpus'] = self.corpus
                     word['utterance_id_fk'] = utterance['utterance_id']
                     self.words.append(Word(**word))
 
                 for morpheme in morphemes:
+                    morpheme['utterance_id_fk'] = utterance['utterance_id']
                     self.morphemes.append(Morpheme(**morpheme))
 
         elif self.format == "ChatXML":

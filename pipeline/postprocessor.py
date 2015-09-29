@@ -89,15 +89,18 @@ def update_age(session, config):
     else:
         update_xml_age(session, config)
 
+#WARNING: UNFINISHED CODE // DO NOT CALL
+#TODO
 def apply_gloss_regex(session, config):
     regex = re.compile(config["gloss"]["regex"])
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
         sid = db_session_entry.session_id
-        for row in session.query(backend.Morpheme).filter(
+#        for row in session.query(backend.Morpheme).filter(
 
 @db_apply
 def unify_glosses(session, config):
-    for row in session.query(backend.Morpheme):
+    corpus_name = config['corpus']['corpus']
+    for row in session.query(backend.Morpheme).join(backend.Utterance).filter(backend.Utterance.corpus == corpus_name):
         old_gloss = None
         if row.gloss:
             old_gloss = row.gloss
@@ -110,6 +113,7 @@ def unify_glosses(session, config):
         try:
             if old_gloss in config["gloss"]:
                 new_gloss = config["gloss"][old_gloss]
+                print(old_gloss, new_gloss)
                 row.clean_gloss = new_gloss
         except KeyError:
             print("Error: .ini file for corpus {0} does not have gloss replacement rules properly configured!".format(config["corpus"]["corpus"]), file=sys.stderr)

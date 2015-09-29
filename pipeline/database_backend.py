@@ -112,7 +112,7 @@ class Word(Base):
     # fk...
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     id = Column(Integer, primary_key=True)
-    utterance_id_fk = Column(Text, ForeignKey('utterance.id'))
+    utterance_id_fk = Column(Text, ForeignKey('utterance.utterance_id'))
     corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
     #Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
     word = Column(Text, nullable=True, unique=False)
@@ -129,7 +129,8 @@ class Morpheme(Base):
     # fk...
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     id = Column(Integer, primary_key=True)
-    utterance_id_fk = Column(Text, ForeignKey('utterance.id'))
+    utterance_id_fk = Column(Text, ForeignKey('utterance.utterance_id'))
+    corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
     morpheme = Column(Text, nullable=True, unique=False)
     morpheme_target = Column(Text, nullable=True, unique=False)
     gloss = Column(Text, nullable=True, unique=False)
@@ -154,5 +155,5 @@ class Warnings(Base):
     #id = Column(Text, primary_key=True) ## @bambooforest Is that a mistake?
     id = Column(Integer,primary_key=True)
     corpus = Column(Text, nullable=True, unique=False)
-    parent_id = Column(Text, ForeignKey('utterance.id'))
+    parent_id = Column(Text, ForeignKey('utterance.utterance_id'))
     warning = Column(Text, nullable=True, unique=False)
