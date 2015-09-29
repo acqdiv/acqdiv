@@ -110,6 +110,7 @@ class SessionProcessor(object):
                 
                 # word parsing
                 for word in words:
+                    word['language'] = self.language
                     word['corpus'] = self.corpus
                     self.words.append(Word(**word))
                     
@@ -208,6 +209,7 @@ class SessionProcessor(object):
 
                 for word in words:
                     # TODO: add in session id?
+
                     word['utterance_id_fk'] = utterance['utterance_id']
                     self.words.append(Word(**word))
 

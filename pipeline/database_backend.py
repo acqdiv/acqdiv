@@ -66,6 +66,7 @@ class Speaker(Base):
     gender = Column(Text, nullable=True, unique=False)
     role = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
+    # languages_spoken = Column(Text, nullable=True, unique=False)
     birthdate = Column(Text, nullable=True, unique=False)
 
     # optional pretty formatting
@@ -112,7 +113,8 @@ class Word(Base):
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     id = Column(Integer, primary_key=True)
     utterance_id_fk = Column(Text, ForeignKey('utterance.id'))
-    corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
+    language = Column(Text, nullable=True, unique=False)
+    corpus = Column(Text, nullable=True, unique=False)
     #Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
     word = Column(Text, nullable=True, unique=False)
     word_target = Column(Text, nullable=True, unique=False)
@@ -129,6 +131,8 @@ class Morpheme(Base):
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     id = Column(Integer, primary_key=True)
     parent_id = Column(Text, ForeignKey('utterance.id'))
+    language = Column(Text, nullable=True, unique=False)
+    corpus = Column(Text, nullable=True, unique=False)
     morpheme = Column(Text, nullable=True, unique=False)
     morpheme_target = Column(Text, nullable=True, unique=False)
     gloss = Column(Text, nullable=True, unique=False)
