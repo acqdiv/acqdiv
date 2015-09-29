@@ -99,8 +99,8 @@ def apply_gloss_regex(session, config):
 
 @db_apply
 def unify_glosses(session, config):
-    corpus_name = config['corpus']['corpus']
-    for row in session.query(backend.Morpheme).join(backend.Utterance).filter(backend.Utterance.corpus == corpus_name):
+    corpus_name = config["corpus"]["corpus"]
+    for row in session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name):
         old_gloss = None
         if row.gloss:
             old_gloss = row.gloss
@@ -113,7 +113,10 @@ def unify_glosses(session, config):
         try:
             if old_gloss in config["gloss"]:
                 new_gloss = config["gloss"][old_gloss]
-                print(old_gloss, new_gloss)
+                # TODO:
+                # this is a debug print to find out what is and isn't getting replaced
+                # we need to automate this
+                # print(old_gloss, new_gloss)
                 row.clean_gloss = new_gloss
         except KeyError:
             print("Error: .ini file for corpus {0} does not have gloss replacement rules properly configured!".format(config["corpus"]["corpus"]), file=sys.stderr)

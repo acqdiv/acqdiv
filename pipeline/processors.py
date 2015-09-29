@@ -110,6 +110,7 @@ class SessionProcessor(object):
                 
                 # word parsing
                 for word in words:
+                    word['language'] = self.language
                     word['corpus'] = self.corpus
                     self.words.append(Word(**word))
                     
@@ -119,26 +120,24 @@ class SessionProcessor(object):
                     for (morpheme,inference) in it.zip_longest(morphemes,inferences):
                         try:
                             morphemes_inferences['utterance_id_fk'] = morpheme['utterance_id_fk']
+                            # TODO: fix this to read from the config
+                            morphemes_inferences['corpus'] = self.corpus
+                            morphemes_inferences['language'] = self.language
                             morphemes_inferences['morpheme'] = morpheme['morpheme']
                             morphemes_inferences['segment'] = morpheme['segment_target']
                             morphemes_inferences['pos'] = inference['pos']
                             morphemes_inferences['gloss'] = inference['gloss']
                             if 'warning' in inference.keys():
+                                # TODO: fix this to read from the config
                                 morphemes_warnings['corpus'] = utterance['corpus']
-                                morphemes_warnings['parent_id'] = morpheme['utterance_id_fk']
+                                morphemes_warnings['utterance_id_fk'] = morpheme['utterance_id_fk']
+                                morphemes_warnings['language'] = utterance['language']
                                 morphemes_warnings['warning'] = inference['warning']
                                 self.warnings.append(Warnings(**morphemes_warnings))
                         except TypeError:
-                            morphemes_inferences['morpheme'] = ''
-                            morphemes_inferences['segment'] = ''
-                            morphemes_inferences['pos'] = ''
-                            morphemes_inferences['gloss'] = ''
+                            continue
                         except KeyError:
-                            morphemes_inferences['morpheme'] = ''
-                            morphemes_inferences['segment'] = ''
-                            morphemes_inferences['pos'] = ''
-                            morphemes_inferences['gloss'] = ''
-                            
+                            continue
                         self.morphemes.append(Morpheme(**morphemes_inferences))
                                  
                 
@@ -148,28 +147,22 @@ class SessionProcessor(object):
                     ## inference parsing
                     for inference in inferences:
                         try:
-                            morphemes_inferences['utterance_id_fk'] = inference['parent_id']
+                            morphemes_inferences['utterance_id_fk'] = inference['utterance_id_fk']
+                            morphemes_inferences['corpus'] = self.corpus
+                            morphemes_inferences['language'] = self.language
                             morphemes_inferences['morpheme'] = inference['morpheme']
                             morphemes_inferences['segment_target'] = inference['morpheme']
                             morphemes_inferences['gloss_target'] = inference['gloss_target']
                             morphemes_inferences['pos_target'] = inference['pos_target']
                             if 'warning' in inference.keys():
                                 morphemes_warnings['corpus'] = utterance['corpus']
-                                morphemes_warnings['parent_id'] = inference['parent_id']
+                                morphemes_warnings['utterance_id_fk'] = inference['utterance_id_fk']
                                 morphemes_warnings['warning'] = inference['warning']
                                 self.warnings.append(Warnings(**morphemes_warnings))
-                                
                         except KeyError:
-                            morphemes_inferences['morpheme'] = ''
-                            morphemes_inferences['segment'] = ''
-                            morphemes_inferences['pos'] = ''
-                            morphemes_inferences['gloss'] = ''
-                        
+                            continue
                         except TypeError:
-                            morphemes_inferences['morpheme'] = ''
-                            morphemes_inferences['segment'] = ''
-                            morphemes_inferences['pos'] = ''
-                            morphemes_inferences['gloss'] = ''
+                            continue
                             
                         self.morphemes.append(Morpheme(**morphemes_inferences))
                                                         
@@ -180,22 +173,20 @@ class SessionProcessor(object):
                     for (morpheme,inference) in it.zip_longest(morphemes,inferences):
                         try:
                             morphemes_inferences['utterance_id_fk'] = morpheme['utterance_id_fk']
+                            morphemes_inferences['corpus'] = self.corpus
+                            morphemes_inferences['language'] = self.language
                             morphemes_inferences['morpheme'] = morpheme['morpheme']
                             morphemes_inferences['segment'] = morpheme['morpheme']
                             morphemes_inferences['gloss'] = inference['gloss']
                             if 'warning' in inference.keys():
                                 morphemes_warnings['corpus'] = utterance['corpus']
-                                morphemes_warnings['parent_id'] = morpheme['parent_id']
+                                morphemes_warnings['utterance_id_fk'] = morpheme['utterance_id_fk']
                                 morphemes_warnings['warning'] = inference['warning']
                                 self.warnings.append(Warnings(**morphemes_warnings))
                         except TypeError:
-                            morphemes_inferences['morpheme'] = ''
-                            morphemes_inferences['segment'] = ''
-                            morphemes_inferences['gloss'] = ''
+                            continue
                         except KeyError:
-                            morphemes_inferences['morpheme'] = ''
-                            morphemes_inferences['segment'] = ''
-                            morphemes_inferences['gloss'] = ''
+                            continue
                             
                         self.morphemes.append(Morpheme(**morphemes_inferences))
 
@@ -208,14 +199,16 @@ class SessionProcessor(object):
 
                 for word in words:
                     # TODO: add in session id?
-                    word['corpus'] = self.corpus
                     word['utterance_id_fk'] = utterance['utterance_id']
+                    word['corpus'] = utterance['corpus']
                     self.words.append(Word(**word))
 
                 for morpheme in morphemes:
                     morpheme['utterance_id_fk'] = utterance['utterance_id']
+                    morpheme['corpus'] = utterance['corpus']
                     self.morphemes.append(Morpheme(**morpheme))
 
+        # TODO: remove / comment out
         elif self.format == "ChatXML":
             #TODO(chysi): this doesn't look like a generator to me!!!
             for u, words, morphemes in self.parser.next_utterance():
