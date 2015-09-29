@@ -4,8 +4,6 @@
 # TODO: implement postprocessing tasks:
 #  - keep all original data and add new columns for calculated and inferred stuff
 #  - morphological label unification
-#  - calculate age (date reformatting ("P25Y", etc. ??)
-#  - calculate age_in_days
 #  - normalize all relevant column data, e.g.:
 #    role: target_child, Target Child, Target_child, etc. --> Target_Child (per CHAT specification!)
 #    gender: female, Female, etc. -> Female
@@ -91,17 +89,30 @@ def update_age(session, config):
     else:
         update_xml_age(session, config)
 
+def apply_gloss_regex(session, config):
+    regex = re.compile(config["gloss"]["regex"])
+    for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
+        sid = db_session_entry.session_id
+        for row in session.query(backend.Morpheme).filter(
 
 @db_apply
 def unify_glosses(session, config):
     for row in session.query(backend.Morpheme):
-        old_gloss = row.gloss
+        old_gloss = None
+        if row.gloss:
+            old_gloss = row.gloss
+        elif row.gloss_target:
+            old_gloss = row.gloss_target
+        elif row.pos:
+            old_gloss = row.pos
+        elif row.pos_target:
+            old_gloss = row.pos_target
         try:
             if old_gloss in config["gloss"]:
                 new_gloss = config["gloss"][old_gloss]
-                row.gloss = new_gloss
+                row.clean_gloss = new_gloss
         except KeyError:
-            print("Error: .ini file for corpus {0} does not have gloss replacement rules configured!".format(config["corpus"]["corpus"]), file=sys.stderr)
+            print("Error: .ini file for corpus {0} does not have gloss replacement rules properly configured!".format(config["corpus"]["corpus"]), file=sys.stderr)
             return
 
 if __name__ == "__main__":
@@ -116,3 +127,5 @@ if __name__ == "__main__":
         print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
         update_age(cfg, engine)
         unify_glosses(cfg, engine)
+
+

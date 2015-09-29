@@ -39,8 +39,8 @@ if __name__ == "__main__":
         cfg.read(config)
 
         # Process by parsing the files and adding extracted data to the db
-        #c = CorpusProcessor(cfg, engine)
-        #c.process_corpus()
+        c = CorpusProcessor(cfg, engine)
+        c.process_corpus()
 
         #Do the postprocessing
         print("Postprocessing database entries for {0}...".format(config.split(".")[0]))

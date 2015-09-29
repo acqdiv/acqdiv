@@ -128,7 +128,7 @@ class Morpheme(Base):
     # fk...
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Text, ForeignKey('utterance.id'))
+    utterance_id_fk = Column(Text, ForeignKey('utterance.id'))
     morpheme = Column(Text, nullable=True, unique=False)
     morpheme_target = Column(Text, nullable=True, unique=False)
     gloss = Column(Text, nullable=True, unique=False)
