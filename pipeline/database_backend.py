@@ -62,11 +62,13 @@ class Speaker(Base):
     speaker_id = Column(Text, nullable=True, unique=False)
     name = Column(Text, nullable=True, unique=False)
     age = Column(Text, nullable=True, unique=False)
+    clean_age = Column(Text, nullable=True, unique=False)
     age_in_days = Column(Integer, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
     role = Column(Text, nullable=True, unique=False)
     normalized_role = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
+    # languages_spoken = Column(Text, nullable=True, unique=False)
     birthdate = Column(Text, nullable=True, unique=False)
 
     # optional pretty formatting
@@ -112,7 +114,10 @@ class Word(Base):
     # fk...
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     id = Column(Integer, primary_key=True)
-    utterance_id_fk = Column(Text, ForeignKey('utterance.id'))
+    utterance_id_fk = Column(Text, ForeignKey('utterance.utterance_id'))
+    corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
+    language = Column(Text, nullable=True, unique=False)
+    corpus = Column(Text, nullable=True, unique=False)
     #Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
     word = Column(Text, nullable=True, unique=False)
     word_target = Column(Text, nullable=True, unique=False)
@@ -128,11 +133,13 @@ class Morpheme(Base):
     # fk...
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Text, ForeignKey('utterance.id'))
+    utterance_id_fk = Column(Text, ForeignKey('utterance.utterance_id'))
+    corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
+    language = Column(Text, nullable=True, unique=False)
     morpheme = Column(Text, nullable=True, unique=False)
     morpheme_target = Column(Text, nullable=True, unique=False)
-    gloss = Column(Text, nullable=True, unique=False)
     clean_gloss = Column(Text, nullable=True, unique=False)
+    gloss = Column(Text, nullable=True, unique=False)
     gloss_target = Column(Text, nullable=True, unique=False)
     pos = Column(Text, nullable=True, unique=False)
     pos_target = Column(Text, nullable=True, unique=False)
@@ -140,8 +147,6 @@ class Morpheme(Base):
     segment_target = Column(Text, nullable=True, unique=False)
     # TODO: get unique morphemes and assign ids in the postprocessor
     morpheme_id = Column(Text, nullable=True, unique=False)
-
-
 
 class Warnings(Base):
     # Table for warnings found in parsing (should be record/multiple levels?)
@@ -153,5 +158,5 @@ class Warnings(Base):
     #id = Column(Text, primary_key=True) ## @bambooforest Is that a mistake?
     id = Column(Integer,primary_key=True)
     corpus = Column(Text, nullable=True, unique=False)
-    parent_id = Column(Text, ForeignKey('utterance.id'))
+    utterance_id_fk = Column(Text, ForeignKey('utterance.utterance_id'))
     warning = Column(Text, nullable=True, unique=False)

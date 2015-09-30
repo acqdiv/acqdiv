@@ -1342,6 +1342,21 @@ def parse_xml(file_name, corpus_name):
                 morphology.text = re.sub('(^|\\s)[\.\?!\+\/]+(\\s|$)', '\\1\\2', morphology.text)
                 morphology.text = re.sub('(^|\\s)tag\|\\S+(\\s|$)', '\\1\\2', morphology.text)
                 morphology.text = re.sub('\\s+$', '', morphology.text)
+                # Yucatec uses ":" both to separate glosses belonging to the same morpheme AND as a morpheme separator. Replace in known cases with frequency > 10. 
+                morphology.text = re.sub('N:PROP', 'N.PROP', morphology.text)
+                morphology.text = re.sub('ABS:SG', 'ABS.SG', morphology.text)
+                morphology.text = re.sub('CLFR:INAN', 'CLFR.INAN', morphology.text)
+                morphology.text = re.sub('ABS:PL', 'ABS.PL', morphology.text)
+                morphology.text = re.sub('NEG:EXIST', 'NEG.EXIST', morphology.text)
+                morphology.text = re.sub('DEICT:PROX', 'DEICT.PROX', morphology.text)
+                morphology.text = re.sub('PT:NEG', 'PT.NEG', morphology.text)
+                morphology.text = re.sub('V:CAUS', 'V.CAUS', morphology.text)
+                morphology.text = re.sub('V:AUX', 'V.AUX', morphology.text)
+                morphology.text = re.sub('V:IMP', 'V.IMP', morphology.text)
+                morphology.text = re.sub('AUX:NEG', 'AUX.NEG', morphology.text)
+                morphology.text = re.sub('IMP:SG', 'IMP.SG', morphology.text)
+                morphology.text = re.sub('DEICT:DIST', 'DEICT.DIST', morphology.text)
+                morphology.text = re.sub('PRON:SG', 'PRON.SG', morphology.text)
                                 
                 # split mor tier into words, reset counter to 0
                 word_index = -1
@@ -1514,6 +1529,8 @@ def parse_toolbox(file_name, corpus_name):
                     content = re.sub('\\s+', ' ', content)
                     # Russian & Indonesian: garbage imported from CHAT
                     content = re.sub('xxx?|www', '???', content)
+                    # Chintang: unknown gloss
+                    content = re.sub('\*\*\*', '???', content)
                     
                     # then save
                     record[field_marker] = content
@@ -1750,7 +1767,7 @@ def parse_toolbox(file_name, corpus_name):
                             for m in morphemes:
                                 
                                 # ignore punctuation
-                                if re.search('^([\.,;!:\"\+\-\/]+|\?)$|PUNCT|ANNOT', m):
+                                if re.search('^([\.,;!:\"\+\-\/]+|\?)$|PUNCT|ANNOT|ZNAK', m):
                                     continue    
                                 # count up word index, extend list if necessary
                                 else:    
