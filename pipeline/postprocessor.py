@@ -143,10 +143,10 @@ def unifyRoles(session, config):
     corpus_name = config["corpus"]["corpus"]
     linguists = ["collector", "researcher", "investigator", "annotator","observer"]
     helper = ["helper", "facilitator"]
-    for a_session in session.query(Session).filter(Session.corpus == corpus_name):
+    for a_session in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
         #we iterate through every session of current corpus
         sessionID = a_session.session_id
-        for row in session.query(Speaker).filter(Speaker.session_id_fk == sessionID):
+        for row in session.query(backend.Speaker).filter(backend.Speaker.session_id_fk == sessionID):
             #we iterate through every row of current session, looking at table "Speaker"
             currRole = row.role
             #finding out what kind of role we have and map it to equivalent normalized role
