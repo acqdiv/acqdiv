@@ -65,6 +65,7 @@ class Speaker(Base):
     age_in_days = Column(Integer, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
     role = Column(Text, nullable=True, unique=False)
+    normalized_role = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     birthdate = Column(Text, nullable=True, unique=False)
 
