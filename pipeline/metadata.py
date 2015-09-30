@@ -196,7 +196,7 @@ if __name__=="__main__":
     # cfg = CorpusConfigParser()
     cfg = ccp()
     cfg.read("Indonesian.ini")
-    f = "../corpora/Indonesian/xml/HIZ-2001-06-01.xml"
+    f = "../corpora/Indonesian/xml/HIZ-1999-06-05.xml"
     chat = Chat(cfg, f)
     # chat = Chat(f)
     for i in chat.metadata:
@@ -208,17 +208,17 @@ if __name__=="__main__":
     print("CHINTANG:")
     cfg = ccp()
     cfg.read("Chintang.ini")
-    imdi = Imdi(cfg, "../corpora/Chintang/metadata/CLDLCh1R01S01.imdi")
+    imdi = Imdi(cfg, "../corpora/Chintang/imdi/CLDLCh1R01S01.imdi")
     for k, v in imdi.metadata.items():
         print(k, v)
         print()
     # print(imdi.metadata['session']['location']['address'])
     print("#########################")
 
-    print("CREE:")
+    print("JPN_MIYATA:")
     cfg = ccp()
-    cfg.read("Cree.ini")
-    chat = Chat(cfg, "../corpora/Cree/xml/2005-03-08.xml")
+    cfg.read("JapaneseMiyata.ini")
+    chat = Chat(cfg, "../corpora/Cree/xml/aki10610.xml")
     for i in chat.metadata:
         print(i)
         print(chat.metadata[i])

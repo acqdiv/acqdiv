@@ -278,7 +278,7 @@ class ToolboxFile(object):
                     d = collections.OrderedDict()
                     ## 1)
                     if ':' not in pos:
-                        d['parent_id'] = utterances['utterance_id']
+                        d['utterance_id_fk'] = utterances['utterance_id']
                         d['pos'] = pos
                         d['gloss'] = pos
                         result.append(d)
@@ -286,7 +286,7 @@ class ToolboxFile(object):
                     elif pos.startswith('V') or pos.startswith('ADJ'):
                         match_verb_adj = re.search('(V|ADJ)-(.*$)', pos)
                         if match_verb_adj:
-                            d['parent_id'] = utterances['utterance_id']
+                            d['utterance_id_fk'] = utterances['utterance_id']
                             d['pos'] = match_verb_adj.group(1)
                             d['gloss'] = match_verb_adj.group(2)
                             result.append(d)
@@ -294,14 +294,14 @@ class ToolboxFile(object):
                     else:
                         match_gloss_pos = re.search('(^[^(V|ADJ)].*?):(.*$)', pos)
                         if match_gloss_pos:
-                            d['parent_id'] = utterances['utterance_id']
+                            d['utterance_id_fk'] = utterances['utterance_id']
                             d['pos'] = match_gloss_pos.group(1)
                             d['gloss'] = match_gloss_pos.group(2)
                             result.append(d)
                             
             else:
                 d = collections.OrderedDict()
-                d['parent_id'] = utterances['utterance_id']
+                d['utterance_id_fk'] = utterances['utterance_id']
                 d['pos'] = ''
                 d['gloss'] = ''
                 d['warning'] = 'not glossed'
@@ -314,12 +314,12 @@ class ToolboxFile(object):
                 glosses = glosses_Indonesian.split()
                 for gloss in glosses:
                     d = collections.OrderedDict()
-                    d['parent_id'] = utterances['utterance_id']
+                    d['utterance_id_fk'] = utterances['utterance_id']
                     d['gloss'] = gloss
                     result.append(d)
             else:
                 d = collections.OrderedDict()
-                d['parent_id'] = utterances['utterance_id']
+                d['utterance_id_fk'] = utterances['utterance_id']
                 d['gloss'] = ''
                 d['warning'] = 'not glossed'
                 result.append(d)
@@ -337,7 +337,7 @@ class ToolboxFile(object):
                     glosses_Chintang = utterances['gloss']
                 except KeyError:
                     glosses_Chintang = ''
-                    d['parent_id'] = utterances['utterance_id']
+                    d['utterance_id_fk'] = utterances['utterance_id']
                     d['warning'] = 'not glossed (gloss missing)'
                     #self.warnings['warning'] = 'not glossed'
                     result.append(d)
@@ -345,7 +345,7 @@ class ToolboxFile(object):
                     pos_Chintang = utterances['pos']
                 except KeyError:
                     pos_Chintang = ''
-                    d['parent_id'] = utterances['utterance_id']
+                    d['utterance_id_fk'] = utterances['utterance_id']
                     d['warning'] = 'pos missing'
                     #self.warnings['warning'] = 'pos missing!'
                     result.append(d)
@@ -359,7 +359,7 @@ class ToolboxFile(object):
                 for (morpheme_target, gloss,pos) in zip_longest(morphemes_targets, glosses_targets,pos_targets):
                     morphemes_target_counter += 1
                     d = collections.OrderedDict()
-                    d['parent_id'] = utterances['utterance_id']
+                    d['utterance_id_fk'] = utterances['utterance_id']
                     #d['morpheme_id'] = str(utterances['utterance_id'])+'_'+str(morphemes_target_counter) ## needed?
                     d['morpheme'] = morpheme_target
                     d['segment_target'] = morpheme_target
@@ -370,7 +370,7 @@ class ToolboxFile(object):
                 d = collections.OrderedDict()
                 d['morpheme'] = ''
                 d['segment_target'] = ''
-                d['parent_id'] = utterances['utterance_id']
+                d['utterance_id_fk'] = utterances['utterance_id']
                 #d['morpheme_id'] = '' ## needed??
                 d['gloss_target'] = ''
                 d['pos_target'] = ''
@@ -397,7 +397,7 @@ class ToolboxFile(object):
                     d = collections.OrderedDict()
                     d['morpheme'] = morpheme
                     d['segment_target'] = morpheme
-                    d['parent_id'] = utterances['utterance_id']
+                    d['utterance_id_fk'] = utterances['utterance_id']
                     result.append(d)
                     
             ## Indonesian specific morpheme stuff
@@ -409,7 +409,7 @@ class ToolboxFile(object):
                     d = collections.OrderedDict()
                     d['morpheme'] = morpheme
                     d['segment'] = morpheme
-                    d['parent_id'] = utterances['utterance_id']
+                    d['utterance_id_fk'] = utterances['utterance_id']
                     result.append(d)
                 
             ## Chintang specific morpheme stuff
@@ -421,12 +421,12 @@ class ToolboxFile(object):
                 for morpheme in morphemes:
                     d = collections.OrderedDict()
                     d['morpheme'] = morpheme
-                    d['parent_id'] = utterances['utterance_id']
+                    d['utterance_id_fk'] = utterances['utterance_id']
                     result.append(d)    
         else:
             d = collections.OrderedDict()
             d['morpheme'] = ''
-            d['parent_id'] = utterances['utterance_id']
+            d['utterance_id_fk'] = utterances['utterance_id']
             d['warning']  = 'morpheme missing' 
             result.append(d)
             #self.warnings['warning'] = 'morpheme missing!'

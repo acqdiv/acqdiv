@@ -4,8 +4,6 @@
 # TODO: implement postprocessing tasks:
 #  - keep all original data and add new columns for calculated and inferred stuff
 #  - morphological label unification
-#  - calculate age (date reformatting ("P25Y", etc. ??)
-#  - calculate age_in_days
 #  - normalize all relevant column data, e.g.:
 #    role: target_child, Target Child, Target_child, etc. --> Target_Child (per CHAT specification!)
 #    gender: female, Female, etc. -> Female
@@ -25,8 +23,11 @@
 # TODO: identify body parsing errors and fixes
 
 from sqlalchemy.orm import sessionmaker
-from database_backend import *
+import database_backend as backend
 import age
+import sys
+import parsers
+import re
 
 def db_apply(func):
     def update_session(config, engine):
@@ -38,46 +39,48 @@ def db_apply(func):
             session.commit()
         except Exception as e:
             session.rollback()
-            print("Error {0}: {1}".format(type(e), e))
+            print("Error {0}: {1}".format(type(e), e), file=sys.stderr)
         finally:
             session.close()
     return update_session
 
 def update_xml_age(session, config):
     corpus_name = config["corpus"]["corpus"]
-    for db_session_entry in session.query(Session).filter(Session.corpus == corpus_name):
+    for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
         sid = db_session_entry.session_id
-        for row in session.query(Speaker).filter(Speaker.age != None, Speaker.session_id_fk == sid):
-            nage = age.format_xml_age(row.age)
-            if nage:
-                row.age = nage
-                aid = age.calculate_xml_days(nage)
+        for row in session.query(backend.Speaker).filter(backend.Speaker.age != None, backend.Speaker.session_id_fk == sid):
+            new_age = age.format_xml_age(row.age)
+            if new_age:
+                row.clean_age = new_age
+                aid = age.calculate_xml_days(new_age)
                 row.age_in_days = aid
 
 def update_imdi_age(session, config):
     corpus_name = config["corpus"]["corpus"]
-    for db_session_entry in session.query(Session).filter(Session.corpus == corpus_name):
+    for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
         sid = db_session_entry.session_id
-        for db_speaker_entry in session.query(Speaker).filter(~Speaker.birthdate.like("Un%"),
-                Speaker.session_id_fk == sid):
+        cleaned_age = re.compile('\d{1,2};\d\.\d')
+        for db_speaker_entry in session.query(backend.Speaker).filter(~backend.Speaker.birthdate.like("Un%"),
+                backend.Speaker.session_id_fk == sid):
             try:
-                recdate = age.numerize_date(db_session_entry.date)
-                bdate = age.numerize_date(db_speaker_entry.birthdate)
-                ages = age.format_imdi_age(bdate, recdate)
-                db_speaker_entry.age = ages[0]
+                recording_date = age.numerize_date(db_session_entry.date)
+                birth_date = age.numerize_date(db_speaker_entry.birthdate)
+                ages = age.format_imdi_age(birth_date, recording_date)
+                db_speaker_entry.clean_age = ages[0]
                 db_speaker_entry.age_in_days = ages[1]
             except Exception as e:
-                    print("Couldn't calculate age of speaker {0}".format(db_speaker_entry.id))
-                    print("Error: {0}".format(e))
-        for db_speaker_entry in session.query(Speaker).filter(Speaker.age != None, ~Speaker.age.like("%Un%"), 
-                Speaker.birthdate.like("Un%"), Speaker.session_id_fk == sid):
-            try:
-                ages = age.clean_year_only_ages(db_speaker_entry.age)
-                db_speaker_entry.age = ages[0]
-                db_speaker_entry.age_in_days = ages[1]
-            except Exception as e:
-                    print("Couldn't calculate age of speaker {0}".format(db_speaker_entry.id))
-                    print("Error: {0}".format(e))
+                    print("Couldn't calculate age of speaker {0}".format(db_speaker_entry.id), file=sys.stderr)
+                    print("Error: {0}".format(e), file=sys.stderr)
+        for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.age != None, ~backend.Speaker.age.like("%Un%"), 
+                backend.Speaker.birthdate.like("Un%"), backend.Speaker.session_id_fk == sid):
+            if not cleaned_age.fullmatch(db_speaker_entry.age):
+                try:
+                    ages = age.clean_year_only_ages(db_speaker_entry.age)
+                    db_speaker_entry.clean_age = ages[0]
+                    db_speaker_entry.age_in_days = ages[1]
+                except Exception as e:
+                        print("Couldn't calculate age of speaker {0}".format(db_speaker_entry.id), file=sys.stderr)
+                        print("Error: {0}".format(e), file=sys.stderr)
 
 @db_apply
 def update_age(session, config):
@@ -86,15 +89,50 @@ def update_age(session, config):
     else:
         update_xml_age(session, config)
 
+#WARNING: UNFINISHED CODE // DO NOT CALL
+#TODO
+def apply_gloss_regex(session, config):
+    regex = re.compile(config["gloss"]["regex"])
+    for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
+        sid = db_session_entry.session_id
+#        for row in session.query(backend.Morpheme).filter(
 
 @db_apply
 def unify_glosses(session, config):
-    for row in session.query(Morpheme):
-        old_gloss = row.gloss
+    corpus_name = config["corpus"]["corpus"]
+    for row in session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name):
+        old_gloss = None
+        if row.gloss:
+            old_gloss = row.gloss
+        elif row.gloss_target:
+            old_gloss = row.gloss_target
+        elif row.pos:
+            old_gloss = row.pos
+        elif row.pos_target:
+            old_gloss = row.pos_target
         try:
             if old_gloss in config["gloss"]:
                 new_gloss = config["gloss"][old_gloss]
-                row.gloss = new_gloss
+                # TODO:
+                # this is a debug print to find out what is and isn't getting replaced
+                # we need to automate this
+                # print(old_gloss, new_gloss)
+                row.clean_gloss = new_gloss
         except KeyError:
-            print("Error: .ini file for corpus {0} does not have gloss replacement rules configured!".format(config["corpus"]["corpus"]))
+            print("Error: .ini file for corpus {0} does not have gloss replacement rules properly configured!".format(config["corpus"]["corpus"]), file=sys.stderr)
             return
+
+if __name__ == "__main__":
+    
+    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
+              'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
+
+    engine = backend.db_connect()
+    cfg = parsers.CorpusConfigParser()
+    for config in configs:
+        cfg.read(config)
+        print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
+        update_age(cfg, engine)
+        unify_glosses(cfg, engine)
+
+
