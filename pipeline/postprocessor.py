@@ -136,3 +136,30 @@ if __name__ == "__main__":
         unify_glosses(cfg, engine)
 
 
+#normalizing roles section
+@db_apply
+def unifyRoles(session, config):
+    #lists of roles which have to be recognized
+    corpus_name = config["corpus"]["corpus"]
+    linguists = ["collector", "researcher", "investigator", "annotator","observer"]
+    helper = ["helper", "facilitator"]
+    for a_session in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
+        #we iterate through every session of current corpus
+        sessionID = a_session.session_id
+        for row in session.query(backend.Speaker).filter(backend.Speaker.session_id_fk == sessionID):
+            #we iterate through every row of current session, looking at table "Speaker"
+            currRole = row.role
+            #finding out what kind of role we have and map it to equivalent normalized role
+            if "target" in currRole.lower() or "focus" in currRole.lower():
+                newRole = "target_child"
+            elif len([item for item in linguists if item in currRole.lower()]) >= 1:
+                #condition "complicated" because there are roles that contain multiple words
+                newRole = "linguist"
+            elif len([item for item in helper if item in currRole.lower()]) >= 1:
+                newRole = "helper"
+            else:
+                newRole = "others/non-humans"
+            #writing normalized role into column "normalized_role"
+            row.normalized_role = newRole
+
+
