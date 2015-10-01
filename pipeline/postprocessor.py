@@ -91,14 +91,23 @@ def update_age(session, config):
 
 #WARNING: UNFINISHED CODE // DO NOT CALL
 #TODO
-def apply_gloss_regex(session, config):
-    regex = re.compile(config["gloss"]["regex"])
-    for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
-        sid = db_session_entry.session_id
-#        for row in session.query(backend.Morpheme).filter(
+def apply_gloss_regexes(session, config):
+    corpus_name = config["corpus"]["corpus"]
+    regexes = config["regex"].items() 
+    ssq = session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name, ~backend.Morpheme.gloss == None)
+    for item in regexes:
+        pattern = item[0][1:-1]
+        replacement = item[1][1:-1]
+        for row in ssq:
+            try:
+                re.sub(pattern, replacement, row.clean_gloss)
+            except TypeError:
+                continue
+            except:
+                print("Error: Improper gloss regex in {0}.ini: {1}".format(corpus_name, item), file=sys.stderr)
 
-@db_apply
-def unify_glosses(session, config):
+
+def unify_gloss_labels(session, config):
     corpus_name = config["corpus"]["corpus"]
     for row in session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name):
         old_gloss = None
@@ -121,11 +130,20 @@ def unify_glosses(session, config):
         except KeyError:
             print("Error: .ini file for corpus {0} does not have gloss replacement rules properly configured!".format(config["corpus"]["corpus"]), file=sys.stderr)
             return
+@db_apply
+def unify_glosses(session, config):
+    if config["corpus"]["corpus"] == "Russian":
+        apply_gloss_regexes(session, config)
+        unify_gloss_labels(session, config)
+    else:
+        unify_gloss_labels(session, config)
+        apply_gloss_regexes(session, config)
 
 if __name__ == "__main__":
     
-    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
-              'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
+    #configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
+    #          'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
+    configs = ['Sesotho.ini']
 
     engine = backend.db_connect()
     cfg = parsers.CorpusConfigParser()
