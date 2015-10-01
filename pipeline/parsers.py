@@ -147,6 +147,7 @@ class ToolboxParser(SessionParser):
         # Presumably we will have to look for the metadata file in the config.
         # The config so it knows what symbols to look for.
 
+        # TODO: fix this to just session or just __attrs__ in the metadata parser
         # this is an ugly hack due to the Indonesian corpus (body=Toolbox, but meta=XML)
         if self.metadata_parser.__class__.__name__ == "Imdi":
             return self.metadata_parser.metadata['session']
@@ -160,6 +161,8 @@ class ToolboxParser(SessionParser):
         :return dictionary
         """
         for speaker in self.metadata_parser.metadata['participants']:
+            print()
+            print("speaker:", speaker)
             yield speaker
 
     def next_utterance(self):

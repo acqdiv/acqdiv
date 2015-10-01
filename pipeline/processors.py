@@ -77,12 +77,17 @@ class SessionProcessor(object):
         # Get speaker metadata; capture data specified in corpus config
         self.speaker_entries = []
         for speaker in self.parser.next_speaker():
+            print("speaker-returned:", speaker)
             d = {}
             for k, v in speaker.items():
-                if not k in self.config['speaker_labels'].values():
-                    continue
-                d[k] = v
+                if k in self.config['speaker_labels'].keys():
+                    d[self.config['speaker_labels'][k]] = v
+                #if not k in self.config['speaker_labels'].values():
+                #    continue
+                #d[k] = v
+            print(d)
             d['session_id_fk'] = self.filename
+            d['language'] = self.config['corpus']['language']
             self.speaker_entries.append(Speaker(**d))
 
         # TODO(stiv): Need to add to each utterance some kind of joining key.
@@ -90,7 +95,7 @@ class SessionProcessor(object):
         # we do database stuff, and not in the parser (there's no reason the parser
         # should have to know about primary keys - it's a parser, not a db)
 
-        # CHATXML | Toolbox body parsing begins...
+        # CHATXML or Toolbox body parsing begins...
         self.utterances = []
         self.words = []
         self.morphemes = []

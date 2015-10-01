@@ -59,6 +59,7 @@ class Speaker(Base):
 
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('session.session_id'))
+    language = Column(Text, nullable=True, unique=False)
     # label = Column(Text, nullable=True, unique=False)
     # TODO: add speaker id
     speaker_id = Column(Text, nullable=True, unique=False)
