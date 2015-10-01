@@ -161,8 +161,6 @@ class ToolboxParser(SessionParser):
         :return dictionary
         """
         for speaker in self.metadata_parser.metadata['participants']:
-            print()
-            print("speaker:", speaker)
             yield speaker
 
     def next_utterance(self):

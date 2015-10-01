@@ -77,7 +77,6 @@ class SessionProcessor(object):
         # Get speaker metadata; capture data specified in corpus config
         self.speaker_entries = []
         for speaker in self.parser.next_speaker():
-            print("speaker-returned:", speaker)
             d = {}
             for k, v in speaker.items():
                 if k in self.config['speaker_labels'].keys():
@@ -85,7 +84,6 @@ class SessionProcessor(object):
                 #if not k in self.config['speaker_labels'].values():
                 #    continue
                 #d[k] = v
-            print(d)
             d['session_id_fk'] = self.filename
             d['language'] = self.config['corpus']['language']
             self.speaker_entries.append(Speaker(**d))
