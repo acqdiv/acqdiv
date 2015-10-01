@@ -22,7 +22,6 @@ class Parser(object):
         self.config = config
         self.tree = objectify.parse(path)
         self.root = self.tree.getroot()
-
         self.metadata = {
             '__attrs__': self.parse_attrs(self.root),
                     }
@@ -147,8 +146,10 @@ class Chat(Parser):
         Parser.__init__(self, config, path)
         self.metadata["participants"] = self.get_participants(self.root)
         self.metadata["comments"] = self.get_comments(self.root)
-        self.metadata["comments"] = self.get_comments(self.root)
-        self.unifier.unify()
+        # self.metadata["session"] = self.get_session_data()
+
+        # self.metadata["comments"] = self.get_comments(self.root)
+        # self.unifier.unify()
         # self.write_json(self.metadata)
 
     # TODO: where is the get_sessions stuff? in the unifier?
@@ -164,9 +165,7 @@ class Chat(Parser):
             pass
 
 class Unifier():
-
     def __init__(self,metadict,cfg):
-
         self.metadata = metadict
         self.config = cfg
         #if 'IMDI' in self.metadata["__attrs__"]['schemaLocation']:
