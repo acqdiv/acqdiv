@@ -86,6 +86,8 @@ class Utterance(Base):
     session_id_fk = Column(Text, ForeignKey('session.session_id'))
     utterance_id = Column(Text, nullable=True, unique=False) # utterance id in original file
     corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
+    speaker_id = Column(Text, nullable=True, unique=False)
+    addressee = Column(Text, nullable=True, unique=False) # exists at least in Russian
     # TODO: rename this type
     utterance_type = Column(Text, nullable=True, unique=False) # phonetic or orthographic
     # TODO: rename this utterance_original
@@ -99,10 +101,6 @@ class Utterance(Base):
     morpheme = Column(Text, nullable=True, unique=False) # morpheme line
     gloss = Column(Text, nullable=True, unique=False) # what to do with the "gloss"?
     pos = Column(Text, nullable=True, unique=False) # parts of speech line
-    speaker_id = Column(Text, nullable=True, unique=False)
-    # TODO: add speaker
-    speaker_id = Column(Text, nullable=True, unique=False)
-    addressee = Column(Text, nullable=True, unique=False) # exists at least in Russian
 
     # speaker_label = Column(Text, nullable=True, unique=False) # -> speaker_id
     # TODO: drop
