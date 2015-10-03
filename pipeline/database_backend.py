@@ -36,16 +36,18 @@ class Session(Base):
     id = Column(Integer, primary_key=True)
     # session_id = Column(Text, nullable=True, unique=False)
     session_id = Column(Text, nullable=False, unique=False) # filename
-    language = Column(Text, nullable=True, unique=False)
     corpus = Column(Text, nullable=True, unique=False)
+    language = Column(Text, nullable=True, unique=False)
     date = Column(Text, nullable=True, unique=False)
-    genre = Column(Text, nullable=True, unique=False)
     situation = Column(Text, nullable=True, unique=False)
+    genre = Column(Text, nullable=True, unique=False)
     # this stuff seems mostly blank because we are not extracing metadata from the .cdc files
     # address = Column(Text, nullable=True, unique=False)
     # continent = Column(Text, nullable=True, unique=False)
     # country = Column(Text, nullable=True, unique=False)
     transcript_id = Column(Text, nullable=True, unique=False) # original file name via ID in XML files (Chintang, Cree, Indonesian & Russian)
+    media = Column(Text, nullable=True, unique=False) # original file name via ID in XML files (Chintang, Cree, Indonesian & Russian)
+    media_type = Column(Text, nullable=True, unique=False) # original file name via ID in XML files (Chintang, Cree, Indonesian & Russian)
 
     # foreign relationships
     speakers = relationship('Speaker', backref='session') #, lazy='dynamic')
@@ -57,6 +59,7 @@ class Speaker(Base):
 
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('session.session_id'))
+    language = Column(Text, nullable=True, unique=False)
     # label = Column(Text, nullable=True, unique=False)
     # TODO: add speaker id
     speaker_id = Column(Text, nullable=True, unique=False)
@@ -66,7 +69,8 @@ class Speaker(Base):
     age_in_days = Column(Integer, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
     role = Column(Text, nullable=True, unique=False)
-    language = Column(Text, nullable=True, unique=False)
+    normalized_role = Column(Text, nullable=True, unique=False)
+    languages_spoken = Column(Text, nullable=True, unique=False)
     # languages_spoken = Column(Text, nullable=True, unique=False)
     birthdate = Column(Text, nullable=True, unique=False)
 
@@ -80,25 +84,32 @@ class Utterance(Base):
 
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Text, ForeignKey('session.session_id'))
-    corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
     utterance_id = Column(Text, nullable=True, unique=False) # utterance id in original file
-    utterance_type = Column(Text, nullable=True, unique=False) # phonetic or orthographic
-    utterance = Column(Text, nullable=True, unique=False) # original utterance
-    utterance_cleaned = Column(Text, nullable=True, unique=False) # our cleaned-up utterance
-    morpheme = Column(Text, nullable=True, unique=False) # morpheme line
-    word = Column(Text, nullable=True, unique=False) # words line? what is Robert's "full_word"?
-    pos = Column(Text, nullable=True, unique=False) # parts of speech line
+    corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
     speaker_id = Column(Text, nullable=True, unique=False)
+    addressee = Column(Text, nullable=True, unique=False) # exists at least in Russian
+    # TODO: rename this type
+    utterance_type = Column(Text, nullable=True, unique=False) # phonetic or orthographic
+    # TODO: rename this utterance_original
+    utterance = Column(Text, nullable=True, unique=False) # original utterance
+    # TODO: rename this utterance
+    utterance_cleaned = Column(Text, nullable=True, unique=False) # our cleaned-up utterance
+    translation = Column(Text, nullable=True, unique=False)
+    # TODO: rename this words
+    word = Column(Text, nullable=True, unique=False) # words line? what is Robert's "full_word"?
+    # TODO: rename this morphemes
+    morpheme = Column(Text, nullable=True, unique=False) # morpheme line
+    gloss = Column(Text, nullable=True, unique=False) # what to do with the "gloss"?
+    pos = Column(Text, nullable=True, unique=False) # parts of speech line
+
     # speaker_label = Column(Text, nullable=True, unique=False) # -> speaker_id
+    # TODO: drop
     u_orthographic = Column(Text, nullable=True, unique=False) # orthographic utterance
     u_phonetic = Column(Text, nullable=True, unique=False) # phonetic utterance
     sentence_type = Column(Text, nullable=True, unique=False)
-    translation = Column(Text, nullable=True, unique=False)
     timestamp_start = Column(Text, nullable=True, unique=False)
     timestamp_end = Column(Text, nullable=True, unique=False)
     comment = Column(Text, nullable=True, unique=False)
-    addressee = Column(Text, nullable=True, unique=False) # exists at least in Russian
-    gloss = Column(Text, nullable=True, unique=False) # what to do with the "gloss"?
     warnings = Column(Text, nullable=True, unique=False) # Robert's warnings!
 
     #Morphemes = sa.Column(sa.Text, nullable=False, unique=False) # concatenated MorphemeIDs per utterance
@@ -114,7 +125,8 @@ class Word(Base):
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     id = Column(Integer, primary_key=True)
     utterance_id_fk = Column(Text, ForeignKey('utterance.utterance_id'))
-    corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
+    # TODO: do we really need corpus at the word level?
+    # corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
     language = Column(Text, nullable=True, unique=False)
     corpus = Column(Text, nullable=True, unique=False)
     #Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
@@ -133,6 +145,7 @@ class Morpheme(Base):
     # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     id = Column(Integer, primary_key=True)
     utterance_id_fk = Column(Text, ForeignKey('utterance.utterance_id'))
+    # TODO: do we really need corpus at the morpheme level?
     corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
     language = Column(Text, nullable=True, unique=False)
     morpheme = Column(Text, nullable=True, unique=False)

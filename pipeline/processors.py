@@ -55,18 +55,15 @@ class SessionProcessor(object):
 
 
     def process_session(self):
-        # Config contains map of standard label -> local label.
+        # Config contains maps from corpus-specific labels -> database column names
         self.parser = SessionParser.create_parser(self.config, self.file_path)
-
-        # Now start asking the parser for stuff...
 
         # Get session metadata (via labels defined in corpus config)
         session_metadata = self.parser.get_session_metadata()
         d = {}
         for k, v in session_metadata.items():
-            if not k in self.config['session_labels'].values():
-                continue
-            d[k] = v
+            if k in self.config['session_labels'].keys():
+                d[self.config['session_labels'][k]] = v
         d['session_id'] = self.filename
         d['language'] = self.config['corpus']['language']
         d['corpus'] = self.config['corpus']['corpus']
@@ -82,10 +79,13 @@ class SessionProcessor(object):
         for speaker in self.parser.next_speaker():
             d = {}
             for k, v in speaker.items():
-                if not k in self.config['speaker_labels'].values():
-                    continue
-                d[k] = v
+                if k in self.config['speaker_labels'].keys():
+                    d[self.config['speaker_labels'][k]] = v
+                #if not k in self.config['speaker_labels'].values():
+                #    continue
+                #d[k] = v
             d['session_id_fk'] = self.filename
+            d['language'] = self.config['corpus']['language']
             self.speaker_entries.append(Speaker(**d))
 
         # TODO(stiv): Need to add to each utterance some kind of joining key.
@@ -93,7 +93,7 @@ class SessionProcessor(object):
         # we do database stuff, and not in the parser (there's no reason the parser
         # should have to know about primary keys - it's a parser, not a db)
 
-        # CHATXML | Toolbox body parsing begins...
+        # CHATXML or Toolbox body parsing begins...
         self.utterances = []
         self.words = []
         self.morphemes = []

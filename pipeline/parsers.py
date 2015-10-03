@@ -147,11 +147,12 @@ class ToolboxParser(SessionParser):
         # Presumably we will have to look for the metadata file in the config.
         # The config so it knows what symbols to look for.
 
+        # TODO: fix this to just session or just __attrs__ in the metadata parser
         # this is an ugly hack due to the Indonesian corpus (body=Toolbox, but meta=XML)
         if self.metadata_parser.__class__.__name__ == "Imdi":
             return self.metadata_parser.metadata['session']
         elif self.metadata_parser.__class__.__name__ == "Chat":
-            return self.metadata_parser.metadata['session']
+            return self.metadata_parser.metadata['__attrs__']
         else:
             assert 0, "Unknown metadata format type: "#  + format
 
@@ -167,9 +168,6 @@ class ToolboxParser(SessionParser):
         returns ordered dictionary of config file record_tiers
         """
         for record in self.session_file:
-#            print()
-#            print("record:", record)
-#            print()
             yield record
 
 
@@ -193,7 +191,7 @@ class ChatXMLParser(SessionParser):
     def get_session_metadata(self):
         # Do xml-specific parsing of session metadata.
         # The config so it knows what symbols to look for.
-        return self.metadata_parser.metadata['session']
+        return self.metadata_parser.metadata['__attrs__']
 
     # Generator to yield Speakers for the Speaker table in the db
     def next_speaker(self):
@@ -305,8 +303,6 @@ class JsonParser(SessionParser):
                                         if k_json_mappings_morphemes in e:
                                             d2[self.config['json_mappings_morphemes'][k_json_mappings_morphemes]] = \
                                             e[k_json_mappings_morphemes]
-
-                                            # print(e[k_json_mappings_morphemes])
                                     if len(d2) > 0:
                                         morphemes.append(d2)
                 # Recreate the full utterance string
