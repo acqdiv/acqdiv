@@ -34,14 +34,13 @@ class Session(Base):
     __tablename__ = 'session'
 
     id = Column(Integer, primary_key=True)
-    # session_id = Column(Text, nullable=True, unique=False)
     session_id = Column(Text, nullable=False, unique=False) # filename
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     date = Column(Text, nullable=True, unique=False)
     situation = Column(Text, nullable=True, unique=False)
     genre = Column(Text, nullable=True, unique=False)
-    # this stuff seems mostly blank because we are not extracing metadata from the .cdc files
+    # this stuff seems mostly blank because we are not extracting metadata from the .cdc files
     # address = Column(Text, nullable=True, unique=False)
     # continent = Column(Text, nullable=True, unique=False)
     # country = Column(Text, nullable=True, unique=False)
@@ -59,19 +58,17 @@ class Speaker(Base):
 
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('session.session_id'))
+    corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
     language = Column(Text, nullable=True, unique=False)
-    # label = Column(Text, nullable=True, unique=False)
-    # TODO: add speaker id
     speaker_id = Column(Text, nullable=True, unique=False)
     name = Column(Text, nullable=True, unique=False)
+    age_raw = Column(Text, nullable=True, unique=False)
     age = Column(Text, nullable=True, unique=False)
-    clean_age = Column(Text, nullable=True, unique=False)
     age_in_days = Column(Integer, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
+    role_raw = Column(Text, nullable=True, unique=False)
     role = Column(Text, nullable=True, unique=False)
-    normalized_role = Column(Text, nullable=True, unique=False)
     languages_spoken = Column(Text, nullable=True, unique=False)
-    # languages_spoken = Column(Text, nullable=True, unique=False)
     birthdate = Column(Text, nullable=True, unique=False)
 
     # optional pretty formatting
@@ -86,6 +83,7 @@ class Utterance(Base):
     session_id_fk = Column(Text, ForeignKey('session.session_id'))
     utterance_id = Column(Text, nullable=True, unique=False) # utterance id in original file
     corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
+    language = Column(Text, nullable=True, unique=False)
     speaker_id = Column(Text, nullable=True, unique=False)
     addressee = Column(Text, nullable=True, unique=False) # exists at least in Russian
     # TODO: rename this type
@@ -131,6 +129,7 @@ class Word(Base):
     corpus = Column(Text, nullable=True, unique=False)
     #Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
     word = Column(Text, nullable=True, unique=False)
+    word_type = Column(Text, nullable=True, unique=False)
     word_target = Column(Text, nullable=True, unique=False)
     warnings = Column(Text, nullable=True, unique=False)
     # TODO: get unique words and assign ids in the postprocessor

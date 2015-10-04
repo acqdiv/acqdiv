@@ -65,8 +65,8 @@ class SessionProcessor(object):
             if k in self.config['session_labels'].keys():
                 d[self.config['session_labels'][k]] = v
         d['session_id'] = self.filename
-        d['language'] = self.config['corpus']['language']
-        d['corpus'] = self.config['corpus']['corpus']
+        d['language'] = self.language
+        d['corpus'] = self.corpus
         self.session_entry = Session(**d)
 
         # TODO: deal with IMDI's dict in dict encoding of location (perhaps in CorpusConfigProcessor):
@@ -85,7 +85,8 @@ class SessionProcessor(object):
                 #    continue
                 #d[k] = v
             d['session_id_fk'] = self.filename
-            d['language'] = self.config['corpus']['language']
+            d['language'] = self.language
+            d['corpus'] = self.corpus
             self.speaker_entries.append(Speaker(**d))
 
         # TODO(stiv): Need to add to each utterance some kind of joining key.
@@ -104,6 +105,7 @@ class SessionProcessor(object):
             for utterance, words, morphemes, inferences in self.parser.next_utterance():
                 utterance['session_id_fk'] = self.filename
                 utterance['corpus'] = self.corpus
+                utterance['language'] = self.language
                 # TODO: determine utterance type from config
                 utterance['utterance_type'] = self.config['utterance']['type']         
                 self.utterances.append(Utterance(**utterance))
@@ -194,6 +196,7 @@ class SessionProcessor(object):
             for utterance, words, morphemes in self.parser.next_utterance():
                 utterance['session_id_fk'] = self.filename
                 utterance['corpus'] = self.corpus
+                utterance['language'] = self.language
                 # utterance['language'] = self.config['corpus']['language']
                 self.utterances.append(Utterance(**utterance))
 

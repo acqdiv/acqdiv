@@ -48,10 +48,10 @@ def update_xml_age(session, config):
     corpus_name = config["corpus"]["corpus"]
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
         sid = db_session_entry.session_id
-        for row in session.query(backend.Speaker).filter(backend.Speaker.age != None, backend.Speaker.session_id_fk == sid):
-            new_age = age.format_xml_age(row.age)
+        for row in session.query(backend.Speaker).filter(backend.Speaker.age_raw != None, backend.Speaker.session_id_fk == sid):
+            new_age = age.format_xml_age(row.age_raw)
             if new_age:
-                row.clean_age = new_age
+                row.age = new_age
                 aid = age.calculate_xml_days(new_age)
                 row.age_in_days = aid
 
@@ -66,17 +66,18 @@ def update_imdi_age(session, config):
                 recording_date = age.numerize_date(db_session_entry.date)
                 birth_date = age.numerize_date(db_speaker_entry.birthdate)
                 ages = age.format_imdi_age(birth_date, recording_date)
-                db_speaker_entry.clean_age = ages[0]
+                # db_speaker_entry.clean_age = ages[0]
+                db_speaker_entry.age = ages[0]
                 db_speaker_entry.age_in_days = ages[1]
             except Exception as e:
                     print("Couldn't calculate age of speaker {0}".format(db_speaker_entry.id), file=sys.stderr)
                     print("Error: {0}".format(e), file=sys.stderr)
-        for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.age != None, ~backend.Speaker.age.like("%Un%"), 
+        for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.age_raw != None, ~backend.Speaker.age_raw.like("%Un%"),
                 backend.Speaker.birthdate.like("Un%"), backend.Speaker.session_id_fk == sid):
-            if not cleaned_age.fullmatch(db_speaker_entry.age):
+            if not cleaned_age.fullmatch(db_speaker_entry.age_raw):
                 try:
-                    ages = age.clean_year_only_ages(db_speaker_entry.age)
-                    db_speaker_entry.clean_age = ages[0]
+                    ages = age.clean_year_only_ages(db_speaker_entry.age_raw)
+                    db_speaker_entry.age = ages[0]
                     db_speaker_entry.age_in_days = ages[1]
                 except Exception as e:
                         print("Couldn't calculate age of speaker {0}".format(db_speaker_entry.id), file=sys.stderr)
@@ -122,33 +123,19 @@ def unify_glosses(session, config):
             print("Error: .ini file for corpus {0} does not have gloss replacement rules properly configured!".format(config["corpus"]["corpus"]), file=sys.stderr)
             return
 
-if __name__ == "__main__":
-    
-    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
-              'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
-
-    engine = backend.db_connect()
-    cfg = parsers.CorpusConfigParser()
-    for config in configs:
-        cfg.read(config)
-        print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
-        update_age(cfg, engine)
-        unify_glosses(cfg, engine)
-
-
 #normalizing roles section
 @db_apply
 def unifyRoles(session, config):
     #lists of roles which have to be recognized
     corpus_name = config["corpus"]["corpus"]
-    linguists = ["collector", "researcher", "investigator", "annotator","observer"]
+    linguists = ["collector", "researcher", "investigator", "annotator", "observer"]
     helper = ["helper", "facilitator"]
     for a_session in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
         #we iterate through every session of current corpus
         sessionID = a_session.session_id
         for row in session.query(backend.Speaker).filter(backend.Speaker.session_id_fk == sessionID):
             #we iterate through every row of current session, looking at table "Speaker"
-            currRole = row.role
+            currRole = row.role_raw
             #finding out what kind of role we have and map it to equivalent normalized role
             if "target" in currRole.lower() or "focus" in currRole.lower():
                 newRole = "target_child"
@@ -160,6 +147,16 @@ def unifyRoles(session, config):
             else:
                 newRole = "others/non-humans"
             #writing normalized role into column "normalized_role"
-            row.normalized_role = newRole
+            row.role = newRole
 
 
+if __name__ == "__main__":
+    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
+              'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
+    engine = backend.db_connect()
+    cfg = parsers.CorpusConfigParser()
+    for config in configs:
+        cfg.read(config)
+        print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
+        update_age(cfg, engine)
+        unify_glosses(cfg, engine)
