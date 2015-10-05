@@ -47,6 +47,7 @@ if __name__ == "__main__":
         update_age(cfg, engine)
         unify_glosses(cfg, engine)
         unify_roles(cfg,engine)
+        unify_gender(cfg,engine)
         unique_speaker(cfg,engine)
 
     print("--- %s seconds ---" % (time.time() - start_time))

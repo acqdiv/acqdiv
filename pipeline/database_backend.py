@@ -65,6 +65,7 @@ class Speaker(Base):
     age_raw = Column(Text, nullable=True, unique=False)
     age = Column(Text, nullable=True, unique=False)
     age_in_days = Column(Integer, nullable=True, unique=False)
+    gender_raw = Column(Text, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
     role_raw = Column(Text, nullable=True, unique=False)
     role = Column(Text, nullable=True, unique=False)

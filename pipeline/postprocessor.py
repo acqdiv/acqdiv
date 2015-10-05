@@ -149,21 +149,35 @@ def unify_roles(session, config):
             #writing normalized role into column "normalized_role"
             row.role = new_role
 
+@db_apply
+def unify_gender(session,config):
+    table = session.query(backend.Speaker)
+    for row in table:
+        if row.gender_raw == None:
+            row.gender = 'unspecified'
+        elif row.gender_raw.lower() == 'female':
+            row.gender = 'female'
+        elif row.gender_raw.lower() == 'male':
+            row.gender = 'male'
+        else:
+            row.gender = 'unspecified'
+
 #deleting duplication, duplicate then when name and birthdate the same
 @db_apply
 def unique_speaker(session, config):
-        #going through corpus by corpus
-        #corpus_name = config["corpus"]["corpus"]
-        #the new table Unique_Speaker
-        unique_name_date = set()
-        table = session.query(backend.Unique_Speaker)
-        for row in table:
-            curr_tuple = (row.name,row.birthdate)
-            #if name-birthdate combi already exists, delete row
-            if curr_tuple in unique_name_date:
-                session.delete(session.query(backend.Unique_Speaker).filter_by(id=row.id).first())
-            else:
-                unique_name_date.add(curr_tuple)
+    #to keep speaker unique
+    unique_name_date = set()
+    table = session.query(backend.Unique_Speaker)
+    for row in table:
+        curr_tuple = (row.name,row.birthdate)
+        #if name-birthdate combi already exists, delete row
+        if curr_tuple in unique_name_date:
+            session.delete(session.query(backend.Unique_Speaker).filter_by(id=row.id).first())
+        else:
+            unique_name_date.add(curr_tuple)
+
+        to_get_gender = session.query(backend.Speaker).filter(backend.Speaker.name == row.name)
+        row.gender = to_get_gender[0].gender
 
 if __name__ == "__main__":
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
