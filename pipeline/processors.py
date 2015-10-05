@@ -4,8 +4,6 @@
 import sys
 import itertools as it
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import exc
-
 from parsers import *
 from database_backend import *
 
