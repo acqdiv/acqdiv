@@ -89,6 +89,7 @@ class Utterance(Base):
     # TODO: rename this type
     utterance_type = Column(Text, nullable=True, unique=False) # phonetic or orthographic
     # TODO: rename this utterance_original
+    utterance_raw = Column(Text, nullable=True, unique=False) # original utterance
     utterance = Column(Text, nullable=True, unique=False) # original utterance
     # TODO: rename this utterance
     utterance_cleaned = Column(Text, nullable=True, unique=False) # our cleaned-up utterance
