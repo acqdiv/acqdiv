@@ -125,30 +125,59 @@ def unify_glosses(session, config):
 
 #normalizing roles section
 @db_apply
-def unifyRoles(session, config):
+def unify_roles(session, config):
     #lists of roles which have to be recognized
     corpus_name = config["corpus"]["corpus"]
     linguists = ["collector", "researcher", "investigator", "annotator", "observer"]
     helper = ["helper", "facilitator"]
     for a_session in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
         #we iterate through every session of current corpus
-        sessionID = a_session.session_id
-        for row in session.query(backend.Speaker).filter(backend.Speaker.session_id_fk == sessionID):
+        session_id = a_session.session_id
+        for row in session.query(backend.Speaker).filter(backend.Speaker.session_id_fk == session_id):
             #we iterate through every row of current session, looking at table "Speaker"
-            currRole = row.role_raw
+            curr_role = row.role_raw
             #finding out what kind of role we have and map it to equivalent normalized role
-            if "target" in currRole.lower() or "focus" in currRole.lower():
-                newRole = "target_child"
-            elif len([item for item in linguists if item in currRole.lower()]) >= 1:
+            if "target" in curr_role.lower() or "focus" in curr_role.lower():
+                new_role = "target_child"
+            elif len([item for item in linguists if item in curr_role.lower()]) >= 1:
                 #condition "complicated" because there are roles that contain multiple words
                 newRole = "linguist"
-            elif len([item for item in helper if item in currRole.lower()]) >= 1:
-                newRole = "helper"
+            elif len([item for item in helper if item in curr_role.lower()]) >= 1:
+                new_role = "helper"
             else:
-                newRole = "others/non-humans"
+                new_role = "others"
             #writing normalized role into column "normalized_role"
-            row.role = newRole
+            row.role = new_role
 
+@db_apply
+def unify_gender(session,config):
+    table = session.query(backend.Speaker)
+    for row in table:
+        if row.gender_raw == None:
+            row.gender = 'unspecified'
+        elif row.gender_raw.lower() == 'female':
+            row.gender = 'female'
+        elif row.gender_raw.lower() == 'male':
+            row.gender = 'male'
+        else:
+            row.gender = 'unspecified'
+
+#deleting duplication, duplicate then when name and birthdate the same
+@db_apply
+def unique_speaker(session, config):
+    #to keep speaker unique
+    unique_name_date = set()
+    table = session.query(backend.Unique_Speaker)
+    for row in table:
+        curr_tuple = (row.name,row.birthdate)
+        #if name-birthdate combi already exists, delete row
+        if curr_tuple in unique_name_date:
+            session.delete(session.query(backend.Unique_Speaker).filter_by(id=row.id).first())
+        else:
+            unique_name_date.add(curr_tuple)
+
+        to_get_gender = session.query(backend.Speaker).filter(backend.Speaker.name == row.name)
+        row.gender = to_get_gender[0].gender
 
 if __name__ == "__main__":
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',

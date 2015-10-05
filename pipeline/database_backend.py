@@ -65,6 +65,7 @@ class Speaker(Base):
     age_raw = Column(Text, nullable=True, unique=False)
     age = Column(Text, nullable=True, unique=False)
     age_in_days = Column(Integer, nullable=True, unique=False)
+    gender_raw = Column(Text, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
     role_raw = Column(Text, nullable=True, unique=False)
     role = Column(Text, nullable=True, unique=False)
@@ -75,6 +76,15 @@ class Speaker(Base):
     def __repr__(self):
         return "Speaker(%s)" % (self.name)
 
+class Unique_Speaker(Base):
+    __tablename__ = 'uniquespeaker'
+
+    id = Column(Integer, primary_key=True)
+    speaker_id = Column(Text, nullable=True, unique=False)
+    name = Column(Text, nullable=True, unique=False)
+    birthdate = Column(Text, nullable=True, unique=False)
+    gender = Column(Text, nullable=True, unique=False)
+    language = Column(Text, nullable=True, unique=False)
 
 class Utterance(Base):
     __tablename__ = 'utterance'
