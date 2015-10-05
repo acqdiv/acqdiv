@@ -223,12 +223,14 @@ class SessionProcessor(object):
                 for word in words:
                     # TODO: add in session id?
                     word['utterance_id_fk'] = utterance['utterance_id']
-                    word['corpus'] = utterance['corpus']
+                    word['corpus'] = self.corpus
+                    word['language'] = self.language
                     self.words.append(Word(**word))
 
                 for morpheme in morphemes:
                     morpheme['utterance_id_fk'] = utterance['utterance_id']
-                    morpheme['corpus'] = utterance['corpus']
+                    morpheme['corpus'] = self.corpus
+                    morpheme['language'] = self.language
                     self.morphemes.append(Morpheme(**morpheme))
 
         # TODO: remove / comment out
