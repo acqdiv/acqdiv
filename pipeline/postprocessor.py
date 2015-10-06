@@ -141,7 +141,7 @@ def unify_roles(session, config):
                 new_role = "target_child"
             elif len([item for item in linguists if item in curr_role.lower()]) >= 1:
                 #condition "complicated" because there are roles that contain multiple words
-                newRole = "linguist"
+                new_role = "linguist"
             elif len([item for item in helper if item in curr_role.lower()]) >= 1:
                 new_role = "helper"
             else:
