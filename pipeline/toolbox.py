@@ -80,7 +80,7 @@ class ToolboxFile(object):
                         utterances['utterance_type'] = self.config['utterance']['type']
                         #utterances['warnings'] = self.get_warnings(utterances['utterance'])
                     except KeyError:
-                        utterances['utterance'] = ""
+                        utterances['utterance_raw'] = ""
                         utterances['utterance_type'] = ""
                         utterances['warnings'] = 'empty utterance'
                         #self.warnings['warnings'] = 'empty utterance'
