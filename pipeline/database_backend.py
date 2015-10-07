@@ -145,7 +145,7 @@ class Morpheme(Base):
     corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
     language = Column(Text, nullable=True, unique=False)
     # this morpheme's type: actual or target
-    type =  Column(Text, nullable=True, unique=False)
+    type = Column(Text, nullable=True, unique=False)
     morpheme = Column(Text, nullable=True, unique=False)
     morpheme_target = Column(Text, nullable=True, unique=False)
     clean_gloss = Column(Text, nullable=True, unique=False)

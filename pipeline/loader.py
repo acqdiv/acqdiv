@@ -21,7 +21,6 @@ if __name__ == "__main__":
 
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
               'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
-
     # configs = ['Chintang.ini']
     # configs = ['Cree.ini']
     # configs = ['Indonesian.ini']
