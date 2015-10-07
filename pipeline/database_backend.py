@@ -60,7 +60,7 @@ class Speaker(Base):
     session_id_fk = Column(Integer, ForeignKey('session.session_id'))
     corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
     language = Column(Text, nullable=True, unique=False)
-    speaker_id = Column(Text, nullable=True, unique=False)
+    speaker_label = Column(Text, nullable=True, unique=False)
     name = Column(Text, nullable=True, unique=False)
     age_raw = Column(Text, nullable=True, unique=False)
     age = Column(Text, nullable=True, unique=False)
@@ -80,7 +80,7 @@ class Unique_Speaker(Base):
     __tablename__ = 'uniquespeaker'
 
     id = Column(Integer, primary_key=True)
-    speaker_id = Column(Text, nullable=True, unique=False)
+    speaker_label = Column(Text, nullable=True, unique=False)
     name = Column(Text, nullable=True, unique=False)
     birthdate = Column(Text, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
@@ -94,7 +94,7 @@ class Utterance(Base):
     corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
     language = Column(Text, nullable=True, unique=False)
     utterance_id = Column(Text, nullable=True, unique=False) # utterance id in original file
-    speaker_id = Column(Text, nullable=True, unique=False)
+    speaker_label = Column(Text, nullable=True, unique=False)
     addressee = Column(Text, nullable=True, unique=False) # exists at least in Russian
     utterance_type = Column(Text, nullable=True, unique=False) # phonetic or orthographic
     utterance_raw = Column(Text, nullable=True, unique=False) # original utterance

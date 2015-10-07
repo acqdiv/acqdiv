@@ -91,7 +91,7 @@ class SessionProcessor(object):
 
         #Get unique speaker metadata, and only data specified in columns + language
         self.unique_speaker_entries = []
-        columns = ['speaker_id', 'name', 'birthdate', 'gender']
+        columns = ['speaker_label', 'name', 'birthdate', 'gender']
         dmeta = {}
         for speaker in self.parser.next_speaker():
             d = {}
