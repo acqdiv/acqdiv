@@ -4,7 +4,6 @@
 import sys
 import itertools as it
 from sqlalchemy.orm import sessionmaker
-
 from parsers import *
 from database_backend import *
 
@@ -43,6 +42,7 @@ class SessionProcessor(object):
         self.language = self.config['corpus']['language']
         self.corpus = self.config['corpus']['corpus']
         self.format = self.config['corpus']['format']
+        self.morpheme_type = self.config['morphemes']['type']
         # get filename
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
 
@@ -65,9 +65,10 @@ class SessionProcessor(object):
             if k in self.config['session_labels'].keys():
                 d[self.config['session_labels'][k]] = v
         d['session_id'] = self.filename
-        d['language'] = self.config['corpus']['language']
-        d['corpus'] = self.config['corpus']['corpus']
+        d['language'] = self.language
+        d['corpus'] = self.corpus
         self.session_entry = Session(**d)
+
 
         # TODO: deal with IMDI's dict in dict encoding of location (perhaps in CorpusConfigProcessor):
         # address = session_metadata['location']['address'],
@@ -85,8 +86,29 @@ class SessionProcessor(object):
                 #    continue
                 #d[k] = v
             d['session_id_fk'] = self.filename
-            d['language'] = self.config['corpus']['language']
+            d['language'] = self.language
+            d['corpus'] = self.corpus
             self.speaker_entries.append(Speaker(**d))
+
+        #Get unique speaker metadata, and only data specified in columns + language
+        self.unique_speaker_entries = []
+        columns = ['speaker_label', 'name', 'birthdate', 'gender']
+        dmeta = {}
+        for speaker in self.parser.next_speaker():
+            d = {}
+            for k, v in speaker.items():
+                if k in self.config['speaker_labels'].keys():
+                    d[self.config['speaker_labels'][k]] = v
+            d_new = {}
+            d_new['language'] = self.language
+            #in case key not available in current d, value is None
+            for key in columns:
+                try:
+                    d_new[key] = d[key]
+                except KeyError:
+                    d_new[key] = None
+            #only add to table if not yet added
+            self.unique_speaker_entries.append(Unique_Speaker(**d_new))
 
         # TODO(stiv): Need to add to each utterance some kind of joining key.
         # I think it makes sense to construct/add it here, since this is where
@@ -104,6 +126,7 @@ class SessionProcessor(object):
             for utterance, words, morphemes, inferences in self.parser.next_utterance():
                 utterance['session_id_fk'] = self.filename
                 utterance['corpus'] = self.corpus
+                utterance['language'] = self.language
                 # TODO: determine utterance type from config
                 utterance['utterance_type'] = self.config['utterance']['type']         
                 self.utterances.append(Utterance(**utterance))
@@ -123,6 +146,7 @@ class SessionProcessor(object):
                             # TODO: fix this to read from the config
                             morphemes_inferences['corpus'] = self.corpus
                             morphemes_inferences['language'] = self.language
+                            morphemes_inferences['type'] = self.morpheme_type
                             morphemes_inferences['morpheme'] = morpheme['morpheme']
                             morphemes_inferences['segment'] = morpheme['segment_target']
                             morphemes_inferences['pos'] = inference['pos']
@@ -150,6 +174,7 @@ class SessionProcessor(object):
                             morphemes_inferences['utterance_id_fk'] = inference['utterance_id_fk']
                             morphemes_inferences['corpus'] = self.corpus
                             morphemes_inferences['language'] = self.language
+                            morphemes_inferences['type'] = self.morpheme_type
                             morphemes_inferences['morpheme'] = inference['morpheme']
                             morphemes_inferences['segment_target'] = inference['morpheme']
                             morphemes_inferences['gloss_target'] = inference['gloss_target']
@@ -175,6 +200,7 @@ class SessionProcessor(object):
                             morphemes_inferences['utterance_id_fk'] = morpheme['utterance_id_fk']
                             morphemes_inferences['corpus'] = self.corpus
                             morphemes_inferences['language'] = self.language
+                            morphemes_inferences['type'] = self.morpheme_type
                             morphemes_inferences['morpheme'] = morpheme['morpheme']
                             morphemes_inferences['segment'] = morpheme['morpheme']
                             morphemes_inferences['gloss'] = inference['gloss']
@@ -194,18 +220,22 @@ class SessionProcessor(object):
             for utterance, words, morphemes in self.parser.next_utterance():
                 utterance['session_id_fk'] = self.filename
                 utterance['corpus'] = self.corpus
+                utterance['language'] = self.language
                 # utterance['language'] = self.config['corpus']['language']
                 self.utterances.append(Utterance(**utterance))
 
                 for word in words:
                     # TODO: add in session id?
                     word['utterance_id_fk'] = utterance['utterance_id']
-                    word['corpus'] = utterance['corpus']
+                    word['corpus'] = self.corpus
+                    word['language'] = self.language
                     self.words.append(Word(**word))
 
                 for morpheme in morphemes:
                     morpheme['utterance_id_fk'] = utterance['utterance_id']
-                    morpheme['corpus'] = utterance['corpus']
+                    morpheme['corpus'] = self.corpus
+                    morpheme['language'] = self.language
+                    morpheme['type'] = self.morpheme_type
                     self.morphemes.append(Morpheme(**morpheme))
 
         # TODO: remove / comment out
@@ -246,6 +276,7 @@ class SessionProcessor(object):
         try:
             session.add(self.session_entry)
             session.add_all(self.speaker_entries)
+            session.add_all(self.unique_speaker_entries)
             session.add_all(self.utterances)
             session.add_all(self.words)
             session.add_all(self.morphemes)

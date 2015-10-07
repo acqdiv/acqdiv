@@ -19,9 +19,8 @@ if __name__ == "__main__":
     engine = db_connect()
     create_tables(engine)
 
-    #configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
-    #          'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
-    configs = ['Sesotho.ini']
+    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
+              'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
     # configs = ['Chintang.ini']
     # configs = ['Cree.ini']
     # configs = ['Indonesian.ini']
@@ -46,6 +45,8 @@ if __name__ == "__main__":
         print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
         update_age(cfg, engine)
         unify_glosses(cfg, engine)
-        unifyRoles(cfg,engine)
+        unify_roles(cfg,engine)
+        unify_gender(cfg,engine)
+        unique_speaker(cfg,engine)
 
     print("--- %s seconds ---" % (time.time() - start_time))

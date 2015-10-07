@@ -76,11 +76,11 @@ class ToolboxFile(object):
                     #utterances['utterance_type'] = self.config['utterance']['type']
                 
                     try:
-                        utterances['utterance'] = utterances[self.config['utterance']['field']]
+                        utterances['utterance_raw'] = utterances[self.config['utterance']['field']]
                         utterances['utterance_type'] = self.config['utterance']['type']
                         #utterances['warnings'] = self.get_warnings(utterances['utterance'])
                     except KeyError:
-                        utterances['utterance'] = ""
+                        utterances['utterance_raw'] = ""
                         utterances['utterance_type'] = ""
                         utterances['warnings'] = 'empty utterance'
                         #self.warnings['warnings'] = 'empty utterance'
@@ -89,16 +89,16 @@ class ToolboxFile(object):
                     
                     # Skip the first rows that contain metadata information
                     # cf. https://github.com/uzling/acqdiv/issues/154
-                    if not utterances['utterance'].startswith('@'):
+                    if not utterances['utterance_raw'].startswith('@'):
                         
                         # TODO: build in the rules system per corpus...
                         # clean up utterance, add new data via Robert inferences, etc.
                         # here we can just pass around the session utterance dictionary
-                        utterances['sentence_type'] = self.get_sentence_type(utterances['utterance'])
-                        utterances['utterance_cleaned'] = self.clean_utterance(utterances['utterance'])
+                        utterances['sentence_type'] = self.get_sentence_type(utterances['utterance_raw'])
+                        utterances['utterance'] = self.clean_utterance(utterances['utterance_raw'])
                         
                         ### get warnings
-                        utterances['warnings'] = self.get_warnings(utterances['utterance'])
+                        utterances['warnings'] = self.get_warnings(utterances['utterance_raw'])
                             
                         # words
                         words = self.get_words(utterances) # pass the dictionary
@@ -131,7 +131,7 @@ class ToolboxFile(object):
         :return: list of ordered dictionaries with word and parent utterance id
         """
         result = []
-        words = utterances['utterance_cleaned'].split()
+        words = utterances['utterance'].split()
                     
         for word in words:
             d = collections.OrderedDict()
@@ -239,7 +239,8 @@ class ToolboxFile(object):
                 # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1633-L1648
                 # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1657-L1661
                 # delete punctuation and garbage
-                utterance = re.sub('[‘’\'“”\"\.!,;:\+\/]|\?$|\.\.\.|<|>', '', utterance)
+                utterance = re.sub('[‘’\'“”\"\.!,;:\+\/]|\?$|<|>', '', utterance)
+                utterance = re.sub('^\\s','',utterance)  
                 
                 # Insecure transcription [?], add warning, delete marker
                 # cf. https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1605-1610
