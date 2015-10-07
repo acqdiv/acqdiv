@@ -12,6 +12,8 @@ from pprint import pprint
 
 from metadata import Imdi, Chat
 from factories import *
+import cree
+
 
 # TODO: integrate the Corpus specific parsing routines from the body parser
 # TODO: integrate the metadata parsing
@@ -212,6 +214,15 @@ class ChatXMLParser(SessionParser):
         for u in self.root.findall('.//u'):
             yield uf.make_utterance(u), uf.next_word, uf.next_morpheme
     
+class CreeParser(ChatXMLParser):
+    """ Cazim's attempt at a Cree corpus specific subclass parser
+    """
+    def next_utterance(self):
+        uf = cree.CreeUtteranceFactory()
+        for u in self.root.findall('.//u'):
+            yield uf.make_utterance(u), uf.next_word, uf.next_morpheme
+
+
 class JsonParser(SessionParser):
     """ Parser for JSON output from:
     https://github.com/uzling/acqdiv/tree/master/extraction/parsing

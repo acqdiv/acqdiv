@@ -2,7 +2,11 @@
 """
 
 # TODO: implement postprocessing tasks:
+#  - keep all original data and add new columns for calculated and inferred stuff
+#  - morphological label unification
 #  - normalize all relevant column data, e.g.:
+#    role: target_child, Target Child, Target_child, etc. --> Target_Child (per CHAT specification!)
+#    gender: female, Female, etc. -> Female
 #    language: check that the language codes are correct (ie valid)
 #    birthday: is this normalize-able? is it important?
 #  - unique word, morpheme, etc., id assignment in post-processing, i.e.
@@ -24,7 +28,6 @@ import age
 import sys
 import parsers
 import re
-import time
 
 def db_apply(func):
     def update_session(config, engine):
@@ -58,7 +61,6 @@ def update_imdi_age(session, config):
         sid = db_session_entry.session_id
         cleaned_age = re.compile('\d{1,2};\d\.\d')
         for db_speaker_entry in session.query(backend.Speaker).filter(~backend.Speaker.birthdate.like("Un%"),
-                ~backend.Speaker.birthdate.like("None"),
                 backend.Speaker.session_id_fk == sid):
             try:
                 recording_date = age.numerize_date(db_session_entry.date)
@@ -70,10 +72,8 @@ def update_imdi_age(session, config):
             except Exception as e:
                     print("Couldn't calculate age of speaker {0}".format(db_speaker_entry.id), file=sys.stderr)
                     print("Error: {0}".format(e), file=sys.stderr)
-        for db_speaker_entry in session.query(backend.Speaker).filter(~backend.Speaker.age_raw.like("None"),
-                ~backend.Speaker.age_raw.like("%Un%"),
-                backend.Speaker.age == None,
-                backend.Speaker.session_id_fk == sid):
+        for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.age_raw != None, ~backend.Speaker.age_raw.like("%Un%"),
+                backend.Speaker.birthdate.like("Un%"), backend.Speaker.session_id_fk == sid):
             if not cleaned_age.fullmatch(db_speaker_entry.age_raw):
                 try:
                     ages = age.clean_year_only_ages(db_speaker_entry.age_raw)
@@ -136,14 +136,13 @@ def unify_gloss_labels(session, config):
         except KeyError:
             print("Error: .ini file for corpus {0} does not have gloss replacement rules properly configured!".format(config["corpus"]["corpus"]), file=sys.stderr)
             return
-
 def unify_glosses(config, engine):
     if config["corpus"]["corpus"] == "Russian":
-        #apply_gloss_regexes(config, engine)
+        apply_gloss_regexes(config, engine)
         unify_gloss_labels(config, engine)
     else:
         unify_gloss_labels(config, engine)
-        #apply_gloss_regexes(config, engine)
+        apply_gloss_regexes(config, engine)
 
 #normalizing roles section
 @db_apply
@@ -172,7 +171,7 @@ def unify_roles(session, config):
             row.role = new_role
 
 @db_apply
-def unify_gender(session, config):
+def unify_gender(session,config):
     table = session.query(backend.Speaker)
     for row in table:
         if row.gender_raw == None:
@@ -202,8 +201,6 @@ def unique_speaker(session, config):
         row.gender = to_get_gender[0].gender
 
 if __name__ == "__main__":
-    start_time = time.time()
-    
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
               'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
     engine = backend.db_connect()
@@ -213,8 +210,3 @@ if __name__ == "__main__":
         print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
         update_age(cfg, engine)
         unify_glosses(cfg, engine)
-        unify_roles(cfg, engine)
-        unify_gender(cfg, engine)
-        unique_speaker(cfg, engine)
-        
-    print("--- %s seconds ---" % (time.time() - start_time))
