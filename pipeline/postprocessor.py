@@ -64,7 +64,6 @@ def update_imdi_age(session, config):
                 recording_date = age.numerize_date(db_session_entry.date)
                 birth_date = age.numerize_date(db_speaker_entry.birthdate)
                 ages = age.format_imdi_age(birth_date, recording_date)
-                # db_speaker_entry.clean_age = ages[0]
                 db_speaker_entry.age = ages[0]
                 db_speaker_entry.age_in_days = ages[1]
             except Exception as e:
@@ -139,11 +138,11 @@ def unify_gloss_labels(session, config):
 
 def unify_glosses(config, engine):
     if config["corpus"]["corpus"] == "Russian":
-        #apply_gloss_regexes(config, engine)
+        apply_gloss_regexes(config, engine)
         unify_gloss_labels(config, engine)
     else:
         unify_gloss_labels(config, engine)
-        #apply_gloss_regexes(config, engine)
+        apply_gloss_regexes(config, engine)
 
 #normalizing roles section
 @db_apply
