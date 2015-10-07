@@ -89,24 +89,29 @@ def update_age(session, config):
     else:
         update_xml_age(session, config)
 
-#WARNING: UNFINISHED CODE // DO NOT CALL
-#TODO
+@db_apply
 def apply_gloss_regexes(session, config):
     corpus_name = config["corpus"]["corpus"]
     regexes = config["regex"].items() 
-    ssq = session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name, ~backend.Morpheme.gloss == None)
+    ssq = session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name)
     for item in regexes:
         pattern = item[0][1:-1]
         replacement = item[1][1:-1]
         for row in ssq:
+            print("We found a row.")
             try:
-                re.sub(pattern, replacement, row.clean_gloss)
+                if corpus_name == "Russian":
+                    print("{0}, {1}".format(pattern, replacement))
+                    row.gloss = re.sub(pattern, replacement, row.gloss)
+                else:
+                    print("But it isn't russian.")
+                    row.clean_gloss = re.sub(pattern, replacement, row.clean_gloss)
             except TypeError:
                 continue
             except:
                 print("Error: Improper gloss regex in {0}.ini: {1}".format(corpus_name, item), file=sys.stderr)
 
-
+@db_apply
 def unify_gloss_labels(session, config):
     corpus_name = config["corpus"]["corpus"]
     for row in session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name):
@@ -130,29 +135,13 @@ def unify_gloss_labels(session, config):
         except KeyError:
             print("Error: .ini file for corpus {0} does not have gloss replacement rules properly configured!".format(config["corpus"]["corpus"]), file=sys.stderr)
             return
-@db_apply
-def unify_glosses(session, config):
+def unify_glosses(config, engine):
     if config["corpus"]["corpus"] == "Russian":
-        apply_gloss_regexes(session, config)
-        unify_gloss_labels(session, config)
+        apply_gloss_regexes(config, engine)
+        unify_gloss_labels(config, engine)
     else:
-        unify_gloss_labels(session, config)
-        apply_gloss_regexes(session, config)
-
-if __name__ == "__main__":
-    
-    #configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
-    #          'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
-    configs = ['Sesotho.ini']
-
-    engine = backend.db_connect()
-    cfg = parsers.CorpusConfigParser()
-    for config in configs:
-        cfg.read(config)
-        print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
-        update_age(cfg, engine)
-        unify_glosses(cfg, engine)
-
+        unify_gloss_labels(config, engine)
+        apply_gloss_regexes(config, engine)
 
 #normalizing roles section
 @db_apply
@@ -180,4 +169,16 @@ def unifyRoles(session, config):
             #writing normalized role into column "normalized_role"
             row.normalized_role = newRole
 
+if __name__ == "__main__":
+    
+    #configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
+    #          'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
+    configs = ['russiantest.ini']
 
+    engine = backend.db_connect()
+    cfg = parsers.CorpusConfigParser()
+    for config in configs:
+        cfg.read(config)
+        print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
+        update_age(cfg, engine)
+        unify_glosses(cfg, engine)
