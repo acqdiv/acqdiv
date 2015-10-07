@@ -100,7 +100,7 @@ def apply_gloss_regexes(session, config):
         for row in ssq:
             try:
                 if corpus_name == "Russian":
-                    row.gloss = re.sub(pattern, replacement, row.gloss)
+                    row.clean_gloss = re.sub(pattern, replacement, row.gloss)
                 else:
                     row.clean_gloss = re.sub(pattern, replacement, row.clean_gloss)
             except TypeError:
@@ -113,14 +113,17 @@ def unify_gloss_labels(session, config):
     corpus_name = config["corpus"]["corpus"]
     for row in session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name):
         old_gloss = None
-        if row.gloss:
-            old_gloss = row.gloss
-        elif row.gloss_target:
-            old_gloss = row.gloss_target
-        elif row.pos:
-            old_gloss = row.pos
-        elif row.pos_target:
-            old_gloss = row.pos_target
+        if corpus_name == "Russian":
+            old_gloss = row.clean_gloss
+        else:
+            if row.gloss:
+                old_gloss = row.gloss
+            elif row.gloss_target:
+                old_gloss = row.gloss_target
+            elif row.pos:
+                old_gloss = row.pos
+            elif row.pos_target:
+                old_gloss = row.pos_target
         try:
             if old_gloss in config["gloss"]:
                 new_gloss = config["gloss"][old_gloss]
@@ -168,9 +171,8 @@ def unifyRoles(session, config):
 
 if __name__ == "__main__":
     
-    #configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
-    #          'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
-    configs = ['russiantest.ini']
+    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
+              'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
 
     engine = backend.db_connect()
     cfg = parsers.CorpusConfigParser()

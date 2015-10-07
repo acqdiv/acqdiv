@@ -39,7 +39,6 @@ class CorpusConfigParser(configparser.ConfigParser):
 
     def __init__(self):
         super().__init__(delimiters=["=="])
-        print(self._delimiters)
 
     # file level initializations
     def read(self, filenames, encoding=None):
