@@ -38,7 +38,8 @@ class CorpusConfigParser(configparser.ConfigParser):
     #            interpolation=self._interpolation)
 
     def __init__(self):
-        super().__init__(delimiters=('§'))
+        super().__init__(delimiters=["=="])
+        print(self._delimiters)
 
     # file level initializations
     def read(self, filenames, encoding=None):

@@ -98,13 +98,10 @@ def apply_gloss_regexes(session, config):
         pattern = item[0][1:-1]
         replacement = item[1][1:-1]
         for row in ssq:
-            print("We found a row.")
             try:
                 if corpus_name == "Russian":
-                    print("{0}, {1}".format(pattern, replacement))
                     row.gloss = re.sub(pattern, replacement, row.gloss)
                 else:
-                    print("But it isn't russian.")
                     row.clean_gloss = re.sub(pattern, replacement, row.clean_gloss)
             except TypeError:
                 continue
