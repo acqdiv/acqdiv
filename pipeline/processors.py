@@ -42,6 +42,7 @@ class SessionProcessor(object):
         self.language = self.config['corpus']['language']
         self.corpus = self.config['corpus']['corpus']
         self.format = self.config['corpus']['format']
+        self.morpheme_type = self.config['morphemes']['type']
         # get filename
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
 
@@ -145,6 +146,7 @@ class SessionProcessor(object):
                             # TODO: fix this to read from the config
                             morphemes_inferences['corpus'] = self.corpus
                             morphemes_inferences['language'] = self.language
+                            morphemes_inferences['type'] = self.morpheme_type
                             morphemes_inferences['morpheme'] = morpheme['morpheme']
                             morphemes_inferences['segment'] = morpheme['segment_target']
                             morphemes_inferences['pos'] = inference['pos']
@@ -172,6 +174,7 @@ class SessionProcessor(object):
                             morphemes_inferences['utterance_id_fk'] = inference['utterance_id_fk']
                             morphemes_inferences['corpus'] = self.corpus
                             morphemes_inferences['language'] = self.language
+                            morphemes_inferences['type'] = self.morpheme_type
                             morphemes_inferences['morpheme'] = inference['morpheme']
                             morphemes_inferences['segment_target'] = inference['morpheme']
                             morphemes_inferences['gloss_target'] = inference['gloss_target']
@@ -197,6 +200,7 @@ class SessionProcessor(object):
                             morphemes_inferences['utterance_id_fk'] = morpheme['utterance_id_fk']
                             morphemes_inferences['corpus'] = self.corpus
                             morphemes_inferences['language'] = self.language
+                            morphemes_inferences['type'] = self.morpheme_type
                             morphemes_inferences['morpheme'] = morpheme['morpheme']
                             morphemes_inferences['segment'] = morpheme['morpheme']
                             morphemes_inferences['gloss'] = inference['gloss']
@@ -231,6 +235,7 @@ class SessionProcessor(object):
                     morpheme['utterance_id_fk'] = utterance['utterance_id']
                     morpheme['corpus'] = self.corpus
                     morpheme['language'] = self.language
+                    morpheme['type'] = self.morpheme_type
                     self.morphemes.append(Morpheme(**morpheme))
 
         # TODO: remove / comment out
