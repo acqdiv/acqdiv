@@ -51,7 +51,7 @@ def format_xml_age(age_str):
     if age:
         years = age.group(1)
         months = age.group(2)
-        if age.groups == 3:
+        if age.lastindex == 3:
             days = age.group(3)
         else:
             days = "0"
