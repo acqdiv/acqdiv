@@ -122,7 +122,7 @@ class SessionProcessor(object):
         self.warnings = []
 
         if self.format == "Toolbox":
-            # Utterance parsing
+            # Utterances
             for utterance, words, morphemes, inferences in self.parser.next_utterance():
                 utterance['session_id_fk'] = self.filename
                 utterance['corpus'] = self.corpus
@@ -131,12 +131,13 @@ class SessionProcessor(object):
                 utterance['utterance_type'] = self.config['utterance']['type']         
                 self.utterances.append(Utterance(**utterance))
                 
-                # word parsing
+                # words
                 for word in words:
                     word['language'] = self.language
                     word['corpus'] = self.corpus
                     self.words.append(Word(**word))
-                    
+
+                # morphemes
                 if utterance['corpus'] == 'Russian':
                     morphemes_inferences = collections.OrderedDict()
                     morphemes_warnings = collections.OrderedDict()
@@ -149,8 +150,8 @@ class SessionProcessor(object):
                             morphemes_inferences['type'] = self.morpheme_type
                             morphemes_inferences['morpheme'] = morpheme['morpheme']
                             morphemes_inferences['segment'] = morpheme['segment_target']
-                            morphemes_inferences['pos'] = inference['pos']
-                            morphemes_inferences['gloss'] = inference['gloss']
+                            morphemes_inferences['pos_raw'] = inference['pos_raw']
+                            morphemes_inferences['gloss_raw'] = inference['gloss_raw']
                             if 'warning' in inference.keys():
                                 # TODO: fix this to read from the config
                                 morphemes_warnings['corpus'] = utterance['corpus']
@@ -176,9 +177,9 @@ class SessionProcessor(object):
                             morphemes_inferences['language'] = self.language
                             morphemes_inferences['type'] = self.morpheme_type
                             morphemes_inferences['morpheme'] = inference['morpheme']
-                            morphemes_inferences['segment_target'] = inference['morpheme']
-                            morphemes_inferences['gloss_target'] = inference['gloss_target']
-                            morphemes_inferences['pos_target'] = inference['pos_target']
+                            #morphemes_inferences['segment_target'] = inference['morpheme']
+                            morphemes_inferences['gloss_raw'] = inference['gloss_raw']
+                            morphemes_inferences['pos_raw'] = inference['pos_raw']
                             if 'warning' in inference.keys():
                                 morphemes_warnings['corpus'] = utterance['corpus']
                                 morphemes_warnings['utterance_id_fk'] = inference['utterance_id_fk']
@@ -202,8 +203,8 @@ class SessionProcessor(object):
                             morphemes_inferences['language'] = self.language
                             morphemes_inferences['type'] = self.morpheme_type
                             morphemes_inferences['morpheme'] = morpheme['morpheme']
-                            morphemes_inferences['segment'] = morpheme['morpheme']
-                            morphemes_inferences['gloss'] = inference['gloss']
+                            # morphemes_inferences['segment'] = morpheme['morpheme']
+                            morphemes_inferences['gloss_raw'] = inference['gloss_raw']
                             if 'warning' in inference.keys():
                                 morphemes_warnings['corpus'] = utterance['corpus']
                                 morphemes_warnings['utterance_id_fk'] = morpheme['utterance_id_fk']
@@ -221,11 +222,9 @@ class SessionProcessor(object):
                 utterance['session_id_fk'] = self.filename
                 utterance['corpus'] = self.corpus
                 utterance['language'] = self.language
-                # utterance['language'] = self.config['corpus']['language']
                 self.utterances.append(Utterance(**utterance))
 
                 for word in words:
-                    # TODO: add in session id?
                     word['utterance_id_fk'] = utterance['utterance_id']
                     word['corpus'] = self.corpus
                     word['language'] = self.language

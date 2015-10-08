@@ -103,12 +103,10 @@ class Utterance(Base):
     sentence_type = Column(Text, nullable=True, unique=False)
     timestamp_start = Column(Text, nullable=True, unique=False)
     timestamp_end = Column(Text, nullable=True, unique=False)
-    # TODO: rename this words
     word = Column(Text, nullable=True, unique=False) # words line? what is Robert's "full_word"?
-    # TODO: rename this morphemes
     morpheme = Column(Text, nullable=True, unique=False) # morpheme line
-    gloss = Column(Text, nullable=True, unique=False) # what to do with the "gloss"?
-    pos = Column(Text, nullable=True, unique=False) # parts of speech line
+    gloss_raw = Column(Text, nullable=True, unique=False) # what to do with the "gloss"?
+    pos_raw = Column(Text, nullable=True, unique=False) # parts of speech line
     comment = Column(Text, nullable=True, unique=False)
     warnings = Column(Text, nullable=True, unique=False) # Robert's warnings!
 
@@ -147,14 +145,14 @@ class Morpheme(Base):
     # this morpheme's type: actual or target
     type = Column(Text, nullable=True, unique=False)
     morpheme = Column(Text, nullable=True, unique=False)
-    morpheme_target = Column(Text, nullable=True, unique=False)
-    clean_gloss = Column(Text, nullable=True, unique=False)
-    gloss = Column(Text, nullable=True, unique=False)
-    gloss_target = Column(Text, nullable=True, unique=False)
-    pos = Column(Text, nullable=True, unique=False)
-    pos_target = Column(Text, nullable=True, unique=False)
-    segment = Column(Text, nullable=True, unique=False)
-    segment_target = Column(Text, nullable=True, unique=False)
+    gloss_raw = Column(Text, nullable=True, unique=False)
+    pos_raw = Column(Text, nullable=True, unique=False)
+    #morpheme_target = Column(Text, nullable=True, unique=False)
+    #clean_gloss = Column(Text, nullable=True, unique=False)
+    #gloss_target = Column(Text, nullable=True, unique=False)
+    #pos_target = Column(Text, nullable=True, unique=False)
+    #segment = Column(Text, nullable=True, unique=False)
+    #segment_target = Column(Text, nullable=True, unique=False)
     # TODO: get unique morphemes and assign ids in the postprocessor
     # morpheme_id = Column(Text, nullable=True, unique=False)
 
