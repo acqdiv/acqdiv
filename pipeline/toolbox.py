@@ -250,10 +250,10 @@ class ToolboxFile(object):
         #morphs = get_morphemes(utterances)
         if self.config['corpus']['corpus'] == "Russian":
             # TODO: do the Russian words / morphemes inference
-            if 'pos' in utterances.keys():
+            if 'pos_raw' in utterances.keys():
             # remove PUNCT pos
             #if self.config['corpus']['corpus'] == "Russian":
-                pos_cleaned = utterances['pos'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
+                pos_cleaned = utterances['pos_raw'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
                 
                 # get pos and gloss (après: https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1751-L1762)
                 #The Russian tier \mor contains both glosses and POS, separated by "-" or ":". Method for distinguishing and extracting them:
@@ -267,48 +267,48 @@ class ToolboxFile(object):
                     ## 1)
                     if ':' not in pos:
                         d['utterance_id_fk'] = utterances['utterance_id']
-                        d['pos'] = pos
-                        d['gloss'] = pos
+                        d['pos_raw'] = pos
+                        d['gloss_raw'] = pos
                         result.append(d)
                     ## 2)
                     elif pos.startswith('V') or pos.startswith('ADJ'):
                         match_verb_adj = re.search('(V|ADJ)-(.*$)', pos)
                         if match_verb_adj:
                             d['utterance_id_fk'] = utterances['utterance_id']
-                            d['pos'] = match_verb_adj.group(1)
-                            d['gloss'] = match_verb_adj.group(2)
+                            d['pos_raw'] = match_verb_adj.group(1)
+                            d['gloss_raw'] = match_verb_adj.group(2)
                             result.append(d)
                     ## 3)
                     else:
                         match_gloss_pos = re.search('(^[^(V|ADJ)].*?):(.*$)', pos)
                         if match_gloss_pos:
                             d['utterance_id_fk'] = utterances['utterance_id']
-                            d['pos'] = match_gloss_pos.group(1)
-                            d['gloss'] = match_gloss_pos.group(2)
+                            d['pos_raw'] = match_gloss_pos.group(1)
+                            d['gloss_raw'] = match_gloss_pos.group(2)
                             result.append(d)
                             
             else:
                 d = collections.OrderedDict()
                 d['utterance_id_fk'] = utterances['utterance_id']
-                d['pos'] = ''
-                d['gloss'] = ''
+                d['pos_raw'] = ''
+                d['gloss_raw'] = ''
                 d['warning'] = 'not glossed'
                 result.append(d)
                         
         # Indonesian specific morpheme/inference stuff
         elif self.config['corpus']['corpus'] == "Indonesian":
-            if 'gloss' in utterances.keys():
-                glosses_Indonesian = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['gloss'])
+            if 'gloss_raw' in utterances.keys():
+                glosses_Indonesian = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['gloss_raw'])
                 glosses = glosses_Indonesian.split()
                 for gloss in glosses:
                     d = collections.OrderedDict()
                     d['utterance_id_fk'] = utterances['utterance_id']
-                    d['gloss'] = gloss
+                    d['gloss_raw'] = gloss
                     result.append(d)
             else:
                 d = collections.OrderedDict()
                 d['utterance_id_fk'] = utterances['utterance_id']
-                d['gloss'] = ''
+                d['gloss_raw'] = ''
                 d['warning'] = 'not glossed'
                 result.append(d)
                 
@@ -316,13 +316,13 @@ class ToolboxFile(object):
         # Chintang specific morpheme/inference stuff
         elif self.config['corpus']['corpus'] == "Chintang":
             d = collections.OrderedDict()
-            if 'morpheme' and 'gloss' and 'pos' in utterances.keys():
+            if 'morpheme' and 'gloss_raw' and 'pos_raw' in utterances.keys():
                 morphemes_target_Chintang = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['morpheme'])
                 morphemes_Chintang = morphemes_Chintang = re.sub('(\s\-)|(\-\s)','-', morphemes_target_Chintang)
                 #glosses_Chintang = utterances['gloss']
                 #pos_Chintang = utterances['pos']
                 try:
-                    glosses_Chintang = utterances['gloss']
+                    glosses_Chintang = utterances['gloss_raw']
                 except KeyError:
                     glosses_Chintang = ''
                     d['utterance_id_fk'] = utterances['utterance_id']
@@ -330,7 +330,7 @@ class ToolboxFile(object):
                     #self.warnings['warning'] = 'not glossed'
                     result.append(d)
                 try:    
-                    pos_Chintang = utterances['pos']
+                    pos_Chintang = utterances['pos_raw']
                 except KeyError:
                     pos_Chintang = ''
                     d['utterance_id_fk'] = utterances['utterance_id']
@@ -383,7 +383,7 @@ class ToolboxFile(object):
                     # Note that there is no "morpheme_target" for Russian
                     d = collections.OrderedDict()
                     d['morpheme'] = morpheme
-                    d['segment_target'] = morpheme
+                   # d['segment_target'] = morpheme
                     d['utterance_id_fk'] = utterances['utterance_id']
                     result.append(d)
                     
@@ -395,7 +395,7 @@ class ToolboxFile(object):
                 for morpheme in morphemes:
                     d = collections.OrderedDict()
                     d['morpheme'] = morpheme
-                    d['segment'] = morpheme
+                    #d['segment'] = morpheme
                     d['utterance_id_fk'] = utterances['utterance_id']
                     result.append(d)
                 
