@@ -149,7 +149,7 @@ class SessionProcessor(object):
                             morphemes_inferences['language'] = self.language
                             morphemes_inferences['type'] = self.morpheme_type
                             morphemes_inferences['morpheme'] = morpheme['morpheme']
-                            morphemes_inferences['segment'] = morpheme['segment_target']
+                            #morphemes_inferences['segment'] = morpheme['segment_target']
                             morphemes_inferences['pos_raw'] = inference['pos_raw']
                             morphemes_inferences['gloss_raw'] = inference['gloss_raw']
                             if 'warning' in inference.keys():
