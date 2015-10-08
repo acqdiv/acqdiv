@@ -20,16 +20,17 @@ if __name__ == "__main__":
     create_tables(engine)
 
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
-              'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
+              'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
+
     # configs = ['Chintang.ini']
     # configs = ['Cree.ini']
     # configs = ['Indonesian.ini']
     # configs = ['Inuktitut.ini']
-    # configs = ['Japanese_MiiPro.ini'] # fails
+    # configs = ['Japanese_MiiPro.ini']
     # configs = ['Japanese_Miyata.ini']
-    # configs = ['Russian.ini'] # missing metdata data; fails
-    # configs = ['Sesotho.ini'] # fails on warnings hixa.json...
-    # configs = ['Turkish.ini'] # fails on utterance_cleaned ekin10_30oct01_01-01-10.json
+    # configs = ['Russian.ini']
+    # configs = ['Sesotho.ini']
+    # configs = ['Turkish.ini']
     # configs = ['Yucatec.ini']
 
     for config in configs:
@@ -42,11 +43,11 @@ if __name__ == "__main__":
         c.process_corpus()
 
         #Do the postprocessing
-        print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
-        update_age(cfg, engine)
-        unify_glosses(cfg, engine)
-        unify_roles(cfg,engine)
-        unify_gender(cfg,engine)
-        unique_speaker(cfg,engine)
+        #print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
+        #update_age(cfg, engine)
+        #unify_glosses(cfg, engine)
+        #unify_roles(cfg,engine)
+        #unify_gender(cfg,engine)
+        #unique_speaker(cfg,engine)
 
     print("--- %s seconds ---" % (time.time() - start_time))
