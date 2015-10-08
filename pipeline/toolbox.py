@@ -240,8 +240,12 @@ class ToolboxFile(object):
                 # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1657-L1661
                 # delete punctuation and garbage
                 utterance = re.sub('[‘’\'“”\"\.!,;:\+\/]|\?$|<|>', '', utterance)
-                utterance = re.sub('(^\\s|\\s+$)','',utterance)  
-                
+                ## get rid of white space at beginning and end of words
+                if re.search('^\\s', utterance):
+                    utterance = re.sub('^\\s','', utterance)
+                if re.search('\\s$', utterance):
+                    utterance = re.sub('\\s$','', utterance)
+                                    
                 # Insecure transcription [?], add warning, delete marker
                 # cf. https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1605-1610
                 if re.search('\[\?\]', utterance):
