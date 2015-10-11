@@ -1,4 +1,7 @@
 """ Entry point for loading acqdiv corpora into the database
+
+TODO: incorporate into pyacqdiv
+
 """
 
 from processors import *
@@ -42,12 +45,12 @@ if __name__ == "__main__":
         c = CorpusProcessor(cfg, engine)
         c.process_corpus()
 
-        #Do the postprocessing
-        #print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
-        #update_age(cfg, engine)
-        #unify_glosses(cfg, engine)
-        #unify_roles(cfg,engine)
-        #unify_gender(cfg,engine)
-        #unique_speaker(cfg,engine)
+        # Do the postprocessing
+        print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
+        update_age(cfg, engine)
+        unify_glosses(cfg, engine)
+        unify_roles(cfg,engine)
+        unify_gender(cfg,engine)
+        unique_speaker(cfg,engine)
 
     print("--- %s seconds ---" % (time.time() - start_time))
