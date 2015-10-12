@@ -95,18 +95,18 @@ def apply_gloss_regexes(session, config):
     regexes = config["regex"].items() 
     ssq = session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name)
     for item in regexes:
-        pattern = item[0][1:-1]
+        pattern = re.compile(item[0][1:-1])
         replacement = item[1][1:-1]
         for row in ssq:
             try:
                 if corpus_name == "Russian":
-                    row.clean_gloss = re.sub(pattern, replacement, row.gloss)
+                    row.gloss = re.sub(pattern, replacement, row.gloss_raw)
                 else:
-                    row.clean_gloss = re.sub(pattern, replacement, row.clean_gloss)
+                    row.gloss = re.sub(pattern, replacement, row.gloss)
             except TypeError:
                 continue
-            except:
-                print("Error: Improper gloss regex in {0}.ini: {1}".format(corpus_name, item), file=sys.stderr)
+            except Exception as e:
+                print("Error applying gloss regex {1} in {0}.ini: {2}".format(corpus_name, item, e), file=sys.stderr)
 
 @db_apply
 def unify_gloss_labels(session, config):
@@ -114,16 +114,9 @@ def unify_gloss_labels(session, config):
     for row in session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name):
         old_gloss = None
         if corpus_name == "Russian":
-            old_gloss = row.clean_gloss
+            old_gloss = row.gloss
         else:
-            if row.gloss:
-                old_gloss = row.gloss
-            elif row.gloss_target:
-                old_gloss = row.gloss_target
-            elif row.pos:
-                old_gloss = row.pos
-            elif row.pos_target:
-                old_gloss = row.pos_target
+            old_gloss = row.gloss_raw
         try:
             if old_gloss in config["gloss"]:
                 new_gloss = config["gloss"][old_gloss]
@@ -131,7 +124,7 @@ def unify_gloss_labels(session, config):
                 # this is a debug print to find out what is and isn't getting replaced
                 # we need to automate this
                 # print(old_gloss, new_gloss)
-                row.clean_gloss = new_gloss
+                row.gloss = new_gloss
         except KeyError:
             print("Error: .ini file for corpus {0} does not have gloss replacement rules properly configured!".format(config["corpus"]["corpus"]), file=sys.stderr)
             return
