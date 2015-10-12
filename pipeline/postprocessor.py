@@ -100,9 +100,9 @@ def apply_gloss_regexes(session, config):
         for row in ssq:
             try:
                 if corpus_name == "Russian":
-                    row.clean_gloss = re.sub(pattern, replacement, row.gloss)
+                    row.gloss = re.sub(pattern, replacement, row.gloss_raw)
                 else:
-                    row.clean_gloss = re.sub(pattern, replacement, row.clean_gloss)
+                    row.gloss = re.sub(pattern, replacement, row.gloss)
             except TypeError:
                 continue
             except Exception as e:
@@ -114,16 +114,9 @@ def unify_gloss_labels(session, config):
     for row in session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name):
         old_gloss = None
         if corpus_name == "Russian":
-            old_gloss = row.clean_gloss
+            old_gloss = row.gloss
         else:
-            if row.gloss:
-                old_gloss = row.gloss
-            elif row.gloss_target:
-                old_gloss = row.gloss_target
-            elif row.pos:
-                old_gloss = row.pos
-            elif row.pos_target:
-                old_gloss = row.pos_target
+            old_gloss = row.gloss_raw
         try:
             if old_gloss in config["gloss"]:
                 new_gloss = config["gloss"][old_gloss]
@@ -131,7 +124,7 @@ def unify_gloss_labels(session, config):
                 # this is a debug print to find out what is and isn't getting replaced
                 # we need to automate this
                 # print(old_gloss, new_gloss)
-                row.clean_gloss = new_gloss
+                row.gloss = new_gloss
         except KeyError:
             print("Error: .ini file for corpus {0} does not have gloss replacement rules properly configured!".format(config["corpus"]["corpus"]), file=sys.stderr)
             return
