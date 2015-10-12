@@ -51,6 +51,8 @@ if __name__ == "__main__":
         unify_glosses(cfg, engine)
         unify_roles(cfg,engine)
         unify_gender(cfg,engine)
+        if config == 'Indonesian.ini':
+            unify_indonesian_labels(cfg, engine)
         unique_speaker(cfg,engine)
 
     print("--- %s seconds ---" % (time.time() - start_time))

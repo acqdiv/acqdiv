@@ -193,6 +193,17 @@ def unique_speaker(session, config):
         to_get_gender = session.query(backend.Speaker).filter(backend.Speaker.name == row.name)
         row.gender = to_get_gender[0].gender
 
+@db_apply
+def unify_indonesian_labels(session, config):
+    for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == "Indonesian"):
+        session_id = db_session_entry.session_id
+        session_set = session_id[0:3]
+        for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.session_id_fk == session_id):
+            if db_speaker_entry.name in config["exp_labels"]:
+                db_speaker_entry.speaker_label = config["exp_labels"][db_speaker_entry.name]
+            elif db_speaker_entry.speaker_label not in config["excluded_labels"]:
+                db_speaker_entry.speaker_label = db_speaker_entry.speaker_label + session_set
+
 if __name__ == "__main__":
     start_time = time.time()
     
@@ -207,6 +218,8 @@ if __name__ == "__main__":
         unify_glosses(cfg, engine)
         unify_roles(cfg, engine)
         unify_gender(cfg, engine)
+        if config == 'Indonesian.ini':
+            unify_indonesian_labels(cfg, engine)
         unique_speaker(cfg, engine)
         
     print("--- %s seconds ---" % (time.time() - start_time))
