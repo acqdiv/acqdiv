@@ -347,6 +347,4 @@ if __name__ == "__main__":
     #because it's a generator and you really should be doing 
     next(c.next_utterance())
     #the original call creates a generator object, but doesn't do anything with it!
-
-    print()
-    print("--- %s seconds ---" % (time.time() - start_time))
+    print("\n--- %s seconds ---" % (time.time() - start_time))

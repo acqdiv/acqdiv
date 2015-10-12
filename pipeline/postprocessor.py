@@ -95,7 +95,7 @@ def apply_gloss_regexes(session, config):
     regexes = config["regex"].items() 
     ssq = session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name)
     for item in regexes:
-        pattern = item[0][1:-1]
+        pattern = re.compile(item[0][1:-1])
         replacement = item[1][1:-1]
         for row in ssq:
             try:
@@ -105,8 +105,8 @@ def apply_gloss_regexes(session, config):
                     row.clean_gloss = re.sub(pattern, replacement, row.clean_gloss)
             except TypeError:
                 continue
-            except:
-                print("Error: Improper gloss regex in {0}.ini: {1}".format(corpus_name, item), file=sys.stderr)
+            except Exception as e:
+                print("Error applying gloss regex {1} in {0}.ini: {2}".format(corpus_name, item, e), file=sys.stderr)
 
 @db_apply
 def unify_gloss_labels(session, config):
