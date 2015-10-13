@@ -144,7 +144,8 @@ def unify_roles(session, config):
     corpus_name = config["corpus"]["corpus"]
     linguists = ["experimenter", "collector", "researcher", "investigator", "annotator", "observer"]
     helper = ["helper", "facilitator"]
-    familymembers = ["mother", "father", "cousin", "aunt"]
+    familymembers = ["mother", "father", "cousin", "aunt", "grandmother"]
+    playmate = ["playmate"]
     for a_session in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
         #we iterate through every session of current corpus
         session_id = a_session.session_id
@@ -161,6 +162,8 @@ def unify_roles(session, config):
                 new_role = "helper"
             elif curr_role.lower() in familymembers:
                 new_role = curr_role.lower()
+            elif curr_role.lower() in playmate:
+                new_role = "playmate"
             else:
                 new_role = "others"
             #writing normalized role into column "normalized_role"
