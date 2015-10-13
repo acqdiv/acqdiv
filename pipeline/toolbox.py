@@ -71,47 +71,35 @@ class ToolboxFile(object):
                     # we need to choose either the phonetic or orthographic transcription
                     # for the general 'utterance' field (from config); also add its type
                     
-                    #TODO: the below two lines rais the error discussed in https://github.com/uzling/acqdiv/issues/154.
+                    #TODO: the below two lines raise the error discussed in https://github.com/uzling/acqdiv/issues/154.
                     #utterances['utterance'] = utterances[self.config['utterance']['field']]
                     #utterances['utterance_type'] = self.config['utterance']['type']
                 
                     try:
-                        utterances['utterance'] = utterances[self.config['utterance']['field']]
+                        utterances['utterance_raw'] = utterances[self.config['utterance']['field']]
                         utterances['utterance_type'] = self.config['utterance']['type']
                         #utterances['warnings'] = self.get_warnings(utterances['utterance'])
                     except KeyError:
-                        utterances['utterance'] = ""
+                        utterances['utterance_raw'] = ""
                         utterances['utterance_type'] = ""
                         utterances['warnings'] = 'empty utterance'
                         #self.warnings['warnings'] = 'empty utterance'
-                    
-                    
-                    
+
                     # Skip the first rows that contain metadata information
                     # cf. https://github.com/uzling/acqdiv/issues/154
-                    if not utterances['utterance'].startswith('@'):
-                        
+                    if not utterances['utterance_raw'].startswith('@'):
                         # TODO: build in the rules system per corpus...
                         # clean up utterance, add new data via Robert inferences, etc.
                         # here we can just pass around the session utterance dictionary
-                        utterances['sentence_type'] = self.get_sentence_type(utterances['utterance'])
-                        utterances['utterance_cleaned'] = self.clean_utterance(utterances['utterance'])
-                        
-                        ### get warnings
-                        utterances['warnings'] = self.get_warnings(utterances['utterance'])
+                        utterances['sentence_type'] = self.get_sentence_type(utterances['utterance_raw'])
+                        utterances['utterance'] = self.clean_utterance(utterances['utterance_raw'])
+                        utterances['warnings'] = self.get_warnings(utterances['utterance_raw'])
                             
-                        # words
-                        words = self.get_words(utterances) # pass the dictionary
-                        #print(words)
-                        
-                                        
-                        ## morphemes
+                        # words, morphemes, inferences
+                        words = self.get_words(utterances)
                         morphemes = self.get_morphemes(utterances)
-                        
-                        ## morpheme, gloss, pos inferences
                         inferences = self.do_inference(utterances)
-    
-                        # print(utterances)
+
                         yield utterances, words, morphemes, inferences
                         pos = ma.start()
                 """
@@ -131,7 +119,7 @@ class ToolboxFile(object):
         :return: list of ordered dictionaries with word and parent utterance id
         """
         result = []
-        words = utterances['utterance_cleaned'].split()
+        words = utterances['utterance'].split()
                     
         for word in words:
             d = collections.OrderedDict()
@@ -205,7 +193,6 @@ class ToolboxFile(object):
                     utterance = re.sub('\[\?\]', '', utterance)
                     transcription_warning ='transcription insecure'
                     return transcription_warning
-                    
         else:
             pass
                  
@@ -239,8 +226,9 @@ class ToolboxFile(object):
                 # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1633-L1648
                 # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1657-L1661
                 # delete punctuation and garbage
-                utterance = re.sub('[‘’\'“”\"\.!,;:\+\/]|\?$|\.\.\.|<|>', '', utterance)
-                
+                utterance = re.sub('[‘’\'“”\"\.!,;:\+\/]|\?$|<|>', '', utterance)
+                utterance = utterance.strip()
+                                    
                 # Insecure transcription [?], add warning, delete marker
                 # cf. https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1605-1610
                 if re.search('\[\?\]', utterance):
@@ -262,10 +250,10 @@ class ToolboxFile(object):
         #morphs = get_morphemes(utterances)
         if self.config['corpus']['corpus'] == "Russian":
             # TODO: do the Russian words / morphemes inference
-            if 'pos' in utterances.keys():
+            if 'pos_raw' in utterances.keys():
             # remove PUNCT pos
             #if self.config['corpus']['corpus'] == "Russian":
-                pos_cleaned = utterances['pos'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
+                pos_cleaned = utterances['pos_raw'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
                 
                 # get pos and gloss (après: https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1751-L1762)
                 #The Russian tier \mor contains both glosses and POS, separated by "-" or ":". Method for distinguishing and extracting them:
@@ -279,48 +267,48 @@ class ToolboxFile(object):
                     ## 1)
                     if ':' not in pos:
                         d['utterance_id_fk'] = utterances['utterance_id']
-                        d['pos'] = pos
-                        d['gloss'] = pos
+                        d['pos_raw'] = pos
+                        d['gloss_raw'] = pos
                         result.append(d)
                     ## 2)
                     elif pos.startswith('V') or pos.startswith('ADJ'):
                         match_verb_adj = re.search('(V|ADJ)-(.*$)', pos)
                         if match_verb_adj:
                             d['utterance_id_fk'] = utterances['utterance_id']
-                            d['pos'] = match_verb_adj.group(1)
-                            d['gloss'] = match_verb_adj.group(2)
+                            d['pos_raw'] = match_verb_adj.group(1)
+                            d['gloss_raw'] = match_verb_adj.group(2)
                             result.append(d)
                     ## 3)
                     else:
                         match_gloss_pos = re.search('(^[^(V|ADJ)].*?):(.*$)', pos)
                         if match_gloss_pos:
                             d['utterance_id_fk'] = utterances['utterance_id']
-                            d['pos'] = match_gloss_pos.group(1)
-                            d['gloss'] = match_gloss_pos.group(2)
+                            d['pos_raw'] = match_gloss_pos.group(1)
+                            d['gloss_raw'] = match_gloss_pos.group(2)
                             result.append(d)
                             
             else:
                 d = collections.OrderedDict()
                 d['utterance_id_fk'] = utterances['utterance_id']
-                d['pos'] = ''
-                d['gloss'] = ''
+                d['pos_raw'] = ''
+                d['gloss_raw'] = ''
                 d['warning'] = 'not glossed'
                 result.append(d)
                         
         # Indonesian specific morpheme/inference stuff
         elif self.config['corpus']['corpus'] == "Indonesian":
-            if 'gloss' in utterances.keys():
-                glosses_Indonesian = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['gloss'])
+            if 'gloss_raw' in utterances.keys():
+                glosses_Indonesian = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['gloss_raw'])
                 glosses = glosses_Indonesian.split()
                 for gloss in glosses:
                     d = collections.OrderedDict()
                     d['utterance_id_fk'] = utterances['utterance_id']
-                    d['gloss'] = gloss
+                    d['gloss_raw'] = gloss
                     result.append(d)
             else:
                 d = collections.OrderedDict()
                 d['utterance_id_fk'] = utterances['utterance_id']
-                d['gloss'] = ''
+                d['gloss_raw'] = ''
                 d['warning'] = 'not glossed'
                 result.append(d)
                 
@@ -328,13 +316,13 @@ class ToolboxFile(object):
         # Chintang specific morpheme/inference stuff
         elif self.config['corpus']['corpus'] == "Chintang":
             d = collections.OrderedDict()
-            if 'morpheme' and 'gloss' and 'pos' in utterances.keys():
+            if 'morpheme' and 'gloss_raw' and 'pos_raw' in utterances.keys():
                 morphemes_target_Chintang = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['morpheme'])
                 morphemes_Chintang = morphemes_Chintang = re.sub('(\s\-)|(\-\s)','-', morphemes_target_Chintang)
                 #glosses_Chintang = utterances['gloss']
                 #pos_Chintang = utterances['pos']
                 try:
-                    glosses_Chintang = utterances['gloss']
+                    glosses_Chintang = utterances['gloss_raw']
                 except KeyError:
                     glosses_Chintang = ''
                     d['utterance_id_fk'] = utterances['utterance_id']
@@ -342,7 +330,7 @@ class ToolboxFile(object):
                     #self.warnings['warning'] = 'not glossed'
                     result.append(d)
                 try:    
-                    pos_Chintang = utterances['pos']
+                    pos_Chintang = utterances['pos_raw']
                 except KeyError:
                     pos_Chintang = ''
                     d['utterance_id_fk'] = utterances['utterance_id']
@@ -362,18 +350,18 @@ class ToolboxFile(object):
                     d['utterance_id_fk'] = utterances['utterance_id']
                     #d['morpheme_id'] = str(utterances['utterance_id'])+'_'+str(morphemes_target_counter) ## needed?
                     d['morpheme'] = morpheme_target
-                    d['segment_target'] = morpheme_target
-                    d['gloss_target'] = gloss
-                    d['pos_target'] = pos
+                    # d['segment_target'] = morpheme_target
+                    d['gloss_raw'] = gloss
+                    d['pos_raw'] = pos
                     result.append(d)
             else:
                 d = collections.OrderedDict()
                 d['morpheme'] = ''
-                d['segment_target'] = ''
+                # d['segment_target'] = ''
                 d['utterance_id_fk'] = utterances['utterance_id']
                 #d['morpheme_id'] = '' ## needed??
-                d['gloss_target'] = ''
-                d['pos_target'] = ''
+                d['gloss_raw'] = ''
+                d['pos_raw'] = ''
                 d['warning'] = 'not glossed'
                 result.append(d)
                 #self.warnings['warning'] ='not glossed'
@@ -385,7 +373,6 @@ class ToolboxFile(object):
         :return: (so far) list of ordered dictionaries with morpheme and parent utterance id
         """
         result = []
-        
         if 'morpheme' in utterances.keys():
             # Russian specific morpheme stuff
             if self.config['corpus']['corpus'] == "Russian":
@@ -396,7 +383,7 @@ class ToolboxFile(object):
                     # Note that there is no "morpheme_target" for Russian
                     d = collections.OrderedDict()
                     d['morpheme'] = morpheme
-                    d['segment_target'] = morpheme
+                   # d['segment_target'] = morpheme
                     d['utterance_id_fk'] = utterances['utterance_id']
                     result.append(d)
                     
@@ -408,7 +395,7 @@ class ToolboxFile(object):
                 for morpheme in morphemes:
                     d = collections.OrderedDict()
                     d['morpheme'] = morpheme
-                    d['segment'] = morpheme
+                    #d['segment'] = morpheme
                     d['utterance_id_fk'] = utterances['utterance_id']
                     result.append(d)
                 
