@@ -76,15 +76,15 @@ corpus_dic_test = {
 def parser_one_json(corpus_name):
     rootdir='corpora/'
     
-    if not os.path.exists('parsed/'+corpus_name + '/'):
-            os.makedirs('parsed/'+corpus_name + '/')
+    if not os.path.exists('parser/parsed/'+corpus_name + '/'):
+            os.makedirs('parser/parsed/'+corpus_name + '/')
     
     # parse corpora using functions from corpus_parser_functions
     if corpus_name in corpus_dic:
         corpus_dic[corpus_name]['dir'] = rootdir + corpus_dic[corpus_name]['dir']
         corpus_object = parse_corpus(corpus_name, corpus_dic[corpus_name]['dir'], corpus_dic[corpus_name]['format'])        
         
-        with open('parsed/'+corpus_name + '/' + corpus_name + '.json', 'w') as file:
+        with open('parser/parsed/'+corpus_name + '/' + corpus_name + '.json', 'w') as file:
             json.dump(corpus_object, file, ensure_ascii=False, indent=4)
         #with open('parsed/'+corpus_name + '/' + corpus_name + '_prettyprint.txt', 'w') as file:
         #    # careful, sort_keys=True can cause memory errors with bigger corpora such as Japanese_MiiPro
@@ -95,8 +95,8 @@ def parser_one_json(corpus_name):
 def parser_per_file(corpus_name):
     rootdir='corpora/'
     
-    if not os.path.exists('parsed/'+corpus_name + '/'):
-            os.makedirs('parsed/'+corpus_name + '/')
+    if not os.path.exists('parser/parsed/'+corpus_name + '/'):
+            os.makedirs('parser/parsed/'+corpus_name + '/')
     
     # parse corpora using functions from corpus_parser_functions
     if corpus_name in corpus_dic:
@@ -110,7 +110,7 @@ def parser_per_file(corpus_name):
                         corpus_object = elem
                         
                         ## write outfiles with file name structure: filename.json or filename_prettyprint.txt
-                        with open('parsed/'+corpus_name + '/'+ filename[:-4]+'.json', 'w') as file:
+                        with open('parser/parsed/'+corpus_name + '/'+ filename[:-4]+'.json', 'w') as file:
                           json.dump(corpus_object, file, ensure_ascii=False, indent=4)
                         #with open('parsed/'+corpus_name + '/'+ filename[:-4]+ '_prettyprint.txt', 'w') as file:
                         #  # careful, sort_keys=True can cause memory errors with bigger corpora such as Japanese_MiiPro
