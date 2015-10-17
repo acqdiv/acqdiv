@@ -67,7 +67,7 @@ def calculate_xml_days(age_str):
     return out
 
 def unify_timestamps(timestamp_str):
-    if type(timestamp_str) is NoneType:
+    if timestamp_str is None:
         return None
     times = re.match(r'(\d+):(\d+):(\d+)\.?(\d+)?', timestamp_str)
     if times:

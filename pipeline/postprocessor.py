@@ -203,6 +203,18 @@ def unify_indonesian_labels(session, config):
                 db_speaker_entry.speaker_label = config["exp_labels"][db_speaker_entry.name]
             elif db_speaker_entry.speaker_label not in config["excluded_labels"]:
                 db_speaker_entry.speaker_label = db_speaker_entry.speaker_label + session_set
+@db_apply
+def unify_timestamps(session, config):
+    corpus_name = config["corpus"]["corpus"]
+    for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
+        sid = db_session_entry.session_id
+        for db_utterance_entry in session.query(backend.Utterance).filter(backend.Utterance.timestamp_start.isnot(None), 
+                backend.Utterance.session_id_fk == sid):
+            try:
+                db_utterance_entry.timestamp_start = age.unify_timestamps(db_utterance_entry.timestamp_start)
+                db_utterance_entry.timestamp_end = age.unify_timestamps(db_utterance_entry.timestamp_end)
+            except Exception as e:
+                print("Error unifying timestamps in corpus {}: {}".format(corpus_name, e))
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -215,6 +227,7 @@ if __name__ == "__main__":
         cfg.read(config)
         print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
         update_age(cfg, engine)
+        unify_timestamps(cfg, engine)
         unify_glosses(cfg, engine)
         unify_roles(cfg, engine)
         unify_gender(cfg, engine)
