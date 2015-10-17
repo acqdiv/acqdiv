@@ -8,7 +8,6 @@ def numerize_date(date):
     date = re.sub('/\d{2}', '', date)
     return date
 
-
 def format_imdi_age(birthdate, sessiondate):
     acc_flag_bd = 0
     acc_flag_sd = 0
@@ -66,3 +65,23 @@ def calculate_xml_days(age_str):
     days = int(age.group(3))
     out = years * 365 + months * 30 + days
     return out
+
+def unify_timestamps(timestamp_str):
+    if type(timestamp_str) is NoneType:
+        return None
+    times = re.match(r'(\d+):(\d+):(\d+)\.?(\d+)?', timestamp_str)
+    if times:
+        fields = times.lastindex
+        if fields == 4:
+            seconds = int(times.group(1)) * 3600 + int(times.group(2)) * 60 + int(times.group(3))
+            msecs = times.group(4)
+            return("{0}.{1}".format(seconds, msecs))
+        elif fields == 3:
+            times = re.match(r'(\d+):(\d+):(\d+)', timestamp_str)
+            if times:
+                seconds = int(times.group(1)) * 3600 + int(times.group(2)) * 60 + int(times.group(3))
+                return("{0}.000".format(seconds))
+        else:
+            return None
+    else:
+        return timestamp_str
