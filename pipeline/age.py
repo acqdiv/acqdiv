@@ -41,7 +41,7 @@ def format_imdi_age(birthdate, sessiondate):
     return([age_cform if age_cform != "0;0.0" else None, age_days if age_days != "0" else None])
 
 def clean_year_only_ages(years):
-    years = str(years).split('/')[0]
+    years = str(years).split('/')[-1]
     clean_years = years + ";0.0"
     days = int(years) * 365
     return((clean_years, days))
