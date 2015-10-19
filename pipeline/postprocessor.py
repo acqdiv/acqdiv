@@ -201,18 +201,18 @@ def unify_indonesian_labels(session, config):
         for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.session_id_fk == session_id):
             if db_speaker_entry.name in config["exp_labels"]:
                 db_speaker_entry.speaker_label = config["exp_labels"][db_speaker_entry.name]
-            elif db_speaker_entry.speaker_label not in config["excluded_labels"]:
+            elif db_speaker_entry.speaker_label not in config["excluded_labels"] and db_speaker_entry.speaker_label[-3:] != session_set:
                 db_speaker_entry.speaker_label = db_speaker_entry.speaker_label + session_set
 @db_apply
 def unify_timestamps(session, config):
     corpus_name = config["corpus"]["corpus"]
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
         sid = db_session_entry.session_id
-        for db_utterance_entry in session.query(backend.Utterance).filter(backend.Utterance.timestamp_start.isnot(None), 
+        for db_utterance_entry in session.query(backend.Utterance).filter(backend.Utterance.start_raw.isnot(None), 
                 backend.Utterance.session_id_fk == sid):
             try:
-                db_utterance_entry.timestamp_start = age.unify_timestamps(db_utterance_entry.timestamp_start)
-                db_utterance_entry.timestamp_end = age.unify_timestamps(db_utterance_entry.timestamp_end)
+                db_utterance_entry.start = age.unify_timestamps(db_utterance_entry.start_raw)
+                db_utterance_entry.end = age.unify_timestamps(db_utterance_entry.end_raw)
             except Exception as e:
                 print("Error unifying timestamps in corpus {}: {}".format(corpus_name, e))
 

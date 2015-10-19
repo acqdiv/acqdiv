@@ -46,11 +46,12 @@ def clean_year_only_ages(years):
     return((clean_years, days))
 
 def format_xml_age(age_str):
-    age = re.match("P(\d*)Y(\d*)M(\d*)?D?", age_str)
+    age_str = age_str.split('/')[0]
+    age = re.match(r'P(\d*)Y(\d*)M(\d*)?D?', age_str)
     if age:
         years = age.group(1)
         months = age.group(2)
-        if age.lastindex == 3:
+        if age.group(3) != '':
             days = age.group(3)
         else:
             days = "0"
