@@ -48,6 +48,7 @@ if __name__ == "__main__":
         # Do the postprocessing
         print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
         update_age(cfg, engine)
+        unify_timestamps(cfg, engine)
         unify_glosses(cfg, engine)
         unify_roles(cfg,engine)
         unify_gender(cfg,engine)

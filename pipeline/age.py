@@ -8,7 +8,6 @@ def numerize_date(date):
     date = re.sub('/\d{2}', '', date)
     return date
 
-
 def format_imdi_age(birthdate, sessiondate):
     acc_flag_bd = 0
     acc_flag_sd = 0
@@ -42,16 +41,18 @@ def format_imdi_age(birthdate, sessiondate):
     return([age_cform if age_cform != "0;0.0" else None, age_days if age_days != "0" else None])
 
 def clean_year_only_ages(years):
-    clean_years = str(years) + ";0.0"
+    years = str(years).split('/')[-1]
+    clean_years = years + ";0.0"
     days = int(years) * 365
     return((clean_years, days))
 
 def format_xml_age(age_str):
-    age = re.match("P(\d*)Y(\d*)M(\d*)?D?", age_str)
+    age_str = age_str.split('/')[0]
+    age = re.match(r'P(\d*)Y(\d*)M(\d*)?D?', age_str)
     if age:
         years = age.group(1)
         months = age.group(2)
-        if age.lastindex == 3:
+        if age.group(3) != '':
             days = age.group(3)
         else:
             days = "0"
@@ -66,3 +67,23 @@ def calculate_xml_days(age_str):
     days = int(age.group(3))
     out = years * 365 + months * 30 + days
     return out
+
+def unify_timestamps(timestamp_str):
+    if timestamp_str is None:
+        return None
+    times = re.match(r'(\d+):(\d+):(\d+)\.?(\d+)?', timestamp_str)
+    if times:
+        fields = times.lastindex
+        if fields == 4:
+            seconds = int(times.group(1)) * 3600 + int(times.group(2)) * 60 + int(times.group(3))
+            msecs = times.group(4)
+            return("{0}.{1}".format(seconds, msecs))
+        elif fields == 3:
+            times = re.match(r'(\d+):(\d+):(\d+)', timestamp_str)
+            if times:
+                seconds = int(times.group(1)) * 3600 + int(times.group(2)) * 60 + int(times.group(3))
+                return("{0}.000".format(seconds))
+        else:
+            return None
+    else:
+        return timestamp_str

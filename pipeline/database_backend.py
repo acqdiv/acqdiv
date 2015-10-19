@@ -101,8 +101,10 @@ class Utterance(Base):
     utterance = Column(Text, nullable=True, unique=False) # original utterance
     translation = Column(Text, nullable=True, unique=False)
     sentence_type = Column(Text, nullable=True, unique=False)
-    timestamp_start = Column(Text, nullable=True, unique=False)
-    timestamp_end = Column(Text, nullable=True, unique=False)
+    start = Column(Text, nullable=True, unique=False)
+    end = Column(Text, nullable=True, unique=False)
+    start_raw = Column(Text, nullable=True, unique=False)
+    end_raw = Column(Text, nullable=True, unique=False)
     word = Column(Text, nullable=True, unique=False) # words line? what is Robert's "full_word"?
     morpheme = Column(Text, nullable=True, unique=False) # morpheme line
     gloss_raw = Column(Text, nullable=True, unique=False) # what to do with the "gloss"?
