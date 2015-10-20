@@ -83,9 +83,14 @@ class Imdi(Parser):
             for e in actor.getchildren():
                 t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "") # drop the IMDI stuff
                 participant[t.lower()] = str(e.text) # make even booleans strings
-
+                #for Chintang: check whether there is a key in Keys with attri
+                #current Session's target child's nr - if yes, extract
+                if actor.find('Keys') != None:
+                    for key in actor.find('Keys').getchildren():
+                        if key != '' and key.get('Name')[-3:] in str(self.root.Session.Name.text):
+                            participant['keys'] = str(key.text)
             if not len(participant) == 0:
-                participants.append(participant)
+                participants.append(participant) 
         return participants
 
     def get_session_data(self):

@@ -147,10 +147,10 @@ class Morpheme(Base):
     # this morpheme's type: actual or target
     type = Column(Text, nullable=True, unique=False)
     morpheme = Column(Text, nullable=True, unique=False)
-    gloss = Column(Text, nullable=True, unique=False)
-    pos = Column(Text, nullable=True, unique=False)
     gloss_raw = Column(Text, nullable=True, unique=False)
+    gloss = Column(Text, nullable=True, unique=False)
     pos_raw = Column(Text, nullable=True, unique=False)
+    pos = Column(Text, nullable=True, unique=False)
     #morpheme_target = Column(Text, nullable=True, unique=False)
     #clean_gloss = Column(Text, nullable=True, unique=False)
     #gloss_target = Column(Text, nullable=True, unique=False)

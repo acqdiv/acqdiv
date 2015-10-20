@@ -1,7 +1,7 @@
 """ Processors for acqdiv corpora
 """
 
-import sys
+import sys, re
 import itertools as it
 from sqlalchemy.orm import sessionmaker
 from parsers import *
@@ -67,6 +67,7 @@ class SessionProcessor(object):
         d['session_id'] = self.filename
         d['language'] = self.language
         d['corpus'] = self.corpus
+
         self.session_entry = Session(**d)
 
 
@@ -82,9 +83,11 @@ class SessionProcessor(object):
             for k, v in speaker.items():
                 if k in self.config['speaker_labels'].keys():
                     d[self.config['speaker_labels'][k]] = v
-                #if not k in self.config['speaker_labels'].values():
-                #    continue
-                #d[k] = v
+            if self.corpus == 'Chintang':
+                if d['role_raw'] == "Speaker/Signer" and speaker['keys'] != 'None':
+                    d['role_raw'] = speaker['keys']
+                elif 'child' not in speaker['role'].lower() and speaker['familysocialrole'] != 'None' and re.match('[\w]+',speaker['familysocialrole']):
+                    d['role_raw'] = speaker['familysocialrole']
             d['session_id_fk'] = self.filename
             d['language'] = self.language
             d['corpus'] = self.corpus
