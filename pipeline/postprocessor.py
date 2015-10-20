@@ -176,22 +176,26 @@ def unify_gender(session, config):
         else:
             row.gender = 'unspecified'
 
-#deleting duplication, duplicate then when name and birthdate the same
 @db_apply
 def unique_speaker(session, config):
-    #to keep speaker unique
+    # create a table of unique speakers
+    unique_speaker_entries = []
     unique_name_date = set()
-    table = session.query(backend.Unique_Speaker)
-    for row in table:
-        curr_tuple = (row.name,row.birthdate)
-        #if name-birthdate combi already exists, delete row
-        if curr_tuple in unique_name_date:
-            session.delete(session.query(backend.Unique_Speaker).filter_by(id=row.id).first())
-        else:
-            unique_name_date.add(curr_tuple)
+    table = session.query(backend.Speaker)
 
-        to_get_gender = session.query(backend.Speaker).filter(backend.Speaker.name == row.name)
-        row.gender = to_get_gender[0].gender
+    for db_speaker_entry in table:
+        unique_tuple = (db_speaker_entry.name, db_speaker_entry.birthdate)
+        if unique_tuple not in unique_name_date:
+            unique_name_date.add(unique_tuple)
+            d = {}
+            d['speaker_label'] = db_speaker_entry.speaker_label
+            d['name'] = db_speaker_entry.name
+            d['birthdate'] = db_speaker_entry.birthdate
+            d['gender'] = db_speaker_entry.gender
+            d['language'] = db_speaker_entry.language
+            unique_speaker_entries.append(backend.Unique_Speaker(**d))
+
+    session.add_all(unique_speaker_entries)
 
 @db_apply
 def unify_indonesian_labels(session, config):
@@ -233,6 +237,7 @@ if __name__ == "__main__":
         unify_gender(cfg, engine)
         if config == 'Indonesian.ini':
             unify_indonesian_labels(cfg, engine)
-        unique_speaker(cfg, engine)
+    #print("Creating Unique Speaker table...")
+    #unique_speaker(cfg, engine)
         
     print("--- %s seconds ---" % (time.time() - start_time))
