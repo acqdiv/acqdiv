@@ -111,6 +111,7 @@ class Utterance(Base):
     pos_raw = Column(Text, nullable=True, unique=False) # parts of speech line
     comment = Column(Text, nullable=True, unique=False)
     warnings = Column(Text, nullable=True, unique=False) # Robert's warnings!
+    nepali = Column(Text, nullable=True, unique=False)
 
     #Morphemes = sa.Column(sa.Text, nullable=False, unique=False) # concatenated MorphemeIDs per utterance
     #Words = sa.Column(sa.Text, nullable=False, unique=True) # concatenated WordIDs per utterance

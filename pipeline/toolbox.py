@@ -91,7 +91,13 @@ class ToolboxFile(object):
                         # TODO: build in the rules system per corpus...
                         # clean up utterance, add new data via Robert inferences, etc.
                         # here we can just pass around the session utterance dictionary
-                        utterances['sentence_type'] = self.get_sentence_type(utterances['utterance_raw'])
+                        if self.config['corpus']['corpus'] == 'Chintang':
+                            try:
+                                utterances['sentence_type'] = self.get_sentence_type(utterances['nepali'])
+                            except KeyError:
+                                continue
+                        else:
+                            utterances['sentence_type'] = self.get_sentence_type(utterances['utterance_raw'])
                         utterances['utterance'] = self.clean_utterance(utterances['utterance_raw'])
                         utterances['warnings'] = self.get_warnings(utterances['utterance_raw'])
                             
@@ -148,7 +154,7 @@ class ToolboxFile(object):
         :param utterance:
         :return: sentence_type
         """
-        if self.config['corpus']['corpus'] == "Russian":
+        if self.config['corpus']['corpus'] in "Russian":
             match_punctuation = re.search('([\.\?!])$', utterance)
             if match_punctuation is not None:
             #    return sentence_types[match_punctuation.group(1)]  ##@bambooforest, I get an error here: NameError: name 'sentence_types' is not defined
@@ -159,7 +165,6 @@ class ToolboxFile(object):
                     sentence_type = 'question'
                 if match_punctuation.group(1) == '!':
                     sentence_type = 'imperative'
-                
                 return sentence_type
 
         # does this logic make any sense? why not, if, if, if, fuck it return?
@@ -174,7 +179,21 @@ class ToolboxFile(object):
                 return
 
         # is there Chintang utterance/sentence type?
-        # lingp: according to the corpus_manual (p.9) there is no utterance/sentence type for Chintang.
+        # logic according to @rabart (cf. https://github.com/uzling/acqdiv/issues/253):
+        # \eng: . = default, ? = question, ! = exclamation
+        # \nep: । = default, rest identical. Note this is not a "pipe" but the so-called danda.
+        if self.config['corpus']['corpus'] == "Chintang":
+            match_punctuation = re.search('([।\?!])$', utterance)
+            if match_punctuation is not None:
+                sentence_type = ''
+                if match_punctuation.group(1) == '।':
+                    sentence_type = 'default'
+                if match_punctuation.group(1) == '?':
+                    sentence_type = 'question'
+                if match_punctuation.group(1) == '!':
+                    sentence_type = 'exclamation'
+                return sentence_type
+        
             
                     
     def get_warnings(self,utterance):
