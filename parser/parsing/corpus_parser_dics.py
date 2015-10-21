@@ -27,7 +27,7 @@ xml_dep_correspondences = {
 xml_ext_correspondences = {
     'pho' : 'phonetic',
     'arg' : 'argument_coding',
-    'spa' : 'spanish'
+    'spn' : 'spanish'
 }
 # correspondences between other XML elements and JSON
 xml_other_correspondences = {
