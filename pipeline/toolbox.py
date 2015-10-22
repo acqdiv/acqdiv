@@ -155,7 +155,7 @@ class ToolboxFile(object):
         :param utterance:
         :return: sentence_type
         """
-        if self.config['corpus']['corpus'] in "Russian":
+        if self.config['corpus']['corpus'] == "Russian":
             match_punctuation = re.search('([\.\?!])$', utterance)
             if match_punctuation is not None:
             #    return sentence_types[match_punctuation.group(1)]  ##@bambooforest, I get an error here: NameError: name 'sentence_types' is not defined
