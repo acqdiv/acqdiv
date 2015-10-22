@@ -94,6 +94,7 @@ class ToolboxFile(object):
                         if self.config['corpus']['corpus'] == 'Chintang':
                             try:
                                 utterances['sentence_type'] = self.get_sentence_type(utterances['nepali'])
+                                del utterances['nepali']
                             except KeyError:
                                 continue
                         else:
