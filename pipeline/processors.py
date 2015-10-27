@@ -70,12 +70,6 @@ class SessionProcessor(object):
 
         self.session_entry = Session(**d)
 
-
-        # TODO: deal with IMDI's dict in dict encoding of location (perhaps in CorpusConfigProcessor):
-        # address = session_metadata['location']['address'],
-        # continent = session_metadata['location']['continent'],
-        # country = session_metadata['location']['country']
-
         # Get speaker metadata; capture data specified in corpus config
         self.speaker_entries = []
         for speaker in self.parser.next_speaker():
@@ -98,7 +92,7 @@ class SessionProcessor(object):
         # we do database stuff, and not in the parser (there's no reason the parser
         # should have to know about primary keys - it's a parser, not a db)
 
-        # CHATXML or Toolbox body parsing begins...
+        # Begin CHATXML or Toolbox body parsing
         self.utterances = []
         self.words = []
         self.morphemes = []
