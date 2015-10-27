@@ -28,8 +28,7 @@ import re
 import time
 
 def full_connect():
-    """ Performs database connection. We can add a database settings
-    in settings.py later. Returns sqlalchemy engine instance.
+    """ Performs database connection to the full database for postprocessor test runs.
     """
     # TODO: if we want to add postgres settings and change to postgres
     # return create_engine(URL(**settings.DATABASE))
@@ -249,8 +248,8 @@ if __name__ == "__main__":
     
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
               'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
-    #engine = backend.db_connect()
-    engine = full_connect()
+    engine = backend.db_connect()
+    #engine = full_connect()
     cfg = parsers.CorpusConfigParser()
     for config in configs:
         cfg.read(config)
