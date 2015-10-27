@@ -56,7 +56,7 @@ def update_imdi_age(session, config):
     corpus_name = config["corpus"]["corpus"]
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
         sid = db_session_entry.session_id
-        cleaned_age = re.compile('\d{1,2};\d\.\d')
+        cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
         for db_speaker_entry in session.query(backend.Speaker).filter(~backend.Speaker.birthdate.like("Un%"),
                 ~backend.Speaker.birthdate.like("None"),
                 backend.Speaker.session_id_fk == sid):
