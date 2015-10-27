@@ -19,6 +19,7 @@
 # TODO: identify body parsing errors and fixes
 
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
 import database_backend as backend
 import age
 import sys
@@ -54,9 +55,11 @@ def update_xml_age(session, config):
 
 def update_imdi_age(session, config):
     corpus_name = config["corpus"]["corpus"]
+
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
         sid = db_session_entry.session_id
-        cleaned_age = re.compile('\d{1,2};\d\.\d')
+        cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
+
         for db_speaker_entry in session.query(backend.Speaker).filter(~backend.Speaker.birthdate.like("Un%"),
                 ~backend.Speaker.birthdate.like("None"),
                 backend.Speaker.session_id_fk == sid):
@@ -69,6 +72,11 @@ def update_imdi_age(session, config):
             except Exception as e:
                     print("Couldn't calculate age of speaker {0}".format(db_speaker_entry.id), file=sys.stderr)
                     print("Error: {0}".format(e), file=sys.stderr)
+
+        for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.age_raw.like("%;%.%")):
+                db_speaker_entry.age = db_speaker_entry.age_raw
+                db_speaker_entry.age_in_days = age.calculate_xml_days(db_speaker_entry.age_raw)
+
         for db_speaker_entry in session.query(backend.Speaker).filter(~backend.Speaker.age_raw.like("None"),
                 ~backend.Speaker.age_raw.like("%Un%"),
                 backend.Speaker.age == None,
@@ -125,6 +133,8 @@ def unify_gloss_labels(session, config):
                 # we need to automate this
                 # print(old_gloss, new_gloss)
                 row.gloss = new_gloss
+            else:
+                row.gloss = old_gloss
         except KeyError:
             print("Error: .ini file for corpus {0} does not have gloss replacement rules properly configured!".format(config["corpus"]["corpus"]), file=sys.stderr)
             return
@@ -241,8 +251,8 @@ if __name__ == "__main__":
         unify_glosses(cfg, engine)
         unify_roles(cfg, engine)
         unify_gender(cfg, engine)
-        if config == 'Indonesian.ini':
-            unify_indonesian_labels(cfg, engine)
+    #    if config == 'Indonesian.ini':
+    #        unify_indonesian_labels(cfg, engine)
     #print("Creating Unique Speaker table...")
     #unique_speaker(cfg, engine)
         

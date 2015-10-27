@@ -3,6 +3,7 @@
 
 import sys, re
 import itertools as it
+import collections
 from sqlalchemy.orm import sessionmaker
 from parsers import *
 from database_backend import *
