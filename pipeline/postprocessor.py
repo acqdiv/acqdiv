@@ -27,13 +27,6 @@ import parsers
 import re
 import time
 
-def full_connect():
-    """ Performs database connection to the full database for postprocessor test runs.
-    """
-    # TODO: if we want to add postgres settings and change to postgres
-    # return create_engine(URL(**settings.DATABASE))
-    return create_engine('sqlite:///acqdiv.sqlite3', echo=False)
-
 def db_apply(func):
     def update_session(config, engine):
         # cfunc is the function that connects to the db
@@ -249,7 +242,6 @@ if __name__ == "__main__":
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
               'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
     engine = backend.db_connect()
-    #engine = full_connect()
     cfg = parsers.CorpusConfigParser()
     for config in configs:
         cfg.read(config)
