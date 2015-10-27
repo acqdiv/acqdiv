@@ -8,6 +8,7 @@ import glob
 import re
 import xml.etree.ElementTree as ET
 import json
+import collections
 from pprint import pprint
 
 from metadata import Imdi, Chat
