@@ -242,7 +242,7 @@ class JsonParser(SessionParser):
         #  here we iterate over the utterances (each record)
         # Warning: the dictionary's key IS NOT ALWAYS the same as the file name...
         #  so we get the *key* (one json file per session; one key based on ID *or* filename)
-        #  and use that, i.e. the transcript_id field
+        #  and use that, i.e. the source_id field
         x = self.data.keys() # in Py3 returns a dict_keys object, not a list!
         keys = list(x)
         assert(len(keys) == 1), "there is more than one key in the json file"

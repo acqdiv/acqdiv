@@ -82,7 +82,7 @@ class ToolboxFile(object):
                     except KeyError:
                         utterances['utterance_raw'] = ""
                         utterances['utterance_type'] = ""
-                        utterances['warnings'] = 'empty utterance'
+                        utterances['warning'] = 'empty utterance'
                         #self.warnings['warnings'] = 'empty utterance'
 
                     # Skip the first rows that contain metadata information
@@ -100,7 +100,7 @@ class ToolboxFile(object):
                         else:
                             utterances['sentence_type'] = self.get_sentence_type(utterances['utterance_raw'])
                         utterances['utterance'] = self.clean_utterance(utterances['utterance_raw'])
-                        utterances['warnings'] = self.get_warnings(utterances['utterance_raw'])
+                        utterances['warning'] = self.get_warnings(utterances['utterance_raw'])
                             
                         # words, morphemes, inferences
                         words = self.get_words(utterances)
