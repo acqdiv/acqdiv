@@ -56,6 +56,8 @@ class SessionProcessor(object):
 
 
     def process_session(self):
+        """ Function that processes corpus-specific sessions for the information needed in the data base."""
+        
         # Config contains maps from corpus-specific labels -> database column names
         self.parser = SessionParser.create_parser(self.config, self.file_path)
 

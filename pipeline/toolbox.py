@@ -39,6 +39,19 @@ class ToolboxFile(object):
 
         
     def __iter__(self):
+        """ Iterator, yields raw utterances, words, morphemes and inference information from a Session file.
+        
+        This iterator directly extracts utterance_raw and utterance_type and calls various functions to extract information
+        from the following levels:
+        
+        sentence_type: Calls the function get_sentence_type() to extract the sentence type.
+        clean_utterance: Calls the function clean_utterance() to the clean utterance.
+        warnings: Calls the function get_warnings() to ge the warnings like "transcription insecure".
+        words: Calls the function get_words() to extract the single words.
+        morphemes: Calls the function get_morphemes() to extract the single morphemes.
+        inference: Calls the function do_inference() to infere the morpheme, pos and gloss information.
+        """
+        
         record_marker = re.compile(br'\\ref')
         with open (self.path, 'rb') as f:
             with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as data:
@@ -66,7 +79,6 @@ class ToolboxFile(object):
                     # we need to choose either the phonetic or orthographic transcription
                     # for the general 'utterance' field (from config); also add its type
                     
-                
                     try:
                         utterances['utterance_raw'] = utterances[self.config['utterance']['field']]
                         utterances['utterance_type'] = self.config['utterance']['type']
@@ -110,9 +122,16 @@ class ToolboxFile(object):
                 """
 
     def get_words(self,utterances):
-        """ Do the Toolbox corpus-specific word processing
-        :param utterance: ordered dictionary
-        :return: list of ordered dictionaries with word and parent utterance id
+        """ Function that does Toolbox corpus-specific word processing.
+        
+        This function does Toolbox corpus-specific word processing and distinguishes between
+        word and word_target if necessary.
+        
+        Args:
+            utterances: An ordered dictionary of utterances.
+            
+        Returns:
+            result: A list of ordered dictionaries with word and parent utterance id (utterance_id_fk).
         """
         result = []
         words = utterances['utterance'].split()
@@ -140,10 +159,15 @@ class ToolboxFile(object):
 
 
     def get_sentence_type(self, utterance):
-        """ Get utterance type (aka sentence type)
-        :param utterance:
-        :return: sentence_type
+        """ Function to get utterance type (aka sentence type) from an utterance.
+        
+        Args:
+            utterance: A single utterance
+            
+        Returns:
+            sentence_type: Distinguishes between default, question, imperativ and exclamation.
         """
+        
         if self.config['corpus']['corpus'] == "Russian":
             match_punctuation = re.search('([\.\?!])$', utterance)
             if match_punctuation is not None:
@@ -186,6 +210,17 @@ class ToolboxFile(object):
             
                     
     def get_warnings(self,utterance):
+        """ Function to extract warning for insecure transcriptions.
+        
+        This function extracts warnings for insecure transcriptions for Russian and Indonesian
+        (incl. intended form for Russian).
+        
+        Args:
+            utterance: a single utterance
+        
+        Returns:
+            transcription_warning: warning for insecure transcription
+        """
         if self.config['corpus']['corpus'] == "Russian":
             if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
                 for target in re.findall('\[=\?\s+[^\]]+\]', utterance):
@@ -207,10 +242,17 @@ class ToolboxFile(object):
 
     # TODO: move this to a cleaning module that's imported, e.g. from pyclean import * as pyclean
     def clean_utterance(self, utterance):
-        """ Clean up corpus-specific utterances
-        :param utterance:
-        :return:
+        """ Function that cleans up corpus-specific utterances.
+        
+        This function cleans an utterance from punctuation marks, comments, etc.
+        
+        Args:
+            utterance: A single utterance
+            
+        Returns:
+            utterance: The cleaned utterance
         """
+        
         # TODO: incorporate Russian \pho and \text tiers -- right now just utterance in general
         # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1586-L1599
         if utterance != 'None' or utterance != '':
@@ -246,8 +288,20 @@ class ToolboxFile(object):
             
 
     def do_inference(self, utterances):
+        """ Function to do corpus-specific inference of morpheme, pos_raw and gloss_raw correspondence.
+        
+        This function takes utterances from a session and extracts POS tags (pos_raw) and glosses (gloss_raw9 from them.
+        From corpus-specific inference rules, the matching between morpheme, pos_raw and gloss_raw gets infered.
+        It also extracts warnings on morpheme level (warning: "not glossed", "pos missing").
+        
+        Args:
+            utterances: An ordered dictionary of utterances.
+            
+        Returns:
+            result: A list of ordered dictionaries with pos_raw, gloss_raw, warning and parent utterance id (utterance_id_fk). 
+        """
         result = []
-        warnings_result = []
+        #warnings_result = []
         
         if self.config['corpus']['corpus'] == "Russian":
             if 'pos_raw' in utterances.keys():
@@ -359,9 +413,15 @@ class ToolboxFile(object):
         return result
 
     def get_morphemes(self, utterances):
-        """ Do the Toolbox corpus-specific morpheme processing
-        :return: (so far) list of ordered dictionaries with morpheme and parent utterance id
+        """ Function to do the Toolbox corpus-specific morpheme processing.
+        
+        Args:
+            utterances: utterances: An ordered dictionary of utterances.
+        
+        Returns:
+            result: A list of ordered dictionaries with morpheme and parent utterance id (utterance_id_fk).
         """
+        
         result = []
         if 'morpheme' in utterances.keys():
             # Russian specific morpheme stuff
