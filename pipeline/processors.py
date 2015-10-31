@@ -280,4 +280,3 @@ class SessionProcessor(object):
 ...     User(name='mary', fullname='Mary Contrary', password='xxg527'),
 ...     User(name='fred', fullname='Fred Flinstone', password='blah')])
 """
-

@@ -1,7 +1,10 @@
 #-*- coding: utf-8 -*-
 
 import unittest
-import re
+import re, os, sys
+
+current_dir = os.getcwd()
+sys.path.append(current_dir)
 
 import database_backend as db
 import metadata as metadata
