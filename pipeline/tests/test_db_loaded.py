@@ -1,17 +1,17 @@
 import unittest
 import re
 
-import pipeline.database_backend as db
-import pipeline.metadata as metadata
-import pipeline.processors as processors
-import pipeline.postprocessor as pp
+import database_backend as db
+import metadata as metadata
+import processors as processors
+import postprocessor as pp
 import time
 import unittest
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import func
 
-from pipeline.toolbox import ToolboxFile
-import pipeline.parsers as parsers
+from toolbox import ToolboxFile
+import parsers as parsers
 
 
 # helper functions

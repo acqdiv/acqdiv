@@ -1,7 +1,6 @@
 import unittest
 import re, codecs
 
-#lingdp: I had to import the modules by using pipeline.module, otherwise it didn't work (ImportError)
 import database_backend as db
 import metadata as metadata
 import processors as processors
