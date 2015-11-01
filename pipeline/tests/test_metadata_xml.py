@@ -53,4 +53,17 @@ class TestXMLParser(TestMetadataParser):
 
 
 if __name__ == "__main__":
-    main()
+    current_dir = os.getcwd()
+    sys.path.append(current_dir)
+    
+    import database_backend as db
+    import metadata as metadata
+    import processors as processors
+    import postprocessor as pp
+    import time
+    import unittest
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy import func
+    
+    from toolbox import ToolboxFile
+    import parsers as parsers

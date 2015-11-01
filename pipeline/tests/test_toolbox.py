@@ -33,16 +33,16 @@ class TestRussianParser(TestToolboxParser):
         self.cfg.read("Russian.ini")
         self.infile = codecs.open("../corpora/Russian/toolbox/A00210817.txt", "r", "utf-8")
         self.toolbx = toolbox.ToolboxFile(self.cfg,self.infile)
+        #self.assertTrue(self.toolbx.__init__(self.cfg, "../corpora/Russian/toolbox/A00210817.txt") == True)
         
     def test_tlbxfile_loaded(self):
         """ Test if Toolbox object was loaded """
         self.assertFalse(self.toolbx == None)
     
-    
-    #TODO: strange, this yielded "True", now all of a sudden "False"... hmmm...
-    #def test_utterances(self):
-    #    """ Test if __init__() works """
-    #    self.assertTrue(self.toolbx.__init__(self.cfg, "../corpora/Russian/toolbox/A00210817.txt") == True)
+    def test_utterances(self):
+        """ Test if __init__() works """
+        self.assertFalse(self.toolbx.config['corpus']['corpus'] == None)
+        #print(self.toolbx.config['corpus']['corpus'])
     
     
     #TODO: Write tests to check input/output of the following ToolboxFile methods:
@@ -52,10 +52,31 @@ class TestRussianParser(TestToolboxParser):
     # - get_words()
     # - get_morphemes()
     # - do_inference()
+    
+#class TestChintangParser(TestToolboxParser):
+#    def setUp(self):
+#        super().setUp()
+#        self.cfg.read("Russian.ini")
+#        self.infile = codecs.open("../corpora/Chintang/toolbox/CLDLCh1R01S01.txt", "r", "utf-8")
+#        self.toolbx = toolbox.ToolboxFile(self.cfg,self.infile)
+    
         
 
 if __name__ == "__main__":
-    main()
+    current_dir = os.getcwd()
+    sys.path.append(current_dir)
+    
+    import database_backend as db
+    import metadata as metadata
+    import processors as processors
+    import postprocessor as pp
+    import time
+    import unittest
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy import func
+    
+    import toolbox as toolbox
+    import parsers as parsers
         
     
         
