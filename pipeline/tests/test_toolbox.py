@@ -42,7 +42,17 @@ class TestRussianParser(TestToolboxParser):
     def test_utterances(self):
         """ Test if __init__() works """
         self.assertFalse(self.toolbx.config['corpus']['corpus'] == None)
-        #print(self.toolbx.config['corpus']['corpus'])
+    
+    def test_sentence_type(self):
+        """ Test if Russian sentence_type works """
+        #self.assertFalse(self.toolbx.config['corpus']['corpus'] == None)
+        self.assertEqual(self.toolbx.get_sentence_type('kakaja uzhasnaja pogoda!'),'imperative')
+        self.assertEqual(self.toolbx.get_sentence_type('a shto ty dumaeshq?'),'question')
+        self.assertEqual(self.toolbx.get_sentence_type('eto dolzhno bytq difolt.'),'default')
+        
+    def test_clean_utterance(self):
+        """ Test if Russian clean_utterance works """
+        self.assertEqual(self.toolbx.clean_utterance('eto nado udalitq [xxx] i eto [?] tozhe'), 'eto nado udalitq  i eto  tozhe')
     
     
     #TODO: Write tests to check input/output of the following ToolboxFile methods:
