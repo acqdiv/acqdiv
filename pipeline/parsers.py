@@ -38,7 +38,11 @@ class CorpusConfigParser(configparser.ConfigParser):
     def __init__(self):
         super().__init__(delimiters=["=="])
 
-    # file level initializations
+    #read non-corpora ini files
+    def read_easy(self, filename, encoding=None):
+        super().read(filename,encoding)
+
+    # file level initializations    
     def read(self, filenames, encoding=None):
         super().read(filenames, encoding)
 
