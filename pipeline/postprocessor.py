@@ -26,7 +26,7 @@ import age
 import sys
 import re
 import time
-import configparser
+from configparser import ConfigParser
 
 def db_apply(func):
     """Wrapper for functions that access the database.
@@ -249,7 +249,7 @@ def unify_roles(session,config):
         engine: SQLalchemy engine object.
     """
     table = session.query(backend.Speaker)
-    cfg_mapping = configparser.ConfigParser()
+    cfg_mapping = ConfigParser()
     #option names resp. keys case-sensitive
     cfg_mapping.optionxform = str
     cfg_mapping.read("role_mapping.ini")
@@ -304,7 +304,7 @@ def macrorole(session,config):
         engine: SQLalchemy engine object.
     """
     table = session.query(backend.Speaker)
-    cfg_mapping = configparser.ConfigParser()
+    cfg_mapping = ConfigParser()
     #option names resp. keys case-sensitive
     cfg_mapping.optionxform = str
     cfg_mapping.read("role_mapping.ini")
