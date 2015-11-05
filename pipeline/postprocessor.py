@@ -21,12 +21,12 @@
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 import database_backend as backend
+from parsers import CorpusConfigParser
 import age
 import sys
-import parsers
 import re
 import time
-import parsers
+import configparser
 
 def db_apply(func):
     """Wrapper for functions that access the database.
@@ -249,8 +249,10 @@ def unify_roles(session,config):
         engine: SQLalchemy engine object.
     """
     table = session.query(backend.Speaker)
-    cfg_mapping = parsers.CorpusConfigParser()
-    cfg_mapping.read_easy("role_mapping.ini")
+    cfg_mapping = configparser.ConfigParser()
+    #option names resp. keys case-sensitive
+    cfg_mapping.optionxform = str
+    cfg_mapping.read("role_mapping.ini")
     for row in table:
         row.role = cfg_mapping['role_mapping'][row.role_raw]
         if row.role == "Unknown" and row.language in cfg_mapping:
@@ -302,8 +304,10 @@ def macrorole(session,config):
         engine: SQLalchemy engine object.
     """
     table = session.query(backend.Speaker)
-    cfg_mapping = parsers.CorpusConfigParser()
-    cfg_mapping.read_easy("role_mapping.ini")
+    cfg_mapping = configparser.ConfigParser()
+    #option names resp. keys case-sensitive
+    cfg_mapping.optionxform = str
+    cfg_mapping.read("role_mapping.ini")
     for row in table:
         if row.role == "Target_Child":
             macro = "Target_Child"
@@ -350,6 +354,7 @@ def unique_speaker(session, config):
             d['birthdate'] = db_speaker_entry.birthdate
             d['gender'] = db_speaker_entry.gender
             d['language'] = db_speaker_entry.language
+            d['macrorole'] = db_speaker_entry.macrorole
             unique_speaker_entries.append(backend.Unique_Speaker(**d))
 
     session.add_all(unique_speaker_entries)
@@ -406,18 +411,19 @@ if __name__ == "__main__":
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
               'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
     engine = backend.db_connect()
-    cfg = parsers.CorpusConfigParser()
+    cfg = CorpusConfigParser()
     for config in configs:
         cfg.read(config)
         print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
         update_age(cfg, engine)
         unify_timestamps(cfg, engine)
         unify_glosses(cfg, engine)
-        unify_roles(cfg, engine)
         unify_gender(cfg, engine)
     #    if config == 'Indonesian.ini':
     #        unify_indonesian_labels(cfg, engine)
     #print("Creating Unique Speaker table...")
-    #unique_speaker(cfg, engine)
+    unify_roles(cfg, engine)
+    macrorole(cfg,engine)
+    unique_speaker(cfg, engine)
         
     print("--- %s seconds ---" % (time.time() - start_time))
