@@ -1,64 +1,63 @@
 """ ORM declarations, database table definitions """
 
-# TODO: set the correct values nullable, unique, etc.
-# TODO: pull out the Speakers from Session info into a separate table
-# TODO: create the links between the database tables
+# TODO: investigate:
 # http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#eager-loading
-# NOTE: apparently sqla Base objects do not need constructors; they seem to be discouraged
 
 from sqlalchemy import create_engine, Text, Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.ext.declarative.api import _declarative_constructor
-
-from sqlalchemy.engine.url import URL
+# from sqlalchemy.ext.declarative.api import _declarative_constructor
+# from sqlalchemy.engine.url import URL
 
 Base = declarative_base()
-# DeclarativeBase = declarative_base()
 
 def db_connect():
-    """ Performs database connection. We can add a database settings
-    in settings.py later. Returns sqlalchemy engine instance.
     """
-    # TODO: if we want to add postgres settings and change to postgres
-    # return create_engine(URL(**settings.DATABASE))
+    Performs database connection. We can add a database settings
+    in settings.py, e.g. for postgres: return create_engine(URL(**settings.DATABASE))
+
+    Returns sqlalchemy engine instance.
+    """
     return create_engine('sqlite:///_acqdiv.sqlite3', echo=False)
 
 def create_tables(engine):
-    """ """
-    # Drop all the database tables first
+    """
+    Drops all databases before creating them
+    """
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(engine)
 
 class Session(Base):
-    __tablename__ = 'session'
+    """
+    Sessions table. Each input file is a row. To note:
+    - session_id field is the input filename
+    - source_id field is the id given in the session file
+    - media field is an associate media file by filename
+    """
+    __tablename__ = 'sessions'
 
     id = Column(Integer, primary_key=True)
-    session_id = Column(Text, nullable=False, unique=False) # filename
+    session_id = Column(Text, nullable=False, unique=False)
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     date = Column(Text, nullable=True, unique=False)
     situation = Column(Text, nullable=True, unique=False)
     genre = Column(Text, nullable=True, unique=False)
-    # this stuff seems mostly blank because we are not extracting metadata from the .cdc files
-    # address = Column(Text, nullable=True, unique=False)
-    # continent = Column(Text, nullable=True, unique=False)
-    # country = Column(Text, nullable=True, unique=False)
-    transcript_id = Column(Text, nullable=True, unique=False) # original file name via ID in XML files (Chintang, Cree, Indonesian & Russian)
-    media = Column(Text, nullable=True, unique=False) # original file name via ID in XML files (Chintang, Cree, Indonesian & Russian)
-    media_type = Column(Text, nullable=True, unique=False) # original file name via ID in XML files (Chintang, Cree, Indonesian & Russian)
-
-    # foreign relationships
+    source_id = Column(Text, nullable=True, unique=False)
+    media = Column(Text, nullable=True, unique=False)
+    media_type = Column(Text, nullable=True, unique=False)
     speakers = relationship('Speaker', backref='session') #, lazy='dynamic')
 
 
 class Speaker(Base):
-    # TODO: we will have to make a link between speakers and speakers in each session/record/utterance
-    __tablename__ = 'speaker'
+    """
+    Speaker table; each row is a speaker in a session. Speakers may appear in > 1 session
+    """
+    __tablename__ = 'speakers'
 
     id = Column(Integer, primary_key=True)
-    session_id_fk = Column(Integer, ForeignKey('session.session_id'))
-    corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
+    session_id_fk = Column(Integer, ForeignKey('sessions.id'))
+    corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False)
     name = Column(Text, nullable=True, unique=False)
@@ -69,15 +68,19 @@ class Speaker(Base):
     gender = Column(Text, nullable=True, unique=False)
     role_raw = Column(Text, nullable=True, unique=False)
     role = Column(Text, nullable=True, unique=False)
+    macrorole = Column(Text, nullable=True, unique=False)
     languages_spoken = Column(Text, nullable=True, unique=False)
     birthdate = Column(Text, nullable=True, unique=False)
 
-    # optional pretty formatting
+    # TODO: optional pretty formatting for printing
     def __repr__(self):
         return "Speaker(%s)" % (self.name)
 
 class Unique_Speaker(Base):
-    __tablename__ = 'uniquespeaker'
+    """
+    Unique speakers across all corpora
+    """
+    __tablename__ = 'uniquespeakers'
 
     id = Column(Integer, primary_key=True)
     speaker_label = Column(Text, nullable=True, unique=False)
@@ -85,90 +88,83 @@ class Unique_Speaker(Base):
     birthdate = Column(Text, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
+    macrorole = Column(Text, nullable=True, unique=False)
 
 class Utterance(Base):
-    __tablename__ = 'utterance'
+    """
+    Utterances in all sessions. To note:
+    - utterance_id is the id in the original files (not unique across corpora, e.g. u1, u1)
+    - addressee not in all corpora
+    - utterance_type is phonetic or orthographic
+    - _raw vs !_raw is distinction between original input and cleaned/manipulated output
+    """
+    __tablename__ = 'utterances'
 
     id = Column(Integer, primary_key=True)
-    session_id_fk = Column(Text, ForeignKey('session.session_id'))
-    corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
+    session_id_fk = Column(Text, ForeignKey('sessions.id'))
+    corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
-    utterance_id = Column(Text, nullable=True, unique=False) # utterance id in original file
+    utterance_id = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False)
-    addressee = Column(Text, nullable=True, unique=False) # exists at least in Russian
-    utterance_type = Column(Text, nullable=True, unique=False) # phonetic or orthographic
-    utterance_raw = Column(Text, nullable=True, unique=False) # original utterance
-    utterance = Column(Text, nullable=True, unique=False) # original utterance
+    addressee = Column(Text, nullable=True, unique=False)
+    utterance_type = Column(Text, nullable=True, unique=False)
+    utterance_raw = Column(Text, nullable=True, unique=False)
+    utterance = Column(Text, nullable=True, unique=False)
     translation = Column(Text, nullable=True, unique=False)
     sentence_type = Column(Text, nullable=True, unique=False)
     start = Column(Text, nullable=True, unique=False)
     end = Column(Text, nullable=True, unique=False)
     start_raw = Column(Text, nullable=True, unique=False)
     end_raw = Column(Text, nullable=True, unique=False)
-    word = Column(Text, nullable=True, unique=False) # words line? what is Robert's "full_word"?
-    morpheme = Column(Text, nullable=True, unique=False) # morpheme line
-    gloss_raw = Column(Text, nullable=True, unique=False) # what to do with the "gloss"?
-    pos_raw = Column(Text, nullable=True, unique=False) # parts of speech line
+    word = Column(Text, nullable=True, unique=False)
+    morpheme = Column(Text, nullable=True, unique=False)
+    gloss_raw = Column(Text, nullable=True, unique=False)
+    pos_raw = Column(Text, nullable=True, unique=False)
     comment = Column(Text, nullable=True, unique=False)
-    warnings = Column(Text, nullable=True, unique=False) # Robert's warnings!
+    warning = Column(Text, nullable=True, unique=False)
 
-    #Morphemes = sa.Column(sa.Text, nullable=False, unique=False) # concatenated MorphemeIDs per utterance
-    #Words = sa.Column(sa.Text, nullable=False, unique=True) # concatenated WordIDs per utterance
-
-    #Session = sa.relationship('Session', backref=backref('Utterances', order_by=id))
 
 class Word(Base):
+    """
+    Words table.
+
+    TODO (BB): get unique words and assign ids in the postprocessor
+    """
     __tablename__ = 'words'
 
     id = Column(Integer, primary_key=True)
-    utterance_id_fk = Column(Text, ForeignKey('utterance.utterance_id'))
+    utterance_id_fk = Column(Text, ForeignKey('utterances.id'))
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     word = Column(Text, nullable=True, unique=False)
     word_actual = Column(Text, nullable=True, unique=False)
     word_target = Column(Text, nullable=True, unique=False)
-    warnings = Column(Text, nullable=True, unique=False)
-    # TODO: get unique words and assign ids in the postprocessor
-    # word_id = Column(Text, nullable=True, unique=False)
-
-    #Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
+    warning = Column(Text, nullable=True, unique=False)
+    # Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
 
 
 class Morpheme(Base):
+    """
+    Morphemes table
+    """
     __tablename__ = 'morphemes'
-
-    # fk...
-    # SessionID = sa.Column(sa.Text, nullable=False, unique=True)
     id = Column(Integer, primary_key=True)
-    utterance_id_fk = Column(Text, ForeignKey('utterance.utterance_id'))
-    # TODO: do we really need corpus at the morpheme level?
-    corpus = Column(Text, nullable=True, unique=False) # for sorting convenience
+    utterance_id_fk = Column(Text, ForeignKey('utterances.id'))
+    corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
-    # this morpheme's type: actual or target
     type = Column(Text, nullable=True, unique=False)
     morpheme = Column(Text, nullable=True, unique=False)
     gloss_raw = Column(Text, nullable=True, unique=False)
     gloss = Column(Text, nullable=True, unique=False)
     pos_raw = Column(Text, nullable=True, unique=False)
     pos = Column(Text, nullable=True, unique=False)
-    #morpheme_target = Column(Text, nullable=True, unique=False)
-    #clean_gloss = Column(Text, nullable=True, unique=False)
-    #gloss_target = Column(Text, nullable=True, unique=False)
-    #pos_target = Column(Text, nullable=True, unique=False)
-    #segment = Column(Text, nullable=True, unique=False)
-    #segment_target = Column(Text, nullable=True, unique=False)
-    # TODO: get unique morphemes and assign ids in the postprocessor
-    # morpheme_id = Column(Text, nullable=True, unique=False)
 
 class Warnings(Base):
-    # Table for warnings found in parsing (should be record/multiple levels?)
-    # Types of data errors in Toolbox files from Toolbox parsing:
-    # missing records (/ref)
-
+    """
+    Warnings found in parsing
+    """
     __tablename__ = 'warnings'
-
-    #id = Column(Text, primary_key=True) ## @bambooforest Is that a mistake?
     id = Column(Integer,primary_key=True)
     corpus = Column(Text, nullable=True, unique=False)
-    utterance_id_fk = Column(Text, ForeignKey('utterance.utterance_id'))
+    utterance_id_fk = Column(Text, ForeignKey('utterances.id'))
     warning = Column(Text, nullable=True, unique=False)

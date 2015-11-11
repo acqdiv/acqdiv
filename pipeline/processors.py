@@ -71,12 +71,6 @@ class SessionProcessor(object):
 
         self.session_entry = Session(**d)
 
-
-        # TODO: deal with IMDI's dict in dict encoding of location (perhaps in CorpusConfigProcessor):
-        # address = session_metadata['location']['address'],
-        # continent = session_metadata['location']['continent'],
-        # country = session_metadata['location']['country']
-
         # Get speaker metadata; capture data specified in corpus config
         self.speaker_entries = []
         for speaker in self.parser.next_speaker():
@@ -84,22 +78,26 @@ class SessionProcessor(object):
             for k, v in speaker.items():
                 if k in self.config['speaker_labels'].keys():
                     d[self.config['speaker_labels'][k]] = v
-            if self.corpus == 'Chintang':
-                if d['role_raw'] == "Speaker/Signer" and speaker['keys'] != 'None':
-                    d['role_raw'] = speaker['keys']
-                elif 'child' not in speaker['role'].lower() and speaker['familysocialrole'] != 'None' and re.match('[\w]+',speaker['familysocialrole']):
+            if self.corpus == 'Chintang' and speaker['role'] != "Target child" and d['role_raw'] == 'Speaker/Signer':
+                if speaker['familysocialrole'] != 'None' and speaker['familysocialrole']!= 'Unspecified' and speaker['familysocialrole'].isalpha():
                     d['role_raw'] = speaker['familysocialrole']
+                if speaker['keys'] != 'None' and re.match('[\w]+',speaker['keys']):
+                    d['role_raw'] = speaker['keys']
+
             d['session_id_fk'] = self.filename
             d['language'] = self.language
             d['corpus'] = self.corpus
-            self.speaker_entries.append(Speaker(**d))
+            if self.corpus == 'Indonesian' and d['role_raw'] == 'Non_Human':
+                continue
+            else:
+                self.speaker_entries.append(Speaker(**d))
 
         # TODO(stiv): Need to add to each utterance some kind of joining key.
         # I think it makes sense to construct/add it here, since this is where
         # we do database stuff, and not in the parser (there's no reason the parser
         # should have to know about primary keys - it's a parser, not a db)
 
-        # CHATXML or Toolbox body parsing begins...
+        # Begin CHATXML or Toolbox body parsing
         self.utterances = []
         self.words = []
         self.morphemes = []

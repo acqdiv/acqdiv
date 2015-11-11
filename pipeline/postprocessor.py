@@ -21,11 +21,12 @@
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 import database_backend as backend
+from parsers import CorpusConfigParser
 import age
 import sys
-import parsers
 import re
 import time
+from configparser import ConfigParser
 
 def db_apply(func):
     """Wrapper for functions that access the database.
@@ -233,50 +234,97 @@ def unify_glosses(config, engine):
         unify_gloss_labels(config, engine)
         apply_gloss_regexes(config, engine)
 
-#normalizing roles section
 @db_apply
-def unify_roles(session, config):
-    #lists of roles which have to be recognized
-    corpus_name = config["corpus"]["corpus"]
-    linguists = ["experimenter", "collector", "researcher", "investigator", "annotator", "observer"]
-    helper = ["helper", "facilitator"]
-    familymembers = ["mother", "father", "cousin", "aunt", "grandmother"]
-    playmate = ["playmate"]
-    for a_session in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
-        #we iterate through every session of current corpus
-        session_id = a_session.session_id
-        for row in session.query(backend.Speaker).filter(backend.Speaker.session_id_fk == session_id):
-            #we iterate through every row of current session, looking at table "Speaker"
-            curr_role = row.role_raw
-            #finding out what kind of role we have and map it to equivalent normalized role
-            if "target" in curr_role.lower() or "focus" in curr_role.lower():
-                new_role = "target_child"
-            elif len([item for item in linguists if item in curr_role.lower()]) >= 1:
-                #condition "complicated" because there are roles that contain multiple words
-                new_role = "linguist"
-            elif len([item for item in helper if item in curr_role.lower()]) >= 1:
-                new_role = "helper"
-            elif curr_role.lower() in familymembers:
-                new_role = curr_role.lower()
-            elif curr_role.lower() in playmate:
-                new_role = "playmate"
-            else:
-                new_role = "others"
-            #writing normalized role into column "normalized_role"
-            row.role = new_role
+def unify_roles(session,config):
+    """Function to unify speaker roles.
+
+    Each corpora has its own set of speaker roles. This function uses
+    "role_mapping.ini" to assign an unified role to each speaker according
+    to the mappings in role_mapping.ini. The mapping is either based on the original
+    role or the speaker_label (depending on how the corpora handles role encoding).
+    The role column in the speaker table contains the unified roles.
+
+    Args:
+        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+        engine: SQLalchemy engine object.
+    """
+    table = session.query(backend.Speaker)
+    cfg_mapping = ConfigParser()
+    #option names resp. keys case-sensitive
+    cfg_mapping.optionxform = str
+    cfg_mapping.read("role_mapping.ini")
+    for row in table:
+        row.role = cfg_mapping['role_mapping'][row.role_raw]
+        if row.role == "Unknown" and row.language in cfg_mapping:
+            try:
+                row.role = cfg_mapping[row.language][row.speaker_label]
+            except KeyError:
+                pass
+        elif row.role in ["Adult", "Child", "old","Teenager"] and row.age_in_days != None:
+            row.role = "Unknown"
+        elif row.role in ["Boy", "Girl", "Female", "Male"] and row.gender_raw != None:
+            row.role = "Unknown"
 
 @db_apply
 def unify_gender(session, config):
+    """Function to unify speaker genders.
+
+    There are different ways to write a speaker's gender. This
+    function unifies the spelling. The column gender in the speakertable
+    contains the unified genders.
+
+    Args:
+        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+        engine: SQLalchemy engine object.
+    """
     table = session.query(backend.Speaker)
     for row in table:
-        if row.gender_raw == None:
-            row.gender = 'unspecified'
-        elif row.gender_raw.lower() == 'female':
-            row.gender = 'female'
-        elif row.gender_raw.lower() == 'male':
-            row.gender = 'male'
+        if row.gender_raw != None:
+            if row.gender_raw.lower() == 'female':
+                row.gender = 'Female'
+            elif row.gender_raw.lower() == 'male':
+                row.gender = 'Male'
+            else:
+                row.gender = "Unspecified"
         else:
-            row.gender = 'unspecified'
+            row.gender = "Unspecified"
+
+@db_apply
+def macrorole(session,config):
+    """Function to define macrorole resp. age category.
+
+    This function assigns an age category to each speaker. If there is
+    no information on age available it uses "role_mappings.ini" to define 
+    which age category a speaker belongs to. The mapping is based on either
+    the speaker's original role or speaker_label (depending on how the corpora
+    handles role encoding).
+
+    Args:
+        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+        engine: SQLalchemy engine object.
+    """
+    table = session.query(backend.Speaker)
+    cfg_mapping = ConfigParser()
+    #option names resp. keys case-sensitive
+    cfg_mapping.optionxform = str
+    cfg_mapping.read("role_mapping.ini")
+    for row in table:
+        if row.role == "Target_Child":
+            macro = "Target_Child"
+        elif row.age_in_days != None:
+            if row.age_in_days <= 4380:
+                macro = "Child"
+            else:
+                macro = "Adult"
+        else:
+            try:
+                macro = cfg_mapping['macrorole_mapping'][row.role_raw]
+            except KeyError:
+                try:
+                    macro = cfg_mapping['macrorole_mapping'][row.speaker_label]
+                except KeyError:
+                    macro = "Unknown"
+        row.macrorole = macro
 
 @db_apply
 def unique_speaker(session, config):
@@ -293,19 +341,20 @@ def unique_speaker(session, config):
     """
     # create a table of unique speakers
     unique_speaker_entries = []
-    unique_name_date = set()
+    unique_name_date_label = set()
     table = session.query(backend.Speaker)
 
     for db_speaker_entry in table:
-        unique_tuple = (db_speaker_entry.name, db_speaker_entry.birthdate)
-        if unique_tuple not in unique_name_date:
-            unique_name_date.add(unique_tuple)
+        unique_tuple = (db_speaker_entry.name, db_speaker_entry.birthdate,db_speaker_entry.speaker_label)
+        if unique_tuple not in unique_name_date_label:
+            unique_name_date_label.add(unique_tuple)
             d = {}
             d['speaker_label'] = db_speaker_entry.speaker_label
             d['name'] = db_speaker_entry.name
             d['birthdate'] = db_speaker_entry.birthdate
             d['gender'] = db_speaker_entry.gender
             d['language'] = db_speaker_entry.language
+            d['macrorole'] = db_speaker_entry.macrorole
             unique_speaker_entries.append(backend.Unique_Speaker(**d))
 
     session.add_all(unique_speaker_entries)
@@ -362,18 +411,19 @@ if __name__ == "__main__":
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
               'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
     engine = backend.db_connect()
-    cfg = parsers.CorpusConfigParser()
+    cfg = CorpusConfigParser()
     for config in configs:
         cfg.read(config)
         print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
         update_age(cfg, engine)
         unify_timestamps(cfg, engine)
         unify_glosses(cfg, engine)
-        unify_roles(cfg, engine)
         unify_gender(cfg, engine)
     #    if config == 'Indonesian.ini':
     #        unify_indonesian_labels(cfg, engine)
     #print("Creating Unique Speaker table...")
-    #unique_speaker(cfg, engine)
+    unify_roles(cfg, engine)
+    macrorole(cfg,engine)
+    unique_speaker(cfg, engine)
         
     print("--- %s seconds ---" % (time.time() - start_time))

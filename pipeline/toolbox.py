@@ -37,13 +37,21 @@ class ToolboxFile(object):
         for k, v in self.config['record_tiers'].items():
             self.field_markers.append(k)
 
-        # TODO: get sentence type, etc...
-
-        # TODO: collect Robert's warnings 
-        self.warnings = collections.OrderedDict()
         
-
     def __iter__(self):
+        """ Iterator, yields raw utterances, words, morphemes and inference information from a Session file.
+        
+        This iterator directly extracts utterance_raw and utterance_type and calls various functions to extract information
+        from the following levels:
+        
+        sentence_type: Calls the function get_sentence_type() to extract the sentence type.
+        clean_utterance: Calls the function clean_utterance() to the clean utterance.
+        warnings: Calls the function get_warnings() to ge the warnings like "transcription insecure".
+        words: Calls the function get_words() to extract the single words.
+        morphemes: Calls the function get_morphemes() to extract the single morphemes.
+        inference: Calls the function do_inference() to infere the morpheme, pos and gloss information.
+        """
+        
         record_marker = re.compile(br'\\ref')
         with open (self.path, 'rb') as f:
             with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as data:
@@ -71,29 +79,29 @@ class ToolboxFile(object):
                     # we need to choose either the phonetic or orthographic transcription
                     # for the general 'utterance' field (from config); also add its type
                     
-                    #TODO: the below two lines raise the error discussed in https://github.com/uzling/acqdiv/issues/154.
-                    #utterances['utterance'] = utterances[self.config['utterance']['field']]
-                    #utterances['utterance_type'] = self.config['utterance']['type']
-                
                     try:
                         utterances['utterance_raw'] = utterances[self.config['utterance']['field']]
                         utterances['utterance_type'] = self.config['utterance']['type']
-                        #utterances['warnings'] = self.get_warnings(utterances['utterance'])
                     except KeyError:
                         utterances['utterance_raw'] = ""
                         utterances['utterance_type'] = ""
-                        utterances['warnings'] = 'empty utterance'
-                        #self.warnings['warnings'] = 'empty utterance'
+                        utterances['warning'] = 'empty utterance'
+
 
                     # Skip the first rows that contain metadata information
                     # cf. https://github.com/uzling/acqdiv/issues/154
                     if not utterances['utterance_raw'].startswith('@'):
-                        # TODO: build in the rules system per corpus...
-                        # clean up utterance, add new data via Robert inferences, etc.
                         # here we can just pass around the session utterance dictionary
-                        utterances['sentence_type'] = self.get_sentence_type(utterances['utterance_raw'])
+                        if self.config['corpus']['corpus'] == 'Chintang':
+                            try:
+                                utterances['sentence_type'] = self.get_sentence_type(utterances['nepali'])
+                                del utterances['nepali']
+                            except KeyError:
+                                continue
+                        else:
+                            utterances['sentence_type'] = self.get_sentence_type(utterances['utterance_raw'])
                         utterances['utterance'] = self.clean_utterance(utterances['utterance_raw'])
-                        utterances['warnings'] = self.get_warnings(utterances['utterance_raw'])
+                        utterances['warning'] = self.get_warnings(utterances['utterance_raw'])
                             
                         # words, morphemes, inferences
                         words = self.get_words(utterances)
@@ -114,9 +122,16 @@ class ToolboxFile(object):
                 """
 
     def get_words(self,utterances):
-        """ Do the Toolbox corpus-specific word processing
-        :param utterance: ordered dictionary
-        :return: list of ordered dictionaries with word and parent utterance id
+        """ Function that does Toolbox corpus-specific word processing.
+        
+        This function does Toolbox corpus-specific word processing and distinguishes between
+        word and word_target if necessary.
+        
+        Args:
+            utterances: An ordered dictionary of utterances.
+            
+        Returns:
+            result: A list of ordered dictionaries with word and parent utterance id (utterance_id_fk).
         """
         result = []
         words = utterances['utterance'].split()
@@ -144,14 +159,18 @@ class ToolboxFile(object):
 
 
     def get_sentence_type(self, utterance):
-        """ Get utterance type (aka sentence type)
-        :param utterance:
-        :return: sentence_type
+        """ Function to get utterance type (aka sentence type) from an utterance.
+        
+        Args:
+            utterance: A single utterance
+            
+        Returns:
+            sentence_type: Distinguishes between default, question, imperativ and exclamation.
         """
+        
         if self.config['corpus']['corpus'] == "Russian":
             match_punctuation = re.search('([\.\?!])$', utterance)
             if match_punctuation is not None:
-            #    return sentence_types[match_punctuation.group(1)]  ##@bambooforest, I get an error here: NameError: name 'sentence_types' is not defined
                 sentence_type = ''
                 if match_punctuation.group(1) == '.':
                     sentence_type = 'default'
@@ -159,7 +178,6 @@ class ToolboxFile(object):
                     sentence_type = 'question'
                 if match_punctuation.group(1) == '!':
                     sentence_type = 'imperative'
-                
                 return sentence_type
 
         # does this logic make any sense? why not, if, if, if, fuck it return?
@@ -174,11 +192,35 @@ class ToolboxFile(object):
                 return
 
         # is there Chintang utterance/sentence type?
-        # lingp: according to the corpus_manual (p.9) there is no utterance/sentence type for Chintang.
+        # logic according to @rabart (cf. https://github.com/uzling/acqdiv/issues/253):
+        # \eng: . = default, ? = question, ! = exclamation
+        # \nep: । = default, rest identical. Note this is not a "pipe" but the so-called danda.
+        if self.config['corpus']['corpus'] == "Chintang":
+            match_punctuation = re.search('([।\?!])$', utterance)
+            if match_punctuation is not None:
+                sentence_type = ''
+                if match_punctuation.group(1) == '।':
+                    sentence_type = 'default'
+                if match_punctuation.group(1) == '?':
+                    sentence_type = 'question'
+                if match_punctuation.group(1) == '!':
+                    sentence_type = 'exclamation'
+                return sentence_type
+        
             
                     
     def get_warnings(self,utterance):
-        #transcription_warning = ''
+        """ Function to extract warning for insecure transcriptions.
+        
+        This function extracts warnings for insecure transcriptions for Russian and Indonesian
+        (incl. intended form for Russian).
+        
+        Args:
+            utterance: a single utterance
+        
+        Returns:
+            transcription_warning: warning for insecure transcription
+        """
         if self.config['corpus']['corpus'] == "Russian":
             if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
                 for target in re.findall('\[=\?\s+[^\]]+\]', utterance):
@@ -200,10 +242,17 @@ class ToolboxFile(object):
 
     # TODO: move this to a cleaning module that's imported, e.g. from pyclean import * as pyclean
     def clean_utterance(self, utterance):
-        """ Clean up corpus-specific utterances
-        :param utterance:
-        :return:
+        """ Function that cleans up corpus-specific utterances.
+        
+        This function cleans an utterance from punctuation marks, comments, etc.
+        
+        Args:
+            utterance: A single utterance
+            
+        Returns:
+            utterance: The cleaned utterance
         """
+        
         # TODO: incorporate Russian \pho and \text tiers -- right now just utterance in general
         # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1586-L1599
         if utterance != 'None' or utterance != '':
@@ -215,9 +264,7 @@ class ToolboxFile(object):
                 # Insecure transcriptions [?], [=( )?], [xxx]: add warning, delete marker
                 # Note that [xxx] usually replaces a complete utterance and is non-aligned,
                 # in contrast to xxx without brackets, which can be counted as a word
-                #if re.search('\[(\s*=?\s*\?\s*|\s*xxx\s*)\]', utterance): ## TODO: I think this doesn't match what it should? (a . missing? check line below)
                 if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
-                    #utterance = re.sub('\[\s*=?\s*\?\s*\]','',utterance)  ## TODO: again, I think this doesn't match what it should... (check line below)
                     utterance = re.sub('\[\s*=?.*?\]', '', utterance)
                 return utterance
 
@@ -239,20 +286,26 @@ class ToolboxFile(object):
                 # No specific stuff here.
                 return utterance
             
-        # add warning for empty utterance
-        else:
-            self.warnings['warning'].append('empty utterance')
 
     def do_inference(self, utterances):
-        result = []
-        warnings_result = []
+        """ Function to do corpus-specific inference of morpheme, pos_raw and gloss_raw correspondence.
         
-        #morphs = get_morphemes(utterances)
+        This function takes utterances from a session and extracts POS tags (pos_raw) and glosses (gloss_raw9 from them.
+        From corpus-specific inference rules, the matching between morpheme, pos_raw and gloss_raw gets infered.
+        It also extracts warnings on morpheme level (warning: "not glossed", "pos missing").
+        
+        Args:
+            utterances: An ordered dictionary of utterances.
+            
+        Returns:
+            result: A list of ordered dictionaries with pos_raw, gloss_raw, warning and parent utterance id (utterance_id_fk). 
+        """
+        result = []
+        #warnings_result = []
+        
         if self.config['corpus']['corpus'] == "Russian":
-            # TODO: do the Russian words / morphemes inference
             if 'pos_raw' in utterances.keys():
-            # remove PUNCT pos
-            #if self.config['corpus']['corpus'] == "Russian":
+                # remove PUNCT pos
                 pos_cleaned = utterances['pos_raw'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
                 
                 # get pos and gloss (après: https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1751-L1762)
@@ -319,15 +372,12 @@ class ToolboxFile(object):
             if 'morpheme' and 'gloss_raw' and 'pos_raw' in utterances.keys():
                 morphemes_target_Chintang = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['morpheme'])
                 morphemes_Chintang = morphemes_Chintang = re.sub('(\s\-)|(\-\s)','-', morphemes_target_Chintang)
-                #glosses_Chintang = utterances['gloss']
-                #pos_Chintang = utterances['pos']
                 try:
                     glosses_Chintang = utterances['gloss_raw']
                 except KeyError:
                     glosses_Chintang = ''
                     d['utterance_id_fk'] = utterances['utterance_id']
                     d['warning'] = 'not glossed (gloss missing)'
-                    #self.warnings['warning'] = 'not glossed'
                     result.append(d)
                 try:    
                     pos_Chintang = utterances['pos_raw']
@@ -335,7 +385,6 @@ class ToolboxFile(object):
                     pos_Chintang = ''
                     d['utterance_id_fk'] = utterances['utterance_id']
                     d['warning'] = 'pos missing'
-                    #self.warnings['warning'] = 'pos missing!'
                     result.append(d)
                     
                 morphemes = morphemes_Chintang.split()
@@ -348,30 +397,31 @@ class ToolboxFile(object):
                     morphemes_target_counter += 1
                     d = collections.OrderedDict()
                     d['utterance_id_fk'] = utterances['utterance_id']
-                    #d['morpheme_id'] = str(utterances['utterance_id'])+'_'+str(morphemes_target_counter) ## needed?
                     d['morpheme'] = morpheme_target
-                    # d['segment_target'] = morpheme_target
                     d['gloss_raw'] = gloss
                     d['pos_raw'] = pos
                     result.append(d)
             else:
                 d = collections.OrderedDict()
                 d['morpheme'] = ''
-                # d['segment_target'] = ''
                 d['utterance_id_fk'] = utterances['utterance_id']
-                #d['morpheme_id'] = '' ## needed??
                 d['gloss_raw'] = ''
                 d['pos_raw'] = ''
                 d['warning'] = 'not glossed'
                 result.append(d)
-                #self.warnings['warning'] ='not glossed'
         
         return result
 
     def get_morphemes(self, utterances):
-        """ Do the Toolbox corpus-specific morpheme processing
-        :return: (so far) list of ordered dictionaries with morpheme and parent utterance id
+        """ Function to do the Toolbox corpus-specific morpheme processing.
+        
+        Args:
+            utterances: utterances: An ordered dictionary of utterances.
+        
+        Returns:
+            result: A list of ordered dictionaries with morpheme and parent utterance id (utterance_id_fk).
         """
+        
         result = []
         if 'morpheme' in utterances.keys():
             # Russian specific morpheme stuff
@@ -383,7 +433,6 @@ class ToolboxFile(object):
                     # Note that there is no "morpheme_target" for Russian
                     d = collections.OrderedDict()
                     d['morpheme'] = morpheme
-                   # d['segment_target'] = morpheme
                     d['utterance_id_fk'] = utterances['utterance_id']
                     result.append(d)
                     
@@ -395,7 +444,6 @@ class ToolboxFile(object):
                 for morpheme in morphemes:
                     d = collections.OrderedDict()
                     d['morpheme'] = morpheme
-                    #d['segment'] = morpheme
                     d['utterance_id_fk'] = utterances['utterance_id']
                     result.append(d)
                 
@@ -416,7 +464,6 @@ class ToolboxFile(object):
             d['utterance_id_fk'] = utterances['utterance_id']
             d['warning']  = 'morpheme missing' 
             result.append(d)
-            #self.warnings['warning'] = 'morpheme missing!'
                 
         return result
     
