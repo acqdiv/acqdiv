@@ -28,7 +28,26 @@ import re
 import time
 
 def db_apply(func):
+    """Wrapper for functions that access the database.
+
+    Args:
+        func: A function that takes a SQLalchemy session and a configparser object as arguments.
+
+    Returns:
+        A function that takes a configparser object and a SQLalchemy engine as arguments and 
+        wraps func with the logic for connecting to and modifying the database.
+    """
     def update_session(config, engine):
+        """Function to connect to and modify the ACQDIV database. This is a wrapper returned by db_apply.
+
+        This function calls the SQLalchemy sessionmaker to create a database session,
+        then calls the function it wraps with the config and the session.
+        Finally it closes the connection again.
+
+        Args:
+            config: A configparser object. The config should be the contents of a corpus-specific .ini file.
+            engine: A SQLalchemy engine object. This is the connection to the ACQDIV database.
+        """
         # cfunc is the function that connects to the db
         Session = sessionmaker(bind=engine)
         session = Session()
@@ -43,6 +62,15 @@ def db_apply(func):
     return update_session
 
 def update_xml_age(session, config):
+    """Function to process speaker ages in Chat XML corpora.
+    
+    Finds all speakers from the corpus in the config and calls methods from age.py to
+    fill in the age and age_in_days columns.
+
+    Args:
+        session: SQLalchemy session object.
+        config: configparser object containing the configuration for the current corpus.
+    """
     corpus_name = config["corpus"]["corpus"]
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
         sid = db_session_entry.session_id
@@ -54,6 +82,22 @@ def update_xml_age(session, config):
                 row.age_in_days = aid
 
 def update_imdi_age(session, config):
+    """Function to process speaker ages in IMDI corpora.
+
+    Finds all the recording sessions in the corpus in the config, then, for each speaker
+    in the session:
+
+    First attempts to calculate ages from the speaker's birth date and the session's
+    recording date. For speakers where this fails, looks for speakers that already
+    have a properly formatted age, transfers this age from the age_raw column to the
+    age column and calculates age_in_days from it.
+
+    Finally, it looks for speakers that only have an age in years and does the same.
+
+    Args:
+        session: SQLalchemy session object.
+        config: configparser object containing the configuration for the current corpus.
+    """
     corpus_name = config["corpus"]["corpus"]
 
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
@@ -92,6 +136,15 @@ def update_imdi_age(session, config):
 
 @db_apply
 def update_age(session, config):
+    """Helper function for age unification.
+
+    Checks the config for the metadata format of the corpus,
+    then calls the appropriate function.
+
+    Args:
+        session: SQLalchemy session object.
+        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+    """
     if config["metadata"]["type"] == "IMDI":
         update_imdi_age(session, config)
     else:
@@ -99,6 +152,15 @@ def update_age(session, config):
 
 @db_apply
 def apply_gloss_regexes(session, config):
+    """Function to apply regex substitutions to the glosses of morphemes in the database.
+
+    Takes regexes specified in the config and applies them to all the morphemes belonging to the
+    current corpus.
+
+    Args:
+        session: SQLalchemy session object.
+        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+    """
     corpus_name = config["corpus"]["corpus"]
     regexes = config["regex"].items() 
     ssq = session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name)
@@ -118,6 +180,18 @@ def apply_gloss_regexes(session, config):
 
 @db_apply
 def unify_gloss_labels(session, config):
+    """Performs simple key-value substitution on morphological glosses in the database.
+
+    This function iterates through all morpheme rows belonging to the current corpus,
+    then searches for the gloss from the gloss_raw column in the "gloss" section of the config.
+
+    If the gloss is found, the gloss column is filled with the value from the config.
+    Otherwise, the raw gloss is carried over unchanged.
+
+    Args:
+        session: SQLalchemy session object.
+        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+    """
     corpus_name = config["corpus"]["corpus"]
     for row in session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name):
         old_gloss = None
@@ -140,6 +214,18 @@ def unify_gloss_labels(session, config):
             return
 
 def unify_glosses(config, engine):
+    """Helper function for unifying glosses.
+
+    For most corpora, the regexes must operate on glosses already substituted.
+    However, for Russian, the regex substitutions must occur first.
+    This function checks if the corpus name in the config is Russian or not
+    and applies the functions in the corresponding order.
+
+
+    Args:
+        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+        engine: SQLalchemy engine object.
+    """
     if config["corpus"]["corpus"] == "Russian":
         apply_gloss_regexes(config, engine)
         unify_gloss_labels(config, engine)
@@ -194,6 +280,17 @@ def unify_gender(session, config):
 
 @db_apply
 def unique_speaker(session, config):
+    """Function to create a table containing every unique speaker from all corpora.
+
+    Queries the speaker table in the database and extracts non-session-specific data
+    for every unique speaker.
+
+    Uniqueness is determined by a combination of speaker label, name, and birthdate.
+
+    Args:
+        session: SQLalchemy session object.
+        config: configparser object containing the configuration for the current corpus.
+    """
     # create a table of unique speakers
     unique_speaker_entries = []
     unique_name_date = set()
@@ -215,6 +312,20 @@ def unique_speaker(session, config):
 
 @db_apply
 def unify_indonesian_labels(session, config):
+    """Function to match the labels of Indonesian speakers with the labels in the Indonesian utterances.
+        
+    Labels in the Indonesian utterances are longer and more specific than those in the metadata files.
+    This function changes the labels in the speaker table to the corresponding labels in the utterances.
+    For most speakers, this is done by appending the first three letters of the session label to the 
+    speaker label. For those that are coded in the original metadata files as EXP, their identity is determined by their
+    name and the appropriate label assigned as coded in the config.
+
+    Finally, some specifically excluded labels (also in the config) are not changed at all.
+
+    Args:
+        session: SQLalchemy session object.
+        config: configparser object containing the configuration for the current corpus.
+    """
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == "Indonesian"):
         session_id = db_session_entry.session_id
         session_set = session_id[0:3]
@@ -225,6 +336,15 @@ def unify_indonesian_labels(session, config):
                 db_speaker_entry.speaker_label = db_speaker_entry.speaker_label + session_set
 @db_apply
 def unify_timestamps(session, config):
+    """Helper function to change utterance timestamps to a consistent format.
+
+    This function queries the database for all timestamps and then calls the
+    unify_timestamps function from age.py to unify the format.
+
+    Args:
+        session: SQLalchemy session object.
+        config: configparser object containing the configuration for the current corpus.
+    """
     corpus_name = config["corpus"]["corpus"]
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
         sid = db_session_entry.session_id
