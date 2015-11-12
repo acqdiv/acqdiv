@@ -20,7 +20,8 @@ def db_connect():
 
     We can add a database settings in settings.py, e.g. for postgres: return create_engine(URL(**settings.DATABASE))
 
-    Returns: sqlalchemy engine instance.
+    Returns:
+        sqlalchemy engine instance
     """
     return create_engine('sqlite:///_acqdiv.sqlite3', echo=False)
 
