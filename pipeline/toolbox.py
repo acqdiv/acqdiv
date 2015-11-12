@@ -2,12 +2,9 @@
 """
 
 import re
-import sys
-import os
+import mmap
 import collections
 import contextlib
-import mmap
-import re
 from itertools import zip_longest
 
 class ToolboxFile(object):
@@ -16,21 +13,14 @@ class ToolboxFile(object):
     _separator = re.compile(b'\r?\n\r?\n(\r?\n)')
 
     def __init__(self, config, file_path):
+        """ Initializes a Toolbox file object
+
+        Args:
+            config: the corpus config file
+            file_path: the file path to the session file
+        """
         self.path = file_path
         self.config = config
-        self.session_id = self.config['record_tiers']['record_marker']
-        self.record_marker = self.config['record_tiers']['record_marker']
-
-        #self.tier_matches = collections.OrderedDict()
-        #for k, v in self.config['record_tiers'].items():
-        #    b = bytearray(v.encode())
-        #    self.tier_matches[k] = re.compile(b.decode())
-
-        # self.record_marker = self.config['record_tiers']['record_marker']
-        # self.regex = re.compile(self.record_marker, re.MULTILINE)
-        # self._separator = re.compile(b'\r?\n\r?\n(\r?\n)')
-
-        # self.record_separator = re.compile(b'\\n{2,}')
         self.tier_separator = re.compile(b'\n')
         self.field_markers = []
 
@@ -41,34 +31,38 @@ class ToolboxFile(object):
     def __iter__(self):
         """ Iterator, yields raw utterances, words, morphemes and inference information from a Session file.
         
-        This iterator directly extracts utterance_raw and utterance_type and calls various functions to extract information
-        from the following levels:
+        Notes:
+            This iterator directly extracts utterance_raw and utterance_type and calls various functions to extract
+            information from the following levels:
         
-        sentence_type: Calls the function get_sentence_type() to extract the sentence type.
-        clean_utterance: Calls the function clean_utterance() to the clean utterance.
-        warnings: Calls the function get_warnings() to ge the warnings like "transcription insecure".
-        words: Calls the function get_words() to extract the single words.
-        morphemes: Calls the function get_morphemes() to extract the single morphemes.
-        inference: Calls the function do_inference() to infere the morpheme, pos and gloss information.
+            sentence_type: Calls the function get_sentence_type() to extract the sentence type.
+            clean_utterance: Calls the function clean_utterance() to the clean utterance.
+            warnings: Calls the function get_warnings() to ge the warnings like "transcription insecure".
+            words: Calls the function get_words() to extract the single words.
+            morphemes: Calls the function get_morphemes() to extract the single morphemes.
+            inference: Calls the function do_inference() to infere the morpheme, pos and gloss information.
+
+        Returns:
+            utterances, words, morphemes, inferences and ordered dictionaries
         """
-        
-        record_marker = re.compile(br'\\ref')
+        record_marker = re.compile(br'\\ref') # has to be updated if some corpus doesn't use "\ref" for record markers
         with open (self.path, 'rb') as f:
             with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as data:
                 ma = record_marker.search(data)
                 header = data[:ma.start()].decode()
                 pos = ma.start()
+
                 for ma in record_marker.finditer(data, ma.end()):
                     utterances = collections.OrderedDict()
-                    # utterances['session_id'] = self.session_id
-
                     record = data[pos:ma.start()]
                     tiers = self.tier_separator.split(record)
+
                     for tier in tiers:
                         tokens = re.split(b'\\s+', tier, maxsplit=1)
                         field_marker = tokens[0].decode()
                         field_marker = field_marker.replace("\\", "")
                         content = "None"
+
                         if len(tokens) > 1:
                             content = tokens[1].decode()
                             content = re.sub('\\s+', ' ', content)
@@ -87,11 +81,9 @@ class ToolboxFile(object):
                         utterances['utterance_type'] = ""
                         utterances['warning'] = 'empty utterance'
 
-
                     # Skip the first rows that contain metadata information
                     # cf. https://github.com/uzling/acqdiv/issues/154
                     if not utterances['utterance_raw'].startswith('@'):
-                        # here we can just pass around the session utterance dictionary
                         if self.config['corpus']['corpus'] == 'Chintang':
                             try:
                                 utterances['sentence_type'] = self.get_sentence_type(utterances['nepali'])
@@ -103,13 +95,13 @@ class ToolboxFile(object):
                         utterances['utterance'] = self.clean_utterance(utterances['utterance_raw'])
                         utterances['warning'] = self.get_warnings(utterances['utterance_raw'])
                             
-                        # words, morphemes, inferences
                         words = self.get_words(utterances)
                         morphemes = self.get_morphemes(utterances)
                         inferences = self.do_inference(utterances)
 
                         yield utterances, words, morphemes, inferences
                         pos = ma.start()
+
                 """
                 ma = self._separator.search(data, pos)
                 if ma is None:
@@ -140,12 +132,14 @@ class ToolboxFile(object):
             d = collections.OrderedDict()
             if self.config['corpus']['corpus'] == 'Indonesian':
                 d['utterance_id_fk'] = utterances['utterance_id']
-                ## distinguish between word and word_target (après: https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1859-L1867)
+
+                # distinguish between word and word_target:
+                # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1859-L1867
+                # otherwise the target word is identical to the actual word
                 if re.search('\(', word):
                     d['word_target'] = re.sub('[\(\)]', '',word)
                     d['word'] = re.sub('\([^\)]+\)', '', word)
                     result.append(d)
-                # otherwise the target word is identical to the actual word
                 else:
                     d['word_target'] = word
                     d['word'] = word
@@ -157,7 +151,6 @@ class ToolboxFile(object):
                 result.append(d)
         return result
 
-
     def get_sentence_type(self, utterance):
         """ Function to get utterance type (aka sentence type) from an utterance.
         
@@ -167,7 +160,6 @@ class ToolboxFile(object):
         Returns:
             sentence_type: Distinguishes between default, question, imperativ and exclamation.
         """
-        
         if self.config['corpus']['corpus'] == "Russian":
             match_punctuation = re.search('([\.\?!])$', utterance)
             if match_punctuation is not None:
@@ -180,7 +172,6 @@ class ToolboxFile(object):
                     sentence_type = 'imperative'
                 return sentence_type
 
-        # does this logic make any sense? why not, if, if, if, fuck it return?
         if self.config['corpus']['corpus'] == "Indonesian":
             if re.search('\.', utterance):
                 return 'default'
@@ -206,15 +197,10 @@ class ToolboxFile(object):
                 if match_punctuation.group(1) == '!':
                     sentence_type = 'exclamation'
                 return sentence_type
-        
-            
-                    
+
     def get_warnings(self,utterance):
-        """ Function to extract warning for insecure transcriptions.
-        
-        This function extracts warnings for insecure transcriptions for Russian and Indonesian
-        (incl. intended form for Russian).
-        
+        """ Extracts warning for insecure transcriptions for Russian and Indonesian (incl. intended form for Russian).
+
         Args:
             utterance: a single utterance
         
@@ -237,15 +223,12 @@ class ToolboxFile(object):
                     return transcription_warning
         else:
             pass
-                 
-                   
 
-    # TODO: move this to a cleaning module that's imported, e.g. from pyclean import * as pyclean
     def clean_utterance(self, utterance):
-        """ Function that cleans up corpus-specific utterances.
+        """ Cleans up corpus-specific utterances from punctuation marks, comments, etc.
         
-        This function cleans an utterance from punctuation marks, comments, etc.
-        
+        TODO: move this to a cleaning module that's imported, e.g. from pyclean import * as pyclean?
+
         Args:
             utterance: A single utterance
             
@@ -301,19 +284,24 @@ class ToolboxFile(object):
             result: A list of ordered dictionaries with pos_raw, gloss_raw, warning and parent utterance id (utterance_id_fk). 
         """
         result = []
-        #warnings_result = []
-        
         if self.config['corpus']['corpus'] == "Russian":
             if 'pos_raw' in utterances.keys():
                 # remove PUNCT pos
                 pos_cleaned = utterances['pos_raw'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
                 
-                # get pos and gloss (après: https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1751-L1762)
-                #The Russian tier \mor contains both glosses and POS, separated by "-" or ":". Method for distinguishing and extracting them:
-                #* 1) If there is no ":" in a word string, gloss and POS are identical (most frequently the case with PCL 'particle').
-                #* 2) Sub-POS are always separated by "-" (e.g. PRO-DEM-NOUN), subglosses are always separated by ":" (e.g. PST:SG:F). What varies, though, is the character that separates POS from glosses in the word string:
-                #* If the POS is V ('verb') or ADJ ('adjective'), the glosses start behind the first "-", e.g. V-PST:SG:F:IRREFL:IPFV -> POS V, gloss PST.SG.F.IRREFL.IPFV
-                #* 3) For all other POS, the glosses start behind the first ":", e.g. PRO-DEM-NOUN:NOM:SG -> POS PRO.DEM.NOUN, gloss NOM.SG
+                # get pos and gloss, see:
+                # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1751-L1762)
+
+                # The Russian tier \mor contains both glosses and POS, separated by "-" or ":".
+                # Method for distinguishing and extracting them:
+                #   1) If there is no ":" in a word string, gloss and POS are identical (most frequently the case with
+                #    PCL 'particle').
+                #   2) Sub-POS are always separated by "-" (e.g. PRO-DEM-NOUN), subglosses are always separated by ":"
+                #    (e.g. PST:SG:F). What varies, though, is the character that separates POS from glosses in the word
+                #    string: If the POS is V ('verb') or ADJ ('adjective'), the glosses start behind the first "-",
+                #    e.g. V-PST:SG:F:IRREFL:IPFV -> POS V, gloss PST.SG.F.IRREFL.IPFV
+                #   3) For all other POS, the glosses start behind the first ":", e.g. PRO-DEM-NOUN:NOM:SG ->
+                #    POS PRO.DEM.NOUN, gloss NOM.SG
     
                 for pos in pos_cleaned:
                     d = collections.OrderedDict()
@@ -339,7 +327,6 @@ class ToolboxFile(object):
                             d['pos_raw'] = match_gloss_pos.group(1)
                             d['gloss_raw'] = match_gloss_pos.group(2)
                             result.append(d)
-                            
             else:
                 d = collections.OrderedDict()
                 d['utterance_id_fk'] = utterances['utterance_id']
@@ -347,7 +334,7 @@ class ToolboxFile(object):
                 d['gloss_raw'] = ''
                 d['warning'] = 'not glossed'
                 result.append(d)
-                        
+
         # Indonesian specific morpheme/inference stuff
         elif self.config['corpus']['corpus'] == "Indonesian":
             if 'gloss_raw' in utterances.keys():
@@ -364,8 +351,7 @@ class ToolboxFile(object):
                 d['gloss_raw'] = ''
                 d['warning'] = 'not glossed'
                 result.append(d)
-                
-                
+
         # Chintang specific morpheme/inference stuff
         elif self.config['corpus']['corpus'] == "Chintang":
             d = collections.OrderedDict()
@@ -464,28 +450,20 @@ class ToolboxFile(object):
             d['utterance_id_fk'] = utterances['utterance_id']
             d['warning']  = 'morpheme missing' 
             result.append(d)
-                
         return result
-    
 
-
-    # probably not needed
     def make_rec(self, data):
+        # probably not needed
         return data.decode(self.encoding)
 
     def __repr__(self):
+        # for pretty printing
         return '%s(%r)' % (self.__class__.__name__, self.path)
-
-
-class Record(collections.OrderedDict):
-    """ Toolbox records in file """
-    # report if record is missing
-    pass
 
 
 @contextlib.contextmanager
 def memorymapped(path, access=mmap.ACCESS_READ):
-    """Return a block context with path as memory-mapped file."""
+    """ Return a block context with path as memory-mapped file. """
     fd = open(path)
     try:
         m = mmap.mmap(fd.fileno(), 0, access=access)
@@ -501,22 +479,13 @@ def memorymapped(path, access=mmap.ACCESS_READ):
 
 if __name__ == "__main__":
     from parsers import CorpusConfigParser
-
     cfg = CorpusConfigParser()
-
     cfg.read("Chintang.ini")
     f = "../../corpora/Chintang/toolbox/CLDLCh1R01S02.txt"
-
     # cfg.read("Russian.ini")
     # f = "../../corpora/Russian/toolbox/A00210817.txt"
-
     t = ToolboxFile(cfg, f)
     for record in t:
         print(record)
-        #for k, v in record.items():
+        # for k, v in record.items():
         #    print(k, "\t", v)
-
-    # should we clean the records here on a corpus-by-corpus basis?
-    # or should we insert data structures as is into the db?
-
-
