@@ -1,75 +1,69 @@
 """ Parsers for CHAT XML and Toolbox files for acqdiv corpora, and an acqdiv config file parser.
+
+TODO: integrate the Corpus specific parsing routines from the body parser
+TODO: integrate the metadata parsing
+
 """
 
 import os
-import sys
-import configparser
 import glob
-import re
-import xml.etree.ElementTree as ET
 import json
 import collections
-from pprint import pprint
+import configparser
 
 from metadata import Imdi, Chat
-
-# TODO: integrate the Corpus specific parsing routines from the body parser
-# TODO: integrate the metadata parsing
 from toolbox import ToolboxFile
 
 
 class CorpusConfigParser(configparser.ConfigParser):
-    """ Config parser for corpus .ini files """
+    """ Config parser for acqdiv corpus .ini files
+    """
 
     def optionxform(self, optionstr):
         return optionstr
 
-
-    # TODO: identify whether we want (extended) interolation, ordered dicts, inline commenting, etc.
-    #    _dict_type = collections.OrderedDict
-    #    _inline_comment_prefixes = ('#',)
-    #    _interpolation = configparser.ExtendedInterpolation()
-
-    #    def __init__(self, defaults=None):
-    #        super(Config, self).__init__(defaults, dict_type=self._dict_type,
-    #            inline_comment_prefixes=self._inline_comment_prefixes,
-    #            interpolation=self._interpolation)
-
     def __init__(self):
+        """ We subclass Python's default config parser and use our own delimiter
+        """
         super().__init__(delimiters=["=="])
 
-    # file level initializations    
     def read(self, filenames, encoding=None):
-        super().read(filenames, encoding)
+        """ File level initializations
 
-        # Load up the list of relative paths to corpus sessions files.
-        # This creates a dependency that processors.py must be in same location as parsers.py!
+        Note: we assume processors.py is in the same location as parsers.py!
+
+        Args:
+            filenames: list of relative paths to corpus session files
+            encoding: file encoding
+        """
+        super().read(filenames, encoding)
         self.path = self['paths']['sessions']
         self.session_files = glob.glob(self.path)
         self.metadata_dir = self['paths']['metadata_dir']
         self.sessions_dir = self['paths']['sessions_dir']
-
-        # Load up a dictionary of 'peculiarities'; these map the 'local'
-        # symbols used in the corpus to the 'standard' symbols.
-        # TODO: fix the inline commenting "#"
-        # TODO: peculiarities moved to [record_tiers]
-        # self.peculiarities = dict(self.items('peculiarities'))
         self.format = self['corpus']['format']
         self.corpus = self['corpus']['corpus']
 
-        # ...And now any other additional things you want to do on
-        # configfile load time.
 
 class SessionParser(object):
     """ Static class-level method to create a new parser instance based on session format type.
     """
-
     @staticmethod
     def create_parser(config, file_path):
+        """ Factory method for creating a parser
+
+        TODO: update logic below when we have an XML parser
+
+        Args:
+            config: corpus config ini file
+            file_path: path to a corpus session file
+
+        Returns:
+            A corpus-type-specific parser
+        """
         corpus = config.corpus
         format = config.format
 
-        # TODO: update when we dump using JSON
         if format == "ChatXML":
             if corpus == "Cree":
                 return CreeParser(config, file_path)
@@ -83,37 +77,54 @@ class SessionParser(object):
             assert 0, "Unknown format type: " + format
 
     def __init__(self, config, file_path):
+        """ Session parser initializer
+
+        Args:
+            config: corpus config ini file
+            file_path: path to a corpus session file
+        """
         self.config = config
         self.file_path = file_path
         # SessionParser.create_parser(self.config, self.file_path)
 
-    # TODO: get SHA1 fingerprint of file -- provides unique data ID for db
     def sha1(self):
+        # TODO: get SHA1 fingerprint of file -- provides unique data ID for db
         pass
 
-    # To be overridden in subclasses.
-    # Session metadata for the Sessions table in the db
     def get_session_metadata(self):
+        """ Gets session metadata for the Sessions table in the db
+        """
         pass
 
-    # Generator to yield Speakers for the Speaker table in the db
     def next_speaker(self):
+        """ Yield speakers for the Speaker table in the db
+        """
         pass
 
-    # Generator to yield Utterances for the Utterance table in the db
     def next_utterance(self):
+        """ Yield utterances for the Utterance table in the db
+        """
         pass
 
     # Generator to yield Utterances for the Utterance table in the db
     # def next_record(self):
     #    pass
 
+
 class ToolboxParser(SessionParser):
-    """ For Chintang, Indonesian, Russian, & potentially Dene  """
+    """ Toolbox parser for Chintang, Indonesian, Russian, & potentially Dene  """
 
     def __init__(self, config, file_path):
-        SessionParser.__init__(self, config, file_path)
+        """ Initialize a Toolbox parser
 
+        Args:
+            config: corpus config ini file
+            file_path: path to a corpus session file
+
+        Returns:
+            A Toolbox parser
+        """
+        SessionParser.__init__(self, config, file_path)
         # Session body for utterances, etc.
         self.session_file = ToolboxFile(self.config, self.file_path)
 
@@ -123,14 +134,12 @@ class ToolboxParser(SessionParser):
             temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
             self.metadata_file_path = temp.replace(".txt", ".xml")
             self.metadata_parser = Chat(self.config, self.metadata_file_path)
-
         elif self.config['metadata']['type'] == "IMDI":
             temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
             self.metadata_file_path = temp.replace(".txt", ".imdi")
             self.metadata_parser = Imdi(self.config, self.metadata_file_path)
         else:
             assert 0, "Unknown metadata format type: "#  + format
-
 
         # check for missing metadata files?
         """
@@ -141,10 +150,15 @@ class ToolboxParser(SessionParser):
         # self.metadata_parser = Imdi(self.metadata_file_path)
 
     def get_session_metadata(self):
-        # Do toolbox-specific parsing of session metadata.
-        # Presumably we will have to look for the metadata file in the config.
-        # The config so it knows what symbols to look for.
+        """ Do toolbox-specific parsing of session metadata
 
+        Args:
+            config: corpus config ini file
+            file_path: path to a corpus session file
+
+        Returns:
+            Session metadata
+        """
         # TODO: fix this to just session or just __attrs__ in the metadata parser
         # this is an ugly hack due to the Indonesian corpus (body=Toolbox, but meta=XML)
         if self.metadata_parser.__class__.__name__ == "Imdi":
@@ -156,49 +170,58 @@ class ToolboxParser(SessionParser):
 
     def next_speaker(self):
         """ Yield participants metadata for the Speaker table in the db
-        :return dictionary
+
+        Returns:
+            Ordered dictionary of speaker (participant) metadata
         """
         for speaker in self.metadata_parser.metadata['participants']:
             yield speaker
 
     def next_utterance(self):
         """ Yield session level utterance data:
-        returns ordered dictionary of config file record_tiers
+
+        Returns:
+             Ordered dictionary of config file record_tiers
         """
         for record in self.session_file:
             yield record
 
+
 class JsonParser(SessionParser):
-    """ Parser for JSON output from:
-    https://github.com/uzling/acqdiv/tree/master/extraction/parsing
+    """ Parser for JSON output
 
-    # TODO:
-        - what to do with the stars?
-            - "phonetic": "* * *",
-            - "phonetic_target": "* * *",
-
+    # TODO: what to do with the stars, e.g. "phonetic": "* * *", "phonetic_target": "* * *"
     """
     def __init__(self, config, file_path):
-        SessionParser.__init__(self, config, file_path)
+        """ Initialize a JsonParser
 
-        # load the data
+        Args:
+            config: corpus config ini file
+            file_path: path to a corpus session file
+
+        Returns:
+            A JsonParser
+        """
+        SessionParser.__init__(self, config, file_path)
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
         with open(file_path) as data_file:
             self.data = json.load(data_file)
-        # TODO: update when no longer using JSON
         temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
         self.metadata_file_path = temp.replace(".json", ".xml")
         self.metadata_parser = Chat(self.config, self.metadata_file_path)
 
     def next_utterance(self):
         """ Get each utterance from Robert's JSON output
-        :return: utterance{}, words[word{}, word{}]
+
+        Notes:
+            Robert's JSON output is a dictionary: {key ("filename"): [u1{...}, u2{...}]}. Here we iterate over the
+            utterances (each record).
+            Warning: the dictionary's key IS NOT ALWAYS the same as the file name, so we get the *key* (one json
+            file per session; one key based on ID *or* filename) and use that, i.e. the source_id field.
+
+        Returns:
+            utterance{}, words[word{}, word{}]
         """
-        # Robert's JSON output is a dictionary: {key ("filename"): [u1{...}, u2{...}]}
-        #  here we iterate over the utterances (each record)
-        # Warning: the dictionary's key IS NOT ALWAYS the same as the file name...
-        #  so we get the *key* (one json file per session; one key based on ID *or* filename)
-        #  and use that, i.e. the source_id field
         x = self.data.keys() # in Py3 returns a dict_keys object, not a list!
         keys = list(x)
         assert(len(keys) == 1), "there is more than one key in the json file"
@@ -216,7 +239,8 @@ class JsonParser(SessionParser):
                     utterance[label] = record[k]
 
                 if k == 'words':
-                    full_utterance = [] # Robert doesn't output the whole utterance, recreate it by gathering up the words
+                    # Robert doesn't output the whole utterance, recreate it by gathering up the words
+                    full_utterance = []
                     # Robert's {words:[]} is a list of dictionaries with keys like "full_word_target"
                     for word in record['words']:
                         d = collections.OrderedDict()
@@ -224,7 +248,8 @@ class JsonParser(SessionParser):
                             if k_json_mappings_words in word and not type(word[k_json_mappings_words]) is dict:
                                 d[self.config['json_mappings_words'][k_json_mappings_words]] = word[k_json_mappings_words]
 
-                        # assign the proper actual vs target "word" given the corpus                        print(self.config['json_mappings_words']['word'])
+                        # assign the proper actual vs target "word" given the corpus
+                        # print(self.config['json_mappings_words']['word'])
                         # recreate the word utterance
                         if self.config['json_mappings_words']['word'] in d:
                             d['word'] = d[self.config['json_mappings_words']['word']]
@@ -276,31 +301,19 @@ class JsonParser(SessionParser):
                     # TODO: add inference / clean-up
             yield utterance, db_words, morphemes
 
-    # TODO: this will have to be removed (copied from ChatXML for the time being)
     def get_session_metadata(self):
-        # Do xml-specific parsing of session metadata.
-        # The config so it knows what symbols to look for.
+        """ Do xml-specific parsing of session metadata.
+
+        Returns:
+            Ordered dictionary of session metadata
+        """
         return self.metadata_parser.metadata['__attrs__']
 
     def next_speaker(self):
         """ Yield participants metadata for the Speaker table in the db
-        :return dictionary
+
+        Returns:
+             Ordered dictionary of speaker metadata
         """
         for speaker in self.metadata_parser.metadata['participants']:
             yield speaker
-
-
-if __name__ == "__main__":
-    import time
-    start_time = time.time()
-
-    from parsers import CorpusConfigParser
-    cfg = CorpusConfigParser()
-    cfg.read("CreeJSON.ini")
-    f = "../../corpora/Cree/json/Ani/2006-10-18.json"  ## ATTN: the folder structure on the server looks different now: corpora/Cree/json/.json
-    c = JsonParser(cfg, f)
-    #c.next_utterance() # why doesn't this work?
-    #because it's a generator and you really should be doing 
-    next(c.next_utterance())
-    #the original call creates a generator object, but doesn't do anything with it!
-    print("\n--- %s seconds ---" % (time.time() - start_time))
