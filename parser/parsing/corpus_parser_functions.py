@@ -252,8 +252,10 @@ def parse_xml(file_name, corpus_name):
                     w.attrib['glossed'] = 'no'
             # other replacements
             if w.text:
-                # where the orthography tier is missing in Cree, <w> is not empty but contains 'missingortho' -> remove this
+                # Cree: where the orthography tier is missing <w> is not empty but contains 'missingortho' -> remove this
                 w.text = re.sub('missingortho', '', w.text)
+                # Cree: replace "zéro" (= zero morpheme) by more standard "Ø"
+                w.text = re.sub('zéro', 'Ø', w.text)
                 # Sometimes words may be partially untranscribed (-xxx, xxx-, -xxx-) - transform this, too
                 w.text = re.sub('\-?xxx\-?', '???', w.text)
                 # only in Cree: morpheme boundaries in <w> are indicated by '_' -> remove these, segments are also given in the morphology tiers. Other corpora can have '_' in <w>, too, but there it's meaningful (e.g. for concatenating the parts of a book title treated as a single word), so only check Cree!
@@ -481,8 +483,6 @@ def parse_xml(file_name, corpus_name):
                     tier.text = re.sub('\\s+(&gt;|>)\\s+', '>', tier.text)
                     # remove square brackets at edges of any of these tiers, they are semantically redundant
                     tier.text = re.sub('^\[|\]$', '', tier.text)
-                    # apparently no difference between "=" and "-" as morpheme separators, so use "=" for all
-                    tier.text = re.sub('-', '=', tier.text)
                     # replace untranscribed and/or unglossed words by standard formalisms
                     tier.text = re.sub('#|%%%|\*|(?<=\\s)\?(?=\\s)', '???', tier.text)
                     # delete brackets in "mortyp" and uppercase content to emphasise its abstract nature
@@ -491,6 +491,8 @@ def parse_xml(file_name, corpus_name):
                     # delete brackets in "tarmor" and "actmor"
                     if morph_tier == 'tarmor' or morph_tier == 'actmor':
                         tier.text = re.sub('[\(\)]', '', tier.text)
+                    # replace "zéro" (= zero morpheme) by more standard "Ø"
+                    tier.text = re.sub('zéro', 'Ø', tier.text)
 
                     # split into words
                     words = re.split('\\s+', tier.text)
@@ -506,7 +508,7 @@ def parse_xml(file_name, corpus_name):
                     word_index = 0
                     for w in words:
                         morpheme_index = 0
-                        morphemes = re.split('=', w)
+                        morphemes = re.split('~', w)
                         for m in morphemes:
                             # some corrections where the Cree tier names don't match our target tiers exactly
                             if morph_tier == 'mortyp' and m == 'IMP' and morphology['mormea'][word_index][morpheme_index]:
@@ -727,7 +729,8 @@ def parse_xml(file_name, corpus_name):
             if morphology is not None:
                 # remove punctuation and tags
                 morphology.text = re.sub('(^|\\s)[\.\?!\+\/]+(\\s|$)', '\\1\\2', morphology.text)
-                morphology.text = re.sub('(^|\\s)tag\|\\S+(\\s|$)', '\\1\\2', morphology.text)
+                morphology.text = re.sub('(^|\\s)tag\|\\S+(?=\\s|$)', '\\1', morphology.text) # right context as lookahead to cover case of double tags 
+                
                 morphology.text = re.sub('\\s+$', '', morphology.text)
                                 
                 # split trn tier into words, reset counter
@@ -1471,6 +1474,13 @@ def parse_xml(file_name, corpus_name):
             # if there is no morphology, add warning to complete utterance
             elif morphology is None:
                 creadd(corpus[text_id][utterance_index], 'warnings', 'not glossed')
+            
+            # check Spanish translation: if it contains punctuation, replace sentence_type based on this
+            spanish = u.find("a[@type='extension'][@flavor='spn']")
+            if spanish is not None: 
+                sentence_delimiter = re.search('([\.\?!])$', spanish.text)
+                if sentence_delimiter is not None: 
+                    corpus[text_id][utterance_index]['sentence_type'] = t_correspondences[sentence_delimiter.group(1)]
                 
         # EOF Yucatec
         
@@ -1549,6 +1559,15 @@ def parse_toolbox(file_name, corpus_name):
                 if corpus_name is 'Chintang':
                     structure = re.search('.*\.(\\d+\.?[a-z]?)$', record['ref'])
                     if structure is not None: utterance_id = structure.group(1)
+                
+                    # get sentence type from utterance delimiter of Nepali translation (main translation tier does not have punctuation)
+                    if 'nep' in record.keys(): 
+                        sentence_delimiter = re.search('([\.।\?!])', record['nep'])
+                        if sentence_delimiter is not None: 
+                            corpus[text_id][utterance_index]['sentence_type'] = t_correspondences[sentence_delimiter.group(1)]
+                    else:
+                        corpus[text_id][utterance_index]['sentence_type'] = 'default'
+
                 # EOF Chintang checks
                 
                 elif corpus_name is 'Russian':
@@ -1698,12 +1717,17 @@ def parse_toolbox(file_name, corpus_name):
                                         morpheme_index = 0
                                     # add morpheme to corpus dic, overwriting existing POS. Indonesian doesn't have POS, so keep separator!
                                     ext_vivi(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])                                    
-                                    if corpus_name == 'Chintang': 
-                                        m = re.sub('\-', '', m)
-                                    if tier_name_JSON in ['pos', 'pos_target']:
+                                    
+                                    # default tiers: remove "-" and simply write to corpus
+                                    m = re.sub('\-', '', m)
+                                    corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = m
+                                    # Chintang POS: overwrite existing value by "pfx"
+                                    if corpus_name == 'Chintang' and tier_name_JSON in ['pos', 'pos_target']:
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = 'pfx'
-                                    else:
-                                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = m
+                                    # Indonesian POS: insert value "pfx"
+                                    if corpus_name == 'Indonesian' and tier_name_JSON == 'glosses_target':
+                                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos'] = 'pfx'
+                                                                        
                                     # count up morpheme index
                                     morpheme_index += 1
                                     # set terminator flag
@@ -1721,6 +1745,10 @@ def parse_toolbox(file_name, corpus_name):
                                     # add morpheme to corpus dic
                                     ext_vivi(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
                                     corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = m
+                                    # special case: insert dummy POS "stem" for Indonesian (where the original data don't have POS)
+                                    if corpus_name == 'Indonesian' and tier_name_JSON == 'glosses_target':
+                                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos'] = 'stem'
+                                        
                                     # count up morpheme index
                                     morpheme_index += 1
                                     # set terminator flag
@@ -1730,12 +1758,17 @@ def parse_toolbox(file_name, corpus_name):
                                 elif re.search('^\-.', m):
                                     # add morpheme to corpus dic, overwriting existing POS. Indonesian doesn't have POS, so keep separator!
                                     ext_vivi(morpheme_index, corpus[text_id][utterance_index]['words'][word_index]['morphemes'])
-                                    if corpus_name == 'Chintang': 
-                                        m = re.sub('\-', '', m)
-                                    if tier_name_JSON in ['pos', 'pos_target']:
+                                    
+                                    # default tiers: remove "-" and simply write to corpus
+                                    m = re.sub('\-', '', m)
+                                    corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = m
+                                    # Chintang POS: overwrite existing value by "sfx"
+                                    if corpus_name == 'Chintang' and tier_name_JSON in ['pos', 'pos_target']:
                                         corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = 'sfx'
-                                    else:
-                                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index][tier_name_JSON] = m
+                                    # Indonesian POS: insert value "sfx"
+                                    if corpus_name == 'Indonesian' and tier_name_JSON == 'glosses_target':
+                                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos'] = 'sfx'
+                                    
                                     # count up morpheme index
                                     morpheme_index += 1
                                     # set terminator flag

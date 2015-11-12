@@ -43,6 +43,7 @@ xml_other_correspondences = {
 t_correspondences = {
     'p' : 'default', # CHAT .
     '.' : 'default',
+    '।' : 'default', # Devanagari danda
     'q' : 'question', # CHAT ?
     '?' : 'question', 
     'e' : 'exclamation', # CHAT !
