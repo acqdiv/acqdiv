@@ -1,38 +1,47 @@
-""" ORM declarations, database table definitions """
+""" ORM declarations, database table definitions
 
-# TODO: investigate:
-# http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#eager-loading
+TODO: investigate:
+
+http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#eager-loading
+
+from sqlalchemy.ext.declarative.api import _declarative_constructor
+from sqlalchemy.engine.url import URL
+
+"""
 
 from sqlalchemy import create_engine, Text, Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
-# from sqlalchemy.ext.declarative.api import _declarative_constructor
-# from sqlalchemy.engine.url import URL
 
 Base = declarative_base()
 
 def db_connect():
-    """
-    Performs database connection. We can add a database settings
-    in settings.py, e.g. for postgres: return create_engine(URL(**settings.DATABASE))
+    """ Performs database connection.
 
-    Returns sqlalchemy engine instance.
+    We can add a database settings in settings.py, e.g. for postgres: return create_engine(URL(**settings.DATABASE))
+
+    Returns: sqlalchemy engine instance.
     """
     return create_engine('sqlite:///_acqdiv.sqlite3', echo=False)
 
+
 def create_tables(engine):
-    """
-    Drops all databases before creating them
+    """ Drops all databases before creating them.
+
+        Args:
+            engine: a sqlalchemy database engine
     """
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(engine)
 
+
 class Session(Base):
-    """
-    Sessions table. Each input file is a row. To note:
-    - session_id field is the input filename
-    - source_id field is the id given in the session file
-    - media field is an associate media file by filename
+    """ Sessions table.
+
+    Each input file is a row. To note:
+        - session_id field is the input filename
+        - source_id field is the id given in the session file
+        - media field is an associate media file by filename
     """
     __tablename__ = 'sessions'
 
@@ -50,8 +59,7 @@ class Session(Base):
 
 
 class Speaker(Base):
-    """
-    Speaker table; each row is a speaker in a session. Speakers may appear in > 1 session
+    """ Speaker table; each row is a speaker in a session. Speakers may appear in > 1 session
     """
     __tablename__ = 'speakers'
 
@@ -77,8 +85,7 @@ class Speaker(Base):
         return "Speaker(%s)" % (self.name)
 
 class Unique_Speaker(Base):
-    """
-    Unique speakers across all corpora
+    """ Unique speakers across all corpora
     """
     __tablename__ = 'uniquespeakers'
 
@@ -91,12 +98,13 @@ class Unique_Speaker(Base):
     macrorole = Column(Text, nullable=True, unique=False)
 
 class Utterance(Base):
-    """
-    Utterances in all sessions. To note:
-    - utterance_id is the id in the original files (not unique across corpora, e.g. u1, u1)
-    - addressee not in all corpora
-    - utterance_type is phonetic or orthographic
-    - _raw vs !_raw is distinction between original input and cleaned/manipulated output
+    """ Utterances in all sessions.
+
+    To note:
+        - utterance_id is the id in the original files (not unique across corpora, e.g. u1, u1)
+        - addressee not in all corpora
+        - utterance_type is phonetic or orthographic
+        - _raw vs !_raw is distinction between original input and cleaned/manipulated output
     """
     __tablename__ = 'utterances'
 
@@ -125,10 +133,9 @@ class Utterance(Base):
 
 
 class Word(Base):
-    """
-    Words table.
+    """ Words table.
 
-    TODO (BB): get unique words and assign ids in the postprocessor
+    TODO: get unique words and assign ids in the postprocessor
     """
     __tablename__ = 'words'
 
@@ -144,10 +151,10 @@ class Word(Base):
 
 
 class Morpheme(Base):
-    """
-    Morphemes table
+    """ Morphemes table
     """
     __tablename__ = 'morphemes'
+
     id = Column(Integer, primary_key=True)
     utterance_id_fk = Column(Text, ForeignKey('utterances.id'))
     corpus = Column(Text, nullable=True, unique=False)
@@ -159,11 +166,12 @@ class Morpheme(Base):
     pos_raw = Column(Text, nullable=True, unique=False)
     pos = Column(Text, nullable=True, unique=False)
 
+
 class Warnings(Base):
-    """
-    Warnings found in parsing
+    """ Warnings found during parsing
     """
     __tablename__ = 'warnings'
+
     id = Column(Integer,primary_key=True)
     corpus = Column(Text, nullable=True, unique=False)
     utterance_id_fk = Column(Text, ForeignKey('utterances.id'))
