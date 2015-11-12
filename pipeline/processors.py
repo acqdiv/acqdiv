@@ -1,61 +1,62 @@
 """ Processors for acqdiv corpora
 """
 
-import sys, re
+
 import itertools as it
+import re
 import collections
 from sqlalchemy.orm import sessionmaker
 from parsers import *
 from database_backend import *
 
 
-# If it turns out that these really don't do anything but the loops, we can get rid of
-# the Corp[us|ora]Processor classes and just make them, well, loops. In some function.
 class CorpusProcessor(object):
     """ Handler for processing each session file in particular corpus
     """
     def __init__(self, cfg, engine):
+        """ Initializes a CorpusProcessor object
+
+        Args:
+            cfg: a corpus config file
+            engine: sqlalchemy database engine
+        """
         self.cfg = cfg
         self.engine = engine
 
     def process_corpus(self):
+        """ Creates a SessionProcessor given a config and input file.
+        """
         for session_file in self.cfg.session_files:
             print("Processing:", session_file)
-            # Create a session based on the format type given in config.
             s = SessionProcessor(self.cfg, session_file, self.engine)
             s.process_session()
             s.commit()
-
-    # TODO: should we add the corpus level data, e.g. metadata, to the database here?
 
 class SessionProcessor(object):
     """ SessionProcessor invokes a parser to get the extracted data, and then interacts
         with the ORM backend to push data to it.
     """
-    # TODO: Does the Session object need a primary key? Is that passed in from the caller
-    # (ie, when we know about the Corpus-level data)?
-
     def __init__(self, cfg, file_path, engine):
-        # Init parser with corpus config. Pass in file path to process. Create sqla session.
-        # Probably don't need to be too self-ish here...
+        """ Init parser with corpus config. Pass in file path to process. Create sqla session.
+
+        Args:
+            cfg: a corpus config file
+            file_path: path to input file
+            engine: sqlalchemy database engine
+        """
         self.config = cfg
         self.file_path = file_path
         self.language = self.config['corpus']['language']
         self.corpus = self.config['corpus']['corpus']
         self.format = self.config['corpus']['format']
         self.morpheme_type = self.config['morphemes']['type']
-        # get filename
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
-
-        # attach session file path to config?
-        # filename = os.path.splitext(os.path.basename(self.file_path))[0]
-        # self.config.set('paths', 'filename', filename)
-
-        # start up db session
         self.Session = sessionmaker(bind=engine)
 
 
     def process_session(self):
+        """ Process function for each file; creates dictionaries and inserts them into the database via sqla
+        """
         # Config contains maps from corpus-specific labels -> database column names
         self.parser = SessionParser.create_parser(self.config, self.file_path)
 
@@ -68,7 +69,6 @@ class SessionProcessor(object):
         d['session_id'] = self.filename
         d['language'] = self.language
         d['corpus'] = self.corpus
-
         self.session_entry = Session(**d)
 
         # Get speaker metadata; capture data specified in corpus config
@@ -91,11 +91,6 @@ class SessionProcessor(object):
                 continue
             else:
                 self.speaker_entries.append(Speaker(**d))
-
-        # TODO(stiv): Need to add to each utterance some kind of joining key.
-        # I think it makes sense to construct/add it here, since this is where
-        # we do database stuff, and not in the parser (there's no reason the parser
-        # should have to know about primary keys - it's a parser, not a db)
 
         # Begin CHATXML or Toolbox body parsing
         self.utterances = []
@@ -199,6 +194,7 @@ class SessionProcessor(object):
                             
                         self.morphemes.append(Morpheme(**morphemes_inferences))
 
+        # TODO: this will be replaced with CHAT XML parsing
         elif self.format == "JSON":
             for utterance, words, morphemes in self.parser.next_utterance():
                 utterance['session_id_fk'] = self.filename
@@ -218,41 +214,14 @@ class SessionProcessor(object):
                     morpheme['language'] = self.language
                     morpheme['type'] = self.morpheme_type
                     self.morphemes.append(Morpheme(**morpheme))
-
-        # TODO: remove / comment out
-        elif self.format == "ChatXML":
-            #TODO(chysi): this doesn't look like a generator to me!!!
-            for u, words, morphemes in self.parser.next_utterance():
-                u.parent_id = self.file_path
-                #TODO: u.ids counted per session
-                # we need a better way of making them unique across corpora
-                # dirty, dirty hack:
-                u.utterance_id = u.parent_id + "_" + u.utterance_id
-                self.utterances.append(u)
-
-                for w, m, i in it.takewhile(lambda x: x[0] and x[1], it.zip_longest(words(u), morphemes(u), it.count())):
-                    w.parent_id = u.utterance_id
-                    w.word_id = u.utterance_id + 'w' + str(i)
-                    self.words.append(w)
-                    m.parent_id = u.utterance_id
-                    m.morpheme_id = u.utterance_id + 'm' + str(i)
-                    self.morphemes.append(m)
-
         else:
             raise Exception("Error: unknown corpus format!")
 
-        # Now write the database to the backend.
-        # commit(session_metadata, speakers, utterances)
-
 
     def commit(self):
-        # def commit(self, session_metadata, speakers, utterances):
-        # TODO(stiv): Put some kind of namespace on the db session stuff, to distinguish
-        # it from the recording sessions. Sessions, sessions everywhere!
+        """ Commits the dictionaries returned from parsing to the database.
+        """
         session = self.Session()
-
-        # entry = Speaker(**item)
-        # self.db_session = SessionMaker()
 
         try:
             session.add(self.session_entry)
@@ -260,27 +229,11 @@ class SessionProcessor(object):
             session.add_all(self.utterances)
             session.add_all(self.words)
             session.add_all(self.morphemes)
-            #session.merge(self.morphemes)
             session.add_all(self.warnings)
             session.commit()
-            # self.db_session.add(session_metadata)
-            # self.db_session.add_all(self.speakers)
-            # self.db_session.add_all(utterances)
-            # self.db_session.commit()
         except:
             # TODO: print some error message? log it?
-            # self.db_session.rollback()
             session.rollback()
             raise
         finally:
             session.close()
-
-# can we return from the metadata parser some json object, etc., that we can then
-# unpack for session.add_all ?
-
-"""
->>> session.add_all([
-...     User(name='wendy', fullname='Wendy Williams', password='foobar'),
-...     User(name='mary', fullname='Mary Contrary', password='xxg527'),
-...     User(name='fred', fullname='Fred Flinstone', password='blah')])
-"""
