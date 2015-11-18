@@ -3,6 +3,74 @@ import dateutil.parser
 from dateutil.relativedelta import relativedelta
 import re
 
+class TimeDataError(Exception):
+    """
+    Base class for all exceptions in acqdiv.age.
+
+    TimeDataError represents an exception occurring because of invalid
+    time data. It is not used directly, but instead subclassed to represent
+    the different kinds of time data processed in this module.
+    """
+    def __init__(self, bad_data, trigger=None):
+        self.bad_data = bad_data
+        self.trigger = trigger
+        if bad_data is None:
+            self.etype = "null"
+        else:
+            self.etype = "other"
+        self.expected = "string"
+        self.data_name = "time data"
+        self.bad_data_repr = type(self.bad_data)
+
+    def __repr__(self):
+        return "TimeDataError({}, {})".format(
+                self.bad_data, self.trigger)
+
+    def __str__(self):
+        if self.etype == "null":
+            rstring = "empty {}, expected {}".format(
+                    self.data_name, self.expected)
+        else:
+            rstring = "{} is {}, expected {}".format(
+                    self.data_name, self.bad_data_repr, self.expected)
+        return rstring
+
+class BirthdateError(TimeDataError):
+    """
+    Subclass of TimeDataError representing a missing or invalid birth date.
+    """
+
+    def __init__(self, bad_data, trigger=None):
+        super().__init__(bad_data, trigger)
+        self.data_name = "birthdate"
+        self.expected = "string in format YYYY-mm-dd"
+        if isinstance(self.bad_data, str):
+            self.bad_data_repr == self.bad_data
+        else:
+            self.bad_data_repr == type(self.bad_data)
+
+    def __repr__(self):
+        return "BirthdateError({}, {})".format(
+                self.bad_data, self.trigger)
+
+class SessionDateError(TimeDataError):
+    """
+    Subclass of TimeDataError representing a missing or invalid recording date.
+    """
+
+    def __init__(self, bad_data, trigger=None):
+        super().__init__(bad_data, trigger)
+        self.data_name = "session recording date"
+        self.expected = "string in format YYYY-mm-dd"
+        if isinstance(self.bad_data, str):
+            self.bad_data_repr == self.bad_data
+        else:
+            self.bad_data_repr == type(self.bad_data)
+
+    def __repr__(self):
+        return "SessionDateError({}, {})".format(
+                self.bad_data, self.trigger)
+
 def numerize_date(date):
     """Converts dates with month names to dates with month digits.
 
@@ -38,14 +106,21 @@ def format_imdi_age(birthdate, sessiondate):
 
     Returns:
         An age in the form YY;MM.DD
+
+    Raises:
+        BirthdateError: the speaker's birth date is None or invalid
+        SessionDateError: the session recording date is None or invalid
     """
     acc_flag_bd = 0
     acc_flag_sd = 0
     try:
         d1 = datetime.strptime(birthdate, "%Y-%m-%d")
     except:
-        d1 = datetime.strptime(birthdate, "%Y")
-        acc_flag_bd = 1
+        try:
+            d1 = datetime.strptime(birthdate, "%Y")
+            acc_flag_bd = 1
+        except Exception as e:
+            raise BirthdateError(birthdate, e)
 
     try:
         d2 = datetime.strptime(sessiondate, "%Y-%m-%d")
@@ -54,8 +129,11 @@ def format_imdi_age(birthdate, sessiondate):
             d2 = datetime.strptime(sessiondate, "%Y")
             acc_flag_sd = 1
         except:
-            d2 = datetime.strptime(sessiondate, "%Y-%m")
-            acc_flag_sd = 2
+            try:
+                d2 = datetime.strptime(sessiondate, "%Y-%m")
+                acc_flag_sd = 2
+            except Exception as e:
+                raise SessionDateError(sessiondate, e)
 
     diff = relativedelta(d2, d1)
     diff_days = d2 - d1
