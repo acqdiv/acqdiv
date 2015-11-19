@@ -270,7 +270,7 @@ def unify_roles(session,config):
         elif row.role in ["Boy", "Girl", "Female", "Male"] and row.gender_raw != None:
             row.role = "Unknown"
     if len(not_found) > 0:
-        print("Raw roles not found in 'role_mapping.ini':\n",list(not_found))
+        print("-- WARNING --\nraw roles not found in 'role_mapping.ini':\n",list(not_found))
 
 @db_apply
 def unify_gender(session, config):
