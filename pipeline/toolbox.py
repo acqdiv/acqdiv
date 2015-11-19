@@ -1,7 +1,7 @@
 """ Parse toolbox files
 """
 
-import re, sys
+import re
 import mmap
 import collections
 import contextlib
@@ -17,7 +17,7 @@ class ToolboxFile(object):
 
         Args:
             config: the corpus config file
-            file_path: the file  to the session file
+            file_path: the file path to the session file
         """
         self.path = file_path
         self.config = config
@@ -99,8 +99,6 @@ class ToolboxFile(object):
                         words = self.get_words(utterances)
                         morphemes = self.get_morphemes(utterances)
                         inferences = self.do_inference(utterances)
-                        #print(utterances['utterance'])
-                        #sys.exit(1)
                         yield utterances, words, morphemes, inferences
                         pos = ma.start()
 
