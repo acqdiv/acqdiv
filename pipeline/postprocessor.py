@@ -253,8 +253,13 @@ def unify_roles(session,config):
     #option names resp. keys case-sensitive
     cfg_mapping.optionxform = str
     cfg_mapping.read("role_mapping.ini")
+    not_found = set()
     for row in table:
-        row.role = cfg_mapping['role_mapping'][row.role_raw]
+        try:
+            row.role = cfg_mapping['role_mapping'][row.role_raw]
+        except KeyError:
+            row.role = row.role_raw
+            not_found.add(row.role_raw)
         if row.role == "Unknown" and row.language in cfg_mapping:
             try:
                 row.role = cfg_mapping[row.language][row.speaker_label]
@@ -264,6 +269,8 @@ def unify_roles(session,config):
             row.role = "Unknown"
         elif row.role in ["Boy", "Girl", "Female", "Male"] and row.gender_raw != None:
             row.role = "Unknown"
+    if len(not_found) > 0:
+        print("Raw roles not found in 'role_mapping.ini':\n",list(not_found))
 
 @db_apply
 def unify_gender(session, config):
