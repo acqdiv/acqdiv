@@ -361,7 +361,6 @@ def unique_speaker(session, config):
             d['birthdate'] = db_speaker_entry.birthdate
             d['gender'] = db_speaker_entry.gender
             d['language'] = db_speaker_entry.language
-            d['macrorole'] = db_speaker_entry.macrorole
             unique_speaker_entries.append(backend.Unique_Speaker(**d))
 
     session.add_all(unique_speaker_entries)

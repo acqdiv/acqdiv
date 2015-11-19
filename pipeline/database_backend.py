@@ -96,7 +96,6 @@ class Unique_Speaker(Base):
     birthdate = Column(Text, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
-    macrorole = Column(Text, nullable=True, unique=False)
 
 class Utterance(Base):
     """ Utterances in all sessions.
