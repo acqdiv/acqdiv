@@ -182,6 +182,7 @@ class SessionProcessor(object):
                             morphemes_inferences['morpheme'] = morpheme['morpheme']
                             # morphemes_inferences['segment'] = morpheme['morpheme']
                             morphemes_inferences['gloss_raw'] = inference['gloss_raw']
+                            morphemes_inferences['pos_raw'] = inference['pos_raw']
                             if 'warning' in inference.keys():
                                 morphemes_warnings['corpus'] = utterance['corpus']
                                 morphemes_warnings['utterance_id_fk'] = morpheme['utterance_id_fk']

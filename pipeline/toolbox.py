@@ -1,7 +1,7 @@
 """ Parse toolbox files
 """
 
-import re
+import re, sys
 import mmap
 import collections
 import contextlib
@@ -17,7 +17,7 @@ class ToolboxFile(object):
 
         Args:
             config: the corpus config file
-            file_path: the file path to the session file
+            file_path: the file  to the session file
         """
         self.path = file_path
         self.config = config
@@ -26,7 +26,8 @@ class ToolboxFile(object):
 
         for k, v in self.config['record_tiers'].items():
             self.field_markers.append(k)
-
+    
+    
         
     def __iter__(self):
         """ Iterator, yields raw utterances, words, morphemes and inference information from a Session file.
@@ -98,7 +99,8 @@ class ToolboxFile(object):
                         words = self.get_words(utterances)
                         morphemes = self.get_morphemes(utterances)
                         inferences = self.do_inference(utterances)
-
+                        #print(utterances['utterance'])
+                        #sys.exit(1)
                         yield utterances, words, morphemes, inferences
                         pos = ma.start()
 
@@ -112,7 +114,8 @@ class ToolboxFile(object):
                     yield data[pos:ma.start(1)].decode()
                 self.header, self.footer = header, footer
                 """
-
+    
+    
     def get_words(self,utterances):
         """ Function that does Toolbox corpus-specific word processing.
         
@@ -341,9 +344,16 @@ class ToolboxFile(object):
                 glosses_Indonesian = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['gloss_raw'])
                 glosses = glosses_Indonesian.split()
                 for gloss in glosses:
+                    if str(gloss).startswith('-'):
+                        pos = 'sfx'
+                    if str(gloss).endswith('-'):
+                        pos = 'pfx'
+                    else:
+                        pos = 'stem'
                     d = collections.OrderedDict()
                     d['utterance_id_fk'] = utterances['utterance_id']
-                    d['gloss_raw'] = gloss
+                    d['gloss_raw'] = gloss.strip('-')
+                    d['pos_raw'] = pos
                     result.append(d)
             else:
                 d = collections.OrderedDict()
@@ -381,10 +391,16 @@ class ToolboxFile(object):
                 
                 for (morpheme_target, gloss,pos) in zip_longest(morphemes_targets, glosses_targets,pos_targets):
                     morphemes_target_counter += 1
+                    # Get pre- and suffixes (cf. https://github.com/uzling/acqdiv/issues/300)
+                    if str(pos).startswith('-'):
+                        pos = 'sfx'
+                    if str(pos).endswith('-'):
+                        pos = 'pfx'
+                        
                     d = collections.OrderedDict()
                     d['utterance_id_fk'] = utterances['utterance_id']
-                    d['morpheme'] = morpheme_target
-                    d['gloss_raw'] = gloss
+                    d['morpheme'] = morpheme_target.strip('-')
+                    d['gloss_raw'] = gloss.strip('-')
                     d['pos_raw'] = pos
                     result.append(d)
             else:
@@ -429,7 +445,7 @@ class ToolboxFile(object):
                 morphemes = morhphemes_Indonesian.split()
                 for morpheme in morphemes:
                     d = collections.OrderedDict()
-                    d['morpheme'] = morpheme
+                    d['morpheme'] = morpheme.strip('-')
                     d['utterance_id_fk'] = utterances['utterance_id']
                     result.append(d)
                 
