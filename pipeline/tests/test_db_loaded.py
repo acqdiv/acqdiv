@@ -7,15 +7,11 @@ current_dir = os.getcwd()
 sys.path.append(current_dir)
 
 import database_backend as db
-import metadata as metadata
 import processors as processors
 import postprocessor as pp
-import time
 import unittest
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import func
-
-from toolbox import ToolboxFile
 import parsers as parsers
 
 
@@ -26,7 +22,7 @@ def connect():
     """
     # TODO: add postgres settings and change to postgres
     # return create_engine(URL(**settings.DATABASE))
-    return db.create_engine('sqlite:///test_acqdiv.sqlite3', echo=False)
+    return db.create_engine('sqlite:///tests/test_acqdiv.sqlite3', echo=False)
 
 def make_session():
     engine = connect()
@@ -41,7 +37,7 @@ def load_database(configs, engine):
         # Parse the config file and call the sessions processor
         cfg = parsers.CorpusConfigParser()
         cfg.read(config)
-        cfg.session_files = cfg.session_files[:4]
+        cfg.session_files = cfg.session_files[:1]
 
         # Process by parsing the files and adding extracted data to the db
         c = processors.CorpusProcessor(cfg, engine)
@@ -110,13 +106,8 @@ if __name__ == "__main__":
     sys.path.append(current_dir)
 
     import database_backend as db
-    import metadata as metadata
     import processors as processors
-    import postprocessor as pp
-    import time
     import unittest
     from sqlalchemy.orm import sessionmaker
     from sqlalchemy import func
-    
-    from toolbox import ToolboxFile
     import parsers as parsers
