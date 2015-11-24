@@ -387,7 +387,7 @@ def unique_speaker(session, config):
         if unique_tuple not in unique_name_date_label:
             unique_name_date_label.add(unique_tuple)
             d = {}
-            d['global_id'] = calculate_id(db_speaker_entry.name, db_speaker_entry.speaker_label, db_speaker_entry.birthdate, db_speaker_entry.corpus)
+            #d['global_id'] = calculate_id(db_speaker_entry.name, db_speaker_entry.speaker_label, db_speaker_entry.birthdate, db_speaker_entry.corpus)
             d['speaker_label'] = db_speaker_entry.speaker_label
             d['name'] = db_speaker_entry.name
             d['birthdate'] = db_speaker_entry.birthdate
