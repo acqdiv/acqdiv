@@ -114,15 +114,30 @@ def update_imdi_age(session, config):
                 ages = age.format_imdi_age(birth_date, recording_date)
                 db_speaker_entry.age = ages[0]
                 db_speaker_entry.age_in_days = ages[1]
-            except Exception as e:
-                    print("Couldn't calculate age of speaker {0}".format(db_speaker_entry.id), file=sys.stderr)
-                    print("Error: {0}".format(e), file=sys.stderr)
+
+            except age.BirthdateError as e:
+                    print("Warning: couldn't calculate age of "
+                             "speaker {} from birth and recording dates"
+                            .format(db_speaker_entry.id), file=sys.stderr)
+                    print("Invalid birthdate: {}. Check data in {} file {}"
+                            .format(db_speaker_entry.birthdate,
+                                corpus_name, sid), file=sys.stderr)
+
+            except age.SessionDateError as e:
+                    print("Warning: couldn't calculate age of "
+                             "speaker {} from birth and recording dates"
+                            .format(db_speaker_entry.id), file=sys.stderr)
+                    print("Invalid session recording date: {}.\n"
+                            "Check data in {} file {}"
+                            .format(db_speaker_entry.birthdate,
+                                corpus_name, sid), file=sys.stderr)
 
         for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.age_raw.like("%;%.%")):
                 db_speaker_entry.age = db_speaker_entry.age_raw
                 db_speaker_entry.age_in_days = age.calculate_xml_days(db_speaker_entry.age_raw)
 
-        for db_speaker_entry in session.query(backend.Speaker).filter(~backend.Speaker.age_raw.like("None"),
+        for db_speaker_entry in session.query(backend.Speaker).filter(
+                ~backend.Speaker.age_raw.like("None"),
                 ~backend.Speaker.age_raw.like("%Un%"),
                 backend.Speaker.age == None,
                 backend.Speaker.session_id_fk == sid):
@@ -131,9 +146,15 @@ def update_imdi_age(session, config):
                     ages = age.clean_year_only_ages(db_speaker_entry.age_raw)
                     db_speaker_entry.age = ages[0]
                     db_speaker_entry.age_in_days = ages[1]
-                except Exception as e:
-                        print("Couldn't calculate age of speaker {0}".format(db_speaker_entry.id), file=sys.stderr)
-                        print("Error: {0}".format(e), file=sys.stderr)
+                except ValueError as e:
+                    print("Error: Couldn't transform age of speaker {}"
+                            .format(db_speaker_entry.id), file=sys.stderr)
+                    print("Age data {} could not be converted to int\n"
+                            "Check data in {} file {}"
+                        .format(db_speaker_entry.age_raw, corpus_name, sid),
+                        file=sys.stderr)
+                    print("Warning: this speaker is likely to be "
+                            "completely without age data in the DB!")
 
 @db_apply
 def update_age(session, config):
@@ -177,7 +198,8 @@ def apply_gloss_regexes(session, config):
             except TypeError:
                 continue
             except Exception as e:
-                print("Error applying gloss regex {1} in {0}.ini: {2}".format(corpus_name, item, e), file=sys.stderr)
+                print("Error applying gloss regex {1} in {0}.ini: {2}"
+                        .format(corpus_name, item, e), file=sys.stderr)
 
 @db_apply
 def unify_gloss_labels(session, config):
@@ -211,7 +233,9 @@ def unify_gloss_labels(session, config):
             else:
                 row.gloss = old_gloss
         except KeyError:
-            print("Error: .ini file for corpus {0} does not have gloss replacement rules properly configured!".format(config["corpus"]["corpus"]), file=sys.stderr)
+            print("Error: .ini file for corpus {0} does not have gloss "
+            "replacement rules properly configured!"
+            .format(config["corpus"]["corpus"]), file=sys.stderr)
             return
 
 def unify_glosses(config, engine):
@@ -393,7 +417,8 @@ def unify_indonesian_labels(session, config):
         for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.session_id_fk == session_id):
             if db_speaker_entry.name in config["exp_labels"]:
                 db_speaker_entry.speaker_label = config["exp_labels"][db_speaker_entry.name]
-            elif db_speaker_entry.speaker_label not in config["excluded_labels"] and db_speaker_entry.speaker_label[-3:] != session_set:
+            elif (db_speaker_entry.speaker_label not in config["excluded_labels"] 
+                    and db_speaker_entry.speaker_label[-3:] != session_set):
                 db_speaker_entry.speaker_label = db_speaker_entry.speaker_label + session_set
 @db_apply
 def unify_timestamps(session, config):
