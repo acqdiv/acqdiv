@@ -360,7 +360,7 @@ def macrorole(session,config):
                 except KeyError:
                     macro = "Unknown"
         row.macrorole = macro
-
+#testtest
 @db_apply
 def unique_speaker(session, config):
     """Function to create a table containing every unique speaker from all corpora.
