@@ -27,6 +27,7 @@ import sys
 import re
 import time
 from configparser import ConfigParser
+import math
 
 def db_apply(func):
     """Wrapper for functions that access the database.
@@ -360,6 +361,34 @@ def macrorole(session,config):
                     macro = "Unknown"
         row.macrorole = macro
 
+def mini_calculation(string):
+    part = 0
+    bool = True
+    for char in string.lower():
+        if bool:
+            part += (ord(char)-96)
+        else:
+            part *= (ord(char)-96)
+            bool = not bool
+    return part
+
+def calculate_id(name, label, birthdate, corpus):
+    num = 0
+    n = 0
+    global_id = corpus[:2].upper()
+    if name!= None and name != 'Unknown' and name != 'Unspecified':
+        num = mini_calculation(name[:2])
+        global_id += str(num)
+    if corpus != 'Cree':
+        num = mini_calculation(label)
+        global_id += str(num)
+    else:
+        num = mini_calculation(name[-3:])
+    if birthdate != None and birthdate != 'Unspecified':
+        num = math.fabs(math.floor(int(birthdate[:3])/(int(birthdate[5:7])*(int(birthdate[7:])))))
+        global_id += str(num)
+    return global_id
+
 @db_apply
 def unique_speaker(session, config):
     """Function to create a table containing every unique speaker from all corpora.
@@ -386,6 +415,7 @@ def unique_speaker(session, config):
         if unique_tuple not in unique_name_date_label:
             unique_name_date_label.add(unique_tuple)
             d = {}
+            d['global_id'] = calculate_id(db_speaker_entry.name, db_speaker_entry.speaker_label, db_speaker_entry.birthdate, db_speaker_entry.corpus)
             d['speaker_label'] = db_speaker_entry.speaker_label
             d['name'] = db_speaker_entry.name
             d['birthdate'] = db_speaker_entry.birthdate
