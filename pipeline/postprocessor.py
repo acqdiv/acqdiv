@@ -360,7 +360,35 @@ def macrorole(session,config):
                 except KeyError:
                     macro = "Unknown"
         row.macrorole = macro
-#testtest
+
+def mini_calculation(string):
+    part = 0
+    bool = True
+    for char in string.lower():
+        if bool:
+            part += (ord(char)-96)
+        else:
+            part *= (ord(char)-96)
+            bool = not bool
+    return part
+
+def calculate_id(name, label, birthdate, corpus):
+    num = 0
+    n = 0
+    global_id = corpus[:2].upper()
+    if name!= None and name != 'Unknown' and name != 'Unspecified':
+        num = mini_calculation(name[:2])
+        global_id += str(num)
+    if corpus != 'Cree':
+        num = mini_calculation(label)
+        global_id += str(num)
+    else:
+        num = mini_calculation(name[-3:])
+    if birthdate != None and birthdate != 'Unspecified':
+        num = math.fabs(math.floor(int(birthdate[:3])/(int(birthdate[5:7])*(int(birthdate[7:])))))
+        global_id += str(num)
+    return global_id
+
 @db_apply
 def unique_speaker(session, config):
     """Function to create a table containing every unique speaker from all corpora.
