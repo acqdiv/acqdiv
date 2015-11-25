@@ -364,29 +364,52 @@ def macrorole(session,config):
 def mini_calculation(string):
     part = 0
     bool = True
-    for char in string.lower():
+    i = 0
+    while i < len(string):
         if bool:
-            part += (ord(char)-96)
-        else:
-            part *= (ord(char)-96)
+            part += ord(string[i])
             bool = not bool
-    return part
+        else:
+            part *= ord(string[i])
+            bool = not bool
+        i += 1
+    part = part/100
+    return int(math.fabs(part))
+
+def mini_calculations2(string):
+    part = 0
+    bool = True
+    i = len(string)-1
+    while i >= 0:
+        if bool:
+            part += ord(string[i])
+            bool = not bool
+        else:
+            part *= ord(string[i])
+            bool = not bool
+        i -= 1
+    part = part/100
+    return int(math.fabs(part))
+
 
 def calculate_id(name, label, birthdate, corpus):
     num = 0
-    n = 0
-    global_id = corpus[:2].upper()
+    global_id = corpus[:3].upper()
     if name!= None and name != 'Unknown' and name != 'Unspecified':
-        num = mini_calculation(name[:2])
-        global_id += str(num)
-    if corpus != 'Cree':
-        num = mini_calculation(label)
-        global_id += str(num)
-    else:
         num = mini_calculation(name[-3:])
+        num *= mini_calculations2(name[:3])
+
+    if corpus != 'Cree':
+        if num != 0:
+            num *= mini_calculation(label)
+        else:
+            num += mini_calculation(label)
+    
     if birthdate != None and birthdate != 'Unspecified':
-        num = math.fabs(math.floor(int(birthdate[:3])/(int(birthdate[5:7])*(int(birthdate[7:])))))
-        global_id += str(num)
+        num += int(math.fabs(math.floor(int(birthdate[:3])/(int(birthdate[5:7])*(int(birthdate[7:]))))))
+    global_id += str(num)
+    if len(global_id) > 9:
+        global_id = global_id[:9]
     return global_id
 
 @db_apply
