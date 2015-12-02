@@ -52,7 +52,6 @@ class Session(Base):
     language = Column(Text, nullable=True, unique=False)
     date = Column(Text, nullable=True, unique=False)
     situation = Column(Text, nullable=True, unique=False)
-    genre = Column(Text, nullable=True, unique=False)
     source_id = Column(Text, nullable=True, unique=False)
     media = Column(Text, nullable=True, unique=False)
     media_type = Column(Text, nullable=True, unique=False)
