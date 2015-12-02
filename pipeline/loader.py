@@ -8,7 +8,6 @@ from parsers import *
 from database_backend import *
 import time
 
-
 if __name__ == "__main__":
     start_time = time.time()
     engine = db_connect()
