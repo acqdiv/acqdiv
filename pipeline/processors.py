@@ -209,6 +209,11 @@ class SessionProcessor(object):
                     word['utterance_id_fk'] = utterance['utterance_id']
                     word['corpus'] = self.corpus
                     word['language'] = self.language
+                    # JSON files have utterance and word level warnings, but sometimes words are misaligned and
+                    # the warning is at the utterance level -- give the user some love and tell them where to look
+                    # if the word is returned NULL due to misalignment
+                    if not 'word' in word:
+                        word['warning'] = "See warning in Utterance table at: {}, {} ".format(word['session_id_fk'], word['utterance_id_fk'])
                     self.words.append(Word(**word))
 
                 for morpheme in morphemes:
