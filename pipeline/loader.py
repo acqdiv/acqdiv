@@ -7,7 +7,6 @@ from postprocessor import *
 from parsers import *
 from database_backend import *
 import time
-from unique_id import unique_id
 
 
 if __name__ == "__main__":
@@ -15,9 +14,9 @@ if __name__ == "__main__":
     engine = db_connect()
     create_tables(engine)
 
-    #configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
-    #         'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
-    configs = ['Chintang.ini']
+    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
+             'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
+
     for config in configs:
         # Parse the config file and call the sessions processor
         cfg = CorpusConfigParser()
@@ -42,7 +41,5 @@ if __name__ == "__main__":
     macrorole(cfg,engine)
     print("Creating unique speaker table...")
     unique_speaker(cfg,engine)
-    #print("Creating unique speaker ids...")
-    #compute_unique_ids(engine,configs)
 
     print("--- %s seconds ---" % (time.time() - start_time))

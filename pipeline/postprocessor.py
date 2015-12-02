@@ -400,7 +400,9 @@ def unique_speaker(session, config):
                 d['global_id'] = cfg_mapping[db_speaker_entry.corpus][key]
             except KeyError:
                 unique_id.new_entry(speakerlist)
+                cfg_mapping.read('unique_ids.ini')
                 d['global_id'] = cfg_mapping[db_speaker_entry.corpus][key]
+                print('WARNING - potentially new unique speaker detected:\n'+db_speaker_entry.name+'\t'+cfg_mapping[db_speaker_entry.corpus][key])
             d['speaker_label'] = db_speaker_entry.speaker_label
             d['name'] = db_speaker_entry.name
             d['birthdate'] = db_speaker_entry.birthdate
