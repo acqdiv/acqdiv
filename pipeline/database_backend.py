@@ -104,7 +104,6 @@ class Utterance(Base):
     To note:
         - utterance_id is the id in the original files (not unique across corpora, e.g. u1, u1)
         - addressee not in all corpora
-        - utterance_type is phonetic or orthographic
         - _raw vs !_raw is distinction between original input and cleaned/manipulated output
     """
     __tablename__ = 'utterances'
@@ -116,7 +115,6 @@ class Utterance(Base):
     utterance_id = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False)
     addressee = Column(Text, nullable=True, unique=False)
-    utterance_type = Column(Text, nullable=True, unique=False)
     utterance_raw = Column(Text, nullable=True, unique=False)
     utterance = Column(Text, nullable=True, unique=False)
     translation = Column(Text, nullable=True, unique=False)

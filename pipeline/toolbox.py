@@ -32,9 +32,9 @@ class ToolboxFile(object):
         """ Iterator, yields raw utterances, words, morphemes and inference information from a Session file.
         
         Notes:
-            This iterator directly extracts utterance_raw and utterance_type and calls various functions to extract
-            information from the following levels:
-        
+            This iterator directly extracts utterances for the db column utterance_raw and calls various
+            functions to extract information from the following levels:
+
             sentence_type: Calls the function get_sentence_type() to extract the sentence type.
             clean_utterance: Calls the function clean_utterance() to the clean utterance.
             warnings: Calls the function get_warnings() to ge the warnings like "transcription insecure".
@@ -75,10 +75,8 @@ class ToolboxFile(object):
                     
                     try:
                         utterances['utterance_raw'] = utterances[self.config['utterance']['field']]
-                        utterances['utterance_type'] = self.config['utterance']['type']
                     except KeyError:
                         utterances['utterance_raw'] = ""
-                        utterances['utterance_type'] = ""
                         utterances['warning'] = 'empty utterance'
 
                     # Skip the first rows that contain metadata information

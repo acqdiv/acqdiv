@@ -296,7 +296,6 @@ class JsonParser(SessionParser):
                     # Recreate the full utterance string
                     utterance['utterance_raw'] = " ".join(full_utterance)
                     utterance['utterance'] = " ".join(full_utterance)
-                    utterance['utterance_type'] = self.config['utterance']['type']
                     utterance['word'] = " ".join(full_utterance)
                     # TODO: add inference / clean-up
             yield utterance, db_words, morphemes

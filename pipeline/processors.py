@@ -104,8 +104,6 @@ class SessionProcessor(object):
                 utterance['session_id_fk'] = self.filename
                 utterance['corpus'] = self.corpus
                 utterance['language'] = self.language
-                # TODO: determine utterance type from config
-                utterance['utterance_type'] = self.config['utterance']['type']         
                 self.utterances.append(Utterance(**utterance))
                 
                 # words
