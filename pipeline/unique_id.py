@@ -114,11 +114,9 @@ def new_entry(speaker):
 	except KeyError:
 		cfg_mapping[corpus] = {}
 		cfg_mapping[corpus][key] = id
-	try:
-		with open('unique_ids.ini') as configfile:
-			cfg_mapping.write(configfile)
-	except io.UnsupportedOperation:
-		print('this')
+	
+	with open('unique_ids.ini','w') as configfile:
+		cfg_mapping.write(configfile)
 
 
 def unique_speaker():
