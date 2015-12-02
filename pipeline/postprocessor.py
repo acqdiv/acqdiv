@@ -27,7 +27,7 @@ import sys
 import re
 import time
 from configparser import ConfigParser
-import math
+import unique_id
 
 def db_apply(func):
     """Wrapper for functions that access the database.
@@ -270,8 +270,8 @@ def unify_roles(session,config):
     The role column in the speaker table contains the unified roles.
 
     Args:
+        session: SQLalchemy session object
         config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
-        engine: SQLalchemy engine object.
     """
     table = session.query(backend.Speaker)
     cfg_mapping = ConfigParser()
@@ -309,8 +309,8 @@ def unify_gender(session, config):
     contains the unified genders.
 
     Args:
+        session: SQLalchemy session object
         config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
-        engine: SQLalchemy engine object.
     """
     table = session.query(backend.Speaker)
     for row in table:
@@ -335,8 +335,8 @@ def macrorole(session,config):
     handles role encoding).
 
     Args:
+        session: SQLalchemy session object
         config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
-        engine: SQLalchemy engine object.
     """
     table = session.query(backend.Speaker)
     cfg_mapping = ConfigParser()
@@ -361,56 +361,6 @@ def macrorole(session,config):
                     macro = "Unknown"
         row.macrorole = macro
 
-def mini_calculation(string):
-    part = 0
-    bool = True
-    i = 0
-    while i < len(string):
-        if bool:
-            part += ord(string[i])
-            bool = not bool
-        else:
-            part *= ord(string[i])
-            bool = not bool
-        i += 1
-    part = part/100
-    return int(math.fabs(part))
-
-def mini_calculations2(string):
-    part = 0
-    bool = True
-    i = len(string)-1
-    while i >= 0:
-        if bool:
-            part += ord(string[i])
-            bool = not bool
-        else:
-            part *= ord(string[i])
-            bool = not bool
-        i -= 1
-    part = part/100
-    return int(math.fabs(part))
-
-
-def calculate_id(name, label, birthdate, corpus):
-    num = 0
-    global_id = corpus[:3].upper()
-    if name!= None and name != 'Unknown' and name != 'Unspecified':
-        num = mini_calculation(name[-3:])
-        num *= mini_calculations2(name[:3])
-
-    if corpus != 'Cree':
-        if num != 0:
-            num *= mini_calculation(label)
-        else:
-            num += mini_calculation(label)
-    
-    if birthdate != None and birthdate != 'Unspecified':
-        num += int(math.fabs(math.floor(int(birthdate[:3])/(int(birthdate[5:7])*(int(birthdate[7:]))))))
-    global_id += str(num)
-    if len(global_id) > 9:
-        global_id = global_id[:9]
-    return global_id
 
 @db_apply
 def unique_speaker(session, config):
@@ -429,7 +379,13 @@ def unique_speaker(session, config):
     unique_speaker_entries = []
     unique_name_date_label = set()
     table = session.query(backend.Speaker)
+    
+    cfg_mapping = ConfigParser()
+    #option names resp. keys case-sensitive
+    cfg_mapping.optionxform = str
+    cfg_mapping.read("unique_ids.ini")
 
+    new_speakers = []
     for db_speaker_entry in table:
         if db_speaker_entry.corpus != 'Cree':
             unique_tuple = (db_speaker_entry.name, db_speaker_entry.birthdate,db_speaker_entry.speaker_label)
@@ -438,7 +394,13 @@ def unique_speaker(session, config):
         if unique_tuple not in unique_name_date_label:
             unique_name_date_label.add(unique_tuple)
             d = {}
-            d['global_id'] = calculate_id(db_speaker_entry.name, db_speaker_entry.speaker_label, db_speaker_entry.birthdate, db_speaker_entry.corpus)
+            speakerlist = [db_speaker_entry.corpus,db_speaker_entry.name, db_speaker_entry.speaker_label,db_speaker_entry.birthdate]
+            key = unique_id.speakers_key(speakerlist[1:])
+            try:
+                d['global_id'] = cfg_mapping[db_speaker_entry.corpus][key]
+            except KeyError:
+                unique_id.new_entry(speakerlist)
+                d['global_id'] = cfg_mapping[db_speaker_entry.corpus][key]
             d['speaker_label'] = db_speaker_entry.speaker_label
             d['name'] = db_speaker_entry.name
             d['birthdate'] = db_speaker_entry.birthdate
@@ -447,6 +409,17 @@ def unique_speaker(session, config):
             unique_speaker_entries.append(backend.Unique_Speaker(**d))
 
     session.add_all(unique_speaker_entries)
+    """
+    if len(new_speakers) > 0:
+        print('\n--- WARNING ---\nNew potential speaker detected:')
+        for s in new_speakers:
+            print('Name:',s[0],'\t','Corpus: ',s[1],'\t','ID: ',s[2])
+    """
+"""def computer_unique_ids(session,config):
+    table = session.query(backend.Unique_Speaker)
+    for speaker in table:
+        unique_id.new_entry(speaker)
+"""
 
 @db_apply
 def unify_indonesian_labels(session, config):
