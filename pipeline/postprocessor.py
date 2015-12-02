@@ -128,7 +128,7 @@ def update_imdi_age(session, config):
                     print("Warning: couldn't calculate age of "
                              "speaker {} from birth and recording dates"
                             .format(db_speaker_entry.id), file=sys.stderr)
-                    print("Invalid session recording date: {}.\n"
+                    print("Invalid session recording date: \"{}\"\n"
                             "Check data in {} file {}"
                             .format(db_speaker_entry.birthdate,
                                 corpus_name, sid), file=sys.stderr)

@@ -104,12 +104,11 @@ class SessionProcessor(object):
                 utterance['session_id_fk'] = self.filename
                 utterance['corpus'] = self.corpus
                 utterance['language'] = self.language
-                # TODO: determine utterance type from config
-                utterance['utterance_type'] = self.config['utterance']['type']         
                 self.utterances.append(Utterance(**utterance))
                 
                 # words
                 for word in words:
+                    word['session_id_fk'] = self.filename
                     word['language'] = self.language
                     word['corpus'] = self.corpus
                     self.words.append(Word(**word))
@@ -120,6 +119,7 @@ class SessionProcessor(object):
                     morphemes_warnings = collections.OrderedDict()
                     for (morpheme,inference) in it.zip_longest(morphemes,inferences):
                         try:
+                            morphemes_inferences['session_id_fk'] = self.filename
                             morphemes_inferences['utterance_id_fk'] = morpheme['utterance_id_fk']
                             # TODO: fix this to read from the config
                             morphemes_inferences['corpus'] = self.corpus
@@ -149,6 +149,7 @@ class SessionProcessor(object):
                     ## inference parsing
                     for inference in inferences:
                         try:
+                            morphemes_inferences['session_id_fk'] = self.filename
                             morphemes_inferences['utterance_id_fk'] = inference['utterance_id_fk']
                             morphemes_inferences['corpus'] = self.corpus
                             morphemes_inferences['language'] = self.language
@@ -175,6 +176,7 @@ class SessionProcessor(object):
                     morphemes_inferences = collections.OrderedDict()
                     for (morpheme,inference) in it.zip_longest(morphemes,inferences):
                         try:
+                            morphemes_inferences['session_id_fk'] = self.filename
                             morphemes_inferences['utterance_id_fk'] = morpheme['utterance_id_fk']
                             morphemes_inferences['corpus'] = self.corpus
                             morphemes_inferences['language'] = self.language
@@ -203,12 +205,19 @@ class SessionProcessor(object):
                 self.utterances.append(Utterance(**utterance))
 
                 for word in words:
+                    word['session_id_fk'] = self.filename
                     word['utterance_id_fk'] = utterance['utterance_id']
                     word['corpus'] = self.corpus
                     word['language'] = self.language
+                    # JSON files have utterance and word level warnings, but sometimes words are misaligned and
+                    # the warning is at the utterance level -- give the user some love and tell them where to look
+                    # if the word is returned NULL due to misalignment
+                    if not 'word' in word:
+                        word['warning'] = "See warning in Utterance table at: {}, {} ".format(word['session_id_fk'], word['utterance_id_fk'])
                     self.words.append(Word(**word))
 
                 for morpheme in morphemes:
+                    morpheme['session_id_fk'] = self.filename
                     morpheme['utterance_id_fk'] = utterance['utterance_id']
                     morpheme['corpus'] = self.corpus
                     morpheme['language'] = self.language

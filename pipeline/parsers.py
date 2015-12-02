@@ -5,7 +5,7 @@ TODO: integrate the metadata parsing
 
 """
 
-import os
+import os, sys
 import glob
 import json
 import collections
@@ -243,9 +243,12 @@ class JsonParser(SessionParser):
                     full_utterance = []
                     # Robert's {words:[]} is a list of dictionaries with keys like "full_word_target"
                     for word in record['words']:
+                        # this is to skip empty dicts in Robert's parser
+                        if len(word) == 0:
+                            continue
                         d = collections.OrderedDict()
                         for k_json_mappings_words in self.config['json_mappings_words']:
-                            if k_json_mappings_words in word and not type(word[k_json_mappings_words]) is dict:
+                            if k_json_mappings_words in word:
                                 d[self.config['json_mappings_words'][k_json_mappings_words]] = word[k_json_mappings_words]
 
                         # assign the proper actual vs target "word" given the corpus
@@ -296,7 +299,6 @@ class JsonParser(SessionParser):
                     # Recreate the full utterance string
                     utterance['utterance_raw'] = " ".join(full_utterance)
                     utterance['utterance'] = " ".join(full_utterance)
-                    utterance['utterance_type'] = self.config['utterance']['type']
                     utterance['word'] = " ".join(full_utterance)
                     # TODO: add inference / clean-up
             yield utterance, db_words, morphemes
