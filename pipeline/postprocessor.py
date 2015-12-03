@@ -411,17 +411,6 @@ def unique_speaker(session, config):
             unique_speaker_entries.append(backend.Unique_Speaker(**d))
 
     session.add_all(unique_speaker_entries)
-    """
-    if len(new_speakers) > 0:
-        print('\n--- WARNING ---\nNew potential speaker detected:')
-        for s in new_speakers:
-            print('Name:',s[0],'\t','Corpus: ',s[1],'\t','ID: ',s[2])
-    """
-"""def computer_unique_ids(session,config):
-    table = session.query(backend.Unique_Speaker)
-    for speaker in table:
-        unique_id.new_entry(speaker)
-"""
 
 @db_apply
 def unify_indonesian_labels(session, config):
