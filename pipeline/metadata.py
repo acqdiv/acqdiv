@@ -311,6 +311,16 @@ if __name__=="__main__":
     # print(imdi.metadata['session']['location']['address'])
     print("#########################")
 
+    print("RUSSIAN: ")
+    cfg = ccp()
+    cfg.read("Russian.ini")
+    imdi = Imdi(cfg, "../corpora/Russian/imdi/A00410909.imdi")
+    for k, v in imdi.metadata.items():
+        print(k, v)
+        print()
+    # print(imdi.metadata['session']['location']['address'])
+    print("#########################")
+
     print("JPN_MIYATA:")
     cfg = ccp()
     cfg.read("JapaneseMiyata.ini")

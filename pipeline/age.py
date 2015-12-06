@@ -119,8 +119,8 @@ def format_imdi_age(birthdate, sessiondate):
         try:
             d1 = datetime.strptime(birthdate, "%Y")
             acc_flag_bd = 1
-        except Exception as e:
-            raise BirthdateError(birthdate, e)
+        except Exception as bde:
+            raise BirthdateError(birthdate, bde)
 
     try:
         d2 = datetime.strptime(sessiondate, "%Y-%m-%d")
@@ -132,8 +132,8 @@ def format_imdi_age(birthdate, sessiondate):
             try:
                 d2 = datetime.strptime(sessiondate, "%Y-%m")
                 acc_flag_sd = 2
-            except Exception as e:
-                raise SessionDateError(sessiondate, e)
+            except Exception as sde:
+                raise SessionDateError(sessiondate, sde)
 
     diff = relativedelta(d2, d1)
     diff_days = d2 - d1

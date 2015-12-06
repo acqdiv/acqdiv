@@ -120,8 +120,8 @@ def update_imdi_age(session, config):
                              "speaker {} from birth and recording dates"
                             .format(db_speaker_entry.id), file=sys.stderr)
                     print("Invalid birthdate: {}. Check data in {} file {}"
-                            .format(db_speaker_entry.birthdate,
-                                corpus_name, sid), file=sys.stderr)
+                            .format(e.bad_data, corpus_name, sid), 
+                            file=sys.stderr)
 
             except age.SessionDateError as e:
                     print("Warning: couldn't calculate age of "
@@ -129,8 +129,8 @@ def update_imdi_age(session, config):
                             .format(db_speaker_entry.id), file=sys.stderr)
                     print("Invalid session recording date: {}.\n"
                             "Check data in {} file {}"
-                            .format(db_speaker_entry.birthdate,
-                                corpus_name, sid), file=sys.stderr)
+                            .format(e.bad_data, corpus_name, sid), 
+                            file=sys.stderr)
 
         for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.age_raw.like("%;%.%")):
                 db_speaker_entry.age = db_speaker_entry.age_raw
