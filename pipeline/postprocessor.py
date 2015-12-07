@@ -27,7 +27,6 @@ import sys
 import re
 import time
 from configparser import ConfigParser
-import math
 
 def db_apply(func):
     """Wrapper for functions that access the database.
