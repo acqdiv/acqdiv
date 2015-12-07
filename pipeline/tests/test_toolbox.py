@@ -24,8 +24,9 @@ class TestRussianParser(TestToolboxParser):
     def setUp(self):
         super().setUp()
         self.cfg.read("Russian.ini")
-        self.infile = codecs.open("../corpora/Russian/toolbox/A00210817.txt", "r", "utf-8")
-        self.file_path = "../corpora/Russian/toolbox/A00210817.txt"
+        #self.infile = codecs.open("../corpora/Russian/toolbox/A00210817.txt", "r", "utf-8")
+        self.infile = codecs.open("../corpora/test/Russian.txt", "r", "utf-8")
+        self.file_path = "../corpora/test/Russian.txt"
         self.toolbx = toolbox.ToolboxFile(self.cfg,self.infile)
         self.parser = SessionParser.create_parser(self.cfg, self.file_path)
         
@@ -69,15 +70,15 @@ class TestRussianParser(TestToolboxParser):
         self.assertEqual(str(self.toolbx.do_inference(input_utterance[0])), "[OrderedDict([('utterance_id_fk', 'A00210817_622'), ('pos_raw', 'V'), ('gloss_raw', 'IMP:2:SG:IRREFL:IPFV')]), OrderedDict([('utterance_id_fk', 'A00210817_622'), ('pos_raw', 'V'), ('gloss_raw', 'IMP:2:SG:IRREFL:PFV')]), OrderedDict([('utterance_id_fk', 'A00210817_622'), ('pos_raw', 'NOUN'), ('gloss_raw', 'M:SG:ACC:INAN')])]")
         
     
-#    
+    
 
 ## Chintang
 class TestChintangParser(TestToolboxParser):
     def setUp(self):
         super().setUp()
         self.cfg.read("Chintang.ini")
-        self.infile = codecs.open("../corpora/Chintang/toolbox/CLDLCh1R01S01.txt", "r", "utf-8")
-        self.file_path = "../corpora/Chintang/toolbox/CLDLCh1R01S01.txt"
+        self.infile = codecs.open("../corpora/test/Chintang.txt", "r", "utf-8")
+        self.file_path = "../corpora/test/Chintang.txt"
         self.toolbx = toolbox.ToolboxFile(self.cfg,self.infile)
         self.parser = SessionParser.create_parser(self.cfg, self.file_path)
         
@@ -97,7 +98,7 @@ class TestChintangParser(TestToolboxParser):
         #input_utterance is utterance nbr 1 from Chintang test file (but can actually be any other "special case" utterance)
         input_utterance = next(islice(self.parser.next_utterance(), 0,0+1))
         self.assertEqual(str(self.toolbx.get_words(input_utterance[0])), "[OrderedDict([('word', 'habinɨŋ'), ('utterance_id_fk', 'CLDLCh1R01S01.001')]), OrderedDict([('word', 'habinɨŋ'), ('utterance_id_fk', 'CLDLCh1R01S01.001')])]")
-
+    
     def test_get_morphemes(self):
         """ Test if get_morphemes() works for Chintang"""
         input_utterance = next(islice(self.parser.next_utterance(), 0,0+1))
@@ -116,8 +117,10 @@ class TestIndonesianParser(TestToolboxParser):
     def setUp(self):
         super().setUp()
         self.cfg.read("Indonesian.ini")
-        self.infile = codecs.open("../corpora/Indonesian/toolbox/HIZ-1999-05-20.txt", "r", "utf-8")
-        self.file_path = "../corpora/Indonesian/toolbox/HIZ-1999-05-20.txt"
+        #self.infile = codecs.open("../corpora/Indonesian/toolbox/HIZ-1999-05-20.txt", "r", "utf-8")
+        #self.file_path = "../corpora/Indonesian/toolbox/HIZ-1999-05-20.txt"
+        self.infile = codecs.open("../corpora/test/Indonesian.txt", "r", "utf-8")
+        self.file_path = "../corpora/test/Indonesian.txt"
         self.toolbx = toolbox.ToolboxFile(self.cfg,self.infile)
         self.parser = SessionParser.create_parser(self.cfg, self.file_path)
         
