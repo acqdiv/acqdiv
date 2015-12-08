@@ -246,16 +246,23 @@ class JsonParser(SessionParser):
                         # this is to skip empty dicts in Robert's parser
                         if len(word) == 0:
                             continue
+
                         d = collections.OrderedDict()
                         for k_json_mappings_words in self.config['json_mappings_words']:
                             if k_json_mappings_words in word:
                                 d[self.config['json_mappings_words'][k_json_mappings_words]] = word[k_json_mappings_words]
 
+                        print("word-up:", word)
                         # assign the proper actual vs target "word" given the corpus
                         # print(self.config['json_mappings_words']['word'])
                         # recreate the word utterance
                         if self.config['json_mappings_words']['word'] in d:
+                            print("word:", word)
                             d['word'] = d[self.config['json_mappings_words']['word']]
+                            # Robert's empty dictionary check - tries to hackle:
+                            # https://github.com/uzling/acqdiv/issues/325
+                            if type(d['word']) is dict and len(d['word']) == 0:
+                                continue
                             full_utterance.append(d['word'])
 
                         # these are so awful -- only work because Robert alphabetically ordered the dictionary by keys
@@ -297,6 +304,7 @@ class JsonParser(SessionParser):
                             if len(glosses) > 0:
                                 utterance['gloss'] = " ".join(glosses)
                     # Recreate the full utterance string
+                    print(full_utterance)
                     utterance['utterance_raw'] = " ".join(full_utterance)
                     utterance['utterance'] = " ".join(full_utterance)
                     utterance['word'] = " ".join(full_utterance)
