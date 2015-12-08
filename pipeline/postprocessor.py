@@ -277,8 +277,13 @@ def unify_roles(session,config):
     #option names resp. keys case-sensitive
     cfg_mapping.optionxform = str
     cfg_mapping.read("role_mapping.ini")
+    not_found = set()
     for row in table:
-        row.role = cfg_mapping['role_mapping'][row.role_raw]
+        try:
+            row.role = cfg_mapping['role_mapping'][row.role_raw]
+        except KeyError:
+            row.role = row.role_raw
+            not_found.add((row.role_raw,row.corpus))
         if row.role == "Unknown" and row.language in cfg_mapping:
             try:
                 row.role = cfg_mapping[row.language][row.speaker_label]
@@ -288,6 +293,11 @@ def unify_roles(session,config):
             row.role = "Unknown"
         elif row.role in ["Boy", "Girl", "Female", "Male"] and row.gender_raw != None:
             row.role = "Unknown"
+    if len(not_found) > 0:
+        print("-- WARNING --")
+        for item in not_found: 
+            print("'"+item[0]+"'","from",item[1])
+        print("not found in role_mapping.ini\n--------")
 
 @db_apply
 def unify_gender(session, config):
@@ -369,16 +379,19 @@ def unique_speaker(session, config):
     table = session.query(backend.Speaker)
 
     for db_speaker_entry in table:
-        unique_tuple = (db_speaker_entry.name, db_speaker_entry.birthdate,db_speaker_entry.speaker_label)
+        if db_speaker_entry.corpus != 'Cree':
+            unique_tuple = (db_speaker_entry.name, db_speaker_entry.birthdate,db_speaker_entry.speaker_label)
+        else:
+            unique_tuple = (db_speaker_entry.name, db_speaker_entry.birthdate)
         if unique_tuple not in unique_name_date_label:
             unique_name_date_label.add(unique_tuple)
             d = {}
+            #d['global_id'] = calculate_id(db_speaker_entry.name, db_speaker_entry.speaker_label, db_speaker_entry.birthdate, db_speaker_entry.corpus)
             d['speaker_label'] = db_speaker_entry.speaker_label
             d['name'] = db_speaker_entry.name
             d['birthdate'] = db_speaker_entry.birthdate
             d['gender'] = db_speaker_entry.gender
-            d['language'] = db_speaker_entry.language
-            d['macrorole'] = db_speaker_entry.macrorole
+            d['corpus'] = db_speaker_entry.corpus
             unique_speaker_entries.append(backend.Unique_Speaker(**d))
 
     session.add_all(unique_speaker_entries)

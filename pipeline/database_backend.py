@@ -89,12 +89,12 @@ class Unique_Speaker(Base):
     __tablename__ = 'uniquespeakers'
 
     id = Column(Integer, primary_key=True)
+    #global_id = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False)
     name = Column(Text, nullable=True, unique=False)
     birthdate = Column(Text, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
-    language = Column(Text, nullable=True, unique=False)
-    macrorole = Column(Text, nullable=True, unique=False)
+    corpus = Column(Text, nullable=True, unique=False)
 
 class Utterance(Base):
     """ Utterances in all sessions.
