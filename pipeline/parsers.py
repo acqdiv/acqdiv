@@ -13,7 +13,7 @@ import configparser
 
 from metadata import Imdi, Chat
 from toolbox import ToolboxFile
-from XMLParser import ChatXMLFile, CreeParser
+#from XMLParser import ChatXMLParser, CreeParser ## this doesn't work (error: ImportError: cannot import name 'CorpusConfigParser')
 
 
 class CorpusConfigParser(configparser.ConfigParser):
@@ -80,7 +80,8 @@ class SessionParser(object):
             return JsonParser(config, file_path)
         
         #elif testformat == "ChatXML":
-        #    return ACQDIVCorpusReader('../corpora/test/', '.*.xml')
+        # should return
+        #    return XMLParser(config, file_path)
         
         elif testformat == 'Toolbox':
             return ToolboxParser(config,testfilespath)
