@@ -274,8 +274,6 @@ class JsonParser(SessionParser):
                         # morphemes{} parsing within word[] and extraction of .ini specified db columns
                         # morphemes are also a key:[] pair in words{}; morphemes: [segment:'ga', pos_target:'Eng']...
                         if 'morphemes' in word:
-                            print()
-                            print("word[morphemes]:", word['morphemes'])
                             segments = []
                             glosses = []
                             pos = []
@@ -284,16 +282,12 @@ class JsonParser(SessionParser):
                                 for e in word['morphemes']: # iter over morpheme dicts
                                     d2 = collections.OrderedDict()
                                     # i'm so ashamed here in the code...
-                                    print("\te:", e)
-                                    print("\t\td2:", d2)
                                     for k_json_mappings_morphemes in self.config['json_mappings_morphemes']:
                                         if k_json_mappings_morphemes in e and not type(e[k_json_mappings_morphemes]) is dict:
                                             d2[self.config['json_mappings_morphemes'][k_json_mappings_morphemes]] = \
                                             e[k_json_mappings_morphemes]
                                     if len(d2) > 0:
-                                        print("len(d2)>0:", d2)
                                         morphemes.append(d2)
-                                        print("d2:", d2)
                                 if 'segment_target' in d2:
                                     segments.append(d2['segment_target'])
                                 if 'gloss_target' in d2:
