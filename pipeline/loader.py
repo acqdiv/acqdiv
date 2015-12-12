@@ -14,9 +14,8 @@ if __name__ == "__main__":
     engine = db_connect()
     create_tables(engine)
 
-    #configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
-    #         'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
-    configs = ['Russian.ini']
+    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
+             'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
     for config in configs:
         # Parse the config file and call the sessions processor
         cfg = CorpusConfigParser()

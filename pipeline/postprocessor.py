@@ -274,7 +274,7 @@ def unify_roles(session,config):
         config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
     """
     table = session.query(backend.Speaker)
-    cfg_mapping = ConfigParser()
+    cfg_mapping = ConfigParser(delimiters=('='))
     #option names resp. keys case-sensitive
     cfg_mapping.optionxform = str
     cfg_mapping.read("role_mapping.ini")
@@ -339,7 +339,7 @@ def macrorole(session,config):
         config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
     """
     table = session.query(backend.Speaker)
-    cfg_mapping = ConfigParser()
+    cfg_mapping = ConfigParser(delimiters=('='))
     #option names resp. keys case-sensitive
     cfg_mapping.optionxform = str
     cfg_mapping.read("role_mapping.ini")
@@ -380,7 +380,7 @@ def unique_speaker(session, config):
     unique_name_date_label = set()
     table = session.query(backend.Speaker)
     
-    cfg_mapping = ConfigParser()
+    cfg_mapping = ConfigParser(delimiters=('='))
     #option names resp. keys case-sensitive
     cfg_mapping.optionxform = str
     cfg_mapping.read("unique_ids.ini")

@@ -87,7 +87,7 @@ class SessionProcessor(object):
             d['session_id_fk'] = self.filename
             d['language'] = self.language
             d['corpus'] = self.corpus
-            if self.corpus == 'Indonesian' and d['role_raw'] == 'Non_Human':
+            if d['role_raw'] == 'Non_Human': #self.corpus == 'Indonesian' and d['role_raw'] == 'Non_Human':
                 continue
             else:
                 self.speaker_entries.append(Speaker(**d))

@@ -31,7 +31,7 @@ def new_entry(speaker):
 			speaker: a list with the necessary speaker information for unique identification
 
 	"""
-	cfg_mapping = ConfigParser()
+	cfg_mapping = ConfigParser(delimiters=('='))
 	cfg_mapping.optionxform = str
 	cfg_mapping.read("unique_ids.ini")
 	corpus = speaker[0]
