@@ -6,13 +6,13 @@ import sys
 current_dir = os.getcwd()
 sys.path.append(current_dir)
 
-import pipeline.database_backend as db
-import pipeline.processors as processors
-import pipeline.postprocessor as pp
+import database_backend as db
+import processors as processors
+import postprocessor as pp
 import unittest
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import func
-import pipeline.parsers as parsers
+import parsers as parsers
 
 
 # helper functions
@@ -42,6 +42,8 @@ def load_database(configs, engine):
         # Process by parsing the files and adding extracted data to the db
         c = processors.CorpusProcessor(cfg, engine)
         c.process_corpus()
+        
+        
 
         print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
         pp.update_age(cfg, engine)

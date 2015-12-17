@@ -39,7 +39,7 @@ class CorpusConfigParser(configparser.ConfigParser):
         """
         super().read(filenames, encoding)
         self.path = self['paths']['sessions']
-        self.testfilespath = self['paths']['testSessions']
+        self.testfilespath = self['tests']['test_sessions']
         self.session_files = glob.glob(self.path)
         self.session_testfiles = glob.glob(self.testfilespath)
         self.metadata_dir = self['paths']['metadata_dir']
