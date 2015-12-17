@@ -37,12 +37,11 @@ def load_database(configs, engine):
         # Parse the config file and call the sessions processor
         cfg = parsers.CorpusConfigParser()
         cfg.read(config)
-        cfg.set('paths', 'sessions', cfg['tests']['test_sessions'])
-        cfg.set('paths', 'metadata_dir', cfg['tests']['test_metadata_dir'])
-        print(cfg['paths']['sessions'])
-        #print('yoyoyo')
-        
-        #print(cfg.session_files)
+        cfg.set('paths', 'sessions', cfg['tests']['sessions'])
+        cfg.set('paths', 'sessions_dir', cfg['tests']['sessions_dir'])
+        cfg.set('paths', 'metadata_dir', cfg['tests']['metadata_dir'])
+        cfg.set('corpus', 'format', cfg['tests']['format'])
+        #print(cfg['paths']['sessions'])
         
 
         # Process by parsing the files and adding extracted data to the db
@@ -61,7 +60,7 @@ class ToolbxTest(unittest.TestCase):
         # http://docs.sqlalchemy.org/en/latest/orm/session_basics.html#session-faq-whentocreate
         engine = connect()
 
-        cls.configs = ['../Chintang.ini', '../Russian.ini', '../Indonesian.ini']
+        cls.configs = ['Chintang.ini', 'Russian.ini', 'Indonesian.ini']
         
         load_database(cls.configs, engine)
     

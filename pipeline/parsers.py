@@ -39,13 +39,10 @@ class CorpusConfigParser(configparser.ConfigParser):
         """
         super().read(filenames, encoding)
         self.path = self['paths']['sessions']
-        self.testfilespath = self['tests']['test_sessions']
         self.session_files = glob.glob(self.path)
-        self.session_testfiles = glob.glob(self.testfilespath)
         self.metadata_dir = self['paths']['metadata_dir']
         self.sessions_dir = self['paths']['sessions_dir']
         self.format = self['corpus']['format']
-        self.testformat = self['corpus']['testformat']
         self.corpus = self['corpus']['corpus']
 
 
@@ -67,7 +64,6 @@ class SessionParser(object):
         """
         corpus = config.corpus
         format = config.format
-        testformat = config.testformat 
 
         if format == "ChatXML":
             if corpus == "Cree":
@@ -78,13 +74,6 @@ class SessionParser(object):
             return ToolboxParser(config, file_path)
         elif format == "JSON":
             return JsonParser(config, file_path)
-        
-        #elif testformat == "ChatXML":
-        # should return
-        #    return XMLParser(config, file_path)
-        
-        elif testformat == 'Toolbox':
-            return ToolboxParser(config,testfilespath)
             
         else:
             assert 0, "Unknown format type: " + format
