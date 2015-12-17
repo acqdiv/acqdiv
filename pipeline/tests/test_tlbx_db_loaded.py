@@ -61,7 +61,7 @@ class ToolbxTest(unittest.TestCase):
         load_database(cls.configs, engine)
     
 
-    def testXMLSessions(self):
+    def testTLBXSessions(self):
         """
         Test if sessions for Toolbox test files are loaded correctly
         """
@@ -73,7 +73,7 @@ class ToolbxTest(unittest.TestCase):
         session.close()
         
         
-    def testXMLUtterances(self):
+    def testTLBXUtterances(self):
         """
         Test if utterances for Toolbox test files are loaded correctly
         """
@@ -92,7 +92,7 @@ class ToolbxTest(unittest.TestCase):
         session.close()
         
         
-    def testXMLWords(self):
+    def testTLBXWords(self):
         """
         Test if words for Toolbox test files are loaded correctly
         """
@@ -111,7 +111,7 @@ class ToolbxTest(unittest.TestCase):
         session.close()
         
         
-    def testXMLMorphemes(self):
+    def testTLBXMorphemes(self):
         """
         Test if morphemes for Toolbox test files are loaded correctly
         """
@@ -131,7 +131,7 @@ class ToolbxTest(unittest.TestCase):
         
         
 
-    def testXMLSpeakers(self):
+    def testTLBXSpeakers(self):
         """
         Test if  speakers for Toolbox test files are loaded
         """
@@ -150,12 +150,13 @@ class ToolbxTest(unittest.TestCase):
         session.close()
         
         
-    def textXMLUniquespeakers(self):
+    def textTLBXUniquespeakers(self):
         """
         Test if unique speakers for Toolbox test files are loaded
         """
         session = make_session()
         self.assertEqual(session.query(db.Uniquespeakers).count(),13)
+        session.close()
     
     
     
