@@ -6,15 +6,15 @@ import sys
 current_dir = os.getcwd()
 sys.path.append(current_dir)
 
-import database_backend as db
-import processors as processors
-import postprocessor as pp
+import pipeline.database_backend as db
+import pipeline.processors as processors
+import pipeline.postprocessor as pp
 import unittest
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import func
 from sqlalchemy.sql import select
 from sqlalchemy.sql import and_, or_, not_
-import parsers as parsers
+import pipeline.parsers as parsers
 
 
 # helper functions
@@ -56,7 +56,7 @@ class ToolbxTest(unittest.TestCase):
         # http://docs.sqlalchemy.org/en/latest/orm/session_basics.html#session-faq-whentocreate
         engine = connect()
 
-        cls.configs = ['Chintang.ini', 'Russian.ini', 'Indonesian.ini']
+        cls.configs = ['../pipeline/Chintang.ini', '../pipeline/Russian.ini', '..pipeline/Indonesian.ini']
         
         load_database(cls.configs, engine)
     

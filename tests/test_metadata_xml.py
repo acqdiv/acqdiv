@@ -6,9 +6,9 @@ import re, os, sys
 current_dir = os.getcwd()
 sys.path.append(current_dir)
 
-import metadata as metadata
+import pipeline.metadata as metadata
 import unittest
-import parsers as parsers
+import pipeline.parsers as parsers
 
 
 

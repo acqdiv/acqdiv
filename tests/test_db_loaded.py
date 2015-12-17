@@ -6,13 +6,13 @@ import sys
 current_dir = os.getcwd()
 sys.path.append(current_dir)
 
-import database_backend as db
-import processors as processors
-import postprocessor as pp
+import pipeline.database_backend as db
+import pipeline.processors as processors
+import pipeline.postprocessor as pp
 import unittest
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import func
-import parsers as parsers
+import pipeline.parsers as parsers
 
 
 # helper functions

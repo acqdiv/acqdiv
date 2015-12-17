@@ -6,9 +6,9 @@ sys.path.append(current_dir)
 
 import unittest
 from itertools import islice
-import toolbox as toolbox
-import parsers as parsers
-from parsers import *
+import pipeline.toolbox as toolbox
+import pipeline.parsers as parsers
+from pipeline.parsers import *
 
 
 class TestToolboxParser(unittest.TestCase):
