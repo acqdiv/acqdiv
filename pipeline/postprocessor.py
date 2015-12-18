@@ -143,7 +143,7 @@ def update_imdi_age(session, config):
                 backend.Speaker.session_id_fk == sid):
             if not cleaned_age.fullmatch(db_speaker_entry.age_raw):
                 try:
-                    ages = age.clean_year_only_ages(db_speaker_entry.age_raw)
+                    ages = age.clean_incomplete_ages(db_speaker_entry.age_raw)
                     db_speaker_entry.age = ages[0]
                     db_speaker_entry.age_in_days = ages[1]
                 except ValueError as e:
