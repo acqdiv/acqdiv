@@ -35,12 +35,15 @@ def load_database(configs, engine):
         # Parse the config file and call the sessions processor
         cfg = parsers.CorpusConfigParser()
         cfg.read(config)
-        cfg.set('paths', 'sessions', cfg['tests']['sessions'])
-        cfg.set('paths', 'sessions_dir', cfg['tests']['sessions_dir'])
-        cfg.set('paths', 'metadata_dir', cfg['tests']['metadata_dir'])
-        cfg.set('corpus', 'format', cfg['tests']['format'])
-        print(cfg.session_files)
-
+        cfg.session_files = cfg.session_testfiles
+        
+        # this below doesn't seem to work
+        #cfg.set('paths', 'sessions', cfg['tests']['sessions'])
+        #cfg.set('paths', 'sessions_dir', cfg['tests']['sessions_dir'])
+        #cfg.set('paths', 'metadata_dir', cfg['tests']['metadata_dir'])
+        #cfg.set('corpus', 'format', cfg['tests']['format'])
+        #print(cfg['paths']['sessions'])
+        
         # Process by parsing the files and adding extracted data to the db
         c = processors.CorpusProcessor(cfg, engine)
         c.process_corpus()
