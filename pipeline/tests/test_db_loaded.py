@@ -71,7 +71,7 @@ class PipelineTest(unittest.TestCase):
 
         load_database(cls.configs, engine)
 
-    def testLppSessionsOk(self):
+    def test_sessions_loaded(self):
         """
         Test if sessions for all corpora are loaded
         """
@@ -79,25 +79,37 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(len(session.query(func.count(db.Session.corpus), db.Session.corpus).group_by(db.Session.corpus).all()), len(PipelineTest.configs))
         session.close()
 
-    def testLppSpeakersOk(self):
+    def test_speakers_loaded(self):
+        """
+        Test if speakers for all copora are loaded
+        """
 
         session = make_session()
         self.assertNotEqual(session.query(db.Speaker).count(), 0)
         session.close()
 
-    def testLppUtterancesOk(self):
+    def test_utterances_loaded(self):
+        """
+        Test if utterances for all corpora are loaded
+        """
 
         session = make_session()
         self.assertNotEqual(session.query(db.Utterance).count(), 0)
         session.close()
 
-    def testLppWordsOk(self):
+    def test_words_loaded(self):
+        """
+        Test if words for all corpora are loaded
+        """
 
         session = make_session()
         self.assertNotEqual(session.query(db.Word).count(), 0)
         session.close()
 
-    def testLppMorphemesOk(self):
+    def test_morphemes_loaded(self):
+        """
+        Test if morphemes for all corpora are loaded
+        """
 
         session = make_session()
         self.assertNotEqual(session.query(db.Morpheme).count(), 0)
