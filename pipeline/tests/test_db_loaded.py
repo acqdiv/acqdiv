@@ -57,17 +57,8 @@ class PipelineTest(unittest.TestCase):
         # http://docs.sqlalchemy.org/en/latest/orm/session_basics.html#session-faq-whentocreate
         engine = connect()
 
-        # cls.configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Russian.ini', 'Japanese_Miyata.ini']
         cls.configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
                'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
-        # cls.configs = ['Cree.ini', 'Indonesian.ini', 'Russian.ini']
-        # cls.configs = ['Chintang.ini']
-        # cls.configs = ['Cree.ini']
-        # cls.configs = ['Indonesian.ini']
-        # cls.configs = ['Russian.ini']
-        # cls.configs = ['CreeJSON.ini']
-        # cls.configs = ['Sesotho.ini']
-        # cls.configs = ['Japanese_Miyata.ini']
 
         load_database(cls.configs, engine)
 
