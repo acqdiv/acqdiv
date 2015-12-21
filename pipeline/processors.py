@@ -108,7 +108,7 @@ class SessionProcessor(object):
                     try:
                         utterance['addressee'] = self.get_chintang_addressee(utterance['addressee'], utterance['utterance_id'])
                     except KeyError:
-                        continue
+                        pass
                 self.utterances.append(Utterance(**utterance))
                 
                 # words
