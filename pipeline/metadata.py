@@ -116,7 +116,10 @@ class Imdi(Parser):
                     langlist = []
                     for lang in e.iterfind('Language'):
                         if lang.Id.text != None:
-                            langlist.append(lang.Id.text.split(':')[1])
+                            try:
+                                langlist.append(lang.Id.text.split(':')[1])
+                            except IndexError:
+                                langlist.append(lang.Id.text)
                     if len(langlist) != 0:
                         participant[t.lower()] = " ".join(langlist)
                 else:
