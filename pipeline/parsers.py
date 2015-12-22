@@ -262,7 +262,7 @@ class JsonParser(SessionParser):
 
                         d = collections.OrderedDict()
                         for k_json_mappings_words in self.config['json_mappings_words']:
-                            if k_json_mappings_words in word:
+                            if k_json_mappings_words in word and len(word[k_json_mappings_words]) > 0:
                                 d[self.config['json_mappings_words'][k_json_mappings_words]] = word[k_json_mappings_words]
 
                         # assign the proper actual vs target "word" given the corpus
