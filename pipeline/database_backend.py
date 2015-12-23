@@ -156,6 +156,7 @@ class Morpheme(Base):
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Text, ForeignKey('sessions.id'))
     utterance_id_fk = Column(Text, ForeignKey('utterances.id'))
+    word_id_fk = Column(Text, ForeignKey('words.id'))
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     type = Column(Text, nullable=True, unique=False)
