@@ -17,7 +17,7 @@ def speakers_key(speakerlist):
 	for i in speakerlist:
 		if i == None:
 			i = 'None'
-		key += i+'_'
+		key += i+','
 	key = key[:-1]
 
 	return key

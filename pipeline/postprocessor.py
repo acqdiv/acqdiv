@@ -402,10 +402,8 @@ def unique_speaker(session, config):
                 unique_id.new_entry(speakerlist)
                 cfg_mapping.read('unique_ids.ini')
                 d['global_id'] = cfg_mapping[db_speaker_entry.corpus][key]
-                try: 
-                    print('WARNING - potentially new unique speaker detected:\n'+db_speaker_entry.name+'\t'+cfg_mapping[db_speaker_entry.corpus][key])
-                except TypeError:
-                    print('WARNING - potentially new unique speaker detected:\n'+'None'+'\t'+cfg_mapping[db_speaker_entry.corpus][key])
+                print('WARNING - potentially new unique speaker added to unique_ids.ini:\n'+key+'\t'cfg_mapping[db_speaker_entry.corpus][key])
+
             d['speaker_label'] = db_speaker_entry.speaker_label
             d['name'] = db_speaker_entry.name
             d['birthdate'] = db_speaker_entry.birthdate
