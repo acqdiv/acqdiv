@@ -6,16 +6,8 @@ import re, os, sys
 current_dir = os.getcwd()
 sys.path.append(current_dir)
 
-import database_backend as db
 import metadata as metadata
-import processors as processors
-import postprocessor as pp
-import time
 import unittest
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import func
-
-from toolbox import ToolboxFile
 import parsers as parsers
 
 
@@ -45,7 +37,7 @@ class TestXMLParser(TestMetadataParser):
     def setUp(self):
         super().setUp()
         self.cfg.read("Cree.ini")
-        self.xml = metadata.Chat(self.cfg, "../corpora/Cree/xml/2005-09-14.xml")
+        self.xml = metadata.Chat(self.cfg, "../corpora/Cree/xml/02-A1-2005-03-25.xml")
 
     def testBasicXMLParsing(self):
         for k, v in self.xml.metadata.items():
@@ -56,14 +48,7 @@ if __name__ == "__main__":
     current_dir = os.getcwd()
     sys.path.append(current_dir)
     
-    import database_backend as db
     import metadata as metadata
-    import processors as processors
-    import postprocessor as pp
     import time
     import unittest
-    from sqlalchemy.orm import sessionmaker
-    from sqlalchemy import func
-    
-    from toolbox import ToolboxFile
     import parsers as parsers

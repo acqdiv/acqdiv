@@ -59,7 +59,7 @@ class TestImdiParser(TestMetadataParser):
     def setUp(self):
         super().setUp()
         self.cfg.read("Russian.ini")
-        self.imdi = metadata.Imdi(self.cfg, "../corpora/Russian/metadata/A00210817.imdi")
+        self.imdi = metadata.Imdi(self.cfg, "../corpora/Russian/imdi/A00210817.imdi")
 
     def testBasicImdiParsing(self):
         for k, v in self.imdi.metadata.items():
