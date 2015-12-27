@@ -3,7 +3,7 @@
 
 
 import itertools as it
-import re, sys
+import re
 import collections
 from sqlalchemy.orm import sessionmaker
 from parsers import *
@@ -104,11 +104,6 @@ class SessionProcessor(object):
                 utterance['session_id_fk'] = self.filename
                 utterance['corpus'] = self.corpus
                 utterance['language'] = self.language
-                if self.corpus == 'Chintang':
-                    try:
-                        utterance['addressee'] = self.get_chintang_addressee(utterance['addressee'], utterance['utterance_id'])
-                    except KeyError:
-                        pass
                 self.utterances.append(Utterance(**utterance))
                 
                 # words
@@ -233,29 +228,6 @@ class SessionProcessor(object):
         else:
             raise Exception("Error: unknown corpus format!")
     
-    def get_chintang_addressee(self,addressee_info, utterance_id):
-        """ Function that extracts addressee information for Chintang.
-        Args:
-            addressee_info: the addressee information from the Chintang files.
-            
-        Returns:
-            result: the extracted addressee information.
-        """
-        #return addressee
-        if re.search('directed|answer', addressee_info):
-            # reconstruct actor code for children from file name
-            match_actor_code = re.search('^(CL.*Ch)(\\d)', utterance_id)
-            child_prefix = match_actor_code.group(1)
-            child_number = match_actor_code.group(2)
-            # several addressees may be connected on a single tier via "+"
-            for addressee in re.split('\+', addressee_info):                                
-                addressee = re.sub('.*target\\s*child.*(\\d).*', child_prefix + '\\1', addressee)
-                addressee = re.sub('.*target\\s*child.*', child_prefix + child_number, addressee)
-                addressee = re.sub('.*child.*', 'unspecified_child', addressee)
-                addressee = re.sub('.*adult.*', 'unspecified_adult', addressee)
-                addressee = re.sub('.*non(\\s*|\\-)directed.*', 'none', addressee)
-                
-                return addressee
 
     def commit(self):
         """ Commits the dictionaries returned from parsing to the database.
