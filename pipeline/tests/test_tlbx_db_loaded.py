@@ -38,7 +38,14 @@ def load_database(configs, engine):
         cfg = parsers.CorpusConfigParser()
         cfg.read(config)
         cfg.session_files = cfg.session_testfiles
-        print(cfg.session_files)
+        
+        # this below doesn't seem to work
+        #cfg.set('paths', 'sessions', cfg['tests']['sessions'])
+        #cfg.set('paths', 'sessions_dir', cfg['tests']['sessions_dir'])
+        #cfg.set('paths', 'metadata_dir', cfg['tests']['metadata_dir'])
+        #cfg.set('corpus', 'format', cfg['tests']['format'])
+        #print(cfg['paths']['sessions'])
+        
 
         # Process by parsing the files and adding extracted data to the db
         c = processors.CorpusProcessor(cfg, engine)
