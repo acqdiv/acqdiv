@@ -50,7 +50,7 @@ class SessionParser(object):
     """ Static class-level method to create a new parser instance based on session format type.
     """
     @staticmethod
-    def create_parser(config, file_path):
+    def create_parser_factory(config):
         """ Factory method for creating a parser
 
         TODO: update logic below when we have an XML parser
@@ -68,14 +68,11 @@ class SessionParser(object):
         testformat = config.testformat
 
         if format == "ChatXML":
-            if corpus == "Cree":
-                return CreeParser(config, file_path)
-            else:
-                return ChatXMLParser(config, file_path)
+            return XMLParserFactory(config)
         elif format == "Toolbox":
-            return ToolboxParser(config, file_path)
+            return lambda file_path: ToolboxParser(config, file_path)
         elif format == "JSON":
-            return JsonParser(config, file_path)
+            return lambda file_path: JsonParser(config, file_path)
         
         # again, needed here for tests  
         elif testformat == 'Toolbox':

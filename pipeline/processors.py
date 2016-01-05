@@ -21,13 +21,16 @@ class CorpusProcessor(object):
         """
         self.cfg = cfg
         self.engine = engine
+        self.morpheme_type = self.config['morphemes']['type']
+        self.parser_factory = SessionParser.create_parser_factory(self.cfg)
 
     def process_corpus(self):
         """ Creates a SessionProcessor given a config and input file.
         """
         for session_file in self.cfg.session_files:
             print("Processing:", session_file)
-            s = SessionProcessor(self.cfg, session_file, self.engine)
+            s = SessionProcessor(self.cfg, session_file, 
+                    self.parser_factory, self.engine)
             s.process_session()
             s.commit()
 
@@ -36,7 +39,7 @@ class SessionProcessor(object):
     """ SessionProcessor invokes a parser to get the extracted data, and then interacts
         with the ORM backend to push data to it.
     """
-    def __init__(self, cfg, file_path, engine):
+    def __init__(self, cfg, file_path, parser_factory, engine):
         """ Init parser with corpus config. Pass in file path to process. Create sqla session.
 
         Args:
@@ -46,19 +49,18 @@ class SessionProcessor(object):
         """
         self.config = cfg
         self.file_path = file_path
+        self.parser_factory = parser_factory
         self.language = self.config['corpus']['language']
         self.corpus = self.config['corpus']['corpus']
         self.format = self.config['corpus']['format']
-        self.morpheme_type = self.config['morphemes']['type']
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
         self.Session = sessionmaker(bind=engine)
-
 
     def process_session(self):
         """ Process function for each file; creates dictionaries and inserts them into the database via sqla
         """
         # Config contains maps from corpus-specific labels -> database column names
-        self.parser = SessionParser.create_parser(self.config, self.file_path)
+        self.parser = self.parser_factory(self.file_path)
 
         # Get session metadata (via labels defined in corpus config)
         session_metadata = self.parser.get_session_metadata()
