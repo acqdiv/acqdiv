@@ -36,8 +36,14 @@ def load_database(configs, engine):
         cfg = parsers.CorpusConfigParser()
         cfg.read(config)
         cfg.session_files = cfg.session_testfiles
-        print(cfg.session_files)
-
+        
+        # this below doesn't seem to work
+        #cfg.set('paths', 'sessions', cfg['tests']['sessions'])
+        #cfg.set('paths', 'sessions_dir', cfg['tests']['sessions_dir'])
+        #cfg.set('paths', 'metadata_dir', cfg['tests']['metadata_dir'])
+        #cfg.set('corpus', 'format', cfg['tests']['format'])
+        #print(cfg['paths']['sessions'])
+        
         # Process by parsing the files and adding extracted data to the db
         c = processors.CorpusProcessor(cfg, engine)
         c.process_corpus()
@@ -54,8 +60,7 @@ class XMLTest(unittest.TestCase):
         # http://docs.sqlalchemy.org/en/latest/orm/session_basics.html#session-faq-whentocreate
         engine = connect()
 
-        cls.configs = ['Cree.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
-               'Japanese_MiiPro.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
+        cls.configs = ['Cree.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini', 'Japanese_MiiPro.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
         
         load_database(cls.configs, engine)
     

@@ -42,6 +42,8 @@ def load_database(configs, engine):
         # Process by parsing the files and adding extracted data to the db
         c = processors.CorpusProcessor(cfg, engine)
         c.process_corpus()
+        
+        
 
         print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
         pp.update_age(cfg, engine)
@@ -55,21 +57,12 @@ class PipelineTest(unittest.TestCase):
         # http://docs.sqlalchemy.org/en/latest/orm/session_basics.html#session-faq-whentocreate
         engine = connect()
 
-        # cls.configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Russian.ini', 'Japanese_Miyata.ini']
         cls.configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
                'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
-        # cls.configs = ['Cree.ini', 'Indonesian.ini', 'Russian.ini']
-        # cls.configs = ['Chintang.ini']
-        # cls.configs = ['Cree.ini']
-        # cls.configs = ['Indonesian.ini']
-        # cls.configs = ['Russian.ini']
-        # cls.configs = ['CreeJSON.ini']
-        # cls.configs = ['Sesotho.ini']
-        # cls.configs = ['Japanese_Miyata.ini']
 
         load_database(cls.configs, engine)
 
-    def testLppSessionsOk(self):
+    def test_sessions_loaded(self):
         """
         Test if sessions for all corpora are loaded
         """
@@ -77,25 +70,37 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(len(session.query(func.count(db.Session.corpus), db.Session.corpus).group_by(db.Session.corpus).all()), len(PipelineTest.configs))
         session.close()
 
-    def testLppSpeakersOk(self):
+    def test_speakers_loaded(self):
+        """
+        Test if speakers for all copora are loaded
+        """
 
         session = make_session()
         self.assertNotEqual(session.query(db.Speaker).count(), 0)
         session.close()
 
-    def testLppUtterancesOk(self):
+    def test_utterances_loaded(self):
+        """
+        Test if utterances for all corpora are loaded
+        """
 
         session = make_session()
         self.assertNotEqual(session.query(db.Utterance).count(), 0)
         session.close()
 
-    def testLppWordsOk(self):
+    def test_words_loaded(self):
+        """
+        Test if words for all corpora are loaded
+        """
 
         session = make_session()
         self.assertNotEqual(session.query(db.Word).count(), 0)
         session.close()
 
-    def testLppMorphemesOk(self):
+    def test_morphemes_loaded(self):
+        """
+        Test if morphemes for all corpora are loaded
+        """
 
         session = make_session()
         self.assertNotEqual(session.query(db.Morpheme).count(), 0)
