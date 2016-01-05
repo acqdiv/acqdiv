@@ -11,15 +11,16 @@ from collections import defaultdict
 from metadata import Chat
 from parsers import CorpusConfigParser as Ccp
 
-class XMLParserMaker(object):
+class XMLParserFactory(object):
 
     def __init__(self, cfg):
         self.cfg = cfg
+        self.CorpusParser = importlib.import_module(self.cfg['paths']['parser'])
+        self.parser_cls = eval(("self.CorpusParser." + 
+            self.cfg['paths']['parser_name']), globals(), locals())
 
     def __call__(self, fpath):
-        CorpusParser = importlib.import_module(self.cfg['paths']['parser'])
-        parser_cls = eval(self.cfg['paths']['parser_name'], globals(), locals())
-        return parser_cls(self.cfg, fpath)
+        return self.parser_cls(self.cfg, fpath)
 
 class XMLParser(object):
 
