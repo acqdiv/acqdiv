@@ -31,8 +31,11 @@ if __name__ == "__main__":
         unify_timestamps(cfg, engine)
         unify_glosses(cfg, engine)
         unify_gender(cfg,engine)
+        
         if config == 'Indonesian.ini':
             unify_indonesian_labels(cfg, engine)
+        if config == 'Chintang.ini':
+            extract_chintang_addressee(cfg, engine)
 
     print("Creating role entries...")
     unify_roles(cfg,engine)

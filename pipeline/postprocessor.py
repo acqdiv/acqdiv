@@ -442,6 +442,33 @@ def unify_timestamps(session, config):
                 db_utterance_entry.end = age.unify_timestamps(db_utterance_entry.end_raw)
             except Exception as e:
                 print("Error unifying timestamps in corpus {}: {}".format(corpus_name, e))
+                
+@db_apply
+def extract_chintang_addressee(session, config):
+    """ Function that extracts addressee information for Chintang.
+    
+        Args:
+        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+        engine: SQLalchemy engine object.
+        """
+    for row in session.query(backend.Utterance):
+        try:
+            if re.search('directed|answer', row.addressee):
+                ## reconstruct actor code for children from file name
+                match_actor_code = re.search('^(CL.*Ch)(\\d)', row.utterance_id)
+                child_prefix = match_actor_code.group(1)
+                child_number = match_actor_code.group(2)
+                # several addressees may be connected on a single tier via "+"
+                for addressee in re.split('\+', row.addressee):                                
+                    addressee = re.sub('.*target\\s*child.*(\\d).*', child_prefix + '\\1', addressee)
+                    addressee = re.sub('.*target\\s*child.*', child_prefix + child_number, addressee)
+                    addressee = re.sub('.*child.*', 'unspecified_child', addressee)
+                    addressee = re.sub('.*adult.*', 'unspecified_adult', addressee)
+                    addressee = re.sub('.*non(\\s*|\\-)directed.*', 'none', addressee)
+                    
+                    row.addressee = addressee
+        except TypeError:
+                pass
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -457,6 +484,8 @@ if __name__ == "__main__":
         unify_timestamps(cfg, engine)
         unify_glosses(cfg, engine)
         unify_gender(cfg, engine)
+        if config == 'Chintang.ini':
+            extract_chintang_addressee(cfg, engine)
     #    if config == 'Indonesian.ini':
     #        unify_indonesian_labels(cfg, engine)
     #print("Creating Unique Speaker table...")

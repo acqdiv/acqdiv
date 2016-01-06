@@ -111,6 +111,8 @@ class SessionProcessor(object):
                     word['session_id_fk'] = self.filename
                     word['language'] = self.language
                     word['corpus'] = self.corpus
+                    if self.config['corpus']['corpus'] in ['Chintang', 'Russian']:
+                        word['word_actual'] = word['word']
                     self.words.append(Word(**word))
 
                 # morphemes
@@ -225,7 +227,7 @@ class SessionProcessor(object):
                     self.morphemes.append(Morpheme(**morpheme))
         else:
             raise Exception("Error: unknown corpus format!")
-
+    
 
     def commit(self):
         """ Commits the dictionaries returned from parsing to the database.
