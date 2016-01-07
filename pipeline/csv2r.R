@@ -1,17 +1,19 @@
-# read CSV tables from the server and save them as an R object
+# read CSV tables and save them as an R object
 
 # path were CSV tables lie
-base = "/Volumes/Acqdiv/Database/"
+base = "./csv/"
+# list of table names
+tables = c("morphemes","sessions","speakers","uniquespeakers","utterances","warnings","words")
 
-# read CSV tables from server
-for (table in c("morphemes","session","speaker","uniquespeaker","utterance","warnings","words")){
+# read CSV tables from base directory
+for (table in tables){
 	print(paste("reading table ",table,"...",sep=""))
-	path_to_table = paste(base,"csv/",table,".csv",sep="")
+	path_to_table = paste(base,table,".csv",sep="")
 	assign(table, read.csv(path_to_table))
 }
 
-# save all tables to R object on server named "corpus-YYYY-MM-DD.rda"
+# save all tables to an R object named "acqdiv_corpus-YYYY-MM-DD.rda"
 date = format(Sys.time(), "%Y-%m-%d")
-path_to_R = paste(base,"R/corpus-",date,".rda",sep="")
+path_to_R = paste("acqdiv_corpus_",date,".rda",sep="")
 
-save(file=path_to_R, morphemes, session, speaker, uniquespeaker, utterance, warnings, words)
+save(file=path_to_R, list=tables)
