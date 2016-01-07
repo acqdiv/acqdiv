@@ -27,10 +27,7 @@ import sys
 import re
 import time
 from configparser import ConfigParser
-<<<<<<< HEAD
 import unique_id
-=======
->>>>>>> 65a5173a2c49513deb8734b2129c8ac3deb7e96b
 
 def db_apply(func):
     """Wrapper for functions that access the database.
