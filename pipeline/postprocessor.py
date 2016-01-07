@@ -402,7 +402,7 @@ def unique_speaker(session, config):
                 unique_id.new_entry(speakerlist)
                 cfg_mapping.read('unique_ids.ini')
                 d['global_id'] = cfg_mapping[db_speaker_entry.corpus][key]
-                print('WARNING - potentially new unique speaker added to unique_ids.ini:\n'+key+'\t'cfg_mapping[db_speaker_entry.corpus][key])
+                print('WARNING - potentially new unique speaker added to unique_ids.ini:\n'+key+'\t'+cfg_mapping[db_speaker_entry.corpus][key])
 
             d['speaker_label'] = db_speaker_entry.speaker_label
             d['name'] = db_speaker_entry.name

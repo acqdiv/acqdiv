@@ -37,9 +37,11 @@ def new_entry(speaker):
 	corpus = speaker[0]
 
 	try:
-		counter = len(cfg_mapping[corpus])+1
+		sorted_by_val = sorted(cfg_mapping[corpus].items(),key=operator.itemgetter(1))
+		counter = int(sorted_by_val[-1][1][3:])+1
 	except KeyError:
 		counter = 1
+		cfg_mapping[corpus] = {}
 
 	if 'jap' not in corpus.lower():
 		id = corpus[:3].upper() + (5-len(str(counter)))*'0' + str(counter)
