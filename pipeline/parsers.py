@@ -5,7 +5,7 @@ TODO: integrate the metadata parsing
 
 """
 
-import os
+import os, sys
 import glob
 import json
 import collections
@@ -13,6 +13,7 @@ import configparser
 
 from metadata import Imdi, Chat
 from toolbox import ToolboxFile
+#from XMLParser import ChatXMLParser, CreeParser ## this doesn't work (error: ImportError: cannot import name 'CorpusConfigParser')
 
 
 class CorpusConfigParser(configparser.ConfigParser):
@@ -43,6 +44,10 @@ class CorpusConfigParser(configparser.ConfigParser):
         self.sessions_dir = self['paths']['sessions_dir']
         self.format = self['corpus']['format']
         self.corpus = self['corpus']['corpus']
+        # I know, this below is ugly here, but it was the only way I could make the tests work
+        self.testformat = self['tests']['format']
+        self.testfilespath = self['tests']['sessions']
+        self.session_testfiles = glob.glob(self.testfilespath)
 
 
 class SessionParser(object):
@@ -63,6 +68,8 @@ class SessionParser(object):
         """
         corpus = config.corpus
         format = config.format
+        # again, this below not cool, but was needed here to make tests work
+        testformat = config.testformat
 
         if format == "ChatXML":
             if corpus == "Cree":
@@ -73,6 +80,14 @@ class SessionParser(object):
             return ToolboxParser(config, file_path)
         elif format == "JSON":
             return JsonParser(config, file_path)
+        
+        # again, needed here for tests  
+        elif testformat == 'Toolbox':
+            return ToolboxParser(config,testfilespath)
+        
+        elif testformat == 'ChatXML':
+            return XMLParser(config,testfilespath)
+            
         else:
             assert 0, "Unknown format type: " + format
 
@@ -243,9 +258,13 @@ class JsonParser(SessionParser):
                     full_utterance = []
                     # Robert's {words:[]} is a list of dictionaries with keys like "full_word_target"
                     for word in record['words']:
+                        # this is to skip empty dicts in Robert's parser
+                        if len(word) == 0:
+                            continue
+
                         d = collections.OrderedDict()
                         for k_json_mappings_words in self.config['json_mappings_words']:
-                            if k_json_mappings_words in word and not type(word[k_json_mappings_words]) is dict:
+                            if k_json_mappings_words in word and len(word[k_json_mappings_words]) > 0:
                                 d[self.config['json_mappings_words'][k_json_mappings_words]] = word[k_json_mappings_words]
 
                         # assign the proper actual vs target "word" given the corpus
@@ -253,6 +272,10 @@ class JsonParser(SessionParser):
                         # recreate the word utterance
                         if self.config['json_mappings_words']['word'] in d:
                             d['word'] = d[self.config['json_mappings_words']['word']]
+                            # Robert's empty dictionary check - tries to hackle:
+                            # https://github.com/uzling/acqdiv/issues/325
+                            if type(d['word']) is dict and len(d['word']) == 0:
+                                continue
                             full_utterance.append(d['word'])
 
                         # these are so awful -- only work because Robert alphabetically ordered the dictionary by keys
@@ -269,9 +292,10 @@ class JsonParser(SessionParser):
                             segments = []
                             glosses = []
                             pos = []
-                            d2 = collections.OrderedDict()
+
                             if len(word['morphemes']) > 0: # skip empty lists in the json
                                 for e in word['morphemes']: # iter over morpheme dicts
+                                    d2 = collections.OrderedDict()
                                     # i'm so ashamed here in the code...
                                     for k_json_mappings_morphemes in self.config['json_mappings_morphemes']:
                                         if k_json_mappings_morphemes in e and not type(e[k_json_mappings_morphemes]) is dict:
@@ -293,10 +317,10 @@ class JsonParser(SessionParser):
                                 utterance['pos'] = " ".join(pos)
                             if len(glosses) > 0:
                                 utterance['gloss'] = " ".join(glosses)
+
                     # Recreate the full utterance string
                     utterance['utterance_raw'] = " ".join(full_utterance)
                     utterance['utterance'] = " ".join(full_utterance)
-                    utterance['utterance_type'] = self.config['utterance']['type']
                     utterance['word'] = " ".join(full_utterance)
                     # TODO: add inference / clean-up
             yield utterance, db_words, morphemes

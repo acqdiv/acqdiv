@@ -11,7 +11,14 @@ from lxml import objectify
 DEBUG = 1 # TODO: move debug to standard logging module
 
 class Parser(object):
-    """ Base metadata parser class
+    """ Base metadata parser class.
+
+    metadata.Parser wraps an lxml.objectify tree. It gets relevant metadata 
+    from the tree and exposes them in a dictionary.
+
+    Attributes:
+        metadata: A dictionary of all metadata values extracted from the 
+                  file the tree was initialized with.
     """
     # do we need to pass in the config?
     # def __init__(self, config, path):
@@ -44,10 +51,27 @@ class Parser(object):
         # assert existing_dir(self.input_path())
 
     def parse_attrs(self, e):
+        """
+        Parses and returns attributes of the root node.
+
+        args:
+            e: root node of an XML session file
+
+        returns:
+            A dictionary of all attributes of e.
+        """
         return {k: e.attrib[k] for k in e.keys()}
 
     def get_everything(self, root):
-        """ method returns a list of all tag text tuples """
+        """ 
+        Parses and returns a list of all tag tuples in the tree.
+        
+        args:
+            root: Root node of an XML session file
+
+        returns:
+            a list of tuples, each representing all tags of a node
+        """
         everything = []
         for e in root.getiterator():
             if e is not None:
@@ -55,7 +79,7 @@ class Parser(object):
         return everything
 
 class Imdi(Parser):
-    """ subclass of metadata.Parser to deal with IMDI metadata (Chintang and Russian via S. Stoll) """
+    """ Subclass of metadata.Parser to deal with IMDI metadata (Chintang and Russian via S. Stoll) """
 
     # Do we want to load up this dictionary of everything on init
     # so that the caller has to deal with the db-specific parsing?
@@ -73,20 +97,38 @@ class Imdi(Parser):
 
     def get_participants(self):
         """
-        :return: list of participants; each participant is a dict
-        of key:value, e.g. 'birthdate': '1978-03-28', 'code': 'RM'.
-        Note: missing values (e.g. birthdate) skipped when not present.
+        Get a list of session participants.
+
+        Parses the session tree, collecting information about
+        all participants in a dictionary.
+
+        Returns: 
+            A list of dictionaries representing participants. The
+            participant's child nodes are keys with their text as values.
+            Note: missing values (e.g. birthdate) skipped when not present.
         """
         participants = []
         for actor in self.root.Session.MDGroup.Actors.getchildren():
             participant = {}
             for e in actor.getchildren():
                 t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "") # drop the IMDI stuff
-                participant[t.lower()] = str(e.text) # make even booleans strings
+                if t == 'Languages':
+                    langlist = []
+                    for lang in e.iterfind('Language'):
+                        if lang.Id.text != None:
+                            try:
+                                langlist.append(lang.Id.text.split(':')[1])
+                            except IndexError:
+                                langlist.append(lang.Id.text)
+                    if len(langlist) != 0:
+                        participant[t.lower()] = " ".join(langlist)
+                else:
+                    participant[t.lower()] = str(e.text) # make even booleans strings
                 #for Chintang: check whether there is a key in Keys with attri
                 #current Session's target child's nr - if yes, extract
-                if actor.find('Keys') != None:
-                    for key in actor.find('Keys').getchildren():
+                keys = actor.find('Keys')
+                if keys != None:
+                    for key in keys.getchildren():
                         if key != '' and key.get('Name')[-3:] in str(self.root.Session.Name.text):
                             participant['keys'] = str(key.text)
             if not len(participant) == 0:
@@ -94,6 +136,12 @@ class Imdi(Parser):
         return participants
 
     def get_session_data(self):
+        """
+        Get session-level metadata.
+
+        Returns:
+            A dictionary of session metadata nodes.
+        """
         session = {}
         session['id'] = self.metadata['__attrs__']['Cname']
         session['date'] = self.root.Session.Date.text
@@ -104,6 +152,15 @@ class Imdi(Parser):
         return session
 
     def get_location(self, root):
+        """
+        Get metadata about recording location.
+
+        Args:
+            root: Root node of the session XML.
+
+        Returns:
+            A dictionary containing location metadata.
+        """
         location = {}
         for e in root.Session.MDGroup.Location.getchildren():
             t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "")
@@ -111,6 +168,15 @@ class Imdi(Parser):
         return location
 
     def get_project_data(self, root):
+        """
+        Get project-level metadata.
+
+        Args:
+            root: Root node of the session XML.
+
+        Returns:
+            A dictionary containing location metadata.
+        """
         project = {}
         project['name'] = root.Session.MDGroup.Project.Title.text
         project['shortname'] = root.Session.MDGroup.Project.Name.text
@@ -119,6 +185,15 @@ class Imdi(Parser):
         return project
 
     def get_project_contact(self, root):
+        """
+        Get contact data of the project owner.
+
+        Args:
+            root: Root node of the session XML.
+
+        Returns:
+            A dictionary containing contact data for the project owner.
+        """
         contact = {}
         for e in root.Session.MDGroup.Project.Contact.getchildren():
             t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "")
@@ -126,6 +201,18 @@ class Imdi(Parser):
         return contact
 
     def get_media_data(self, root):
+        """
+        Get data about session multimedia resources.
+
+        If there are audio or video files and positions specified,
+        return these data. Otherwise returns an empty dictionary.
+
+        Args:
+            root: Root node of the session XML.
+
+        Returns:
+            A dictionary of media files and metadata (like duration etc.)
+        """
         media = {}
         for e in root.Session.Resources.getchildren():
             t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "")
@@ -133,6 +220,15 @@ class Imdi(Parser):
         return media
 
     def get_mediafile_data(self, element):
+        """
+        Helper method to get metadata for individual multimedia resources.
+
+        Args:
+            element: A child node of a media node.
+
+        Returns:
+            A dictionary of mediafile data.
+        """
         mediafile = {}
         for e in element.getchildren():
             t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "")
@@ -140,7 +236,14 @@ class Imdi(Parser):
         return mediafile
 
 class Chat(Parser):
-    """ subclass of metadata.Parser class to deal with CHAT XML metadata extraction """
+    """ 
+    Subclass of metadata.Parser class to deal with CHAT XML metadata extraction. 
+
+    Unlike in the IMDI files, a lot of data above session level is not
+    specified in the Chat/Talkbank XML files, but instead saved in
+    per-corpus files (with the extension .cdc). Therefor, the Chat class
+    contains significantly less functionality than the IMDI class.
+    """
     # do we need to pass in the config?
     # def __init__(self, config, path):
         # Parser.__init__(self, config, path)
@@ -157,9 +260,36 @@ class Chat(Parser):
     # TODO: where is the get_sessions stuff? in the unifier?
 
     def get_participants(self, root):
+        """
+        Get a list of all session participants.
+
+        Iterate through the participants node, building a list of dictionaries.
+        In Talkbank XML, data about participants is encoded as attributes of a
+        participant node, rather than child nodes as in IMDI. Each participant
+        is a dictionary of the form {attr key: attr value, ...}.
+
+        Args:
+            root: Root node of the session XML.
+
+        Returns:
+            A list of dictionaries containing participant metadata.
+        """
         return [self.parse_attrs(p) for p in root.Participants.participant]
 
     def get_comments(self, root):
+        """
+        Extract miscellaneous metadata from Talkbank XML.
+
+        In the non-IMDI corpora, all non-participant metadata are stored in
+        child nodes of the comment node. This method performs a simple
+        dictionary comprehension to extract them.
+
+        Args:
+            root: Root node of the session XML.
+
+        Returns:
+            A dictionary with metadata. If an error occurs, do nothing.
+        """
         #print({c.attrib['type']: str(c) for c in root.comment})
         try:
             return {c.attrib['type']: str(c) for c in root.comment}
@@ -187,6 +317,16 @@ if __name__=="__main__":
     cfg = ccp()
     cfg.read("Chintang.ini")
     imdi = Imdi(cfg, "../corpora/Chintang/imdi/CLDLCh1R01S01.imdi")
+    for k, v in imdi.metadata.items():
+        print(k, v)
+        print()
+    # print(imdi.metadata['session']['location']['address'])
+    print("#########################")
+
+    print("RUSSIAN: ")
+    cfg = ccp()
+    cfg.read("Russian.ini")
+    imdi = Imdi(cfg, "../corpora/Russian/imdi/A00410909.imdi")
     for k, v in imdi.metadata.items():
         print(k, v)
         print()

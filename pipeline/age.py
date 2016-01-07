@@ -119,8 +119,8 @@ def format_imdi_age(birthdate, sessiondate):
         try:
             d1 = datetime.strptime(birthdate, "%Y")
             acc_flag_bd = 1
-        except Exception as e:
-            raise BirthdateError(birthdate, e)
+        except Exception as bde:
+            raise BirthdateError(birthdate, bde)
 
     try:
         d2 = datetime.strptime(sessiondate, "%Y-%m-%d")
@@ -132,8 +132,8 @@ def format_imdi_age(birthdate, sessiondate):
             try:
                 d2 = datetime.strptime(sessiondate, "%Y-%m")
                 acc_flag_sd = 2
-            except Exception as e:
-                raise SessionDateError(sessiondate, e)
+            except Exception as sde:
+                raise SessionDateError(sessiondate, sde)
 
     diff = relativedelta(d2, d1)
     diff_days = d2 - d1
@@ -148,19 +148,28 @@ def format_imdi_age(birthdate, sessiondate):
     age_days = str(diff_days.days)
     return([age_cform if age_cform != "0;0.0" else None, age_days if age_days != "0" else None])
 
-def clean_year_only_ages(years):
-    """Cleanly formats an age in years.
+def clean_incomplete_ages(age):
+    """Cleanly formats an age given in terms of only years and months.
 
     Args:
-        years: A string or integer representing the age in years of the speaker.
+        age: A string or integer representing the age in years and 
+             optionally months of the speaker.
 
     Returns:
-        A string in the form YY;0.0
+        A string in the form YY;MM.0 where MM is 0 if only years are given. 
     """
-    years = str(years).split('/')[-1]
-    clean_years = years + ";0.0"
-    days = int(years) * 365
-    return((clean_years, days))
+    if ";" in age:
+        parts = age.split(";")
+        years = parts[0]
+        months = parts[1]
+        days = int(years) * 365 + int(months) * 30
+        new_age = age + ".0"
+        return (new_age, days)
+    else:
+        years = age.split('/')[-1]
+        clean_years = years + ";0.0"
+        days = int(years) * 365
+        return (clean_years, days)
 
 def format_xml_age(age_str):
     """Reformats ages in XML corpora.
@@ -180,14 +189,17 @@ def format_xml_age(age_str):
         is passed in.
     """
     age_str = age_str.split('/')[0]
-    age = re.match(r'P(\d*)Y(\d*)M(\d*)?D?', age_str)
+    age = re.match(r'P(\d*)Y(\d*)?M?(\d*)?D?', age_str)
     if age:
-        years = age.group(1)
-        months = age.group(2)
         if age.group(3) != '':
             days = age.group(3)
         else:
             days = "0"
+        if age.group(2) != '':
+            months = age.group(2)
+        else:
+            months = "0"
+        years = age.group(1)
         return("{0};{1}.{2}".format(years, months, days))
     else:
         return None

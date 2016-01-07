@@ -27,7 +27,10 @@ import sys
 import re
 import time
 from configparser import ConfigParser
+<<<<<<< HEAD
 import unique_id
+=======
+>>>>>>> 65a5173a2c49513deb8734b2129c8ac3deb7e96b
 
 def db_apply(func):
     """Wrapper for functions that access the database.
@@ -121,17 +124,17 @@ def update_imdi_age(session, config):
                              "speaker {} from birth and recording dates"
                             .format(db_speaker_entry.id), file=sys.stderr)
                     print("Invalid birthdate: {}. Check data in {} file {}"
-                            .format(db_speaker_entry.birthdate,
-                                corpus_name, sid), file=sys.stderr)
+                            .format(e.bad_data, corpus_name, sid), 
+                            file=sys.stderr)
 
             except age.SessionDateError as e:
                     print("Warning: couldn't calculate age of "
                              "speaker {} from birth and recording dates"
                             .format(db_speaker_entry.id), file=sys.stderr)
-                    print("Invalid session recording date: {}.\n"
+                    print("Invalid session recording date: \"{}\"\n"
                             "Check data in {} file {}"
-                            .format(db_speaker_entry.birthdate,
-                                corpus_name, sid), file=sys.stderr)
+                            .format(e.bad_data, corpus_name, sid), 
+                            file=sys.stderr)
 
         for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.age_raw.like("%;%.%")):
                 db_speaker_entry.age = db_speaker_entry.age_raw
@@ -144,7 +147,7 @@ def update_imdi_age(session, config):
                 backend.Speaker.session_id_fk == sid):
             if not cleaned_age.fullmatch(db_speaker_entry.age_raw):
                 try:
-                    ages = age.clean_year_only_ages(db_speaker_entry.age_raw)
+                    ages = age.clean_incomplete_ages(db_speaker_entry.age_raw)
                     db_speaker_entry.age = ages[0]
                     db_speaker_entry.age_in_days = ages[1]
                 except ValueError as e:
@@ -403,7 +406,6 @@ def unique_speaker(session, config):
                 cfg_mapping.read('unique_ids.ini')
                 d['global_id'] = cfg_mapping[db_speaker_entry.corpus][key]
                 print('WARNING - potentially new unique speaker added to unique_ids.ini:\n'+key+'\t'+cfg_mapping[db_speaker_entry.corpus][key])
-
             d['speaker_label'] = db_speaker_entry.speaker_label
             d['name'] = db_speaker_entry.name
             d['birthdate'] = db_speaker_entry.birthdate
@@ -459,6 +461,33 @@ def unify_timestamps(session, config):
                 db_utterance_entry.end = age.unify_timestamps(db_utterance_entry.end_raw)
             except Exception as e:
                 print("Error unifying timestamps in corpus {}: {}".format(corpus_name, e))
+                
+@db_apply
+def extract_chintang_addressee(session, config):
+    """ Function that extracts addressee information for Chintang.
+    
+        Args:
+        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+        engine: SQLalchemy engine object.
+        """
+    for row in session.query(backend.Utterance):
+        try:
+            if re.search('directed|answer', row.addressee):
+                ## reconstruct actor code for children from file name
+                match_actor_code = re.search('^(CL.*Ch)(\\d)', row.utterance_id)
+                child_prefix = match_actor_code.group(1)
+                child_number = match_actor_code.group(2)
+                # several addressees may be connected on a single tier via "+"
+                for addressee in re.split('\+', row.addressee):                                
+                    addressee = re.sub('.*target\\s*child.*(\\d).*', child_prefix + '\\1', addressee)
+                    addressee = re.sub('.*target\\s*child.*', child_prefix + child_number, addressee)
+                    addressee = re.sub('.*child.*', 'unspecified_child', addressee)
+                    addressee = re.sub('.*adult.*', 'unspecified_adult', addressee)
+                    addressee = re.sub('.*non(\\s*|\\-)directed.*', 'none', addressee)
+                    
+                    row.addressee = addressee
+        except TypeError:
+                pass
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -474,6 +503,8 @@ if __name__ == "__main__":
         unify_timestamps(cfg, engine)
         unify_glosses(cfg, engine)
         unify_gender(cfg, engine)
+        if config == 'Chintang.ini':
+            extract_chintang_addressee(cfg, engine)
     #    if config == 'Indonesian.ini':
     #        unify_indonesian_labels(cfg, engine)
     #print("Creating Unique Speaker table...")

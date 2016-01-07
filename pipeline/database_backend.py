@@ -51,8 +51,6 @@ class Session(Base):
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     date = Column(Text, nullable=True, unique=False)
-    situation = Column(Text, nullable=True, unique=False)
-    genre = Column(Text, nullable=True, unique=False)
     source_id = Column(Text, nullable=True, unique=False)
     media = Column(Text, nullable=True, unique=False)
     media_type = Column(Text, nullable=True, unique=False)
@@ -91,7 +89,7 @@ class Unique_Speaker(Base):
     __tablename__ = 'uniquespeakers'
 
     id = Column(Integer, primary_key=True)
-    global_id = Column(Text, nullable=True, unique=False)
+    #global_id = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False)
     name = Column(Text, nullable=True, unique=False)
     birthdate = Column(Text, nullable=True, unique=False)
@@ -104,7 +102,6 @@ class Utterance(Base):
     To note:
         - utterance_id is the id in the original files (not unique across corpora, e.g. u1, u1)
         - addressee not in all corpora
-        - utterance_type is phonetic or orthographic
         - _raw vs !_raw is distinction between original input and cleaned/manipulated output
     """
     __tablename__ = 'utterances'
@@ -116,7 +113,6 @@ class Utterance(Base):
     utterance_id = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False)
     addressee = Column(Text, nullable=True, unique=False)
-    utterance_type = Column(Text, nullable=True, unique=False)
     utterance_raw = Column(Text, nullable=True, unique=False)
     utterance = Column(Text, nullable=True, unique=False)
     translation = Column(Text, nullable=True, unique=False)
@@ -141,6 +137,7 @@ class Word(Base):
     __tablename__ = 'words'
 
     id = Column(Integer, primary_key=True)
+    session_id_fk = Column(Text, ForeignKey('sessions.id'))
     utterance_id_fk = Column(Text, ForeignKey('utterances.id'))
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
@@ -157,7 +154,9 @@ class Morpheme(Base):
     __tablename__ = 'morphemes'
 
     id = Column(Integer, primary_key=True)
+    session_id_fk = Column(Text, ForeignKey('sessions.id'))
     utterance_id_fk = Column(Text, ForeignKey('utterances.id'))
+    word_id_fk = Column(Text, ForeignKey('words.id'))
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     type = Column(Text, nullable=True, unique=False)
