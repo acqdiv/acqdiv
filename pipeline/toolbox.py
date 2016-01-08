@@ -247,6 +247,10 @@ class ToolboxFile(object):
                 # in contrast to xxx without brackets, which can be counted as a word
                 if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
                     utterance = re.sub('\[\s*=?.*?\]', '', utterance)
+                
+                utterance = re.sub('\s\s', ' ', utterance).replace('=', '')
+                utterance = utterance.strip()
+                
                 return utterance
 
             # incorporate the Indonesian stuff
@@ -261,6 +265,7 @@ class ToolboxFile(object):
                 # cf. https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1605-1610
                 if re.search('\[\?\]', utterance):
                     utterance = re.sub('\[\?\]', '', utterance)
+                
                 return utterance
     
             if self.config['corpus']['corpus'] == "Chintang":
