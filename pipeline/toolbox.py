@@ -248,7 +248,7 @@ class ToolboxFile(object):
                 if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
                     utterance = re.sub('\[\s*=?.*?\]', '', utterance)
                 
-                utterance = re.sub('\s\s', ' ', utterance).replace('=', '')
+                utterance = re.sub('\s+', ' ', utterance).replace('=', '')
                 utterance = utterance.strip()
                 
                 return utterance
