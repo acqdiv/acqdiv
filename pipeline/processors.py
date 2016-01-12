@@ -81,13 +81,13 @@ class SessionProcessor(object):
             if self.corpus == 'Chintang' and speaker['role'] != "Target child" and d['role_raw'] == 'Speaker/Signer':
                 if speaker['familysocialrole'] != 'None' and speaker['familysocialrole']!= 'Unspecified' and speaker['familysocialrole'].isalpha():
                     d['role_raw'] = speaker['familysocialrole']
-                if speaker['keys'] != 'None' and re.match('[\w]+',speaker['keys']):
+                elif speaker['keys'] != 'None' and re.match('[\w]+',speaker['keys']):
                     d['role_raw'] = speaker['keys']
 
             d['session_id_fk'] = self.filename
             d['language'] = self.language
             d['corpus'] = self.corpus
-            if d['role_raw'] == 'Non_Human': #self.corpus == 'Indonesian' and d['role_raw'] == 'Non_Human':
+            if 'Non_Human' in d['role_raw']:
                 continue
             else:
                 self.speaker_entries.append(Speaker(**d))
