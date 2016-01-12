@@ -1,7 +1,6 @@
 """ Processors for acqdiv corpora
 """
 
-
 import itertools as it
 import re
 import collections
@@ -31,6 +30,7 @@ class CorpusProcessor(object):
             s = SessionProcessor(self.cfg, session_file, self.engine)
             s.process_session()
             s.commit()
+
 
 class SessionProcessor(object):
     """ SessionProcessor invokes a parser to get the extracted data, and then interacts
@@ -143,8 +143,7 @@ class SessionProcessor(object):
                         except KeyError:
                             continue
                         self.morphemes.append(Morpheme(**morphemes_inferences))
-                                 
-                
+
                 elif utterance['corpus'] == 'Chintang':
                     morphemes_inferences = collections.OrderedDict()
                     morphemes_warnings = collections.OrderedDict()
@@ -171,8 +170,8 @@ class SessionProcessor(object):
                             continue
                             
                         self.morphemes.append(Morpheme(**morphemes_inferences))
-                                                        
-                
+
+
                 elif utterance['corpus'] == 'Indonesian':
                     morphemes_warnings = collections.OrderedDict()
                     morphemes_inferences = collections.OrderedDict()
@@ -227,7 +226,7 @@ class SessionProcessor(object):
                     self.morphemes.append(Morpheme(**morpheme))
         else:
             raise Exception("Error: unknown corpus format!")
-    
+
 
     def commit(self):
         """ Commits the dictionaries returned from parsing to the database.

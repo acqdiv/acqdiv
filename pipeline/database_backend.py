@@ -15,6 +15,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
+
 def db_connect():
     """ Performs database connection.
 
@@ -83,6 +84,7 @@ class Speaker(Base):
     def __repr__(self):
         return "Speaker(%s)" % (self.name)
 
+
 class Unique_Speaker(Base):
     """ Unique speakers across all corpora
     """
@@ -95,6 +97,7 @@ class Unique_Speaker(Base):
     birthdate = Column(Text, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
     corpus = Column(Text, nullable=True, unique=False)
+
 
 class Utterance(Base):
     """ Utterances in all sessions.

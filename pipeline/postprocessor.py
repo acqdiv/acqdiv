@@ -1,25 +1,8 @@
 """ Post-processing processes for ACQDIV corpora
 """
 
-# TODO: implement postprocessing tasks:
-#  - normalize all relevant column data, e.g.:
-#    language: check that the language codes are correct (ie valid)
-#    birthday: is this normalize-able? is it important?
-#  - unique word, morpheme, etc., id assignment in post-processing, i.e.
-#    assign a unique ID to each unique word, morpheme, etc., and then populate a new column
-#  - remove these bullet points when you've implemented this stuff above, please!
-
-# for the future:
-#  - add additional inferred info, e.g. Russian ends_at time stamps
-#  - BB's wish for MorphemeID+MorphemeID, WordID+WordID, etc.
-#  - infer gender, etc., from things like "Grandmother" once these labels have been unified
-#  - infer blank cells from the (non-existent input data) existing data?
-#    e.g. in Russian Alja is gender x; Sabine is role y...
-
-# TODO: identify body parsing errors and fixes
-
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
+# from sqlalchemy import create_engine
 import database_backend as backend
 from parsers import CorpusConfigParser
 import age
@@ -28,6 +11,7 @@ import re
 import time
 from configparser import ConfigParser
 import unique_id
+
 
 def db_apply(func):
     """Wrapper for functions that access the database.
@@ -63,6 +47,7 @@ def db_apply(func):
             session.close()
     return update_session
 
+
 def update_xml_age(session, config):
     """Function to process speaker ages in Chat XML corpora.
     
@@ -82,6 +67,7 @@ def update_xml_age(session, config):
                 row.age = new_age
                 aid = age.calculate_xml_days(new_age)
                 row.age_in_days = aid
+
 
 def update_imdi_age(session, config):
     """Function to process speaker ages in IMDI corpora.
@@ -157,6 +143,7 @@ def update_imdi_age(session, config):
                     print("Warning: this speaker is likely to be "
                             "completely without age data in the DB!")
 
+
 @db_apply
 def update_age(session, config):
     """Helper function for age unification.
@@ -172,6 +159,7 @@ def update_age(session, config):
         update_imdi_age(session, config)
     else:
         update_xml_age(session, config)
+
 
 @db_apply
 def apply_gloss_regexes(session, config):
@@ -201,6 +189,7 @@ def apply_gloss_regexes(session, config):
             except Exception as e:
                 print("Error applying gloss regex {1} in {0}.ini: {2}"
                         .format(corpus_name, item, e), file=sys.stderr)
+
 
 @db_apply
 def unify_gloss_labels(session, config):
@@ -239,6 +228,7 @@ def unify_gloss_labels(session, config):
             .format(config["corpus"]["corpus"]), file=sys.stderr)
             return
 
+
 def unify_glosses(config, engine):
     """Helper function for unifying glosses.
 
@@ -258,6 +248,7 @@ def unify_glosses(config, engine):
     else:
         unify_gloss_labels(config, engine)
         apply_gloss_regexes(config, engine)
+
 
 @db_apply
 def unify_roles(session,config):
@@ -300,6 +291,7 @@ def unify_roles(session,config):
             print("'"+item[0]+"'","from",item[1])
         print("not found in role_mapping.ini\n--------")
 
+
 @db_apply
 def unify_gender(session, config):
     """Function to unify speaker genders.
@@ -323,6 +315,7 @@ def unify_gender(session, config):
                 row.gender = "Unspecified"
         else:
             row.gender = "Unspecified"
+
 
 @db_apply
 def macrorole(session,config):
@@ -412,6 +405,7 @@ def unique_speaker(session, config):
 
     session.add_all(unique_speaker_entries)
 
+
 @db_apply
 def unify_indonesian_labels(session, config):
     """Function to match the labels of Indonesian speakers with the labels in the Indonesian utterances.
@@ -437,6 +431,8 @@ def unify_indonesian_labels(session, config):
             elif (db_speaker_entry.speaker_label not in config["excluded_labels"] 
                     and db_speaker_entry.speaker_label[-3:] != session_set):
                 db_speaker_entry.speaker_label = db_speaker_entry.speaker_label + session_set
+
+
 @db_apply
 def unify_timestamps(session, config):
     """Helper function to change utterance timestamps to a consistent format.
@@ -458,7 +454,8 @@ def unify_timestamps(session, config):
                 db_utterance_entry.end = age.unify_timestamps(db_utterance_entry.end_raw)
             except Exception as e:
                 print("Error unifying timestamps in corpus {}: {}".format(corpus_name, e))
-                
+
+
 @db_apply
 def extract_chintang_addressee(session, config):
     """ Function that extracts addressee information for Chintang.
@@ -485,6 +482,7 @@ def extract_chintang_addressee(session, config):
                     row.addressee = addressee
         except TypeError:
                 pass
+
 
 if __name__ == "__main__":
     start_time = time.time()
