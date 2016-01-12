@@ -27,6 +27,7 @@ import sys
 import re
 import time
 from configparser import ConfigParser
+import unique_id
 
 def db_apply(func):
     """Wrapper for functions that access the database.
@@ -269,11 +270,11 @@ def unify_roles(session,config):
     The role column in the speaker table contains the unified roles.
 
     Args:
+        session: SQLalchemy session object
         config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
-        engine: SQLalchemy engine object.
     """
     table = session.query(backend.Speaker)
-    cfg_mapping = ConfigParser()
+    cfg_mapping = ConfigParser(delimiters=('='))
     #option names resp. keys case-sensitive
     cfg_mapping.optionxform = str
     cfg_mapping.read("role_mapping.ini")
@@ -308,8 +309,8 @@ def unify_gender(session, config):
     contains the unified genders.
 
     Args:
+        session: SQLalchemy session object
         config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
-        engine: SQLalchemy engine object.
     """
     table = session.query(backend.Speaker)
     for row in table:
@@ -334,11 +335,11 @@ def macrorole(session,config):
     handles role encoding).
 
     Args:
+        session: SQLalchemy session object
         config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
-        engine: SQLalchemy engine object.
     """
     table = session.query(backend.Speaker)
-    cfg_mapping = ConfigParser()
+    cfg_mapping = ConfigParser(delimiters=('='))
     #option names resp. keys case-sensitive
     cfg_mapping.optionxform = str
     cfg_mapping.read("role_mapping.ini")
@@ -360,6 +361,7 @@ def macrorole(session,config):
                     macro = "Unknown"
         row.macrorole = macro
 
+
 @db_apply
 def unique_speaker(session, config):
     """Function to create a table containing every unique speaker from all corpora.
@@ -377,7 +379,13 @@ def unique_speaker(session, config):
     unique_speaker_entries = []
     unique_name_date_label = set()
     table = session.query(backend.Speaker)
+    
+    cfg_mapping = ConfigParser(delimiters=('='))
+    #option names resp. keys case-sensitive
+    cfg_mapping.optionxform = str
+    cfg_mapping.read("unique_ids.ini")
 
+    new_speakers = []
     for db_speaker_entry in table:
         if db_speaker_entry.corpus != 'Cree':
             unique_tuple = (db_speaker_entry.name, db_speaker_entry.birthdate,db_speaker_entry.speaker_label)
@@ -386,7 +394,15 @@ def unique_speaker(session, config):
         if unique_tuple not in unique_name_date_label:
             unique_name_date_label.add(unique_tuple)
             d = {}
-            #d['global_id'] = calculate_id(db_speaker_entry.name, db_speaker_entry.speaker_label, db_speaker_entry.birthdate, db_speaker_entry.corpus)
+            speakerlist = [db_speaker_entry.corpus,db_speaker_entry.name, db_speaker_entry.speaker_label,db_speaker_entry.birthdate]
+            key = unique_id.speakers_key(speakerlist[1:])
+            try:
+                d['global_id'] = cfg_mapping[db_speaker_entry.corpus][key]
+            except KeyError:
+                unique_id.new_entry(speakerlist)
+                cfg_mapping.read('unique_ids.ini')
+                d['global_id'] = cfg_mapping[db_speaker_entry.corpus][key]
+                print('WARNING - potentially new unique speaker added to unique_ids.ini:\n'+key+'\t'+cfg_mapping[db_speaker_entry.corpus][key])
             d['speaker_label'] = db_speaker_entry.speaker_label
             d['name'] = db_speaker_entry.name
             d['birthdate'] = db_speaker_entry.birthdate
