@@ -1,4 +1,4 @@
-""" Parse toolbox files
+""" Parser for toolbox files (Russian, Chintang)
 """
 
 import re
@@ -8,8 +8,8 @@ import contextlib
 from itertools import zip_longest
 
 class ToolboxFile(object):
-    """ Toolbox Standard Format text file as iterable over records """
-
+    """ Toolbox Standard Format text file as iterable over records
+    """
     _separator = re.compile(b'\r?\n\r?\n(\r?\n)')
 
     def __init__(self, config, file_path):
