@@ -39,8 +39,10 @@ if __name__ == "__main__":
 
     print("Creating role entries...")
     unify_roles(cfg,engine)
+
     print("Creating macrorole entries...")
     macrorole(cfg,engine)
+
     print("Creating unique speaker table...")
     unique_speaker(cfg,engine)
 

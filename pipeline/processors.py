@@ -79,13 +79,12 @@ class SessionProcessor(object):
                 if k in self.config['speaker_labels'].keys():
                     d[self.config['speaker_labels'][k]] = v
 
-            """ THIS BREAKS THE PIPELINE
-            if self.corpus == 'Chintang' and speaker['role'] != "Target child" and d['role_raw'] == 'Speaker/Signer':
-                if speaker['familysocialrole'] != 'None' and speaker['familysocialrole']!= 'Unspecified' and speaker['familysocialrole'].isalpha():
-                    d['role_raw'] = speaker['familysocialrole']
-                elif speaker['keys'] != 'None' and re.match('[\w]+',speaker['keys']):
-                    d['role_raw'] = speaker['keys']
-            """
+            """ THIS BREAKS THE PIPELINE """
+#            if self.corpus == 'Chintang' and speaker['role'] != "Target child" and d['role_raw'] == 'Speaker/Signer':
+#                if speaker['familysocialrole'] != 'None' and speaker['familysocialrole']!= 'Unspecified' and speaker['familysocialrole'].isalpha():
+#                    d['role_raw'] = speaker['familysocialrole']
+#                elif speaker['keys'] != 'None' and re.match('[\w]+',speaker['keys']):
+#                    d['role_raw'] = speaker['keys']
 
             d['session_id_fk'] = self.filename
             d['language'] = self.language
