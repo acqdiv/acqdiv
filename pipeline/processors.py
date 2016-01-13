@@ -83,6 +83,9 @@ class SessionProcessor(object):
             d['language'] = self.language
             d['corpus'] = self.corpus
 
+            #if 'Non_Human' in d['role_raw']:
+            #    print(d)
+
             """ WHAT IS THIS?
             if 'Non_Human' in d['role_raw']:
                 continue
