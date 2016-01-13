@@ -113,7 +113,6 @@ class Imdi(Parser):
             participant = {}
             for e in actor.getchildren():
                 t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "") # drop the IMDI stuff
-                print("t:", t)
 
                 if t == 'Languages':
                     langlist = []
