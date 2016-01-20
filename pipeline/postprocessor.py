@@ -504,13 +504,13 @@ def clean_tlbx_pos_morphemes(session, config):
                 else:
                     row.pos_raw = row.pos_raw.strip('-')
                     row.pos = row.pos_raw
+
+                # strip '-' from morphemes and gloss_raw
+                row.morpheme = row.morpheme.strip('-')
+                row.gloss_raw = row.gloss_raw.strip('-')
+                row.gloss = row.gloss.strip('-')
             except AttributeError:
                 pass
-
-            # strip '-' from morphemes and gloss_raw
-            row.morpheme = row.morpheme.strip('-')
-            row.gloss_raw = row.gloss_raw.strip('-')
-            row.gloss = row.gloss.strip('-')
 
     if config["corpus"]["corpus"] == "Indonesian":
         for row in session.query(backend.Morpheme):
@@ -524,10 +524,10 @@ def clean_tlbx_pos_morphemes(session, config):
                     row.gloss_raw = row.gloss_raw.strip('-')
                 else:
                     row.pos = 'stem'
+
+                row.morpheme = row.morpheme.strip('-')
             except AttributeError:
                 pass
-
-            row.morpheme = row.morpheme.strip('-')
 
 
 if __name__ == "__main__":
