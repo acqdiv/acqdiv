@@ -483,6 +483,52 @@ def extract_chintang_addressee(session, config):
         except TypeError:
                 pass
 
+@db_apply
+def clean_tlbx_pos_morphemes(session, config):
+    """ Function that cleans pos and morphemes in Chintang and Indonesian.
+
+        Args:
+        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+        engine: SQLalchemy engine object.
+        """
+    if config["corpus"]["corpus"] == "Chintang":
+        # get pfx and sfx
+        for row in session.query(backend.Morpheme):
+            try:
+                if row.pos_raw.startswith('-'):
+                    row.pos = 'sfx'
+                    row.pos_raw = 'sfx'
+                elif row.pos_raw.endswith('-'):
+                    row.pos = 'pfx'
+                    row.pos_raw = 'pfx'
+                else:
+                    row.pos_raw = row.pos_raw.strip('-')
+                    row.pos = row.pos_raw
+            except AttributeError:
+                pass
+
+            # strip '-' from morphemes and gloss_raw
+            row.morpheme = row.morpheme.strip('-')
+            row.gloss_raw = row.gloss_raw.strip('-')
+            row.gloss = row.gloss.strip('-')
+
+    if config["corpus"]["corpus"] == "Indonesian":
+        for row in session.query(backend.Morpheme):
+            try:
+                if row.gloss_raw.startswith('-'):
+                    row.pos = 'sfx'
+                    row.gloss_raw = row.gloss_raw.strip('-')
+                elif row.gloss_raw.endswith('-'):
+                    row.pos = 'pfx'
+                    row.gloss_raw = row.gloss_raw.strip('-')
+                else:
+                    row.pos = 'stem'
+            except AttributeError:
+                pass
+
+            row.morpheme = row.morpheme.strip('-')
+            print(row.morpheme, row.pos)
+
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -500,6 +546,9 @@ if __name__ == "__main__":
         unify_gender(cfg, engine)
         if config == 'Chintang.ini':
             extract_chintang_addressee(cfg, engine)
+            clean_tlbx_pos_morphemes(cfg, engine)
+        if config == 'Indonesian.ini':
+            clean_tlbx_pos_morphemes(cfg, engine)
     #    if config == 'Indonesian.ini':
     #        unify_indonesian_labels(cfg, engine)
     #print("Creating Unique Speaker table...")
