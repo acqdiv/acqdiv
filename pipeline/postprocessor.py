@@ -514,6 +514,7 @@ def clean_tlbx_pos_morphemes(session, config):
 
     if config["corpus"]["corpus"] == "Indonesian":
         for row in session.query(backend.Morpheme):
+            # get pfx and sfx, strip '-' from gloss_raw
             try:
                 if row.gloss_raw.startswith('-'):
                     row.pos = 'sfx'
@@ -527,7 +528,6 @@ def clean_tlbx_pos_morphemes(session, config):
                 pass
 
             row.morpheme = row.morpheme.strip('-')
-            print(row.morpheme, row.pos)
 
 
 if __name__ == "__main__":
