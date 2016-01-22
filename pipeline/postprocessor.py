@@ -1,25 +1,8 @@
 """ Post-processing processes for ACQDIV corpora
 """
 
-# TODO: implement postprocessing tasks:
-#  - normalize all relevant column data, e.g.:
-#    language: check that the language codes are correct (ie valid)
-#    birthday: is this normalize-able? is it important?
-#  - unique word, morpheme, etc., id assignment in post-processing, i.e.
-#    assign a unique ID to each unique word, morpheme, etc., and then populate a new column
-#  - remove these bullet points when you've implemented this stuff above, please!
-
-# for the future:
-#  - add additional inferred info, e.g. Russian ends_at time stamps
-#  - BB's wish for MorphemeID+MorphemeID, WordID+WordID, etc.
-#  - infer gender, etc., from things like "Grandmother" once these labels have been unified
-#  - infer blank cells from the (non-existent input data) existing data?
-#    e.g. in Russian Alja is gender x; Sabine is role y...
-
-# TODO: identify body parsing errors and fixes
-
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
+# from sqlalchemy import create_engine
 import database_backend as backend
 from parsers import CorpusConfigParser
 import age
@@ -27,6 +10,8 @@ import sys
 import re
 import time
 from configparser import ConfigParser
+import unique_id
+
 
 def db_apply(func):
     """Wrapper for functions that access the database.
@@ -62,6 +47,7 @@ def db_apply(func):
             session.close()
     return update_session
 
+
 def update_xml_age(session, config):
     """Function to process speaker ages in Chat XML corpora.
     
@@ -81,6 +67,7 @@ def update_xml_age(session, config):
                 row.age = new_age
                 aid = age.calculate_xml_days(new_age)
                 row.age_in_days = aid
+
 
 def update_imdi_age(session, config):
     """Function to process speaker ages in IMDI corpora.
@@ -156,6 +143,7 @@ def update_imdi_age(session, config):
                     print("Warning: this speaker is likely to be "
                             "completely without age data in the DB!")
 
+
 @db_apply
 def update_age(session, config):
     """Helper function for age unification.
@@ -171,6 +159,7 @@ def update_age(session, config):
         update_imdi_age(session, config)
     else:
         update_xml_age(session, config)
+
 
 @db_apply
 def apply_gloss_regexes(session, config):
@@ -200,6 +189,7 @@ def apply_gloss_regexes(session, config):
             except Exception as e:
                 print("Error applying gloss regex {1} in {0}.ini: {2}"
                         .format(corpus_name, item, e), file=sys.stderr)
+
 
 @db_apply
 def unify_gloss_labels(session, config):
@@ -238,6 +228,7 @@ def unify_gloss_labels(session, config):
             .format(config["corpus"]["corpus"]), file=sys.stderr)
             return
 
+
 def unify_glosses(config, engine):
     """Helper function for unifying glosses.
 
@@ -258,6 +249,7 @@ def unify_glosses(config, engine):
         unify_gloss_labels(config, engine)
         apply_gloss_regexes(config, engine)
 
+
 @db_apply
 def unify_roles(session,config):
     """Function to unify speaker roles.
@@ -269,11 +261,11 @@ def unify_roles(session,config):
     The role column in the speaker table contains the unified roles.
 
     Args:
+        session: SQLalchemy session object
         config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
-        engine: SQLalchemy engine object.
     """
     table = session.query(backend.Speaker)
-    cfg_mapping = ConfigParser()
+    cfg_mapping = ConfigParser(delimiters=('='))
     #option names resp. keys case-sensitive
     cfg_mapping.optionxform = str
     cfg_mapping.read("role_mapping.ini")
@@ -299,6 +291,7 @@ def unify_roles(session,config):
             print("'"+item[0]+"'","from",item[1])
         print("not found in role_mapping.ini\n--------")
 
+
 @db_apply
 def unify_gender(session, config):
     """Function to unify speaker genders.
@@ -308,8 +301,8 @@ def unify_gender(session, config):
     contains the unified genders.
 
     Args:
+        session: SQLalchemy session object
         config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
-        engine: SQLalchemy engine object.
     """
     table = session.query(backend.Speaker)
     for row in table:
@@ -323,6 +316,7 @@ def unify_gender(session, config):
         else:
             row.gender = "Unspecified"
 
+
 @db_apply
 def macrorole(session,config):
     """Function to define macrorole resp. age category.
@@ -334,11 +328,11 @@ def macrorole(session,config):
     handles role encoding).
 
     Args:
+        session: SQLalchemy session object
         config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
-        engine: SQLalchemy engine object.
     """
     table = session.query(backend.Speaker)
-    cfg_mapping = ConfigParser()
+    cfg_mapping = ConfigParser(delimiters=('='))
     #option names resp. keys case-sensitive
     cfg_mapping.optionxform = str
     cfg_mapping.read("role_mapping.ini")
@@ -360,6 +354,7 @@ def macrorole(session,config):
                     macro = "Unknown"
         row.macrorole = macro
 
+
 @db_apply
 def unique_speaker(session, config):
     """Function to create a table containing every unique speaker from all corpora.
@@ -377,7 +372,13 @@ def unique_speaker(session, config):
     unique_speaker_entries = []
     unique_name_date_label = set()
     table = session.query(backend.Speaker)
+    
+    cfg_mapping = ConfigParser(delimiters=('='))
+    #option names resp. keys case-sensitive
+    cfg_mapping.optionxform = str
+    cfg_mapping.read("unique_ids.ini")
 
+    new_speakers = []
     for db_speaker_entry in table:
         if db_speaker_entry.corpus != 'Cree':
             unique_tuple = (db_speaker_entry.name, db_speaker_entry.birthdate,db_speaker_entry.speaker_label)
@@ -386,7 +387,15 @@ def unique_speaker(session, config):
         if unique_tuple not in unique_name_date_label:
             unique_name_date_label.add(unique_tuple)
             d = {}
-            #d['global_id'] = calculate_id(db_speaker_entry.name, db_speaker_entry.speaker_label, db_speaker_entry.birthdate, db_speaker_entry.corpus)
+            speakerlist = [db_speaker_entry.corpus,db_speaker_entry.name, db_speaker_entry.speaker_label,db_speaker_entry.birthdate]
+            key = unique_id.speakers_key(speakerlist[1:])
+            try:
+                d['global_id'] = cfg_mapping[db_speaker_entry.corpus][key]
+            except KeyError:
+                unique_id.new_entry(speakerlist)
+                cfg_mapping.read('unique_ids.ini')
+                d['global_id'] = cfg_mapping[db_speaker_entry.corpus][key]
+                print('WARNING - potentially new unique speaker added to unique_ids.ini:\n'+key+'\t'+cfg_mapping[db_speaker_entry.corpus][key])
             d['speaker_label'] = db_speaker_entry.speaker_label
             d['name'] = db_speaker_entry.name
             d['birthdate'] = db_speaker_entry.birthdate
@@ -395,6 +404,7 @@ def unique_speaker(session, config):
             unique_speaker_entries.append(backend.Unique_Speaker(**d))
 
     session.add_all(unique_speaker_entries)
+
 
 @db_apply
 def unify_indonesian_labels(session, config):
@@ -421,6 +431,8 @@ def unify_indonesian_labels(session, config):
             elif (db_speaker_entry.speaker_label not in config["excluded_labels"] 
                     and db_speaker_entry.speaker_label[-3:] != session_set):
                 db_speaker_entry.speaker_label = db_speaker_entry.speaker_label + session_set
+
+
 @db_apply
 def unify_timestamps(session, config):
     """Helper function to change utterance timestamps to a consistent format.
@@ -443,6 +455,35 @@ def unify_timestamps(session, config):
             except Exception as e:
                 print("Error unifying timestamps in corpus {}: {}".format(corpus_name, e))
 
+
+@db_apply
+def extract_chintang_addressee(session, config):
+    """ Function that extracts addressee information for Chintang.
+    
+        Args:
+        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+        engine: SQLalchemy engine object.
+        """
+    for row in session.query(backend.Utterance):
+        try:
+            if re.search('directed|answer', row.addressee):
+                ## reconstruct actor code for children from file name
+                match_actor_code = re.search('^(CL.*Ch)(\\d)', row.utterance_id)
+                child_prefix = match_actor_code.group(1)
+                child_number = match_actor_code.group(2)
+                # several addressees may be connected on a single tier via "+"
+                for addressee in re.split('\+', row.addressee):                                
+                    addressee = re.sub('.*target\\s*child.*(\\d).*', child_prefix + '\\1', addressee)
+                    addressee = re.sub('.*target\\s*child.*', child_prefix + child_number, addressee)
+                    addressee = re.sub('.*child.*', 'unspecified_child', addressee)
+                    addressee = re.sub('.*adult.*', 'unspecified_adult', addressee)
+                    addressee = re.sub('.*non(\\s*|\\-)directed.*', 'none', addressee)
+                    
+                    row.addressee = addressee
+        except TypeError:
+                pass
+
+
 if __name__ == "__main__":
     start_time = time.time()
     
@@ -457,6 +498,8 @@ if __name__ == "__main__":
         unify_timestamps(cfg, engine)
         unify_glosses(cfg, engine)
         unify_gender(cfg, engine)
+        if config == 'Chintang.ini':
+            extract_chintang_addressee(cfg, engine)
     #    if config == 'Indonesian.ini':
     #        unify_indonesian_labels(cfg, engine)
     #print("Creating Unique Speaker table...")

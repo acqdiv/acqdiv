@@ -1,11 +1,8 @@
-""" Parsers for CHAT XML and Toolbox files for acqdiv corpora, and an acqdiv config file parser.
-
-TODO: integrate the Corpus specific parsing routines from the body parser
-TODO: integrate the metadata parsing
-
+""" Parsers for ACQDIV corpora, e.g. CHAT XML, Toolbox files
 """
 
-import os, sys
+import os
+import sys
 import glob
 import json
 import collections
@@ -19,7 +16,6 @@ from toolbox import ToolboxFile
 class CorpusConfigParser(configparser.ConfigParser):
     """ Config parser for acqdiv corpus .ini files
     """
-
     def optionxform(self, optionstr):
         return optionstr
 
@@ -127,8 +123,8 @@ class SessionParser(object):
 
 
 class ToolboxParser(SessionParser):
-    """ Toolbox parser for Chintang, Indonesian, Russian, & potentially Dene  """
-
+    """ Toolbox parser for Chintang, Indonesian, Russian, & potentially Dene
+    """
     def __init__(self, config, file_path):
         """ Initialize a Toolbox parser
 
@@ -204,7 +200,6 @@ class ToolboxParser(SessionParser):
 
 class JsonParser(SessionParser):
     """ Parser for JSON output
-
     # TODO: what to do with the stars, e.g. "phonetic": "* * *", "phonetic_target": "* * *"
     """
     def __init__(self, config, file_path):

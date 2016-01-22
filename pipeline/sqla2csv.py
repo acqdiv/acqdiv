@@ -10,9 +10,10 @@ call: python3 sqla2csv.py databasename.sqlite3
 import sqlite3
 import csv
 import sys
+import os
 
 def write_table(table_name):
-    outfile = open(table_name+'.csv', 'w')
+    outfile = open('csv/'+table_name+'.csv', 'w')
     outcsv = csv.writer(outfile, quotechar='"', quoting=csv.QUOTE_NONNUMERIC,delimiter=',')
     cursor = con.execute('select * from '+table_name)
     # dump column titles (optional)
@@ -22,6 +23,7 @@ def write_table(table_name):
     outfile.close()
 
 if __name__=="__main__":
+    os.makedirs('csv', exist_ok=True)
     con = sqlite3.connect(sys.argv[1])
     write_table("sessions")
     write_table("speakers")

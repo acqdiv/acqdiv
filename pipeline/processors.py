@@ -1,7 +1,6 @@
 """ Processors for acqdiv corpora
 """
 
-
 import itertools as it
 import re
 import collections
@@ -31,6 +30,7 @@ class CorpusProcessor(object):
             s = SessionProcessor(self.cfg, session_file, self.engine)
             s.process_session()
             s.commit()
+
 
 class SessionProcessor(object):
     """ SessionProcessor invokes a parser to get the extracted data, and then interacts
@@ -78,19 +78,21 @@ class SessionProcessor(object):
             for k, v in speaker.items():
                 if k in self.config['speaker_labels'].keys():
                     d[self.config['speaker_labels'][k]] = v
-            if self.corpus == 'Chintang' and speaker['role'] != "Target child" and d['role_raw'] == 'Speaker/Signer':
-                if speaker['familysocialrole'] != 'None' and speaker['familysocialrole']!= 'Unspecified' and speaker['familysocialrole'].isalpha():
-                    d['role_raw'] = speaker['familysocialrole']
-                if speaker['keys'] != 'None' and re.match('[\w]+',speaker['keys']):
-                    d['role_raw'] = speaker['keys']
 
             d['session_id_fk'] = self.filename
             d['language'] = self.language
             d['corpus'] = self.corpus
-            if self.corpus == 'Indonesian' and d['role_raw'] == 'Non_Human':
+
+            #if 'Non_Human' in d['role_raw']:
+            #    print(d)
+
+            """ WHAT IS THIS?
+            if 'Non_Human' in d['role_raw']:
                 continue
             else:
                 self.speaker_entries.append(Speaker(**d))
+            """
+            self.speaker_entries.append(Speaker(**d))
 
         # Begin CHATXML or Toolbox body parsing
         self.utterances = []
@@ -111,6 +113,8 @@ class SessionProcessor(object):
                     word['session_id_fk'] = self.filename
                     word['language'] = self.language
                     word['corpus'] = self.corpus
+                    if self.config['corpus']['corpus'] in ['Chintang', 'Russian']:
+                        word['word_actual'] = word['word']
                     self.words.append(Word(**word))
 
                 # morphemes
@@ -141,8 +145,7 @@ class SessionProcessor(object):
                         except KeyError:
                             continue
                         self.morphemes.append(Morpheme(**morphemes_inferences))
-                                 
-                
+
                 elif utterance['corpus'] == 'Chintang':
                     morphemes_inferences = collections.OrderedDict()
                     morphemes_warnings = collections.OrderedDict()
@@ -169,8 +172,8 @@ class SessionProcessor(object):
                             continue
                             
                         self.morphemes.append(Morpheme(**morphemes_inferences))
-                                                        
-                
+
+
                 elif utterance['corpus'] == 'Indonesian':
                     morphemes_warnings = collections.OrderedDict()
                     morphemes_inferences = collections.OrderedDict()

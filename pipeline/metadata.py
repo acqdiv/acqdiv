@@ -1,7 +1,5 @@
 """ A metadata parser base class with subclasses for IMDI and CHAT XML formats
 """
-
-import sys
 import os
 import re
 import collections
@@ -47,8 +45,8 @@ class Parser(object):
             self.metadata['__attrs__']['Cname'] = match.group(1).upper() + '-' + match.group(4) + match.group(3) + match.group(2)
         self.metadata['__attrs__']['schemaLocation'] = self.metadata['__attrs__'].pop('{http://www.w3.org/2001/XMLSchema-instance}schemaLocation')
         """
-
         # assert existing_dir(self.input_path())
+
 
     def parse_attrs(self, e):
         """
@@ -61,6 +59,7 @@ class Parser(object):
             A dictionary of all attributes of e.
         """
         return {k: e.attrib[k] for k in e.keys()}
+
 
     def get_everything(self, root):
         """ 
@@ -77,6 +76,7 @@ class Parser(object):
             if e is not None:
                 everything.append((e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", ""), e))
         return everything
+
 
 class Imdi(Parser):
     """ Subclass of metadata.Parser to deal with IMDI metadata (Chintang and Russian via S. Stoll) """
@@ -95,6 +95,7 @@ class Imdi(Parser):
         self.metadata["project"] = self.get_project_data(self.root)
         self.metadata["media"] = self.get_media_data(self.root)
 
+
     def get_participants(self):
         """
         Get a list of session participants.
@@ -112,6 +113,7 @@ class Imdi(Parser):
             participant = {}
             for e in actor.getchildren():
                 t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "") # drop the IMDI stuff
+
                 if t == 'Languages':
                     langlist = []
                     for lang in e.iterfind('Language'):
@@ -123,17 +125,25 @@ class Imdi(Parser):
                     if len(langlist) != 0:
                         participant[t.lower()] = " ".join(langlist)
                 else:
-                    participant[t.lower()] = str(e.text) # make even booleans strings
-                #for Chintang: check whether there is a key in Keys with attri
-                #current Session's target child's nr - if yes, extract
+                    if not str(e.text).strip() == "": # skip empty fields in the IMDI
+                        participant[t.lower()] = str(e.text).strip() # turn booleans into strings
+
+                # for Chintang: check whether there is a key in Keys with attributes
+                # current Session's target child's nr - if yes, extract
                 keys = actor.find('Keys')
                 if keys != None:
                     for key in keys.getchildren():
                         if key != '' and key.get('Name')[-3:] in str(self.root.Session.Name.text):
                             participant['keys'] = str(key.text)
+
             if not len(participant) == 0:
-                participants.append(participant) 
+                # Chintang specific handling of IMDI roles (see issue #236); in a nutshell familysocialrole
+                # is more specific than role, so here we pass fsr back as role if it's not unspecified, etc.
+                if 'familysocialrole' in participant and not participant['familysocialrole'].lower() in ['unspecified']:
+                    participant['role'] = participant['familysocialrole']
+                participants.append(participant)
         return participants
+
 
     def get_session_data(self):
         """
@@ -151,6 +161,7 @@ class Imdi(Parser):
         map(lambda x: x.lower(), session)
         return session
 
+
     def get_location(self, root):
         """
         Get metadata about recording location.
@@ -166,6 +177,7 @@ class Imdi(Parser):
             t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "")
             location[t.lower()] = str(e.text)
         return location
+
 
     def get_project_data(self, root):
         """
@@ -184,6 +196,7 @@ class Imdi(Parser):
         project['contact'] = self.get_project_contact(root)
         return project
 
+
     def get_project_contact(self, root):
         """
         Get contact data of the project owner.
@@ -199,6 +212,7 @@ class Imdi(Parser):
             t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "")
             contact[t.lower()] = str(e.text)
         return contact
+
 
     def get_media_data(self, root):
         """
@@ -219,6 +233,7 @@ class Imdi(Parser):
             media[t.lower()] = self.get_mediafile_data(e)
         return media
 
+
     def get_mediafile_data(self, element):
         """
         Helper method to get metadata for individual multimedia resources.
@@ -234,6 +249,7 @@ class Imdi(Parser):
             t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "")
             mediafile[t.lower()] = str(e.text)
         return mediafile
+
 
 class Chat(Parser):
     """ 
@@ -259,6 +275,7 @@ class Chat(Parser):
 
     # TODO: where is the get_sessions stuff? in the unifier?
 
+
     def get_participants(self, root):
         """
         Get a list of all session participants.
@@ -275,6 +292,7 @@ class Chat(Parser):
             A list of dictionaries containing participant metadata.
         """
         return [self.parse_attrs(p) for p in root.Participants.participant]
+
 
     def get_comments(self, root):
         """
@@ -295,6 +313,7 @@ class Chat(Parser):
             return {c.attrib['type']: str(c) for c in root.comment}
         except:
             pass
+
 
 if __name__=="__main__":
     # TODO: we need some serious tests

@@ -1,4 +1,4 @@
-""" Parse toolbox files
+""" Parser for toolbox files (Russian, Chintang)
 """
 
 import re
@@ -8,8 +8,8 @@ import contextlib
 from itertools import zip_longest
 
 class ToolboxFile(object):
-    """ Toolbox Standard Format text file as iterable over records """
-
+    """ Toolbox Standard Format text file as iterable over records
+    """
     _separator = re.compile(b'\r?\n\r?\n(\r?\n)')
 
     def __init__(self, config, file_path):
@@ -247,6 +247,10 @@ class ToolboxFile(object):
                 # in contrast to xxx without brackets, which can be counted as a word
                 if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
                     utterance = re.sub('\[\s*=?.*?\]', '', utterance)
+                
+                utterance = re.sub('\s+', ' ', utterance).replace('=', '')
+                utterance = utterance.strip()
+                
                 return utterance
 
             # incorporate the Indonesian stuff
@@ -261,6 +265,7 @@ class ToolboxFile(object):
                 # cf. https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1605-1610
                 if re.search('\[\?\]', utterance):
                     utterance = re.sub('\[\?\]', '', utterance)
+                
                 return utterance
     
             if self.config['corpus']['corpus'] == "Chintang":
