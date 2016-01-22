@@ -21,7 +21,6 @@ class CorpusProcessor(object):
         """
         self.cfg = cfg
         self.engine = engine
-        self.morpheme_type = self.config['morphemes']['type']
         self.parser_factory = SessionParser.create_parser_factory(self.cfg)
 
     def process_corpus(self):
@@ -53,6 +52,7 @@ class SessionProcessor(object):
         self.language = self.config['corpus']['language']
         self.corpus = self.config['corpus']['corpus']
         self.format = self.config['corpus']['format']
+        self.morpheme_type = self.config['morphemes']['type']
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
         self.Session = sessionmaker(bind=engine)
 

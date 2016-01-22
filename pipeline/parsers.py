@@ -10,7 +10,7 @@ import configparser
 
 from metadata import Imdi, Chat
 from toolbox import ToolboxFile
-#from XMLParser import ChatXMLParser, CreeParser ## this doesn't work (error: ImportError: cannot import name 'CorpusConfigParser')
+from XMLParser import XMLParserFactory
 
 
 class CorpusConfigParser(configparser.ConfigParser):

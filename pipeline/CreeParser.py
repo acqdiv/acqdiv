@@ -2,6 +2,7 @@
 
 import re
 import sys
+import itertools
 
 from lxml import etree
 from XMLParser import XMLParser
@@ -151,69 +152,85 @@ class CreeParser(XMLParser):
 
     def _morphology_inference(self, u):
 
-            if u['morphemes'] != None:
-                mortext = u['morphemes']
-                mortext = re.sub('\\s+(&gt;|>)\\s+', '>', mortext)
-                # remove square brackets at edges of any of these tiers, they are semantically redundant
-                mortext = re.sub('^\[|\]$', '', mortext)
-                # replace untranscribed and/or unglossed words by standard formalisms
-                mortext = re.sub('#|%%%|\*|(?<=\\s)\?(?=\\s)', '???', mortext)
-                mortext = re.sub('[\(\)]', '', mortext)
-                mortext = re.sub('zéro', 'Ø', mortext)
-                u['morphemes'] = mortext
+        morph = u['morphology']
 
-            if u['gloss_raw'] != None:
-                gltext = u['gloss_raw']
-                gltext = re.sub('\\s+(&gt;|>)\\s+', '>', gltext)
-                # remove square brackets at edges of any of these tiers, they are semantically redundant
-                gltext = re.sub('^\[|\]$', '', gltext)
-                # replace untranscribed and/or unglossed words by standard formalisms
-                gltext = re.sub('#|%%%|\*|(?<=\\s)\?(?=\\s)', '???', gltext)
-                gltext = re.sub('zéro', 'Ø', gltext)
-                u['gloss_raw'] = gltext
+        if morph['morphemes'] != None:
+            mortext = morph['morphemes']
+            mortext = re.sub('\\s+(&gt;|>)\\s+', '>', mortext)
+            # remove square brackets at edges of any of these tiers, they are semantically redundant
+            mortext = re.sub('^\[|\]$', '', mortext)
+            # replace untranscribed and/or unglossed words by standard formalisms
+            mortext = re.sub('#|%%%|\*|(?<=\\s)\?(?=\\s)', '???', mortext)
+            mortext = re.sub('[\(\)]', '', mortext)
+            mortext = re.sub('zéro', 'Ø', mortext)
+            morph['morphemes'] = mortext
 
-            if u['pos_raw'] != None:
-                postext = u['pos_raw']
-                postext = re.sub('\\s+(&gt;|>)\\s+', '>', postext)
-                # remove square brackets at edges of any of these tiers, they are semantically redundant
-                postext = re.sub('^\[|\]$', '', postext)
-                # replace untranscribed and/or unglossed words by standard formalisms
-                postext = re.sub('#|%%%|\*|(?<=\\s)\?(?=\\s)', '???', postext)
-                # delete brackets in "mortyp" and uppercase content to emphasise its abstract nature
-                postext = re.sub('\(([^\)]+)\)', '\\1'.upper(), postext)
-                postext = re.sub('zéro', 'Ø', postext)
-                u['pos_raw'] = postext
+        if morph['gloss_raw'] != None:
+            gltext = morph['gloss_raw']
+            gltext = re.sub('\\s+(&gt;|>)\\s+', '>', gltext)
+            # remove square brackets at edges of any of these tiers, they are semantically redundant
+            gltext = re.sub('^\[|\]$', '', gltext)
+            # replace untranscribed and/or unglossed words by standard formalisms
+            gltext = re.sub('#|%%%|\*|(?<=\\s)\?(?=\\s)', '???', gltext)
+            gltext = re.sub('zéro', 'Ø', gltext)
+            morph['gloss_raw'] = gltext
 
-            tiers = ['morphemes', 'gloss_raw', 'pos_raw']
+        if morph['pos_raw'] != None:
+            postext = morph['pos_raw']
+            postext = re.sub('\\s+(&gt;|>)\\s+', '>', postext)
+            # remove square brackets at edges of any of these tiers, they are semantically redundant
+            postext = re.sub('^\[|\]$', '', postext)
+            # replace untranscribed and/or unglossed words by standard formalisms
+            postext = re.sub('#|%%%|\*|(?<=\\s)\?(?=\\s)', '???', postext)
+            # delete brackets in "mortyp" and uppercase content to emphasise its abstract nature
+            postext = re.sub('\(([^\)]+)\)', '\\1'.upper(), postext)
+            postext = re.sub('zéro', 'Ø', postext)
+            morph['pos_raw'] = postext
 
-            if u['morphemes'] == None and u['gloss_raw'
-                    ] == None and u['pos_raw'] == None:
-                u['warnings'] = "not glossed"
-                return u
+        tiers = ['morphemes', 'gloss_raw', 'pos_raw']
 
-            for tier in tiers:
-                
-                text = u[tier]
+        if morph['morphemes'] == None and morph['gloss_raw'
+                ] == None and morph['pos_raw'] == None:
+            u['utterance']['warnings'] = "not glossed"
+            return morph
 
-                if text != None:
+        for tier in tiers:
+            
+            text = morph[tier]
 
-                    words = re.split('\\s+', text)
+            if text != None:
 
-                    if len(words) != len(u['words']):
-                        # log error
-                        print("Alignment error! Oh no!", file=sys.stderr)
-                        u['warnings'] = "broken alignment"
+                words = re.split('\\s+', text)
+
+                if len(words) != len(u['words']):
+                    # log error
+                    print("Alignment error! Oh no!", file=sys.stderr)
+                    if u['utterance']['warnings'] != None:
+                        u['utterance']['warnings'] += ("broken alignment: " 
+                            "{bad_tier}".format(bad_tier=tier))
+                    else:
+                        u['utterance']['warnings'] = ("broken alignment: "
+                            "{bad_tier}".format(bad_tier=tier))
+
+                    morph[tier] = []
+
+                else:
 
                     mlist = []
                     for mw in words:
                         ms = mw.split('~')
                         mlist.append(ms)
-                    u[tier] = mlist
+                    morph[tier] = mlist
 
-                else:
-                    continue
+            else:
+                morph[tier] = []
+                continue
 
-            return u
+        out = [{'morphemes':m, 'gloss_raw':g, 'pos_raw':p} for m,g,p in
+                itertools.zip_longest(morph['morphemes'], 
+                    morph['gloss_raw'], morph['pos_raw'])]
+
+        return out
 
     def _get_timestamps(self, u):
         ts = u.find('.//media')
@@ -221,5 +238,5 @@ class CreeParser(XMLParser):
 
     def next_utterance(self):
         for u in self._get_utts():
-            u = self._morphology_inference(u)
-            yield u
+            u['morphology'] = self._morphology_inference(u)
+            yield u['utterance'], u['words'], u['morphology']

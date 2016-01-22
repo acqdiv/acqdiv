@@ -9,7 +9,6 @@ import logging
 from collections import defaultdict
 
 from metadata import Chat
-from parsers import CorpusConfigParser as Ccp
 
 class XMLParserFactory(object):
 
@@ -33,12 +32,12 @@ class XMLParser(object):
               'phonetic':None,
               'phonetic_target':None,
               'translation':None,
-              'words':None,
-              'morphemes':None,
-              'gloss_raw':None,
-              'pos_raw':None,
               'comments':None,
               'warnings':None          }
+
+    mordict = { 'morphemes':None,
+                'gloss_raw':None,
+                'pos_raw':None    }
 
 
     def __init__(self, cfg, fpath):
@@ -57,18 +56,25 @@ class XMLParser(object):
             attrib = elem.attrib
 
         for u in xmldoc.findall('.//u'):
-
+            
+            #uwm = utterance - words - morphemes
+            uwm = {}
             d = XMLParser.udict.copy()
             
             words = self._get_words(u)
-            d['words'] = words
+            uwm['words'] = words
 
             anno = self._get_annotations(u)
             morph = anno[0]
             trans = anno[1]
             comment = anno[2]
+
+            uwm['morphology'] = XMLParser.mordict.copy()
+
             for tier in morph:
-                d[self.cfg['morphology_tiers'][tier]] = morph[tier]
+                uwm['morphology'][self.cfg['morphology_tiers'][tier]
+                        ] = morph[tier]
+
             d['translation'] = trans
             d['comments'] = comment
 
@@ -83,7 +89,10 @@ class XMLParser(object):
             d['speaker_id'] = u.attrib.get('who')
             d['sentence_type'] = self._get_sentence_type(u)
             d['utterance_id'] = u.attrib.get('uID')
-            yield d
+
+            uwm['utterance'] = d
+
+            yield uwm
 
     def _get_words(self, u):
         raw_words = u.findall('.//w')
@@ -134,7 +143,7 @@ class XMLParser(object):
 
     def next_utterance(self):
         for u in self._get_utts():
-            yield u
+            yield u['utterance'], u['words'], u['morphemes']
 
 
 ##################################################
@@ -144,6 +153,7 @@ def test_read(config, fileid):
     return corpus
 
 if __name__ == '__main__':
+    from parsers import CorpusConfigParser as Ccp
     import CreeParser
     conf = Ccp()
     conf.read('Cree.ini')
