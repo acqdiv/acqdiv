@@ -24,6 +24,7 @@ class XMLParserFactory(object):
 class XMLParser(object):
 
     udict = { 'utterance_id':None,
+              'session_id_fk':None,
               'start_raw':None,
               'end_raw':None,
               'speaker_id':None,
@@ -43,6 +44,7 @@ class XMLParser(object):
     def __init__(self, cfg, fpath):
         self.cfg = cfg
         self.fpath = fpath
+        self.sname = os.path.basename(fpath).split(".")[0]
         self.metadata_parser = Chat(cfg, fpath)
 
     def _get_utts(self):
@@ -51,9 +53,12 @@ class XMLParser(object):
 
         for elem in xmldoc.iter():
             # remove prefixed namespaces
-            elem.tag = re.sub('^\{http[^\}]+\}', '', elem.tag)
-            tag = elem.tag
-            attrib = elem.attrib
+            try:
+                elem.tag = re.sub('^\{http[^\}]+\}', '', elem.tag)
+                tag = elem.tag
+                attrib = elem.attrib
+            except TypeError:
+                print(type(elem))
 
         for u in xmldoc.findall('.//u'):
             
