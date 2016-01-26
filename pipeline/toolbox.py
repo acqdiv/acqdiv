@@ -86,6 +86,8 @@ class ToolboxFile(object):
                             try:
                                 utterances['sentence_type'] = self.get_sentence_type(utterances['nepali'])
                                 del utterances['nepali']
+                                if utterances['translation'] == "None":
+                                    del utterances['translation']
                             except KeyError:
                                 continue
                         else:
