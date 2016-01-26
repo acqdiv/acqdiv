@@ -139,7 +139,7 @@ class Imdi(Parser):
             if not len(participant) == 0:
                 # Chintang specific handling of IMDI roles (see issue #236); in a nutshell familysocialrole
                 # is more specific than role, so here we pass fsr back as role if it's not unspecified, etc.
-                if 'familysocialrole' in participant and not participant['familysocialrole'].lower() in ['unspecified']:
+                if (not participant['role'] in ['Target child', 'Target Child','Target_Child', 'Target_child']) and 'familysocialrole' in participant and not participant['familysocialrole'].lower() in ['unspecified']:
                     participant['role'] = participant['familysocialrole']
                 participants.append(participant)
         return participants
