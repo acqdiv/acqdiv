@@ -25,8 +25,18 @@ def main():
     """
     # get data (is ordering important?)
 
-    con = sqlite3.connect("../database/_acqdiv.sqlite3")
+    con = sqlite3.connect("../../database/_acqdiv.sqlite3")
     df = pd.read_sql_query('SELECT * from morphemes', con)
+    print(df.head())
+    # sys.exit(1)
+
+
+    df = pd.read_sql_query('select utterances.utterance, utterances.pos_raw '
+                              'from utterances, speakers ', con)
+
+
+
+
 
     """
     df = pd.read_sql_query(
