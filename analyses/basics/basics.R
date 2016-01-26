@@ -15,14 +15,14 @@ library(xtable)
 
 # time wrapper if needed
 start.time <- Sys.time()
-
+% ...
 end.time <- Sys.time()
 time.taken <- end.time - start.time
 time.taken
 
 
-# load the data
-runsql <- function(sql, dbname="../database/_acqdiv.sqlite3"){
+# load db
+runsql <- function(sql, dbname="../../database/_acqdiv.sqlite3"){
   require(RSQLite)
   driver <- dbDriver("SQLite")
   connect <- dbConnect(driver, dbname=dbname);
@@ -44,6 +44,11 @@ ms <- runsql('select corpus, count(*) from morphemes group by corpus')
 colnames(ms) <- c('corpus', 'morphemes')
 x <- merge(us, ws)
 y <- merge(x, ms)
+
+# to latex table
+y.tex <- xtable(y)
+print(y.tex, type="latex", file="tables/utterance-word-morpheme.tex")
+
 z <- melt(y)
 head(z)
 # qplot(corpus, value, data=z, color=variable)
@@ -91,22 +96,34 @@ ggsave("figures/participants.pdf")
 # number and kinds of POS labels in full acqdiv corpus
 p <- runsql('select corpus, count(distinct pos_raw) from morphemes group by corpus')
 colnames(p) <- c('corpus', 'pos')
-xtable(p)
+# to latex table
+p.tex <- xtable(p)
+print(p.tex, type="latex", file="tables/corpus-pos.tex")
+# as bar plot
 ggplot(data=p, aes(x=corpus, y=pos)) +
     geom_bar(stat="identity", position=position_dodge(), colour="black")
 ggsave("figures/pos.pdf")
 
 # POS labels and counts data
 p.labels <- runsql('select corpus, pos_raw from morphemes group by corpus, pos_raw')
-# labels and counts
 p.labels.counts <- runsql('select corpus, pos_raw, count(pos_raw) from morphemes group by corpus, pos_raw')
+glimpse(p.labels)
+
+p.labels <- runsql('select corpus, pos_raw from morphemes')
+x <- p.labels %>% group_by(corpus, pos_raw) %>% summarize(pos.count=n())
+glimpse(x)
+
+# subset per language
+
+# flip data
+
+# plot
+
+
 
 # to latex table
 # drop variable; change header to variable name
 
-
-
-# mlu by participant
 
 # mlm per word per utterance
 
@@ -115,6 +132,7 @@ p.labels.counts <- runsql('select corpus, pos_raw, count(pos_raw) from morphemes
 stop("end script")
 
 ### static stuff ###
+
 \begin{table}[h]
  \begin{center}
 \begin{tabular}{|l|l|l|l|}
@@ -137,6 +155,7 @@ chp	&	Dene	&	11,900	&	Na-Dene	\\
  \end{center}
 \end{table}
 
+
 \begin{table}[h]
  \begin{center}
 \begin{tabular}{|l|l|l|l|l|l|}
@@ -157,6 +176,30 @@ Yucatec	&	CHAT-like	&	3	&	121	& 120441	\\
 \end{tabular}
 \caption{Corpora}\label{corpora}
  \end{center}
+\end{table}
+
+
+# acqdiv-refs.tex
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+corpus & citation \\
+\hline
+Chintang	&	\cite{Stoll_etal2015b} \\
+Cree	&	\cite{Brittain2015a} \\
+Indonesian	&	\cite{Gil_etal2007a} \\
+Inuktitut	&	\cite{Allen2015a}  \\
+Japanese MiiPro	&	\cite{Miyata_etal2009a, Nisisawa_etal2009a, Miyata_etal2010a, Nisisawa_etal2010a, Miyata2012a}  \\
+Japanese Miyata	&	\cite{Miyata2004a, Miyata2004b, Miyata2004c, Miyata2012a}  \\
+Russian	&	\cite{Stoll_etal2008a}  \\
+Sesotho	&	\cite{Demuth1992b,Demuth2015a}  \\
+Turkish	&	\cite{Kuntay2015a}  \\
+Yucatec	&	\cite{Pfeiler2015a}  \\
+\hline
+\end{tabular}
+\caption{Corpora}\label{corpora}
+\end{center}
 \end{table}
 
 
