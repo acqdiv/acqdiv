@@ -76,7 +76,6 @@ class ToolboxFile(object):
                     try:
                         utterances['utterance_raw'] = utterances[self.config['utterance']['field']]
                     except KeyError:
-                        utterances['utterance_raw'] = ""
                         utterances['warning'] = 'empty utterance'
 
                     # Skip the first rows that contain metadata information
@@ -90,8 +89,17 @@ class ToolboxFile(object):
                                     del utterances['translation']
                             except KeyError:
                                 continue
+
+                        elif self.config['corpus']['corpus'] == 'Russian':
+                            try:
+                                utterances['sentence_type'] = self.get_sentence_type(utterances['utterance_raw'])
+                                utterances['utterance_raw'] = re.sub('xxx?|www', '???', utterances['utterance_raw'])
+                                utterances['pos_raw'] = re.sub('xxx?|www', '???', utterances['pos_raw'])
+                            except KeyError:
+                                continue
                         else:
                             utterances['sentence_type'] = self.get_sentence_type(utterances['utterance_raw'])
+
                         utterances['utterance'] = self.clean_utterance(utterances['utterance_raw'])
                         utterances['warning'] = self.get_warnings(utterances['utterance_raw'])
                             
@@ -136,17 +144,18 @@ class ToolboxFile(object):
                 # distinguish between word and word_target:
                 # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1859-L1867
                 # otherwise the target word is identical to the actual word
+                # also: xx(x), www and *** is garbage from chat
                 if re.search('\(', word):
                     d['word_target'] = re.sub('[\(\)]', '',word)
                     d['word'] = re.sub('\([^\)]+\)', '', word)
                     result.append(d)
                 else:
-                    d['word_target'] = word
-                    d['word'] = word
+                    d['word_target'] = re.sub('xxx?|www', '???', word)
+                    d['word'] = re.sub('xxx?', '???', word)
                     result.append(d)
             else:
                 d = collections.OrderedDict()
-                d['word'] = word
+                d['word'] = re.sub('xxx?|www|\*\*\*', '???', word)
                 d['utterance_id_fk'] = utterances['utterance_id']
                 result.append(d)
         return result
@@ -261,19 +270,19 @@ class ToolboxFile(object):
                 # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1657-L1661
                 # delete punctuation and garbage
                 utterance = re.sub('[‘’\'“”\"\.!,;:\+\/]|\?$|<|>', '', utterance)
+                utterance = re.sub('xxx?|www', '???', utterance)
                 utterance = utterance.strip()
                                     
                 # Insecure transcription [?], add warning, delete marker
                 # cf. https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1605-1610
                 if re.search('\[\?\]', utterance):
                     utterance = re.sub('\[\?\]', '', utterance)
-                
+
                 return utterance
     
             if self.config['corpus']['corpus'] == "Chintang":
                 # No specific stuff here.
                 return utterance
-            
 
     def do_inference(self, utterances):
         """ Function to do corpus-specific inference of morpheme, pos_raw and gloss_raw correspondence.
@@ -293,7 +302,7 @@ class ToolboxFile(object):
             if 'pos_raw' in utterances.keys():
                 # remove PUNCT pos
                 pos_cleaned = utterances['pos_raw'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
-                
+
                 # get pos and gloss, see:
                 # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1751-L1762)
 
@@ -313,24 +322,24 @@ class ToolboxFile(object):
                     ## 1)
                     if ':' not in pos:
                         d['utterance_id_fk'] = utterances['utterance_id']
-                        d['pos_raw'] = pos
-                        d['gloss_raw'] = pos
+                        d['pos_raw'] = re.sub('xxx?', '???', pos)
+                        d['gloss_raw'] = re.sub('xxx?', '???', pos)
                         result.append(d)
                     ## 2)
                     elif pos.startswith('V') or pos.startswith('ADJ'):
                         match_verb_adj = re.search('(V|ADJ)-(.*$)', pos)
                         if match_verb_adj:
                             d['utterance_id_fk'] = utterances['utterance_id']
-                            d['pos_raw'] = match_verb_adj.group(1)
-                            d['gloss_raw'] = match_verb_adj.group(2)
+                            d['pos_raw'] = re.sub('xxx?', '???', match_verb_adj.group(1))
+                            d['gloss_raw'] = re.sub('xxx?', '???', match_verb_adj.group(2))
                             result.append(d)
                     ## 3)
                     else:
                         match_gloss_pos = re.search('(^[^(V|ADJ)].*?):(.*$)', pos)
                         if match_gloss_pos:
                             d['utterance_id_fk'] = utterances['utterance_id']
-                            d['pos_raw'] = match_gloss_pos.group(1)
-                            d['gloss_raw'] = match_gloss_pos.group(2)
+                            d['pos_raw'] = re.sub('xxx?', '???', match_gloss_pos.group(1))
+                            d['gloss_raw'] = re.sub('xxx?', '???', match_gloss_pos.group(2))
                             result.append(d)
             else:
                 d = collections.OrderedDict()
@@ -344,6 +353,7 @@ class ToolboxFile(object):
         elif self.config['corpus']['corpus'] == "Indonesian":
             if 'gloss_raw' in utterances.keys():
                 glosses_Indonesian = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['gloss_raw'])
+                glosses_Indonesian = re.sub('xxx?|www', '???', glosses_Indonesian)
                 glosses = glosses_Indonesian.split()
                 for gloss in glosses:
                     d = collections.OrderedDict()
@@ -362,7 +372,10 @@ class ToolboxFile(object):
             d = collections.OrderedDict()
             if 'morpheme' and 'gloss_raw' and 'pos_raw' in utterances.keys():
                 morphemes_target_Chintang = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['morpheme'])
+                morphemes_target_Chintang = re.sub('\*\*\*', '???', morphemes_target_Chintang)
                 morphemes_Chintang = morphemes_Chintang = re.sub('(\s\-)|(\-\s)','-', morphemes_target_Chintang)
+
+
                 try:
                     glosses_Chintang = utterances['gloss_raw']
                 except KeyError:
@@ -389,8 +402,8 @@ class ToolboxFile(object):
                     d = collections.OrderedDict()
                     d['utterance_id_fk'] = utterances['utterance_id']
                     d['morpheme'] = morpheme_target
-                    d['gloss_raw'] = gloss
-                    d['pos_raw'] = pos
+                    d['gloss_raw'] = re.sub('\*\*\*', '???', gloss)
+                    d['pos_raw'] = re.sub('\*\*\*', '???', gloss)
                     result.append(d)
             else:
                 d = collections.OrderedDict()
@@ -400,7 +413,7 @@ class ToolboxFile(object):
                 d['pos_raw'] = ''
                 d['warning'] = 'not glossed'
                 result.append(d)
-        
+
         return result
 
     def get_morphemes(self, utterances):
@@ -418,7 +431,8 @@ class ToolboxFile(object):
             # Russian specific morpheme stuff
             if self.config['corpus']['corpus'] == "Russian":
                 # remove punctuation from morphemes!
-                morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\-\?\+\/]', '', utterances['morpheme'])
+                morphemes_clean = re.sub('[‘’\'“”\"\.!,:\-\?\+\/]', '', utterances['morpheme'])
+                morphemes_cleaned = re.sub('xxx?|www', '???', morphemes_clean)
                 morphemes = morphemes_cleaned.split()
                 for morpheme in morphemes:
                     # Note that there is no "morpheme_target" for Russian
@@ -430,8 +444,9 @@ class ToolboxFile(object):
             ## Indonesian specific morpheme stuff
             elif self.config['corpus']['corpus'] == "Indonesian":
                 # remove punctuation
-                morhphemes_Indonesian = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['morpheme'])
-                morphemes = morhphemes_Indonesian.split()
+                morphemes_Indonesian = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['morpheme'])
+                morphemes_Indonesian = re.sub('xxx?|www', '???', morphemes_Indonesian)
+                morphemes = morphemes_Indonesian.split()
                 for morpheme in morphemes:
                     d = collections.OrderedDict()
                     d['morpheme'] = morpheme
@@ -443,17 +458,18 @@ class ToolboxFile(object):
                 # remove punctuation
                 morphemes_Chintang = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['morpheme'])
                 morphemes_Chintang = re.sub('(\s\-)|(\-\s)','-', morphemes_Chintang)
+                morphemes_Chintang = re.sub('\*\*\*', '???', morphemes_Chintang)
                 morphemes = morphemes_Chintang.split()
                 for morpheme in morphemes:
                     d = collections.OrderedDict()
                     d['morpheme'] = morpheme
                     d['utterance_id_fk'] = utterances['utterance_id']
-                    result.append(d)    
+                    result.append(d)
         else:
             d = collections.OrderedDict()
             d['morpheme'] = ''
             d['utterance_id_fk'] = utterances['utterance_id']
-            d['warning']  = 'morpheme missing' 
+            d['warning']  = 'morpheme missing'
             result.append(d)
         return result
 

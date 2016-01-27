@@ -53,7 +53,6 @@ class SessionProcessor(object):
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
         self.Session = sessionmaker(bind=engine)
 
-
     def process_session(self):
         """ Process function for each file; creates dictionaries and inserts them into the database via sqla
         """
@@ -130,8 +129,8 @@ class SessionProcessor(object):
                             morphemes_inferences['language'] = self.language
                             morphemes_inferences['type'] = self.morpheme_type
                             morphemes_inferences['morpheme'] = morpheme['morpheme']
-                            #morphemes_inferences['segment'] = morpheme['segment_target']
                             morphemes_inferences['pos_raw'] = inference['pos_raw']
+                            morphemes_inferences['pos'] = inference['pos_raw']
                             morphemes_inferences['gloss_raw'] = inference['gloss_raw']
                             if 'warning' in inference.keys():
                                 # TODO: fix this to read from the config
@@ -158,7 +157,6 @@ class SessionProcessor(object):
                             morphemes_inferences['language'] = self.language
                             morphemes_inferences['type'] = self.morpheme_type
                             morphemes_inferences['morpheme'] = inference['morpheme']
-                            #morphemes_inferences['segment_target'] = inference['morpheme']
                             morphemes_inferences['gloss_raw'] = inference['gloss_raw']
                             morphemes_inferences['pos_raw'] = inference['pos_raw']
                             if 'warning' in inference.keys():
@@ -173,7 +171,6 @@ class SessionProcessor(object):
                             
                         self.morphemes.append(Morpheme(**morphemes_inferences))
 
-
                 elif utterance['corpus'] == 'Indonesian':
                     morphemes_warnings = collections.OrderedDict()
                     morphemes_inferences = collections.OrderedDict()
@@ -185,7 +182,6 @@ class SessionProcessor(object):
                             morphemes_inferences['language'] = self.language
                             morphemes_inferences['type'] = self.morpheme_type
                             morphemes_inferences['morpheme'] = morpheme['morpheme']
-                            # morphemes_inferences['segment'] = morpheme['morpheme']
                             morphemes_inferences['gloss_raw'] = inference['gloss_raw']
                             if 'warning' in inference.keys():
                                 morphemes_warnings['corpus'] = utterance['corpus']

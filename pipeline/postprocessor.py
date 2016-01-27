@@ -463,7 +463,7 @@ def extract_chintang_addressee(session, config):
         Args:
         config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
         engine: SQLalchemy engine object.
-        """
+    """
     for row in session.query(backend.Utterance):
         try:
             if re.search('directed|answer', row.addressee):
@@ -486,11 +486,13 @@ def extract_chintang_addressee(session, config):
 @db_apply
 def clean_tlbx_pos_morphemes(session, config):
     """ Function that cleans pos and morphemes in Chintang and Indonesian.
+        It also cleans the morpheme (for Chintang and Russian) and gloss_raw (Indonesian) column in the utterances
+        table because cleaning them within the Toolbox parser messes up the morphemes table.
 
         Args:
         config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
         engine: SQLalchemy engine object.
-        """
+    """
     if config["corpus"]["corpus"] == "Chintang":
         # get pfx and sfx
         for row in session.query(backend.Morpheme).filter(backend.Morpheme.corpus == "Chintang"):
@@ -504,7 +506,6 @@ def clean_tlbx_pos_morphemes(session, config):
                 else:
                     row.pos_raw = row.pos_raw.strip('-')
                     row.pos = row.pos_raw
-
                 # strip '-' from morphemes and gloss_raw
                 row.morpheme = row.morpheme.strip('-')
                 row.gloss_raw = row.gloss_raw.strip('-')
@@ -522,11 +523,58 @@ def clean_tlbx_pos_morphemes(session, config):
                 elif row.gloss_raw.endswith('-'):
                     row.pos = 'pfx'
                     row.gloss_raw = row.gloss_raw.strip('-')
+                elif row.gloss_raw == '???':
+                    row.pos = '???'
                 else:
                     row.pos = 'stem'
-
                 row.morpheme = row.morpheme.strip('-')
             except AttributeError:
+                pass
+            except TypeError:
+                pass
+
+
+@db_apply
+def clean_utterances_table(session, config):
+    """ Function that cleans *** and xx(x) from utterances table.
+
+        Args:
+        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+        engine: SQLalchemy engine object.
+        """
+    if config["corpus"]["corpus"] == "Chintang":
+        # clean unknown morphemes (***) from utterances table
+        for row in session.query(backend.Utterance).filter(backend.Utterance.corpus == "Chintang"):
+            try:
+                row.morpheme = re.sub('\*\*\*', '???', row.morpheme)
+                row.gloss_raw = re.sub('\*\*\*', '???', row.gloss_raw)
+                row.pos_raw = re.sub('\*\*\*', '???', row.pos_raw)
+            except AttributeError:
+                pass
+            except TypeError:
+                pass
+
+    if config["corpus"]["corpus"] == "Russian":
+        # clean garbage imported from chat (xxx|www)
+        for row in session.query(backend.Utterance).filter(backend.Utterance.corpus == "Russian"):
+            try:
+                row.morpheme = re.sub('xxx?|www', '???', row.morpheme)
+            except AttributeError:
+                pass
+            except TypeError:
+                pass
+
+    # clean garbage imported from chat (xxx|www)
+    if config["corpus"]["corpus"] == "Indonesian":
+        for row in session.query(backend.Utterance).filter(backend.Utterance.corpus == "Indonesian"):
+            try:
+                row.morpheme = re.sub('xxx?|www', '???', row.morpheme)
+                row.gloss_raw = re.sub('xxx?|www', '???', row.gloss_raw)
+                row.utterance_raw = re.sub('xxx?|www', '???', row.utterance_raw)
+                row.translation = re.sub('xxx?|www', '???', row.translation)
+            except AttributeError:
+                pass
+            except TypeError:
                 pass
 
 
@@ -547,8 +595,12 @@ if __name__ == "__main__":
         if config == 'Chintang.ini':
             extract_chintang_addressee(cfg, engine)
             clean_tlbx_pos_morphemes(cfg, engine)
+            clean_utterances_table(cfg, engine)
         if config == 'Indonesian.ini':
             clean_tlbx_pos_morphemes(cfg, engine)
+            clean_utterances_table(cfg, engine)
+        if config == 'Russian.ini':
+            clean_utterances_table(cfg, engine)
     #    if config == 'Indonesian.ini':
     #        unify_indonesian_labels(cfg, engine)
     #print("Creating Unique Speaker table...")
