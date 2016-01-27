@@ -35,9 +35,13 @@ if __name__ == "__main__":
         if config == 'Indonesian.ini':
             unify_indonesian_labels(cfg, engine)
             clean_tlbx_pos_morphemes(cfg, engine)
+            clean_utterances_table(cfg, engine)
         if config == 'Chintang.ini':
             extract_chintang_addressee(cfg, engine)
             clean_tlbx_pos_morphemes(cfg, engine)
+            clean_utterances_table(cfg, engine)
+        if config == 'Russian.ini':
+            clean_utterances_table(cfg, engine)
 
     print("Creating role entries...")
     unify_roles(cfg,engine)
