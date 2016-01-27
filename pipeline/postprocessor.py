@@ -281,7 +281,7 @@ def unify_roles(session,config):
                 row.role = cfg_mapping[row.language][row.speaker_label]
             except KeyError:
                 pass
-        elif row.role in ["Adult", "Child", "old","Teenager"] and row.age_in_days != None:
+        elif row.role in ["Adult", "Child", "old", "Teenager"] and row.age_in_days != None:
             row.role = "Unknown"
         elif row.role in ["Boy", "Girl", "Female", "Male"] and row.gender_raw != None:
             row.role = "Unknown"
@@ -318,7 +318,7 @@ def unify_gender(session, config):
 
 
 @db_apply
-def macrorole(session,config):
+def macrorole(session, config):
     """Function to define macrorole resp. age category.
 
     This function assigns an age category to each speaker. If there is
@@ -328,7 +328,7 @@ def macrorole(session,config):
     handles role encoding).
 
     Args:
-        session: SQLalchemy session object
+        session: SQLAlchemy session object
         config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
     """
     table = session.query(backend.Speaker)
@@ -357,53 +357,50 @@ def macrorole(session,config):
 
 @db_apply
 def unique_speaker(session, config):
-    """Function to create a table containing every unique speaker from all corpora.
+    """  Creates a table containing unique speakers from all corpora. Also populates uniquespeaker foreign key ids
+    in the speakers table
 
-    Queries the speaker table in the database and extracts non-session-specific data
-    for every unique speaker.
-
-    Uniqueness is determined by a combination of speaker label, name, and birthdate.
+    Uniqueness is determined by a combination of speaker: name, speaker label, birthdate
 
     Args:
-        session: SQLalchemy session object.
+        session: SQLAlchemy session object.
         config: configparser object containing the configuration for the current corpus.
     """
-    # create a table of unique speakers
-    unique_speaker_entries = []
-    unique_name_date_label = set()
+    unique_speakers = [] # unique speaker dicts for uniquespeakers table
+    identifiers = [] # keep track of unique (name, label, birthdate) speaker tuples
+
     table = session.query(backend.Speaker)
-    
-    cfg_mapping = ConfigParser(delimiters=('='))
-    #option names resp. keys case-sensitive
-    cfg_mapping.optionxform = str
-    cfg_mapping.read("unique_ids.ini")
+    for row in table:
 
-    new_speakers = []
-    for db_speaker_entry in table:
-        if db_speaker_entry.corpus != 'Cree':
-            unique_tuple = (db_speaker_entry.name, db_speaker_entry.birthdate,db_speaker_entry.speaker_label)
+        # TODO: this logic should go away once Cree data is updated and be replaced with:
+        # t = (row.name, row.speaker_label, row.birthdate)
+        # see:
+        # https://github.com/uzling/acqdiv/issues/366
+        if row.corpus != 'Cree':
+            t = (row.name, row.birthdate, row.speaker_label)
         else:
-            unique_tuple = (db_speaker_entry.name, db_speaker_entry.birthdate)
-        if unique_tuple not in unique_name_date_label:
-            unique_name_date_label.add(unique_tuple)
-            d = {}
-            speakerlist = [db_speaker_entry.corpus,db_speaker_entry.name, db_speaker_entry.speaker_label,db_speaker_entry.birthdate]
-            key = unique_id.speakers_key(speakerlist[1:])
-            try:
-                d['global_id'] = cfg_mapping[db_speaker_entry.corpus][key]
-            except KeyError:
-                unique_id.new_entry(speakerlist)
-                cfg_mapping.read('unique_ids.ini')
-                d['global_id'] = cfg_mapping[db_speaker_entry.corpus][key]
-                print('WARNING - potentially new unique speaker added to unique_ids.ini:\n'+key+'\t'+cfg_mapping[db_speaker_entry.corpus][key])
-            d['speaker_label'] = db_speaker_entry.speaker_label
-            d['name'] = db_speaker_entry.name
-            d['birthdate'] = db_speaker_entry.birthdate
-            d['gender'] = db_speaker_entry.gender
-            d['corpus'] = db_speaker_entry.corpus
-            unique_speaker_entries.append(backend.Unique_Speaker(**d))
+            t = (row.name, row.birthdate)
 
-    session.add_all(unique_speaker_entries)
+        if t not in identifiers:
+            identifiers.append(t)
+
+            # create unique speaker row
+            d = {}
+            d['id'] = identifiers.index(t) + 1 # Python lists start at 0!
+            d['corpus'] = row.corpus
+            d['speaker_label'] = row.speaker_label
+            d['name'] = row.name
+            d['birthdate'] = row.birthdate
+            d['gender'] = row.gender
+            unique_speakers.append(backend.UniqueSpeaker(**d))
+
+        # insert uniquespeaker_fk_id in speakers table
+        row.uniquespeaker_id_fk = identifiers.index(t) + 1
+
+    # add all unique speakers entries to uniquespeakers table
+    session.add_all(unique_speakers)
+
+    # TODO: call method to propogate the to the other tables
 
 
 @db_apply
@@ -441,7 +438,7 @@ def unify_timestamps(session, config):
     unify_timestamps function from age.py to unify the format.
 
     Args:
-        session: SQLalchemy session object.
+        session: SQLAlchemy session object.
         config: configparser object containing the configuration for the current corpus.
     """
     corpus_name = config["corpus"]["corpus"]

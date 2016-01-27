@@ -65,6 +65,7 @@ class Speaker(Base):
 
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
+    uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False)
@@ -82,16 +83,15 @@ class Speaker(Base):
 
     # TODO: optional pretty formatting for printing
     def __repr__(self):
-        return "Speaker(%s)" % (self.name)
+        return "Speaker(%s), Label(%s), Birthdate(%s)" % (self.name, self.speaker_label, self.birthdate)
 
 
-class Unique_Speaker(Base):
+class UniqueSpeaker(Base):
     """ Unique speakers across all corpora
     """
     __tablename__ = 'uniquespeakers'
 
     id = Column(Integer, primary_key=True)
-    global_id = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False)
     name = Column(Text, nullable=True, unique=False)
     birthdate = Column(Text, nullable=True, unique=False)
@@ -111,6 +111,7 @@ class Utterance(Base):
 
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Text, ForeignKey('sessions.id'))
+    # uniquespeaker_id_fk = Column(Text, ForeignKey('sessions.id'))
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     utterance_id = Column(Text, nullable=True, unique=False)
