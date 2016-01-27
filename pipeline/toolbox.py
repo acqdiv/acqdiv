@@ -403,7 +403,7 @@ class ToolboxFile(object):
                     d['utterance_id_fk'] = utterances['utterance_id']
                     d['morpheme'] = morpheme_target
                     d['gloss_raw'] = re.sub('\*\*\*', '???', gloss)
-                    d['pos_raw'] = re.sub('\*\*\*', '???', gloss)
+                    d['pos_raw'] = pos
                     result.append(d)
             else:
                 d = collections.OrderedDict()
