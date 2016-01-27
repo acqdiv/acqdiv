@@ -137,9 +137,11 @@ class Imdi(Parser):
                             participant['keys'] = str(key.text)
 
             if not len(participant) == 0:
-                # Chintang specific handling of IMDI roles (see issue #236); in a nutshell familysocialrole
-                # is more specific than role, so here we pass fsr back as role if it's not unspecified, etc.
-                if 'familysocialrole' in participant and not participant['familysocialrole'].lower() in ['unspecified']:
+                # Chintang requires additional inference rules for role:
+                # (1) Take the value from the IMDI field Role as the default
+                # (2) If the IMDI field FamilySocialRole has a value, rather use that value since it's usually more specific than Role.
+                # (3) Exception: If Role says "Target Child", keep that value rather than overwriting it. 
+                if (not participant['role'] in ['Target child', 'Target Child','Target_Child', 'Target_child']) and 'familysocialrole' in participant and not participant['familysocialrole'].lower() in ['unspecified']:
                     participant['role'] = participant['familysocialrole']
                 participants.append(participant)
         return participants
