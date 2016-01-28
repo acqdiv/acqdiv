@@ -127,7 +127,7 @@ class XMLParser(object):
                     morph[tier] = a.text
             if (a.attrib.get('type') == 'english translation'):
                 trans = a.text
-            if (a.attrib.get('type') == 'comments'):
+            if (a.attrib.get('type') in ['comments', 'actions', 'explanation']):
                 comment = a.text
         return (morph, trans, comment)
 
