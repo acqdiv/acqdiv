@@ -127,8 +127,8 @@ class XMLTestCree(unittest.TestCase):
         Test if all unique speakers for Cree test file are loaded
         """
         session = make_session('Cree')
-        self.assertEqual(session.query(db.Uniquespeakers).count(),2)
-        s_cree = select([db.Uniquespeaker])
+        self.assertEqual(session.query(db.Unique_Speaker).count(),2)
+        s_cree = select([db.Unique_Speaker])
         result_cree = session.execute(s_cree)
         self.assertEqual(str(result_cree.fetchall()), "[[(1, 'CRE00001', 'CHI', 'Ani', '2003-01-24', 'Female', 'Cree'), (2, 'CRE00007', 'DAN', 'Daniel', None, 'Male', 'Cree')]")
         
@@ -213,9 +213,9 @@ class XMLTestInuktitut(unittest.TestCase):
         Test if all unique speakers for Cree test file are loaded
         """
         session = make_session('Inuktitut')
-        self.assertEqual(session.query(db.Uniquespeakers).count(),2)
+        self.assertEqual(session.query(db.Unique_Speaker).count(),2)
         
-        s_inuk = select([db.Uniquespeakers])
+        s_inuk = select([db.Unique_Speaker])
         result_inuk = session.execute(s_inuk)
         self.assertEqual(str(result_inuk.fetchall()), "[(1, 'INU00001', 'ALI', 'Alec', '1986-08-25', 'Male', 'Inuktitut'), (2, 'INU00002', 'DAN', 'Daniel', None, 'Male', 'Inuktitut')]")
         
@@ -301,9 +301,9 @@ class XMLTestJapaneseMiiPro(unittest.TestCase):
         Test if all unique speakers for JapaneseMiiPro test file are loaded
         """
         session = make_session('Japanese_MiiPro')
-        self.assertEqual(session.query(db.Uniquespeakers).count(),2)
+        self.assertEqual(session.query(db.Unique_Speaker).count(),2)
         
-        s_jap_mii = select([db.Uniquespeakers])
+        s_jap_mii = select([db.Unique_Speaker])
         result_jap_mii = session.execute(s_jap_mii)
         self.assertEqual(str(result_jap_mii.fetchall()), "[(1, 'JMI00001', 'ALS', 'Asatokun', None, 'Male', 'Japanese_MiiPro'), (2, 'JMI00002', 'MOT', None, None, 'Female', 'Japanese_MiiPro')]")
 
@@ -387,9 +387,9 @@ class XMLTestJapaneseMiyata(unittest.TestCase):
         Test if all unique speakers for JapaneseMiyata test file are loaded
         """
         session = make_session('Japanese_Miyata')
-        self.assertEqual(session.query(db.Uniquespeakers).count(), 2)
+        self.assertEqual(session.query(db.Unique_Speaker).count(), 2)
         
-        s_jap_miy = select([db.Uniquespeakers])
+        s_jap_miy = select([db.Unique_Speaker])
         result_jap_miy = session.execute(s_jap_miy)
         self.assertEqual(str(result_jap_miy.fetchall()), "[(1, 'JMY00001', 'CHI', 'Akifumi', None, 'Unspecified', 'Japanese_Miyata'), (2, 'JMY00002', 'AMO', 'Okaasan', None, 'Unspecified', 'Japanese_Miyata')]")
         
@@ -473,9 +473,9 @@ class XMLTestSesotho(unittest.TestCase):
         Test if all unique speakers for Sesotho test file are loaded
         """
         session = make_session('Sesotho')
-        self.assertEqual(session.query(db.Uniquespeakers).count(),2)
+        self.assertEqual(session.query(db.Unique_Speaker).count(),2)
         
-        s_seso = select([db.Uniquespeakers])
+        s_seso = select([db.Unique_Speaker])
         result_seso = session.execute(s_seso)
         self.assertEqual(str(result_seso.fetchall()), "[(1, 'SES00001', 'NTS', 'Ntselleng', None, 'Unspecified', 'Sesotho'), (2, 'SES00002', 'RPL', 'Rapelang', None, 'Unspecified', 'Sesotho')]")
 
@@ -560,9 +560,9 @@ class XMLTestTurkish(unittest.TestCase):
         Test if all unique speakers for Turkish test file are loaded
         """
         session = make_session('Turkish')
-        self.assertEqual(session.query(db.Uniquespeakers).count(),2)
+        self.assertEqual(session.query(db.Unique_Speaker).count(),2)
         
-        s_turk = select([db.Uniquespeakers])
+        s_turk = select([db.Unique_Speaker])
         result_turk = session.execute(s_turk)
         self.assertEqual(str(result_turk.fetchall()), "[(1, 'TUR00001', 'CHI', 'Burcu', None, 'Female', 'Turkish_KULLD'), (2, 'TUR00002', 'MOT', 'Gülcan', None, 'Female', 'Turkish_KULLD')]")
         
@@ -646,9 +646,9 @@ class XMLTestYucatec(unittest.TestCase):
         Test if all unique speakers for Yucatec test file are loaded
         """
         session = make_session('Yucatec')
-        self.assertEqual(session.query(db.Uniquespeakers).count(), 2)
+        self.assertEqual(session.query(db.Unique_Speaker).count(), 2)
         
-        s_yuc = select([db.Uniquespeakers])
+        s_yuc = select([db.Unique_Speaker])
         result_yuc = session.execute(s_yuc)
         self.assertEqual(str(result_yuc.fetchall()), "[(1, 'YUC00026', 'ARM', None, None, 'Unspecified', 'Yucatec'), (2, 'YUC00027', 'SAN', None, None, 'Unspecified', 'Yucatec')]")
         
