@@ -6,7 +6,8 @@ import database_backend as db
 import processors as processors
 import postprocessor as pp
 import unittest
-from sqlalchemy import select
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import func, select
 import parsers as parsers
 
 current_dir = os.getcwd()
