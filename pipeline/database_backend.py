@@ -1,4 +1,4 @@
-""" ORM declarations, database table definitions
+""" ORM declarations, database table definitions for ACQDIV-DB
 
 TODO: investigate:
 
@@ -24,7 +24,7 @@ def db_connect():
     Returns:
         sqlalchemy engine instance
     """
-    return create_engine('sqlite:///_acqdiv.sqlite3', echo=False)
+    return create_engine('sqlite:///acqdiv.sqlite3', echo=False)
 
 
 def create_tables(engine):
@@ -36,11 +36,10 @@ def create_tables(engine):
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(engine)
 
+# TODO: http://stackoverflow.com/questions/13978554/is-possible-to-create-column-in-sqlalchemy-which-is-going-to-be-automatically-po
 
 class Session(Base):
-    """ Sessions table.
-
-    Each input file is a row. To note:
+    """ Each input file is a row in the Sessions table. Note:
         - session_id field is the input filename
         - source_id field is the id given in the session file
         - media field is an associate media file by filename
@@ -48,15 +47,18 @@ class Session(Base):
     __tablename__ = 'sessions'
 
     id = Column(Integer, primary_key=True)
-    session_id = Column(Text, nullable=False, unique=False)
+    source_id = Column(Text, nullable=True, unique=False)
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     date = Column(Text, nullable=True, unique=False)
-    source_id = Column(Text, nullable=True, unique=False)
     media = Column(Text, nullable=True, unique=False)
     media_type = Column(Text, nullable=True, unique=False)
-    speakers = relationship('Speaker', backref='session') #, lazy='dynamic')
 
+    # here the slqa relationship definitions
+    speakers = relationship('Speaker', backref='Session')
+    utterances = relationship('Utterance', backref='Session')
+    words = relationship('Word', backref='Session')
+    morphemes = relationship('Morpheme', backref='Session')
 
 class Speaker(Base):
     """ Speaker table; each row is a speaker in a session. Speakers may appear in > 1 session
@@ -65,7 +67,8 @@ class Speaker(Base):
 
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
-    uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
+    # uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
+    # uniquespeaker = relationship("UniqueSpeaker", back_populates="speakers")
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False)
@@ -110,11 +113,18 @@ class Utterance(Base):
     __tablename__ = 'utterances'
 
     id = Column(Integer, primary_key=True)
-    session_id_fk = Column(Text, ForeignKey('sessions.id'))
-    # uniquespeaker_id_fk = Column(Text, ForeignKey('sessions.id'))
+    session_id_fk = Column(Integer, ForeignKey('sessions.id'))
+    source_id = Column(Text, nullable=True, unique=False)
+    # uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
+
+    # here at the FKs
+    words = relationship('Word', backref='Utterance')
+    morphemes = relationship('Morpheme', backref='Utterance')
+ #   corpus = relationship('Recording', backref='Utterance')
+
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
-    utterance_id = Column(Text, nullable=True, unique=False)
+    # utterance_id = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False)
     addressee = Column(Text, nullable=True, unique=False)
     utterance_raw = Column(Text, nullable=True, unique=False)
@@ -141,8 +151,13 @@ class Word(Base):
     __tablename__ = 'words'
 
     id = Column(Integer, primary_key=True)
-    session_id_fk = Column(Text, ForeignKey('sessions.id'))
-    utterance_id_fk = Column(Text, ForeignKey('utterances.id'))
+    session_id_fk = Column(Integer, ForeignKey('sessions.id'))
+    utterance_id_fk = Column(Integer, ForeignKey('utterances.id'))
+    morphemes = relationship('Morpheme', backref='Word')
+
+    uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
+
+    word = Column(Text, nullable=True)
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     word = Column(Text, nullable=True, unique=False)
@@ -150,6 +165,10 @@ class Word(Base):
     word_target = Column(Text, nullable=True, unique=False)
     warning = Column(Text, nullable=True, unique=False)
     # Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
+
+    # here the sqla relationship
+    morphemes = relationship('Morpheme', backref='Word')
+
 
 
 class Morpheme(Base):
@@ -161,6 +180,13 @@ class Morpheme(Base):
     session_id_fk = Column(Text, ForeignKey('sessions.id'))
     utterance_id_fk = Column(Text, ForeignKey('utterances.id'))
     word_id_fk = Column(Text, ForeignKey('words.id'))
+
+    # here add the FKs
+#    word_id_fk = Column(Integer, ForeignKey('words.id'))
+#    utterance_id_fk = Column(Integer, ForeignKey('utterances.id'))
+#    recording_id_fk = Column(Integer, ForeignKey('recordings.id'))
+
+
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     type = Column(Text, nullable=True, unique=False)
@@ -169,7 +195,7 @@ class Morpheme(Base):
     gloss = Column(Text, nullable=True, unique=False)
     pos_raw = Column(Text, nullable=True, unique=False)
     pos = Column(Text, nullable=True, unique=False)
-
+    warning = Column(Text, nullable=True, unique=False)
 
 class Warnings(Base):
     """ Warnings found during parsing

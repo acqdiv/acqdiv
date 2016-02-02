@@ -16,6 +16,10 @@ if __name__ == "__main__":
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
                 'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
 
+    configs = ['Chintang.ini']
+    # configs = ['Cree.ini']
+    # configs = ['Russian.ini']
+
     for config in configs:
         # Parse the config file and call the sessions processor
         cfg = CorpusConfigParser()
@@ -25,6 +29,7 @@ if __name__ == "__main__":
         c = CorpusProcessor(cfg, engine)
         c.process_corpus()
 
+        # TODO: move not corpus-specific stuff out of this loop
         # Do the postprocessing
         print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
         update_age(cfg, engine)
@@ -36,10 +41,12 @@ if __name__ == "__main__":
             unify_indonesian_labels(cfg, engine)
             clean_tlbx_pos_morphemes(cfg, engine)
             clean_utterances_table(cfg, engine)
+
         if config == 'Chintang.ini':
             extract_chintang_addressee(cfg, engine)
             clean_tlbx_pos_morphemes(cfg, engine)
             clean_utterances_table(cfg, engine)
+
         if config == 'Russian.ini':
             clean_utterances_table(cfg, engine)
 
@@ -49,7 +56,11 @@ if __name__ == "__main__":
     print("Creating macrorole entries...")
     macrorole(cfg,engine)
 
-    print("Creating unique speaker table...")
-    unique_speaker(cfg,engine)
+    # print("Creating unique speaker table...")
+    # unique_speaker(cfg,engine)
+
+    # print("Populate foreign keys")
+    # populate_fks(cfg,engine)
+
 
     print("--- %s seconds ---" % (time.time() - start_time))

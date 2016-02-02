@@ -1,12 +1,23 @@
-""" Processors for acqdiv corpora
+""" Processors for raw corpora input to ACQDIV DB
 """
 
 import itertools as it
 import re
 import collections
+import logging
 from sqlalchemy.orm import sessionmaker
 from parsers import *
 from database_backend import *
+import database_backend as db
+
+# logging.basicConfig(level=logging.INFO)
+logging.basicConfig(filemode='w')
+logger = logging.getLogger(__name__)
+handler = logging.FileHandler('errors.log')
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 class CorpusProcessor(object):
@@ -36,11 +47,10 @@ class CorpusProcessor(object):
 
 class SessionProcessor(object):
     """ SessionProcessor invokes a parser to get the extracted data, and then interacts
-        with the ORM backend to push data to it.
+        with the SQLAlchemy ORM backend to push data to it.
     """
     def __init__(self, cfg, file_path, parser_factory, engine):
-        """ Init parser with corpus config. Pass in file path to process. Create sqla session.
-
+        """ Init parser with a corpus-specific config that contains labels->database column name mappings,
         Args:
             cfg: a corpus config file
             file_path: path to input file
@@ -49,6 +59,7 @@ class SessionProcessor(object):
         self.config = cfg
         self.file_path = file_path
         self.parser_factory = parser_factory
+        # factor this shit out
         self.language = self.config['corpus']['language']
         self.corpus = self.config['corpus']['corpus']
         self.format = self.config['corpus']['format']
@@ -59,32 +70,31 @@ class SessionProcessor(object):
     def process_session(self):
         """ Process function for each file; creates dictionaries and inserts them into the database via sqla
         """
-        # Config contains maps from corpus-specific labels -> database column names
         self.parser = self.parser_factory(self.file_path)
 
-        # Get session metadata (via labels defined in corpus config)
+        # Returns all session metadata and gets corpus-specific sessions table mappings to populate the db
         session_metadata = self.parser.get_session_metadata()
         d = {}
         for k, v in session_metadata.items():
             if k in self.config['session_labels'].keys():
                 d[self.config['session_labels'][k]] = v
-        d['session_id'] = self.filename
+        # SM: someday we could clean this up across ini files
+        d['source_id'] = self.filename
         d['language'] = self.language
         d['corpus'] = self.corpus
-        self.session_entry = Session(**d)
 
-        # Get speaker metadata; capture data specified in corpus config
+        self.session = db.Session(**d)
+
+        # Get speaker metadata and populate the speakers table
         self.speaker_entries = []
         for speaker in self.parser.next_speaker():
             d = {}
             for k, v in speaker.items():
                 if k in self.config['speaker_labels'].keys():
                     d[self.config['speaker_labels'][k]] = v
+            self.session.speakers.append(Speaker(**d))
 
-            d['session_id_fk'] = self.filename
-            d['language'] = self.language
-            d['corpus'] = self.corpus
-
+            # TODO: check this
             #if 'Non_Human' in d['role_raw']:
             #    print(d)
 
@@ -94,7 +104,7 @@ class SessionProcessor(object):
             else:
                 self.speaker_entries.append(Speaker(**d))
             """
-            self.speaker_entries.append(Speaker(**d))
+            # self.speaker_entries.append(Speaker(**d))
 
         # Begin CHATXML or Toolbox body parsing
         self.utterances = []
@@ -103,101 +113,31 @@ class SessionProcessor(object):
         self.warnings = []
 
         if self.format == "Toolbox":
-            # Utterances
-            for utterance, words, morphemes, inferences in self.parser.next_utterance():
-                utterance['session_id_fk'] = self.filename
-                utterance['corpus'] = self.corpus
-                utterance['language'] = self.language
-                self.utterances.append(Utterance(**utterance))
-                
-                # words
-                for word in words:
-                    word['session_id_fk'] = self.filename
-                    word['language'] = self.language
-                    word['corpus'] = self.corpus
-                    if self.config['corpus']['corpus'] in ['Chintang', 'Russian']:
-                        word['word_actual'] = word['word']
-                    self.words.append(Word(**word))
+            # Get the sessions utterances, words and morphemes to populate those db tables
+            for utterance, words, morphemes in self.parser.next_utterance():
+                u = Utterance(**utterance)
 
-                # morphemes
-                if utterance['corpus'] == 'Russian':
-                    morphemes_inferences = collections.OrderedDict()
-                    morphemes_warnings = collections.OrderedDict()
-                    for (morpheme,inference) in it.zip_longest(morphemes,inferences):
-                        try:
-                            morphemes_inferences['session_id_fk'] = self.filename
-                            morphemes_inferences['utterance_id_fk'] = morpheme['utterance_id_fk']
-                            # TODO: fix this to read from the config
-                            morphemes_inferences['corpus'] = self.corpus
-                            morphemes_inferences['language'] = self.language
-                            morphemes_inferences['type'] = self.morpheme_type
-                            morphemes_inferences['morpheme'] = morpheme['morpheme']
-                            morphemes_inferences['pos_raw'] = inference['pos_raw']
-                            morphemes_inferences['pos'] = inference['pos_raw']
-                            morphemes_inferences['gloss_raw'] = inference['gloss_raw']
-                            if 'warning' in inference.keys():
-                                # TODO: fix this to read from the config
-                                morphemes_warnings['corpus'] = utterance['corpus']
-                                morphemes_warnings['utterance_id_fk'] = morpheme['utterance_id_fk']
-                                morphemes_warnings['language'] = utterance['language']
-                                morphemes_warnings['warning'] = inference['warning']
-                                self.warnings.append(Warnings(**morphemes_warnings))
-                        except TypeError:
-                            continue
-                        except KeyError:
-                            continue
-                        self.morphemes.append(Morpheme(**morphemes_inferences))
+                # In Chintang the number of words may be longer than the number of morphemes -- error handling
+                if len(words) > len(morphemes):
+                    logger.info("There are more words than morphemes in %s", utterance['source_id'])
+                    continue
 
-                elif utterance['corpus'] == 'Chintang':
-                    morphemes_inferences = collections.OrderedDict()
-                    morphemes_warnings = collections.OrderedDict()
-                    ## inference parsing
-                    for inference in inferences:
-                        try:
-                            morphemes_inferences['session_id_fk'] = self.filename
-                            morphemes_inferences['utterance_id_fk'] = inference['utterance_id_fk']
-                            morphemes_inferences['corpus'] = self.corpus
-                            morphemes_inferences['language'] = self.language
-                            morphemes_inferences['type'] = self.morpheme_type
-                            morphemes_inferences['morpheme'] = inference['morpheme']
-                            morphemes_inferences['gloss_raw'] = inference['gloss_raw']
-                            morphemes_inferences['pos_raw'] = inference['pos_raw']
-                            if 'warning' in inference.keys():
-                                morphemes_warnings['corpus'] = utterance['corpus']
-                                morphemes_warnings['utterance_id_fk'] = inference['utterance_id_fk']
-                                morphemes_warnings['warning'] = inference['warning']
-                                self.warnings.append(Warnings(**morphemes_warnings))
-                        except KeyError:
-                            continue
-                        except TypeError:
-                            continue
-                            
-                        self.morphemes.append(Morpheme(**morphemes_inferences))
+                # Populate the words
+                for i in range(0, len(words)):
+                    word = Word(**words[i])
+                    u.words.append(word)
+                    u.words.append(word)
+                    self.session.words.append(word)
 
-                elif utterance['corpus'] == 'Indonesian':
-                    morphemes_warnings = collections.OrderedDict()
-                    morphemes_inferences = collections.OrderedDict()
-                    for (morpheme,inference) in it.zip_longest(morphemes,inferences):
-                        try:
-                            morphemes_inferences['session_id_fk'] = self.filename
-                            morphemes_inferences['utterance_id_fk'] = morpheme['utterance_id_fk']
-                            morphemes_inferences['corpus'] = self.corpus
-                            morphemes_inferences['language'] = self.language
-                            morphemes_inferences['type'] = self.morpheme_type
-                            morphemes_inferences['morpheme'] = morpheme['morpheme']
-                            morphemes_inferences['gloss_raw'] = inference['gloss_raw']
-                            if 'warning' in inference.keys():
-                                morphemes_warnings['corpus'] = utterance['corpus']
-                                morphemes_warnings['utterance_id_fk'] = morpheme['utterance_id_fk']
-                                morphemes_warnings['warning'] = inference['warning']
-                                self.warnings.append(Warnings(**morphemes_warnings))
-                        except TypeError:
-                            continue
-                        except KeyError:
-                            continue
-                            
-                        self.morphemes.append(Morpheme(**morphemes_inferences))
+                    # Populate the morphemes
+                    for j in range(0, len(morphemes[i])): # loop morphemes
+                        morpheme = Morpheme(**morphemes[i][j])
+                        word.morphemes.append(morpheme)
+                        u.morphemes.append(morpheme)
+                        self.session.morphemes.append(morpheme)
+                self.session.utterances.append(u)
 
+        """
         # TODO: this will be replaced with CHAT XML parsing
         elif self.format == "JSON":
             for utterance, words, morphemes in self.parser.next_utterance():
@@ -280,7 +220,7 @@ class SessionProcessor(object):
                             pass
         else:
             raise Exception("Error: unknown corpus format!")
-
+        """
 
     def commit(self):
         """ Commits the dictionaries returned from parsing to the database.
@@ -288,12 +228,7 @@ class SessionProcessor(object):
         session = self.Session()
 
         try:
-            session.add(self.session_entry)
-            session.add_all(self.speaker_entries)
-            session.add_all(self.utterances)
-            session.add_all(self.words)
-            session.add_all(self.morphemes)
-            session.add_all(self.warnings)
+            session.add(self.session)
             session.commit()
         except:
             # TODO: print some error message? log it?
