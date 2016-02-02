@@ -106,12 +106,14 @@ class SessionProcessor(object):
             """
             # self.speaker_entries.append(Speaker(**d))
 
+        """
         # Begin CHATXML or Toolbox body parsing
         self.utterances = []
         self.words = []
         self.morphemes = []
         self.warnings = []
-
+        """
+        
         if self.format == "Toolbox":
             # Get the sessions utterances, words and morphemes to populate those db tables
             for utterance, words, morphemes in self.parser.next_utterance():
