@@ -113,7 +113,7 @@ class SessionProcessor(object):
         self.morphemes = []
         self.warnings = []
         """
-        
+
         if self.format == "Toolbox":
             # Get the sessions utterances, words and morphemes to populate those db tables
             for utterance, words, morphemes in self.parser.next_utterance():
