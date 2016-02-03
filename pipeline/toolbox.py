@@ -61,7 +61,7 @@ class ToolboxFile(object):
                         tokens = re.split(b'\\s+', tier, maxsplit=1)
                         field_marker = tokens[0].decode()
                         field_marker = field_marker.replace("\\", "")
-                        content = "None"
+                        content = None
 
                         if len(tokens) > 1:
                             content = tokens[1].decode()
@@ -78,37 +78,39 @@ class ToolboxFile(object):
                     except KeyError:
                         utterances['warning'] = 'empty utterance'
 
-                    # Skip the first rows that contain metadata information
-                    # cf. https://github.com/uzling/acqdiv/issues/154
-                    if not utterances['utterance_raw'].startswith('@'):
-                        if self.config['corpus']['corpus'] == 'Chintang':
-                            try:
-                                utterances['sentence_type'] = self.get_sentence_type(utterances['nepali'])
-                                del utterances['nepali']
-                                if utterances['translation'] == "None":
-                                    del utterances['translation']
-                            except KeyError:
-                                continue
+                    # Skip the first rows that contain metadata information:
+                    # https://github.com/uzling/acqdiv/issues/154
+                    if 'utterance_raw' in utterances.keys() and not utterances['utterance_raw'] is None:
+                        # https://github.com/uzling/acqdiv/issues/379
+                        if not utterances['utterance_raw'].startswith('@'):
+                            if self.config['corpus']['corpus'] == 'Chintang':
+                                try:
+                                    utterances['sentence_type'] = self.get_sentence_type(utterances['nepali'])
+                                    del utterances['nepali']
+                                    if utterances['translation'] == None:
+                                        del utterances['translation']
+                                except KeyError:
+                                    continue
 
-                        elif self.config['corpus']['corpus'] == 'Russian':
-                            try:
+                            elif self.config['corpus']['corpus'] == 'Russian':
+                                try:
+                                    utterances['sentence_type'] = self.get_sentence_type(utterances['utterance_raw'])
+                                    utterances['utterance_raw'] = re.sub('xxx?|www', '???', utterances['utterance_raw'])
+                                    utterances['pos_raw'] = re.sub('xxx?|www', '???', utterances['pos_raw'])
+                                except KeyError:
+                                    continue
+                            else:
                                 utterances['sentence_type'] = self.get_sentence_type(utterances['utterance_raw'])
-                                utterances['utterance_raw'] = re.sub('xxx?|www', '???', utterances['utterance_raw'])
-                                utterances['pos_raw'] = re.sub('xxx?|www', '???', utterances['pos_raw'])
-                            except KeyError:
-                                continue
-                        else:
-                            utterances['sentence_type'] = self.get_sentence_type(utterances['utterance_raw'])
 
-                        utterances['utterance'] = self.clean_utterance(utterances['utterance_raw'])
-                        utterances['warning'] = self.get_warnings(utterances['utterance_raw'])
-                            
-                        words = self.get_words(utterances)
-                        morphemes = self.get_morphemes(utterances)
-                        inferences = self.do_inference(utterances)
+                            utterances['utterance'] = self.clean_utterance(utterances['utterance_raw'])
+                            utterances['warning'] = self.get_warnings(utterances['utterance_raw'])
 
-                        yield utterances, words, morphemes, inferences
-                        pos = ma.start()
+                            words = self.get_words(utterances)
+                            morphemes = self.get_morphemes(utterances)
+                            inferences = self.do_inference(utterances)
+
+                            yield utterances, words, morphemes, inferences
+                            pos = ma.start()
 
                 """
                 ma = self._separator.search(data, pos)
@@ -172,7 +174,7 @@ class ToolboxFile(object):
         if self.config['corpus']['corpus'] == "Russian":
             match_punctuation = re.search('([\.\?!])$', utterance)
             if match_punctuation is not None:
-                sentence_type = ''
+                sentence_type = None
                 if match_punctuation.group(1) == '.':
                     sentence_type = 'default'
                 if match_punctuation.group(1) == '?':
@@ -196,16 +198,17 @@ class ToolboxFile(object):
         # \eng: . = default, ? = question, ! = exclamation
         # \nep: । = default, rest identical. Note this is not a "pipe" but the so-called danda.
         if self.config['corpus']['corpus'] == "Chintang":
-            match_punctuation = re.search('([।\?!])$', utterance)
-            if match_punctuation is not None:
-                sentence_type = ''
-                if match_punctuation.group(1) == '।':
-                    sentence_type = 'default'
-                if match_punctuation.group(1) == '?':
-                    sentence_type = 'question'
-                if match_punctuation.group(1) == '!':
-                    sentence_type = 'exclamation'
-                return sentence_type
+            if not utterance is None:
+                match_punctuation = re.search('([।\?!])$', utterance)
+                if match_punctuation is not None:
+                    sentence_type = None
+                    if match_punctuation.group(1) == '।':
+                        sentence_type = 'default'
+                    if match_punctuation.group(1) == '?':
+                        sentence_type = 'question'
+                    if match_punctuation.group(1) == '!':
+                        sentence_type = 'exclamation'
+                    return sentence_type
 
     def get_warnings(self,utterance):
         """ Extracts warning for insecure transcriptions for Russian and Indonesian (incl. intended form for Russian).
@@ -228,7 +231,7 @@ class ToolboxFile(object):
                 # cf. https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1605-1610
                 if re.search('\[\?\]', utterance):
                     utterance = re.sub('\[\?\]', '', utterance)
-                    transcription_warning ='transcription insecure'
+                    transcription_warning = 'transcription insecure'
                     return transcription_warning
         else:
             pass
@@ -247,7 +250,7 @@ class ToolboxFile(object):
         
         # TODO: incorporate Russian \pho and \text tiers -- right now just utterance in general
         # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1586-L1599
-        if utterance != 'None' or utterance != '':
+        if not utterance is None: # != 'None' or utterance != '':
             if self.config['corpus']['corpus'] == "Russian":
                 utterance = re.sub('[‘’\'“”\"\.!,:\+\/]+|(&lt; )|(?<=\\s)\?(?=\\s|$)', '', utterance)
                 utterance = re.sub('\\s\-\\s', ' ', utterance)
@@ -344,8 +347,8 @@ class ToolboxFile(object):
             else:
                 d = collections.OrderedDict()
                 d['utterance_id_fk'] = utterances['utterance_id']
-                d['pos_raw'] = ''
-                d['gloss_raw'] = ''
+                d['pos_raw'] = None
+                d['gloss_raw'] = None
                 d['warning'] = 'not glossed'
                 result.append(d)
 
@@ -363,7 +366,7 @@ class ToolboxFile(object):
             else:
                 d = collections.OrderedDict()
                 d['utterance_id_fk'] = utterances['utterance_id']
-                d['gloss_raw'] = ''
+                d['gloss_raw'] = None
                 d['warning'] = 'not glossed'
                 result.append(d)
 
@@ -379,14 +382,14 @@ class ToolboxFile(object):
                 try:
                     glosses_Chintang = utterances['gloss_raw']
                 except KeyError:
-                    glosses_Chintang = ''
+                    glosses_Chintang = None
                     d['utterance_id_fk'] = utterances['utterance_id']
                     d['warning'] = 'not glossed (gloss missing)'
                     result.append(d)
                 try:    
                     pos_Chintang = utterances['pos_raw']
                 except KeyError:
-                    pos_Chintang = ''
+                    pos_Chintang = None
                     d['utterance_id_fk'] = utterances['utterance_id']
                     d['warning'] = 'pos missing'
                     result.append(d)
@@ -399,18 +402,21 @@ class ToolboxFile(object):
                 
                 for (morpheme_target, gloss,pos) in zip_longest(morphemes_targets, glosses_targets,pos_targets):
                     morphemes_target_counter += 1
-                    d = collections.OrderedDict()
-                    d['utterance_id_fk'] = utterances['utterance_id']
-                    d['morpheme'] = morpheme_target
-                    d['gloss_raw'] = re.sub('\*\*\*', '???', gloss)
-                    d['pos_raw'] = pos
-                    result.append(d)
+                    try:
+                        d = collections.OrderedDict()
+                        d['utterance_id_fk'] = utterances['utterance_id']
+                        d['morpheme'] = morpheme_target
+                        d['gloss_raw'] = re.sub('\*\*\*', '???', gloss)
+                        d['pos_raw'] = pos
+                        result.append(d)
+                    except TypeError:
+                        pass
             else:
                 d = collections.OrderedDict()
-                d['morpheme'] = ''
+                d['morpheme'] = None
                 d['utterance_id_fk'] = utterances['utterance_id']
-                d['gloss_raw'] = ''
-                d['pos_raw'] = ''
+                d['gloss_raw'] = None
+                d['pos_raw'] = None
                 d['warning'] = 'not glossed'
                 result.append(d)
 
@@ -467,7 +473,7 @@ class ToolboxFile(object):
                     result.append(d)
         else:
             d = collections.OrderedDict()
-            d['morpheme'] = ''
+            d['morpheme'] = None
             d['utterance_id_fk'] = utterances['utterance_id']
             d['warning']  = 'morpheme missing'
             result.append(d)
