@@ -403,30 +403,6 @@ def unique_speaker(session, config):
 
 
 @db_apply
-def populate_fks(session, config):
-    """
-    # propograte ids to tables
-    # postprocess adding uniquespeaker_id_fk to utterances, words, morphemes, tables given fks in speakers table
-
-    Args:
-        session: SQLalchemy session object.
-        config: configparser object containing the configuration for the current corpus.
-    """
-    for u, s in session.query(backend.Utterance, backend.Speaker).filter(
-                    backend.Utterance.session_id_fk==backend.Speaker.session_id_fk).filter(
-                    backend.Utterance.speaker_label==backend.Speaker.speaker_label):
-        u.uniquespeaker_id_fk = s.uniquespeaker_id_fk
-        # print(u, s)
-
-    for w, u in session.query(backend.Word, backend.Utterance).filter(backend.Word.utterance_id_fk==backend.Utterance.utterance_id):
-        w.uniquespeaker_id_fk = u.uniquespeaker_id_fk
-
-    # for m, w in session.query(backend.Morpheme, backend.Word).filter(backend.Morpheme.)
-
-    # query = session.query(User, Document, DocumentsPermissions).join(Document).join(DocumentsPermissions)
-
-
-@db_apply
 def unify_indonesian_labels(session, config):
     """Function to match the labels of Indonesian speakers with the labels in the Indonesian utterances.
         

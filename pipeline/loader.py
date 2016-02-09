@@ -16,13 +16,7 @@ if __name__ == "__main__":
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
                 'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
 
-<<<<<<< HEAD
     configs = ['Chintang.ini', 'Russian.ini']
-=======
-    configs = ['Chintang.ini']
-    # configs = ['Cree.ini']
-    # configs = ['Russian.ini']
->>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
 
     for config in configs:
         # Parse the config file and call the sessions processor
