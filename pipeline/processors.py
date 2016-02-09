@@ -117,9 +117,10 @@ class SessionProcessor(object):
         if self.format == "Toolbox":
             # Get the sessions utterances, words and morphemes to populate those db tables
             for utterance, words, morphemes in self.parser.next_utterance():
-                # TODO: move this post processing (before the age, etc.)
-                # utterance['corpus'] = self.corpus
-                # utterance['language'] = self.language
+                # TODO: move this post processing (before the age, etc.) if it improves performance
+                utterance['corpus'] = self.corpus
+                utterance['language'] = self.language
+
                 u = Utterance(**utterance)
 
                 # In Chintang the number of words may be longer than the number of morphemes -- error handling
@@ -129,6 +130,10 @@ class SessionProcessor(object):
 
                 # Populate the words
                 for i in range(0, len(words)):
+                    # TODO: move this post processing (before the age, etc.) if it improves performance
+                    words[i]['corpus'] = self.corpus
+                    words[i]['language'] = self.language
+
                     word = Word(**words[i])
                     # is it cheaper to append a list here?
                     u.words.append(word)
@@ -136,6 +141,10 @@ class SessionProcessor(object):
 
                     # Populate the morphemes
                     for j in range(0, len(morphemes[i])): # loop morphemes
+                        # TODO: move this post processing (before the age, etc.) if it improves performance
+                        morphemes[i][j]['corpus'] = self.corpus
+                        morphemes[i][j]['language'] = self.language
+
                         morpheme = Morpheme(**morphemes[i][j])
                         word.morphemes.append(morpheme)
                         u.morphemes.append(morpheme)
