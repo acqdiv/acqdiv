@@ -4,10 +4,14 @@
 
 import re
 import mmap
+<<<<<<< HEAD
 import logging
+=======
+>>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
 import contextlib
 from itertools import zip_longest
 import sys
+
 
 class ToolboxFile(object):
     """ Toolbox Standard Format text file as iterable over records
@@ -32,10 +36,17 @@ class ToolboxFile(object):
             self.field_markers.append(k)
 
     def __iter__(self):
+<<<<<<< HEAD
         """ Iterator that yields utterance, words, morphemes and inference information from a session transcript file.
         
         Note:
             This iterator directly extracts utterance for the db column utterance_raw and calls various
+=======
+        """ Iterator that yields utterances, words, morphemes and inference information from a session transcript file.
+        
+        Note:
+            This iterator directly extracts utterances for the db column utterance_raw and calls various
+>>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
             functions to extract information from the following levels:
 
             get_sentence_type: extract the sentence type
@@ -45,7 +56,11 @@ class ToolboxFile(object):
             get_morphemes extract the morphemes in a word for the morphemes table
 
         Returns:
+<<<<<<< HEAD
             utterance: {}
+=======
+            utterances: {}
+>>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
             words: [{},{}...]
             morphemes: [[{},{}...], [{},{}...]...]
         """
@@ -80,6 +95,7 @@ class ToolboxFile(object):
                     except KeyError:
                         utterance['warning'] = 'empty utterance'
 
+<<<<<<< HEAD
                     # Skip the first rows that contain metadata information:
                     # https://github.com/uzling/acqdiv/issues/154
                     if 'utterance_raw' in utterance.keys() and not utterance['utterance_raw'] is None:
@@ -117,6 +133,39 @@ class ToolboxFile(object):
 #                            print()
                             yield utterance, words, morphemes
                             pos = ma.start()
+=======
+                    # Skip the first rows that contain metadata information in the Toolbox files
+                    # https://github.com/uzling/acqdiv/issues/154
+                    if not utterance['utterance_raw'].startswith('@'):
+                        if self.config['corpus']['corpus'] == 'Chintang':
+                            try:
+                                utterance['sentence_type'] = self.get_sentence_type(utterance['nepali'])
+                                del utterance['nepali']
+                                if utterance['translation'] == "None":
+                                    del utterance['translation']
+                            except KeyError:
+                                continue
+
+                        elif self.config['corpus']['corpus'] == 'Russian':
+                            try:
+                                utterance['sentence_type'] = self.get_sentence_type(utterance['utterance_raw'])
+                                utterance['utterance_raw'] = re.sub('xxx?|www', '???', utterance['utterance_raw'])
+                                utterance['pos_raw'] = re.sub('xxx?|www', '???', utterance['pos_raw'])
+                            except KeyError:
+                                continue
+                        else:
+                            utterance['sentence_type'] = self.get_sentence_type(utterance['utterance_raw'])
+
+                        utterance['utterance'] = self.clean_utterance(utterance['utterance_raw'])
+                        utterance['warning'] = self.get_warnings(utterance['utterance_raw'])
+                        words = self.get_words(utterance['utterance'])
+                        morphemes = self.get_morphemes(utterance)
+
+                        # yield utterance{}, words[{},{}], morphemes[[{},{}],[{},{}]]
+                        yield utterance, words, morphemes
+                        pos = ma.start()
+
+>>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
                 """
                 # in case of footer
                 ma = self._separator.search(data, pos)
@@ -204,6 +253,7 @@ class ToolboxFile(object):
         # \eng: . = default, ? = question, ! = exclamation
         # \nep: । = default, rest identical. Note this is not a "pipe" but the so-called danda at U+0964
         if self.config['corpus']['corpus'] == "Chintang":
+<<<<<<< HEAD
             if not utterance is None:
                 match_punctuation = re.search('([।\?!])$', utterance)
                 if match_punctuation is not None:
@@ -215,6 +265,18 @@ class ToolboxFile(object):
                     if match_punctuation.group(1) == '!':
                         sentence_type = 'exclamation'
                     return sentence_type
+=======
+            match_punctuation = re.search('([।\?!])$', utterance)
+            if match_punctuation is not None:
+                sentence_type = ''
+                if match_punctuation.group(1) == '।':
+                    sentence_type = 'default'
+                if match_punctuation.group(1) == '?':
+                    sentence_type = 'question'
+                if match_punctuation.group(1) == '!':
+                    sentence_type = 'exclamation'
+                return sentence_type
+>>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
 
     def get_warnings(self, utterance):
         """ Extracts warnings for insecure transcriptions for Russian and Indonesian (incl. intended form for Russian).
@@ -291,11 +353,19 @@ class ToolboxFile(object):
                 # No specific stuff here.
                 return utterance
 
+<<<<<<< HEAD
     def get_morphemes(self, utterance):
         """ Return ordered list of lists of morphemes where each morpheme is a dict of key-value pairs
 
         Args:
             utterance: a dict of utterance information
+=======
+    def get_morphemes(self, utterances):
+        """ Return ordered list of lists of morphemes where each morpheme is a dict of key-value pairs
+
+        Args:
+            utterances: a dict of utterance information
+>>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
 
         Returns:
             result: a list of lists that contain dicts
@@ -308,6 +378,7 @@ class ToolboxFile(object):
 
         # Russian specific morpheme inference
         if self.config['corpus']['corpus'] == "Russian":
+<<<<<<< HEAD
             if 'morpheme' in utterance.keys():
                 # Remove punctuation from morphemes
                 morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\-\?\+\/]', '', utterance['morpheme'])
@@ -315,11 +386,24 @@ class ToolboxFile(object):
                 morphemes = morphemes_cleaned.split()
 
             if 'pos_raw' in utterance.keys():
+=======
+            if 'morpheme' in utterances.keys():
+                # Remove punctuation from morphemes
+                morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\-\?\+\/]', '', utterances['morpheme'])
+                morphemes_cleaned = re.sub('xxx?|www', '???', morphemes_cleaned)
+                morphemes = morphemes_cleaned.split()
+
+            if 'pos_raw' in utterances.keys():
+>>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
                 # Get pos and gloss, see:
                 # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1751-L1762)
 
                 # Remove PUNCT pos
+<<<<<<< HEAD
                 pos_cleaned = utterance['pos_raw'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
+=======
+                pos_cleaned = utterances['pos_raw'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
+>>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
 
                 # The Russian tier \mor contains both glosses and POS, separated by "-" or ":".
                 # Method for distinguishing and extracting them:
@@ -352,6 +436,7 @@ class ToolboxFile(object):
 
         # Indonesian specific morpheme inference stuff
         elif self.config['corpus']['corpus'] == "Indonesian":
+<<<<<<< HEAD
             if 'morpheme' in utterance.keys():
                 # remove punctuation from morphemes
                 morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterance['morpheme'])
@@ -360,6 +445,16 @@ class ToolboxFile(object):
 
             if 'gloss_raw' in utterance.keys():
                 glosses_Indonesian = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterance['gloss_raw'])
+=======
+            if 'morpheme' in utterances.keys():
+                # remove punctuation from morphemes
+                morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['morpheme'])
+                morphemes_cleaned = re.sub('xxx?|www', '???', morphemes_cleaned)
+                morphemes = morphemes_cleaned.split()
+
+            if 'gloss_raw' in utterances.keys():
+                glosses_Indonesian = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['gloss_raw'])
+>>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
                 glosses_Indonesian = re.sub('xxx?|www', '???', glosses_Indonesian)
                 glosses = glosses_Indonesian.split()
             else:
@@ -367,9 +462,15 @@ class ToolboxFile(object):
 
         # Chintang specific morpheme stuff
         elif self.config['corpus']['corpus'] == "Chintang":
+<<<<<<< HEAD
             if 'morpheme' in utterance.keys():
                 # Remove non-linguistic punctuation from morphemes
                 morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterance['morpheme'])
+=======
+            if 'morpheme' in utterances.keys():
+                # Remove non-linguistic punctuation from morphemes
+                morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterances['morpheme'])
+>>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
 
                 # Replace pos automatically tagged "***" (fail) with "???" (unknown)
                 morphemes_cleaned = re.sub('\*\*\*', '???', morphemes_cleaned)
@@ -377,6 +478,7 @@ class ToolboxFile(object):
                 # Chintang morphemes AND words are space delimited, e.g. 'hap -i -nig hap -i -nig'
                 # we need to infer first the word boundaries and then the morphemes
                 # words = re.sub('(\s\-)|(\-\s)','-', morphemes_cleaned)
+<<<<<<< HEAD
                 # word_boundaries = re.sub('(\s\-)|(\-\s)','%%%%%', morphemes_cleaned)
                 word_boundaries = re.split(self.chintang_word_boundary, morphemes_cleaned)
                 for word in word_boundaries:
@@ -419,6 +521,37 @@ class ToolboxFile(object):
                 # print()
             else:
                 logging.info("Length of morphemes, glosses, poses don't match:" + utterance['source_id'])
+=======
+                word_boundaries = re.sub('(\s\-)|(\-\s)','%%%%%', morphemes_cleaned)
+                words = word_boundaries.split()
+                for word in words:
+                    morphemes.append(word.split("%%%%%"))
+            else:
+                warnings.append('no morpheme tier')
+
+            if 'gloss_raw' in utterances.keys():
+                glosses = utterances['gloss_raw'].split()
+            else:
+                warnings.append('not glossed')
+
+            if 'pos_raw' in utterances.keys():
+                poses = utterances['pos_raw'].split()
+            else:
+                warnings.append('pos missing')
+
+        # Loop over the "words" to create nested lists of morphemes
+        # Note this will return mismatched words-to-morphemes if the input tiers are wrong (but those errors are logged)
+        for morpheme in morphemes:
+            l = []
+            for (morph, gloss, pos, warning) in zip_longest(morpheme, glosses, poses, warnings):
+                d = {}
+                d['morpheme'] = morph
+                d['gloss_raw'] = gloss
+                d['pos_raw'] = pos
+                d['warning'] = warning
+                l.append(d)
+            result.append(l)
+>>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
         return result
 
     def make_rec(self, data):

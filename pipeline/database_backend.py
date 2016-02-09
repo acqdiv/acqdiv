@@ -39,12 +39,19 @@ def create_tables(engine):
 # TODO: http://stackoverflow.com/questions/13978554/is-possible-to-create-column-in-sqlalchemy-which-is-going-to-be-automatically-po
 
 class Session(Base):
+<<<<<<< HEAD
     """ Each input file is a row in the Sessions table.
 
         Note:
             - session_id field is the input filename
             - source_id field is the id given in the session file
             - media field is an associate media file by filename
+=======
+    """ Each input file is a row in the Sessions table. Note:
+        - session_id field is the input filename
+        - source_id field is the id given in the session file
+        - media field is an associate media file by filename
+>>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
     """
     __tablename__ = 'sessions'
 
@@ -56,7 +63,11 @@ class Session(Base):
     media = Column(Text, nullable=True, unique=False)
     media_type = Column(Text, nullable=True, unique=False)
 
+<<<<<<< HEAD
     # SQLAlchemy relationship definitions
+=======
+    # here the slqa relationship definitions
+>>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
     speakers = relationship('Speaker', backref='Session')
     utterances = relationship('Utterance', backref='Session')
     words = relationship('Word', backref='Session')
@@ -122,6 +133,14 @@ class Utterance(Base):
     source_id = Column(Text, nullable=True, unique=False)
     # uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
 
+<<<<<<< HEAD
+=======
+    # here at the FKs
+    words = relationship('Word', backref='Utterance')
+    morphemes = relationship('Morpheme', backref='Utterance')
+ #   corpus = relationship('Recording', backref='Utterance')
+
+>>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     # utterance_id = Column(Text, nullable=True, unique=False)
@@ -158,8 +177,16 @@ class Word(Base):
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
     utterance_id_fk = Column(Integer, ForeignKey('utterances.id'))
+<<<<<<< HEAD
     uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
 
+=======
+    morphemes = relationship('Morpheme', backref='Word')
+
+    uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
+
+    word = Column(Text, nullable=True)
+>>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     word = Column(Text, nullable=True, unique=False)
@@ -169,6 +196,10 @@ class Word(Base):
 
     # SQLAlchemy relationship definitions
     morphemes = relationship('Morpheme', backref='Word')
+
+    # here the sqla relationship
+    morphemes = relationship('Morpheme', backref='Word')
+
 
 
 class Morpheme(Base):
@@ -180,7 +211,16 @@ class Morpheme(Base):
     session_id_fk = Column(Text, ForeignKey('sessions.id'))
     utterance_id_fk = Column(Text, ForeignKey('utterances.id'))
     word_id_fk = Column(Text, ForeignKey('words.id'))
+<<<<<<< HEAD
     uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
+=======
+
+    # here add the FKs
+#    word_id_fk = Column(Integer, ForeignKey('words.id'))
+#    utterance_id_fk = Column(Integer, ForeignKey('utterances.id'))
+#    recording_id_fk = Column(Integer, ForeignKey('recordings.id'))
+
+>>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
 
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
@@ -191,9 +231,12 @@ class Morpheme(Base):
     pos_raw = Column(Text, nullable=True, unique=False)
     pos = Column(Text, nullable=True, unique=False)
     warning = Column(Text, nullable=True, unique=False)
+<<<<<<< HEAD
 
 
 
+=======
+>>>>>>> 5ff17997664a24f2b652e76e4dcae2e24d048ec1
 
 class Warnings(Base):
     """ Warnings found during parsing
