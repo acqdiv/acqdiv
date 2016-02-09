@@ -371,7 +371,6 @@ def unique_speaker(session, config):
 
     table = session.query(backend.Speaker)
     for row in table:
-
         # TODO: this logic should go away once Cree data is updated and be replaced with:
         # t = (row.name, row.speaker_label, row.birthdate)
         # see:
