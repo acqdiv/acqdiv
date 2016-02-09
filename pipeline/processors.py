@@ -78,6 +78,7 @@ class SessionProcessor(object):
         for k, v in session_metadata.items():
             if k in self.config['session_labels'].keys():
                 d[self.config['session_labels'][k]] = v
+
         # SM: someday we could clean this up across ini files
         d['source_id'] = self.filename
         d['language'] = self.language
@@ -92,19 +93,10 @@ class SessionProcessor(object):
             for k, v in speaker.items():
                 if k in self.config['speaker_labels'].keys():
                     d[self.config['speaker_labels'][k]] = v
+            # TODO: move this post processing (before the age, etc.) if it improves performance
+            d['corpus'] = self.corpus
+            d['language'] = self.language
             self.session.speakers.append(Speaker(**d))
-
-            # TODO: check this
-            #if 'Non_Human' in d['role_raw']:
-            #    print(d)
-
-            """ WHAT IS THIS?
-            if 'Non_Human' in d['role_raw']:
-                continue
-            else:
-                self.speaker_entries.append(Speaker(**d))
-            """
-            # self.speaker_entries.append(Speaker(**d))
 
         """
         # Begin CHATXML or Toolbox body parsing
@@ -123,7 +115,10 @@ class SessionProcessor(object):
 
                 u = Utterance(**utterance)
 
+                # Deal with Indonesian...
+
                 # In Chintang the number of words may be longer than the number of morphemes -- error handling
+                # print("words:", words)
                 if len(words) > len(morphemes):
                     logger.info("There are more words than morphemes in %s", utterance['source_id'])
                     continue
@@ -135,7 +130,7 @@ class SessionProcessor(object):
                     words[i]['language'] = self.language
 
                     word = Word(**words[i])
-                    # is it cheaper to append a list here?
+                    # TODO: is it cheaper to append a list here?
                     word = Word(**words[i])
                     u.words.append(word)
                     self.session.words.append(word)
@@ -150,6 +145,7 @@ class SessionProcessor(object):
                         word.morphemes.append(morpheme)
                         u.morphemes.append(morpheme)
                         self.session.morphemes.append(morpheme)
+
                 self.session.utterances.append(u)
 
         """

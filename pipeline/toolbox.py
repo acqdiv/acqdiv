@@ -2,6 +2,7 @@
 """ Parser for Toolbox files for the Russian, Chintang and Indonesian corpora
 """
 
+import sys
 import re
 import mmap
 import logging
@@ -303,14 +304,16 @@ class ToolboxFile(object):
 
         # Russian specific morpheme inference
         if self.config['corpus']['corpus'] == "Russian":
+
             if 'morpheme' in utterance.keys():
                 # Remove punctuation from morphemes
                 morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\-\?\+\/]', '', utterance['morpheme'])
                 morphemes_cleaned = re.sub('xxx?|www', '???', morphemes_cleaned)
-                morphemes = morphemes_cleaned.split()
+                morphemes_split = morphemes_cleaned.split()
+                morphemes = [morphemes_split[i:i+1] for i in range(0, len(morphemes_split), 1)] # make list of lists
 
             if 'pos_raw' in utterance.keys():
-                # Get pos and gloss, see:
+                # Get pos and gloss in Russian, see:
                 # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1751-L1762)
 
                 # Remove PUNCT pos
@@ -342,21 +345,34 @@ class ToolboxFile(object):
                         if match_gloss_pos:
                             poses.append(re.sub('xxx?', '???', match_gloss_pos.group(1)))
                             glosses.append(re.sub('xxx?', '???', match_gloss_pos.group(2)))
+
+                # Make list of lists to follow the structure of the other languages
+                poses = [poses[i:i+1] for i in range(0, len(poses), 1)]
+                glosses = [glosses[i:i+1] for i in range(0, len(glosses), 1)]
+
             else:
                 warnings.append('not glossed')
 
         # Indonesian specific morpheme inference stuff
         elif self.config['corpus']['corpus'] == "Indonesian":
             if 'morpheme' in utterance.keys():
-                # remove punctuation from morphemes
+                # TODO: move this to post-processing?
+                # Remove punctuation from morphemes
                 morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterance['morpheme'])
                 morphemes_cleaned = re.sub('xxx?|www', '???', morphemes_cleaned)
-                morphemes = morphemes_cleaned.split()
+                morphemes_split = morphemes_cleaned.split()
+                morphemes = [morphemes_split[i:i+1] for i in range(0, len(morphemes_split), 1)]
+                # print("morphemes:", morphemes)
 
             if 'gloss_raw' in utterance.keys():
+                # TODO: move this to post-processing?
                 glosses_Indonesian = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterance['gloss_raw'])
                 glosses_Indonesian = re.sub('xxx?|www', '???', glosses_Indonesian)
-                glosses = glosses_Indonesian.split()
+                glosses_split = glosses_Indonesian.split()
+                glosses = [glosses_split[i:i+1] for i in range(0, len(glosses_split), 1)]
+                # There are no POS in Indonesian, so we populate empty data that becomes NULL in the database.
+                poses = [[] for i in range(0, len(glosses_split), 1)]
+
             else:
                 warnings.append('not glossed')
 
@@ -366,6 +382,7 @@ class ToolboxFile(object):
                 # Remove non-linguistic punctuation from morphemes
                 morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterance['morpheme'])
 
+                # TODO: this should go to post-processing
                 # Replace pos automatically tagged "***" (fail) with "???" (unknown)
                 morphemes_cleaned = re.sub('\*\*\*', '???', morphemes_cleaned)
 
@@ -377,7 +394,6 @@ class ToolboxFile(object):
                 word_boundaries = re.split(self.chintang_word_boundary, morphemes_cleaned)
                 for word in word_boundaries:
                     morphemes.append(word.split())
-                # print("morphemes:", morphemes)
             else:
                 warnings.append('no morpheme tier')
 
@@ -385,7 +401,6 @@ class ToolboxFile(object):
                 word_boundaries = re.split(self.chintang_word_boundary, utterance['gloss_raw'])
                 for word in word_boundaries:
                     glosses.append(word.split())
-                # print("glosses:", glosses)
             else:
                 warnings.append('not glossed')
 
@@ -393,28 +408,29 @@ class ToolboxFile(object):
                 word_boundaries = re.split(self.chintang_word_boundary, utterance['pos_raw'])
                 for word in word_boundaries:
                     poses.append(word.split())
-                # print("poses:", poses)
             else:
                 warnings.append('pos missing')
 
-            # TODO: log this stuff
-            if len(morphemes) == len(glosses) == len(poses):
-                # Loop over the "words" to create nested lists of morphemes
-                # Note this will return mismatched words-to-morphemes if the input tiers are wrong (but those errors are logged)
-                for i in range(0, len(morphemes)):
-                    l = []
-                    # for (morph, gloss, pos, warning) in zip_longest(morphemes[i], glosses[i], poses[i], warnings[i]):
-                    for (morph, gloss, pos) in zip_longest(morphemes[i], glosses[i], poses[i]):
-                        d = {}
-                        d['morpheme'] = morph
-                        d['gloss_raw'] = gloss
-                        d['pos_raw'] = pos
-                        # d['warning'] = warning
-                        l.append(d)
-                    result.append(l)
-                # print()
-            else:
-                logging.info("Length of morphemes, glosses, poses don't match:" + utterance['source_id'])
+        else:
+            raise TypeError("Corpus format is not supported by this parser.")
+
+        # Do the morphemes data structure processing
+        if len(morphemes) == len(glosses) == len(poses):
+            # Here we Loop over the words to create nested lists of morphemes for potential one-to-many mappings
+            # Note this will log of the input tiers are wrong, i.e. not the same length
+            for i in range(0, len(morphemes)):
+                l = []
+                for (morph, gloss, pos) in zip_longest(morphemes[i], glosses[i], poses[i]):
+                    d = {}
+                    d['morpheme'] = morph
+                    d['gloss_raw'] = gloss
+                    d['pos_raw'] = pos
+                    # d['warning'] = warning
+                    l.append(d)
+                result.append(l)
+        else:
+            # TODO: log this stuff!
+            logging.info("Length of morphemes, glosses, poses don't match:" + utterance['source_id'])
         return result
 
     def make_rec(self, data):
