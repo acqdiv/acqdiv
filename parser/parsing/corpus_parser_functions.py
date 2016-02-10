@@ -1188,7 +1188,7 @@ def parse_xml(file_name, corpus_name):
                 morphology.text = re.sub('&amp;', '.', morphology.text) # joins glosses
                 morphology.text = re.sub('\+', '_', morphology.text) # marks word number mismatches between orthography and morphology (but is less frequent than "_")
                 morphology.text = re.sub('([A-Z]\\S*):\\s+', '\\1', morphology.text) # POS tags gone astray: join with following word
-                morphology.text = re.sub('([^\|]+)\|([^\|]+)\|', '\\1/\\2|', morphology.text) # double POS tags: replace "|" by "/"
+                morphology.text = re.sub('(\S+?)\|(\S+?)\|', '\\1/\\2|', morphology.text) # double POS tags: replace "|" by "/"
                                 
                 # split mor tier into words, reset counter to -1
                 words = re.split('\\s+',morphology.text)
@@ -1226,7 +1226,7 @@ def parse_xml(file_name, corpus_name):
                         (mor_w1,mor_w2) = (complex_mor.group(1),complex_mor.group(2))
                         
                         # sometimes the part after the "_" has its own POS tag and/or suffixes. Linguistically it would be better to treat these
-                        # cases as two words, but that would require further messing with <w>, so for the time being we remote the additional 
+                        # cases as two words, but that would require further messing with <w>, so for the time being we remove the additional 
                         # POS tags and treat the whole thing as one word
                         # Note: there is a handful of cases (~10) where the mor word consists of three words. These are presently ignored (i.e. treated as if they were two words, e.g. Tom_ve_Jerry -> Tom_ve, Jerry).                        
                         if re.search('\|', mor_w2) or (re.search('\-', mor_w1) and re.search('\-', mor_w2)):
