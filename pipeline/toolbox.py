@@ -83,6 +83,7 @@ class ToolboxFile(object):
 
                     # Skip the first rows that contain metadata information:
                     # https://github.com/uzling/acqdiv/issues/154
+                    # TODO: is the utterance clean-up here redundant given the same regexes in get_morphemes()?
                     if 'utterance_raw' in utterance.keys() and not utterance['utterance_raw'] is None:
                         # https://github.com/uzling/acqdiv/issues/379
                         if not utterance['utterance_raw'].startswith('@'):
@@ -98,13 +99,15 @@ class ToolboxFile(object):
                             elif self.config['corpus']['corpus'] == 'Russian':
                                 try:
                                     utterance['sentence_type'] = self.get_sentence_type(utterance['utterance_raw'])
-                                    utterance['utterance_raw'] = re.sub('xxx?|www', '???', utterance['utterance_raw'])
-                                    utterance['pos_raw'] = re.sub('xxx?|www', '???', utterance['pos_raw'])
+                                    utterance['utterance_raw'] = None if utterance['utterance_raw'] is None else re.sub('xxx?|www', '???', utterance['utterance_raw'])
+                                    utterance['pos_raw'] = None if utterance['pos_raw'] is None else re.sub('xxx?|www', '???', utterance['pos_raw'])
+                                    # TODO: log the None data...
                                 except KeyError:
                                     continue
                             else:
                                 utterance['sentence_type'] = self.get_sentence_type(utterance['utterance_raw'])
 
+                            print(utterance)
                             utterance['utterance'] = self.clean_utterance(utterance['utterance_raw'])
                             utterance['warning'] = self.get_warnings(utterance['utterance_raw'])
 
@@ -316,8 +319,10 @@ class ToolboxFile(object):
                 # Get pos and gloss in Russian, see:
                 # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1751-L1762)
 
-                # Remove PUNCT pos
-                pos_cleaned = utterance['pos_raw'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
+                # Remove PUNCT in POS; if the POS in input data is missing, insert empty list for processing
+                # TODO: log it
+                pos_cleaned = [] if utterance['pos_raw'] is None else utterance['pos_raw'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
+
 
                 # The Russian tier \mor contains both glosses and POS, separated by "-" or ":".
                 # Method for distinguishing and extracting them:
