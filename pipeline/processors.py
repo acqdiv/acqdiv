@@ -148,7 +148,6 @@ class SessionProcessor(object):
 
                 self.session.utterances.append(u)
 
-        """
         # TODO: this will be replaced with CHAT XML parsing
         elif self.format == "JSON":
             for utterance, words, morphemes in self.parser.next_utterance():
@@ -178,7 +177,20 @@ class SessionProcessor(object):
                     self.morphemes.append(Morpheme(**morpheme))
 
         elif self.format == "ChatXML":
-            for raw_u, raw_words, raw_morphemes in self.parser.next_utterance():
+            # rewrite me!
+            for utterance, raw_words, raw_morphemes in self.parser.next_utterance():
+                print(utterance)
+                print(raw_words)
+                print(raw_morphemes)
+
+                # Here the revamped FK insertion
+                utterance['session_id_fk'] = self.filename
+                utterance['corpus'] = self.corpus
+                utterance['language'] = self.language
+                u = Utterance(**utterance)
+
+                sys.exit(1)
+
                 utterance = {}
                 for k in raw_u:
                     if k in self.config['json_mappings_utterance']:
@@ -231,7 +243,6 @@ class SessionProcessor(object):
                             pass
         else:
             raise Exception("Error: unknown corpus format!")
-        """
 
     def commit(self):
         """ Commits the dictionaries returned from parsing to the database.
