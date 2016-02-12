@@ -96,7 +96,7 @@ class ToolboxFile(object):
                                 try:
                                     utterances['sentence_type'] = self.get_sentence_type(utterances['utterance_raw'])
                                     utterances['utterance_raw'] = re.sub('xxx?|www', '???', utterances['utterance_raw'])
-                                    utterances['pos_raw'] = re.sub('xxx?|www', '???', utterances['pos_raw'])
+                                    utterances['pos_raw'] = None if utterances['pos_raw'] is None else re.sub('xxx?|www', '???', utterances['pos_raw'])
                                 except KeyError:
                                     continue
                             else:
@@ -304,7 +304,7 @@ class ToolboxFile(object):
         if self.config['corpus']['corpus'] == "Russian":
             if 'pos_raw' in utterances.keys():
                 # remove PUNCT pos
-                pos_cleaned = utterances['pos_raw'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
+                pos_cleaned = [] if utterances['pos_raw'] is None else utterances['pos_raw'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
 
                 # get pos and gloss, see:
                 # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1751-L1762)
@@ -396,7 +396,7 @@ class ToolboxFile(object):
                     
                 morphemes = morphemes_Chintang.split()
                 morphemes_targets = morphemes_target_Chintang.split()
-                glosses_targets = glosses_Chintang.split()
+                glosses_targets = [] if glosses_Chintang is None else glosses_Chintang.split()
                 pos_targets = pos_Chintang.split()
                 morphemes_target_counter = 0
                 
