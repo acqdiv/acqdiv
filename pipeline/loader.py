@@ -30,7 +30,7 @@ if __name__ == "__main__":
         update_age(cfg, engine)
         unify_timestamps(cfg, engine)
         unify_glosses(cfg, engine)
-        unify_gender(cfg,engine)
+        unify_gender(cfg, engine)
         
         if config == 'Indonesian.ini':
             unify_indonesian_labels(cfg, engine)
