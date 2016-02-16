@@ -16,7 +16,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 
-def db_connect(path='sqlite:///acqdiv.sqlite3'):
+def db_connect(path):
     """ Performs database connection.
 
     We can add a database settings in settings.py, e.g. for postgres: return create_engine(URL(**settings.DATABASE))
