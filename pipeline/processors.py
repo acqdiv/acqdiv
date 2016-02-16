@@ -271,16 +271,23 @@ class SessionProcessor(object):
                     self.words.append(Word(**word))
 
                 for mword in raw_morphemes:
-                    for morpheme in mword:
+                    for raw_morpheme in mword:
+                        morpheme = {}
                         try:
-                            morpheme['session_id_fk'] = self.filename
-                            morpheme['utterance_id_fk'] = utterance['utterance_id']
-                            morpheme['corpus'] = self.corpus
-                            morpheme['language'] = self.language
-                            morpheme['type'] = self.morpheme_type
+                            for k in raw_morpheme:
+                                if k in self.config['json_mappings_morphemes']:
+                                    label = self.config['json_mappings_morphemes'][k]
+                                    morpheme[label] = raw_morpheme[k]
+                                else:
+                                    morpheme[k] = raw_morpheme[k]
+                                morpheme['session_id_fk'] = self.filename
+                                morpheme['utterance_id_fk'] = utterance['utterance_id']
+                                morpheme['corpus'] = self.corpus
+                                morpheme['language'] = self.language
+                                morpheme['type'] = self.morpheme_type
                             self.morphemes.append(Morpheme(**morpheme))
-                        except TypeError:
-                            pass
+                        except TypeError as t:
+                            print(("TypeError! in " + self.filename + " morpheme: " + str(t)),file=sys.stderr)
         else:
             raise Exception("Error: unknown corpus format!")
 

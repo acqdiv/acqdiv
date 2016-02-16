@@ -34,7 +34,7 @@ class XMLParser(object):
               'phonetic_target':None,
               'translation':None,
               'comments':None,
-              'warnings':None          }
+              'warning':None          }
 
     mordict = { 'morphemes':None,
                 'gloss_raw':None,
@@ -100,9 +100,46 @@ class XMLParser(object):
             yield uwm
 
     def _get_words(self, u):
+        clean_u = self._clean_groups(u)
         raw_words = u.findall('.//w')
         words = self._word_inference(raw_words, u)
         return words
+
+    def _clean_groups(self, u):
+        groups = u.findall('.//g')
+        map(self._clean_repetitions, groups)
+        map(self._clean_retracings, groups)
+        map(self._clean_guesses, groups)
+        return u
+
+    def _clean_repetitions(self, group):
+        reps = group.find('r')
+        if reps:
+            ws = group.findall('.//w')
+            for i in range(int(reps.attrib['times'])-1):
+                for w in words:
+                    group[len(ws)-1] = copy.deepcopy(w)
+
+    def _clean_retracings(self, group):
+        words = group.findall('.//w')
+        retracings = group.find('k[@type="retracing"]')
+        retracings_wc = group.find('k[@type="retracing with correction"]')
+        if (retracings is not None) or (retracings_wc is not None):
+            # we can't do checks for corpus name here so
+            # just use Turkish / MiiPro as default
+            # and override for miyata
+            for w in words: 
+                w.attrib['glossed'] = 'ahead'
+
+    def _clean_guesses(self, group):
+        target_guess = g.find('.//ga[@type="alternative"]')
+        if target_guess is not None:
+            words[0].attrib['target'] = target_guess.text
+
+        guesses = g.find('k[@type="best guess"]')
+        if guesses is not None:
+            for w in words:
+                w.attrib['transcribed'] = 'insecure'
 
     def _word_inference(self, words, u):
         new_words = []
@@ -110,7 +147,7 @@ class XMLParser(object):
             new_words.append(word.text)
         return new_words
 
-    def _morpheme_inference(self, morphstring):
+    def _morphology_inference(self, morphstring):
         return morphstring
 
     def _get_phonetic(self, u):
