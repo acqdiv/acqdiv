@@ -199,7 +199,7 @@ class CreeParser(XMLParser):
 
         if morph['morphemes'] == '' and morph['gloss_raw'
                 ] == '' and morph['pos_raw'] == '':
-            u['utterance']['warnings'] = "not glossed"
+            u['utterance']['warning'] = "not glossed"
             return morph
 
         for tier in tiers:
@@ -213,11 +213,11 @@ class CreeParser(XMLParser):
                 if len(words) != len(u['words']):
                     # log error
                     #print("Alignment error! Oh no!", file=sys.stderr)
-                    if u['utterance']['warnings'] != None:
-                        u['utterance']['warnings'] += ("broken alignment: " 
+                    if u['utterance']['warning'] != None:
+                        u['utterance']['warning'] += ("broken alignment: " 
                             "{bad_tier}".format(bad_tier=tier))
                     else:
-                        u['utterance']['warnings'] = ("broken alignment: "
+                        u['utterance']['warning'] = ("broken alignment: "
                             "{bad_tier}".format(bad_tier=tier))
 
                     morph[tier] = []
@@ -238,10 +238,10 @@ class CreeParser(XMLParser):
         #            itertools.zip_longest(morph['morphemes'], 
         #            morph['gloss_raw'], morph['pos_raw']))]
 
-        if u['utterance']['warnings'] == (
+        if u['utterance']['warning'] == (
         "broken alignment: morphemesbroken alignment: "
         "gloss_rawbroken alignment: pos_raw"):
-            u['utterance']['warnings'] = "not glossed"
+            u['utterance']['warning'] = "not glossed"
 
         out = []
         for mt,gt,pt in itertools.zip_longest(morph['morphemes'],
