@@ -6,20 +6,23 @@ from processors import *
 from postprocessor import *
 from parsers import *
 from database_backend import *
-import time
 
-if __name__ == "__main__":
-    start_time = time.time()
+
+def main(args):
     engine = db_connect()
     create_tables(engine)
 
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
                 'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
 
+    if args.t:
+        print("Testing mode")
+
     for config in configs:
         # Parse the config file and call the sessions processor
         cfg = CorpusConfigParser()
         cfg.read(config)
+        cfg.read("ini/"+config)
 
         # Process by parsing the files and adding extracted data to the db
         c = CorpusProcessor(cfg, engine)
@@ -31,25 +34,40 @@ if __name__ == "__main__":
         unify_timestamps(cfg, engine)
         unify_glosses(cfg, engine)
         unify_gender(cfg, engine)
-        
+
         if config == 'Indonesian.ini':
             unify_indonesian_labels(cfg, engine)
             clean_tlbx_pos_morphemes(cfg, engine)
             clean_utterances_table(cfg, engine)
+
         if config == 'Chintang.ini':
             extract_chintang_addressee(cfg, engine)
             clean_tlbx_pos_morphemes(cfg, engine)
             clean_utterances_table(cfg, engine)
+
         if config == 'Russian.ini':
             clean_utterances_table(cfg, engine)
 
     print("Creating role entries...")
-    unify_roles(cfg,engine)
+    unify_roles(cfg, engine)
 
     print("Creating macrorole entries...")
-    macrorole(cfg,engine)
+    macrorole(cfg, engine)
 
     print("Creating unique speaker table...")
-    unique_speaker(cfg,engine)
+    unique_speaker(cfg, engine)
+
+if __name__ == "__main__":
+    import time
+    import sys
+    import argparse
+
+    start_time = time.time()
+
+    p = argparse.ArgumentParser()
+    p.add_argument('-t', action='store_true')
+    args = p.parse_args()
+
+    main(args)
 
     print("--- %s seconds ---" % (time.time() - start_time))
