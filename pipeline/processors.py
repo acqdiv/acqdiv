@@ -1,32 +1,33 @@
-""" Processors for acqdiv corpora
+""" Corpus and session processors to turn ACQDIV raw input corpora (Toolbox, ChatXML) into ACQDIV-DB
 """
 
-import itertools as it
-import re
 import collections
+import itertools as it
 from sqlalchemy.orm import sessionmaker
+
 from parsers import *
 from database_backend import *
 
 
 class CorpusProcessor(object):
-    """ Handler for processing each session file in particular corpus
+    """ Handler for processing each session file in particular corpus.
     """
     def __init__(self, cfg, engine):
-        """ Initializes a CorpusProcessor object
+        """ Initializes a CorpusProcessor object then calls a SessionProcessor for each session input file.
 
         Args:
-            cfg: a corpus config file
+            cfg: CorpusConfigParser
             engine: sqlalchemy database engine
         """
         self.cfg = cfg
         self.engine = engine
+        # Create the correct SessionParser (e.g. ToolboxParser, XMLParser)
         self.parser_factory = SessionParser.create_parser_factory(self.cfg)
 
     def process_corpus(self):
-        """ Creates a SessionProcessor given a config and input file.
+        """ Loops all raw corpus session input files and processes each and the commits the data to the database.
         """
-        for session_file in self.cfg.session_files:
+        for session_file in glob.glob(self.cfg['paths']['sessions']):
             print("Processing:", session_file)
             s = SessionProcessor(self.cfg, session_file, 
                     self.parser_factory, self.engine)
@@ -39,27 +40,32 @@ class SessionProcessor(object):
         with the ORM backend to push data to it.
     """
     def __init__(self, cfg, file_path, parser_factory, engine):
-        """ Init parser with corpus config. Pass in file path to process. Create sqla session.
+        """ Init parser with corpus config, file path, a parser factory and a database engine.
 
         Args:
-            cfg: a corpus config file
-            file_path: path to input file
-            engine: sqlalchemy database engine
+            cfg: CorpusConfigParser
+            file_path: path to raw session input file
+            parser_factory: SessionParser (given
+            engine: SQLAlchemy database engine
         """
         self.config = cfg
         self.file_path = file_path
         self.parser_factory = parser_factory
+
+        # TODO: do we need these variables?
         self.language = self.config['corpus']['language']
         self.corpus = self.config['corpus']['corpus']
         self.format = self.config['corpus']['format']
         self.morpheme_type = self.config['morphemes']['type']
+
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
         self.Session = sessionmaker(bind=engine)
 
     def process_session(self):
         """ Process function for each file; creates dictionaries and inserts them into the database via sqla
+
+            Note: ACQDIV corpus config files contain maps from raw input tier labels -> ACQDIV-DB column names.
         """
-        # Config contains maps from corpus-specific labels -> database column names
         self.parser = self.parser_factory(self.file_path)
 
         # Get session metadata (via labels defined in corpus config)
@@ -284,7 +290,8 @@ class SessionProcessor(object):
                                 morpheme['type'] = self.morpheme_type
                             self.morphemes.append(Morpheme(**morpheme))
                         except TypeError as t:
-                            print(("TypeError! in " + self.filename + " morpheme: " + str(t)),file=sys.stderr)
+                            pass
+                            # print(("TypeError! in " + self.filename + " morpheme: " + str(t)),file=sys.stderr)
         else:
             raise Exception("Error: unknown corpus format!")
 
