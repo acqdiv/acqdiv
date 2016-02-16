@@ -1,5 +1,4 @@
 """ Entry point for loading acqdiv corpora into the database
-    TODO: incorporate into pyacqdiv
 """
 
 from processors import *
@@ -9,26 +8,33 @@ from database_backend import *
 
 
 def main(args):
-    engine = db_connect()
+    """ Main processing loop; for each corpus config file process all session recordings and load database.
+    """
+
+    if args.t:
+        print("Testing mode")
+        engine = db_connect('sqlite:///../database/acqdiv.sqlite3')
     create_tables(engine)
 
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
                 'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
 
-    if args.t:
-        print("Testing mode")
-
+    # Parse the config file and call the sessions processor
     for config in configs:
-        # Parse the config file and call the sessions processor
         cfg = CorpusConfigParser()
         cfg.read(config)
-        cfg.read("ini/"+config)
+        # cfg.read("ini/"+config)
+
+        # If test mode use test corpora
+        if args.t:
+            cfg['paths']['path'] = "tests/corpora"
 
         # Process by parsing the files and adding extracted data to the db
         c = CorpusProcessor(cfg, engine)
         c.process_corpus()
 
-        # Do the postprocessing
+        # Do some postprocessing
+        # TODO: test if moving this outside of the loop is faster
         print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
         update_age(cfg, engine)
         unify_timestamps(cfg, engine)

@@ -16,15 +16,17 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 
-def db_connect():
+def db_connect(path='sqlite:///acqdiv.sqlite3'):
     """ Performs database connection.
 
     We can add a database settings in settings.py, e.g. for postgres: return create_engine(URL(**settings.DATABASE))
 
+    path : str
+
     Returns:
         sqlalchemy engine instance
     """
-    return create_engine('sqlite:///_acqdiv.sqlite3', echo=False)
+    return create_engine(path, echo=False)
 
 
 def create_tables(engine):

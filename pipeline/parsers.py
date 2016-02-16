@@ -7,6 +7,7 @@ import glob
 import json
 import collections
 import configparser
+from configparser import BasicInterpolation
 
 from metadata import Imdi, Chat
 from toolbox import ToolboxFile
@@ -22,7 +23,7 @@ class CorpusConfigParser(configparser.ConfigParser):
     def __init__(self):
         """ We subclass Python's default config parser and use our own delimiter
         """
-        super().__init__(delimiters=["=="])
+        super().__init__(delimiters=["=="], interpolation=BasicInterpolation())
 
     def read(self, filenames, encoding=None):
         """ File level initializations
