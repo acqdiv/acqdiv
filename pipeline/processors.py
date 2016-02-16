@@ -21,13 +21,15 @@ class CorpusProcessor(object):
         """
         self.cfg = cfg
         self.engine = engine
+        self.parser_factory = SessionParser.create_parser_factory(self.cfg)
 
     def process_corpus(self):
         """ Creates a SessionProcessor given a config and input file.
         """
         for session_file in self.cfg.session_files:
             print("Processing:", session_file)
-            s = SessionProcessor(self.cfg, session_file, self.engine)
+            s = SessionProcessor(self.cfg, session_file, 
+                    self.parser_factory, self.engine)
             s.process_session()
             s.commit()
 
@@ -36,7 +38,7 @@ class SessionProcessor(object):
     """ SessionProcessor invokes a parser to get the extracted data, and then interacts
         with the ORM backend to push data to it.
     """
-    def __init__(self, cfg, file_path, engine):
+    def __init__(self, cfg, file_path, parser_factory, engine):
         """ Init parser with corpus config. Pass in file path to process. Create sqla session.
 
         Args:
@@ -46,6 +48,7 @@ class SessionProcessor(object):
         """
         self.config = cfg
         self.file_path = file_path
+        self.parser_factory = parser_factory
         self.language = self.config['corpus']['language']
         self.corpus = self.config['corpus']['corpus']
         self.format = self.config['corpus']['format']
@@ -53,12 +56,11 @@ class SessionProcessor(object):
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
         self.Session = sessionmaker(bind=engine)
 
-
     def process_session(self):
         """ Process function for each file; creates dictionaries and inserts them into the database via sqla
         """
         # Config contains maps from corpus-specific labels -> database column names
-        self.parser = SessionParser.create_parser(self.config, self.file_path)
+        self.parser = self.parser_factory(self.file_path)
 
         # Get session metadata (via labels defined in corpus config)
         session_metadata = self.parser.get_session_metadata()
@@ -226,6 +228,66 @@ class SessionProcessor(object):
                     morpheme['language'] = self.language
                     morpheme['type'] = self.morpheme_type
                     self.morphemes.append(Morpheme(**morpheme))
+
+        elif self.format == "ChatXML":
+            for raw_u, raw_words, raw_morphemes in self.parser.next_utterance():
+                utterance = {}
+                for k in raw_u:
+                    if k in self.config['json_mappings_utterance']:
+                        label = self.config['json_mappings_utterance'][k]
+                        utterance[label] = raw_u[k]
+                    else:
+                        utterance[k] = raw_u[k]
+
+                utterance['session_id_fk'] = self.filename
+                utterance['corpus'] = self.corpus
+                utterance['language'] = self.language
+                del utterance['phonetic_target']
+                del utterance['phonetic']
+                self.utterances.append(Utterance(**utterance))
+
+                for raw_word in raw_words:
+                    word = {}
+                    for k in raw_word:
+                        if k in self.config['json_mappings_words']:
+                            label = self.config['json_mappings_words'][k]
+                            word[label] = raw_word[k]
+                        else:
+                            word[k] = raw_word[k]
+                    word['word'] = word[self.config['json_mappings_words']
+                                            ['word']]
+                    word['session_id_fk'] = self.filename
+                    word['utterance_id_fk'] = utterance['utterance_id']
+                    word['corpus'] = self.corpus
+                    word['language'] = self.language
+                    # JSON files have utterance and word level warnings, but sometimes words are misaligned and
+                    # the warning is at the utterance level -- give the user some love and tell them where to look
+                    # if the word is returned NULL due to misalignment
+                    if not 'word' in word:
+                        word['warning'] = ("See warning in Utterance table at: "
+                              "{}, {} ".format(word['session_id_fk'], 
+                                    word['utterance_id_fk']))
+                    del word['word_id']
+                    self.words.append(Word(**word))
+
+                for mword in raw_morphemes:
+                    for raw_morpheme in mword:
+                        morpheme = {}
+                        try:
+                            for k in raw_morpheme:
+                                if k in self.config['json_mappings_morphemes']:
+                                    label = self.config['json_mappings_morphemes'][k]
+                                    morpheme[label] = raw_morpheme[k]
+                                else:
+                                    morpheme[k] = raw_morpheme[k]
+                                morpheme['session_id_fk'] = self.filename
+                                morpheme['utterance_id_fk'] = utterance['utterance_id']
+                                morpheme['corpus'] = self.corpus
+                                morpheme['language'] = self.language
+                                morpheme['type'] = self.morpheme_type
+                            self.morphemes.append(Morpheme(**morpheme))
+                        except TypeError as t:
+                            print(("TypeError! in " + self.filename + " morpheme: " + str(t)),file=sys.stderr)
         else:
             raise Exception("Error: unknown corpus format!")
 
