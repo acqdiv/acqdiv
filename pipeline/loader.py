@@ -28,8 +28,7 @@ def main(args):
     # Parse the config file and call the sessions processor
     for config in configs:
         cfg = CorpusConfigParser()
-        cfg.read(config)
-        # cfg.read("ini/"+config)
+        cfg.read("ini/"+config)
 
         # If test mode use test corpora path by overwriting cfg['paths']['path'].
         if args.t:
