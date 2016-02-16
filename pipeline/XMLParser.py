@@ -103,8 +103,44 @@ class XMLParser(object):
             uwm['utterance'] = d
 
             uwm['morphemes'] = self._morphology_inference(uwm)
+            uwm['morphemes'] = self._clean_morphemes(uwm['morphemes'])
+
+            uwm['words'] = self._clean_words(uwm['words'])
+            uwm['utterance']['utterance_raw'] = ' '.join(
+                    [w['word'] for w in uwm['words']])
+
 
             yield uwm
+
+    def _clean_words(self, words):
+        new_words = []
+        for raw_word in words:
+            word = {}
+            for k in raw_word:
+                if k in self.cfg['json_mappings_words']:
+                    label = self.cfg['json_mappings_words'][k]
+                    word[label] = raw_word[k]
+                else:
+                    word[k] = raw_word[k]
+            word['word'] = word[self.cfg['json_mappings_words']['word']]
+            new_words.append(word)
+        return new_words
+
+    def _clean_morphemes(self, mors):
+        new_mors = []
+        for mword in mors:
+            new_mword = []
+            for raw_morpheme in mword:
+                morpheme = {}
+                for k in raw_morpheme:
+                    if k in self.cfg['json_mappings_morphemes']:
+                        label = self.cfg['json_mappings_morphemes'][k]
+                        morpheme[label] = raw_morpheme[k]
+                    else:
+                        morpheme[k] = raw_morpheme[k]
+                new_mword.append(morpheme)
+            new_mors.append(new_mword)
+        return new_mors
 
     def _get_words(self, u):
         u = self._clean_groups(u)
@@ -139,6 +175,7 @@ class XMLParser(object):
                 w.attrib['glossed'] = 'ahead'
 
     def _clean_guesses(self, group):
+        words = group.findall('.//w')
         target_guess = group.find('.//ga[@type="alternative"]')
         if target_guess is not None:
             words[0].attrib['target'] = target_guess.text
@@ -235,13 +272,17 @@ class XMLParser(object):
         # <g><w>burred<replacement><w>word</w></replacement></w></g>
         # these require an additional loop over <w> in <u>,
         # because there may be shortenings within replacements
-        for i in range(0, len(words)):
+        js = itertools.count()
+        for i in js:
+            if i >= len(words):
+                break
             r = words[i].find('replacement')
             if r is not None:
                 rep_words = r.findall('w')
+                rep_len = len(rep_words)
 
                 # go through words in replacement
-                for j in range(0, len(rep_words)):
+                for j in range(rep_len):
                     # check for morphology
                     mor = rep_words[j].find('mor')
                     # first word: transfer content 
@@ -264,6 +305,8 @@ class XMLParser(object):
                 #words[i].attrib['target'] = '_'.join(rep_w.attrib['target'] 
                 #        for rep_w in r.findall('w'))
                 words[i].remove(r)
+                for k in range(1,rep_len+1):
+                    del words[i+k]
         return words
 
     def _morphology_inference(self, u):

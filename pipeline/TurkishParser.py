@@ -133,7 +133,7 @@ class TurkishParser(XMLParser):
                 # (1) repetitions: get morphology from preceding word 
                 if 'repeat' in  u['words'][i]['warning']:
                     if i != 0:
-                        morphemes.insert(i, morphemes[i-1])
+                        morphemes.insert(i, morphemes[i-1].copy())
                 
                 # (2) retracings: get morphology from any matching word further ahead
                 if 'search ahead' in u['words'][i]['warning']:
@@ -142,11 +142,19 @@ class TurkishParser(XMLParser):
                         # corresponding target words: transfer morphology
                         if u['words'][j]['full_word_target'] == u['words'][i]['full_word_target']:
                             # transfer gloss from match to present word
-                            morphemes.insert(i, morphemes[j])
+                            try:
+                                morphemes.insert(i, morphemes[j].copy())
+                            except IndexError:
+                                print("Skipping unglossed retracing in file "
+                                        "{} utterance {} words {}, {}: "
+                                        "next word is unglossed".format(
+                                            self.sname, 
+                                            u['utterance']['utterance_id'], i, j))
+                                print(len(morphemes), len(u['words']))
                         # corresponding actual words: transfer morphology AND target word
                         elif u['words'][j]['full_word'] == u['words'][i]['full_word']:
                             # transfer gloss and target from match to present word
-                            morphemes.insert(i, morphemes[j])
+                            morphemes.insert(i, morphemes[j].copy())
                             u['words'][i]['full_word_target'] = u['words'][j]['full_word_target']
                     
                 #remove warning and delete key if empty
@@ -158,7 +166,7 @@ class TurkishParser(XMLParser):
         # EOF glosses for repetitions/retracings 
 
         # check alignment with words that were found in <w>
-        if length_morphology != len(u['words']):
+        if len(morphemes) != len(u['words']):
             u['utterance']['warning'] = 'broken alignment full_word : segments/glosses'
 
         # if there is no morphology, add warning to complete utterance
