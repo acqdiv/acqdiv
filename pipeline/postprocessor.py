@@ -1,4 +1,4 @@
-""" Post-processing processes on the corpora in the ACQDIV-DB
+""" Post-processing processes on the corpora in the ACQDIV-DB.
 """
 
 from sqlalchemy.orm import sessionmaker
@@ -30,7 +30,7 @@ def db_apply(func):
         then calls the function it wraps with the config and the session.
         Finally it closes the connection again.
 
-        Args:
+    Args:
             config: A configparser object. The config should be the contents of a corpus-specific .ini file.
             engine: A SQLalchemy engine object. This is the connection to the ACQDIV database.
         """
@@ -146,10 +146,8 @@ def update_imdi_age(session, config):
 
 @db_apply
 def update_age(session, config):
-    """Helper function for age unification.
-
-    Checks the config for the metadata format of the corpus,
-    then calls the appropriate function.
+    """Helper function for age unification. Checks the config for the metadata format of the corpus,
+        then calls the appropriate function.
 
     Args:
         session: SQLAlchemy session object.
@@ -161,45 +159,22 @@ def update_age(session, config):
         update_xml_age(session, config)
 
 
-@db_apply
-def apply_gloss_regexes(session, config):
-    """ Applies regex substitutions to the glosses of morphemes in the database.
-
-    Takes regexes specified in the config and applies them to all the morphemes belonging to the
-    current corpus.
+def unify_labels(config, engine):
+    """ Helper function for unifying glosses. Gloss replacement from the config files [glosses] and [pos]
+        is applied first. Then regex substitions (on [regex] section) are applied for Chintang and Japanese Miyata.
 
     Args:
         session: SQLAlchemy session object.
         config: CorpusConfigParser object.
     """
-    corpus_name = config["corpus"]["corpus"]
-    regexes = config["regex"].items() 
-    ssq = session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name)
-    for item in regexes:
-        pattern = re.compile(item[0][1:-1])
-        replacement = item[1][1:-1]
-        for row in ssq:
-            try:
-                if corpus_name == "Russian":
-                    row.gloss = re.sub(pattern, replacement, row.gloss_raw)
-                else:
-                    row.gloss = re.sub(pattern, replacement, row.gloss)
-            except TypeError:
-                continue
-            except Exception as e:
-                print("Error applying gloss regex {1} in {0}.ini: {2}"
-                        .format(corpus_name, item, e), file=sys.stderr)
+    _unify_labels(config, engine)
+    _unify_labels_regex(config, engine)
 
 
 @db_apply
-def unify_gloss_labels(session, config):
-    """Performs simple key-value substitution on morphological glosses in the database.
-
-    This function iterates through all morpheme rows belonging to the current corpus,
-    then searches for the gloss from the gloss_raw column in the "gloss" section of the config.
-
-    If the gloss is found, the gloss column is filled with the value from the config.
-    Otherwise, the raw gloss is carried over unchanged.
+def _unify_labels(session, config):
+    """Performs key-value substitutions for morphological glosses and parts-of-speech in the database. If no key is
+        defined in the corpus ini file, then None (NULL) is written to the database.
 
     Args:
         session: SQLAlchemy session object.
@@ -211,44 +186,34 @@ def unify_gloss_labels(session, config):
         row.pos = config['pos'].get(row.pos_raw, None)
         # TODO: Insert some debugging here if the labels are missing?
 
-    """
-    for row in session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name):
-        old_gloss = None
-        if corpus_name == "Russian":
-            old_gloss = row.gloss
-        else:
-            old_gloss = row.gloss_raw
-        try:
-            if old_gloss in config["gloss"]:
-                new_gloss = config["gloss"][old_gloss]
-                # TODO:
-                # this is a debug print to find out what is and isn't getting replaced
-                # we need to automate this
-                # print(old_gloss, new_gloss)
-                row.gloss = new_gloss
-            else:
-                row.gloss = old_gloss
-        except KeyError:
-            print("Error: .ini file for corpus {0} does not have gloss "
-            "replacement rules properly configured!"
-            .format(config["corpus"]["corpus"]), file=sys.stderr)
-            return
-    """
 
-def unify_glosses(config, engine):
-    """Helper function for unifying glosses.
-
-    For most corpora, the regexes must operate on glosses already substituted.
-    However, for Russian, the regex substitutions must occur first.
-    This function checks if the corpus name in the config is Russian or not
-    and applies the functions in the corresponding order.
+@db_apply
+def _unify_labels_regex(session, config):
+    """ Applies regex substitutions.
 
     Args:
         session: SQLAlchemy session object.
         config: CorpusConfigParser object.
     """
-    unify_gloss_labels(config, engine)
-    apply_gloss_regexes(config, engine)
+    if "regex" in config:
+        corpus_name = config["corpus"]["corpus"]
+        regexes = config["regex"].items()
+        ssq = session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name)
+        for item in regexes:
+            pattern = re.compile(item[0][1:-1])
+            replacement = item[1][1:-1]
+            for row in ssq:
+                try:
+                    if corpus_name == "Russian":
+                        row.gloss = re.sub(pattern, replacement, row.gloss_raw)
+                    else:
+                        row.gloss = re.sub(pattern, replacement, row.gloss)
+                except TypeError:
+                    continue
+                except Exception as e:
+                    print("Error applying gloss regex {1} in {0}.ini: {2}"
+                            .format(corpus_name, item, e), file=sys.stderr)
+
 
 @db_apply
 def unify_roles(session,config):
@@ -457,7 +422,7 @@ def unify_timestamps(session, config):
 def extract_chintang_addressee(session, config):
     """ Function that extracts addressee information for Chintang.
     
-        Args:
+    Args:
         session: SQLAlchemy session object.
         config: CorpusConfigParser object.
     """
@@ -480,13 +445,14 @@ def extract_chintang_addressee(session, config):
         except TypeError:
                 pass
 
+
 @db_apply
 def clean_tlbx_pos_morphemes(session, config):
     """ Function that cleans pos and morphemes in Chintang and Indonesian.
         It also cleans the morpheme (for Chintang and Russian) and gloss_raw (Indonesian) column in the utterances
         table because cleaning them within the Toolbox parser messes up the morphemes table.
 
-        Args:
+    Args:
         session: SQLAlchemy session object.
         config: CorpusConfigParser object.
     """
@@ -535,7 +501,7 @@ def clean_tlbx_pos_morphemes(session, config):
 def clean_utterances_table(session, config):
     """ Function that cleans *** and xx(x) from utterances table.
 
-        Args:
+    Args:
         session: SQLAlchemy session object.
         config: CorpusConfigParser object.
         """
@@ -573,36 +539,3 @@ def clean_utterances_table(session, config):
                 pass
             except TypeError:
                 pass
-
-
-if __name__ == "__main__":
-    start_time = time.time()
-    
-    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
-              'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
-    engine = backend.db_connect()
-    cfg = CorpusConfigParser()
-    for config in configs:
-        cfg.read(config)
-        print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
-        update_age(cfg, engine)
-        unify_timestamps(cfg, engine)
-        unify_glosses(cfg, engine)
-        unify_gender(cfg, engine)
-        if config == 'Chintang.ini':
-            extract_chintang_addressee(cfg, engine)
-            clean_tlbx_pos_morphemes(cfg, engine)
-            clean_utterances_table(cfg, engine)
-        if config == 'Indonesian.ini':
-            clean_tlbx_pos_morphemes(cfg, engine)
-            clean_utterances_table(cfg, engine)
-        if config == 'Russian.ini':
-            clean_utterances_table(cfg, engine)
-    #    if config == 'Indonesian.ini':
-    #        unify_indonesian_labels(cfg, engine)
-    #print("Creating Unique Speaker table...")
-    unify_roles(cfg, engine)
-    macrorole(cfg,engine)
-    unique_speaker(cfg, engine)
-        
-    print("--- %s seconds ---" % (time.time() - start_time))

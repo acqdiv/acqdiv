@@ -12,12 +12,12 @@ def main(args):
     """
     # If testing mode
     if args.t:
-        print("Testing mode; writing: acqdiv.sqlite3")
+        print("Writing test database to: acqdiv/pipeline/acacqdiv.sqlite3")
         print()
         engine = db_connect('sqlite:///acqdiv.sqlite3')
         create_tables(engine)
     else:
-        print("Writing to: acqdiv/database/acqdiv.sqlite3")
+        print("Writing database to: acqdiv/database/acqdiv.sqlite3")
         print()
         engine = db_connect('sqlite:///../database/acqdiv.sqlite3')
         create_tables(engine)
@@ -59,7 +59,7 @@ def main(args):
             clean_utterances_table(cfg, engine)
 
         # This seems to need to be applied after the clean_tlbx_pos_morphemes... which should be moved to the parser.
-        unify_glosses(cfg, engine)
+        unify_labels(cfg, engine)
 
     print("Creating role entries...")
     unify_roles(cfg, engine)
