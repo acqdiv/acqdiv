@@ -43,7 +43,6 @@ def main(args):
         print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
         update_age(cfg, engine)
         unify_timestamps(cfg, engine)
-        unify_glosses(cfg, engine)
         unify_gender(cfg, engine)
 
         if config == 'Indonesian.ini':
@@ -58,6 +57,9 @@ def main(args):
 
         if config == 'Russian.ini':
             clean_utterances_table(cfg, engine)
+
+        # This seems to need to be applied after the clean_tlbx_pos_morphemes... which should be moved to the parser.
+        unify_glosses(cfg, engine)
 
     print("Creating role entries...")
     unify_roles(cfg, engine)
