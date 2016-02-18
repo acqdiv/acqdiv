@@ -1,11 +1,13 @@
-""" Processors for raw corpora input to ACQDIV DB
+""" Corpus and session processors to turn ACQDIV raw input corpora (Toolbox, ChatXML) into ACQDIV-DB
 """
 
+import collections
 import itertools as it
 import re
 import collections
 import logging
 from sqlalchemy.orm import sessionmaker
+
 from parsers import *
 from database_backend import *
 import database_backend as db
@@ -21,23 +23,24 @@ logger.addHandler(handler)
 
 
 class CorpusProcessor(object):
-    """ Handler for processing each session file in particular corpus
+    """ Handler for processing each session file in particular corpus.
     """
     def __init__(self, cfg, engine):
-        """ Initializes a CorpusProcessor object
+        """ Initializes a CorpusProcessor object then calls a SessionProcessor for each session input file.
 
         Args:
-            cfg: a corpus config file
+            cfg: CorpusConfigParser
             engine: sqlalchemy database engine
         """
         self.cfg = cfg
         self.engine = engine
+        # Create the correct SessionParser (e.g. ToolboxParser, XMLParser)
         self.parser_factory = SessionParser.create_parser_factory(self.cfg)
 
     def process_corpus(self):
-        """ Creates a SessionProcessor given a config and input file.
+        """ Loops all raw corpus session input files and processes each and the commits the data to the database.
         """
-        for session_file in self.cfg.session_files:
+        for session_file in glob.glob(self.cfg['paths']['sessions']):
             print("Processing:", session_file)
             s = SessionProcessor(self.cfg, session_file, 
                     self.parser_factory, self.engine)
@@ -50,25 +53,31 @@ class SessionProcessor(object):
         with the SQLAlchemy ORM backend to push data to it.
     """
     def __init__(self, cfg, file_path, parser_factory, engine):
-        """ Init parser with a corpus-specific config that contains labels->database column name mappings,
+        """ Init parser with corpus config, file path, a parser factory and a database engine.
+
         Args:
-            cfg: a corpus config file
-            file_path: path to input file
-            engine: sqlalchemy database engine
+            cfg: CorpusConfigParser
+            file_path: path to raw session input file
+            parser_factory: SessionParser (given
+            engine: SQLAlchemy database engine
         """
         self.config = cfg
         self.file_path = file_path
         self.parser_factory = parser_factory
-        # factor this shit out
+
+        # TODO: do we need these variables?
         self.language = self.config['corpus']['language']
         self.corpus = self.config['corpus']['corpus']
         self.format = self.config['corpus']['format']
         self.morpheme_type = self.config['morphemes']['type']
+
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
         self.Session = sessionmaker(bind=engine)
 
     def process_session(self):
         """ Process function for each file; creates dictionaries and inserts them into the database via sqla
+
+            Note: ACQDIV corpus config files contain maps from raw input tier labels -> ACQDIV-DB column names.
         """
         self.parser = self.parser_factory(self.file_path)
 
@@ -86,6 +95,9 @@ class SessionProcessor(object):
 
         self.session = db.Session(**d)
 
+        # TODO: remove this when we're on XML
+        self.session_entry = Session(**d)
+
         # Get speaker metadata and populate the speakers table
         self.speaker_entries = []
         for speaker in self.parser.next_speaker():
@@ -98,13 +110,13 @@ class SessionProcessor(object):
             d['language'] = self.language
             self.session.speakers.append(Speaker(**d))
 
-        """
+
         # Begin CHATXML or Toolbox body parsing
         self.utterances = []
         self.words = []
         self.morphemes = []
         self.warnings = []
-        """
+
 
         if self.format == "Toolbox":
             # Get the sessions utterances, words and morphemes to populate those db tables
@@ -231,30 +243,54 @@ class SessionProcessor(object):
                     self.words.append(Word(**word))
 
                 for mword in raw_morphemes:
-                    for morpheme in mword:
+                    for raw_morpheme in mword:
+                        morpheme = {}
                         try:
-                            morpheme['session_id_fk'] = self.filename
-                            morpheme['utterance_id_fk'] = utterance['utterance_id']
-                            morpheme['corpus'] = self.corpus
-                            morpheme['language'] = self.language
-                            morpheme['type'] = self.morpheme_type
+                            for k in raw_morpheme:
+                                if k in self.config['json_mappings_morphemes']:
+                                    label = self.config['json_mappings_morphemes'][k]
+                                    morpheme[label] = raw_morpheme[k]
+                                else:
+                                    morpheme[k] = raw_morpheme[k]
+                                morpheme['session_id_fk'] = self.filename
+                                morpheme['utterance_id_fk'] = utterance['utterance_id']
+                                morpheme['corpus'] = self.corpus
+                                morpheme['language'] = self.language
+                                morpheme['type'] = self.morpheme_type
                             self.morphemes.append(Morpheme(**morpheme))
-                        except TypeError:
+                        except TypeError as t:
                             pass
+                            # print(("TypeError! in " + self.filename + " morpheme: " + str(t)),file=sys.stderr)
         else:
             raise Exception("Error: unknown corpus format!")
 
     def commit(self):
         """ Commits the dictionaries returned from parsing to the database.
         """
-        session = self.Session()
-
-        try:
-            session.add(self.session)
-            session.commit()
-        except:
-            # TODO: print some error message? log it?
-            session.rollback()
-            raise
-        finally:
-            session.close()
+        if self.config["corpus"]["format"] == "Toolbox":
+            session = self.Session()
+            try:
+                session.add(self.session)
+                session.commit()
+            except:
+                # TODO: print some error message? log it?
+                session.rollback()
+                raise
+            finally:
+                session.close()
+        else:
+            session = self.Session()
+            try:
+                session.add(self.session_entry)
+                session.add_all(self.speaker_entries)
+                session.add_all(self.utterances)
+                session.add_all(self.words)
+                session.add_all(self.morphemes)
+                session.add_all(self.warnings)
+                session.commit()
+            except:
+                # TODO: print some error message? log it?
+                session.rollback()
+                raise
+            finally:
+                session.close()

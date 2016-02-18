@@ -107,7 +107,6 @@ class ToolboxFile(object):
                             else:
                                 utterance['sentence_type'] = self.get_sentence_type(utterance['utterance_raw'])
 
-                            print(utterance)
                             utterance['utterance'] = self.clean_utterance(utterance['utterance_raw'])
                             utterance['warning'] = self.get_warnings(utterance['utterance_raw'])
 
@@ -307,6 +306,9 @@ class ToolboxFile(object):
 
         # Russian specific morpheme inference
         if self.config['corpus']['corpus'] == "Russian":
+            if 'pos_raw' in utterance.keys():
+                # remove PUNCT pos
+                pos_cleaned = [] if utterance['pos_raw'] is None else utterance['pos_raw'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
 
             if 'morpheme' in utterance.keys():
                 # Remove punctuation from morphemes

@@ -16,15 +16,17 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 
-def db_connect():
+def db_connect(path):
     """ Performs database connection.
 
     If desired add a database settings in settings.py, e.g. for postgres: return create_engine(URL(**settings.DATABASE))
 
+    path : str
+
     Returns:
         SQLAlchemy engine instance
     """
-    return create_engine('sqlite:///acqdiv.sqlite3', echo=False)
+    return create_engine(path, echo=False)
 
 
 def create_tables(engine):
@@ -70,8 +72,7 @@ class Speaker(Base):
 
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
-    # uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
-    # uniquespeaker = relationship("UniqueSpeaker", back_populates="speakers")
+    uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False)
@@ -127,7 +128,7 @@ class Utterance(Base):
 
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
-    # utterance_id = Column(Text, nullable=True, unique=False)
+    utterance_id = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False)
     addressee = Column(Text, nullable=True, unique=False)
     utterance_raw = Column(Text, nullable=True, unique=False)
