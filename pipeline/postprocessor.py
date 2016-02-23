@@ -160,7 +160,7 @@ def update_age(session, config):
 
 
 @db_apply
-def unify_labels(config, engine):
+def unify_labels(session, config):
     """Performs key-value substitutions for morphological glosses and parts-of-speech in the database. If no key is
         defined in the corpus ini file, then None (NULL) is written to the database.
 
