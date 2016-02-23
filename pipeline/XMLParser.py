@@ -17,7 +17,7 @@ class XMLParserFactory(object):
     def __init__(self, cfg):
         self.cfg = cfg
         self.CorpusParser = importlib.import_module(self.cfg['paths']['parser'])
-        self.parser_cls = eval(("self.CorpusParser." + 
+        self.parser_cls = eval(('self.CorpusParser.' + 
             self.cfg['paths']['parser_name']), globals(), locals())
 
     def __call__(self, fpath):
@@ -53,7 +53,7 @@ class XMLParser(object):
     def __init__(self, cfg, fpath):
         self.cfg = cfg
         self.fpath = fpath
-        self.sname = os.path.basename(fpath).split(".")[0]
+        self.sname = os.path.basename(fpath).split('.')[0]
         self.metadata_parser = Chat(cfg, fpath)
 
     def _get_utts(self):
@@ -67,7 +67,7 @@ class XMLParser(object):
                 tag = elem.tag
                 attrib = elem.attrib
             except TypeError:
-                print(type(elem))
+                pass
 
         for u in xmldoc.findall('.//u'):
             
@@ -165,8 +165,8 @@ class XMLParser(object):
 
     def _clean_retracings(self, group):
         words = group.findall('.//w')
-        retracings = group.find('k[@type="retracing"]')
-        retracings_wc = group.find('k[@type="retracing with correction"]')
+        retracings = group.find('k[@type='retracing']')
+        retracings_wc = group.find('k[@type='retracing with correction']')
         if (retracings is not None) or (retracings_wc is not None):
             # we can't do checks for corpus name here so
             # just use Turkish / MiiPro as default
@@ -176,11 +176,11 @@ class XMLParser(object):
 
     def _clean_guesses(self, group):
         words = group.findall('.//w')
-        target_guess = group.find('.//ga[@type="alternative"]')
+        target_guess = group.find('.//ga[@type='alternative']')
         if target_guess is not None:
             words[0].attrib['target'] = target_guess.text
 
-        guesses = group.find('k[@type="best guess"]')
+        guesses = group.find('k[@type='best guess']')
         if guesses is not None:
             for w in words:
                 w.attrib['transcribed'] = 'insecure'
@@ -213,10 +213,10 @@ class XMLParser(object):
         words = self._add_word_warnings(words)
         words = filter(lambda w: w != None, words)
 
-        return [{"full_word": w.text, "full_word_target": w.attrib['target'],
-            "utterance_id_fk": u.attrib.get('uID'), 
-            "word_id": (u.attrib.get('uID') + 'w' + str(i)),
-            "warning": w.attrib['warning']} 
+        return [{'full_word': w.text, 'full_word_target': w.attrib['target'],
+            'utterance_id_fk': u.attrib.get('uID'), 
+            'word_id': (u.attrib.get('uID') + 'w' + str(i)),
+            'warning': w.attrib['warning']} 
             for w,i in zip(words, itertools.count())]
 
     def _clean_word_text(self, words):
