@@ -165,8 +165,8 @@ class XMLParser(object):
 
     def _clean_retracings(self, group):
         words = group.findall('.//w')
-        retracings = group.find('k[@type='retracing']')
-        retracings_wc = group.find('k[@type='retracing with correction']')
+        retracings = group.find('k[@type="retracing"]')
+        retracings_wc = group.find('k[@type="retracing with correction"]')
         if (retracings is not None) or (retracings_wc is not None):
             # we can't do checks for corpus name here so
             # just use Turkish / MiiPro as default
@@ -176,11 +176,11 @@ class XMLParser(object):
 
     def _clean_guesses(self, group):
         words = group.findall('.//w')
-        target_guess = group.find('.//ga[@type='alternative']')
+        target_guess = group.find('.//ga[@type="alternative"]')
         if target_guess is not None:
             words[0].attrib['target'] = target_guess.text
 
-        guesses = group.find('k[@type='best guess']')
+        guesses = group.find('k[@type="best guess"]')
         if guesses is not None:
             for w in words:
                 w.attrib['transcribed'] = 'insecure'
