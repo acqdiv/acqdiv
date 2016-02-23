@@ -159,20 +159,8 @@ def update_age(session, config):
         update_xml_age(session, config)
 
 
-def unify_labels(config, engine):
-    """ Helper function for unifying glosses. Gloss replacement from the config files [glosses] and [pos]
-        is applied first. Then regex substitions (on [regex] section) are applied for Chintang and Japanese Miyata.
-
-    Args:
-        session: SQLAlchemy session object.
-        config: CorpusConfigParser object.
-    """
-    _unify_labels(config, engine)
-    _unify_labels_regex(config, engine)
-
-
 @db_apply
-def _unify_labels(session, config):
+def unify_labels(config, engine):
     """Performs key-value substitutions for morphological glosses and parts-of-speech in the database. If no key is
         defined in the corpus ini file, then None (NULL) is written to the database.
 
@@ -185,34 +173,6 @@ def _unify_labels(session, config):
         row.gloss = config['gloss'].get(row.gloss_raw, None)
         row.pos = config['pos'].get(row.pos_raw, None)
         # TODO: Insert some debugging here if the labels are missing?
-
-
-@db_apply
-def _unify_labels_regex(session, config):
-    """ Applies regex substitutions.
-
-    Args:
-        session: SQLAlchemy session object.
-        config: CorpusConfigParser object.
-    """
-    if "regex" in config:
-        corpus_name = config["corpus"]["corpus"]
-        regexes = config["regex"].items()
-        ssq = session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name)
-        for item in regexes:
-            pattern = re.compile(item[0][1:-1])
-            replacement = item[1][1:-1]
-            for row in ssq:
-                try:
-                    if corpus_name == "Russian":
-                        row.gloss = re.sub(pattern, replacement, row.gloss_raw)
-                    else:
-                        row.gloss = re.sub(pattern, replacement, row.gloss)
-                except TypeError:
-                    continue
-                except Exception as e:
-                    print("Error applying gloss regex {1} in {0}.ini: {2}"
-                            .format(corpus_name, item, e), file=sys.stderr)
 
 
 @db_apply
