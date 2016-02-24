@@ -136,15 +136,9 @@ class InuktitutParser(XMLParser):
                         #pdb.set_trace()
                         try:
                             mdic = mwords[word_index][morpheme_index]
-                            empty_actual = False
                         except IndexError:
                             mwords[word_index].append({})
                             mdic = mwords[word_index][morpheme_index]
-                            empty_actual = True
-                        if not empty_actual:
-                            mdic['pos'] = mdic['pos_target']
-                            mdic['segments'] = mdic['segments_target']
-                            mdic['glosses'] = mdic['glosses_target']
                         mdic['pos_target'] = pos
                         mdic['segments_target'] = form
                         mdic['glosses_target'] = gloss
