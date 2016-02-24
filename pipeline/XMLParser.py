@@ -4,6 +4,7 @@ import itertools
 import json
 import logging
 import os
+import pdb
 import re
 import sys
 
@@ -67,7 +68,7 @@ class XMLParser(object):
             except TypeError:
                 pass
 
-        for u in xmldoc.findall('.//u'):
+        for u in xmldoc.iterfind('.//u'):
             
             #uwm = utterance - words - morphemes
             uwm = {}
@@ -98,6 +99,9 @@ class XMLParser(object):
             d['sentence_type'] = self._get_sentence_type(u)
             d['utterance_id'] = u.attrib.get('uID')
 
+            d['corpus'] = self.cfg['corpus']['corpus']
+            d['language'] = self.cfg['corpus']['language']
+
             uwm['utterance'] = d
 
             uwm['morphemes'] = self._morphology_inference(uwm)
@@ -120,6 +124,8 @@ class XMLParser(object):
                     word[label] = raw_word[k]
                 else:
                     word[k] = raw_word[k]
+                    if word[k] == "":
+                        word[k] = None
             word['word'] = word[self.cfg['json_mappings_words']['word']]
             new_words.append(word)
         return new_words
@@ -139,6 +145,17 @@ class XMLParser(object):
                 new_mword.append(morpheme)
             new_mors.append(new_mword)
         return new_mors
+
+    def _clean_utterance(self, raw_u):
+
+        utterance = {}
+        for k in raw_u:
+            if k in self.config['json_mappings_utterance']:
+                label = self.config['json_mappings_utterance'][k]
+                utterance[label] = raw_u[k]
+            else:
+                utterance[k] = raw_u[k]
+        return utterance
 
     def _get_words(self, u):
         u = self._clean_groups(u)
@@ -309,6 +326,7 @@ class XMLParser(object):
         pass
 
     def _get_annotations(self, u):
+        pdb.set_trace()
         morph = {}
         trans = None
         comment = None

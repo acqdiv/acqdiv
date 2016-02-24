@@ -229,6 +229,7 @@ class SessionProcessor(object):
             self.session.utterances.append(u)
         self.commit()
 
+
     def commit(self):
         """ Commits the dictionaries returned from parsing to the database.
         """
