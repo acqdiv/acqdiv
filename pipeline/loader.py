@@ -25,12 +25,6 @@ def main(args):
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
                 'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
 
-    configs = ['Chintang.ini', 'Indonesian.ini', 'Russian.ini']
-
-    configs = ['Inuktitut.ini', 'Japanese_Miyata.ini', 'Japanese_MiiPro.ini', 'Sesotho.ini', 'Yucatec.ini']
-
-
-
     # Parse the config file and call the sessions processor
     for config in configs:
         cfg = CorpusConfigParser()
