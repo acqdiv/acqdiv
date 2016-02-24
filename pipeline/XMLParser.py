@@ -97,7 +97,7 @@ class XMLParser(object):
 
             d['speaker_label'] = u.attrib.get('who')
             d['sentence_type'] = self._get_sentence_type(u)
-            d['utterance_id'] = u.attrib.get('uID')
+            d['source_id'] = u.attrib.get('uID')
 
             d['corpus'] = self.cfg['corpus']['corpus']
             d['language'] = self.cfg['corpus']['language']
@@ -326,7 +326,6 @@ class XMLParser(object):
         pass
 
     def _get_annotations(self, u):
-        pdb.set_trace()
         morph = {}
         trans = None
         comment = None
