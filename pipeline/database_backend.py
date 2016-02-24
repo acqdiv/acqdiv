@@ -127,7 +127,7 @@ class Utterance(Base):
 
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
-    utterance_id = Column(Text, nullable=True, unique=False)
+    # utterance_id = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False)
     addressee = Column(Text, nullable=True, unique=False)
     utterance_raw = Column(Text, nullable=True, unique=False)

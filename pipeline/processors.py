@@ -133,7 +133,7 @@ class SessionProcessor(object):
 
             for word in words:
                 word['session_id_fk'] = self.filename
-                word['utterance_id_fk'] = utterance['utterance_id']
+                word['utterance_id_fk'] = utterance['source_id']
                 word['corpus'] = self.corpus
                 word['language'] = self.language
                 # JSON files have utterance and word level warnings, but sometimes words are misaligned and
@@ -145,7 +145,7 @@ class SessionProcessor(object):
 
             for morpheme in morphemes:
                 morpheme['session_id_fk'] = self.filename
-                morpheme['utterance_id_fk'] = utterance['utterance_id']
+                morpheme['utterance_id_fk'] = utterance['source_id']
                 morpheme['corpus'] = self.corpus
                 morpheme['language'] = self.language
                 morpheme['type'] = self.morpheme_type

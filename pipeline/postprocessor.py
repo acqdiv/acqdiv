@@ -389,7 +389,7 @@ def extract_chintang_addressee(session, config):
         try:
             if re.search('directed|answer', row.addressee):
                 ## reconstruct actor code for children from file name
-                match_actor_code = re.search('^(CL.*Ch)(\\d)', row.utterance_id)
+                match_actor_code = re.search('^(CL.*Ch)(\\d)', row.source_id)
                 child_prefix = match_actor_code.group(1)
                 child_number = match_actor_code.group(2)
                 # several addressees may be connected on a single tier via "+"
