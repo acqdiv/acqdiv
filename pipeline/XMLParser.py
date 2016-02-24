@@ -26,7 +26,7 @@ class XMLParserFactory(object):
 
 class XMLParser(object):
 
-    udict = { 'utterance_id':None,
+    udict = { 'source_id':None,
               'session_id_fk':None,
               'start_raw':None,
               'end_raw':None,
