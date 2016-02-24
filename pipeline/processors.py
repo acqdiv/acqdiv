@@ -192,19 +192,7 @@ class SessionProcessor(object):
             # rewrite me!
             for raw_u, raw_words, raw_morphemes in self.parser.next_utterance():
 
-                # Here the revamped FK insertion
-
-                utterance = {}
-                for k in raw_u:
-                    if k in self.config['json_mappings_utterance']:
-                        label = self.config['json_mappings_utterance'][k]
-                        utterance[label] = raw_u[k]
-                    else:
-                        utterance[k] = raw_u[k]
-
-                utterance['session_id_fk'] = self.filename
-                utterance['corpus'] = self.corpus
-                utterance['language'] = self.language
+                #commit words and morphemes too
                 self.utterances.append(Utterance(**utterance))
 
         else:
