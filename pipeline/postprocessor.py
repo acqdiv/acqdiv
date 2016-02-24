@@ -60,7 +60,7 @@ def update_xml_age(session, config):
     """
     corpus_name = config["corpus"]["corpus"]
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
-        sid = db_session_entry.session_id
+        sid = db_session_entry.id
         for row in session.query(backend.Speaker).filter(backend.Speaker.age_raw != None, backend.Speaker.session_id_fk == sid):
             new_age = age.format_xml_age(row.age_raw)
             if new_age:
@@ -89,7 +89,7 @@ def update_imdi_age(session, config):
     corpus_name = config["corpus"]["corpus"]
 
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
-        sid = db_session_entry.session_id
+        sid = db_session_entry.id
         cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 
         for db_speaker_entry in session.query(backend.Speaker).filter(~backend.Speaker.birthdate.like("Un%"),
@@ -384,9 +384,9 @@ def unify_indonesian_labels(session, config):
         config: CorpusConfigParser object.
     """
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == "Indonesian"):
-        session_id = db_session_entry.session_id
-        session_set = session_id[0:3]
-        for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.session_id_fk == session_id):
+        sid = db_session_entry.id
+        session_set = db_session_entry.source_id[0:3]
+        for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.session_id_fk == sid):
             if db_speaker_entry.name in config["exp_labels"]:
                 db_speaker_entry.speaker_label = config["exp_labels"][db_speaker_entry.name]
             elif (db_speaker_entry.speaker_label not in config["excluded_labels"] 
@@ -407,7 +407,7 @@ def unify_timestamps(session, config):
     """
     corpus_name = config["corpus"]["corpus"]
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
-        sid = db_session_entry.session_id
+        sid = db_session_entry.id
         for db_utterance_entry in session.query(backend.Utterance).filter(backend.Utterance.start_raw.isnot(None), 
                 backend.Utterance.session_id_fk == sid):
             try:

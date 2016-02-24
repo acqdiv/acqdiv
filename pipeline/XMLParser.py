@@ -29,13 +29,11 @@ class XMLParser(object):
               'session_id_fk':None,
               'start_raw':None,
               'end_raw':None,
-              'speaker_id':None,
+              'speaker_label':None,
               'addressee':None,
               'sentence_type':None,
-              'phonetic':None,
-              'phonetic_target':None,
               'translation':None,
-              'comments':None,
+              'comment':None,
               'warning':None          }
 
     mordict = { 'morphemes':None,
@@ -90,13 +88,13 @@ class XMLParser(object):
                         ] = morph[tier]
 
             d['translation'] = trans
-            d['comments'] = comment
+            d['comment'] = comment
 
             ts = self._get_timestamps(u)
             d['start_raw'] = ts[0]
             d['end_raw'] = ts[1]
 
-            d['speaker_id'] = u.attrib.get('who')
+            d['speaker_label'] = u.attrib.get('who')
             d['sentence_type'] = self._get_sentence_type(u)
             d['utterance_id'] = u.attrib.get('uID')
 
@@ -214,8 +212,6 @@ class XMLParser(object):
         words = filter(lambda w: w != None, words)
 
         return [{'full_word': w.text, 'full_word_target': w.attrib['target'],
-            'utterance_id_fk': u.attrib.get('uID'), 
-            'word_id': (u.attrib.get('uID') + 'w' + str(i)),
             'warning': w.attrib['warning']} 
             for w,i in zip(words, itertools.count())]
 
@@ -323,7 +319,7 @@ class XMLParser(object):
                     morph[tier] = a.text
             if (a.attrib.get('type') == 'english translation'):
                 trans = a.text
-            if (a.attrib.get('type') in ['comments', 'actions', 'explanation']):
+            if (a.attrib.get('type') in ['comment', 'actions', 'explanation']):
                 comment = a.text
         return morph, trans, comment
 

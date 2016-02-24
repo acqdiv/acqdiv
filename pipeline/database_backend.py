@@ -122,7 +122,6 @@ class Utterance(Base):
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
     # TODO: remove the old session_id
-    session_id = Column(Text, nullable=True, unique=False)
     source_id = Column(Text, nullable=True, unique=False)
     # uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
 
