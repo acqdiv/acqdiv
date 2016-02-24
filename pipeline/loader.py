@@ -41,6 +41,7 @@ def main(args):
         # Do some postprocessing
         # TODO: test if moving this outside of the loop is faster
         print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
+
         update_age(cfg, engine)
         unify_timestamps(cfg, engine)
         unify_gender(cfg, engine)

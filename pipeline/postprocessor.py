@@ -60,7 +60,7 @@ def update_xml_age(session, config):
     """
     corpus_name = config["corpus"]["corpus"]
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
-        sid = db_session_entry.session_id
+        sid = db_session_entry.id
         for row in session.query(backend.Speaker).filter(backend.Speaker.age_raw != None, backend.Speaker.session_id_fk == sid):
             new_age = age.format_xml_age(row.age_raw)
             if new_age:
@@ -89,7 +89,7 @@ def update_imdi_age(session, config):
     corpus_name = config["corpus"]["corpus"]
 
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
-        sid = db_session_entry.session_id
+        sid = db_session_entry.id
         cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 
         for db_speaker_entry in session.query(backend.Speaker).filter(~backend.Speaker.birthdate.like("Un%"),
@@ -296,7 +296,6 @@ def unique_speaker(session, config):
 
     table = session.query(backend.Speaker)
     for row in table:
-
         # TODO: this logic should go away once Cree data is updated and be replaced with:
         # t = (row.name, row.speaker_label, row.birthdate)
         # see:
@@ -345,9 +344,9 @@ def unify_indonesian_labels(session, config):
         config: CorpusConfigParser object.
     """
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == "Indonesian"):
-        session_id = db_session_entry.session_id
-        session_set = session_id[0:3]
-        for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.session_id_fk == session_id):
+        sid = db_session_entry.id
+        session_set = db_session_entry.source_id[0:3]
+        for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.session_id_fk == sid):
             if db_speaker_entry.name in config["exp_labels"]:
                 db_speaker_entry.speaker_label = config["exp_labels"][db_speaker_entry.name]
             elif (db_speaker_entry.speaker_label not in config["excluded_labels"] 
@@ -368,7 +367,7 @@ def unify_timestamps(session, config):
     """
     corpus_name = config["corpus"]["corpus"]
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
-        sid = db_session_entry.session_id
+        sid = db_session_entry.id
         for db_utterance_entry in session.query(backend.Utterance).filter(backend.Utterance.start_raw.isnot(None), 
                 backend.Utterance.session_id_fk == sid):
             try:
@@ -390,7 +389,7 @@ def extract_chintang_addressee(session, config):
         try:
             if re.search('directed|answer', row.addressee):
                 ## reconstruct actor code for children from file name
-                match_actor_code = re.search('^(CL.*Ch)(\\d)', row.utterance_id)
+                match_actor_code = re.search('^(CL.*Ch)(\\d)', row.source_id)
                 child_prefix = match_actor_code.group(1)
                 child_number = match_actor_code.group(2)
                 # several addressees may be connected on a single tier via "+"

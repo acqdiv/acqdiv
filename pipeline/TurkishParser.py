@@ -10,6 +10,13 @@ from XMLParser import XMLParser
 
 class TurkishParser(XMLParser):
 
+    def _get_timestamps(self, u):
+        ts = u.find('.//media')
+        if ts != None:
+            return (ts.attrib.get('start'), ts.attrib.get('end'))
+        else:
+            return (None, None)
+
     def _clean_fragments_and_omissions(self, words):
         for w in words:
             if 'type' in w.attrib:
@@ -176,10 +183,3 @@ class TurkishParser(XMLParser):
         return morphemes
             
     # EOF Turkish_KULLD
-
-    def _get_timestamps(self, u):
-        ts = u.find('.//media')
-        if ts != None:
-            return (ts.attrib.get('start'), ts.attrib.get('end'))
-        else:
-            return (None, None)

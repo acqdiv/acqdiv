@@ -4,6 +4,7 @@ import itertools
 import json
 import logging
 import os
+import pdb
 import re
 import sys
 
@@ -17,7 +18,7 @@ class XMLParserFactory(object):
     def __init__(self, cfg):
         self.cfg = cfg
         self.CorpusParser = importlib.import_module(self.cfg['paths']['parser'])
-        self.parser_cls = eval(("self.CorpusParser." + 
+        self.parser_cls = eval(('self.CorpusParser.' + 
             self.cfg['paths']['parser_name']), globals(), locals())
 
     def __call__(self, fpath):
@@ -25,17 +26,15 @@ class XMLParserFactory(object):
 
 class XMLParser(object):
 
-    udict = { 'utterance_id':None,
+    udict = { 'source_id':None,
               'session_id_fk':None,
               'start_raw':None,
               'end_raw':None,
-              'speaker_id':None,
+              'speaker_label':None,
               'addressee':None,
               'sentence_type':None,
-              'phonetic':None,
-              'phonetic_target':None,
               'translation':None,
-              'comments':None,
+              'comment':None,
               'warning':None          }
 
     mordict = { 'morphemes':None,
@@ -53,7 +52,7 @@ class XMLParser(object):
     def __init__(self, cfg, fpath):
         self.cfg = cfg
         self.fpath = fpath
-        self.sname = os.path.basename(fpath).split(".")[0]
+        self.sname = os.path.basename(fpath).split('.')[0]
         self.metadata_parser = Chat(cfg, fpath)
 
     def _get_utts(self):
@@ -67,9 +66,9 @@ class XMLParser(object):
                 tag = elem.tag
                 attrib = elem.attrib
             except TypeError:
-                print(type(elem))
+                pass
 
-        for u in xmldoc.findall('.//u'):
+        for u in xmldoc.iterfind('.//u'):
             
             #uwm = utterance - words - morphemes
             uwm = {}
@@ -90,15 +89,18 @@ class XMLParser(object):
                         ] = morph[tier]
 
             d['translation'] = trans
-            d['comments'] = comment
+            d['comment'] = comment
 
             ts = self._get_timestamps(u)
             d['start_raw'] = ts[0]
             d['end_raw'] = ts[1]
 
-            d['speaker_id'] = u.attrib.get('who')
+            d['speaker_label'] = u.attrib.get('who')
             d['sentence_type'] = self._get_sentence_type(u)
-            d['utterance_id'] = u.attrib.get('uID')
+            d['source_id'] = u.attrib.get('uID')
+
+            d['corpus'] = self.cfg['corpus']['corpus']
+            d['language'] = self.cfg['corpus']['language']
 
             uwm['utterance'] = d
 
@@ -122,6 +124,8 @@ class XMLParser(object):
                     word[label] = raw_word[k]
                 else:
                     word[k] = raw_word[k]
+                    if word[k] == "":
+                        word[k] = None
             word['word'] = word[self.cfg['json_mappings_words']['word']]
             new_words.append(word)
         return new_words
@@ -141,6 +145,17 @@ class XMLParser(object):
                 new_mword.append(morpheme)
             new_mors.append(new_mword)
         return new_mors
+
+    def _clean_utterance(self, raw_u):
+
+        utterance = {}
+        for k in raw_u:
+            if k in self.config['json_mappings_utterance']:
+                label = self.config['json_mappings_utterance'][k]
+                utterance[label] = raw_u[k]
+            else:
+                utterance[k] = raw_u[k]
+        return utterance
 
     def _get_words(self, u):
         u = self._clean_groups(u)
@@ -213,10 +228,8 @@ class XMLParser(object):
         words = self._add_word_warnings(words)
         words = filter(lambda w: w != None, words)
 
-        return [{"full_word": w.text, "full_word_target": w.attrib['target'],
-            "utterance_id_fk": u.attrib.get('uID'), 
-            "word_id": (u.attrib.get('uID') + 'w' + str(i)),
-            "warning": w.attrib['warning']} 
+        return [{'full_word': w.text, 'full_word_target': w.attrib['target'],
+            'warning': w.attrib['warning']} 
             for w,i in zip(words, itertools.count())]
 
     def _clean_word_text(self, words):
@@ -323,7 +336,7 @@ class XMLParser(object):
                     morph[tier] = a.text
             if (a.attrib.get('type') == 'english translation'):
                 trans = a.text
-            if (a.attrib.get('type') in ['comments', 'actions', 'explanation']):
+            if (a.attrib.get('type') in ['comment', 'actions', 'explanation']):
                 comment = a.text
         return morph, trans, comment
 

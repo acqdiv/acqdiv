@@ -1,4 +1,4 @@
-""" ORM declarations, database table definitions
+""" ORM declarations, database table definitions for ACQDIV-DB
 
 TODO: investigate:
 
@@ -19,12 +19,12 @@ Base = declarative_base()
 def db_connect(path):
     """ Performs database connection.
 
-    We can add a database settings in settings.py, e.g. for postgres: return create_engine(URL(**settings.DATABASE))
+    If desired add a database settings in settings.py, e.g. for postgres: return create_engine(URL(**settings.DATABASE))
 
     path : str
 
     Returns:
-        sqlalchemy engine instance
+        SQLAlchemy engine instance
     """
     return create_engine(path, echo=False)
 
@@ -38,30 +38,35 @@ def create_tables(engine):
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(engine)
 
+# TODO: http://stackoverflow.com/questions/13978554/is-possible-to-create-column-in-sqlalchemy-which-is-going-to-be-automatically-po
 
 class Session(Base):
-    """ Sessions table.
+    """ Each input file is a row in the Sessions table.
 
-    Each input file is a row. To note:
-        - session_id field is the input filename
-        - source_id field is the id given in the session file
-        - media field is an associate media file by filename
+        Note:
+            - session_id field is the input filename
+            - source_id field is the id given in the session file
+            - media field is an associate media file by filename
     """
     __tablename__ = 'sessions'
 
     id = Column(Integer, primary_key=True)
-    session_id = Column(Text, nullable=False, unique=False)
+    source_id = Column(Text, nullable=True, unique=False)
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     date = Column(Text, nullable=True, unique=False)
-    source_id = Column(Text, nullable=True, unique=False)
     media = Column(Text, nullable=True, unique=False)
     media_type = Column(Text, nullable=True, unique=False)
-    speakers = relationship('Speaker', backref='session') #, lazy='dynamic')
+
+    # SQLAlchemy relationship definitions
+    speakers = relationship('Speaker', backref='Session')
+    utterances = relationship('Utterance', backref='Session')
+    words = relationship('Word', backref='Session')
+    morphemes = relationship('Morpheme', backref='Session')
 
 
 class Speaker(Base):
-    """ Speaker table; each row is a speaker in a session. Speakers may appear in > 1 session
+    """ Speaker table includes a row for each speaker in a session. Speakers may appear in > 1 session.
     """
     __tablename__ = 'speakers'
 
@@ -83,13 +88,16 @@ class Speaker(Base):
     languages_spoken = Column(Text, nullable=True, unique=False)
     birthdate = Column(Text, nullable=True, unique=False)
 
+    # SQLAlchemy relationship definitions
+    # hook to unique speakers?
+
     # TODO: optional pretty formatting for printing
     def __repr__(self):
         return "Speaker(%s), Label(%s), Birthdate(%s)" % (self.name, self.speaker_label, self.birthdate)
 
 
 class UniqueSpeaker(Base):
-    """ Unique speakers across all corpora
+    """ Unique speakers across all corpora.
     """
     __tablename__ = 'uniquespeakers'
 
@@ -105,18 +113,21 @@ class Utterance(Base):
     """ Utterances in all sessions.
 
     To note:
-        - utterance_id is the id in the original files (not unique across corpora, e.g. u1, u1)
-        - addressee not in all corpora
-        - _raw vs !_raw is distinction between original input and cleaned/manipulated output
+        - source_id is the id in the original files and is not unique across corpora, e.g. u1, u1, u1
+        - addressee field is not present in all corpora (see corpus manual for more info)
+        - x_raw vs x is distinction between original input and cleaned/manipulated output
     """
     __tablename__ = 'utterances'
 
     id = Column(Integer, primary_key=True)
-    session_id_fk = Column(Text, ForeignKey('sessions.id'))
-    # uniquespeaker_id_fk = Column(Text, ForeignKey('sessions.id'))
+    session_id_fk = Column(Integer, ForeignKey('sessions.id'))
+    # TODO: remove the old session_id
+    source_id = Column(Text, nullable=True, unique=False)
+    # uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
+
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
-    utterance_id = Column(Text, nullable=True, unique=False)
+    # utterance_id = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False)
     addressee = Column(Text, nullable=True, unique=False)
     utterance_raw = Column(Text, nullable=True, unique=False)
@@ -134,6 +145,10 @@ class Utterance(Base):
     comment = Column(Text, nullable=True, unique=False)
     warning = Column(Text, nullable=True, unique=False)
 
+    # SQLAlchemy relationship definitions
+    words = relationship('Word', backref='Utterance')
+    morphemes = relationship('Morpheme', backref='Utterance')
+
 
 class Word(Base):
     """ Words table.
@@ -143,15 +158,17 @@ class Word(Base):
     __tablename__ = 'words'
 
     id = Column(Integer, primary_key=True)
-    session_id_fk = Column(Text, ForeignKey('sessions.id'))
-    utterance_id_fk = Column(Text, ForeignKey('utterances.id'))
+    session_id_fk = Column(Integer, ForeignKey('sessions.id'))
+    utterance_id_fk = Column(Integer, ForeignKey('utterances.id'))
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     word = Column(Text, nullable=True, unique=False)
     word_actual = Column(Text, nullable=True, unique=False)
     word_target = Column(Text, nullable=True, unique=False)
     warning = Column(Text, nullable=True, unique=False)
-    # Utterance = relationship('Utterance',  backref=backref('Words', order_by=ID))
+
+    # SQLAlchemy relationship definitions
+    morphemes = relationship('Morpheme', backref='Word')
 
 
 class Morpheme(Base):
@@ -163,6 +180,7 @@ class Morpheme(Base):
     session_id_fk = Column(Text, ForeignKey('sessions.id'))
     utterance_id_fk = Column(Text, ForeignKey('utterances.id'))
     word_id_fk = Column(Text, ForeignKey('words.id'))
+
     corpus = Column(Text, nullable=True, unique=False)
     language = Column(Text, nullable=True, unique=False)
     type = Column(Text, nullable=True, unique=False)
@@ -171,6 +189,7 @@ class Morpheme(Base):
     gloss = Column(Text, nullable=True, unique=False)
     pos_raw = Column(Text, nullable=True, unique=False)
     pos = Column(Text, nullable=True, unique=False)
+    warning = Column(Text, nullable=True, unique=False)
 
 
 class Warnings(Base):
