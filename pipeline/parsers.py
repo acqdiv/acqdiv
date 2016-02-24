@@ -7,6 +7,7 @@ import glob
 import json
 import collections
 import configparser
+from configparser import ExtendedInterpolation
 
 from metadata import Imdi, Chat
 from toolbox import ToolboxFile
@@ -14,76 +15,23 @@ from XMLParser import XMLParserFactory
 
 
 class CorpusConfigParser(configparser.ConfigParser):
-    """ Config parser for acqdiv corpus .ini files
+    """ Config parser for ACQDIV corpus-specific .ini configuration files
     """
     def optionxform(self, optionstr):
         return optionstr
 
     def __init__(self):
-        """ We subclass Python's default config parser and use our own delimiter
+        """ We subclass Python's default config parser and use our own delimiter and extended interpolation.
         """
-        super().__init__(delimiters=["=="])
+        super().__init__(delimiters=["=="], interpolation=ExtendedInterpolation())
 
-    def read(self, filenames, encoding=None):
-        """ File level initializations
-
-        Note: we assume processors.py is in the same location as parsers.py!
-
-        Args:
-            filenames: list of relative paths to corpus session files
-            encoding: file encoding
-        """
-        super().read(filenames, encoding)
-        self.path = self['paths']['sessions']
-        self.session_files = glob.glob(self.path)
-        self.metadata_dir = self['paths']['metadata_dir']
-        self.sessions_dir = self['paths']['sessions_dir']
-        self.format = self['corpus']['format']
-        self.corpus = self['corpus']['corpus']
-        # I know, this below is ugly here, but it was the only way I could make the tests work
-        self.testformat = self['tests']['format']
-        self.testfilespath = self['tests']['sessions']
-        self.session_testfiles = glob.glob(self.testfilespath)
+    def read(self, config, encoding=None):
+        super().read(config, encoding)
 
 
 class SessionParser(object):
     """ Static class-level method to create a new parser instance based on session format type.
     """
-    @staticmethod
-    def create_parser_factory(config):
-        """ Factory method for creating a parser
-
-        TODO: update logic below when we have an XML parser
-
-        Args:
-            config: corpus config ini file
-            file_path: path to a corpus session file
-
-        Returns:
-            A corpus-type-specific parser
-        """
-        corpus = config.corpus
-        format = config.format
-        # again, this below not cool, but was needed here to make tests work
-        testformat = config.testformat
-
-        if format == "ChatXML":
-            return XMLParserFactory(config)
-        elif format == "Toolbox":
-            return lambda file_path: ToolboxParser(config, file_path)
-        elif format == "JSON":
-            return lambda file_path: JsonParser(config, file_path)
-        
-        # again, needed here for tests  
-        elif testformat == 'Toolbox':
-            return ToolboxParser(config,testfilespath)
-        
-        elif testformat == 'ChatXML':
-            return XMLParser(config,testfilespath)
-            
-        else:
-            assert 0, "Unknown format type: " + format
-
     def __init__(self, config, file_path):
         """ Session parser initializer
 
@@ -93,10 +41,30 @@ class SessionParser(object):
         """
         self.config = config
         self.file_path = file_path
-        # SessionParser.create_parser(self.config, self.file_path)
 
-    def sha1(self):
-        # TODO: get SHA1 fingerprint of file -- provides unique data ID for db
+    @staticmethod
+    def create_parser_factory(config):
+        """ Factory method for creating a corpus session parser based on input format type (e.g. Toolbox, ChatXML).
+
+        Args:
+            config: CorpusConfigParser
+
+        Returns:
+            A corpus-type-specific parser
+        """
+        format = config['corpus']['format']
+
+        if format == "ChatXML":
+            return XMLParserFactory(config)
+        elif format == "Toolbox":
+            return lambda file_path: ToolboxParser(config, file_path)
+        elif format == "JSON":
+            return lambda file_path: JsonParser(config, file_path)
+        else:
+            assert 0, "Unknown format type: " + format
+
+    def get_sha1(self):
+        # TODO: get SHA1 fingerprint for each session file and write to the sessions table.
         pass
 
     def get_session_metadata(self):
@@ -133,17 +101,18 @@ class ToolboxParser(SessionParser):
             A Toolbox parser
         """
         SessionParser.__init__(self, config, file_path)
+
         # Session body for utterances, etc.
         self.session_file = ToolboxFile(self.config, self.file_path)
 
         # Metadata
         if self.config['metadata']['type'] == "XML":
-            # hack to get the separate metadata file paths for IMDIs
-            temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
+            # Hack to get the separate metadata file paths for IMDIs
+            temp = self.file_path.replace(self.config['paths']['sessions_dir'], self.config['paths']['metadata_dir'])
             self.metadata_file_path = temp.replace(".txt", ".xml")
             self.metadata_parser = Chat(self.config, self.metadata_file_path)
         elif self.config['metadata']['type'] == "IMDI":
-            temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
+            temp = self.file_path.replace(self.config['paths']['sessions_dir'], self.config['paths']['metadata_dir'])
             self.metadata_file_path = temp.replace(".txt", ".imdi")
             self.metadata_parser = Imdi(self.config, self.metadata_file_path)
         else:
@@ -213,7 +182,7 @@ class JsonParser(SessionParser):
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
         with open(file_path) as data_file:
             self.data = json.load(data_file)
-        temp = self.file_path.replace(self.config.sessions_dir, self.config.metadata_dir)
+        temp = self.file_path.replace(self.config['paths']['sessions_dir'], self.config['paths']['metadata_dir'])
         self.metadata_file_path = temp.replace(".json", ".xml")
         self.metadata_parser = Chat(self.config, self.metadata_file_path)
 

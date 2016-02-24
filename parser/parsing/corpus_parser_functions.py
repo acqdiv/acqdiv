@@ -261,6 +261,9 @@ def parse_xml(file_name, corpus_name):
                 # only in Cree: morpheme boundaries in <w> are indicated by '_' -> remove these, segments are also given in the morphology tiers. Other corpora can have '_' in <w>, too, but there it's meaningful (e.g. for concatenating the parts of a book title treated as a single word), so only check Cree!
                 if corpus_name == 'Cree':
                     w.text = re.sub('_', '', w.text)
+                # only in Yucatec: morpheme boundaries in <w> are sometimes indicated by '-' -> remove 
+                if corpus_name == 'Yucatec':
+                    w.text = re.sub('\-\\s*', '', w.text)
         # EOF string replacements
                                     
         # transcriptions featuring a contrast between actual and target pronunciation: go through words, create an attribute "target" (initially identical to its text), and set it as appropriate. "target" is taken up later again when all content is written to the corpus dic. 
@@ -1185,7 +1188,7 @@ def parse_xml(file_name, corpus_name):
                 morphology.text = re.sub('&amp;', '.', morphology.text) # joins glosses
                 morphology.text = re.sub('\+', '_', morphology.text) # marks word number mismatches between orthography and morphology (but is less frequent than "_")
                 morphology.text = re.sub('([A-Z]\\S*):\\s+', '\\1', morphology.text) # POS tags gone astray: join with following word
-                morphology.text = re.sub('([^\|]+)\|([^\|]+)\|', '\\1/\\2|', morphology.text) # double POS tags: replace "|" by "/"
+                morphology.text = re.sub('(\S+?)\|(\S+?)\|', '\\1/\\2|', morphology.text) # double POS tags: replace "|" by "/"
                                 
                 # split mor tier into words, reset counter to -1
                 words = re.split('\\s+',morphology.text)
@@ -1223,7 +1226,7 @@ def parse_xml(file_name, corpus_name):
                         (mor_w1,mor_w2) = (complex_mor.group(1),complex_mor.group(2))
                         
                         # sometimes the part after the "_" has its own POS tag and/or suffixes. Linguistically it would be better to treat these
-                        # cases as two words, but that would require further messing with <w>, so for the time being we remote the additional 
+                        # cases as two words, but that would require further messing with <w>, so for the time being we remove the additional 
                         # POS tags and treat the whole thing as one word
                         # Note: there is a handful of cases (~10) where the mor word consists of three words. These are presently ignored (i.e. treated as if they were two words, e.g. Tom_ve_Jerry -> Tom_ve, Jerry).                        
                         if re.search('\|', mor_w2) or (re.search('\-', mor_w1) and re.search('\-', mor_w2)):
@@ -1340,30 +1343,25 @@ def parse_xml(file_name, corpus_name):
             
             # parse the morphology tier mor
             morphology = u.find("a[@type='extension'][@flavor='mor']")
-            if morphology is not None:
+            if (morphology is not None) and (not re.search('^\\s*[\.\?!]*\\s*$', morphology.text)):
                 # remove punctuation and tags
                 morphology.text = re.sub('(^|\\s)[\.\?!\+\/]+(\\s|$)', '\\1\\2', morphology.text)
                 morphology.text = re.sub('(^|\\s)tag\|\\S+(\\s|$)', '\\1\\2', morphology.text)
                 morphology.text = re.sub('\\s+$', '', morphology.text)
-                # Yucatec uses ":" both to separate glosses belonging to the same morpheme AND as a morpheme separator. Replace in known cases with frequency > 10. 
-                morphology.text = re.sub('N:PROP', 'N.PROP', morphology.text)
-                morphology.text = re.sub('ABS:SG', 'ABS.SG', morphology.text)
-                morphology.text = re.sub('CLFR:INAN', 'CLFR.INAN', morphology.text)
-                morphology.text = re.sub('ABS:PL', 'ABS.PL', morphology.text)
-                morphology.text = re.sub('NEG:EXIST', 'NEG.EXIST', morphology.text)
-                morphology.text = re.sub('DEICT:PROX', 'DEICT.PROX', morphology.text)
-                morphology.text = re.sub('PT:NEG', 'PT.NEG', morphology.text)
-                morphology.text = re.sub('V:CAUS', 'V.CAUS', morphology.text)
-                morphology.text = re.sub('V:AUX', 'V.AUX', morphology.text)
-                morphology.text = re.sub('V:IMP', 'V.IMP', morphology.text)
-                morphology.text = re.sub('AUX:NEG', 'AUX.NEG', morphology.text)
-                morphology.text = re.sub('IMP:SG', 'IMP.SG', morphology.text)
-                morphology.text = re.sub('DEICT:DIST', 'DEICT.DIST', morphology.text)
-                morphology.text = re.sub('PRON:SG', 'PRON.SG', morphology.text)
+                morphology.text = re.sub('(?<=\\s)##(?=\\s)', ' ', morphology.text)
+                # Yucatec uses ":" both to separate glosses belonging to the same morpheme (e.g. ABS:PL) AND as a morpheme separator (stem:suffix)
+                # The first case can be identified by checking for uppercase letters -> replace ":" by "."
+                morphology.text = re.sub('([A-Z0-9]+):(?=[A-Z0-9]+)', '\\1.', morphology.text)
+                # If a word does not contain any of the usual morpheme separators "#" and ":" but does contain "-", this usually stands for ":"
+                if not re.search('[#:]', morphology.text) and re.search('\-', morphology.text):
+                    morphology.text = re.sub('\-', ':', morphology.text)
+                # unclear words are given as "xxx" without the usual internal structure -> create structure and set both components to "unknown"
+                morphology.text = re.sub('xxx', '???|???', morphology.text)
                                 
                 # split mor tier into words, reset counter to 0
+                # Besides spaces, "&" and "+" are also interpreted as word separators (they seem to mark clitics, which tend to be treated as separate words in <w>)
                 word_index = -1
-                words = re.split('[\\s+&]', morphology.text)                
+                words = re.split('[\\s&\+]+', morphology.text)                
                 
                 for w in words:
                     
@@ -1428,13 +1426,22 @@ def parse_xml(file_name, corpus_name):
                         else:
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem_struc.group(1)
                             corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'   
-                    # unstructured stems: whole block tends to be a gloss, but not necessarily so -> throw warning
+                    # unstructured stems: whole block can be a gloss or a segment -> see what it looks like and make educated guess; additionally throw warning
                     else:
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = '???'
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem
-                        corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
-                        print(file_name, ' u', utterance_index, ' w', word_index, ' m', morpheme_index, ' has no segment/gloss structure: ', stem, sep='')
-                        creadd(corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index], 'warnings', 'no segment/gloss structure')
+                        # glosses tend to consist of uppercase letters, digits, and "."
+                        if re.search('^[A-Z0-9\.]+$', stem):
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = '???'
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = stem
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
+                            print(file_name, ' u', utterance_index, ' w', word_index, ' m', morpheme_index, ' has no segment/gloss structure: ', stem, sep='')
+                            creadd(corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index], 'warnings', 'no segment/gloss structure')
+                        # other stuff tends to be a segment
+                        else:
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['segments_target'] = stem
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['glosses_target'] = '???'
+                            corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index]['pos_target'] = '???'
+                            print(file_name, ' u', utterance_index, ' w', word_index, ' m', morpheme_index, ' has no segment/gloss structure: ', stem, sep='')
+                            creadd(corpus[text_id][utterance_index]['words'][word_index]['morphemes'][morpheme_index], 'warnings', 'no segment/gloss structure')
                     # EOF stem
                                 
                     # if any suffixes were detected above, suffix_string contains them by now - otherwise it's empty
@@ -1472,7 +1479,7 @@ def parse_xml(file_name, corpus_name):
                     creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment full_word : segments/glosses')            
                 
             # if there is no morphology, add warning to complete utterance
-            elif morphology is None:
+            else:
                 creadd(corpus[text_id][utterance_index], 'warnings', 'not glossed')
             
             # check Spanish translation: if it contains punctuation, replace sentence_type based on this

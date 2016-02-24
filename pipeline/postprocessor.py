@@ -1,4 +1,4 @@
-""" Post-processing processes for ACQDIV corpora
+""" Post-processing processes on the corpora in the ACQDIV-DB.
 """
 
 from sqlalchemy.orm import sessionmaker
@@ -30,7 +30,7 @@ def db_apply(func):
         then calls the function it wraps with the config and the session.
         Finally it closes the connection again.
 
-        Args:
+    Args:
             config: A configparser object. The config should be the contents of a corpus-specific .ini file.
             engine: A SQLalchemy engine object. This is the connection to the ACQDIV database.
         """
@@ -55,12 +55,12 @@ def update_xml_age(session, config):
     fill in the age and age_in_days columns.
 
     Args:
-        session: SQLalchemy session object.
-        config: configparser object containing the configuration for the current corpus.
+        session: SQLAlchemy session object.
+        config: CorpusConfigParser object.
     """
     corpus_name = config["corpus"]["corpus"]
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
-        sid = db_session_entry.session_id
+        sid = db_session_entry.id
         for row in session.query(backend.Speaker).filter(backend.Speaker.age_raw != None, backend.Speaker.session_id_fk == sid):
             new_age = age.format_xml_age(row.age_raw)
             if new_age:
@@ -83,13 +83,13 @@ def update_imdi_age(session, config):
     Finally, it looks for speakers that only have an age in years and does the same.
 
     Args:
-        session: SQLalchemy session object.
-        config: configparser object containing the configuration for the current corpus.
+        session: SQLAlchemy session object.
+        config: CorpusConfigParser object.
     """
     corpus_name = config["corpus"]["corpus"]
 
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
-        sid = db_session_entry.session_id
+        sid = db_session_entry.id
         cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 
         for db_speaker_entry in session.query(backend.Speaker).filter(~backend.Speaker.birthdate.like("Un%"),
@@ -146,14 +146,12 @@ def update_imdi_age(session, config):
 
 @db_apply
 def update_age(session, config):
-    """Helper function for age unification.
-
-    Checks the config for the metadata format of the corpus,
-    then calls the appropriate function.
+    """Helper function for age unification. Checks the config for the metadata format of the corpus,
+        then calls the appropriate function.
 
     Args:
-        session: SQLalchemy session object.
-        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+        session: SQLAlchemy session object.
+        config: CorpusConfigParser object.
     """
     if config["metadata"]["type"] == "IMDI":
         update_imdi_age(session, config)
@@ -161,93 +159,60 @@ def update_age(session, config):
         update_xml_age(session, config)
 
 
-@db_apply
-def apply_gloss_regexes(session, config):
-    """Function to apply regex substitutions to the glosses of morphemes in the database.
-
-    Takes regexes specified in the config and applies them to all the morphemes belonging to the
-    current corpus.
+def unify_labels(config, engine):
+    """ Helper function for unifying glosses. Gloss replacement from the config files [glosses] and [pos]
+        is applied first. Then regex substitions (on [regex] section) are applied for Chintang and Japanese Miyata.
 
     Args:
-        session: SQLalchemy session object.
-        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+        session: SQLAlchemy session object.
+        config: CorpusConfigParser object.
     """
-    corpus_name = config["corpus"]["corpus"]
-    regexes = config["regex"].items() 
-    ssq = session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name)
-    for item in regexes:
-        pattern = re.compile(item[0][1:-1])
-        replacement = item[1][1:-1]
-        for row in ssq:
-            try:
-                if corpus_name == "Russian":
-                    row.gloss = re.sub(pattern, replacement, row.gloss_raw)
-                else:
-                    row.gloss = re.sub(pattern, replacement, row.gloss)
-            except TypeError:
-                continue
-            except Exception as e:
-                print("Error applying gloss regex {1} in {0}.ini: {2}"
-                        .format(corpus_name, item, e), file=sys.stderr)
+    _unify_labels(config, engine)
+    _unify_labels_regex(config, engine)
 
 
 @db_apply
-def unify_gloss_labels(session, config):
-    """Performs simple key-value substitution on morphological glosses in the database.
-
-    This function iterates through all morpheme rows belonging to the current corpus,
-    then searches for the gloss from the gloss_raw column in the "gloss" section of the config.
-
-    If the gloss is found, the gloss column is filled with the value from the config.
-    Otherwise, the raw gloss is carried over unchanged.
+def _unify_labels(session, config):
+    """Performs key-value substitutions for morphological glosses and parts-of-speech in the database. If no key is
+        defined in the corpus ini file, then None (NULL) is written to the database.
 
     Args:
-        session: SQLalchemy session object.
-        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+        session: SQLAlchemy session object.
+        config: CorpusConfigParser object.
     """
     corpus_name = config["corpus"]["corpus"]
     for row in session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name):
-        old_gloss = None
-        if corpus_name == "Russian":
-            old_gloss = row.gloss
-        else:
-            old_gloss = row.gloss_raw
-        try:
-            if old_gloss in config["gloss"]:
-                new_gloss = config["gloss"][old_gloss]
-                # TODO:
-                # this is a debug print to find out what is and isn't getting replaced
-                # we need to automate this
-                # print(old_gloss, new_gloss)
-                row.gloss = new_gloss
-            else:
-                row.gloss = old_gloss
-        except KeyError:
-            print("Error: .ini file for corpus {0} does not have gloss "
-            "replacement rules properly configured!"
-            .format(config["corpus"]["corpus"]), file=sys.stderr)
-            return
+        row.gloss = config['gloss'].get(row.gloss_raw, None)
+        row.pos = config['pos'].get(row.pos_raw, None)
+        # TODO: Insert some debugging here if the labels are missing?
 
 
-def unify_glosses(config, engine):
-    """Helper function for unifying glosses.
-
-    For most corpora, the regexes must operate on glosses already substituted.
-    However, for Russian, the regex substitutions must occur first.
-    This function checks if the corpus name in the config is Russian or not
-    and applies the functions in the corresponding order.
-
+@db_apply
+def _unify_labels_regex(session, config):
+    """ Applies regex substitutions.
 
     Args:
-        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
-        engine: SQLalchemy engine object.
+        session: SQLAlchemy session object.
+        config: CorpusConfigParser object.
     """
-    if config["corpus"]["corpus"] == "Russian":
-        apply_gloss_regexes(config, engine)
-        unify_gloss_labels(config, engine)
-    else:
-        unify_gloss_labels(config, engine)
-        apply_gloss_regexes(config, engine)
+    if "regex" in config:
+        corpus_name = config["corpus"]["corpus"]
+        regexes = config["regex"].items()
+        ssq = session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name)
+        for item in regexes:
+            pattern = re.compile(item[0][1:-1])
+            replacement = item[1][1:-1]
+            for row in ssq:
+                try:
+                    if corpus_name == "Russian":
+                        row.gloss = re.sub(pattern, replacement, row.gloss_raw)
+                    else:
+                        row.gloss = re.sub(pattern, replacement, row.gloss)
+                except TypeError:
+                    continue
+                except Exception as e:
+                    print("Error applying gloss regex {1} in {0}.ini: {2}"
+                            .format(corpus_name, item, e), file=sys.stderr)
 
 
 @db_apply
@@ -261,8 +226,8 @@ def unify_roles(session,config):
     The role column in the speaker table contains the unified roles.
 
     Args:
-        session: SQLalchemy session object
-        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+        session: SQLAlchemy session object.
+        config: CorpusConfigParser object.
     """
     table = session.query(backend.Speaker)
     cfg_mapping = ConfigParser(delimiters=('='))
@@ -281,7 +246,7 @@ def unify_roles(session,config):
                 row.role = cfg_mapping[row.language][row.speaker_label]
             except KeyError:
                 pass
-        elif row.role in ["Adult", "Child", "old","Teenager"] and row.age_in_days != None:
+        elif row.role in ["Adult", "Child", "old", "Teenager"] and row.age_in_days != None:
             row.role = "Unknown"
         elif row.role in ["Boy", "Girl", "Female", "Male"] and row.gender_raw != None:
             row.role = "Unknown"
@@ -301,8 +266,8 @@ def unify_gender(session, config):
     contains the unified genders.
 
     Args:
-        session: SQLalchemy session object
-        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+        session: SQLAlchemy session object.
+        config: CorpusConfigParser object.
     """
     table = session.query(backend.Speaker)
     for row in table:
@@ -318,7 +283,7 @@ def unify_gender(session, config):
 
 
 @db_apply
-def macrorole(session,config):
+def macrorole(session, config):
     """Function to define macrorole resp. age category.
 
     This function assigns an age category to each speaker. If there is
@@ -328,8 +293,8 @@ def macrorole(session,config):
     handles role encoding).
 
     Args:
-        session: SQLalchemy session object
-        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
+        session: SQLAlchemy session object.
+        config: CorpusConfigParser object.
     """
     table = session.query(backend.Speaker)
     cfg_mapping = ConfigParser(delimiters=('='))
@@ -357,53 +322,49 @@ def macrorole(session,config):
 
 @db_apply
 def unique_speaker(session, config):
-    """Function to create a table containing every unique speaker from all corpora.
+    """  Creates a table containing unique speakers from all corpora. Also populates uniquespeaker foreign key ids
+    in the speakers table
 
-    Queries the speaker table in the database and extracts non-session-specific data
-    for every unique speaker.
-
-    Uniqueness is determined by a combination of speaker label, name, and birthdate.
+    Uniqueness is determined by a combination of speaker: name, speaker label, birthdate
 
     Args:
-        session: SQLalchemy session object.
-        config: configparser object containing the configuration for the current corpus.
+        session: SQLAlchemy session object.
+        config: CorpusConfigParser object.
     """
-    # create a table of unique speakers
-    unique_speaker_entries = []
-    unique_name_date_label = set()
+    unique_speakers = [] # unique speaker dicts for uniquespeakers table
+    identifiers = [] # keep track of unique (name, label, birthdate) speaker tuples
+
     table = session.query(backend.Speaker)
-    
-    cfg_mapping = ConfigParser(delimiters=('='))
-    #option names resp. keys case-sensitive
-    cfg_mapping.optionxform = str
-    cfg_mapping.read("unique_ids.ini")
-
-    new_speakers = []
-    for db_speaker_entry in table:
-        if db_speaker_entry.corpus != 'Cree':
-            unique_tuple = (db_speaker_entry.name, db_speaker_entry.birthdate,db_speaker_entry.speaker_label)
+    for row in table:
+        # TODO: this logic should go away once Cree data is updated and be replaced with:
+        # t = (row.name, row.speaker_label, row.birthdate)
+        # see:
+        # https://github.com/uzling/acqdiv/issues/366
+        if row.corpus != 'Cree':
+            t = (row.name, row.birthdate, row.speaker_label)
         else:
-            unique_tuple = (db_speaker_entry.name, db_speaker_entry.birthdate)
-        if unique_tuple not in unique_name_date_label:
-            unique_name_date_label.add(unique_tuple)
-            d = {}
-            speakerlist = [db_speaker_entry.corpus,db_speaker_entry.name, db_speaker_entry.speaker_label,db_speaker_entry.birthdate]
-            key = unique_id.speakers_key(speakerlist[1:])
-            try:
-                d['global_id'] = cfg_mapping[db_speaker_entry.corpus][key]
-            except KeyError:
-                unique_id.new_entry(speakerlist)
-                cfg_mapping.read('unique_ids.ini')
-                d['global_id'] = cfg_mapping[db_speaker_entry.corpus][key]
-                print('WARNING - potentially new unique speaker added to unique_ids.ini:\n'+key+'\t'+cfg_mapping[db_speaker_entry.corpus][key])
-            d['speaker_label'] = db_speaker_entry.speaker_label
-            d['name'] = db_speaker_entry.name
-            d['birthdate'] = db_speaker_entry.birthdate
-            d['gender'] = db_speaker_entry.gender
-            d['corpus'] = db_speaker_entry.corpus
-            unique_speaker_entries.append(backend.Unique_Speaker(**d))
+            t = (row.name, row.birthdate)
 
-    session.add_all(unique_speaker_entries)
+        if t not in identifiers:
+            identifiers.append(t)
+
+            # create unique speaker row
+            d = {}
+            d['id'] = identifiers.index(t) + 1 # Python lists start at 0!
+            d['corpus'] = row.corpus
+            d['speaker_label'] = row.speaker_label
+            d['name'] = row.name
+            d['birthdate'] = row.birthdate
+            d['gender'] = row.gender
+            unique_speakers.append(backend.UniqueSpeaker(**d))
+
+        # insert uniquespeaker_fk_id in speakers table
+        row.uniquespeaker_id_fk = identifiers.index(t) + 1
+
+    # add all unique speakers entries to uniquespeakers table
+    session.add_all(unique_speakers)
+
+    # TODO: call method to propogate the to the other tables
 
 
 @db_apply
@@ -419,13 +380,13 @@ def unify_indonesian_labels(session, config):
     Finally, some specifically excluded labels (also in the config) are not changed at all.
 
     Args:
-        session: SQLalchemy session object.
-        config: configparser object containing the configuration for the current corpus.
+        session: SQLAlchemy session object.
+        config: CorpusConfigParser object.
     """
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == "Indonesian"):
-        session_id = db_session_entry.session_id
-        session_set = session_id[0:3]
-        for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.session_id_fk == session_id):
+        sid = db_session_entry.id
+        session_set = db_session_entry.source_id[0:3]
+        for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.session_id_fk == sid):
             if db_speaker_entry.name in config["exp_labels"]:
                 db_speaker_entry.speaker_label = config["exp_labels"][db_speaker_entry.name]
             elif (db_speaker_entry.speaker_label not in config["excluded_labels"] 
@@ -441,12 +402,12 @@ def unify_timestamps(session, config):
     unify_timestamps function from age.py to unify the format.
 
     Args:
-        session: SQLalchemy session object.
-        config: configparser object containing the configuration for the current corpus.
+        session: SQLAlchemy session object.
+        config: CorpusConfigParser object.
     """
     corpus_name = config["corpus"]["corpus"]
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
-        sid = db_session_entry.session_id
+        sid = db_session_entry.id
         for db_utterance_entry in session.query(backend.Utterance).filter(backend.Utterance.start_raw.isnot(None), 
                 backend.Utterance.session_id_fk == sid):
             try:
@@ -460,10 +421,10 @@ def unify_timestamps(session, config):
 def extract_chintang_addressee(session, config):
     """ Function that extracts addressee information for Chintang.
     
-        Args:
-        config: configparser object containing the configuration for the current corpus. This needs to specify the metadata format.
-        engine: SQLalchemy engine object.
-        """
+    Args:
+        session: SQLAlchemy session object.
+        config: CorpusConfigParser object.
+    """
     for row in session.query(backend.Utterance):
         try:
             if re.search('directed|answer', row.addressee):
@@ -484,27 +445,96 @@ def extract_chintang_addressee(session, config):
                 pass
 
 
-if __name__ == "__main__":
-    start_time = time.time()
-    
-    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
-              'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini']
-    engine = backend.db_connect()
-    cfg = CorpusConfigParser()
-    for config in configs:
-        cfg.read(config)
-        print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
-        update_age(cfg, engine)
-        unify_timestamps(cfg, engine)
-        unify_glosses(cfg, engine)
-        unify_gender(cfg, engine)
-        if config == 'Chintang.ini':
-            extract_chintang_addressee(cfg, engine)
-    #    if config == 'Indonesian.ini':
-    #        unify_indonesian_labels(cfg, engine)
-    #print("Creating Unique Speaker table...")
-    unify_roles(cfg, engine)
-    macrorole(cfg,engine)
-    unique_speaker(cfg, engine)
-        
-    print("--- %s seconds ---" % (time.time() - start_time))
+@db_apply
+def clean_tlbx_pos_morphemes(session, config):
+    """ Function that cleans pos and morphemes in Chintang and Indonesian.
+        It also cleans the morpheme (for Chintang and Russian) and gloss_raw (Indonesian) column in the utterances
+        table because cleaning them within the Toolbox parser messes up the morphemes table.
+
+    Args:
+        session: SQLAlchemy session object.
+        config: CorpusConfigParser object.
+    """
+    if config["corpus"]["corpus"] == "Chintang":
+        # get pfx and sfx
+        for row in session.query(backend.Morpheme).filter(backend.Morpheme.corpus == "Chintang"):
+            try:
+                if row.pos_raw.startswith('-'):
+                    row.pos = 'sfx'
+                    row.pos_raw = 'sfx'
+                elif row.pos_raw.endswith('-'):
+                    row.pos = 'pfx'
+                    row.pos_raw = 'pfx'
+                else:
+                    row.pos_raw = row.pos_raw.strip('-')
+                    row.pos = row.pos_raw
+                # strip '-' from morphemes and gloss_raw
+                row.morpheme = row.morpheme.strip('-')
+                row.gloss_raw = row.gloss_raw.strip('-')
+                row.gloss = row.gloss.strip('-')
+            except AttributeError:
+                pass
+
+    if config["corpus"]["corpus"] == "Indonesian":
+        for row in session.query(backend.Morpheme).filter(backend.Morpheme.corpus == "Indonesian"):
+            # get pfx and sfx, strip '-' from gloss_raw
+            try:
+                if row.gloss_raw.startswith('-'):
+                    row.pos = 'sfx'
+                    row.gloss_raw = row.gloss_raw.strip('-')
+                elif row.gloss_raw.endswith('-'):
+                    row.pos = 'pfx'
+                    row.gloss_raw = row.gloss_raw.strip('-')
+                elif row.gloss_raw == '???':
+                    row.pos = '???'
+                else:
+                    row.pos = 'stem'
+                row.morpheme = row.morpheme.strip('-')
+            except AttributeError:
+                pass
+            except TypeError:
+                pass
+
+
+@db_apply
+def clean_utterances_table(session, config):
+    """ Function that cleans *** and xx(x) from utterances table.
+
+    Args:
+        session: SQLAlchemy session object.
+        config: CorpusConfigParser object.
+        """
+    if config["corpus"]["corpus"] == "Chintang":
+        # clean unknown morphemes (***) from utterances table
+        for row in session.query(backend.Utterance).filter(backend.Utterance.corpus == "Chintang"):
+            try:
+                row.morpheme = re.sub('\*\*\*', '???', row.morpheme)
+                row.gloss_raw = re.sub('\*\*\*', '???', row.gloss_raw)
+                row.pos_raw = re.sub('\*\*\*', '???', row.pos_raw)
+            except AttributeError:
+                pass
+            except TypeError:
+                pass
+
+    if config["corpus"]["corpus"] == "Russian":
+        # clean garbage imported from chat (xxx|www)
+        for row in session.query(backend.Utterance).filter(backend.Utterance.corpus == "Russian"):
+            try:
+                row.morpheme = re.sub('xxx?|www', '???', row.morpheme)
+            except AttributeError:
+                pass
+            except TypeError:
+                pass
+
+    # clean garbage imported from chat (xxx|www)
+    if config["corpus"]["corpus"] == "Indonesian":
+        for row in session.query(backend.Utterance).filter(backend.Utterance.corpus == "Indonesian"):
+            try:
+                row.morpheme = re.sub('xxx?|www', '???', row.morpheme)
+                row.gloss_raw = re.sub('xxx?|www', '???', row.gloss_raw)
+                row.utterance_raw = re.sub('xxx?|www', '???', row.utterance_raw)
+                row.translation = re.sub('xxx?|www', '???', row.translation)
+            except AttributeError:
+                pass
+            except TypeError:
+                pass
