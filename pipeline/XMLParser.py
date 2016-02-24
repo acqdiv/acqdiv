@@ -17,7 +17,7 @@ class XMLParserFactory(object):
     def __init__(self, cfg):
         self.cfg = cfg
         self.CorpusParser = importlib.import_module(self.cfg['paths']['parser'])
-        self.parser_cls = eval(("self.CorpusParser." + 
+        self.parser_cls = eval(('self.CorpusParser.' + 
             self.cfg['paths']['parser_name']), globals(), locals())
 
     def __call__(self, fpath):
@@ -53,7 +53,7 @@ class XMLParser(object):
     def __init__(self, cfg, fpath):
         self.cfg = cfg
         self.fpath = fpath
-        self.sname = os.path.basename(fpath).split(".")[0]
+        self.sname = os.path.basename(fpath).split('.')[0]
         self.metadata_parser = Chat(cfg, fpath)
 
     def _get_utts(self):
@@ -67,7 +67,7 @@ class XMLParser(object):
                 tag = elem.tag
                 attrib = elem.attrib
             except TypeError:
-                print(type(elem))
+                pass
 
         for u in xmldoc.findall('.//u'):
             
@@ -213,10 +213,10 @@ class XMLParser(object):
         words = self._add_word_warnings(words)
         words = filter(lambda w: w != None, words)
 
-        return [{"full_word": w.text, "full_word_target": w.attrib['target'],
-            "utterance_id_fk": u.attrib.get('uID'), 
-            "word_id": (u.attrib.get('uID') + 'w' + str(i)),
-            "warning": w.attrib['warning']} 
+        return [{'full_word': w.text, 'full_word_target': w.attrib['target'],
+            'utterance_id_fk': u.attrib.get('uID'), 
+            'word_id': (u.attrib.get('uID') + 'w' + str(i)),
+            'warning': w.attrib['warning']} 
             for w,i in zip(words, itertools.count())]
 
     def _clean_word_text(self, words):
