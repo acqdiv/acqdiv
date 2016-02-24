@@ -326,7 +326,6 @@ class XMLParser(object):
         pass
 
     def _get_annotations(self, u):
-        pdb.set_trace()
         morph = {}
         trans = None
         comment = None
