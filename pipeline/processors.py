@@ -99,7 +99,7 @@ class SessionProcessor(object):
         for k, v in session_metadata.items():
             if k in self.config['session_labels'].keys():
                 d[self.config['session_labels'][k]] = v
-        d['session_id'] = self.filename
+        d['source_id'] = self.filename
         d['language'] = self.language
         d['corpus'] = self.corpus
         self.session_entry = Session(**d)
@@ -190,8 +190,6 @@ class SessionProcessor(object):
             # TODO: move this post processing (before the age, etc.) if it improves performance
             utterance['corpus'] = self.corpus
             utterance['language'] = self.language
-
-            print(utterance)
 
             u = Utterance(**utterance)
 
