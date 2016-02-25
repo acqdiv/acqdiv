@@ -66,7 +66,7 @@ class SesothoParser(XMLParser):
             if len(gloss_words) != len(segment_words):
                 print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ': tier "target gloss" (= segments_target) has ' +
                     str(len(segment_words)) + ' words vs. ' + str(len(gloss_words)) + ' in "coding" (= glosses_target)')
-                XMLParser.creadd(u['utterance'], 'warnings', 'broken alignment segments_target : glosses_target')
+                XMLParser.creadd(u['utterance'], 'warning', 'broken alignment segments_target : glosses_target')
             
             # reset word index for writing to corpus dict
             word_index = -1
@@ -99,7 +99,7 @@ class SesothoParser(XMLParser):
                    # print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ', word ' + str(word_index) +
                    #     ': tier "target gloss" (= segments_target) has ' + str(len(segments[word_index])) + ' morphemes vs. ' + str(len(glosses)) + 
                    #     ' in "coding" (= glosses_target)')
-                    XMLParser.creadd(u['words'][word_index], 'warnings', 'broken alignment segments_target : glosses_target')
+                    XMLParser.creadd(u['words'][word_index], 'warning', 'broken alignment segments_target : glosses_target')
                 
                 # morphemes is a list of morphemes; initial index is -1
                 morphemes = []
@@ -181,12 +181,12 @@ class SesothoParser(XMLParser):
             if (word_index+1) != len(u['words']):
                 #print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ': general word tier <w> has ' 
                 #    + str(len(u['words'])) + ' words vs ' + str(word_index+1) + ' in "coding" (= glosses_target)')
-                XMLParser.creadd(u['utterance'], 'warnings', 'broken alignment full_word : glosses_target')
+                XMLParser.creadd(u['utterance'], 'warning', 'broken alignment full_word : glosses_target')
 
             return mwords
 
         # if there is no morphology, add warning to complete utterance
         elif gloss_tier is None:
-            XMLParser.creadd(u['utterance'], 'warnings', 'not glossed')
+            XMLParser.creadd(u['utterance'], 'warning', 'not glossed')
             return []
     # EOF Sesotho        

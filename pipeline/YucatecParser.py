@@ -42,8 +42,8 @@ class YucatecParser(XMLParser):
 
                 # some words in <w> have a warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
                 # -> incremeent the <w> counter by one as long as the present morphological word is associated with the next <w>
-                while('warnings' in u['words'][word_index].keys() and
-                    re.search('not glossed', u['words'][word_index]['warnings'])):
+                while('warning' in u['words'][word_index].keys() and
+                    re.search('not glossed', u['words'][word_index]['warning'])):
                         word_index += 1                                                       
 
                 # morphemes is a list of morphemes; initial index is -1
@@ -73,7 +73,7 @@ class YucatecParser(XMLParser):
                             morphemes[morpheme_index]['glosses_target'] = pfx
                             morphemes[morpheme_index]['pos_target'] = 'pfx'
                             #print(self.fpath, ' u', utterance_index, ' w', word_index, ' m', morpheme_index, ' has no segment/gloss structure: ', pfx, sep='')
-                            XMLParser.creadd(morphemes[morpheme_index], 'warnings', 'no segment/gloss structure')
+                            XMLParser.creadd(morphemes[morpheme_index], 'warning', 'no segment/gloss structure')
                 # EOF prefixes
                 
                 # get stem: everything up to the first ":" (= suffix separator) or, if there are no suffixes, to the end of the word
@@ -109,14 +109,14 @@ class YucatecParser(XMLParser):
                         morphemes[morpheme_index]['glosses_target'] = stem
                         morphemes[morpheme_index]['pos_target'] = '???'
                         #print(self.fpath, ' u', utterance_index, ' w', word_index, ' m', morpheme_index, ' has no segment/gloss structure: ', stem, sep='')
-                        XMLParser.creadd(morphemes[morpheme_index], 'warnings', 'no segment/gloss structure')
+                        XMLParser.creadd(morphemes[morpheme_index], 'warning', 'no segment/gloss structure')
                     # other stuff tends to be a segment
                     else:
                         morphemes[morpheme_index]['segments_target'] = stem
                         morphemes[morpheme_index]['glosses_target'] = '???'
                         morphemes[morpheme_index]['pos_target'] = '???'
                         #print(self.fpath, ' u', utterance_index, ' w', word_index, ' m', morpheme_index, ' has no segment/gloss structure: ', stem, sep='')
-                        XMLParser.creadd(morphemes[morpheme_index], 'warnings', 'no segment/gloss structure')
+                        XMLParser.creadd(morphemes[morpheme_index], 'warning', 'no segment/gloss structure')
                 # EOF stem
                             
                 # if any suffixes were detected above, suffix_string contains them by now - otherwise it's empty
@@ -138,7 +138,7 @@ class YucatecParser(XMLParser):
                             morphemes[morpheme_index]['glosses_target'] = sfx
                             morphemes[morpheme_index]['pos_target'] = 'sfx'
                             #print(self.fpath, ' u', utterance_index, ' w', word_index, ' m', morpheme_index, ' has no segment/gloss structure: ', sfx, sep='')
-                            XMLParser.creadd(morphemes[morpheme_index], 'warnings', 'no segment/gloss structure')
+                            XMLParser.creadd(morphemes[morpheme_index], 'warning', 'no segment/gloss structure')
                 # EOF suffixes
                 
                 # check if morpheme list has been filled; if not delete key
@@ -153,11 +153,11 @@ class YucatecParser(XMLParser):
             if length_morphology != length_words:
                 #print('alignment problem in ' + self.fpath + ', utterance ' + str(utterance_index) + ': general word tier <w> has ' 
                 #+ str(length_words) + ' words vs ' + str(length_morphology) + ' in "mor" (= morphology)')
-                XMLParser.creadd(u['utterance'], 'warnings', 'broken alignment full_word : segments/glosses')            
+                XMLParser.creadd(u['utterance'], 'warning', 'broken alignment full_word : segments/glosses')            
 
             return mwords
             
         # if there is no morphology, add warning to complete utterance
         else:
-            XMLParser.creadd(u['utterance'], 'warnings', 'not glossed')
+            XMLParser.creadd(u['utterance'], 'warning', 'not glossed')
             return []
