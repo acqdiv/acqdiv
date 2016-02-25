@@ -11,7 +11,7 @@ from configparser import ExtendedInterpolation
 
 from metadata import Imdi, Chat
 from toolbox import ToolboxFile
-from XMLParser import XMLParserFactory
+from xml_parser import XMLParserFactory
 
 
 class CorpusConfigParser(configparser.ConfigParser):
