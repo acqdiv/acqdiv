@@ -6,6 +6,7 @@ import itertools as it
 import re
 import collections
 import logging
+import traceback
 from sqlalchemy.orm import sessionmaker
 
 from parsers import *
@@ -44,7 +45,12 @@ class CorpusProcessor(object):
             print("Processing:", session_file)
             s = SessionProcessor(self.cfg, session_file, 
                     self.parser_factory, self.engine)
-            s.process_session()
+            try:
+                s.process_session()
+            except Exception as e:
+                logger.warn("Aborted processing of file {}: exception: {}\n"
+                        "Stacktrace:\n{}".format(session_file, type(e), 
+                            traceback.format_exc()))
             # TODO: uncomment when XMLParsers are finished
             # s.commit()
 

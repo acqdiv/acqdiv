@@ -346,7 +346,11 @@ class XMLParser(object):
         return stype
 
     def _get_timestamps(self, u):
-        return None, None
+        ts = u.find('.//media')
+        if ts != None:
+            return ts.attrib.get('start'), ts.attrib.get('end')
+        else:
+            return None, None
 
     def get_session_metadata(self):
         return self.metadata_parser.metadata['__attrs__']

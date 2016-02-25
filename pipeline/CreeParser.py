@@ -130,9 +130,3 @@ class CreeParser(XMLParser):
 
         return out
 
-    def _get_timestamps(self, u):
-        ts = u.find('.//media')
-        if ts != None:
-            return (ts.attrib.get('start'), ts.attrib.get('end'))
-        else:
-            return (None, None)

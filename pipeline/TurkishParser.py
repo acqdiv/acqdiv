@@ -156,7 +156,7 @@ class TurkishParser(XMLParser):
                                         "{} utterance {} words {}, {}: "
                                         "next word is unglossed".format(
                                             self.sname, 
-                                            u['utterance']['utterance_id'], i, j))
+                                            u['utterance']['source_id'], i, j))
                                 print(len(morphemes), len(u['words']))
                         # corresponding actual words: transfer morphology AND target word
                         elif u['words'][j]['full_word'] == u['words'][i]['full_word']:
