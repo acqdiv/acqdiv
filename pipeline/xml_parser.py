@@ -106,6 +106,12 @@ class XMLParser(object):
 
             uwm['morphemes'] = self._morphology_inference(uwm)
             uwm['morphemes'] = self._clean_morphemes(uwm['morphemes'])
+            uwm['utterance']['pos_raw'] = self._concat_mor_tier(
+                    'pos_raw', uwm['morphemes'])
+            uwm['utterance']['gloss_raw'] = self._concat_mor_tier(
+                    'gloss_raw', uwm['morphemes'])
+            uwm['utterance']['morpheme'] = self._concat_mor_tier(
+                    'morpheme', uwm['morphemes'])
 
             uwm['words'] = self._clean_words(uwm['words'])
             uwm['utterance']['utterance_raw'] = ' '.join(
@@ -113,6 +119,13 @@ class XMLParser(object):
 
 
             yield uwm
+
+    def _concat_mor_tier(self, tier, morphlist):
+        return ' '.join(['-'.join([m for m in map(
+            lambda x:
+                x[tier] if x[tier] is not None 
+                else '???', mword)])
+            for mword in morphlist])
 
     def _clean_words(self, words):
         new_words = []

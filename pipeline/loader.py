@@ -12,9 +12,9 @@ def main(args):
     """
     # If testing mode
     if args.t:
-        print("Writing test database to: acqdiv/pipeline/acacqdiv.sqlite3")
+        print("Writing test database to: acqdiv/pipeline/test_acqdiv.sqlite3")
         print()
-        engine = db_connect('sqlite:///acqdiv.sqlite3')
+        engine = db_connect('sqlite:///test_acqdiv.sqlite3')
         create_tables(engine)
     else:
         print("Writing database to: acqdiv/database/acqdiv.sqlite3")

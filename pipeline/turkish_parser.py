@@ -6,7 +6,7 @@ import sys
 import itertools
 
 from lxml import etree
-from XMLParser import XMLParser
+from xml_parser import XMLParser
 
 class TurkishParser(XMLParser):
 

@@ -6,7 +6,7 @@ import itertools
 import pdb
 
 from lxml import etree
-from XMLParser import XMLParser
+from xml_parser import XMLParser
 
 class InuktitutParser(XMLParser):
 
