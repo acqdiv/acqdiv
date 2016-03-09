@@ -60,7 +60,7 @@ def update_xml_age(session, config):
     """
     corpus_name = config["corpus"]["corpus"]
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
-        sid = db_session_entry.id
+        sid = db_session_entry.source_id
         for row in session.query(backend.Speaker).filter(backend.Speaker.age_raw != None, backend.Speaker.session_id_fk == sid):
             new_age = age.format_xml_age(row.age_raw)
             if new_age:
