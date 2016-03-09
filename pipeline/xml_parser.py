@@ -7,6 +7,7 @@ import os
 import pdb
 import re
 import sys
+import traceback
 
 from collections import defaultdict
 from lxml import etree
@@ -41,6 +42,13 @@ class XMLParser(object):
                 'gloss_raw':None,
                 'pos_raw':None    }
 
+    logging.basicConfig(filemode='w')
+    logger = logging.getLogger(__name__)
+    handler = logging.FileHandler('errors.log')
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
     @staticmethod
     def creadd(location, key, value):
@@ -70,55 +78,61 @@ class XMLParser(object):
 
         for u in xmldoc.iterfind('.//u'):
             
-            #uwm = utterance - words - morphemes
-            uwm = {}
-            d = XMLParser.udict.copy()
-            
-            words = self._get_words(u)
-            uwm['words'] = words
+            try:
+                #uwm = utterance - words - morphemes
+                uwm = {}
+                d = XMLParser.udict.copy()
+                
+                words = self._get_words(u)
+                uwm['words'] = words
 
-            anno = self._get_annotations(u)
-            morph = anno[0]
-            trans = anno[1]
-            comment = anno[2]
+                anno = self._get_annotations(u)
+                morph = anno[0]
+                trans = anno[1]
+                comment = anno[2]
 
-            uwm['morphology'] = XMLParser.mordict.copy()
+                uwm['morphology'] = XMLParser.mordict.copy()
 
-            for tier in morph:
-                uwm['morphology'][self.cfg['morphology_tiers'][tier]
-                        ] = morph[tier]
+                for tier in morph:
+                    uwm['morphology'][self.cfg['morphology_tiers'][tier]
+                            ] = morph[tier]
 
-            d['translation'] = trans
-            d['comment'] = comment
+                d['translation'] = trans
+                d['comment'] = comment
 
-            ts = self._get_timestamps(u)
-            d['start_raw'] = ts[0]
-            d['end_raw'] = ts[1]
+                ts = self._get_timestamps(u)
+                d['start_raw'] = ts[0]
+                d['end_raw'] = ts[1]
 
-            d['speaker_label'] = u.attrib.get('who')
-            d['sentence_type'] = self._get_sentence_type(u)
-            d['source_id'] = u.attrib.get('uID')
+                d['speaker_label'] = u.attrib.get('who')
+                d['sentence_type'] = self._get_sentence_type(u)
+                d['source_id'] = u.attrib.get('uID')
 
-            d['corpus'] = self.cfg['corpus']['corpus']
-            d['language'] = self.cfg['corpus']['language']
+                d['corpus'] = self.cfg['corpus']['corpus']
+                d['language'] = self.cfg['corpus']['language']
 
-            uwm['utterance'] = d
+                uwm['utterance'] = d
 
-            uwm['morphemes'] = self._morphology_inference(uwm)
-            uwm['morphemes'] = self._clean_morphemes(uwm['morphemes'])
-            uwm['utterance']['pos_raw'] = self._concat_mor_tier(
-                    'pos_raw', uwm['morphemes'])
-            uwm['utterance']['gloss_raw'] = self._concat_mor_tier(
-                    'gloss_raw', uwm['morphemes'])
-            uwm['utterance']['morpheme'] = self._concat_mor_tier(
-                    'morpheme', uwm['morphemes'])
+                uwm['morphemes'] = self._morphology_inference(uwm)
+                uwm['morphemes'] = self._clean_morphemes(uwm['morphemes'])
+                uwm['utterance']['pos_raw'] = self._concat_mor_tier(
+                        'pos_raw', uwm['morphemes'])
+                uwm['utterance']['gloss_raw'] = self._concat_mor_tier(
+                        'gloss_raw', uwm['morphemes'])
+                uwm['utterance']['morpheme'] = self._concat_mor_tier(
+                        'morpheme', uwm['morphemes'])
 
-            uwm['words'] = self._clean_words(uwm['words'])
-            uwm['utterance']['utterance_raw'] = ' '.join(
-                    [w['word'] for w in uwm['words']])
+                uwm['words'] = self._clean_words(uwm['words'])
+                uwm['utterance']['utterance_raw'] = ' '.join(
+                        [w['word'] for w in uwm['words']])
 
 
-            yield uwm
+                yield uwm
+            except Exception as e:
+                XMLParser.logger.warn("Aborted processing of utterance {} "
+                        "in file {} with error: {}\nStacktrace: {}".format(
+                            u.attrib.get('uID'), self.fpath, repr(e),
+                            traceback.format_exc()))
 
     def _concat_mor_tier(self, tier, morphlist):
         return ' '.join(['-'.join([m for m in map(
