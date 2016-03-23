@@ -71,6 +71,10 @@ class Session:
             self.situation = metadata_list[4]
             self.content = metadata_list[5]
             self.people = metadata_list[6]
+            self.genre = "Discourse"
+            self.subgenre = "Language acquisition"
+            self.plannedness = "Spontaneous"
+            self.researcher_involvement = "Non-elicited"
 
         else:
             self.code = ""
@@ -372,7 +376,7 @@ if __name__ == "__main__":
     new_session_file = open("sessions_new.csv", "w")
     new_participant_file = open("participants_new.csv", "w")
 
-    fields_session = ["Code","Date","Location","Length of recording","Situation","Content","Participants and roles","Comments"]
+    fields_session = ["Code","Date","Location","Length of recording","Situation","Content","Participants and roles","Comments", "Genre", "Subgenre", "Plannedness", "Researcher involvement"]
     fields_participant = ["Added by","Short name","Full name","Birth date","Age","Gender","Education","First languages","Second languages","Main language","Language biography","Description","Contact address","E-mail/Phone"]
 
     reader1 = csv.reader(session_file, delimiter=",", quotechar='"')
@@ -395,7 +399,11 @@ if __name__ == "__main__":
                         "Situation": session.situation,
                         "Content": session.content,
                         "Participants and roles": session.people,
-                        "Comments": replace_i(row[7])
+                        "Comments": replace_i(row[7]),
+                        "Genre": session.genre,
+                        "Subgenre": session.subgenre,
+                        "Plannedness": session.plannedness,
+                        "Researcher involvement": session.researcher_involvement
                         })
 
 
