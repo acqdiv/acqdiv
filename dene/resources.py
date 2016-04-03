@@ -1,7 +1,7 @@
-import sys, os, csv, logging, exiftool
+import sys, os, csv, logging, exiftool, datetime, metadata
 
 ############################
-## exiftool is used for extracting metadata of files
+## exiftool is used for extracting metadata of media files
 ## Installation of exiftool wrapper for python:
 ## git clone git://github.com/smarnach/pyexiftool.git
 ## sudo python3 setup.py install
@@ -46,16 +46,33 @@ class Resource:
         return Resource.media_dict[self.extension][0] + "/" + self.extension
 
 
-    def get_duration(self):
+    def get_duration(self, session_file):
 
         with exiftool.ExifTool() as et:
-            # get duration in seconds
-            duration = et.get_metadata(self.path)[Resource.media_dict[self.extension][1] + ":Duration"]
-            # converting to hours, minutes and seconds
-            m, s = divmod(duration, 60)
-            h, m = divmod(m, 60)
 
-            return "%02d:%02d:%02d" % (h, m, s)
+            duration_in_secs = et.get_metadata(self.path)[Resource.media_dict[self.extension][1] + ":Duration"]
+
+            time_from_mediafile = datetime.timedelta(seconds=duration_in_secs)
+
+            reader = csv.DictReader(session_file, delimiter=",", quotechar='"')
+
+            for row in reader:
+                if row["Code"] == get_session_code():
+                    len_of_rec = row["Length of recording"]
+
+                    if re.search(r"\d{1,2}:\d{1,2}:\d{1,2}", len_of_rec):
+                        h, m, s = len_of_rec.split(":")
+
+                        time_from_table = datetime.timedelta(hours=h, minutes=m, seconds=s)
+
+                        threshold = datetime.timedelta(minutes=3)
+
+                        if abs(time_from_mediafile - time_from_table) > threshold:
+                            logger.warning("Length recording times deviate too much: " + row["Code"])
+
+                        return "%02d:%02d:%02d" % (h, m, s)
+
+            return ""
 
 
     def get_byte_size(self):
@@ -75,13 +92,31 @@ class Resource:
     def in_media_dict(self):
         return self.extension in Resource.media_dict
 
+    def check_Code(self, session_file):
+        reader = csv.DictReader(session_file, delimiter=",", quotechar='"')
+
+        for row in reader:
+            if row[Code] == get_session_code():
+                break
+        else:
+            logger.warning("Media File " + get_session_code() + " does not occur in session table")
+
+    def correct_filename(self, participant_file):
+        code = get_session_code()
+        session = Session()
+        session.code = code
+        session.check_Code()
+
+        os.rename(self.media_file, session.code + "." + self.extension)
+
 
 
 if __name__ == "__main__":
 
-    path = sys.argv[1]
+    path = "./TestFiles"
 
     resource_file = open("resources.csv", "w")
+    session_file = open("sessions.csv", "r")
 
     fields_resource = ["Session code", "Type", "Format", "Duration", "Byte size", "Word size", "Location"]
 
