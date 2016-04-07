@@ -68,7 +68,10 @@ def list_index_up(index, vivilist):
     # check if list in Vividict is too short for present index
     if len(vivilist) <= index:
         # if it is, append empty element to list to extend index
-        vivilist.append(Vividict())
+        try:
+            vivilist.append(Vividict())
+        except:
+            pass
     return index
 
 # extend list nested in Vividict if it is to short for a counter variable
