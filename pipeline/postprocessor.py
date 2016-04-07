@@ -225,6 +225,10 @@ def unify_roles(session,config):
             not_found.add((row.role_raw,row.corpus))
         
         # inference to gender
+        if (row.gender_raw is None or row.gender_raw in ['Unspecified', 'Unknown']):
+            # and row.role_raw in cfg_mapping['role2gender']):
+            # print('hallelooyah', row.role_raw, cfg_mapping['role2gender'][row.role_raw])
+            print("yep", row.gender_raw, row.role_raw)
         
         # inference to age (-> macrorole)
         
