@@ -226,17 +226,20 @@ def unify_roles(session,config):
         
         # inference to gender
         if (row.gender_raw is None or row.gender_raw in ['Unspecified', 'Unknown']):
-            # and row.role_raw in cfg_mapping['role2gender']):
-            # print('hallelooyah', row.role_raw, cfg_mapping['role2gender'][row.role_raw])
-            print("yep", row.gender_raw, row.role_raw)
+            try:
+                row.gender = cfg_mapping['role2gender'][row.role_raw]
+                print('set gender for', row.corpus, row.speaker_label, 'from', row.gender_raw, 'to', cfg_mapping['role2gender'][row.role_raw], '=', row.gender)
+            except KeyError:
+                pass
         
         # inference to age (-> macrorole)
+        if (row.macrorole is None or row.macrorole in ['Unspecified', 'Unknown']):
+            try:
+                row.macrorole = cfg_mapping['role2macrorole'][row.role_raw]
+                print('set macrorole for', row.corpus, row.speaker_label, 'from', row.macrorole, 'to', cfg_mapping['role2macrorole'][row.role_raw], '=', row.macrorole)
+            except KeyError:
+                pass
         
-        # if row.role == "Unknown" and row.language in cfg_mapping:
-        #     try:
-        #         row.role = cfg_mapping[row.language][row.speaker_label]
-        #     except KeyError:
-        #         pass
     if len(not_found) > 0:
         print("-- WARNING --")
         for item in not_found: 
