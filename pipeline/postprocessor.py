@@ -190,25 +190,6 @@ def unify_roles(session,config):
         config: CorpusConfigParser object.
     """
     
-    # how to do this more systematically
-    # read speaker table
-    # read role_mapping ini with the following overlapping blocks:
-    #   [role_mapping]
-    #   [role2gender]
-    #   [role2macrorole]
-    # map raw roles
-    # transfer gender and macrorole values
-
-    # for macrorole finetuning
-    # [Corpus1], [Corpus2], ...
-        
-    # macrorole mapping
-    # macroroles can be (in this order of preference)
-    #   - set by role processing (-> role2macrorole)
-    #   - inferred from age (>= 12yrs, i.e. > 4380 days)
-    #   - inferred from code + corpus (lists)
-    # -> additional block in role_mapping.ini like this: 
-    
     table = session.query(backend.Speaker)
     cfg_mapping = ConfigParser(delimiters=('='))
     cfg_mapping.optionxform = str
@@ -228,7 +209,6 @@ def unify_roles(session,config):
         if (row.gender_raw is None or row.gender_raw in ['Unspecified', 'Unknown']):
             try:
                 row.gender = cfg_mapping['role2gender'][row.role_raw]
-                print('set gender for', row.corpus, row.speaker_label, 'from', row.gender_raw, 'to', cfg_mapping['role2gender'][row.role_raw], '=', row.gender)
             except KeyError:
                 pass
         
@@ -236,7 +216,9 @@ def unify_roles(session,config):
         if (row.macrorole is None or row.macrorole in ['Unspecified', 'Unknown']):
             try:
                 row.macrorole = cfg_mapping['role2macrorole'][row.role_raw]
-                print('set macrorole for', row.corpus, row.speaker_label, 'from', row.macrorole, 'to', cfg_mapping['role2macrorole'][row.role_raw], '=', row.macrorole)
+                # make sure None is not taken as a string
+                if row.macrorole == 'None':
+                    row.macrorole = None
             except KeyError:
                 pass
         
@@ -274,7 +256,7 @@ def unify_gender(session, config):
 
 @db_apply
 def macrorole(session, config):
-    """Function to define macrorole resp. age category.
+    """Function to define macrorole (= Adult, Child, Target_Child, Unknown)
 
     This function assigns an age category to each speaker. If there is
     no information on age available it uses "role_mappings.ini" to define 
@@ -286,29 +268,27 @@ def macrorole(session, config):
         session: SQLAlchemy session object.
         config: CorpusConfigParser object.
     """
+    
     table = session.query(backend.Speaker)
     cfg_mapping = ConfigParser(delimiters=('='))
-    #option names resp. keys case-sensitive
     cfg_mapping.optionxform = str
     cfg_mapping.read("role_mapping.ini")
-    for row in table:
-        if row.role == "Target_Child":
-            macro = "Target_Child"
-        elif row.age_in_days != None:
-            if row.age_in_days <= 4380:
-                macro = "Child"
-            else:
-                macro = "Adult"
-        else:
-            try:
-                macro = cfg_mapping['macrorole_mapping'][row.role_raw]
-            except KeyError:
-                try:
-                    macro = cfg_mapping['macrorole_mapping'][row.speaker_label]
-                except KeyError:
-                    macro = "Unknown"
-        row.macrorole = macro
 
+    for row in table:
+        # check if macrorole is not already filled (by unify_roles)
+        if row.macrorole is None:
+            # first check age: Adults are >= 12yrs, i.e. > 4380 days
+            if row.age_in_days is not None:
+                if row.age_in_days <= 4380:
+                    row.macrorole = "Child"
+                else:
+                    row.macrorole = "Adult"
+            # second check corpus-specific lists of speaker labels
+            else:
+                try:
+                    row.macrorole = cfg_mapping[row.corpus][row.speaker_label]
+                except KeyError:
+                    row.macrorole = "Unknown"
 
 @db_apply
 def unique_speaker(session, config):
