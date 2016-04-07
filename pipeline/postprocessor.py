@@ -189,6 +189,51 @@ def unify_roles(session,config):
         session: SQLAlchemy session object.
         config: CorpusConfigParser object.
     """
+    
+    # how to do this more systematically
+    # read speaker table
+    # read role_mapping ini with the following overlapping blocks:
+    #   role_mapping (contains all raw roles)
+    #   roles_with_gender (subset of role_mapping)
+    #   roles_with_age (subset of role_mapping)
+    # map raw roles:
+    #   - first work off role_mapping; raw roles marking gender ("Female") or age ("Adult") go to role "Unknown"
+    #   - extract hints to other fields from roles_with_gender and roles_with_age
+        
+    # e.g.
+    # 
+    # [role_mapping]
+    # Speaker = Speaker
+    # Sister = Sister
+    # Female = Unknown
+    # Mother = Mother
+    # Adult = Unknown
+    #
+    # [roles_with_gender]
+    # Sister = Female
+    # Mother = Female
+    #
+    # [roles_with_age]
+    # Mother = Adult
+    # Playmate = Child
+    
+    # or alternative:
+    #
+    # Mother = Mother,Female,Adult
+    # Speaker = Speaker,Unknown,Unknown
+    # Sister = Sister,Female,Unknown
+    # Playmate = Playmate,Unknown,Child
+    
+    # macrorole mapping
+    # macroroles can be (in this order of preference)
+    #   - set by role processing (-> roles_with_age)
+    #   - inferred from age (>= 12yrs, i.e. > 4380 days)
+    #   - inferred from code + corpus (lists)
+    # -> additional block in role_mapping.ini like this: 
+    
+    # [Russian]
+    # BAB = Adult
+    
     table = session.query(backend.Speaker)
     cfg_mapping = ConfigParser(delimiters=('='))
     #option names resp. keys case-sensitive
