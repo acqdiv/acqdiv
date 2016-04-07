@@ -177,10 +177,10 @@ def unify_labels(session, config):
 
 @db_apply
 def unify_roles(session,config):
-    """Function to unify speaker roles.
+    """Function to unify speaker roles and draw inferences to related values.
 
-    Each corpora has its own set of speaker roles. This function uses
-    "role_mapping.ini" to assign an unified role to each speaker according
+    Each corpus has its own set of speaker roles. This function uses
+    "role_mapping.ini" to assign a unified role to each speaker according
     to the mappings in role_mapping.ini. The mapping is either based on the original
     role or the speaker_label (depending on how the corpora handles role encoding).
     The role column in the speaker table contains the unified roles.
@@ -193,68 +193,46 @@ def unify_roles(session,config):
     # how to do this more systematically
     # read speaker table
     # read role_mapping ini with the following overlapping blocks:
-    #   role_mapping (contains all raw roles)
-    #   roles_with_gender (subset of role_mapping)
-    #   roles_with_age (subset of role_mapping)
-    # map raw roles:
-    #   - first work off role_mapping; raw roles marking gender ("Female") or age ("Adult") go to role "Unknown"
-    #   - extract hints to other fields from roles_with_gender and roles_with_age
+    #   [role_mapping]
+    #   [role2gender]
+    #   [role2macrorole]
+    # map raw roles
+    # transfer gender and macrorole values
+
+    # for macrorole finetuning
+    # [Corpus1], [Corpus2], ...
         
-    # e.g.
-    # 
-    # [role_mapping]
-    # Speaker = Speaker
-    # Sister = Sister
-    # Female = Unknown
-    # Mother = Mother
-    # Adult = Unknown
-    #
-    # [roles_with_gender]
-    # Sister = Female
-    # Mother = Female
-    #
-    # [roles_with_age]
-    # Mother = Adult
-    # Playmate = Child
-    
-    # or alternative:
-    #
-    # Mother = Mother,Female,Adult
-    # Speaker = Speaker,Unknown,Unknown
-    # Sister = Sister,Female,Unknown
-    # Playmate = Playmate,Unknown,Child
-    
     # macrorole mapping
     # macroroles can be (in this order of preference)
-    #   - set by role processing (-> roles_with_age)
+    #   - set by role processing (-> role2macrorole)
     #   - inferred from age (>= 12yrs, i.e. > 4380 days)
     #   - inferred from code + corpus (lists)
     # -> additional block in role_mapping.ini like this: 
     
-    # [Russian]
-    # BAB = Adult
-    
     table = session.query(backend.Speaker)
     cfg_mapping = ConfigParser(delimiters=('='))
-    #option names resp. keys case-sensitive
     cfg_mapping.optionxform = str
     cfg_mapping.read("role_mapping.ini")
     not_found = set()
+    
     for row in table:
+        # map role if possible
         try:
             row.role = cfg_mapping['role_mapping'][row.role_raw]
+        # otherwise remember role
         except KeyError:
             row.role = row.role_raw
             not_found.add((row.role_raw,row.corpus))
-        if row.role == "Unknown" and row.language in cfg_mapping:
-            try:
-                row.role = cfg_mapping[row.language][row.speaker_label]
-            except KeyError:
-                pass
-        elif row.role in ["Adult", "Child", "old", "Teenager"] and row.age_in_days != None:
-            row.role = "Unknown"
-        elif row.role in ["Boy", "Girl", "Female", "Male"] and row.gender_raw != None:
-            row.role = "Unknown"
+        
+        # inference to gender
+        
+        # inference to age (-> macrorole)
+        
+        # if row.role == "Unknown" and row.language in cfg_mapping:
+        #     try:
+        #         row.role = cfg_mapping[row.language][row.speaker_label]
+        #     except KeyError:
+        #         pass
     if len(not_found) > 0:
         print("-- WARNING --")
         for item in not_found: 
