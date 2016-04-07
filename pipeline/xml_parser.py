@@ -55,7 +55,10 @@ class XMLParser(object):
         if key not in location.keys() or location[key] is None:
             location[key] = value
         else:
-            location[key] += '; ' + value
+            if value in location[key]:
+                pass
+            else:
+                location[key] += '; ' + value
 
     def __init__(self, cfg, fpath):
         self.cfg = cfg
@@ -63,7 +66,7 @@ class XMLParser(object):
         self.sname = os.path.basename(fpath).split('.')[0]
         self.metadata_parser = Chat(cfg, fpath)
 
-    def _get_utts(self):
+    def _get_utts(self, debug=False):
 
         xmldoc = etree.parse(self.fpath).getroot()
 
@@ -76,8 +79,8 @@ class XMLParser(object):
             except TypeError:
                 pass
 
-        for u in xmldoc.iterfind('.//u'):
-            
+        for u in xmldoc.getiterator('u'):
+
             try:
                 #uwm = utterance - words - morphemes
                 uwm = {}
@@ -113,14 +116,15 @@ class XMLParser(object):
 
                 uwm['utterance'] = d
 
-                uwm['morphemes'] = self._morphology_inference(uwm)
-                uwm['morphemes'] = self._clean_morphemes(uwm['morphemes'])
+                self._process_morphology(uwm)
+                self._morphology_inference(uwm)
+                self._clean_morphemes(uwm)
                 uwm['utterance']['pos_raw'] = self._concat_mor_tier(
-                        'pos_raw', uwm['morphemes'])
+                        'pos_raw', uwm['words'])
                 uwm['utterance']['gloss_raw'] = self._concat_mor_tier(
-                        'gloss_raw', uwm['morphemes'])
+                        'gloss_raw', uwm['words'])
                 uwm['utterance']['morpheme'] = self._concat_mor_tier(
-                        'morpheme', uwm['morphemes'])
+                        'morpheme', uwm['words'])
 
                 uwm['words'] = self._clean_words(uwm['words'])
                 uwm['utterance']['utterance_raw'] = ' '.join(
@@ -128,11 +132,60 @@ class XMLParser(object):
 
 
                 yield uwm
+
             except Exception as e:
                 XMLParser.logger.warn("Aborted processing of utterance {} "
                         "in file {} with error: {}\nStacktrace: {}".format(
                             u.attrib.get('uID'), self.fpath, repr(e),
                             traceback.format_exc()))
+
+    def _debug_xml(self):
+
+        xmldoc = etree.parse(self.fpath)
+        root = xmldoc.getroot()
+
+        for elem in root.iter():
+            # remove prefixed namespaces
+            try:
+                elem.tag = re.sub('^\{http[^\}]+\}', '', elem.tag)
+                tag = elem.tag
+                attrib = elem.attrib
+            except TypeError:
+                pass
+
+        for u in xmldoc.iterfind('.//u'):
+
+            try:
+
+                self._clean_xml_utterance(u)
+
+            except Exception as e:
+                XMLParser.logger.warn("Aborted processing of utterance {} "
+                        "in file {} with error: {}\nStacktrace: {}".format(
+                            u.attrib.get('uID'), self.fpath, repr(e),
+                            traceback.format_exc()))
+
+        #with open('{}_clean.xml'.format(self.fpath), 'w') as out:
+        xmldoc.write('{}_clean.xml'.format(self.fpath),
+                encoding='utf-8', pretty_print=False)
+            
+
+    def _clean_xml_utterance(self, u):
+
+        if self.cfg['morphemes']['repetitions_glossed'] == 'yes':
+            self._word_inference(u)
+            self._clean_groups(u)
+            self._process_morphology(u)
+        else:
+            self._word_inference(u)
+            self._process_morphology(u)
+            self._clean_groups(u)
+        self._morphology_inference(u)
+        self._add_morphology_warnings(u)
+        self._remove_junk(u)
+
+    def _remove_junk(self, u):
+        pass
 
     def _concat_mor_tier(self, tier, morphlist):
         return ' '.join(['-'.join([m for m in map(
@@ -158,20 +211,17 @@ class XMLParser(object):
         return new_words
 
     def _clean_morphemes(self, mors):
-        new_mors = []
-        for mword in mors:
-            new_mword = []
-            for raw_morpheme in mword:
-                morpheme = {}
-                for k in raw_morpheme:
-                    if k in self.cfg['json_mappings_morphemes']:
-                        label = self.cfg['json_mappings_morphemes'][k]
-                        morpheme[label] = raw_morpheme[k]
-                    else:
-                        morpheme[k] = raw_morpheme[k]
-                new_mword.append(morpheme)
-            new_mors.append(new_mword)
-        return new_mors
+        new_mword = []
+        for raw_morpheme in mword:
+            morpheme = {}
+            for k in raw_morpheme:
+                if k in self.cfg['json_mappings_morphemes']:
+                    label = self.cfg['json_mappings_morphemes'][k]
+                    morpheme[label] = raw_morpheme[k]
+                else:
+                    morpheme[k] = raw_morpheme[k]
+            new_mword.append(morpheme)
+        return new_mword
 
     def _clean_utterance(self, raw_u):
 
@@ -187,15 +237,27 @@ class XMLParser(object):
     def _get_words(self, u):
         u = self._clean_groups(u)
         raw_words = u.findall('.//w')
-        words = self._word_inference(raw_words, u)
+        if self.cfg['repetitions_glossed'] == 'yes':
+            words = self._word_inference(raw_words, u)
+            self._process_morphology(u)
+        else:
+            self._process_morphology(u)
+            words = self._word_inference(raw_words, u)
         return words
 
     def _clean_groups(self, u):
         for group in u.iterfind('.//g'):
+
+            parent = group.getparent()
+            idx = parent.index(group)
+
             self._clean_repetitions(group)
-            self._clean_retracings(group)
+            self._clean_retracings(group, u)
             self._clean_guesses(group)
-        return u
+            for w in group.iterfind('.//w'):
+                parent.insert(idx, w)
+                idx += 1
+            parent.remove(group)
 
     def _clean_repetitions(self, group):
         reps = group.find('r')
@@ -205,76 +267,87 @@ class XMLParser(object):
                 for w in ws:
                     group.insert(len(ws)-1, copy.deepcopy(w))
 
-    def _clean_retracings(self, group):
-        words = group.findall('.//w')
+    def _clean_retracings(self, group, u):
         retracings = group.find('k[@type="retracing"]')
         retracings_wc = group.find('k[@type="retracing with correction"]')
-        if (retracings is not None) or (retracings_wc is not None):
-            # we can't do checks for corpus name here so
-            # just use Turkish / MiiPro as default
-            # and override for miyata
-            for w in words: 
-                w.attrib['glossed'] = 'ahead'
+        if retracings is not None:
+            group_ws = group.findall('w')
+            for w in group_ws:
+                elems_with_same_text = [e for e in u.iterfind('.//w')
+                        if e.find('actual').text == w.find('actual').text]
+                for elem in elems_with_same_text:
+                    mor = elem.find('mor')
+                    # if there is <mor>, insert below the retraced word
+                    if mor is not None:
+                        w.append(mor)
+
+        elif retracings_wc is not None:
+            group_ws = group.findall('w')
+            u_ws = u.findall('.//w')
+            base_index = u_ws.index(group_ws[-1]) + 1
+            max_index = base_index + len(group_ws)
+            for i,j in zip(range(base_index, max_index), itertools.count()):
+                if u_ws[i].find('mor') is not None: 
+                    mor = etree.SubElement(group_ws[j], 'mor')
+                    mor.text = u_ws[i].find('mor').text
+                else:
+                    re.sub(';search ahead', '', group_ws[j].attrib['warning'])
+                group_ws[j].find('target').text = u_ws[i].find('target').text
+                del group_ws[j].attrib['glossed']
 
     def _clean_guesses(self, group):
         words = group.findall('.//w')
         target_guess = group.find('.//ga[@type="alternative"]')
         if target_guess is not None:
-            words[0].attrib['target'] = target_guess.text
+            words[0].find('target').text = target_guess.text
 
         guesses = group.find('k[@type="best guess"]')
         if guesses is not None:
             for w in words:
                 w.attrib['transcribed'] = 'insecure'
 
-    def _add_word_warnings(self, words):
-        new_words = []
+    def _word_inference(self, u):
+        words = u.findall('.//w')
+        self._restructure_words(words)
+        self._clean_word_text(words)
+        self._clean_fragments_and_omissions(words)
+        self._clean_shortenings(words)
+        self._clean_replacements(words)
+        self._mark_retracings(u)
+        self._add_word_warnings(words)
+        #words = filter(lambda w: w != None, words)
+
+        #return [{'full_word': w.text, 'full_word_target': w.attrib['target'],
+        #    'warning': w.attrib['warning']} for w in words]
+
+    def _restructure_words(self, words):
         for w in words:
-            try:
-                if 'glossed' in w.attrib:
-                    if w.attrib['glossed'] == 'no':
-                        XMLParser.creadd(w.attrib, 'warning', 'not glossed')
-                    elif w.attrib['glossed'] == 'repeated':
-                        XMLParser.creadd(w.attrib, 'warning', 'not glossed; repeat')
-                    elif w.attrib['glossed'] == 'ahead':
-                        XMLParser.creadd(w.attrib, 'warning', 'not glossed; search ahead')
-                if 'transcribed' in w.attrib and w.attrib['transcribed'] == 'insecure':
-                    XMLParser.creadd(w.attrib, 'warning', 'transcription insecure')            
-                if 'warning' not in w.attrib:
-                    w.attrib['warning'] = ''
-                new_words.append(w)
-            except TypeError:
-                pass
-        return new_words
-
-    def _word_inference(self, words, u):
-        words = self._clean_word_text(words)
-        words = self._clean_fragments_and_omissions(words)
-        words = self._clean_shortenings(words)
-        words = self._clean_replacements(words)
-        words = self._add_word_warnings(words)
-        words = filter(lambda w: w != None, words)
-
-        return [{'full_word': w.text, 'full_word_target': w.attrib['target'],
-            'warning': w.attrib['warning']} 
-            for w,i in zip(words, itertools.count())]
+            actual = etree.SubElement(w, 'actual')
+            target = etree.SubElement(w, 'target')
+            if w.text is not None:
+                actual.text = w.text
+            else:
+                actual.text = ''
+            target.text = ''
+            w.text = ''
 
     def _clean_word_text(self, words):
         for w in words:
+            wt = w.find('actual')
             for path in ('.//p', './/ca-element', './/wk'):
                 for t in w.findall(path):
                     if t.tail is not None:
-                        if w.text is None:
-                            w.text = t.tail
+                        if wt.text is None:
+                            wt.text = t.tail
                         else:
-                            w.text += t.tail
-            if w.text:
+                            wt.text += t.tail
+                    w.remove(t)
+            if wt.text:
                 # Sometimes words may be partially untranscribed
                 # (-xxx, xxx-, -xxx-) - transform this to unified ???
-                w.text = re.sub('\-?xxx\-?', '???', w.text)
+                wt.text = re.sub('\-?xxx\-?', '???', w.text)
             if 'untranscribed' in w.attrib:
-                w.text = '???'
-        return words
+                wt.text = '???'
 
     def _clean_fragments_and_omissions(self, words):
         for w in words:
@@ -282,30 +355,23 @@ class XMLParser(object):
                 if 'type' == 'omission':
                     w = None
                 elif 'type' == 'fragment':
-                    w.attrib['target'] = '???'
-                    w.attrib['glossed'] = 'no'
-        return words
-    
+                    w.find('target').text = '???'
+                    w.attrib['warning'] = 'not glossed'
+        
     def _clean_shortenings(self, words):
         for w in words:
 
-            if w.text is None:
-                w.text = ''
-            w_actual = w.text
-            w_target = w.text
+            w_actual = w.find('actual')
+            w_target = w.find('target')
+            w_target.text = w_actual.text
 
             for s in w.findall('shortening'):
                 if s.text is not None:
-                    w_target += s.text
+                    w_target.text += s.text
                 if s.tail is not None:
-                    w_target += s.tail
-                    w_actual += s.tail
+                    w_target.text += s.tail
+                    w_actual.text += s.tail
                 w.remove(s)
-
-            w.text = w_actual
-            w.attrib['target'] = w_target
-
-        return words
 
     def _clean_replacements(self, words):
         # replacements, e.g. 
@@ -328,18 +394,19 @@ class XMLParser(object):
                     # first word: transfer content 
                     # and any morphology to parent <w> in <u>
                     if j == 0:
-                        words[i].attrib['target'] = rep_words[0].attrib['target']
+                        words[i].find('target').text = rep_words[0].find('target').text
                         if mor is not None:
-                            words[i].insert(0, mor)
+                            words[i].append(mor)
                     # all further words: insert new empty <w> under parent of
                     # last known <w> (= <u> or <g>),
                     # put content and morphology there
                     else:
                         w = etree.Element('w')
-                        w.text = ''
-                        w.attrib['target'] = rep_words[j].attrib['target']
+                        w_act = etree.SubElement(w, 'actual')
+                        w_tar = etree.SubElement(w, 'target')
+                        w_tar.text = rep_words[j].find('target').text
                         if mor is not None:
-                            w.insert(0, mor)
+                            w.appent(mor)
                         words.insert(i+j, w)
                         
                 #words[i].attrib['target'] = '_'.join(rep_w.attrib['target'] 
@@ -347,10 +414,50 @@ class XMLParser(object):
                 words[i].remove(r)
                 for k in range(1,rep_len+1):
                     del words[i+k]
-        return words
+
+    def _mark_retracings(self, u):
+        for group in u.iterfind('.//g'):
+            retracings = group.find('k[@type="retracing"]')
+            retracings_wc = group.find('k[@type="retracing with correction"]')
+            if (retracings is not None) or (retracings_wc is not None):
+                # we can't do checks for corpus name here so
+                # just use Turkish / MiiPro as default
+                # and override for miyata
+                words = group.findall('.//w')
+                for w in words: 
+                    w.attrib['glossed'] = 'ahead'
+                    XMLParser.creadd(w.attrib, 'warning', 'not glossed; search ahead')
+        
+    def _add_word_warnings(self, words):
+        for w in words:
+            if 'glossed' in w.attrib:
+                if w.attrib['glossed'] == 'no':
+                    XMLParser.creadd(w.attrib, 'warning', 'not glossed')
+                elif w.attrib['glossed'] == 'repeated':
+                    XMLParser.creadd(w.attrib, 'warning', 'not glossed; repeat')
+                elif w.attrib['glossed'] == 'ahead':
+                    XMLParser.creadd(w.attrib, 'warning', 'not glossed; search ahead')
+            if 'transcribed' in w.attrib and w.attrib['transcribed'] == 'insecure':
+                XMLParser.creadd(w.attrib, 'warning', 'transcription insecure')            
+            #if 'warning' not in w.attrib:
+            #    w.attrib['warning'] = ''
+
+    def _process_morphology(self, u):
+        pass
 
     def _morphology_inference(self, u):
         pass
+
+    def _add_morphology_warnings(self, u):
+        if u.find('.//mor') is None:
+            XMLParser.creadd(u.attrib, 'warning', 'not glossed')
+        else:
+            for w in u.findall('.//w'):
+                #print('alignment problem in ' + self.fpath + ', utterance ' + str(utterance_index) + ': general word tier <w> has
+                #+ str(length_words) + ' words vs ' + str(length_morphology) + ' in "mor" (= morphology)')
+                if w.find('./mor') is None:
+                    XMLParser.creadd(u.attrib, 'warning', 'broken alignment full_word : segments/glosses')
+                    break
 
     def _get_annotations(self, u):
         morph = {}
