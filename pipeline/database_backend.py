@@ -40,8 +40,9 @@ def create_tables(engine):
 
 # TODO: http://stackoverflow.com/questions/13978554/is-possible-to-create-column-in-sqlalchemy-which-is-going-to-be-automatically-po
 
+
 class Session(Base):
-    """ Each input file is a row in the Sessions table.
+    """ Each row in the Sessions table represents an input file.
 
         Note:
             - session_id field is the input filename
@@ -51,10 +52,10 @@ class Session(Base):
     __tablename__ = 'sessions'
 
     id = Column(Integer, primary_key=True)
-    source_id = Column(Text, nullable=True, unique=False)
-    corpus = Column(Text, nullable=True, unique=False)
-    language = Column(Text, nullable=True, unique=False)
-    date = Column(Text, nullable=True, unique=False)
+    source_id = Column(Text, nullable=False, unique=False)
+    corpus = Column(Text, nullable=False, unique=False)
+    language = Column(Text, nullable=False, unique=False)
+    date = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     media = Column(Text, nullable=True, unique=False)
     media_type = Column(Text, nullable=True, unique=False)
 
@@ -73,10 +74,10 @@ class Speaker(Base):
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
     uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
-    corpus = Column(Text, nullable=True, unique=False)
-    language = Column(Text, nullable=True, unique=False)
-    speaker_label = Column(Text, nullable=True, unique=False)
-    name = Column(Text, nullable=True, unique=False)
+    corpus = Column(Text, nullable=False, unique=False)
+    language = Column(Text, nullable=False, unique=False)
+    speaker_label = Column(Text, nullable=True, unique=False)  # TODO: set to nullable=FALSE once all tests pass
+    name = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     age_raw = Column(Text, nullable=True, unique=False)
     age = Column(Text, nullable=True, unique=False)
     age_in_days = Column(Integer, nullable=True, unique=False)
@@ -84,7 +85,7 @@ class Speaker(Base):
     gender = Column(Text, nullable=True, unique=False)
     role_raw = Column(Text, nullable=True, unique=False)
     role = Column(Text, nullable=True, unique=False)
-    macrorole = Column(Text, nullable=True, unique=False)
+    macrorole = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     languages_spoken = Column(Text, nullable=True, unique=False)
     birthdate = Column(Text, nullable=True, unique=False)
 
@@ -102,11 +103,11 @@ class UniqueSpeaker(Base):
     __tablename__ = 'uniquespeakers'
 
     id = Column(Integer, primary_key=True)
-    speaker_label = Column(Text, nullable=True, unique=False)
-    name = Column(Text, nullable=True, unique=False)
+    speaker_label = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    name = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     birthdate = Column(Text, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
-    corpus = Column(Text, nullable=True, unique=False)
+    corpus = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
 
 
 class Utterance(Base):
@@ -125,15 +126,15 @@ class Utterance(Base):
     source_id = Column(Text, nullable=True, unique=False)
     # uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
 
-    corpus = Column(Text, nullable=True, unique=False)
-    language = Column(Text, nullable=True, unique=False)
+    corpus = Column(Text, nullable=False, unique=False)
+    language = Column(Text, nullable=False, unique=False)
     # utterance_id = Column(Text, nullable=True, unique=False)
-    speaker_label = Column(Text, nullable=True, unique=False)
+    speaker_label = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     addressee = Column(Text, nullable=True, unique=False)
-    utterance_raw = Column(Text, nullable=True, unique=False)
-    utterance = Column(Text, nullable=True, unique=False)
+    utterance_raw = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    utterance = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     translation = Column(Text, nullable=True, unique=False)
-    sentence_type = Column(Text, nullable=True, unique=False)
+    sentence_type = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     start = Column(Text, nullable=True, unique=False)
     end = Column(Text, nullable=True, unique=False)
     start_raw = Column(Text, nullable=True, unique=False)
@@ -160,9 +161,9 @@ class Word(Base):
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
     utterance_id_fk = Column(Integer, ForeignKey('utterances.id'))
-    corpus = Column(Text, nullable=True, unique=False)
-    language = Column(Text, nullable=True, unique=False)
-    word = Column(Text, nullable=True, unique=False)
+    corpus = Column(Text, nullable=False, unique=False)
+    language = Column(Text, nullable=False, unique=False)
+    word = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     word_actual = Column(Text, nullable=True, unique=False)
     word_target = Column(Text, nullable=True, unique=False)
     warning = Column(Text, nullable=True, unique=False)
@@ -181,15 +182,15 @@ class Morpheme(Base):
     utterance_id_fk = Column(Text, ForeignKey('utterances.id'))
     word_id_fk = Column(Text, ForeignKey('words.id'))
 
-    corpus = Column(Text, nullable=True, unique=False)
-    language = Column(Text, nullable=True, unique=False)
-    type = Column(Text, nullable=True, unique=False)
-    morpheme = Column(Text, nullable=True, unique=False)
-    gloss_raw = Column(Text, nullable=True, unique=False)
-    gloss = Column(Text, nullable=True, unique=False)
-    pos_raw = Column(Text, nullable=True, unique=False)
-    pos = Column(Text, nullable=True, unique=False)
-    warning = Column(Text, nullable=True, unique=False)
+    corpus = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    language = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    type = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    morpheme = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    gloss_raw = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    gloss = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    pos_raw = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    pos = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    warning = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
 
 
 class Warnings(Base):
