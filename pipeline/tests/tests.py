@@ -77,16 +77,16 @@ def test_database_integrity():
     query = "select count(*) from sessions where media is null"
     yield check_null, query
 
-    query = "select count(*) from utterance where speaker_label is null"
+    query = "select count(*) from utterances where speaker_label is null"
     yield check_null, query
 
-    query = "select count(*) from utterance where utterance_raw is null"
+    query = "select count(*) from utterances where utterance_raw is null"
     yield check_null, query
 
-    query = "select count(*) from utterance where utterance is null"
+    query = "select count(*) from utterances where utterance is null"
     yield check_null, query
 
-    query = "select count(*) from utterance where sentence_type is null"
+    query = "select count(*) from utterances where sentence_type is null"
     yield check_null, query
 
     query = "select count(*) from words where word is null"
@@ -101,13 +101,13 @@ def test_database_integrity():
     query = "select count(*) from speakers where macrorole is null"
     yield check_null, query
 
-    query = "select count(*) from unique_speakers where speaker_label is null"
+    query = "select count(*) from uniquespeakers where speaker_label is null"
     yield check_null, query
 
-    query = "select count(*) from unique_speakers where name is null"
+    query = "select count(*) from uniquespeakers where name is null"
     yield check_null, query
 
-    query = "select count(*) from unique_speakers where corpus is null"
+    query = "select count(*) from uniquespeakers where corpus is null"
     yield check_null, query
 
 
