@@ -146,14 +146,14 @@ class XMLParser(object):
         for raw_word in words:
             word = {}
             for k in raw_word:
-                if k in self.cfg['json_mappings_words']:
-                    label = self.cfg['json_mappings_words'][k]
+                if k in self.cfg['json_mappings']:
+                    label = self.cfg['json_mappings'][k]
                     word[label] = raw_word[k]
                 else:
                     word[k] = raw_word[k]
                     if word[k] == "":
                         word[k] = None
-            word['word'] = word[self.cfg['json_mappings_words']['word']]
+            word['word'] = word[self.cfg['json_mappings']['word']]
             new_words.append(word)
         return new_words
 
@@ -164,8 +164,8 @@ class XMLParser(object):
             for raw_morpheme in mword:
                 morpheme = {}
                 for k in raw_morpheme:
-                    if k in self.cfg['json_mappings_morphemes']:
-                        label = self.cfg['json_mappings_morphemes'][k]
+                    if k in self.cfg['json_mappings']:
+                        label = self.cfg['json_mappings'][k]
                         morpheme[label] = raw_morpheme[k]
                     else:
                         morpheme[k] = raw_morpheme[k]
@@ -177,8 +177,8 @@ class XMLParser(object):
 
         utterance = {}
         for k in raw_u:
-            if k in self.config['json_mappings_utterance']:
-                label = self.config['json_mappings_utterance'][k]
+            if k in self.config['json_mappings']:
+                label = self.config['json_mappings'][k]
                 utterance[label] = raw_u[k]
             else:
                 utterance[k] = raw_u[k]

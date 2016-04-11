@@ -8,6 +8,7 @@ import json
 import collections
 import configparser
 from configparser import ExtendedInterpolation
+from collections import namedtuple
 
 from metadata import Imdi, Chat
 from toolbox import ToolboxFile
@@ -187,7 +188,7 @@ class JsonParser(SessionParser):
         self.metadata_parser = Chat(self.config, self.metadata_file_path)
 
     def next_utterance(self):
-        """ Get each utterance from Robert's JSON output
+        """ Get utterance, words and morphemes from Robert's JSON output
 
         Notes:
             Robert's JSON output is a dictionary: {key ("filename"): [u1{...}, u2{...}]}. Here we iterate over the
@@ -203,88 +204,73 @@ class JsonParser(SessionParser):
         assert(len(keys) == 1), "there is more than one key in the json file"
         key = keys[0] # should only be one top-level key per json file
 
+        # TODO: config session label mapping replacement afterwards
         for record in self.data[key]:
-            utterance = collections.OrderedDict()
-            db_words = []
+            utterance = {}
+            words = []
             morphemes = []
 
-            # iterate over the utterance keys in the json parsed object and grab what is specified in the .ini
-            for k in record:
-                if k in self.config['json_mappings_utterance']:
-                    label = self.config['json_mappings_utterance'][k]
-                    utterance[label] = record[k]
+            # take only the config specified fields
+            for k, v in record.items():
+                if k in self.config['json_mappings']:
+                    utterance[self.config['json_mappings'][k]] = v.strip()
 
-                if k == 'words':
-                    # Robert doesn't output the whole utterance, recreate it by gathering up the words
-                    full_utterance = []
-                    # Robert's {words:[]} is a list of dictionaries with keys like "full_word_target"
-                    for word in record['words']:
-                        # this is to skip empty dicts in Robert's parser
-                        if len(word) == 0:
-                            continue
+            # get initial words and morphemes
+            if 'words' in record and not len(record['words']) == 0:
+                for word in record['words']:
+                    words.append(word)
+                    if 'morphemes' in word:
+                        morphemes.append(word['morphemes'])
 
-                        d = collections.OrderedDict()
-                        for k_json_mappings_words in self.config['json_mappings_words']:
-                            if k_json_mappings_words in word and len(word[k_json_mappings_words]) > 0:
-                                d[self.config['json_mappings_words'][k_json_mappings_words]] = word[k_json_mappings_words]
+            # take only the config specified fields
+            temp = []
+            full_utterance = [] # utterance reconstruction
+            for word in words:
+                d = {}
+                for k, v in word.items():
+                    if k in self.config['json_mappings']:
+                        d[self.config['json_mappings'][k]] = v.strip()
+                temp.append(d)
+                # full utterance re-creation and populate words.word
+                if self.config['json_mappings']['word'] in d:
+                    full_utterance.append(d[self.config['json_mappings']['word']])
+                    d['word'] = d[self.config['json_mappings']['word']]
 
-                        # assign the proper actual vs target "word" given the corpus
-                        # print(self.config['json_mappings_words']['word'])
-                        # recreate the word utterance
-                        if self.config['json_mappings_words']['word'] in d:
-                            d['word'] = d[self.config['json_mappings_words']['word']]
-                            # Robert's empty dictionary check - tries to hackle:
-                            # https://github.com/uzling/acqdiv/issues/325
-                            if type(d['word']) is dict and len(d['word']) == 0:
-                                continue
-                            full_utterance.append(d['word'])
+            utterance['utterance_raw'] = " ".join(full_utterance)
+            words = temp
 
-                        # these are so awful -- only work because Robert alphabetically ordered the dictionary by keys
-                        if 'utterance_id' in utterance:
-                            d['utterance_id_fk'] = utterance['utterance_id']
-                        if 'warnings' in word:
-                            d[self.config['json_mappings_words']['warnings']] = word['warnings']
+            # take only the config specified fields
+            temp = []
+            for i in morphemes: # [[{},{}], [{}]]
+                temp2 = []
+                # reconstructions:
+                morpheme = []
+                gloss = []
+                pos = []
 
-                        db_words.append(d)
+                for j in i: # [{},{}]
+                    d = {}
+                    for k, v in j.items():
+                        if k in self.config['json_mappings']:
+                           d[self.config['json_mappings'][k]] = v.strip()
+                    temp2.append(d)
+                    # reconstructions: # TODO: add words, segments, etc.
+                    if 'morpheme' in d:
+                        morpheme.append(d['morpheme'])
+                    if 'gloss_raw' in d:
+                        gloss.append(d['gloss_raw'])
+                    if 'pos_raw' in d:
+                        pos.append(d['pos_raw'])
 
-                        # morphemes{} parsing within word[] and extraction of .ini specified db columns
-                        # morphemes are also a key:[] pair in words{}; morphemes: [segment:'ga', pos_target:'Eng']...
-                        if 'morphemes' in word:
-                            segments = []
-                            glosses = []
-                            pos = []
+                temp.append(temp2)
+                # reconstructions
+                utterance['morpheme'] = " ".join(morpheme)
+                utterance['gloss_raw'] = " ".join(gloss)
+                utterance['pos_raw'] = " ".join(pos)
+            morphemes = temp
 
-                            if len(word['morphemes']) > 0: # skip empty lists in the json
-                                for e in word['morphemes']: # iter over morpheme dicts
-                                    d2 = collections.OrderedDict()
-                                    # i'm so ashamed here in the code...
-                                    for k_json_mappings_morphemes in self.config['json_mappings_morphemes']:
-                                        if k_json_mappings_morphemes in e and not type(e[k_json_mappings_morphemes]) is dict:
-                                            d2[self.config['json_mappings_morphemes'][k_json_mappings_morphemes]] = \
-                                            e[k_json_mappings_morphemes]
-                                    if len(d2) > 0:
-                                        morphemes.append(d2)
-                                if 'segment_target' in d2:
-                                    segments.append(d2['segment_target'])
-                                if 'gloss_target' in d2:
-                                    glosses.append(d2['gloss_target'])
-                                if 'pos_target' in d2:
-                                    pos.append(d2['pos_target'])
+            yield utterance, words, morphemes
 
-                            # this is so nasty hacky -- assumes all json files are the same!
-                            if len(segments) > 0:
-                                utterance['morpheme'] = " ".join(segments)
-                            if len(pos) > 0:
-                                utterance['pos'] = " ".join(pos)
-                            if len(glosses) > 0:
-                                utterance['gloss'] = " ".join(glosses)
-
-                    # Recreate the full utterance string
-                    utterance['utterance_raw'] = " ".join(full_utterance)
-                    utterance['utterance'] = " ".join(full_utterance)
-                    utterance['word'] = " ".join(full_utterance)
-                    # TODO: add inference / clean-up
-            yield utterance, db_words, morphemes
 
     def get_session_metadata(self):
         """ Do xml-specific parsing of session metadata.
@@ -293,6 +279,7 @@ class JsonParser(SessionParser):
             Ordered dictionary of session metadata
         """
         return self.metadata_parser.metadata['__attrs__']
+
 
     def next_speaker(self):
         """ Yield participants metadata for the Speaker table in the db

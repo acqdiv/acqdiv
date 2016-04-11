@@ -22,6 +22,17 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
+# uncomment to define a Handler which writes INFO messages or higher to the sys.stderr
+"""
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+# set a format which is simpler for console use
+formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+# tell the handler to use this format
+console.setFormatter(formatter)
+# add the handler to the root logger
+logging.getLogger('').addHandler(console)
+"""
 
 class CorpusProcessor(object):
     """ Handler for processing each session file in particular corpus.
@@ -81,85 +92,8 @@ class SessionProcessor(object):
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
         self.Session = sessionmaker(bind=engine)
 
+
     def process_session(self):
-        """ Process function for each file; creates dictionaries and inserts them into the database via sqla
-
-            Note: ACQDIV corpus config files contain maps from raw input tier labels -> ACQDIV-DB column names.
-        """
-        # TODO: remove this logic and the process_old and commit_old routines when XMLParsing is finished
-        if self.format == "Toolbox" or self.format == "ChatXML":
-            self.process()
-        elif self.format == "JSON":
-            self.process_old()
-        else:
-            raise Exception("Error: unknown corpus format!")
-
-    def process_old(self):
-        # OLD JSON Parsing
-        # Begin CHATXML or Toolbox body parsing
-        self.parser = self.parser_factory(self.file_path)
-
-        # Get session metadata (via labels defined in corpus config)
-        session_metadata = self.parser.get_session_metadata()
-        d = {}
-        for k, v in session_metadata.items():
-            if k in self.config['session_labels'].keys():
-                d[self.config['session_labels'][k]] = v
-        d['source_id'] = self.filename
-        d['language'] = self.language
-        d['corpus'] = self.corpus
-        self.session_entry = Session(**d)
-
-        # Get speaker metadata; capture data specified in corpus config
-        self.speaker_entries = []
-        for speaker in self.parser.next_speaker():
-            d = {}
-            for k, v in speaker.items():
-                if k in self.config['speaker_labels'].keys():
-                    d[self.config['speaker_labels'][k]] = v
-
-            d['session_id_fk'] = self.filename
-            d['language'] = self.language
-            d['corpus'] = self.corpus
-
-            self.speaker_entries.append(Speaker(**d))
-
-        # Begin CHATXML or Toolbox body parsing
-        self.utterances = []
-        self.words = []
-        self.morphemes = []
-        self.warnings = []
-
-        # TODO: this will be replaced with CHAT XML parsing
-        for utterance, words, morphemes in self.parser.next_utterance():
-            utterance['session_id_fk'] = self.filename
-            utterance['corpus'] = self.corpus
-            utterance['language'] = self.language
-            self.utterances.append(Utterance(**utterance))
-
-            for word in words:
-                word['session_id_fk'] = self.filename
-                word['utterance_id_fk'] = utterance['source_id']
-                word['corpus'] = self.corpus
-                word['language'] = self.language
-                # JSON files have utterance and word level warnings, but sometimes words are misaligned and
-                # the warning is at the utterance level -- give the user some love and tell them where to look
-                # if the word is returned NULL due to misalignment
-                if not 'word' in word:
-                    word['warning'] = "See warning in Utterance table at: {}, {} ".format(word['session_id_fk'], word['utterance_id_fk'])
-                self.words.append(Word(**word))
-
-            for morpheme in morphemes:
-                morpheme['session_id_fk'] = self.filename
-                morpheme['utterance_id_fk'] = utterance['source_id']
-                morpheme['corpus'] = self.corpus
-                morpheme['language'] = self.language
-                morpheme['type'] = self.morpheme_type
-                self.morphemes.append(Morpheme(**morpheme))
-        self.commit_old()
-
-
-    def process(self):
         self.parser = self.parser_factory(self.file_path)
 
         # Returns all session metadata and gets corpus-specific sessions table mappings to populate the db
@@ -245,24 +179,5 @@ class SessionProcessor(object):
             # TODO: print some error message? log it?
             session.rollback()
             raise
-        finally:
-            session.close()
-
-
-    def commit_old(self):
-        # TODO: remove this when XMLParsing is finished; handles the old JSON parsing
-        session = self.Session()
-        try:
-            session.add(self.session_entry)
-            session.add_all(self.speaker_entries)
-            session.add_all(self.utterances)
-            session.add_all(self.words)
-            session.add_all(self.morphemes)
-            session.add_all(self.warnings)
-            session.commit()
-        except Exception as e:
-            # TODO: print some error message? log it?
-            session.rollback()
-            raise e
         finally:
             session.close()
