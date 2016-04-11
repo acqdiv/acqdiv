@@ -111,38 +111,56 @@ class Imdi(Parser):
         participants = []
         for actor in self.root.Session.MDGroup.Actors.getchildren():
             participant = {}
-            for e in actor.getchildren():
-                t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "") # drop the IMDI stuff
-
-                if t == 'Languages':
+            
+            # go through actor nodes, paying special attention to complex nodes
+            for actornode in actor.getchildren():
+                actortag = actornode.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "") # drop the IMDI stuff
+                
+                # deal with special nodes first
+                # <Languages>: this may contain several languages -> save as list
+                if actortag == 'Languages':
                     langlist = []
-                    for lang in e.iterfind('Language'):
+                    for lang in actornode.iterfind('Language'):
                         if lang.Id.text != None:
                             try:
                                 langlist.append(lang.Id.text.split(':')[1])
                             except IndexError:
                                 langlist.append(lang.Id.text)
                     if len(langlist) != 0:
-                        participant[t.lower()] = " ".join(langlist)
+                        participant[actortag.lower()] = " ".join(langlist)
+                # <Keys>: marks family relations which may be used for role inference when given in relation to the current target child
+                elif actortag == 'Keys':
+                    # get code for current target child from session name
+                    search_tc_session = re.search('^CL(.+?Ch\\d)R\\d+S\\d+$', str(self.root.Session.Name.text))
+                    if search_tc_session is not None:
+                        current_target_child = search_tc_session.group(1)
+                        # find Key where Name = "FSR_" + the code of the current target child
+                        for key in actornode.iterfind('Key'):
+                            if re.search('FSR_'+current_target_child, key.get('Name')):
+                                participant['family_key'] = str(key.text)
+                        
+                # all other nodes: simply add to dictionary
                 else:
-                    if not str(e.text).strip() == "": # skip empty fields in the IMDI
-                        participant[t.lower()] = str(e.text).strip() # turn booleans into strings
-
-                # for Chintang: check whether there is a key in Keys with attributes
-                # current Session's target child's nr - if yes, extract
-                keys = actor.find('Keys')
-                if keys != None:
-                    for key in keys.getchildren():
-                        if key != '' and key.get('Name')[-3:] in str(self.root.Session.Name.text):
-                            participant['keys'] = str(key.text)
-
+                    if not str(actornode.text).strip() == "": # skip empty fields in the IMDI
+                        participant[actortag.lower()] = str(actornode.text).strip() # turn booleans into strings
+            
+            # check collected participant dictionary, then append to list of all participants
             if not len(participant) == 0:
-                # Chintang requires additional inference rules for role:
-                # (1) Take the value from the IMDI field Role as the default
-                # (2) If the IMDI field FamilySocialRole has a value, rather use that value since it's usually more specific than Role.
-                # (3) Exception: If Role says "Target Child", keep that value rather than overwriting it. 
-                if (not participant['role'] in ['Target child', 'Target Child','Target_Child', 'Target_child']) and 'familysocialrole' in participant and not participant['familysocialrole'].lower() in ['unspecified']:
-                    participant['role'] = participant['familysocialrole']
+                # Chintang only: special role inference
+                # Default for participant['role'] is the value taken from the field Role; overwrite this by more specific value UNLESS the existing value is "Target Child"
+                
+                if self.config['corpus']['corpus'] == "Chintang":
+                    # (1) Actor/FamilySocialRole is on average more specific than Actor/Role
+                    if ('familysocialrole' in participant and
+                        participant['familysocialrole'] not in ['Unspecified', 'unspecified'] and
+                        participant['role'] not in ['target child', 'Target child', 'Target Child']):
+                        participant['role'] = participant['familysocialrole']
+                    # (2) Even better values can sometimes be found in Actor/Keys. This list of nodes has been evaluated above; the relevant value is now in participant['family_key']
+                    if ('family_key' in participant and
+                        participant['family_key'] not in ['None', 'none', 'n/a', '?', '??'] and
+                        participant['role'] not in ['target child', 'Target child', 'Target Child']):
+                        participant['role'] = participant['family_key']
+                        
                 participants.append(participant)
         return participants
 
