@@ -7,9 +7,9 @@ import sys
 import itertools
 
 from lxml import etree
-from xml_parser import XMLParser
+from xml_parser import XMLCleaner
 
-class MiyataParser(XMLParser):
+class MiyataCleaner(XMLCleaner):
 
     def _process_morphology(self, u):
         pass
@@ -121,7 +121,7 @@ class MiyataParser(XMLParser):
                                                   
             # if there is no morphology, add warning to present word and count up
             elif morphology is None:
-                XMLParser.creadd(w.attrib, 'warnings', 'not glossed')
+                XMLCleaner.creadd(w.attrib, 'warnings', 'not glossed')
     
         # EOF word loop
         
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     from parsers import CorpusConfigParser as Ccp
     conf = Ccp()
     conf.read('ini/Japanese_Miyata.ini')
-    corpus = MiyataParser(conf, 'tests/corpora/Japanese_Miyata/xml/Japanese_Miyata.xml')
+    corpus = MiyataCleaner(conf, 'tests/corpora/Japanese_Miyata/xml/Japanese_Miyata.xml')
 
     corpus._debug_xml()
 

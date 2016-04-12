@@ -7,9 +7,9 @@ import itertools
 import pdb
 
 from lxml import etree
-from xml_parser import XMLParser
+from xml_parser import XMLCleaner
 
-class TurkishParser(XMLParser):
+class TurkishCleaner(XMLCleaner):
 
     def _get_timestamps(self, u):
         ts = u.find('.//media')
@@ -26,12 +26,12 @@ class TurkishParser(XMLParser):
                     continue
                 elif 'type' == 'fragment':
                     w.find('target').text = '???'
-                    XMLParser.creadd(w.attrib, 'warning', 'not glossed')
+                    XMLCleaner.creadd(w.attrib, 'warning', 'not glossed')
                     continue
             if 'formType' in w.attrib and (w.attrib['formType'] 
                     in ['interjection', 'onomatopoeia', 'family-specific']):
                 w.find('target').text = '???'
-                XMLParser.creadd(w.attrib, 'warning', 'not glossed')
+                XMLCleaner.creadd(w.attrib, 'warning', 'not glossed')
                 continue
 
     def _process_morphology(self, u):
@@ -200,7 +200,7 @@ if __name__ == '__main__':
     from parsers import CorpusConfigParser as Ccp
     conf = Ccp()
     conf.read('ini/Turkish.ini')
-    corpus = TurkishParser(conf, 'tests/corpora/Turkish_KULLD/xml/Turkish_KULLD.xml')
+    corpus = TurkishCleaner(conf, 'tests/corpora/Turkish_KULLD/xml/Turkish_KULLD.xml')
 
     corpus._debug_xml()
 

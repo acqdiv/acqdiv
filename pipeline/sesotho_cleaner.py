@@ -6,9 +6,9 @@ import itertools
 import pdb
 
 from lxml import etree
-from xml_parser import XMLParser
+from xml_parser import XMLCleaner
 
-class SesothoParser(XMLParser):
+class SesothoCleaner(XMLCleaner):
 
     def _process_morphology(self, u):
     
@@ -28,7 +28,7 @@ class SesothoParser(XMLParser):
                 else:
                     w = re.sub('[\(\)]', '', w)
 
-                word_index, wlen = XMLParser.word_index_up(
+                word_index, wlen = XMLCleaner.word_index_up(
                         full_words, wlen, word_index, u)
 
                 mor = etree.SubElement(full_words[word_index], 'mor')
@@ -104,7 +104,7 @@ class SesothoParser(XMLParser):
             
             # check alignment between segments and glosses on morpheme level
             if len(glosses) != len(segments):
-                XMLParser.creadd(fw.attrib, 'warnings', 
+                XMLCleaner.creadd(fw.attrib, 'warnings', 
                         'broken alignment segments_target : glosses_target')
             
             ms = itertools.zip_longest(glosses, segments, fillvalue='')
@@ -187,7 +187,7 @@ if __name__ == "__main__":
     from parsers import CorpusConfigParser as Ccp
     conf = Ccp()
     conf.read('ini/Sesotho.ini')
-    corpus = SesothoParser(conf, 'tests/corpora/Sesotho/xml/Sesotho.xml')
+    corpus = SesothoCleaner(conf, 'tests/corpora/Sesotho/xml/Sesotho.xml')
 
     corpus._debug_xml()
 

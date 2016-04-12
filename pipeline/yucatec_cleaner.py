@@ -5,9 +5,9 @@ import sys
 import itertools
 
 from lxml import etree
-from xml_parser import XMLParser
+from xml_parser import XMLCleaner
 
-class YucatecParser(XMLParser):
+class YucatecCleaner(XMLCleaner):
 
     def _process_morphology(self, u):
         full_words = u.findall('.//w')
@@ -51,7 +51,7 @@ class YucatecParser(XMLParser):
                 
         # if there is no morphology, add warning to complete utterance
         else:
-            XMLParser.creadd(u.attrib, 'warning', 'not glossed')
+            XMLCleaner.creadd(u.attrib, 'warning', 'not glossed')
 
 
     def _morphology_inference(self, u):
@@ -66,7 +66,7 @@ class YucatecParser(XMLParser):
                     morphemes = fw.find('.//mor')
                     w = morphemes.text
                 except AttributeError:
-                    XMLParser.creadd(fw.attrib, 'warning', 'not glossed')
+                    XMLCleaner.creadd(fw.attrib, 'warning', 'not glossed')
                     continue
 
             # morphemes is a list of morphemes; initial index is -1
@@ -95,7 +95,7 @@ class YucatecParser(XMLParser):
                         morphemes[morpheme_index].attrib['glosses_target'] = 'pfx'
                         morphemes[morpheme_index].attrib['pos_target'] = 'pfx'
                         #print(self.fpath, ' u', utterance_index, ' w', word_index, ' m', morpheme_index, ' has no segment/gloss structure: ', pfx, sep='')
-                        XMLParser.creadd(morphemes[morpheme_index].attrib, 'warning', 'no segment/gloss structure')
+                        XMLCleaner.creadd(morphemes[morpheme_index].attrib, 'warning', 'no segment/gloss structure')
             # EOF prefixes
             
             # get stem: everything up to the first ":" (= suffix separator) or, if there are no suffixes, to the end of the word
@@ -131,14 +131,14 @@ class YucatecParser(XMLParser):
                     morphemes[morpheme_index].attrib['glosses_target'] = stem
                     morphemes[morpheme_index].attrib['pos_target'] = '???'
                     #print(self.fpath, ' u', utterance_index, ' w', word_index, ' m', morpheme_index, ' has no segment/gloss structure: ', stem, sep='')
-                    XMLParser.creadd(morphemes[morpheme_index].attrib, 'warning', 'no segment/gloss structure')
+                    XMLCleaner.creadd(morphemes[morpheme_index].attrib, 'warning', 'no segment/gloss structure')
                 # other stuff tends to be a segment
                 else:
                     morphemes[morpheme_index].attrib['segments_target'] = stem
                     morphemes[morpheme_index].attrib['glosses_target'] = '???'
                     morphemes[morpheme_index].attrib['pos_target'] = '???'
                     #print(self.fpath, ' u', utterance_index, ' w', word_index, ' m', morpheme_index, ' has no segment/gloss structure: ', stem, sep='')
-                    XMLParser.creadd(morphemes[morpheme_index].attrib, 'warning', 'no segment/gloss structure')
+                    XMLCleaner.creadd(morphemes[morpheme_index].attrib, 'warning', 'no segment/gloss structure')
             # EOF stem
                         
             # if any suffixes were detected above, suffix_string contains them by now - otherwise it's empty
@@ -160,7 +160,7 @@ class YucatecParser(XMLParser):
                         morphemes[morpheme_index].attrib['glosses_target'] = sfx
                         morphemes[morpheme_index].attrib['pos_target'] = 'sfx'
                         #print(self.fpath, ' u', utterance_index, ' w', word_index, ' m', morpheme_index, ' has no segment/gloss structure: ', sfx, sep='')
-                        XMLParser.creadd(morphemes[morpheme_index].attrib, 'warning', 'no segment/gloss structure')
+                        XMLCleaner.creadd(morphemes[morpheme_index].attrib, 'warning', 'no segment/gloss structure')
 
             morphemes.text = ''
             # EOF suffixes
@@ -174,6 +174,6 @@ if __name__ == '__main__':
     from parsers import CorpusConfigParser as Ccp
     conf = Ccp()
     conf.read('ini/Yucatec.ini')
-    corpus = YucatecParser(conf, 'tests/corpora/Yucatec/xml/Yucatec.xml')
+    corpus = YucatecCleaner(conf, 'tests/corpora/Yucatec/xml/Yucatec.xml')
 
     corpus._debug_xml()

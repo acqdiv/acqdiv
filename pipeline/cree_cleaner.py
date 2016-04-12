@@ -6,9 +6,9 @@ import re
 import sys
 
 from lxml import etree
-from xml_parser import XMLParser
+from xml_parser import XMLCleaner
 
-class CreeParser(XMLParser):
+class CreeCleaner(XMLCleaner):
 
     def _clean_word_text(self, words):
         
@@ -129,7 +129,7 @@ class CreeParser(XMLParser):
                 wd.remove(temp)
                 word_index += 1                    
             else:
-                XMLParser.creadd(wd.attrib, 'warning', 'not glossed')
+                XMLCleaner.creadd(wd.attrib, 'warning', 'not glossed')
                 word_index += 1                    
                 continue
 
@@ -152,7 +152,7 @@ class CreeParser(XMLParser):
                     # check for "?" attached to gloss; replace by warning that gloss is insecure
                     if mormea_t is w.attrib and w.attrib[mormea_t].endswith('?'):
                         w.attrib[mormea_t] = w.attrib[mormea_t][:-1]
-                        XMLParser.creadd(ms.attrib, 'warning', 'gloss insecure for tier ' + mormea_t)
+                        XMLCleaner.creadd(ms.attrib, 'warning', 'gloss insecure for tier ' + mormea_t)
          # EOF word loop
      # EOF Cree                    
 
@@ -161,7 +161,7 @@ if __name__ == '__main__':
     from parsers import CorpusConfigParser as Ccp
     conf = Ccp()
     conf.read('ini/Cree.ini')
-    corpus = CreeParser(conf, 'tests/corpora/Cree/xml/Cree.xml')
+    corpus = CreeCleaner(conf, 'tests/corpora/Cree/xml/Cree.xml')
 
     corpus._debug_xml()
 

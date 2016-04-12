@@ -6,9 +6,9 @@ import itertools
 import pdb
 
 from lxml import etree
-from xml_parser import XMLParser
+from xml_parser import XMLCleaner
 
-class InuktitutParser(XMLParser):
+class InuktitutCleaner(XMLCleaner):
 
     def _mark_retracings(self, u):
         pass
@@ -46,7 +46,7 @@ class InuktitutParser(XMLParser):
             morphology.text = re.sub('\\b0\\b', '', morphology.text) # empty utterance
             # insecure glosses [?]: add warning, then remove
             if re.search('\[\?\]', morphology.text):
-                 XMLParser.creadd(u.attrib, 'warning', 'gloss insecure')
+                 XMLCleaner.creadd(u.attrib, 'warning', 'gloss insecure')
                  morphology.text = re.sub('\[\?\]', '', morphology.text)
             
             # strip white space from both ends
@@ -55,7 +55,7 @@ class InuktitutParser(XMLParser):
             
             # check if anything's left; if not, place warning and break loop
             if morphology.text == '':
-                XMLParser.creadd(u.attrib, 'warning', 'not glossed')
+                XMLCleaner.creadd(u.attrib, 'warning', 'not glossed')
                 return
             
             # split mor tier into words, reset counters to 0
@@ -74,7 +74,7 @@ class InuktitutParser(XMLParser):
                     w = re.sub('^\[=\?(.*)\]$', '\\1', w)
 
                 # count up word index, extend list if necessary
-                word_index, wlen = XMLParser.word_index_up(
+                word_index, wlen = XMLCleaner.word_index_up(
                         full_words, wlen, word_index, u)
                 # some words in <w> warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
                 # -> incremeent the <w> counter by one as long as the present morphological word is associated with the next <w>
@@ -96,7 +96,7 @@ class InuktitutParser(XMLParser):
             u.remove(morphology)
         
         else:
-            XMLParser.creadd(u.attrib, 'warning', 'not glossed')
+            XMLCleaner.creadd(u.attrib, 'warning', 'not glossed')
                                                         
     # EOF Inuktitut 
 
@@ -134,7 +134,7 @@ class InuktitutParser(XMLParser):
                             gloss = re.sub('@', '', gloss)
                     else:
                         if not re.search('^\?\?\?$', mph):
-                            XMLParser.creadd(fw.attrib, 'warning', 'contains unstructured morpheme')
+                            XMLCleaner.creadd(fw.attrib, 'warning', 'contains unstructured morpheme')
                     mor.text = ''
                 
                 # default: add morpheme to corpus dic
@@ -167,7 +167,7 @@ class InuktitutParser(XMLParser):
                             gloss = re.sub('@', '', gloss)
                     else:
                         if not re.search('^\?\?\?$', mph):
-                            XMLParser.creadd(fw.attrib, 'warning', 'contains unstructured morpheme')
+                            XMLCleaner.creadd(fw.attrib, 'warning', 'contains unstructured morpheme')
                     m = mors[morpheme_index]
                     m.attrib['pos'] = m.attrib['pos_target']
                     m.attrib['pos_target'] = pos
@@ -185,7 +185,7 @@ if __name__ == '__main__':
     from parsers import CorpusConfigParser as Ccp
     conf = Ccp()
     conf.read('ini/Inuktitut.ini')
-    corpus = InuktitutParser(conf, 'tests/corpora/Inuktitut/xml/Inuktitut.xml')
+    corpus = InuktitutCleaner(conf, 'tests/corpora/Inuktitut/xml/Inuktitut.xml')
 
     corpus._debug_xml()
 

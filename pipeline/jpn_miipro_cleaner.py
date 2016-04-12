@@ -7,9 +7,9 @@ import itertools
 import pdb
 
 from lxml import etree
-from xml_parser import XMLParser
+from xml_parser import XMLCleaner
 
-class MiiProParser(XMLParser):
+class MiiProCleaner(XMLCleaner):
 
     def _get_timestamps(self, u):
         ts = u.find('.//media')
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     from parsers import CorpusConfigParser as Ccp
     conf = Ccp()
     conf.read('ini/Japanese_MiiPro.ini')
-    corpus = MiiProParser(conf, 'tests/corpora/Japanese_MiiPro/xml/Japanese_MiiPro.xml')
+    corpus = MiiProCleaner(conf, 'tests/corpora/Japanese_MiiPro/xml/Japanese_MiiPro.xml')
 
     corpus._debug_xml()
 
