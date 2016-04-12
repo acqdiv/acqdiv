@@ -61,6 +61,7 @@ def main(args):
 
         # This seems to need to be applied after the clean_tlbx_pos_morphemes... which should be moved to the parser.
         unify_labels(cfg, engine)
+        get_word_pos(cfg, engine)
 
     print("Creating role entries...")
     unify_roles(cfg, engine)

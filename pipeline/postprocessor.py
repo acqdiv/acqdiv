@@ -1,6 +1,7 @@
 """ Post-processing processes on the corpora in the ACQDIV-DB.
 """
 
+import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
 # from sqlalchemy import create_engine
 import database_backend as backend
@@ -167,12 +168,33 @@ def unify_labels(session, config):
     Args:
         session: SQLAlchemy session object.
         config: CorpusConfigParser object.
+
+    # TODO: Insert some debugging here if the labels are missing?
     """
     corpus_name = config["corpus"]["corpus"]
     for row in session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name):
         row.gloss = config['gloss'].get(row.gloss_raw, None)
         row.pos = config['pos'].get(row.pos_raw, None)
-        # TODO: Insert some debugging here if the labels are missing?
+
+
+@db_apply
+def get_word_pos(session, config):
+    """
+    Populates word POS from morphemes table by taking the first non "pfx" or "sfx" value.
+
+    # TODO: Insert some debugging here if the labels are missing?
+    """
+
+    corpus_name = config["corpus"]["corpus"]
+    for row in session.query(backend.Morpheme).filter(backend.Morpheme.corpus == corpus_name):
+        # get word_id_fk
+        word_id_fk = row.word_id_fk
+        pos = row.pos
+
+        table = session.query(backend.Word).filter(backend.Word.id==word_id_fk)
+        for result in table:
+            if not pos in ["sfx", "pfx"]:
+                result.pos = pos
 
 
 @db_apply
@@ -498,3 +520,60 @@ def clean_utterances_table(session, config):
                 pass
             except TypeError:
                 pass
+
+def main():
+    # default set to test database
+    engine = sa.create_engine('sqlite:///tests/test.sqlite3')
+    meta = sa.MetaData(engine, reflect=True)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
+                'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
+
+    # Parse the config file and call the sessions processor
+    for config in configs:
+        cfg = CorpusConfigParser()
+        cfg.read("ini/"+config)
+
+        # Do some postprocessing
+        # TODO: test if moving this outside of the loop is faster
+        print("Postprocessing database entries for {0}...".format(config.split(".")[0]))
+
+        update_age(cfg, engine)
+        unify_timestamps(cfg, engine)
+        unify_gender(cfg, engine)
+
+        if config == 'Indonesian.ini':
+            unify_indonesian_labels(cfg, engine)
+            clean_tlbx_pos_morphemes(cfg, engine)
+            clean_utterances_table(cfg, engine)
+
+        if config == 'Chintang.ini':
+            extract_chintang_addressee(cfg, engine)
+            clean_tlbx_pos_morphemes(cfg, engine)
+            clean_utterances_table(cfg, engine)
+
+        if config == 'Russian.ini':
+            clean_utterances_table(cfg, engine)
+
+        # This seems to need to be applied after the clean_tlbx_pos_morphemes... which should be moved to the parser.
+        unify_labels(cfg, engine)
+        get_word_pos(cfg, engine)
+
+    print("Creating role entries...")
+    unify_roles(cfg, engine)
+
+    print("Creating macrorole entries...")
+    macrorole(cfg, engine)
+
+    print("Creating unique speaker table...")
+    # unique_speaker(cfg, engine)
+
+if __name__ == "__main__":
+    import time
+    import sys
+    print("Postprocessing the database without compiling it...  ")
+    start_time = time.time()
+    main()
+    print("--- %s seconds ---" % (time.time() - start_time))
