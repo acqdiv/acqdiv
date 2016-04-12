@@ -25,6 +25,7 @@ class XMLParserFactory(object):
     def __call__(self, fpath):
         return self.parser_cls(self.cfg, fpath)
 
+
 class XMLParser(object):
 
     udict = { 'source_id':None,
@@ -59,6 +60,21 @@ class XMLParser(object):
                 pass
             else:
                 location[key] += '; ' + value
+
+    @staticmethod
+    def word_index_up(ls, llen, idx, parent):
+        idx += 1
+        if idx >= llen:
+            new_word = etree.Element('w')
+            act = etree.SubElement(new_word, 'actual')
+            tar = etree.SubElement(new_word, 'target')
+            act.text = '???'
+            tar.text = '???'
+            new_word.attrib['dummy'] = 'misaligned morphemes'
+            parent.insert(llen, new_word)
+            ls.insert(llen, new_word)
+            llen += 1
+        return idx, llen
 
     def __init__(self, cfg, fpath):
         self.cfg = cfg
@@ -156,10 +172,9 @@ class XMLParser(object):
         for u in xmldoc.iterfind('.//u'):
 
             try:
-
                 self._clean_xml_utterance(u)
-
             except Exception as e:
+                #u.getparent().remove(u)
                 XMLParser.logger.warn("Aborted processing of utterance {} "
                         "in file {} with error: {}\nStacktrace: {}".format(
                             u.attrib.get('uID'), self.fpath, repr(e),
@@ -270,6 +285,7 @@ class XMLParser(object):
     def _clean_retracings(self, group, u):
         retracings = group.find('k[@type="retracing"]')
         retracings_wc = group.find('k[@type="retracing with correction"]')
+
         if retracings is not None:
             group_ws = group.findall('w')
             for w in group_ws:
@@ -279,7 +295,20 @@ class XMLParser(object):
                     mor = elem.find('mor')
                     # if there is <mor>, insert below the retraced word
                     if mor is not None:
-                        w.append(mor)
+                        w.append(copy.deepcopy(mor))
+                        if 'warning' in w.attrib:
+                            w.attrib['warning'] = re.sub('not glossed; search ahead',
+                                    '', w.attrib['warning'])
+                            if w.attrib['warning'] == '':
+                                del w.attrib['warning']
+                        w.find('target').text = elem.find('target').text
+                        break
+                if w.find('mor') is None:
+                    if 'warning' in w.attrib:
+                        w.attrib['warning'] = re.sub('; search ahead',
+                                '', w.attrib['warning'])
+                if 'glossed' in w.attrib:
+                    del w.attrib['glossed']
 
         elif retracings_wc is not None:
             group_ws = group.findall('w')
@@ -290,10 +319,15 @@ class XMLParser(object):
                 if u_ws[i].find('mor') is not None: 
                     mor = etree.SubElement(group_ws[j], 'mor')
                     mor.text = u_ws[i].find('mor').text
+                    if 'warning' in w.attrib:
+                        re.sub('not glossed; search ahead', '', 
+                                group_ws[j].attrib['warning'])
                 else:
-                    re.sub(';search ahead', '', group_ws[j].attrib['warning'])
+                    if 'warning' in group_ws[j].attrib:
+                        re.sub('; search ahead', '', group_ws[j].attrib['warning'])
                 group_ws[j].find('target').text = u_ws[i].find('target').text
-                del group_ws[j].attrib['glossed']
+                if 'glossed' in group_ws[j].attrib:
+                    del group_ws[j].attrib['glossed']
 
     def _clean_guesses(self, group):
         words = group.findall('.//w')
@@ -345,16 +379,16 @@ class XMLParser(object):
             if wt.text:
                 # Sometimes words may be partially untranscribed
                 # (-xxx, xxx-, -xxx-) - transform this to unified ???
-                wt.text = re.sub('\-?xxx\-?', '???', w.text)
+                wt.text = re.sub('\-?xxx\-?', '???', wt.text)
             if 'untranscribed' in w.attrib:
                 wt.text = '???'
 
     def _clean_fragments_and_omissions(self, words):
         for w in words:
             if 'type' in w.attrib:
-                if 'type' == 'omission':
+                if w.attrib['type'] == 'omission':
                     w = None
-                elif 'type' == 'fragment':
+                elif w.attrib['type'] == 'fragment':
                     w.find('target').text = '???'
                     w.attrib['warning'] = 'not glossed'
         
@@ -406,7 +440,7 @@ class XMLParser(object):
                         w_tar = etree.SubElement(w, 'target')
                         w_tar.text = rep_words[j].find('target').text
                         if mor is not None:
-                            w.appent(mor)
+                            w.append(mor)
                         words.insert(i+j, w)
                         
                 #words[i].attrib['target'] = '_'.join(rep_w.attrib['target'] 
@@ -420,9 +454,6 @@ class XMLParser(object):
             retracings = group.find('k[@type="retracing"]')
             retracings_wc = group.find('k[@type="retracing with correction"]')
             if (retracings is not None) or (retracings_wc is not None):
-                # we can't do checks for corpus name here so
-                # just use Turkish / MiiPro as default
-                # and override for miyata
                 words = group.findall('.//w')
                 for w in words: 
                     w.attrib['glossed'] = 'ahead'

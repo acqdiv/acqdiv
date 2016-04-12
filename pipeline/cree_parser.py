@@ -90,7 +90,7 @@ class CreeParser(XMLParser):
                         tar = etree.SubElement(new_word, 'target')
                         act.text = '???'
                         tar.text = '???'
-                        new_word.attrib['untranscribed'] = 'dummy'
+                        new_word.attrib['dummy'] = 'misaligned morphemes'
                         u.insert(wlen, new_word)
                         full_words.insert(wlen, new_word)
                         wlen += 1
@@ -126,7 +126,7 @@ class CreeParser(XMLParser):
                         mor.attrib[self.cfg['correspondences'][tier.tag]] = m
                         morpheme_index += 1
 
-                wd.remove(wd.find('tmor'))
+                wd.remove(temp)
                 word_index += 1                    
             else:
                 XMLParser.creadd(wd.attrib, 'warning', 'not glossed')
