@@ -90,15 +90,9 @@ class XMLCleaner(object):
 
         return xmldoc
 
-    def _debug_write(self, xmldoc):
-
-        #with open('{}_clean.xml'.format(self.fpath), 'w') as out:
-        xmldoc.write('{}_clean.xml'.format(self.fpath),
-                encoding='utf-8', pretty_print=False)
-
     def _debug_xml(self):
         xmld = self._clean_xml()
-        self._debug_write(xmld)
+        sys.stdout.write(etree.tostring(xmld, encoding='unicode', pretty_print=True))
 
     def _clean_xml_utterance(self, u):
 

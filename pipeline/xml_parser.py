@@ -36,7 +36,7 @@ class XMLParser(object):
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
-    udict = { 'source_id':None,
+    udict = { 'utterance_id':None,
               'session_id_fk':None,
               'start_raw':None,
               'end_raw':None,
@@ -73,7 +73,7 @@ class XMLParser(object):
         #        pass
 
         for u in xmldoc.getiterator('u'):
-        
+
             udict = XMLParser.udict.copy()
             words = deque()
             mwords = deque()
@@ -83,7 +83,7 @@ class XMLParser(object):
                 udict['corpus'] = self.cfg['corpus']['corpus']
                 udict['language'] = self.cfg['corpus']['language']
 
-                udict['source_id'] = u.attrib.get('uID')
+                udict['utterance_id'] = u.attrib.get('uID')
                 udict['speaker_label'] = u.attrib.get('who')
                 udict['warning'] = u.attrib.get('warning')
 
@@ -119,13 +119,22 @@ class XMLParser(object):
                         morphemes = deque()
                         for m in w.findall('.//m'):
                             mdict = {}
-                            for tier_name in self.cfg['json_mappings_morphemes']:
-                                new_tier = self.cfg['json_mappings_morphemes'][tier_name]
-                                mdict[new_tier] = m.attrib.get(tier_name)
+                            for tier_name in m.attrib:
+                                mdict[tier_name] = m.attrib.get(tier_name)
                             morphemes.append(mdict)
 
                     words.append(wdict)
                     mwords.append(morphemes)
+
+                udict = self._clean_utterance(udict)
+                words = self._clean_words(words)
+                mwords = self._clean_morphemes(mwords)
+
+                udict['pos_raw'] = self._concat_mor_tier('pos_raw', mwords)
+                udict['gloss_raw'] = self._concat_mor_tier('gloss_raw', mwords)
+                udict['morpheme'] = self._concat_mor_tier('morpheme', mwords)
+                udict['utterance_raw'] = ' '.join([w['word'] for w in words
+                                                   if w['word'] is not None])
 
                 yield XMLParser.rstruc(udict, words, mwords)
 
@@ -136,47 +145,64 @@ class XMLParser(object):
                                           traceback.format_exc()))
 
     def _clean_words(self, words):
-        new_words = []
-        for raw_word in words:
-            word = {}
-            for k in raw_word:
-                if k in self.cfg['json_mappings']:
-                    label = self.cfg['json_mappings'][k]
-                    word[label] = raw_word[k]
-                else:
-                    word[k] = raw_word[k]
-                    if word[k] == "":
-                        word[k] = None
-            word['word'] = word[self.cfg['json_mappings']['word']]
-            new_words.append(word)
+        new_words = deque()
+        try:
+            for raw_word in words:
+                word = {}
+                for k in raw_word:
+                    if k in self.cfg['json_mappings']:
+                        label = self.cfg['json_mappings'][k]
+                        word[label] = raw_word[k]
+                    else:
+                        pass
+                word['word'] = word[self.cfg['json_mappings']['word']]
+                new_words.append(word)
+        except TypeError:
+            pass
         return new_words
 
     def _clean_morphemes(self, mors):
-        new_mors = []
-        for mword in mors:
-            new_mword = []
-            for raw_morpheme in mword:
-                morpheme = {}
-                for k in raw_morpheme:
-                    if k in self.cfg['json_mappings']:
-                        label = self.cfg['json_mappings'][k]
-                        morpheme[label] = raw_morpheme[k]
-                    else:
-                        morpheme[k] = raw_morpheme[k]
-                new_mword.append(morpheme)
-            new_mors.append(new_mword)
+        new_mors = deque()
+        try:
+            for mword in mors:
+                new_mword = deque()
+                try:
+                    for raw_morpheme in mword:
+                        morpheme = {}
+                        for k in raw_morpheme:
+                            if k in self.cfg['json_mappings']:
+                                label = self.cfg['json_mappings'][k]
+                                morpheme[label] = raw_morpheme[k]
+                            else:
+                                pass
+                        new_mword.append(morpheme)
+                    new_mors.append(new_mword)
+                except TypeError:
+                    continue
+        except TypeError:
+            pass
         return new_mors
 
     def _clean_utterance(self, raw_u):
 
         utterance = {}
         for k in raw_u:
-            if k in self.config['json_mappings']:
-                label = self.config['json_mappings'][k]
+            if k in self.cfg['json_mappings']:
+                label = self.cfg['json_mappings'][k]
                 utterance[label] = raw_u[k]
             else:
-                utterance[k] = raw_u[k]
+                pass
         return utterance
+
+    def _concat_mor_tier(self, tier, morphlist):
+        try:
+            return ' '.join(['-'.join([m for m in map(
+                lambda x:
+                    x[tier] if tier in x and x[tier] is not None 
+                    else '???', mword)])
+                for mword in morphlist])
+        except TypeError:
+            return None
 
     def get_session_metadata(self):
         return self.metadata_parser.metadata['__attrs__']
@@ -192,11 +218,15 @@ if __name__ == '__main__':
 
     from inuktitut_cleaner import InuktitutCleaner
     from parsers import CorpusConfigParser as Ccp
+    import sys
     
+    cname = sys.argv[1]
     conf = Ccp()
-    conf.read('ini/Inuktitut.ini')
-    corpus = InuktitutCleaner(conf, 'tests/corpora/Inuktitut/xml/Inuktitut.xml')
-    xmlb = corpus.clean()
-    parser = XMLParser(conf, xmlb)
+    conf.read('ini/{}.ini'.format(cname))
+    corpus = InuktitutCleaner
+    parser = XMLParser(conf, corpus, 'tests/corpora/{0}/xml/{0}.xml'.format(cname))
+    i = 0
     for u in parser.next_utterance():
+        i += 1
         print(u)
+    print('Total utterances: {}'.format(i))

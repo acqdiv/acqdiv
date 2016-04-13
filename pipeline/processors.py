@@ -6,6 +6,7 @@ import itertools as it
 import re
 import collections
 import logging
+import pdb
 import traceback
 from sqlalchemy.orm import sessionmaker
 
@@ -138,8 +139,8 @@ class SessionProcessor(object):
             # In Chintang the number of words may be longer than the number of morphemes -- error handling
             # print("words:", words)
             if len(words) > len(morphemes):
-                logger.info("There are more words than morphemes in %s", utterance['source_id'])
-                continue
+                logger.info("There are more words than morphemes in "
+                "{} utterance {}".format(self.corpus, utterance['source_id']))
 
             # Populate the words
             for i in range(0, len(words)):
@@ -165,8 +166,13 @@ class SessionProcessor(object):
                         u.morphemes.append(morpheme)
                         self.session.morphemes.append(morpheme)
                 except TypeError:
-                    logger.info("Word {} in Utterance {} "
-                                "has no morphemes".format(i, 
+                    logger.warn("Error processing morphemes in "
+                                "word {} in {} utterance {}:\n{}".format(i, 
+                                    self.corpus, utterance['source_id'],
+                                    traceback.format_exc()))
+                except IndexError:
+                    logger.info("Word {} in {} utterance {} "
+                                "has no morphemes".format(i, self.corpus,
                                     utterance['source_id']))
 
             self.session.utterances.append(u)
