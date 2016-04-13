@@ -7,7 +7,7 @@ import itertools
 import pdb
 
 from lxml import etree
-from xml_parser import XMLCleaner
+from xml_cleaner import XMLCleaner
 
 class MiiProCleaner(XMLCleaner):
 
@@ -25,8 +25,6 @@ class MiiProCleaner(XMLCleaner):
 
         morphology = u.find("a[@type='extension'][@flavor='trn']")
         if morphology is not None:
-            if u.attrib['uID'] == 'u1779':
-                pdb.set_trace()
             # remove punctuation and tags
             morphology.text = re.sub('(^|\\s)[\.\?!\+\/]+(\\s|$)', '\\1\\2', morphology.text)
             morphology.text = re.sub('(^|\\s)tag\|\\S+(?=\\s|$)', '\\1', morphology.text) # right context as lookahead to cover case of double tags 
@@ -41,21 +39,11 @@ class MiiProCleaner(XMLCleaner):
             for w in words:
             
                 # count up word index, extend list if necessary
-                word_index += 1
+                word_index, wlen = XMLCleaner.word_index_up(
+                        full_words, wlen, word_index, u)
 
                     # some words in <w> have a warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
                     # -> incremeent the <w> counter by one as long as the present morphological word is associated with the next <w>
-                if word_index >= wlen:
-                    new_word = etree.Element('w')
-                    act = etree.SubElement(new_word, 'actual')
-                    tar = etree.SubElement(new_word, 'target')
-                    act.text = '???'
-                    tar.text = '???'
-                    new_word.attrib['dummy'] = 'misaligned morphemes'
-                    u.insert(wlen, new_word)
-                    full_words.insert(wlen, new_word)
-                    wlen += 1
-
                 try:
                     while('warning' in full_words[word_index].attrib and
                         re.search('not glossed',full_words[word_index].attrib['warning'])):

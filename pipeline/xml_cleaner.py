@@ -65,13 +65,12 @@ class XMLCleaner(object):
         self.cfg = cfg
         self.fpath = fpath
         self.sname = os.path.basename(fpath).split('.')[0]
-        self.metadata_parser = Chat(cfg, fpath)
+        #self.metadata_parser = Chat(cfg, fpath)
 
+    def _clean_xml(self):
 
-    def _debug_xml(self):
-
-        xmldoc = etree.parse(self.fpath)
-        root = xmldoc.getroot()
+        self.xmldoc = etree.parse(self.fpath)
+        root = self.xmldoc.getroot()
 
         for elem in root.iter():
             # remove prefixed namespaces
@@ -82,21 +81,26 @@ class XMLCleaner(object):
             except TypeError:
                 pass
 
-        for u in xmldoc.iterfind('.//u'):
+        for u in self.xmldoc.iterfind('.//u'):
 
             try:
                 self._clean_xml_utterance(u)
             except Exception as e:
-                #u.getparent().remove(u)
                 XMLCleaner.logger.warn("Aborted processing of utterance {} "
                         "in file {} with error: {}\nStacktrace: {}".format(
                             u.attrib.get('uID'), self.fpath, repr(e),
                             traceback.format_exc()))
+                u.getparent().remove(u)
+
+    def _debug_write(self):
 
         #with open('{}_clean.xml'.format(self.fpath), 'w') as out:
-        xmldoc.write('{}_clean.xml'.format(self.fpath),
+        self.xmldoc.write('{}_clean.xml'.format(self.fpath),
                 encoding='utf-8', pretty_print=False)
-            
+
+    def _debug_xml(self):
+        self._clean_xml()
+        self._debug_write()
 
     def _clean_xml_utterance(self, u):
 
@@ -110,148 +114,8 @@ class XMLCleaner(object):
             self._clean_groups(u)
         self._morphology_inference(u)
         self._add_morphology_warnings(u)
+        self._restructure_metadata(u)
         self._remove_junk(u)
-
-    def _remove_junk(self, u):
-        pass
-
-    def _concat_mor_tier(self, tier, morphlist):
-        return ' '.join(['-'.join([m for m in map(
-            lambda x:
-                x[tier] if x[tier] is not None 
-                else '???', mword)])
-            for mword in morphlist])
-
-    def _clean_words(self, words):
-        new_words = []
-        for raw_word in words:
-            word = {}
-            for k in raw_word:
-                if k in self.cfg['json_mappings_words']:
-                    label = self.cfg['json_mappings_words'][k]
-                    word[label] = raw_word[k]
-                else:
-                    word[k] = raw_word[k]
-                    if word[k] == "":
-                        word[k] = None
-            word['word'] = word[self.cfg['json_mappings_words']['word']]
-            new_words.append(word)
-        return new_words
-
-    def _clean_morphemes(self, mors):
-        new_mword = []
-        for raw_morpheme in mword:
-            morpheme = {}
-            for k in raw_morpheme:
-                if k in self.cfg['json_mappings_morphemes']:
-                    label = self.cfg['json_mappings_morphemes'][k]
-                    morpheme[label] = raw_morpheme[k]
-                else:
-                    morpheme[k] = raw_morpheme[k]
-            new_mword.append(morpheme)
-        return new_mword
-
-    def _clean_utterance(self, raw_u):
-
-        utterance = {}
-        for k in raw_u:
-            if k in self.config['json_mappings_utterance']:
-                label = self.config['json_mappings_utterance'][k]
-                utterance[label] = raw_u[k]
-            else:
-                utterance[k] = raw_u[k]
-        return utterance
-
-    def _get_words(self, u):
-        u = self._clean_groups(u)
-        raw_words = u.findall('.//w')
-        if self.cfg['repetitions_glossed'] == 'yes':
-            words = self._word_inference(raw_words, u)
-            self._process_morphology(u)
-        else:
-            self._process_morphology(u)
-            words = self._word_inference(raw_words, u)
-        return words
-
-    def _clean_groups(self, u):
-        for group in u.iterfind('.//g'):
-
-            parent = group.getparent()
-            idx = parent.index(group)
-
-            self._clean_repetitions(group)
-            self._clean_retracings(group, u)
-            self._clean_guesses(group)
-            for w in group.iterfind('.//w'):
-                parent.insert(idx, w)
-                idx += 1
-            parent.remove(group)
-
-    def _clean_repetitions(self, group):
-        reps = group.find('r')
-        if reps is not None:
-            ws = group.findall('.//w')
-            for i in range(int(reps.attrib['times'])-1):
-                for w in ws:
-                    group.insert(len(ws)-1, copy.deepcopy(w))
-
-    def _clean_retracings(self, group, u):
-        retracings = group.find('k[@type="retracing"]')
-        retracings_wc = group.find('k[@type="retracing with correction"]')
-
-        if retracings is not None:
-            group_ws = group.findall('w')
-            for w in group_ws:
-                elems_with_same_text = [e for e in u.iterfind('.//w')
-                        if e.find('actual').text == w.find('actual').text]
-                for elem in elems_with_same_text:
-                    mor = elem.find('mor')
-                    # if there is <mor>, insert below the retraced word
-                    if mor is not None:
-                        w.append(copy.deepcopy(mor))
-                        if 'warning' in w.attrib:
-                            w.attrib['warning'] = re.sub('not glossed; search ahead',
-                                    '', w.attrib['warning'])
-                            if w.attrib['warning'] == '':
-                                del w.attrib['warning']
-                        w.find('target').text = elem.find('target').text
-                        break
-                if w.find('mor') is None:
-                    if 'warning' in w.attrib:
-                        w.attrib['warning'] = re.sub('; search ahead',
-                                '', w.attrib['warning'])
-                if 'glossed' in w.attrib:
-                    del w.attrib['glossed']
-
-        elif retracings_wc is not None:
-            group_ws = group.findall('w')
-            u_ws = u.findall('.//w')
-            base_index = u_ws.index(group_ws[-1]) + 1
-            max_index = base_index + len(group_ws)
-            for i,j in zip(range(base_index, max_index), itertools.count()):
-                if u_ws[i].find('mor') is not None: 
-                    mor = etree.SubElement(group_ws[j], 'mor')
-                    mor.text = u_ws[i].find('mor').text
-                    if 'warning' in w.attrib:
-                        re.sub('not glossed; search ahead', '', 
-                                group_ws[j].attrib['warning'])
-                else:
-                    if 'warning' in group_ws[j].attrib:
-                        re.sub('; search ahead', '', group_ws[j].attrib['warning'])
-                group_ws[j].find('target').text = u_ws[i].find('target').text
-                if 'glossed' in group_ws[j].attrib:
-                    del group_ws[j].attrib['glossed']
-
-    def _clean_guesses(self, group):
-        words = group.findall('.//w')
-        target_guess = group.find('.//ga[@type="alternative"]')
-        if target_guess is not None:
-            words[0].find('target').text = target_guess.text
-
-        guesses = group.find('k[@type="best guess"]')
-        if guesses is not None:
-            for w in words:
-                w.attrib['transcribed'] = 'insecure'
 
     def _word_inference(self, u):
         words = u.findall('.//w')
@@ -386,6 +250,86 @@ class XMLCleaner(object):
             #if 'warning' not in w.attrib:
             #    w.attrib['warning'] = ''
 
+    def _clean_groups(self, u):
+        for group in u.iterfind('.//g'):
+
+            parent = group.getparent()
+            idx = parent.index(group)
+
+            self._clean_repetitions(group)
+            self._clean_retracings(group, u)
+            self._clean_guesses(group)
+            for w in group.iterfind('.//w'):
+                parent.insert(idx, w)
+                idx += 1
+            parent.remove(group)
+
+    def _clean_repetitions(self, group):
+        reps = group.find('r')
+        if reps is not None:
+            ws = group.findall('.//w')
+            for i in range(int(reps.attrib['times'])-1):
+                for w in ws:
+                    group.insert(len(ws)-1, copy.deepcopy(w))
+
+    def _clean_retracings(self, group, u):
+        retracings = group.find('k[@type="retracing"]')
+        retracings_wc = group.find('k[@type="retracing with correction"]')
+
+        if retracings is not None:
+            group_ws = group.findall('w')
+            for w in group_ws:
+                elems_with_same_text = [e for e in u.iterfind('.//w')
+                        if e.find('actual').text == w.find('actual').text]
+                for elem in elems_with_same_text:
+                    mor = elem.find('mor')
+                    # if there is <mor>, insert below the retraced word
+                    if mor is not None:
+                        w.append(copy.deepcopy(mor))
+                        if 'warning' in w.attrib:
+                            w.attrib['warning'] = re.sub('not glossed; search ahead',
+                                    '', w.attrib['warning'])
+                            if w.attrib['warning'] == '':
+                                del w.attrib['warning']
+                        w.find('target').text = elem.find('target').text
+                        break
+                if w.find('mor') is None:
+                    if 'warning' in w.attrib:
+                        w.attrib['warning'] = re.sub('; search ahead',
+                                '', w.attrib['warning'])
+                if 'glossed' in w.attrib:
+                    del w.attrib['glossed']
+
+        elif retracings_wc is not None:
+            group_ws = group.findall('w')
+            u_ws = u.findall('.//w')
+            base_index = u_ws.index(group_ws[-1]) + 1
+            max_index = base_index + len(group_ws)
+            for i,j in zip(range(base_index, max_index), itertools.count()):
+                if u_ws[i].find('mor') is not None: 
+                    mor = etree.SubElement(group_ws[j], 'mor')
+                    mor.text = u_ws[i].find('mor').text
+                    if 'warning' in group_ws[j].attrib:
+                        re.sub('not glossed; search ahead', '', 
+                                group_ws[j].attrib['warning'])
+                else:
+                    if 'warning' in group_ws[j].attrib:
+                        re.sub('; search ahead', '', group_ws[j].attrib['warning'])
+                group_ws[j].find('target').text = u_ws[i].find('target').text
+                if 'glossed' in group_ws[j].attrib:
+                    del group_ws[j].attrib['glossed']
+
+    def _clean_guesses(self, group):
+        words = group.findall('.//w')
+        target_guess = group.find('.//ga[@type="alternative"]')
+        if target_guess is not None:
+            words[0].find('target').text = target_guess.text
+
+        guesses = group.find('k[@type="best guess"]')
+        if guesses is not None:
+            for w in words:
+                w.attrib['transcribed'] = 'insecure'
+
     def _process_morphology(self, u):
         pass
 
@@ -403,65 +347,19 @@ class XMLCleaner(object):
                     XMLCleaner.creadd(u.attrib, 'warning', 'broken alignment full_word : segments/glosses')
                     break
 
-    def _get_annotations(self, u):
-        morph = {}
-        trans = None
-        comment = None
+    def _restructure_metadata(self, u):
         for a in u.findall('.//a'):
-            for tier in self.cfg['morphology_tiers']:
-                if (a.attrib.get('type') == 'extension'
-                        and a.attrib.get('flavor') == tier):
-                    morph[tier] = a.text
-            if (a.attrib.get('type') == 'english translation'):
-                trans = a.text
-            if (a.attrib.get('type') in ['comment', 'actions', 'explanation']):
-                comment = a.text
-        return morph, trans, comment
-
-    def _get_sentence_type(self, u):
-        st_raw = u.find('t').attrib.get('type')
-        stype = self.cfg['correspondences'][st_raw]
-        return stype
-
-    def _get_timestamps(self, u):
-        ts = u.find('.//media')
-        if ts != None:
-            return ts.attrib.get('start'), ts.attrib.get('end')
-        else:
-            return None, None
-
-    def get_session_metadata(self):
-        return self.metadata_parser.metadata['__attrs__']
-
-    def next_speaker(self):
-        for p in self.metadata_parser.metadata['participants']:
-            yield p
-
-    def next_utterance(self):
-        for u in self._get_utts():
-            yield u['utterance'], u['words'], u['morphemes']
+            if a.attrib['type'] == 'extension':
+                ntag = a.attrib['flavor']
+                del a.attrib['flavor']
+            else:
+                ntag = a.attrib['type']
+            a.tag = ntag
+            del a.attrib['type']
 
 
-##################################################
-
-def test_read(config, fileid):
-    corpus = CreeCleaner.CreeCleaner(config, fileid)
-    return corpus
+    def _remove_junk(self, u):
+        pass
 
 if __name__ == '__main__':
-    from parsers import CorpusConfigParser as Ccp
-    import CreeCleaner
-    conf = Ccp()
-    conf.read('Cree.ini')
-    corpus = test_read(conf, '../corpora/Cree/xml/01-A1-2005-03-08ms.xml')
-
-    with open('test.json', 'w') as tf:
-        #tf.write('Participants:\n')
-        #for p in corpus.next_speaker():
-        #    json.dump(p, tf)
-        tf.write('Metadata:\n')
-        json.dump(corpus.get_session_metadata(), tf)
-        tf.write('\n\n######################\n\nUtterances:\n')
-        for u in corpus.next_utterance():
-            json.dump(u, tf)
-            tf.write('\n')
+    print("Sorry, there's nothing here!")

@@ -7,7 +7,7 @@ import sys
 import itertools
 
 from lxml import etree
-from xml_parser import XMLCleaner
+from xml_cleaner import XMLCleaner
 
 class MiyataCleaner(XMLCleaner):
 
@@ -33,6 +33,8 @@ class MiyataCleaner(XMLCleaner):
                     m.attrib['glosses_target'] = '???'
                     m.attrib['pos_target'] = 'pfx'
                 
+                # stem
+                m = etree.SubElement(morphology, 'm')
                 # find stem by joining all stems under <w> (there may be several stems in the case of compounds)
                 stems = morphology.findall('.//stem')
                 stem = stems[0].text
@@ -68,7 +70,6 @@ class MiyataCleaner(XMLCleaner):
                         cl.attrib['type'] = 'clitic'
                     stem_gloss = menx.text
                 
-                m = etree.SubElement(morphology, 'm')
                 m.attrib['segments_target'] = stem
                 m.attrib['glosses_target'] = stem_gloss
                 m.attrib['pos_target'] = stem_pos

@@ -5,7 +5,7 @@ import sys
 import itertools
 
 from lxml import etree
-from xml_parser import XMLCleaner
+from xml_cleaner import XMLCleaner
 
 class YucatecCleaner(XMLCleaner):
 

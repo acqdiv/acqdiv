@@ -7,7 +7,7 @@ import itertools
 import pdb
 
 from lxml import etree
-from xml_parser import XMLCleaner
+from xml_cleaner import XMLCleaner
 
 class TurkishCleaner(XMLCleaner):
 

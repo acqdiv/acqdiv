@@ -313,7 +313,7 @@ class Chat(Parser):
         #print({c.attrib['type']: str(c) for c in root.comment})
         try:
             return {c.attrib['type']: str(c) for c in root.comment}
-        except:
+        except Exception:
             pass
 
 

@@ -6,7 +6,7 @@ import re
 import sys
 
 from lxml import etree
-from xml_parser import XMLCleaner
+from xml_cleaner import XMLCleaner
 
 class CreeCleaner(XMLCleaner):
 
@@ -83,17 +83,8 @@ class CreeCleaner(XMLCleaner):
                 
                 for w in words:
 
-                    word_index += 1
-                    if word_index >= wlen:
-                        new_word = etree.Element('w')
-                        act = etree.SubElement(new_word, 'actual')
-                        tar = etree.SubElement(new_word, 'target')
-                        act.text = '???'
-                        tar.text = '???'
-                        new_word.attrib['dummy'] = 'misaligned morphemes'
-                        u.insert(wlen, new_word)
-                        full_words.insert(wlen, new_word)
-                        wlen += 1
+                    word_index, wlen = XMLCleaner.word_index_up(
+                            full_words, wlen, word_index, u)
 
                     if full_words[word_index].find('tmor') is None:
                         mor = etree.SubElement(full_words[word_index], 'tmor')
