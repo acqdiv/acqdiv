@@ -55,11 +55,11 @@ class SessionParser(object):
         """
         format = config['corpus']['format']
 
-        if format == "ChatXML":
+        if format == "xml":
             return XMLParserFactory(config)
-        elif format == "Toolbox":
+        elif format == "toolbox":
             return lambda file_path: ToolboxParser(config, file_path)
-        elif format == "JSON":
+        elif format == "json":
             return lambda file_path: JsonParser(config, file_path)
         else:
             assert 0, "Unknown format type: " + format

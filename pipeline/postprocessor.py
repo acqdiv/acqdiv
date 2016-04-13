@@ -154,7 +154,7 @@ def update_age(session, config):
         session: SQLAlchemy session object.
         config: CorpusConfigParser object.
     """
-    if config["metadata"]["type"] == "IMDI":
+    if config["metadata"]["type"] == "imdi":
         update_imdi_age(session, config)
     else:
         update_xml_age(session, config)
@@ -561,13 +561,13 @@ def main():
         unify_labels(cfg, engine)
         get_word_pos(cfg, engine)
 
-    print("Creating role entries...")
+    print("Calculating role entries.\n")
     unify_roles(cfg, engine)
 
-    print("Creating macrorole entries...")
+    print("Calculating macrorole entries.\n")
     macrorole(cfg, engine)
 
-    print("Creating unique speaker table...")
+    print("Calculating unique speaker table.\n")
     # unique_speaker(cfg, engine)
 
 if __name__ == "__main__":
