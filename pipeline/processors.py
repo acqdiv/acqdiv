@@ -154,15 +154,20 @@ class SessionProcessor(object):
                 self.session.words.append(word)
 
                 # Populate the morphemes
-                for j in range(0, len(morphemes[i])): # loop morphemes
-                    # TODO: move this post processing (before the age, etc.) if it improves performance
-                    morphemes[i][j]['corpus'] = self.corpus
-                    morphemes[i][j]['language'] = self.language
+                try:
+                    for j in range(0, len(morphemes[i])): # loop morphemes
+                        # TODO: move this post processing (before the age, etc.) if it improves performance
+                        morphemes[i][j]['corpus'] = self.corpus
+                        morphemes[i][j]['language'] = self.language
 
-                    morpheme = Morpheme(**morphemes[i][j])
-                    word.morphemes.append(morpheme)
-                    u.morphemes.append(morpheme)
-                    self.session.morphemes.append(morpheme)
+                        morpheme = Morpheme(**morphemes[i][j])
+                        word.morphemes.append(morpheme)
+                        u.morphemes.append(morpheme)
+                        self.session.morphemes.append(morpheme)
+                except TypeError:
+                    logger.info("Word {} in Utterance {} "
+                                "has no morphemes".format(i, 
+                                    utterance['source_id']))
 
             self.session.utterances.append(u)
         self.commit()
