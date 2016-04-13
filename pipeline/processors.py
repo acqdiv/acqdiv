@@ -1,4 +1,4 @@
-""" Corpus and session processors to turn ACQDIV raw input corpora (Toolbox, ChatXML) into ACQDIV-DB
+""" Corpus and session processors to turn ACQDIV raw input corpora (Toolbox, ChatXML, JSON) into ACQDIV-DB
 """
 
 import collections
@@ -138,7 +138,7 @@ class SessionProcessor(object):
             # In Chintang the number of words may be longer than the number of morphemes -- error handling
             # print("words:", words)
             if len(words) > len(morphemes):
-                logger.info("There are more words than morphemes in %s", utterance['source_id'])
+                logger.info("There are more words than morphemes in %s in %s", utterance['source_id'], self.corpus)
                 continue
 
             # Populate the words

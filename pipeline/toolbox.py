@@ -437,7 +437,7 @@ class ToolboxFile(object):
                 result.append(l)
         else:
             # TODO: log this stuff!
-            logging.info("Length of morphemes, glosses, poses don't match:" + utterance['source_id'])
+            logging.info("Length of morphemes, glosses, poses don't match in the Toolbox file: " + utterance['source_id'])
         return result
 
     def make_rec(self, data):
