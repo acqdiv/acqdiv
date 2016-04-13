@@ -1,6 +1,6 @@
-"""Checks the metadata for sessions and participants.
+"""Checks and corrects the metadata for sessions and participants.
 
-This modules implements two classes for checking the metadata of sessions and participants.
+This modules implements two classes for checking and correcting the metadata of sessions and participants.
 It also includes two module-level functions, one for replacing all <ı>'s and one checking the date for sanity.
 
 If the module is run directly, it reads the files 'sessions.csv' and 'participants.csv' and checks all their fields,
@@ -45,7 +45,7 @@ def replace_i(string):
 
 
 def validate_date(str_date, object_number=0, object_id=""):
-    """Checks date for sanity, input is a date as a string.
+    """Check date for sanity and correct it.
 
     Positional Args:
         str_date: date as a string
@@ -81,7 +81,7 @@ def validate_date(str_date, object_number=0, object_id=""):
 ################################################################################
 
 class Session:
-    """Class for checking the metadata of a session."""
+    """Class for checking and correcting the metadata of a session."""
 
     # keep track of the line where the session occurs in the session table
     session_number = 1
@@ -191,8 +191,6 @@ class Session:
         """
         if self.people:
 
-            self.people = replace_i(self.people.rstrip(" "))
-
             # a set of predefined roles which can be extended if needed
             role_table = {
                 "child", "recorder", "mother", "classmate", "brother",
@@ -202,7 +200,7 @@ class Session:
                 "great grandmother", "cousin"
             }
 
-            # hash for replacing certain informal terms for roles
+            # hash for replacing certain informal terms or non-standard spellings
             role_subs = {
                 "auntie": "aunt", "grandma": "grandmother", "grandpa": "grandfather",
                 "dad": "father", "mum": "mother", "step-father": "stepfather",
@@ -210,7 +208,7 @@ class Session:
             }
 
             # sometimes commas occur at the end of the participant and roles, so strip them away too
-            self.people = self.people.rstrip(" ").rstrip(",")
+            self.people = replace_i(self.people.rstrip(" ").rstrip(","))
 
             part_role_regex = re.compile(r"""
                 (
@@ -218,7 +216,7 @@ class Session:
                 \s*                     # an optional whitespace
                 \(                      # an opening bracket
                 \w+([ -]\w+)*           # a role which can consist of multiple words, sometimes separated by a hyphen
-                (\s*&\s*                # if there are multiple roles for a shortname, they are separated by an ampersand
+                (\s*[&,]\s*             # if there are multiple roles for a shortname, they are separated by an ampersand or comma
                 \w+([ -]\w+)*           # same as second last line
                 )*                      # can repeat pattern: role1 & role2 & role3 ...
                 \)                      # a closing bracket
@@ -233,9 +231,9 @@ class Session:
                 # insert a whitespace between role (in brackets) and shortname
                 self.people = re.sub(r"(\))([A-Z]+)", r"\1 \2", self.people)
 
-                # create list containing all shortnames and roles by splitting at commas and
-                # at whitespaces between shortname and role and role and shortname, respectively
-                list_all = re.split(r"\s*,\s*|(?<=[A-Z])\s+(?=\()|(?<=\))\s+(?=[A-Z])", self.people)
+                # create list containing all shortnames and roles by splitting at whitespaces between shortname and role and
+                # at whitespaces and commas between role and shortname
+                list_all = re.split(r"(?<=[A-Z])\s+(?=\()|(?<=\))\s*[, ]\s*(?=[A-Z])", self.people)
 
                 # extract all shortnames by taking out every even element
                 shortname_list = list_all[::2]
@@ -253,7 +251,7 @@ class Session:
                 for role_set_index, role_set in enumerate(role_list):
 
                     # store role(s) of a shortname in a list by stripping away the braces and splitting at ampersand
-                    roles = re.split('\s*&\s*', role_set[1:-1])
+                    roles = re.split('\s*[&,]\s*', role_set[1:-1])
 
                     # now go through all roles of that shortname
                     for role_index, role in enumerate(roles):
@@ -321,7 +319,7 @@ class Session:
 ################################################################################
 
 class Participant:
-    """Class for checking the metadata of a participant."""
+    """Class for checking and correcting the metadata of a participant."""
 
     # keep track of the line where the participant occurs in the file
     participant_number = 1
