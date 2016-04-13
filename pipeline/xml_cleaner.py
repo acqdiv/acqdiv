@@ -1,5 +1,4 @@
 import copy
-import importlib
 import itertools
 import json
 import logging
@@ -12,19 +11,6 @@ import traceback
 from collections import defaultdict
 from lxml import etree
 from metadata import Chat
-
-
-class XMLCleanerFactory(object):
-
-    def __init__(self, cfg):
-        self.cfg = cfg
-        self.CorpusCleaner = importlib.import_module(self.cfg['paths']['parser'])
-        self.parser_cls = eval(('self.CorpusCleaner.' + 
-            self.cfg['paths']['parser_name']), globals(), locals())
-
-    def __call__(self, fpath):
-        return self.parser_cls(self.cfg, fpath)
-
 
 class XMLCleaner(object):
 
@@ -61,6 +47,16 @@ class XMLCleaner(object):
             llen += 1
         return idx, llen
 
+    @staticmethod
+    def find_text(parent, child):
+        se = parent.find(child)
+        return se.text if se is not None else None
+
+    @staticmethod
+    def find_xpath(parent, xpexpr):
+        ses = parent.xpath(xpexpr)
+        return ses[0] if len(ses) != 0 else None
+
     def __init__(self, cfg, fpath):
         self.cfg = cfg
         self.fpath = fpath
@@ -69,8 +65,8 @@ class XMLCleaner(object):
 
     def _clean_xml(self):
 
-        self.xmldoc = etree.parse(self.fpath)
-        root = self.xmldoc.getroot()
+        xmldoc = etree.parse(self.fpath)
+        root = xmldoc.getroot()
 
         for elem in root.iter():
             # remove prefixed namespaces
@@ -81,7 +77,7 @@ class XMLCleaner(object):
             except TypeError:
                 pass
 
-        for u in self.xmldoc.iterfind('.//u'):
+        for u in xmldoc.iterfind('.//u'):
 
             try:
                 self._clean_xml_utterance(u)
@@ -92,15 +88,17 @@ class XMLCleaner(object):
                             traceback.format_exc()))
                 u.getparent().remove(u)
 
-    def _debug_write(self):
+        return xmldoc
+
+    def _debug_write(self, xmldoc):
 
         #with open('{}_clean.xml'.format(self.fpath), 'w') as out:
-        self.xmldoc.write('{}_clean.xml'.format(self.fpath),
+        xmldoc.write('{}_clean.xml'.format(self.fpath),
                 encoding='utf-8', pretty_print=False)
 
     def _debug_xml(self):
-        self._clean_xml()
-        self._debug_write()
+        xmld = self._clean_xml()
+        self._debug_write(xmld)
 
     def _clean_xml_utterance(self, u):
 
@@ -354,12 +352,17 @@ class XMLCleaner(object):
                 del a.attrib['flavor']
             else:
                 ntag = a.attrib['type']
+                if ' ' in ntag:
+                    ntag = ntag.split()[0]
             a.tag = ntag
             del a.attrib['type']
 
 
     def _remove_junk(self, u):
         pass
+
+    def clean(self):
+        return self._clean_xml()
 
 if __name__ == '__main__':
     print("Sorry, there's nothing here!")

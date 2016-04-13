@@ -1,4 +1,40 @@
+import collections
+import importlib
+import io
+import logging
+import lxml
+import metadata
+import pdb
+import re
+import traceback
+import xml_cleaner
+
+from collections import deque
+from collections import namedtuple
+from lxml import etree
+from metadata import Chat
+from xml_cleaner import XMLCleaner
+
+class XMLParserFactory(object):
+
+    def __init__(self, cfg):
+        self.cfg = cfg
+        self.CorpusCleaner = importlib.import_module(self.cfg['paths']['cleaner'])
+        self.cleaner_cls = eval(('self.CorpusCleaner.' + 
+            self.cfg['paths']['cleaner_name']), globals(), locals())
+
+    def __call__(self, fpath):
+        return XMLParser(self.cfg, self.cleaner_cls, fpath)
+
 class XMLParser(object):
+
+    logging.basicConfig(filemode='w')
+    logger = logging.getLogger(__name__)
+    handler = logging.FileHandler('errors.log')
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
     udict = { 'source_id':None,
               'session_id_fk':None,
@@ -11,96 +47,93 @@ class XMLParser(object):
               'comment':None,
               'warning':None          }
 
-    mordict = { 'morphemes':None,
-                'gloss_raw':None,
-                'pos_raw':None    }
+    mdict = { 'morphemes':None,
+              'gloss_raw':None,
+              'pos_raw':None    }
 
-    def __init__(self):
-        pass
+    rstruc = namedtuple('FlatUtterance', ['u', 'w', 'm']) 
+
+    def __init__(self, cfg, cleaner_cls, fpath):
+
+        self.cfg = cfg
+        self.cleaner = cleaner_cls(cfg, fpath)
+        self.metadata_parser = Chat(cfg, fpath)
 
     def _get_utts(self):
 
-        for u in self.xmldoc.iter('u'):
-        
-            udict = {}
-            words = []
-            mphms = []
+        xmldoc = self.cleaner.clean()
 
-            for w in u.findall('.//w'):
-
-
-    def _get_utts(self, debug=False):
-
-        xmldoc = etree.parse(self.fpath).getroot()
-
-        for elem in xmldoc.iter():
-            # remove prefixed namespaces
-            try:
-                elem.tag = re.sub('^\{http[^\}]+\}', '', elem.tag)
-                tag = elem.tag
-                attrib = elem.attrib
-            except TypeError:
-                pass
+        #for elem in xmldoc.iter():
+        #    # remove prefixed namespaces
+        #    try:
+        #        elem.tag = re.sub('^\{http[^\}]+\}', '', elem.tag)
+        #        tag = elem.tag
+        #        attrib = elem.attrib
+        #    except TypeError:
+        #        pass
 
         for u in xmldoc.getiterator('u'):
+        
+            udict = XMLParser.udict.copy()
+            words = deque()
+            mwords = deque()
 
             try:
-                #uwm = utterance - words - morphemes
-                uwm = {}
-                d = XMLParser.udict.copy()
-                
-                words = self._get_words(u)
-                uwm['words'] = words
 
-                anno = self._get_annotations(u)
-                morph = anno[0]
-                trans = anno[1]
-                comment = anno[2]
+                udict['corpus'] = self.cfg['corpus']['corpus']
+                udict['language'] = self.cfg['corpus']['language']
 
-                uwm['morphology'] = XMLParser.mordict.copy()
+                udict['source_id'] = u.attrib.get('uID')
+                udict['speaker_label'] = u.attrib.get('who')
+                udict['warning'] = u.attrib.get('warning')
 
-                for tier in morph:
-                    uwm['morphology'][self.cfg['morphology_tiers'][tier]
-                            ] = morph[tier]
+                udict['addressee'] = XMLCleaner.find_text(u, 'addressee')
+                udict['translation'] = XMLCleaner.find_text(u, 'translation')
+                udict['comment'] = XMLCleaner.find_text(u, 'comment')
 
-                d['translation'] = trans
-                d['comment'] = comment
+                udict['start_raw'] = XMLCleaner.find_xpath(u, 'media/@start')
+                udict['end_raw'] = XMLCleaner.find_xpath(u, 'media/@end')
+                udict['sentence_type'] = XMLCleaner.find_xpath(u, 't/@type')
 
-                ts = self._get_timestamps(u)
-                d['start_raw'] = ts[0]
-                d['end_raw'] = ts[1]
+                fws = u.findall('.//w')
+                if fws is None:
+                    continue
+                for w in fws:
 
-                d['speaker_label'] = u.attrib.get('who')
-                d['sentence_type'] = self._get_sentence_type(u)
-                d['source_id'] = u.attrib.get('uID')
+                    wdict = {}
 
-                d['corpus'] = self.cfg['corpus']['corpus']
-                d['language'] = self.cfg['corpus']['language']
+                    wdict['corpus'] = udict['corpus']
+                    wdict['language'] = udict['language']
 
-                uwm['utterance'] = d
+                    wdict['word_actual'] = w.find('actual').text
+                    wdict['word_target'] = w.find('target').text
+                    wdict['word'] = wdict[self.cfg['json_mappings_words']['word']]
+                    wdict['warning'] = w.attrib.get('warning')
 
-                self._process_morphology(uwm)
-                self._morphology_inference(uwm)
-                self._clean_morphemes(uwm)
-                uwm['utterance']['pos_raw'] = self._concat_mor_tier(
-                        'pos_raw', uwm['words'])
-                uwm['utterance']['gloss_raw'] = self._concat_mor_tier(
-                        'gloss_raw', uwm['words'])
-                uwm['utterance']['morpheme'] = self._concat_mor_tier(
-                        'morpheme', uwm['words'])
+                    if ((udict['warning'] is not None
+                        and 'not glossed' in udict['warning']) 
+                        or (wdict['warning'] is not None
+                            and 'not glossed' in wdict['warning'])):
+                        morphemes = None
+                    else:
+                        morphemes = deque()
+                        for m in w.findall('.//m'):
+                            mdict = {}
+                            for tier_name in self.cfg['json_mappings_morphemes']:
+                                new_tier = self.cfg['json_mappings_morphemes'][tier_name]
+                                mdict[new_tier] = m.attrib.get(tier_name)
+                            morphemes.append(mdict)
 
-                uwm['words'] = self._clean_words(uwm['words'])
-                uwm['utterance']['utterance_raw'] = ' '.join(
-                        [w['word'] for w in uwm['words']])
+                    words.append(wdict)
+                    mwords.append(morphemes)
 
-
-                yield uwm
+                yield XMLParser.rstruc(udict, words, mwords)
 
             except Exception as e:
-                XMLParser.logger.warn("Aborted processing of utterance {} "
-                        "in file {} with error: {}\nStacktrace: {}".format(
-                            u.attrib.get('uID'), self.fpath, repr(e),
-                            traceback.format_exc()))
+                XMLParser.logger.warn("Encountered problem processing "
+                                      "utterance: {}\n{}"
+                                      "Skipping...".format(repr(e), 
+                                          traceback.format_exc()))
 
     def _clean_words(self, words):
         new_words = []
@@ -142,33 +175,6 @@ class XMLParser(object):
                 utterance[k] = raw_u[k]
         return utterance
 
-    def _get_annotations(self, u):
-        morph = {}
-        trans = None
-        comment = None
-        for a in u.findall('.//a'):
-            for tier in self.cfg['morphology_tiers']:
-                if (a.attrib.get('type') == 'extension'
-                        and a.attrib.get('flavor') == tier):
-                    morph[tier] = a.text
-            if (a.attrib.get('type') == 'english translation'):
-                trans = a.text
-            if (a.attrib.get('type') in ['comment', 'actions', 'explanation']):
-                comment = a.text
-        return morph, trans, comment
-
-    def _get_sentence_type(self, u):
-        st_raw = u.find('t').attrib.get('type')
-        stype = self.cfg['correspondences'][st_raw]
-        return stype
-
-    def _get_timestamps(self, u):
-        ts = u.find('.//media')
-        if ts != None:
-            return ts.attrib.get('start'), ts.attrib.get('end')
-        else:
-            return None, None
-
     def get_session_metadata(self):
         return self.metadata_parser.metadata['__attrs__']
 
@@ -177,5 +183,17 @@ class XMLParser(object):
             yield p
 
     def next_utterance(self):
-        for u in self._get_utts():
-            yield u['utterance'], u['words'], u['morphemes']
+        return self._get_utts()
+
+if __name__ == '__main__':
+
+    from inuktitut_cleaner import InuktitutCleaner
+    from parsers import CorpusConfigParser as Ccp
+    
+    conf = Ccp()
+    conf.read('ini/Inuktitut.ini')
+    corpus = InuktitutCleaner(conf, 'tests/corpora/Inuktitut/xml/Inuktitut.xml')
+    xmlb = corpus.clean()
+    parser = XMLParser(conf, xmlb)
+    for u in parser.next_utterance():
+        print(u)

@@ -11,7 +11,7 @@ from configparser import ExtendedInterpolation
 
 from metadata import Imdi, Chat
 from toolbox import ToolboxFile
-from xml_cleaner import XMLCleanerFactory
+from xml_parser import XMLParserFactory
 
 
 class CorpusConfigParser(configparser.ConfigParser):
@@ -55,7 +55,7 @@ class SessionParser(object):
         format = config['corpus']['format']
 
         if format == "ChatXML":
-            return XMLCleanerFactory(config)
+            return XMLParserFactory(config)
         elif format == "Toolbox":
             return lambda file_path: ToolboxParser(config, file_path)
         elif format == "JSON":

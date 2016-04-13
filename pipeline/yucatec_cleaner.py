@@ -11,26 +11,27 @@ class YucatecCleaner(XMLCleaner):
 
     def _process_morphology(self, u):
         full_words = u.findall('.//w')
-        morphology = self._get_annotations(u)[0]['mor']
-        if (morphology is not None) and (not re.search('^\\s*[\.\?!]*\\s*$', morphology)):
+        morphology = u.find("a[@type='extension'][@flavor='mor']")
+        if (morphology is not None and 
+                not re.search('^\\s*[\.\?!]*\\s*$', morphology.text)):
             # remove punctuation and tags
-            morphology = re.sub('(^|\\s)[\.\?!\+\/]+(\\s|$)', '\\1\\2', morphology)
-            morphology = re.sub('(^|\\s)tag\|\\S+(\\s|$)', '\\1\\2', morphology)
-            morphology = re.sub('\\s+$', '', morphology)
-            morphology = re.sub('(?<=\\s)##(?=\\s)', ' ', morphology)
+            morphology.text = re.sub('(^|\\s)[\.\?!\+\/]+(\\s|$)', '\\1\\2', morphology.text)
+            morphology.text = re.sub('(^|\\s)tag\|\\S+(\\s|$)', '\\1\\2', morphology.text)
+            morphology.text = re.sub('\\s+$', '', morphology.text)
+            morphology.text = re.sub('(?<=\\s)##(?=\\s)', ' ', morphology.text)
             # Yucatec uses ":" both to separate glosses belonging to the same morpheme (e.g. ABS:PL) AND as a morpheme separator (stem:suffix)
             # The first case can be identified by checking for uppercase letters -> replace ":" by "."
-            morphology = re.sub('([A-Z0-9]+):(?=[A-Z0-9]+)', '\\1.', morphology)
+            morphology.text = re.sub('([A-Z0-9]+):(?=[A-Z0-9]+)', '\\1.', morphology.text)
             # If a word does not contain any of the usual morpheme separators "#" and ":" but does contain "-", this usually stands for ":"
-            if not re.search('[#:]', morphology) and re.search('\-', morphology):
-                morphology = re.sub('\-', ':', morphology)
+            if not re.search('[#:]', morphology.text) and re.search('\-', morphology.text):
+                morphology.text = re.sub('\-', ':', morphology.text)
             # unclear words are given as "xxx" without the usual internal structure -> create structure and set both components to "unknown"
-            morphology = re.sub('xxx', '???|???', morphology)
+            morphology.text = re.sub('xxx', '???|???', morphology.text)
                             
             # split mor tier into words, reset counter to 0
             # Besides spaces, "&" and "+" are also interpreted as word separators (they seem to mark clitics, which tend to be treated as separate words in <w>)
             word_index = -1
-            words = re.split('[\\s&\+]+', morphology)                
+            words = re.split('[\\s&\+]+', morphology.text)                
             
             #mwords is a list of lists of morphemes
             for w in words:
