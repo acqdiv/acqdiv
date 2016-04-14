@@ -1,4 +1,4 @@
-""" Corpus and session processors to turn ACQDIV raw input corpora (Toolbox, ChatXML) into ACQDIV-DB
+""" Corpus and session processors to turn ACQDIV raw input corpora (Toolbox, ChatXML, JSON) into ACQDIV-DB
 """
 
 import collections
