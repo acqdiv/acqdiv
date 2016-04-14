@@ -23,7 +23,7 @@ class InuktitutCleaner(XMLCleaner):
         # parse the morphology tier mor
         full_words = u.findall('.//w')
         morphology = u.find("a[@type='extension'][@flavor='mor']")
-        if morphology is not None and not morphology.text.startswith('xxx'):
+        if morphology is not None and not morphology.text.startswith('xxx.'):
             
             # remove CHAT garbage
             morphology.text = re.sub('\[\+.*?\"\]', '', morphology.text) # postcodes in square brackets; these are not documented anywhere
