@@ -175,7 +175,8 @@ class XMLParser(object):
                                 morpheme[label] = raw_morpheme[k]
                             else:
                                 pass
-                        new_mword.append(morpheme)
+                        if morpheme != {}:
+                            new_mword.append(morpheme)
                     new_mors.append(new_mword)
                 except TypeError:
                     continue
