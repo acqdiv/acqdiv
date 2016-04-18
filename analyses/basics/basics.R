@@ -22,7 +22,7 @@ time.taken
 
 
 # load db
-runsql <- function(sql, dbname="../../database/_acqdiv.sqlite3"){
+runsql <- function(sql, dbname="../../database/bigacqdiv.sqlite3"){
   require(RSQLite)
   driver <- dbDriver("SQLite")
   connect <- dbConnect(driver, dbname=dbname);
@@ -34,6 +34,7 @@ runsql <- function(sql, dbname="../../database/_acqdiv.sqlite3"){
   return(dd)
 }
 
+x <- runsql('select * from speakers where corpus = "Chintang" and macrorole="Target_Child"')
 
 # query utterances, words, morphemes token counts and make bar chart
 us <- runsql('select corpus, count(*) from utterances group by corpus')
@@ -126,9 +127,81 @@ glimpse(x)
 
 
 # mlm per word per utterance
+
+
+
 stop("end script")
 
+### static stuff ###
 
+\begin{table}[h]
+ \begin{center}
+\begin{tabular}{|l|l|l|l|}
+\hline
+ISO 639-3 & Language & Speakers & Classification \\
+\hline
+tur	&	Turkish	&	70,890,130	&	Altaic	\\
+jpn	&	Japanese	&	128,056,940	&	Japanese	\\
+ind	&	Indonesian	&	23,200,480	&	Austronesian	\\
+yua	&	Yucatec	&	766,000	&	Mayan	\\
+ike	&	Inuktitut	&	34,510	&	Eskimo-Aleut	\\
+ctn	&	Chintang	&	3,710	&	Sino-Tibetan	\\
+sot	&	Sesotho	&	5,634,000	&	Niger-Congo \\
+rus	&	Russian	&	166,167,860	&	Indo-European	\\
+cre	&	Cree	&	87,220	&	Algic	\\
+chp	&	Dene	&	11,900	&	Na-Dene	\\
+\hline
+\end{tabular}
+\caption{Language sample}\label{languages}
+ \end{center}
+\end{table}
+
+
+\begin{table}[h]
+ \begin{center}
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+Language	&	Format	&	Kids	&	Sessions	&	Words	\\
+\hline
+Chintang	&	Toolbox &	3	&	419	&	828272	\\
+Cree	&	CHAT	&	1	&	10	& 21525	\\
+Indonesian	&	Toolbox	&	8	&	997	& 2496828	\\
+Inuktitut	&	CHAT-like	&	5	&	77	& 73302	\\
+Japanese	&	XML	&	7	&	341	& 1235364	\\
+Russian	&	Toolbox	&	4	&	448	& 2022992	\\
+Sesotho	&	XML	&	4	&	129	& 237247	\\
+Turkish	&	CHAT-like	&	8	&	373	& 1139877	\\
+% RS: This will change considerably once cleaning is finished. The present DB only contains about 40% of all files.
+Yucatec	&	CHAT-like	&	3	&	121	& 120441	\\
+\hline
+\end{tabular}
+\caption{Corpora}\label{corpora}
+ \end{center}
+\end{table}
+
+
+# acqdiv-refs.tex
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+corpus & citation \\
+\hline
+Chintang	&	\cite{Stoll_etal2015b} \\
+Cree	&	\cite{Brittain2015a} \\
+Indonesian	&	\cite{Gil_etal2007a} \\
+Inuktitut	&	\cite{Allen2015a}  \\
+Japanese MiiPro	&	\cite{Miyata_etal2009a, Nisisawa_etal2009a, Miyata_etal2010a, Nisisawa_etal2010a, Miyata2012a}  \\
+Japanese Miyata	&	\cite{Miyata2004a, Miyata2004b, Miyata2004c, Miyata2012a}  \\
+Russian	&	\cite{Stoll_etal2008a}  \\
+Sesotho	&	\cite{Demuth1992b,Demuth2015a}  \\
+Turkish	&	\cite{Kuntay2015a}  \\
+Yucatec	&	\cite{Pfeiler2015a}  \\
+\hline
+\end{tabular}
+\caption{Corpora}\label{corpora}
+\end{center}
+\end{table}
 
 
 # number of labels

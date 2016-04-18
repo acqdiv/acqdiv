@@ -134,15 +134,15 @@ class Utterance(Base):
     utterance_raw = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     utterance = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     translation = Column(Text, nullable=True, unique=False)
+    morpheme = Column(Text, nullable=True, unique=False)
+    gloss_raw = Column(Text, nullable=True, unique=False)
+    pos_raw = Column(Text, nullable=True, unique=False)
     sentence_type = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     start = Column(Text, nullable=True, unique=False)
     end = Column(Text, nullable=True, unique=False)
     start_raw = Column(Text, nullable=True, unique=False)
     end_raw = Column(Text, nullable=True, unique=False)
-    word = Column(Text, nullable=True, unique=False)
-    morpheme = Column(Text, nullable=True, unique=False)
-    gloss_raw = Column(Text, nullable=True, unique=False)
-    pos_raw = Column(Text, nullable=True, unique=False)
+    # word = Column(Text, nullable=True, unique=False)
     comment = Column(Text, nullable=True, unique=False)
     warning = Column(Text, nullable=True, unique=False)
 
