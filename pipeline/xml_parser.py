@@ -190,7 +190,10 @@ class XMLParser(object):
         for k in raw_u:
             if k in self.cfg['json_mappings']:
                 label = self.cfg['json_mappings'][k]
-                utterance[label] = raw_u[k]
+                if raw_u[k] in self.cfg['correspondences']:
+                    utterance[label] = self.cfg['correspondences'][raw_u[k]]
+                else:
+                    utterance[label] = raw_u[k]
             else:
                 pass
         return utterance
