@@ -61,7 +61,7 @@ def update_xml_age(session, config):
     """
     corpus_name = config["corpus"]["corpus"]
     for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
-        sid = db_session_entry.source_id
+        sid = db_session_entry.id
         for row in session.query(backend.Speaker).filter(backend.Speaker.age_raw != None, backend.Speaker.session_id_fk == sid):
             new_age = age.format_xml_age(row.age_raw)
             if new_age:
@@ -89,11 +89,13 @@ def update_imdi_age(session, config):
     """
     corpus_name = config["corpus"]["corpus"]
 
-    for db_session_entry in session.query(backend.Session).filter(backend.Session.corpus == corpus_name):
+    for db_session_entry in session.query(backend.Session).filter(
+            backend.Session.corpus == corpus_name):
         sid = db_session_entry.id
         cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 
-        for db_speaker_entry in session.query(backend.Speaker).filter(~backend.Speaker.birthdate.like("Un%"),
+        for db_speaker_entry in session.query(backend.Speaker).filter(
+                ~backend.Speaker.birthdate.like("Un%"),
                 ~backend.Speaker.birthdate.like("None"),
                 backend.Speaker.session_id_fk == sid):
             try:
@@ -120,9 +122,11 @@ def update_imdi_age(session, config):
                             .format(e.bad_data, corpus_name, sid), 
                             file=sys.stderr)
 
-        for db_speaker_entry in session.query(backend.Speaker).filter(backend.Speaker.age_raw.like("%;%.%")):
+        for db_speaker_entry in session.query(backend.Speaker).filter(
+                backend.Speaker.age_raw.like("%;%.%")):
                 db_speaker_entry.age = db_speaker_entry.age_raw
-                db_speaker_entry.age_in_days = age.calculate_xml_days(db_speaker_entry.age_raw)
+                db_speaker_entry.age_in_days = age.calculate_xml_days(
+                        db_speaker_entry.age_raw)
 
         for db_speaker_entry in session.query(backend.Speaker).filter(
                 ~backend.Speaker.age_raw.like("None"),
@@ -228,9 +232,14 @@ def unify_roles(session,config):
                 row.role = cfg_mapping[row.language][row.speaker_label]
             except KeyError:
                 pass
-        elif row.role in ["Adult", "Child", "old", "Teenager"] and row.age_in_days != None:
+        elif row.role in ["Adult", "Child", "old", "Teenager"]:
+            if row.age_in_days is None:
+                row.macrorole = cfg_mapping['macrorole_mapping'][row.role]
             row.role = "Unknown"
-        elif row.role in ["Boy", "Girl", "Female", "Male"] and row.gender_raw != None:
+        elif row.role in ["Boy", "Girl", "Female", "Male"]:
+            if row.gender_raw is None:
+                row.gender = ('Male' if row.role in ['Boy', 'Male'] 
+                              else 'Female')
             row.role = "Unknown"
     if len(not_found) > 0:
         print("-- WARNING --")
@@ -253,7 +262,9 @@ def unify_gender(session, config):
     """
     table = session.query(backend.Speaker)
     for row in table:
-        if row.gender_raw != None:
+        if row.gender is not None:
+            continue
+        if row.gender_raw is not None:
             if row.gender_raw.lower() == 'female':
                 row.gender = 'Female'
             elif row.gender_raw.lower() == 'male':
@@ -284,9 +295,11 @@ def macrorole(session, config):
     cfg_mapping.optionxform = str
     cfg_mapping.read("role_mapping.ini")
     for row in table:
+        if row.macrorole is not None:
+            continue
         if row.role == "Target_Child":
             macro = "Target_Child"
-        elif row.age_in_days != None:
+        elif row.age_in_days is not None:
             if row.age_in_days <= 4380:
                 macro = "Child"
             else:
