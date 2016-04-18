@@ -237,6 +237,7 @@ class JsonParser(SessionParser):
                     d['word'] = d[self.config['json_mappings']['word']]
 
             utterance['utterance_raw'] = " ".join(full_utterance)
+            utterance['utterance'] = " ".join(full_utterance)
             words = temp
 
             # take only the config specified fields
@@ -268,7 +269,6 @@ class JsonParser(SessionParser):
                 utterance['gloss_raw'] = " ".join(gloss)
                 utterance['pos_raw'] = " ".join(pos)
             morphemes = temp
-
             yield utterance, words, morphemes
 
 
