@@ -3,6 +3,7 @@
 import re
 import sys
 import itertools
+import pdb
 
 from lxml import etree
 from xml_cleaner import XMLCleaner
@@ -15,26 +16,41 @@ class YucatecCleaner(XMLCleaner):
         if (morphology is not None and 
                 not re.search('^\\s*[\.\?!]*\\s*$', morphology.text)):
             # remove punctuation and tags
-            morphology.text = re.sub('(^|\\s)[\.\?!\+\/]+(\\s|$)', '\\1\\2', morphology.text)
-            morphology.text = re.sub('(^|\\s)tag\|\\S+(\\s|$)', '\\1\\2', morphology.text)
-            morphology.text = re.sub('\\s+$', '', morphology.text)
-            morphology.text = re.sub('(?<=\\s)##(?=\\s)', ' ', morphology.text)
-            # Yucatec uses ":" both to separate glosses belonging to the same morpheme (e.g. ABS:PL) AND as a morpheme separator (stem:suffix)
-            # The first case can be identified by checking for uppercase letters -> replace ":" by "."
-            morphology.text = re.sub('([A-Z0-9]+):(?=[A-Z0-9]+)', '\\1.', morphology.text)
-            # If a word does not contain any of the usual morpheme separators "#" and ":" but does contain "-", this usually stands for ":"
-            if not re.search('[#:]', morphology.text) and re.search('\-', morphology.text):
-                morphology.text = re.sub('\-', ':', morphology.text)
-            # unclear words are given as "xxx" without the usual internal structure -> create structure and set both components to "unknown"
-            morphology.text = re.sub('xxx', '???|???', morphology.text)
-                            
+            mortext = morphology.text
+            mortext = re.sub('(^|\\s)[\.\?!\+\/]+(\\s|$)', '\\1\\2', mortext)
+            mortext = re.sub('(^|\\s)tag\|\\S+(\\s|$)', '\\1\\2', mortext)
+            mortext = re.sub('\\s+$', '', mortext)
+            mortext = re.sub('(?<=\\s)##(?=\\s)', ' ', mortext)
+
             # split mor tier into words, reset counter to 0
             # Besides spaces, "&" and "+" are also interpreted as word separators (they seem to mark clitics, which tend to be treated as separate words in <w>)
-            word_index = -1
-            words = re.split('[\\s&\+]+', morphology.text)                
-            
-            #mwords is a list of lists of morphemes
+            words = re.split('[\\s&\+]+', mortext)                
+            new_words = []
             for w in words:
+
+                # fixes for terrible hyphens
+                w = re.sub('(:[A-Z0-9]+)\-(?=[a-záéíóúʔ]+)', '\\1|', w)
+                w = re.sub('([A-Z0-9]+)\-(?=[a-záéíóúʔ]+#)', '\\1|', w)
+                # If a word does not contain any of the usual morpheme separators "#" and ":" but does contain "-", this usually stands for ":"
+                if not re.search('[#:|]', w) and re.search('\-', w):
+                    w = re.sub('\-', ':', w)
+                    w = '(usm)' + w
+                # sometimes this happens on a per-morpheme level
+                w = re.sub('(?<!\|)\-(?!\|)', ':', w)
+                # Yucatec uses ":" both to separate glosses belonging to the same morpheme (e.g. ABS:PL) AND as a morpheme separator (stem:suffix)
+                # The first case can be identified by checking for uppercase letters -> replace ":" by "."
+                # TODO DEBUG
+                w = re.sub('(^|[ |:])([A-Z0-9]+):(?=[A-Z0-9]+)', '\\1\\2.', w)
+                # unclear words are given as "xxx" without the usual internal 
+                # structure -> create structure and set 
+                # both components to "unknown"
+                w = re.sub('xxx', '???|???', w)
+                new_words.append(w)
+                            
+            #initialize word index
+            word_index = -1
+            #mwords is a list of lists of morphemes
+            for w in new_words:
                 
                 # count up word index, extend list if necessary
                 word_index += 1
@@ -49,11 +65,12 @@ class YucatecCleaner(XMLCleaner):
                 
                 wmor = etree.SubElement(full_words[word_index], 'mor')
                 wmor.text = w
+
+            #u.remove(morphology)
                 
         # if there is no morphology, add warning to complete utterance
         else:
             XMLCleaner.creadd(u.attrib, 'warning', 'not glossed')
-
 
     def _morphology_inference(self, u):
 
@@ -100,6 +117,20 @@ class YucatecCleaner(XMLCleaner):
             # EOF prefixes
             
             # get stem: everything up to the first ":" (= suffix separator) or, if there are no suffixes, to the end of the word
+            if w.startswith('(usm)'):
+                w = w[5:]
+                wmors = w.split(':')
+                for wmor in wmors:
+                    morpheme_index += 1
+                    m = etree.SubElement(morphemes, 'm')
+                    m.attrib['segments_target'] = wmor
+                    m.attrib['glosses_target'] = '???'
+                    m.attrib['pos_target'] = '???'
+                    m.attrib['warning'] = 'no segment/gloss structure'
+                morphemes.text = ''
+                continue
+
+
             stem = ''
             suffix_string = ''
             check_sfx = re.search('(.*?):(.*$)', w)
