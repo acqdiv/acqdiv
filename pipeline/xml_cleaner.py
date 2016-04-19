@@ -181,14 +181,13 @@ class XMLCleaner(object):
         # <g><w>burred<replacement><w>word</w></replacement></w></g>
         # these require an additional loop over <w> in <u>,
         # because there may be shortenings within replacements
-        js = itertools.count()
-        for i in js:
-            if i >= len(words):
-                break
-            r = words[i].find('replacement')
+        for fw in words:
+            r = fw.find('replacement')
             if r is not None:
                 rep_words = r.findall('w')
                 rep_len = len(rep_words)
+                wp = fw.getparent()
+                i = wp.index(fw)
 
                 # go through words in replacement
                 for j in range(rep_len):
@@ -197,9 +196,9 @@ class XMLCleaner(object):
                     # first word: transfer content 
                     # and any morphology to parent <w> in <u>
                     if j == 0:
-                        words[i].find('target').text = rep_words[0].find('target').text
+                        fw.find('target').text = rep_words[0].find('target').text
                         if mor is not None:
-                            words[i].append(mor)
+                            fw.append(mor)
                     # all further words: insert new empty <w> under parent of
                     # last known <w> (= <u> or <g>),
                     # put content and morphology there
@@ -210,13 +209,11 @@ class XMLCleaner(object):
                         w_tar.text = rep_words[j].find('target').text
                         if mor is not None:
                             w.append(mor)
-                        words.insert(i+j, w)
+                        wp.insert(i+j, w)
                         
-                #words[i].attrib['target'] = '_'.join(rep_w.attrib['target'] 
+                #fw.attrib['target'] = '_'.join(rep_w.attrib['target'] 
                 #        for rep_w in r.findall('w'))
-                words[i].remove(r)
-                for k in range(1,rep_len+1):
-                    del words[i+k]
+                fw.remove(r)
 
     def _mark_retracings(self, u):
         for group in u.iterfind('.//g'):
@@ -340,7 +337,7 @@ class XMLCleaner(object):
                     break
 
     def _restructure_metadata(self, u):
-        for a in u.findall('.//a'):
+        for a in u.findall('a'):
             if a.attrib['type'] == 'extension':
                 ntag = a.attrib['flavor']
                 del a.attrib['flavor']
@@ -351,6 +348,10 @@ class XMLCleaner(object):
             a.tag = ntag
             del a.attrib['type']
 
+        stype = u.find('t')
+        if stype is not None:
+            stype.attrib['type'] = \
+                    self.cfg['correspondences'][stype.attrib.get('type')]
 
     def _remove_junk(self, u):
         pass

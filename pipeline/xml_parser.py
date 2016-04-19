@@ -47,9 +47,9 @@ class XMLParser(object):
               'comment':None,
               'warning':None          }
 
-    mdict = { 'morphemes':None,
-              'gloss_raw':None,
-              'pos_raw':None    }
+    mdict = { 'morphemes':'???',
+              'gloss_raw':'???',
+              'pos_raw':'???'    }
 
     rstruc = namedtuple('FlatUtterance', ['u', 'w', 'm']) 
 
@@ -135,6 +135,7 @@ class XMLParser(object):
                 udict['morpheme'] = self._concat_mor_tier('morpheme', mwords)
                 udict['utterance_raw'] = ' '.join([w['word'] for w in words
                                                    if w['word'] is not None])
+                udict['utterance'] = udict['utterance_raw']
 
                 yield XMLParser.rstruc(udict, words, mwords)
 
@@ -190,7 +191,10 @@ class XMLParser(object):
         for k in raw_u:
             if k in self.cfg['json_mappings']:
                 label = self.cfg['json_mappings'][k]
-                utterance[label] = raw_u[k]
+                if raw_u[k] in self.cfg['correspondences']:
+                    utterance[label] = self.cfg['correspondences'][raw_u[k]]
+                else:
+                    utterance[label] = raw_u[k]
             else:
                 pass
         return utterance
