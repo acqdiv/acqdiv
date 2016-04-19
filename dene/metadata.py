@@ -116,7 +116,7 @@ class Session:
         Note:
             The prescribed format is <desla-shortname-year-month-day[-partial_session_letter]>.
         """
-        self.code = self.code.rstrip(" ")
+        self.code = self.code.strip(" ")
 
         if "deslas" not in self.code:
             # desla must be lowercased, so try to correct it by lowercasing it
@@ -155,7 +155,7 @@ class Session:
 
     def check_Date(self):
         """Check if the recording date (Session.Date) is 2015 or later and if it matches the one in Session.code."""
-        self.date = self.date.rstrip(" ")
+        self.date = self.date.strip(" ")
         self.date = validate_date(self.date, Session.session_number, self.code)
 
         if self.date:
@@ -173,14 +173,14 @@ class Session:
 
     def replace_child(self):
         """Replace all instances of 'child' in Session.content and Session.situation by the shortname."""
-        self.content = replace_i(self.content.rstrip(" "))
-        self.situation = replace_i(self.situation.rstrip(" "))
+        self.content = replace_i(self.content.strip(" "))
+        self.situation = replace_i(self.situation.strip(" "))
 
         match = re.search(r"deslas\-([A-Z]{3,})\-\d+", self.code)
         if match:
-            shortname = match.group()
-            self.content = re.sub(r"[cC]hild(?=\W)", shortname, self.content)
-            self.situation = re.sub(r"[cC]hild(?=\W)", shortname, self.situation)
+            shortname = match.group(1)
+            self.content = self.content.replace(shortname, "child")
+            self.situation = self.situation.replace(shortname, "child")
 
 
     def check_Participants(self):
@@ -197,18 +197,19 @@ class Session:
                 "cousin", "grandmother", "sister", "father", "aunt",
                 "uncle", "grandfather", "teacher", "older brother", "stepfather",
                 "researcher", "older sister", "nephew", "family friend", "linguist",
-                "great grandmother", "cousin"
+                "great grandmother", "great grandfather", "cousin"
             }
 
             # hash for replacing certain informal terms or non-standard spellings
             role_subs = {
                 "auntie": "aunt", "grandma": "grandmother", "grandpa": "grandfather",
                 "dad": "father", "mum": "mother", "step-father": "stepfather",
-                "step-mother": "stepmother"
+                "step-mother": "stepmother", "great-grandmother": "great grandmother",
+                "great-grandfather": "great grandfather"
             }
 
             # sometimes commas occur at the end of the participant and roles, so strip them away too
-            self.people = replace_i(self.people.rstrip(" ").rstrip(","))
+            self.people = replace_i(self.people.strip(" ").rstrip(","))
 
             part_role_regex = re.compile(r"""
                 (
@@ -216,7 +217,8 @@ class Session:
                 \s*                     # an optional whitespace
                 \(                      # an opening bracket
                 \w+([ -]\w+)*           # a role which can consist of multiple words, sometimes separated by a hyphen
-                (\s*[&,]\s*             # if there are multiple roles for a shortname, they are separated by an ampersand or comma
+                (\s*[&,/]\s*            # if there are multiple roles for a shortname,
+                                        # they are separated by an ampersand, comma or slash
                 \w+([ -]\w+)*           # same as second last line
                 )*                      # can repeat pattern: role1 & role2 & role3 ...
                 \)                      # a closing bracket
@@ -250,8 +252,9 @@ class Session:
                 # go through the roles of every shortname
                 for role_set_index, role_set in enumerate(role_list):
 
-                    # store role(s) of a shortname in a list by stripping away the braces and splitting at ampersand
-                    roles = re.split('\s*[&,]\s*', role_set[1:-1])
+                    # store role(s) of a shortname in a list by stripping away the braces
+                    # and splitting at ampersand, comma or slash
+                    roles = re.split('\s*[&,/]\s*', role_set[1:-1])
 
                     # now go through all roles of that shortname
                     for role_index, role in enumerate(roles):
@@ -278,7 +281,7 @@ class Session:
                         # check if the role occurs in the predefined set of roles
                         if role not in role_table:
 
-                            # check if the role must be replaced by a more formal term
+                            # check if the role must be replaced
                             if role in role_subs:
                                 logger.info("Role '" + role + "' substituted by '" + role_subs[role] + "'",
                                     extra={"object_number": Session.session_number, "object_id": self.code})
@@ -301,7 +304,7 @@ class Session:
 
 
             else:
-                logger.error("Participants and roles cannot be parsed",
+                logger.error("Participants and roles cannot be parsed - check format",
                     extra={"object_number": Session.session_number, "object_id": self.code})
         else:
             logger.warning("Missing value for Participants and roles",
@@ -351,7 +354,7 @@ class Participant:
 
     def check_ShortName(self):
         """Check if shortname is in the correct format and if it does not occur more than once in the participants table."""
-        self.shortname = self.shortname.rstrip(" ")
+        self.shortname = self.shortname.strip(" ")
 
         # shortname must be at least 3 chars long and uppercased
         if re.fullmatch(r"[A-Z]{3,}", self.shortname):
@@ -375,7 +378,7 @@ class Participant:
     def check_BirthDate(self):
         """Check birth of date (Participant.Birth date) for sanity."""
         if self.birthdate:
-            self.birthdate = self.birthdate.rstrip(" ")
+            self.birthdate = self.birthdate.strip(" ")
             self.birthdate = validate_date(self.birthdate, Participant.participant_number, self.shortname)
 
         else:
@@ -395,7 +398,7 @@ class Participant:
         """
         if self.age:
 
-            self.age = self.age.rstrip(" ")
+            self.age = self.age.strip(" ")
 
             # age value must be a number optionally followed by a year in brackets
             match = re.fullmatch(r"\d+( \(\d{4}\))?", self.age)
@@ -430,10 +433,10 @@ class Participant:
     def check_Gender(self):
         """Check if the gender field has either the value Female or Male."""
         if self.gender:
-            self.gender = self.gender.rstrip(" ")
+            self.gender = self.gender.strip(" ")
 
             if self.gender != "Female" and self.gender != "Male":
-                logger.error("Gender value not correct",
+                logger.error("Gender value not correct - allowed values are 'Female' or 'Male'",
                     extra={"object_number": Participant.participant_number, "object_id": self.shortname})
         else:
             logger.warning("Gender value missing",
@@ -443,8 +446,8 @@ class Participant:
     def check_Lang(self):
         """Check if the language fields have the values English or Dene."""
         if self.firstlang and self.mainlang:
-            self.firstlang = replace_i(self.firstlang.rstrip(" "))
-            self.mainlang = replace_i(self.mainlang.rstrip(" "))
+            self.firstlang = replace_i(self.firstlang.strip(" "))
+            self.mainlang = replace_i(self.mainlang.strip(" "))
 
             for lang in [self.firstlang, self.mainlang]:
                 if lang != "English" and lang != "Dene":
@@ -518,12 +521,12 @@ if __name__ == "__main__":
         # write (corrected) data of the session to the output file 'sessions_new.csv'
         sessions_writer.writerow({"Code": session.code,
                         "Date": session.date,
-                        "Location": replace_i(row["Location"].rstrip(" ")),
-                        "Length of recording": row["Length of recording"].rstrip(" "),
+                        "Location": replace_i(row["Location"].strip(" ")),
+                        "Length of recording": row["Length of recording"].strip(" "),
                         "Situation": session.situation,
                         "Content": session.content,
                         "Participants and roles": session.people,
-                        "Comments": replace_i(row["Comments"].rstrip(" "))
+                        "Comments": replace_i(row["Comments"].strip(" "))
                         # "Genre": session.genre,
                         # "Subgenre": session.subgenre,
                         # "Plannedness": session.plannedness,
@@ -546,20 +549,20 @@ if __name__ == "__main__":
         participant.check_all()
 
         # write (corrected) data of the session to the output file 'participants_new.csv'
-        participants_writer.writerow({"Added by": replace_i(row["Added by"].rstrip(" ")),
+        participants_writer.writerow({"Added by": replace_i(row["Added by"].strip(" ")),
                         "Short name": participant.shortname,
-                        "Full name": replace_i(row["Full name"].rstrip(" ")),
+                        "Full name": replace_i(row["Full name"].strip(" ")),
                         "Birth date": participant.birthdate,
                         "Age": participant.age,
                         "Gender": participant.gender,
-                        "Education": replace_i(row["Education"].rstrip(" ")),
+                        "Education": replace_i(row["Education"].strip(" ")),
                         "First languages": participant.firstlang,
-                        "Second languages": replace_i(row["Second languages"].rstrip(" ")),
+                        "Second languages": replace_i(row["Second languages"].strip(" ")),
                         "Main language": participant.mainlang,
-                        "Language biography": replace_i(row["Language biography"].rstrip(" ")),
-                        "Description": replace_i(row["Description"].rstrip(" ")),
-                        "Contact address": replace_i(row["Contact address"].rstrip(" ")),
-                        "E-mail/Phone": replace_i(row["E-mail/Phone"].rstrip(" "))
+                        "Language biography": replace_i(row["Language biography"].strip(" ")),
+                        "Description": replace_i(row["Description"].strip(" ")),
+                        "Contact address": replace_i(row["Contact address"].strip(" ")),
+                        "E-mail/Phone": replace_i(row["E-mail/Phone"].strip(" "))
                         })
 
 
