@@ -9,7 +9,7 @@ tables = c("morphemes","sessions","speakers","uniquespeakers","utterances","warn
 for (table in tables){
 	print(paste("reading table ",table,"...",sep=""))
 	path_to_table = paste(base,table,".csv",sep="")
-	assign(table, read.csv(path_to_table))
+	assign(table, read.csv(path_to_table, na.strings=""))
 }
 
 # generate additional big flat table
