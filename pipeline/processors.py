@@ -138,9 +138,10 @@ class SessionProcessor(object):
 
             # In Chintang the number of words may be longer than the number of morphemes -- error handling
             # print("words:", words)
-            if len(words) > len(morphemes):
-                logger.info("There are more words than morphemes in "
-                "{} utterance {}".format(self.corpus, utterance['source_id']))
+            #
+            #if len(words) > len(morphemes):
+            #    logger.info("There are more words than morphemes in "
+            #    "{} utterance {}".format(self.corpus, utterance['source_id']))
 
             # Populate the words
             for i in range(0, len(words)):
