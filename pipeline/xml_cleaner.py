@@ -353,6 +353,12 @@ class XMLCleaner(object):
             stype.attrib['type'] = \
                     self.cfg['correspondences'][stype.attrib.get('type')]
 
+        timestamp = u.find('time')
+        if timestamp is not None:
+            timestamp.attrib['start'] = timestamp.text
+            timestamp.text = ''
+            timestamp.tag = 'media'
+
     def _remove_junk(self, u):
         pass
 

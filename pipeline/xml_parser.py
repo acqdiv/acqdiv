@@ -38,8 +38,8 @@ class XMLParser(object):
 
     udict = { 'utterance_id':None,
               'session_id_fk':None,
-              'start_raw':None,
-              'end_raw':None,
+              'starts_at':None,
+              'ends_at':None,
               'speaker_label':None,
               'addressee':None,
               'sentence_type':None,
@@ -91,8 +91,8 @@ class XMLParser(object):
                 udict['translation'] = XMLCleaner.find_text(u, 'translation')
                 udict['comment'] = XMLCleaner.find_text(u, 'comment')
 
-                udict['start_raw'] = XMLCleaner.find_xpath(u, 'media/@start')
-                udict['end_raw'] = XMLCleaner.find_xpath(u, 'media/@end')
+                udict['starts_at'] = XMLCleaner.find_xpath(u, 'media/@start')
+                udict['ends_at'] = XMLCleaner.find_xpath(u, 'media/@end')
                 udict['sentence_type'] = XMLCleaner.find_xpath(u, 't/@type')
 
                 fws = u.findall('.//w')
