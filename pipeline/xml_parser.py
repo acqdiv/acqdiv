@@ -38,8 +38,8 @@ class XMLParser(object):
 
     udict = { 'utterance_id':None,
               'session_id_fk':None,
-              'start_raw':None,
-              'end_raw':None,
+              'starts_at':None,
+              'ends_at':None,
               'speaker_label':None,
               'addressee':None,
               'sentence_type':None,
@@ -47,9 +47,9 @@ class XMLParser(object):
               'comment':None,
               'warning':None          }
 
-    mdict = { 'morphemes':None,
-              'gloss_raw':None,
-              'pos_raw':None    }
+    mdict = { 'morphemes':'???',
+              'gloss_raw':'???',
+              'pos_raw':'???'    }
 
     rstruc = namedtuple('FlatUtterance', ['u', 'w', 'm']) 
 
@@ -91,8 +91,8 @@ class XMLParser(object):
                 udict['translation'] = XMLCleaner.find_text(u, 'translation')
                 udict['comment'] = XMLCleaner.find_text(u, 'comment')
 
-                udict['start_raw'] = XMLCleaner.find_xpath(u, 'media/@start')
-                udict['end_raw'] = XMLCleaner.find_xpath(u, 'media/@end')
+                udict['starts_at'] = XMLCleaner.find_xpath(u, 'media/@start')
+                udict['ends_at'] = XMLCleaner.find_xpath(u, 'media/@end')
                 udict['sentence_type'] = XMLCleaner.find_xpath(u, 't/@type')
 
                 fws = u.findall('.//w')
@@ -135,6 +135,7 @@ class XMLParser(object):
                 udict['morpheme'] = self._concat_mor_tier('morpheme', mwords)
                 udict['utterance_raw'] = ' '.join([w['word'] for w in words
                                                    if w['word'] is not None])
+                udict['utterance'] = udict['utterance_raw']
 
                 yield XMLParser.rstruc(udict, words, mwords)
 
@@ -190,7 +191,10 @@ class XMLParser(object):
         for k in raw_u:
             if k in self.cfg['json_mappings']:
                 label = self.cfg['json_mappings'][k]
-                utterance[label] = raw_u[k]
+                if raw_u[k] in self.cfg['correspondences']:
+                    utterance[label] = self.cfg['correspondences'][raw_u[k]]
+                else:
+                    utterance[label] = raw_u[k]
             else:
                 pass
         return utterance

@@ -10,34 +10,22 @@ session = None
 
 def setup():
     global cfg, session
-    engine = sa.create_engine('sqlite:///test.sqlite3')
+    engine = sa.create_engine('sqlite:///../../database/acqdiv.sqlite3')
     meta = sa.MetaData(engine, reflect=True)
     Session = sessionmaker(bind=engine)
     session = Session()
 
-
 def test_counts():
     cfg = configparser.ConfigParser()
-    cfg.read("counts.ini")
+    cfg.read("session_counts.ini")
     for section in cfg:
-        # skip default section in default python config
-        if section == "DEFAULT":
+        if section == "default":
             continue
         for option in cfg[section]:
-            if option == 'utterances':
-                yield check, section, option, int(cfg[section][option])
-            if option == 'words':
-                yield check, section, option, int(cfg[section][option])
-            if option == 'morphemes':
-                yield check, section, option, int(cfg[section][option])
-            # TODO: check() not work here
-            if option == 'glosses':
-                yield check, section, option, int(cfg[section][option])
-            if option == 'pos':
-                yield check, section, option, int(cfg[section][option])
+            yield check_counts, section, option, int(cfg[section][option])
 
 
-def check(corpus, attr, target):
+def check_counts(corpus, attr, target):
     res = session.execute("select count(*) from %s where corpus = '%s'" % (attr, corpus))
     actual = res.fetchone()[0]
     assert_equal(actual, target, msg='%s %s: expected %s, got %s' % (corpus, attr, target, actual))
@@ -124,4 +112,3 @@ def check_null(query):
     res = session.execute(query)
     actual = res.fetchone()[0]
     assert_equal(actual, 0, msg='Column contains NULL')
-
