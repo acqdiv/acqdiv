@@ -40,7 +40,7 @@ def main(args):
 
         # Do some postprocessing
         # TODO: test if moving this outside of the loop is faster
-        print("Postprocessing: {0}".format(config.split(".")[0]))
+        # print("Postprocessing: {0}".format(config.split(".")[0]))
 
         update_age(cfg, engine)
         unify_timestamps(cfg, engine)
@@ -63,15 +63,15 @@ def main(args):
         unify_labels(cfg, engine)
         get_word_pos(cfg, engine)
 
-        print()
+        # print()
 
-    print("Calculating role entries.\n")
+#    print("Calculating role entries.\n")
     unify_roles(cfg, engine)
 
-    print("Calculating macrorole entries.\n")
+#    print("Calculating macrorole entries.\n")
     macrorole(cfg, engine)
 
-    print("Calculating unique speaker table.\n")
+#    print("Calculating unique speaker table.\n")
     unique_speaker(cfg, engine)
 
     print()
