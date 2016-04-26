@@ -107,7 +107,7 @@ class XMLParser(object):
 
                     wdict['word_actual'] = w.find('actual').text
                     wdict['word_target'] = w.find('target').text
-                    wdict['word'] = wdict[self.cfg['json_mappings']['word']]
+                    wdict['word'] = wdict[self.cfg['xml_mappings']['word']]
                     wdict['warning'] = w.attrib.get('warning')
 
                     if ((udict['warning'] is not None
@@ -151,12 +151,12 @@ class XMLParser(object):
             for raw_word in words:
                 word = {}
                 for k in raw_word:
-                    if k in self.cfg['json_mappings']:
-                        label = self.cfg['json_mappings'][k]
+                    if k in self.cfg['xml_mappings']:
+                        label = self.cfg['xml_mappings'][k]
                         word[label] = raw_word[k]
                     else:
                         pass
-                word['word'] = word[self.cfg['json_mappings']['word']]
+                word['word'] = word[self.cfg['xml_mappings']['word']]
                 new_words.append(word)
         except TypeError:
             pass
@@ -171,8 +171,8 @@ class XMLParser(object):
                     for raw_morpheme in mword:
                         morpheme = {}
                         for k in raw_morpheme:
-                            if k in self.cfg['json_mappings']:
-                                label = self.cfg['json_mappings'][k]
+                            if k in self.cfg['xml_mappings']:
+                                label = self.cfg['xml_mappings'][k]
                                 morpheme[label] = raw_morpheme[k]
                             else:
                                 pass
@@ -189,8 +189,8 @@ class XMLParser(object):
 
         utterance = {}
         for k in raw_u:
-            if k in self.cfg['json_mappings']:
-                label = self.cfg['json_mappings'][k]
+            if k in self.cfg['xml_mappings']:
+                label = self.cfg['xml_mappings'][k]
                 if raw_u[k] in self.cfg['correspondences']:
                     utterance[label] = self.cfg['correspondences'][raw_u[k]]
                 else:
