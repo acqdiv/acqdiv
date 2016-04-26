@@ -178,7 +178,6 @@ class ToolboxFile(object):
         Returns:
             sentence_type: str
         """
-
         if self.config['corpus']['corpus'] == "Russian":
             match_punctuation = re.search('([\.\?!])$', utterance['utterance_raw'])
             if match_punctuation is not None:
@@ -205,16 +204,30 @@ class ToolboxFile(object):
         # \eng: . = default, ? = question, ! = exclamation
         # \nep: । = default, rest identical. Note this is not a "pipe" but the so-called danda at U+0964
         if self.config['corpus']['corpus'] == "Chintang":
-            match_punctuation = re.search('([।\?!])$', utterance['nepali'])
-            if match_punctuation is not None:
-                sentence_type = None
-                if match_punctuation.group(1) == '।':
-                    sentence_type = 'default'
-                if match_punctuation.group(1) == '?':
-                    sentence_type = 'question'
-                if match_punctuation.group(1) == '!':
-                    sentence_type = 'exclamation'
-                return sentence_type
+            if 'nepali' in utterance.keys() and not utterance['nepali'] is None:
+                match_punctuation = re.search('([।\?!])$', utterance['nepali'])
+                if match_punctuation is not None:
+                    sentence_type = None
+                    if match_punctuation.group(1) == '।':
+                        sentence_type = 'default'
+                    if match_punctuation.group(1) == '?':
+                        sentence_type = 'question'
+                    if match_punctuation.group(1) == '!':
+                        sentence_type = 'exclamation'
+                    return sentence_type
+            elif 'eng' in utterance.keys() and not utterance['translation'] is None:
+                match_punctuation = re.search('([।\?!])$', utterance['translation'])
+                if match_punctuation is not None:
+                    sentence_type = None
+                    if match_punctuation.group(1) == '.':
+                        sentence_type = 'default'
+                    if match_punctuation.group(1) == '?':
+                        sentence_type = 'question'
+                    if match_punctuation.group(1) == '!':
+                        sentence_type = 'exclamation'
+                    return sentence_type
+            else:
+                return None
 
 
     def get_warnings(self, utterance):
