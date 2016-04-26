@@ -79,7 +79,7 @@ def main(args):
         get_word_pos(cfg, engine)
         print("%s seconds --- get_word_pos" % (time.time() - start_time))
 
-        print()
+        # print()
 
     unify_roles(cfg, engine)
     print("%s seconds --- unify_roles" % (time.time() - start_time))
