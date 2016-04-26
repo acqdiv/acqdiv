@@ -35,44 +35,60 @@ def main(args):
             cfg['paths']['path'] = "tests/corpora"
 
         # Process by parsing the files and adding extracted data to the db
+        print("%s seconds --- Start processing: {1}".format(time.time() - start_time, config.split(".")[0]))
         c = CorpusProcessor(cfg, engine)
         c.process_corpus()
 
         # Do some postprocessing
         # TODO: test if moving this outside of the loop is faster
-        print("Postprocessing: {0}".format(config.split(".")[0]))
+        print("{0} seconds --- Start postprocessing: {1}".format(time.time() - start_time, config.split(".")[0]))
 
         update_age(cfg, engine)
+        print("%s seconds --- update_age" % (time.time() - start_time))
+
         unify_timestamps(cfg, engine)
+        print("%s seconds --- unify_timestamps" % (time.time() - start_time))
+
         unify_gender(cfg, engine)
+        print("%s seconds --- unify_gender" % (time.time() - start_time))
 
         if config == 'Indonesian.ini':
             unify_indonesian_labels(cfg, engine)
+            print("%s seconds --- Indonesian unify_indonesian_labels" % (time.time() - start_time))
             clean_tlbx_pos_morphemes(cfg, engine)
+            print("%s seconds --- Indonesian clean_tlbx_pos_morphemes" % (time.time() - start_time))
             clean_utterances_table(cfg, engine)
+            print("%s seconds --- Indonesian clean_utterances_table" % (time.time() - start_time))
 
         if config == 'Chintang.ini':
             extract_chintang_addressee(cfg, engine)
+            print("%s seconds --- Chintang extract_chintang_addressee" % (time.time() - start_time))
             clean_tlbx_pos_morphemes(cfg, engine)
+            print("%s seconds --- Chintang clean_tlbx_pos_morphemes" % (time.time() - start_time))
             clean_utterances_table(cfg, engine)
+            print("%s seconds --- Chintang clean_utterances_table" % (time.time() - start_time))
 
         if config == 'Russian.ini':
             clean_utterances_table(cfg, engine)
+            print("%s seconds --- Russian clean_utterances_table" % (time.time() - start_time))
 
         # This seems to need to be applied after the clean_tlbx_pos_morphemes... which should be moved to the parser.
         unify_labels(cfg, engine)
+        print("%s seconds --- unify_labels" % (time.time() - start_time))
+
         get_word_pos(cfg, engine)
+        print("%s seconds --- get_word_pos" % (time.time() - start_time))
 
         print()
 
-    print("Calculating role entries.\n")
     unify_roles(cfg, engine)
+    print("%s seconds --- unify_roles" % (time.time() - start_time))
 
-    print("Calculating macrorole entries.\n")
     macrorole(cfg, engine)
+    print("%s seconds --- macrorole" % (time.time() - start_time))
 
-    print("Calculating unique speaker table.\n")
     unique_speaker(cfg, engine)
+    print("%s seconds --- unique_speaker" % (time.time() - start_time))
 
     print()
 
