@@ -13,6 +13,7 @@ Do not forget to unmount when you are done:
 """
 
 import os
+import re
 import csv
 import logging
 import exiftool
@@ -33,7 +34,7 @@ logger.setLevel(logging.INFO)
 handler = logging.FileHandler("resources.log", mode="w")
 handler.setLevel(logging.INFO)
 
-formatter = logging.Formatter("%(object_number)d|%(object_id)s|%(funcName)s|%(levelname)s|%(message)s")
+formatter = logging.Formatter("%(object_id)s|%(funcName)s|%(levelname)s|%(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
@@ -43,10 +44,10 @@ class Resource:
 
     # the four media file extensions are mapped to their MIME-Type and exiftool's key to access the duration
     media_dict = {
-                "wav": ("Audio", "Composite"),
-                "mp4": ("Video", "QuickTime"),
-                "mts": ("Video", "M2TS"),
-                "mov": ("Video", "QuickTime")
+        "wav": ("Audio", "Composite"),
+        "mp4": ("Video", "QuickTime"),
+        "mts": ("Video", "M2TS"),
+        "mov": ("Video", "QuickTime")
     }
 
     def __init__(self, path, et):
@@ -59,17 +60,25 @@ class Resource:
         # store path to the media file relative to the script's location
         self.path = path
         # store name of the media file
-        self.media_file = os.path.split(self.path)[1]
+        self.file_name = os.path.split(self.path)[1]
         # store (lowercased) extension of media file
-        self.extension = self.media_file[-3:].lower()
+        self.extension = self.file_name[-3:].lower()
         # store parsed media file by exiftool
         self.et = et.get_metadata(self.path)
 
 
     def get_Session_code(self):
-        """Strip of the dot and the file extension of the media file's name and return it."""
-        return self.media_file[:-4]
+        """Strip off extension part and any letters for partial sessions and return it"""
+        match = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+|)?", self.file_name)
 
+        if match:
+            return match.group()
+        else:
+            return ""
+
+    def get_Recording_code(self):
+        """Strip off the dot and the file extension of the media file's name and return it."""
+        return self.file_name[:-4]
 
     def get_Type(self):
         """Return the MIME-Type of the media file."""
@@ -87,8 +96,7 @@ class Resource:
         try:
             duration_in_secs = self.et[Resource.media_dict[self.extension][1] + ":Duration"]
         except KeyError:
-            logger.error("Media file cannot be parsed by exiftool",
-                extra={"object_number": 0, "object_id": self.media_file})
+            logger.error("Duration cannot be extracted by exiftool", extra={"object_id": self.file_name})
             return ""
 
         # convert to hours, minutes and seconds
@@ -105,8 +113,7 @@ class Resource:
         try:
             bytes = self.et["File:FileSize"]
         except KeyError:
-            logger.error("Media file cannot be parsed by exiftool",
-                extra={"object_number": 0, "object_id": self.media_file})
+            logger.error("Byte size cannot be extracted by exiftool", extra={"object_id": self.file_name})
             return ""
         else:
             return bytes
@@ -119,7 +126,7 @@ class Resource:
 
     def get_Location(self):
         """Return absolute path of media file."""
-        return "smb://server.ivs.uzh.ch/Dene/Media/" + self.media_file
+        return "smb://server.ivs.uzh.ch/Dene/Media/" + self.file_name
 
 
     def in_media_dict(self):
@@ -127,104 +134,150 @@ class Resource:
         return self.extension in Resource.media_dict
 
 
-    def in_session_table(self):
-        """Check if the file has an entry in the session table."""
-
-    def in_media_folder(self):
-        """Check if an entry in the sessions table has at least one corresponding file in the media folder"""
-
-
-    def has_three_extension_types(self):
-
-
 if __name__ == "__main__":
 
-    # open resource file
-    resource_file = open("../Metadata/resources.csv", "w+")
-    # open session file
-    session_file = open("../Metdata/sessions.csv", "r")
+    # open resource file for reading and writing data
+    resource_file = open("resources.csv", "r+")
+    # open session file for reading data
+    session_file = open("test/Metadata/sessions.csv", "r")
 
     # Dict reader instance for sessions
     sessions_reader = csv.DictReader(session_file, delimiter=",", quotechar='"')
     # Dict reader instance for resources
     resources_reader = csv.DictReader(resource_file, delimiter=",", quotechar='"')
 
-    # store all session codes as a set
-    session_codes = {row["Session code"] for row in sessions_reader}
-    # store all media files in the resource table
-    files_in_resources_table = {row["Session code"] for row in resources_reader}
+    # store all session codes from the sessions table in a set
+    session_codes = {row["Code"] for row in sessions_reader}
+    # store all recording files from the resource table in a set
+    recs_from_resources_table = {row["File name"] for row in resources_reader}
 
-    # our data structure for the files in the media folder:
-    # {abstract_session_code: {session-A: {file.mov, file.mts, file.wav}, session-B: {file.mov, ....}}}
-    files_in_media_folder = defaultdict(defaultdict(set))
+    # data structure for saving the recording files in the media folder
+    # {session_code: {recording_code_A: {file.mp4, file.mts/mov, file.wav}, recording_code_B: {file.mov, ....}}}
+    rec_hash = defaultdict(lambda: defaultdict(set))
 
     # create DictWriter instance for the new resources
-    resources_writer = csv.DictWriter(resource_file,
-    fieldnames=["Session code", "Type", "Format", "Duration", "Byte size", "Word size", "Location"])
+    resources_writer = csv.DictWriter(resource_file, fieldnames=["Session code", "Recording code", "File name", "Type",
+                                                                "Format", "Duration", "Byte size", "Word size", "Location"])
+    # TODO: überprüfen, ob parial codes fortlaufend sind
+    # TODO: überprüfen, ob session-code-1, session-code2 vorhanden
+    # TODO: file_locations.xls checking -> only where yes for UZH
+    # TODO: monitor -> file_locations and file_locations -> monitor || monitor (Teilmenge von file_locations)
 
-    # create an exiftool instance to extract the metadata of the new resources
-    with exiftool.ExifTool() as et:
 
-        print(media_file) # just to see the progress...
+    ######################################################################################################################################
 
-        # Go through all media files in the media folder
-        for media_file in os.listdir("test/Media"):
+    ############### Checks for resources.csv ##########################
 
-            # if the media file (without file extension) is not listed in the resources table
-            if not media_file[:-4] in files_in_resources_table:
+    # path to the media files
+    resources = os.listdir("test/Media")
 
-                # create an instance of the Resource class
-                resource = Resource(path + "/" + media_file, et)
+    # used to see progress of script
+    number_of_resources = str(len(resources))
+    counter = 0
 
-                # if the file is a hidden file, ignore it
-                if media_file.startswith("."):
-                    logger.warning("File '" + media_file + "' is a hidden file",
-                    extra={"object_number": 0, "object_id": media_file})
-                    break
+    # Go through all recording files in the media folder
+    for rec in resources:
+
+        counter += 1
+
+        print(rec + "\t\t\t" + str(counter) + "/" + number_of_resources) # just to see the progress
+
+        # get recording code for that recording file by stripping off file extension
+        rec_code = rec[:-4]
+
+        # regex for checking and extracting parts of the recording code
+        rec_code_regex = re.compile(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-([A-Z]+|\d+|\d+[A-Z]+))?")
+
+        # check the format of the recording code
+        if rec_code_regex.fullmatch(rec_code):
+
+            # infer the session code for that recording file
+            session_code = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+|)?", rec_code).group()
+
+            # store recording file under the right session and recording code
+            rec_hash[session_code][rec_code].add(rec)
+
+            # if the recording file is not listed in the resources table
+            if rec not in recs_from_resources_table:
+
+                # create an exiftool instance to extract the metadata of that recording file
+                with exiftool.ExifTool() as et:
+
+                    # create an instance of the Resource class
+                    resource = Resource("test/Media/" + rec, et)
 
                     # and then exclude any files that do not have the proper extension
-                elif resource.in_media_dict():
+                    if resource.in_media_dict():
 
-                    # write data of the resource to the file 'resources.csv'
-                    resources_writer.writerow({"Session code": resource.get_Session_code(),
-                    "Type": resource.get_Type(),
-                    "Format": resource.get_Format(),
-                    "Duration": resource.get_Duration(),
-                    "Byte size": resource.get_Byte_size(),
-                    "Word size": resource.get_Word_size(),
-                    "Location": resource.get_Location()
-                    })
+                        # write metadata to the file 'resources.csv'
+                        resources_writer.writerow({
+                            "Session code": session_code,
+                            "Recording code": rec_code,
+                            "File name": rec,
+                            "Type": resource.get_Type(),
+                            "Format": resource.get_Format(),
+                            "Duration": resource.get_Duration(),
+                            "Byte size": resource.get_Byte_size(),
+                            "Word size": resource.get_Word_size(),
+                            "Location": resource.get_Location()
+                        })
 
-                else:
-                    logger.warning("File '" + media_file + "' has unknown file extension",
-                    extra={"object_number": 0, "object_id": media_file})
-                    break
-
-            # regex for checking and extracting (abstract) session name
-            session_code_regex = re.compile(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-([A-Z]+|\d+|\d+[A-Z]+))?")
-
-            # check if the session code is in the right format
-            if session_code_regex.fullmatch(media_file):
-
-                # get the abstract session code name for the media file
-                abstract_session_code = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+|)?").group()
-
-                #TODO: implement right data structure
-                files_in_media_folder[abstract_session_code].append(media_file)
-
-                # check if the abstract session code is in the sessions table
-                if abstract_session_code not in session_codes:
-                    logger.error("Media file is not listed in the sessions table",
-                        extra={"object_number": 0, "object_id": media_file})
-
-            else:
-                logger.error("Error in Session code", extra={"object_number": 0, "object_id": media_file})
+                    else:
+                        logger.warning("File '" + rec + "' has unknown file extension", extra={"object_id": rec})
 
 
+        # if the file is a hidden file, ignore it and produce warning
+        elif rec.startswith("."):
+            if rec != ".DS_Store":
+                logger.warning("File '" + rec + "' is a hidden file", extra={"object_id": rec})
 
-            resource_file.close()
-            session_file.close()
+        else:
+            logger.error("Format of recording code wrong", extra={"object_id": rec})
 
-            for session_code in session_codes:
 
-                if session_code in
+    # Go through all session codes that were inferred from the recording names in the media folder
+    for session_code in rec_hash:
+
+        # check if the session code is listed in the sessions table
+        if session_code not in session_codes:
+            logger.error("Session code is not listed in the sessions table", extra={"object_id": session_code})
+
+        # Go through all recording codes mapped to that session code
+        for rec_code in rec_hash[session_code]:
+
+            # store set containing all recs mapped to that recording code
+            rec_set = rec_hash[session_code][rec_code]
+
+            # Check if audio file exists for that recording code
+            if rec_code + ".wav" not in rec_set:
+                logger.error("Audio file with wav-extension missing for: " + rec_code, extra={"object_id": rec_code})
+
+            # Check if video file with mp4-extension exists for that recording code
+            if rec_code + ".mp4" not in rec_set:
+                logger.error("Video file with mp4-extension missing for: " + rec_code, extra={"object_id": rec_code})
+
+            # Check if video file with mov/mts-extension exists for that recording code
+            if rec_code + ".mts" not in rec_set and rec_code + ".mov" not in rec_set:
+                logger.error("Video file with mov/mts-extension missing for: " + rec_code, extra={"object_id": rec_code})
+
+
+    # Go through all session codes from the sessions table
+    for session_code in session_codes:
+
+        # Check if that session code has at least one recording file in the media folder
+        if session_code not in rec_hash:
+            logger.warning("No recording file in Media folder for session code: " + session_code, extra={"object_id": session_code})
+
+
+
+    ######################################################################################################################################
+
+
+
+
+
+
+
+    resource_file.close()
+    session_file.close()
+    handler.close()
