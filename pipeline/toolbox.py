@@ -113,9 +113,13 @@ class ToolboxFile(object):
         if self.config['corpus']['corpus'] == 'Russian':
             utterance['utterance_raw'] = None if utterance['utterance_raw'] is None else re.sub('xxx?|www', '???', utterance['utterance_raw'])
             utterance['pos_raw'] = None if utterance['pos_raw'] is None else re.sub('xxx?|www', '???', utterance['pos_raw'])
-
         # Create clean utterance
         utterance['utterance'] = None if utterance['utterance_raw'] is None else self.clean_utterance(utterance['utterance_raw'])
+
+        # Talk to Robert
+        # utterance['morpheme'] = None if not 'morpheme' in utterance else self.clean_morpheme(utterance['morpeheme'])
+        # utterance['pos_raw'] = None if not 'morpheme' in utterance else self.clean_morpheme(utterance['pos_raw'])
+        # utterance['gloss_raw'] = None if not 'morpheme' in utterance else self.clean_morpheme(utterance['gloss_raw'])
 
         # Append utterance warnings if data fields are missing in the input
         if not utterance['utterance_raw'] is None:
@@ -303,9 +307,35 @@ class ToolboxFile(object):
                 return utterance
     
             if self.config['corpus']['corpus'] == "Chintang":
-                # No specific stuff here.
+                utterance = re.sub('\*\*\*', '???', utterance)
                 return utterance
 
+    """ TODO: talk to Robert
+    # Clean up Chintang
+    if self.config['corpus']['corpus'] == 'Chintang':
+        utterance['morpheme'] = None if utterance['morpheme'] is None else re.sub('\*\*\*', '???', utterance['morpheme'])
+        utterance['gloss_raw'] = None if utterance['gloss_raw'] is None else re.sub('\*\*\*', '???', utterance['gloss_raw'])
+        utterance['pos_raw'] = None if utterance['pos_raw'] is None else re.sub('\*\*\*', '???', utterance['pos_raw'])
+        # We infer sentence type from Chintang \nep but we do not add the nepali field to the database yet
+        if 'nepali' in utterance:
+            del utterance['nepali']
+
+    # Clean up Russian
+    if self.config['corpus']['corpus'] == 'Russian':
+        utterance['utterance_raw'] = None if utterance['utterance_raw'] is None else re.sub('xxx?|www', '???', utterance['utterance_raw'])
+        utterance['pos_raw'] = None if utterance['pos_raw'] is None else re.sub('xxx?|www', '???', utterance['pos_raw'])
+        utterance['morpheme'] = None if utterance['morpheme'] is None else re.sub('xxx?|www', '???', utterance['morpheme'])
+
+    # Clean up Indonesian
+    if self.config['corpus']['corpus'] == 'Russian':
+        utterance['morpheme'] = None if utterance['morpheme'] is None else re.sub('xxx?|www', '???', utterance['morpheme'])
+        utterance['gloss_raw'] = None if utterance['gloss_raw'] is None else re.sub('xxx?|www', '???', utterance['gloss_raw'])
+        utterance['utterance_raw'] = None if utterance['utterance_raw'] is None else re.sub('xxx?|www', '???', utterance['utterance_raw'])
+        utterance['translation'] = None if utterance['translation'] is None else re.sub('xxx?|www', '???', utterance['translation'])
+
+    # Create clean utterance
+    utterance['utterance'] = None if utterance['utterance_raw'] is None else self.clean_utterance(utterance['utterance_raw'])
+    """
 
     def get_morphemes(self, utterance):
         """ Return ordered list of lists of morphemes where each morpheme is a dict of key-value pairs

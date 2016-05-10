@@ -446,4 +446,4 @@ if __name__ == "__main__":
     print('Next, run tests:')
     print('python3 -m "nose" -s -w tests test_counts.py')
     print('python3 -m "nose" -s -w tests test_regression.py')
-    print()
+    print('python3 -m "nose" -s -w tests test_integrity.py')
