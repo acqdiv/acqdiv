@@ -148,6 +148,7 @@ def format_imdi_age(birthdate, sessiondate):
     age_days = str(diff_days.days)
     return([age_cform if age_cform != "0;0.0" else None, age_days if age_days != "0" else None])
 
+
 def clean_incomplete_ages(age):
     """Cleanly formats an age given in terms of only years and months.
 
@@ -166,10 +167,11 @@ def clean_incomplete_ages(age):
         new_age = age + ".0"
         return (new_age, days)
     else:
-        years = age.split('/')[-1]
+        years = age.split('/')[0]
         clean_years = years + ";0.0"
         days = int(years) * 365
         return (clean_years, days)
+
 
 def format_xml_age(age_str):
     """Reformats ages in XML corpora.

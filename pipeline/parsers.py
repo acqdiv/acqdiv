@@ -162,6 +162,8 @@ class ToolboxParser(SessionParser):
              Ordered dictionary of config file record_tiers
         """
         for record in self.session_file:
+            if record is None:
+                raise StopIteration
             yield record
 
 

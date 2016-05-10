@@ -1,19 +1,18 @@
 import configparser
-import pdb
-
-from nose.tools import assert_equal, assert_in
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
+from nose.tools import assert_equal, assert_in
+
 
 session = None
 
-
 def setup():
     global cfg, session
-    engine = sa.create_engine('sqlite:///../../database/acqdiv.sqlite3')
+    engine = sa.create_engine('sqlite:///../../database/beta.sqlite3')
     meta = sa.MetaData(engine, reflect=True)
     Session = sessionmaker(bind=engine)
     session = Session()
+
 
 def test_counts():
     cfg = configparser.ConfigParser()
