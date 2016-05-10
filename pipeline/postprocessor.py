@@ -16,6 +16,7 @@ session = None
 cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 age_pattern = re.compile(".*;.*\..*")
 
+
 def setup():
     global cfg, session
     engine = sa.create_engine('sqlite:///tests/test.sqlite3')
