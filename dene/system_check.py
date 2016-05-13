@@ -135,167 +135,185 @@ class Resource:
         return self.extension in Resource.media_dict
 
 
-if __name__ == "__main__":
 
-    # open resource file for reading and writing data
-    resource_file = open("resources.csv", "r+")
-    # open session file for reading data
-    session_file = open("sessions.csv", "r")
-    # open file locations file for reading data
-    file_locations_file = open("file_locations.csv", "r")
-    # open monitor file for reading data
-    monitor_file = open("monitor.csv", "r")
+class System_check:
+    """Checks whole system on server."""
 
+    def __init__(self, path, r_file, s_file, l_file, m_file):
+        """Initializes various sets of session and recording codes as well as resource names.
 
-    # Dict reader instance for sessions
-    sessions_reader = csv.DictReader(session_file, delimiter=",", quotechar='"')
-    # Dict reader instance for resources
-    resources_reader = csv.DictReader(resource_file, delimiter=",", quotechar='"')
-    # Dict reader instance for file locations
-    file_locations_reader = csv.DictReader(file_locations_file, delimiter=",", quotechar='"')
-    # Dict reader instance for monitor file_locations_file
-    monitor_reader = csv.DictReader(monitor_file, delimiter=",", quotechar='"')
+        Positional args:
+            path: path to the folder where the resources are (e.g. Dene/Media)
+            r_file: file instance of resources.csv
+            s_file: file instance of sessions.csv
+            l_file: file instance of file_locations.csv
+            m_file: file instance of montior.csv
+        """
 
 
-    # store all session codes from the sessions table in a set
-    session_codes = {row["Code"] for row in sessions_reader}
-    # store all recording files from the resource table in a set
-    recs_from_resources_table = {row["File name"] for row in resources_reader}
-    # store all recording files from the file_location file
-    recs_from_file_locations = {row["File name"] for row in file_locations_reader if "yes" in row["UZH"]}
-    # store all recording codes from the file_location file
-    rec_codes_from_file_locations = {rec[:-4] for rec in recs_from_file_locations}
-    # store all recording codes in the monitor file
-    rec_codes_from_monitor_table = {row["recording"] for row in monitor_reader if row["recording"]}
-
-    # closing files that are not needed anymore
-    session_file.close()
-    file_locations_file.close()
-    monitor_file.close()
-
-    # data structure representing system file tree in Dene/Media
-    # {session_code: {recording_code_A: {file.mp4, file.mts/mov, file.wav}, recording_code_B: {file.mov, ....}}}
-    rec_hash = defaultdict(lambda: defaultdict(set))
-
-    # create DictWriter instance for the new resources
-    resources_writer = csv.DictWriter(resource_file, fieldnames=["Session code", "Recording code", "File name", "Type",
-                                                                "Format", "Duration", "Byte size", "Word size", "Location"])
-
-    # path to the recording file
-    resources = os.listdir("test")
-
-    # used to see progress of script
-    number_of_resources = str(len(resources))
-    counter = 0
-
-    # Go through all recording files in the media folder
-    for rec in resources:
-
-        counter += 1
-
-        print(rec + "\t\t\t" + str(counter) + "/" + number_of_resources) # just to see the progress
-
-        # get recording code for that recording file by stripping off file extension
-        rec_code = rec[:-4]
-
-        # regex for checking and extracting parts of the recording code
-        rec_code_regex = re.compile(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-([A-Z]+|\d+|\d+[A-Z]+))?")
-
-        # check the format of the recording code
-        if rec_code_regex.fullmatch(rec_code):
-
-            # infer the session code for that recording file
-            session_code = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+|)?", rec_code).group()
-
-            # store recording file under the right session and recording code
-            rec_hash[session_code][rec_code].add(rec)
-
-            # if system -> resources.csv
-            if rec not in recs_from_resources_table:
-
-                # create an exiftool instance to extract the metadata of that recording file
-                with exiftool.ExifTool() as et:
-
-                    # create an instance of the Resource class
-                    resource = Resource("test/Media/" + rec, et)
-
-                    # and then exclude any files that do not have the proper extension
-                    if resource.in_media_dict():
-
-                        # write metadata to the file 'resources.csv'
-                        resources_writer.writerow({
-                            "Session code": session_code,
-                            "Recording code": rec_code,
-                            "File name": rec,
-                            "Type": resource.get_Type(),
-                            "Format": resource.get_Format(),
-                            "Duration": resource.get_Duration(),
-                            "Byte size": resource.get_Byte_size(),
-                            "Word size": resource.get_Word_size(),
-                            "Location": resource.get_Location()
-                        })
-
-                        recs_from_resources_table.add(rec)
-
-                    else:
-                        logger.warning("File '" + rec + "' has unknown file extension", extra={"object_id": rec})
+        self.resources_file = r_file
+        self.resources_path = path
+        # store all session codes from the sessions table in a set
+        self.session_codes = {row["Code"] for row in csv.DictReader(s_file)}
+        # store all recording files from the file_location file
+        self.recs_from_file_locations = {row["File name"] for row in csv.DictReader(l) if "yes" in row["UZH"]}
+        # store all recording codes from the file_location file
+        self.rec_codes_from_file_locations = {rec[:-4] for rec in recs_from_file_locations}
+        # store all recording codes in the monitor file
+        self.rec_codes_from_monitor_table = {row["recording"] for row in csv.DictReader(m_file) if row["recording"]}
+        # store all recording files from the resource table in a set
+        self.recs_from_resources_table = {row["File name"] for row in csv.DictReader(self.resources_file)}
+        # data structure representing system file tree in Dene/Media
+        # {session_code: {recording_code_A: {file.mp4, file.mts/mov, file.wav}, recording_code_B: {file.mov, ....}}}
+        rec_hash = defaultdict(lambda: defaultdict(set))
 
 
-        # if the file is a hidden file, ignore it and produce warning
-        elif rec.startswith("."):
-            if rec != ".DS_Store":
-                logger.warning("File '" + rec + "' is a hidden file", extra={"object_id": rec})
+    def autocomplete(self):
+        """Autocompletes resources.csv and sets system tree structure."""
 
-        else:
-            logger.error("Format of recording code wrong", extra={"object_id": rec})
+        # create DictWriter instance for the new resources
+        resources_writer = csv.DictWriter(resources_file, fieldnames=["Session code", "Recording code", "File name", "Type",
+            "Format", "Duration", "Byte size", "Word size", "Location"])
 
-    # hash storing all session codes that have numbers
-    same_day_codes = defaultdict(list)
 
-    # Go through all session codes that were inferred from the recording names in the media folder
-    for session_code in rec_hash:
+        # path to the recording files
+        resources = os.listdir(self.resources_path)
 
-        # Check system -> sessions.csv
-        if session_code not in session_codes:
-            logger.error(session_code + " from media folder not in sessions.csv", extra={"object_id": session_code})
+        # keep track of progress
+        number_of_resources = str(len(resources))
+        counter = 0
 
-        # Check if it has same-day-session-number and save number with this session_code
-        match = re.search(r"(.*\d\d\d\d\-\d\d\-\d\d)\-(\d+)$", session_code)
-        if match:
-            same_day_codes[match.group(1)].append(int(match.group(2)))
+        # Go through all recording files in the media folder
+        for rec in resources:
 
-        # create list of (ideally) consecutive letters
-        letter_seq_list = []
+            # count and print progress
+            counter += 1
+            print(rec + "\t\t\t" + str(counter) + "/" + number_of_resources)
 
-        # Go through all recording codes mapped to that session code
-        for rec_code in rec_hash[session_code]:
+            # get recording code for that recording file by stripping off file extension
+            rec_code = rec[:-4]
 
-            # extract partial code letter
-            match = re.search(r"[A-Z]+$", rec_code)
+            # regex for checking and extracting parts of the recording code
+            rec_code_regex = re.compile(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-([A-Z]+|\d+|\d+[A-Z]+))?")
+
+            # check the format of the recording code
+            if rec_code_regex.fullmatch(rec_code):
+
+                # infer the session code for that recording file
+                session_code = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+|)?", rec_code).group()
+
+                # store recording file under the right session and recording code
+                rec_hash[session_code][rec_code].add(rec)
+
+                # if system -> resources.csv
+                if rec not in recs_from_resources_table:
+
+                    # create an exiftool instance to extract the metadata of that recording file
+                    with exiftool.ExifTool() as et:
+
+                        # create an instance of the Resource class
+                        resource = Resource(path_to_resources + "/" + rec, et)
+
+                        # and then exclude any files that do not have the proper extension
+                        if resource.in_media_dict():
+
+                            # write metadata to the file 'resources.csv'
+                            resources_writer.writerow({
+                                "Session code": session_code,
+                                "Recording code": rec_code,
+                                "File name": rec,
+                                "Type": resource.get_Type(),
+                                "Format": resource.get_Format(),
+                                "Duration": resource.get_Duration(),
+                                "Byte size": resource.get_Byte_size(),
+                                "Word size": resource.get_Word_size(),
+                                "Location": resource.get_Location()
+                            })
+
+                        else:
+                            logger.warning("File '" + rec + "' has unknown file extension", extra={"object_id": rec})
+
+
+                            # if the file is a hidden file, ignore it and produce warning
+                        elif rec.startswith("."):
+                            if rec != ".DS_Store":
+                                logger.warning("File '" + rec + "' is a hidden file", extra={"object_id": rec})
+
+                            else:
+                                logger.error("Format of recording code wrong", extra={"object_id": rec})
+
+
+        return rec_hash
+
+
+    def consistency_check(rec_hash):
+        """Checks consistency of recording files in the Media folder.
+
+        positional args:
+            rec_hash: {session_code: {recording_code_A: {file.mp4, file.mts/mov, file.wav}, recording_code_B: {file.mov, ....}, ...}, ...}
+
+        The following checks are made:
+            - consecutive letters in recording codes
+            - consecutive numbers in session codes
+            - every recording code occurs with a wav, mp4 and mts/mov extension
+        """
+
+        # hash storing all session codes that have numbers
+        same_day_codes = defaultdict(list)
+
+        # Go through all session codes that were inferred from the recording names in the media folder
+        for session_code in rec_hash:
+
+            # Check if it has same-day-session-number and save number with this session_code
+            match = re.search(r"(.*\d\d\d\d\-\d\d\-\d\d)\-(\d+)$", session_code)
             if match:
-                letter_seq_list += list(match.group())
+                same_day_codes[match.group(1)].append(int(match.group(2)))
 
-            # store set containing all recs mapped to that recording code
-            rec_set = rec_hash[session_code][rec_code]
+            # create list of (ideally) consecutive letters
+            letter_seq_list = []
 
-            wav = rec_code + ".wav"
-            mp4 = rec_code + ".mp4"
-            mts = rec_code + ".mts"
-            mov = rec_code + ".mov"
+            # Go through all recording codes mapped to that session code
+            for rec_code in rec_hash[session_code]:
 
-            # Check if audio file exists for that recording code
-            if wav not in rec_set:
-                logger.error("wav-file missing for: " + rec_code, extra={"object_id": rec_code})
+                # extract partial code letter
+                match = re.search(r"[A-Z]+$", rec_code)
+                if match:
+                    letter_seq_list += list(match.group())
 
-            # Check if video file with mp4-extension exists for that recording code
-            if mp4 not in rec_set:
-                logger.error("mp4-file missing for: " + rec_code, extra={"object_id": rec_code})
+                three_files_check(rec_hash[session_code][rec_code])
 
-            # Check if video file with mov/mts-extension exists for that recording code
-            if mts not in rec_set and mov not in rec_set:
-                logger.error("mov/mts-file missing for: " + rec_code, extra={"object_id": rec_code})
+            consecutive_letter_check(letter_seq_list)
+
+        consecutive_number_check(same_day_codes)
 
 
+
+    def three_files_check(rec_set):
+        """Checks if every recording code occurs with a wav, mp4 and mts/mov extension.
+
+        positional args:
+        """
+
+        wav = rec_code + ".wav"
+        mp4 = rec_code + ".mp4"
+        mts = rec_code + ".mts"
+        mov = rec_code + ".mov"
+
+        # Check if audio file exists for that recording code
+        if wav not in rec_set:
+            logger.error("wav-file missing for: " + rec_code, extra={"object_id": rec_code})
+
+        # Check if video file with mp4-extension exists for that recording code
+        if mp4 not in rec_set:
+            logger.error("mp4-file missing for: " + rec_code, extra={"object_id": rec_code})
+
+        # Check if video file with mov/mts-extension exists for that recording code
+        if mts not in rec_set and mov not in rec_set:
+            logger.error("mov/mts-file missing for: " + rec_code, extra={"object_id": rec_code})
+
+
+
+    def consecutive_letter_check(letter_seq_list):
 
         # if there are several recording codes for a session
         if letter_seq_list:
@@ -307,8 +325,10 @@ if __name__ == "__main__":
             counter = 0
             for letter in letter_seq_list:
 
+                # get desired letter
                 should_be_letter = string.ascii_uppercase[counter]
 
+                # check if desired letter corresponds to the letter in the recording code
                 if letter != should_be_letter:
                     logger.error("Recording codes of " + session_code + " are not consecutive - recording code " + session_code + should_be_letter + " missing", extra={"object_id": session_code})
                     counter += 2
@@ -316,53 +336,78 @@ if __name__ == "__main__":
                     counter += 1
 
 
-    for code in same_day_codes:
+    def consecutive_number_check(same_day_codes):
+        """Check if same-day-session codes are consecutive.
 
-        numbers = sorted(same_day_codes[code])
+        positional args:
+            same_day_codes: hash mapping session code to all its numbers
+        """
+        # go through all session codes that have several same-day-codes
+        for code in same_day_codes:
 
-        counter = 1
-        for number in numbers:
+            # first sort all numbers
+            numbers = sorted(same_day_codes[code])
 
-            if number != counter:
-                logger.error("Same-day-sessions of " + code + "are not consecutive - session code " + code + str(counter) + " missing",
+            counter = 1
+            for number in numbers:
+
+                if number != counter:
+                    logger.error("Same-day-sessions of " + code + "are not consecutive - session code " + code + str(counter) + " missing",
                     extra={"object_id": code})
-                counter += 2
-            else:
-                counter += 1
+                    counter += 2
+                else:
+                    counter += 1
 
 
-    # Go through all session codes from the sessions table
-    for session_code in session_codes:
+    def compare_sessions_system():
 
-        # Check session.csv -> system
-        if session_code not in rec_hash:
-            logger.warning(session_code + " from sessions.csv not in media folder", extra={"object_id": session_code})
+        for session_code in rec_hash:
+            # Check system -> sessions.csv
+            if session_code not in session_codes:
+                logger.error(session_code + " from media folder not in sessions.csv", extra={"object_id": session_code})
 
+        # Go through all session codes from the sessions table
+        for session_code in session_codes:
 
-    # Check system -> file_locations.csv
-    for rec in recs_from_resources_table - recs_from_file_locations:
-        logger.error(rec + " from media folder not in file_locations.csv", extra={"object_id": rec})
-
-    # Check file_locations.csv -> system
-    for rec in recs_from_file_locations - recs_from_resources_table:
-        logger.error(rec + " from file_locations.csv not in media folder", extra={"object_id": rec})
-
-    # Check file_locations.csv -> monitor.csv
-    for rec in rec_codes_from_file_locations - rec_codes_from_monitor_table:
-        logger.error(rec + " from file_locations.csv not in file_locations.csv", extra={"object_id": rec})
-
-    # Check monitor.csv -> file_locations.csv
-    for rec in rec_codes_from_monitor_table - rec_codes_from_file_locations:
-        logger.error(rec + " from monitor.csv not in file_locations.csv", extra={"object_id": rec})
+            # Check session.csv -> system
+            if session_code not in rec_hash:
+                logger.warning(session_code + " from sessions.csv not in media folder", extra={"object_id": session_code})
 
 
+    def compare_file_locations_system():
 
-    resource_file.close()
+        # Check system -> file_locations.csv
+        for rec in recs_from_resources_table - recs_from_file_locations:
+            logger.error(rec + " from media folder not in file_locations.csv", extra={"object_id": rec})
+
+        # Check file_locations.csv -> system
+        for rec in recs_from_file_locations - recs_from_resources_table:
+            logger.error(rec + " from file_locations.csv not in media folder", extra={"object_id": rec})
+
+
+    def compare_file_locations_monitor():
+        # Check file_locations.csv -> monitor.csv
+        for rec in rec_codes_from_file_locations - rec_codes_from_monitor_table:
+            logger.error(rec + " from file_locations.csv not in file_locations.csv", extra={"object_id": rec})
+
+        # Check monitor.csv -> file_locations.csv
+        for rec in rec_codes_from_monitor_table - rec_codes_from_file_locations:
+            logger.error(rec + " from monitor.csv not in file_locations.csv", extra={"object_id": rec})
+
+
+
+if __name__ == "__main__":
+
+    # adapt if needed
+    path = "test/Media"
+
+    with open("resources.csv", "r+") as r:
+        with open("sessions.csv", "r") as s:
+            with open("file_locations.csv", "r") as l:
+                with open("monitor.csv", "r") as m:
+
+                    System_check(path, r, s, l, m)
+
+
+
     handler.close()
-
-
-    # ugly debugging
-    print("\n###############################session.csv#######################################\n", session_codes)
-    print("\n###############################file_locations.csv################################\n", recs_from_file_locations)
-    print("\n###############################monitor.csv#######################################\n", rec_codes_from_monitor_table)
-    print("\n###############################resources.csv#####################################\n", recs_from_resources_table)
