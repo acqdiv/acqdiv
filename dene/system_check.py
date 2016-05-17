@@ -1,24 +1,27 @@
-"""Extracts the metadata for resources and checks the recording files on the server.
+"""Extracts the metadata for resources and checks the resources on the server.
 
-This modules includes two classes, one extracting metadata from resources and one checking the whole file system on the server.
-If you run this module, make sure exiftool (http://www.sno.phy.queensu.ca/~phil/exiftool/) and
+This modules includes two classes, one extracting metadata from resources and one checking the whole recording file system on
+the server. If you run this module, make sure exiftool (http://www.sno.phy.queensu.ca/~phil/exiftool/) and
 the python wrapper for it (https://smarnach.github.io/pyexiftool/) is installed.
 
 If the script is run without any path specifications (via command line), the script will look for 'sessions.csv' and
 'resources.csv' in the folder 'Metadata', for 'locations.csv' and 'monitor.csv' in the folder 'Workflow' and for the
 resources itself in 'Media', all folders lying one level higher than the script itself. In this case the script will check
-everything. You can also specify the paths to all those aforementioned files (python3 system_check --help). What checks are done effectively depends on which file paths were specified over the command line.
+everything. You can also specify the paths to all those aforementioned files (see python3 system_check --help).
+In this case, what checks are done effectively depends on which file paths were specified over the command line.
 """
 
 import os
 import re
 import csv
 import sys
+import string
 import argparse
 import logging
 import exiftool
 from collections import defaultdict
 
+# logging settings
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -35,6 +38,7 @@ logger.addHandler(handler)
 class Resource:
     """Class for extracting, checking and correcting the metadata of a resource."""
 
+
     # the four media file extensions are mapped to their MIME-Type and exiftool's key to access the duration
     media_dict = {
         "wav": ("Audio", "Composite"),
@@ -43,7 +47,8 @@ class Resource:
         "mov": ("Video", "QuickTime")
     }
 
-    def __init__(self, path, et):
+
+    def __init__(self, path, exifTool):
         """Initialize and store path, name, extension and exiftool's instance of the media file.
 
         Positional args:
@@ -57,21 +62,23 @@ class Resource:
         # store (lowercased) extension of media file
         self.extension = self.file_name[-3:].lower()
         # store parsed media file by exiftool
-        self.et = et.get_metadata(self.path)
+        self.exifTool = exifTool.get_metadata(self.path)
 
 
     def get_Session_code(self):
         """Strip off extension part and any letters for partial sessions and return it"""
-        match = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+|)?", self.file_name)
+        match = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+)?", self.file_name)
 
         if match:
             return match.group()
         else:
             return ""
 
+
     def get_Recording_code(self):
         """Strip off the dot and the file extension of the media file's name and return it."""
         return self.file_name[:-4]
+
 
     def get_Type(self):
         """Return the MIME-Type of the media file."""
@@ -87,7 +94,7 @@ class Resource:
         """Extract the duration (recording length) of a media file and return it in the format HH:MM:SS."""
         # try to extract the media file's duration in secs
         try:
-            duration_in_secs = self.et[Resource.media_dict[self.extension][1] + ":Duration"]
+            duration_in_secs = self.exifTool[Resource.media_dict[self.extension][1] + ":Duration"]
         except KeyError:
             logger.error("Duration cannot be extracted for " + self.file_name)
             return ""
@@ -104,7 +111,7 @@ class Resource:
         """Extract size of media file in bytes and return it."""
         # try to extract the media file's size in bytes
         try:
-            bytes = self.et["File:FileSize"]
+            bytes = self.exifTool["File:FileSize"]
         except KeyError:
             logger.error("Byte size cannot be extracted for " + self.file_name)
             return ""
@@ -135,14 +142,13 @@ class System_check:
 
     def __init__(self):
         """Initializes various sets for the recording files."""
-        # data structure for system: {session_code: {rec_code_A: {file.mp4, file.mts/mov, file.wav}, rec_code_B: {file.mov, ....}, ...}, ...}
+        # data structure for system: {session_code: {rec_code_A: {file.mp4, file.mts/mov, file.wav},...},...}
         self.media_structure = defaultdict(lambda: defaultdict(set))
         self.recs_from_media_folder = set()
         self.session_codes_from_sessions = set()
         self.recs_from_locations = set()
         self.rec_codes_from_locations = set()
         self.rec_codes_from_monitor = set()
-
 
 
     def set_media(self, media_path):
@@ -234,7 +240,6 @@ class System_check:
             resources_path: path to resources.csv
             media_path: path to media folder
         """
-
         with open(resources_path, "r+") as resources_file, exiftool.ExifTool() as exifTool:
             # store recording names from resources.csv
             recs_from_resources = {row["File name"] for row in csv.DictReader(resources_file)}
@@ -282,7 +287,6 @@ class System_check:
                     logger.warning("File '" + rec + "' has unknown file extension")
 
 
-
     def media_check(self):
         """Checks consistency of recording files in the Media folder.
 
@@ -291,18 +295,18 @@ class System_check:
             - consecutive numbers in session codes
             - every recording code occurs with a wav, mp4 and mts/mov extension
         """
-
-        # hash storing session codes mapped to a list with (ideally) consecutive numbers
+        # hash storing same-day session codes (without numbers) mapped to a list with (ideally) consecutive numbers
         same_day_session_codes = defaultdict(list)
 
         # Go through all session codes
         for session_code in self.media_structure:
 
-            # Check if it has same-day-session-number and save number with this session_code
+            # Check if session code has a number
             match = re.search(r"(.*\d\d\d\d\-\d\d\-\d\d)\-(\d+)$", session_code)
             if match:
                 part_without_number = match.group(1)
                 number = int(match.group(2))
+                # save number with this session_code
                 same_day_session_codes[part_without_number].append(number)
 
             # create list of (ideally) consecutive letters
@@ -321,7 +325,6 @@ class System_check:
             self.consecutive_letter_check(session_code, letter_seq_list)
 
         self.consecutive_number_check(same_day_session_codes)
-
 
 
     def three_files_check(self, rec_code, rec_set):
@@ -354,27 +357,31 @@ class System_check:
 
         Positional args:
             session_code: session code under which the recording codes are subsumed
-            letter_seq_list: list containing letters
+            letter_seq_list: list containing letters of all recording codes under this session code
         """
         if letter_seq_list:
 
             # first sort letters
             letter_seq_list = sorted(letter_seq_list)
 
-            # Check if letters are consecutive in this list
-            counter = 0
-            for letter in letter_seq_list:
+            # get 'largest' letter, i.e. letter closest to the end of the alphabet
+            largest_letter = letter_seq_list[-1]
 
-                # get desired letter
-                should_be_letter = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[counter]
+            # get position of that letter in the alphabet
+            largest_letter_pos = string.ascii_uppercase.index(largest_letter)
 
-                # check if desired letter corresponds to the letter in the list
-                if letter != should_be_letter:
-                    logger.warning("Recording code " + session_code + "-" + should_be_letter + " missing")
+            # extract the letters that should occur in the recording codes
+            letters_that_should_occur = string.ascii_uppercase[:largest_letter_pos + 1]
 
-                    counter += 2
-                else:
-                    counter += 1
+            # check if recording code with 'A' exists, but not with 'B'
+            if len(letter_seq_list) == 1 and "A" in letter_seq_list:
+                logger.warning("Recording code " + session_code + "(-)B missing")
+
+            # otherwise check if all required letters occur
+            else:
+                for letter in letters_that_should_occur:
+                    if letter not in letter_seq_list:
+                        logger.warning("Recording code " + session_code + "-" + letter + " missing")
 
 
     def consecutive_number_check(self, same_day_codes):
@@ -383,21 +390,24 @@ class System_check:
         positional args:
             same_day_codes: hash mapping session code to a list of numbers
         """
-        # go through all session codes
-        for session_code in same_day_codes:
+        # go through all session codes without numbers
+        for session_code_without_number in same_day_codes:
 
             # first sort all numbers
-            numbers = sorted(same_day_codes[session_code])
+            numbers = sorted(same_day_codes[session_code_without_number])
 
-            counter = 1
-            for number in numbers:
+            # extract the largest number
+            largest_number = numbers[-1]
 
-                if number != counter:
-                    logger.warning("Session code " + code + "-" + str(counter) + " missing")
+            # check if session code with '1' exists, but not with '2'
+            if len(numbers) == 1 and 1 in numbers:
+                logger.warning("Session code " + session_code_without_number + "-2 missing")
 
-                    counter += 2
-                else:
-                    counter += 1
+            # otherwise check if all required numbers occur
+            else:
+                for number in range(1, largest_number + 1):
+                    if number not in numbers:
+                        logger.warning("Session code " + session_code_without_number + "-" + str(number) + " missing")
 
 
     def compare_sessions_media(self):
@@ -432,7 +442,7 @@ class System_check:
 
         # Check monitor.csv -> file_locations.csv
         for rec in self.rec_codes_from_monitor - self.rec_codes_from_locations:
-            logger.warning(rec + " from monitor.csv not in file_locations.csv")
+            logger.warning(rec + " from monitor.csv not in file_locations.csv or not at UZH yet")
 
 
     def check_all(self):
@@ -523,7 +533,7 @@ if __name__ == "__main__":
             dene_recs.compare_locations_monitor()
 
         else:
-            print("Sorry, you haven't given the right combination of files via command line")
+            print("You have not given the right combination of files via command line. Try again.")
 
 
 
