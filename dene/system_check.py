@@ -4,8 +4,10 @@ This modules includes two classes, one extracting metadata from resources and on
 If you run this module, make sure exiftool (http://www.sno.phy.queensu.ca/~phil/exiftool/) and
 the python wrapper for it (https://smarnach.github.io/pyexiftool/) is installed.
 
-The script should be located in a folder named "Scripts" whereas the files to be checked should be in a folder named "Media"
-located on the same level. If these conditions are given, simply run python3 system_check.py
+If the script is run without any path specifications (via command line), the script will look for 'sessions.csv' and
+'resources.csv' in the folder 'Metadata', for 'locations.csv' and 'monitor.csv' in the folder 'Workflow' and for the
+resources itself in 'Media', all folders lying one level higher than the script itself. In this case the script will check
+everything. You can also specify the paths to all those aforementioned files (python3 system_check --help). What checks are done effectively depends on which file paths were specified over the command line.
 """
 
 import os
@@ -23,7 +25,7 @@ logger.setLevel(logging.INFO)
 handler = logging.FileHandler("resources.log", mode="w")
 handler.setLevel(logging.INFO)
 
-formatter = logging.Formatter("%(object_id)s|%(funcName)s|%(levelname)s|%(message)s")
+formatter = logging.Formatter("%(funcName)s|%(levelname)s|%(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
@@ -87,7 +89,7 @@ class Resource:
         try:
             duration_in_secs = self.et[Resource.media_dict[self.extension][1] + ":Duration"]
         except KeyError:
-            logger.error("Duration cannot be extracted by exiftool", extra={"object_id": self.file_name})
+            logger.error("Duration cannot be extracted for " + self.file_name)
             return ""
 
         # convert to hours, minutes and seconds
@@ -104,7 +106,7 @@ class Resource:
         try:
             bytes = self.et["File:FileSize"]
         except KeyError:
-            logger.error("Byte size cannot be extracted by exiftool", extra={"object_id": self.file_name})
+            logger.error("Byte size cannot be extracted for " + self.file_name)
             return ""
         else:
             return bytes
@@ -169,8 +171,12 @@ class System_check:
                 # store recording name in a separate set
                 self.recs_from_media_folder.add(rec)
 
+            # if file is a hidden file, produce warning
+            elif rec.startswith("."):
+                logger.warning("File '" + rec + "' is a hidden file")
+
             else:
-                logger.error("Format of recording code wrong", extra={"object_id": rec})
+                logger.error("Format of " + rec + " wrong")
 
 
     def set_locations(self, locations_path):
@@ -206,7 +212,7 @@ class System_check:
             self.session_codes_from_sessions = {row["Code"] for row in csv.DictReader(sessions_file)}
 
 
-    def set_all(media_path, locations_path, monitor_path, sessions_path):
+    def set_all(self, media_path, locations_path, monitor_path, sessions_path):
         """Gets and sets all data.
 
         Positional args:
@@ -215,10 +221,10 @@ class System_check:
             monitor_path: path to monitor.csv
             sessions_path: path to sessions.csv
         """
-        set_media(media_path)
-        set_locations(locations_path)
-        set_monitor(monitor_path)
-        set_sessions(sessions_path)
+        self.set_media(media_path)
+        self.set_locations(locations_path)
+        self.set_monitor(monitor_path)
+        self.set_sessions(sessions_path)
 
 
     def autocomplete(self, resources_path, media_path):
@@ -241,8 +247,11 @@ class System_check:
             new_recs = self.recs_from_media_folder - recs_from_resources
 
             # keep track of progress
-            n_recs = str(len(new_recs))
-            counter = 0
+            n_recs = len(new_recs)
+            if n_recs:
+                n_recs = str(len(new_recs))
+                counter = 0
+                print("Autocompletion for:")
 
             for rec in new_recs:
 
@@ -258,8 +267,8 @@ class System_check:
 
                     # write metadata to the file 'resources.csv'
                     resources_writer.writerow({
-                        "Session code": get_Session_code(),
-                        "Recording code": get_Recording_code(),
+                        "Session code": resource.get_Session_code(),
+                        "Recording code": resource.get_Recording_code(),
                         "File name": rec,
                         "Type": resource.get_Type(),
                         "Format": resource.get_Format(),
@@ -269,12 +278,8 @@ class System_check:
                         "Location": resource.get_Location()
                     })
 
-                # if file is a hidden file, produce warning
-                elif rec.startswith(".") and rec != ".DS_Store":
-                    logger.warning("File '" + rec + "' is a hidden file", extra={"object_id": rec})
-
                 else:
-                    logger.warning("File '" + rec + "' has unknown file extension", extra={"object_id": rec})
+                    logger.warning("File '" + rec + "' has unknown file extension")
 
 
 
@@ -311,11 +316,11 @@ class System_check:
                 if match:
                     letter_seq_list += list(match.group())
 
-                three_files_check(rec_code, self.media_structure[session_code][rec_code])
+                self.three_files_check(rec_code, self.media_structure[session_code][rec_code])
 
-            consecutive_letter_check(session_code, letter_seq_list)
+            self.consecutive_letter_check(session_code, letter_seq_list)
 
-        consecutive_number_check(same_day_session_codes)
+        self.consecutive_number_check(same_day_session_codes)
 
 
 
@@ -326,17 +331,22 @@ class System_check:
             rec_code: recording code under which the three files are subsumed
             rec_set: (ideally) contains three different file types
         """
+        wav = rec_code + ".wav"
+        mp4 = rec_code + ".mp4"
+        mts = rec_code + ".mts"
+        mov = rec_code + ".mov"
+
         # Check if file with wav-extension exists
-        if rec_code + ".wav" not in rec_set:
-            logger.error("wav-file missing for: " + rec_code, extra={"object_id": rec_code})
+        if wav not in rec_set:
+            logger.warning(wav + " missing")
 
         # Check if file with mp4-extension exists
-        if rec_code + ".mp4" not in rec_set:
-            logger.error("mp4-file missing for: " + rec_code, extra={"object_id": rec_code})
+        if mp4 not in rec_set:
+            logger.warning(mp4 + " missing")
 
         # Check if file with mov/mts-extension exists
-        if rec_code + ".mts" not in rec_set and rec_code + ".mov" not in rec_set:
-            logger.error("mov/mts-file missing for: " + rec_code, extra={"object_id": rec_code})
+        if mts not in rec_set and mov not in rec_set:
+            logger.warning(mts + "/" + mov + " missing")
 
 
     def consecutive_letter_check(self, session_code, letter_seq_list):
@@ -360,7 +370,7 @@ class System_check:
 
                 # check if desired letter corresponds to the letter in the list
                 if letter != should_be_letter:
-                    logger.error("Recording codes of " + session_code + " are not consecutive - recording code " + session_code + should_be_letter + " missing", extra={"object_id": session_code})
+                    logger.warning("Recording code " + session_code + "-" + should_be_letter + " missing")
 
                     counter += 2
                 else:
@@ -383,8 +393,7 @@ class System_check:
             for number in numbers:
 
                 if number != counter:
-                    logger.error("Same-day-sessions of " + session_code + "are not consecutive - session code " + code + str(counter) + " missing",
-                    extra={"object_id": code})
+                    logger.warning("Session code " + code + "-" + str(counter) + " missing")
 
                     counter += 2
                 else:
@@ -396,62 +405,127 @@ class System_check:
         # Check session.csv -> media folder
         for session_code in self.session_codes_from_sessions:
             if session_code not in self.media_structure:
-                logger.warning(session_code + " from sessions.csv not in media folder", extra={"object_id": session_code})
+                logger.warning(session_code + " from sessions.csv not in media folder")
 
         # Check media folder -> sessions.csv
         for session_code in self.media_structure:
             if session_code not in self.session_codes_from_sessions:
-                logger.error(session_code + " from media folder not in sessions.csv", extra={"object_id": session_code})
+                logger.warning(session_code + " from media folder not in sessions.csv")
 
 
     def compare_locations_media(self):
         """Check if every recording name in file_locations.csv has a corresponding file in the media folder and vice versa."""
         # Check file_locations.csv -> media folder
-        for rec in self.recs_from_file_locations - self.recs_from_media_folder:
-            logger.error(rec + " from file_locations.csv not in media folder", extra={"object_id": rec})
+        for rec in self.recs_from_locations - self.recs_from_media_folder:
+            logger.warning(rec + " from file_locations.csv not in media folder")
 
         # Check media folder -> file_locations.csv
         for rec in self.recs_from_media_folder - self.recs_from_locations:
-            logger.error(rec + " from media folder not in file_locations.csv", extra={"object_id": rec})
+            logger.warning(rec + " from media folder not in file_locations.csv")
 
 
     def compare_locations_monitor(self):
         """Check if every recording code in file_locations.csv is also listed in monitor.csv and vice versa."""
         # Check file_locations.csv -> monitor.csv
         for rec in self.rec_codes_from_locations - self.rec_codes_from_monitor:
-            logger.error(rec + " from file_locations.csv not in file_locations.csv", extra={"object_id": rec})
+            logger.warning(rec + " from file_locations.csv not in monitor.csv")
 
         # Check monitor.csv -> file_locations.csv
         for rec in self.rec_codes_from_monitor - self.rec_codes_from_locations:
-            logger.error(rec + " from monitor.csv not in file_locations.csv", extra={"object_id": rec})
+            logger.warning(rec + " from monitor.csv not in file_locations.csv")
 
 
     def check_all(self):
         """Checks whole system."""
-        media_check()
-        compare_sessions_media()
-        compare_locations_media()
-        compare_locations_monitor()
+        self.media_check()
+        self.compare_sessions_media()
+        self.compare_locations_media()
+        self.compare_locations_monitor()
 
 
 if __name__ == "__main__":
 
-    # get all arguments from the command line
-    arg_list = sys.argv
+    # set up command line arguments
+    arg_description =   """
+                        Specify paths for media folder, sessions.csv, file_locations.csv, monitor.csv and resources.csv.
+                        Keep in mind that one or more of the following file combinations must be given:
+                        - media folder only
+                        - media folder and resources.csv
+                        - media folder and file_locations.csv
+                        - media folder and sessions.csv
+                        - locations.csv and monitor.csv
+                        """
 
-    # default settings if no argument were given
-    if len(arg_list) == 1:
+    parser = argparse.ArgumentParser(description=arg_description)
+    parser.add_argument("-f", "--media", help="path to the media folder")
+    parser.add_argument("-l", "--locations", help ="path to file_locations.csv")
+    parser.add_argument("-m", "--monitor", help="path to monitor.csv")
+    parser.add_argument("-r", "--resources", help="path ro resources.csv")
+    parser.add_argument("-s", "--sessions", help="path to sessions.csv")
+    args = parser.parse_args()
 
+    # create instance for system check
+    dene_recs = System_check()
+
+    # default settings if no arguments were given via command line
+    if len(sys.argv) == 1:
+
+        # all default paths
         media_path = "../Media"
         locations_path = "../Workflow/file_locations.csv"
         monitor_path = "../Workflow/monitor.csv"
         sessions_path = "../Metadata/sessions.csv"
         resources_path = "../Metadata/resources.csv"
 
-        dene_recs = System_check()
+        # get all data from all files
         dene_recs.set_all(media_path, locations_path, monitor_path, sessions_path)
+        # then check everything
         dene_recs.check_all()
+        # finally complete resources.csv
         dene_recs.autocomplete(resources_path, media_path)
 
+    elif args.media:
+        # get and set recording files in the media folder
+        dene_recs.set_media(args.media)
+        # check the file names from the media folder
+        dene_recs.media_check()
 
+        if args.resources:
+            # autocomplete resources.csv
+            dene_recs.autocomplete(args.resources, args.media)
+
+        if args.sessions:
+            # get and set session codes from sessions.csv
+            dene_recs.set_sessions(args.sessions)
+            # check sessions.csv <-> media folder
+            dene_recs.compare_sessions_media()
+
+        if args.locations:
+            # get and set recording names from locations.csv
+            dene_recs.set_locations(args.locations)
+            # check media folder <-> locations.csv
+            dene_recs.compare_locations_media()
+
+            if args.monitor:
+                # get and set recording codes from monitor.csv
+                dene_recs.set_monitor(args.monitor)
+                # check locations.csv <-> monitor.csv
+                dene_recs.compare_locations_monitor()
+
+    else:
+
+        if args.locations and args.monitor:
+            # get and set recording codes from locations.csv
+            dene_recs.set_locations(args.locations)
+            # get and set recording codes from monitor.csv
+            dene_recs.set_monitor(args.monitor)
+            # check locations.csv <-> monitor.csv
+            dene_recs.compare_locations_monitor()
+
+        else:
+            print("Sorry, you haven't given the right combination of files via command line")
+
+
+
+    # close logging file
     handler.close()
