@@ -9,12 +9,13 @@ import logging
 import contextlib
 from itertools import zip_longest
 
+# logging.basicConfig(filename='toolbox.log', level=logging.INFO)
 
 class ToolboxFile(object):
     """ Toolbox Standard Format text file as iterable over records
     """
     _separator = re.compile(b'\r?\n\r?\n(\r?\n)')
-    logging.basicConfig(filename='errors.log', level=logging.INFO)
+    _record_marker = re.compile(br'\\ref')
 
     def __init__(self, config, file_path):
         """ Initializes a Toolbox file object
@@ -28,6 +29,7 @@ class ToolboxFile(object):
         self.tier_separator = re.compile(b'\n')
         self.chintang_word_boundary = re.compile('(?<![\-\s])\s+(?![\-\s])')
 
+        # get database column names
         self.field_markers = []
         for k, v in self.config['record_tiers'].items():
             self.field_markers.append(k)
@@ -44,88 +46,94 @@ class ToolboxFile(object):
             get_warnings: get warnings like "transcription insecure"
             get_words: extract the words in an utterance for the words table
             get_morphemes extract the morphemes in a word for the morphemes table
+            FYI: the record marker needs to be updated if the corpus doesn't use "\ref" for record markers
 
         Returns:
             utterance: {}
             words: [{},{}...]
             morphemes: [[{},{}...], [{},{}...]...]
         """
-        # FYI: the record marker needs to be updated if the corpus doesn't use "\ref" for record markers
-        record_marker = re.compile(br'\\ref')
         with open(self.path, 'rb') as f:
             with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as data:
-                ma = record_marker.search(data)
+                ma = self._record_marker.search(data)
+                # Skip the first rows that contain metadata information: https://github.com/uzling/acqdiv/issues/154
                 header = data[:ma.start()].decode()
                 pos = ma.start()
-
-                for ma in record_marker.finditer(data, ma.end()):
-                    utterance = {}
-                    record = data[pos:ma.start()]
-                    tiers = self.tier_separator.split(record)
-
-                    for tier in tiers:
-                        tokens = re.split(b'\\s+', tier, maxsplit=1)
-                        field_marker = tokens[0].decode()
-                        field_marker = field_marker.replace("\\", "")
-                        content = None
-
-                        if len(tokens) > 1:
-                            content = tokens[1].decode()
-                            content = re.sub('\\s+', ' ', content)
-
-                        if field_marker in self.field_markers:
-                            utterance[self.config['record_tiers'][field_marker]] = content
-
-                    try:
-                        utterance['utterance_raw'] = utterance[self.config['utterance']['field']]
-                    except KeyError:
-                        utterance['warning'] = 'empty utterance'
-
-                    # Skip the first rows that contain metadata information:
-                    # https://github.com/uzling/acqdiv/issues/154
-                    # TODO: is the utterance clean-up here redundant given the same regexes in get_morphemes()?
-                    if 'utterance_raw' in utterance.keys() and not utterance['utterance_raw'] is None:
-                        # https://github.com/uzling/acqdiv/issues/379
-                        if not utterance['utterance_raw'].startswith('@'):
-                            if self.config['corpus']['corpus'] == 'Chintang':
-                                try:
-                                    utterance['sentence_type'] = self.get_sentence_type(utterance['nepali'])
-                                    del utterance['nepali']
-                                    if utterance['translation'] == None:
-                                        del utterance['translation']
-                                except KeyError:
-                                    continue
-
-                            elif self.config['corpus']['corpus'] == 'Russian':
-                                try:
-                                    utterance['sentence_type'] = self.get_sentence_type(utterance['utterance_raw'])
-                                    utterance['utterance_raw'] = None if utterance['utterance_raw'] is None else re.sub('xxx?|www', '???', utterance['utterance_raw'])
-                                    utterance['pos_raw'] = None if utterance['pos_raw'] is None else re.sub('xxx?|www', '???', utterance['pos_raw'])
-                                    # TODO: log the None data...
-                                except KeyError:
-                                    continue
-                            else:
-                                utterance['sentence_type'] = self.get_sentence_type(utterance['utterance_raw'])
-
-                            utterance['utterance'] = self.clean_utterance(utterance['utterance_raw'])
-                            utterance['warning'] = self.get_warnings(utterance['utterance_raw'])
-
-                            words = self.get_words(utterance['utterance'])
-                            morphemes = self.get_morphemes(utterance)
-
-                            yield utterance, words, morphemes
-                            pos = ma.start()
-                """
-                # in case of footer
-                ma = self._separator.search(data, pos)
+                for ma in self._record_marker.finditer(data, ma.end()):
+                    yield self.make_rec(data[pos:ma.start()])
+                    pos = ma.start()
                 if ma is None:
-                    footer = ''
-                    yield data[pos:].decode()
+                    raise StopIteration
                 else:
-                    footer = data[ma.start(1):].decode()
-                    yield data[pos:ma.start(1)].decode()
-                self.header, self.footer = header, footer
-                """
+                    yield self.make_rec(data[pos:])
+
+
+    def make_rec(self, record):
+        """ Parse and make utterance, words and morpheme structures.
+        :param data:
+        :return:
+        """
+        utterance = {}
+        words = []
+        morphemes = []
+
+        warnings = []
+        tiers = self.tier_separator.split(record)
+        for tier in tiers:
+            tokens = re.split(b'\\s+', tier, maxsplit=1)
+            field_marker = tokens[0].decode()
+            field_marker = field_marker.replace("\\", "")
+            content = None
+
+            if len(tokens) > 1:
+                content = tokens[1].decode()
+                content = re.sub('\\s+', ' ', content)
+                content = content.strip()
+                if content.startswith('@') or content == "":
+                    # TODO: log
+                    continue
+
+            if field_marker in self.field_markers:
+                utterance[self.config['record_tiers'][field_marker]] = content
+                if content is None:
+                    warnings.append(self.config['record_tiers'][field_marker])
+
+        # Some records will not have an utterance, append None for convenience below
+        if not 'utterance_raw' in utterance:
+            utterance['utterance_raw'] = None
+
+        utterance['sentence_type'] = None if utterance['utterance_raw'] is None else self.get_sentence_type(utterance)
+
+        # We infer sentence type from Chintang \nep but we do not add the nepali field to the database yet
+        if self.config['corpus']['corpus'] == 'Chintang':
+            if 'nepali' in utterance:
+                del utterance['nepali']
+
+        # Clean up Russian
+        if self.config['corpus']['corpus'] == 'Russian':
+            utterance['utterance_raw'] = None if utterance['utterance_raw'] is None else re.sub('xxx?|www', '???', utterance['utterance_raw'])
+            utterance['pos_raw'] = None if utterance['pos_raw'] is None else re.sub('xxx?|www', '???', utterance['pos_raw'])
+        # Create clean utterance
+        utterance['utterance'] = None if utterance['utterance_raw'] is None else self.clean_utterance(utterance['utterance_raw'])
+
+        # Talk to Robert
+        # utterance['morpheme'] = None if not 'morpheme' in utterance else self.clean_morpheme(utterance['morpeheme'])
+        # utterance['pos_raw'] = None if not 'morpheme' in utterance else self.clean_morpheme(utterance['pos_raw'])
+        # utterance['gloss_raw'] = None if not 'morpheme' in utterance else self.clean_morpheme(utterance['gloss_raw'])
+
+        # Append utterance warnings if data fields are missing in the input
+        if not utterance['utterance_raw'] is None:
+            if not self.get_warnings(utterance['utterance_raw']) is None:
+                warnings.append(self.get_warnings(utterance['utterance_raw']))
+        if len(warnings) > 0:
+            utterance['warning'] = "Empty value in the input for: "+", ".join(warnings)
+
+        # Create words and morphemes
+        words = [] if utterance['utterance'] is None else self.get_words(utterance['utterance'])
+        morphemes = [] if utterance['utterance'] is None else self.get_morphemes(utterance)
+
+        return utterance, words, morphemes
+
 
     def get_words(self, utterance):
         """ Return ordered list of words where each word is a dict of key-value pairs
@@ -159,13 +167,11 @@ class ToolboxFile(object):
             else:
                 d['word'] = re.sub('xxx?|www|\*\*\*', '???', word)
                 # Actual vs target distinction <forehead slap>
-                # if self.config['corpus']['corpus'] in ['Chintang', 'Russian']:
-                #    word['word_actual'] = word['word']
+                if self.config['corpus']['corpus'] in ['Chintang', 'Russian']:
+                    d['word_actual'] = word
                 result.append(d)
-
-        # TODO: get words and morphemes
-
         return result
+
 
     def get_sentence_type(self, utterance):
         """ Get utterance type (aka sentence type) of an utterance: default, question, imperative or exclamation.
@@ -177,7 +183,7 @@ class ToolboxFile(object):
             sentence_type: str
         """
         if self.config['corpus']['corpus'] == "Russian":
-            match_punctuation = re.search('([\.\?!])$', utterance)
+            match_punctuation = re.search('([\.\?!])$', utterance['utterance_raw'])
             if match_punctuation is not None:
                 sentence_type = None
                 if match_punctuation.group(1) == '.':
@@ -189,21 +195,21 @@ class ToolboxFile(object):
                 return sentence_type
 
         if self.config['corpus']['corpus'] == "Indonesian":
-            if re.search('\.', utterance):
+            if re.search('\.', utterance['utterance_raw']):
                 return 'default'
-            elif re.search('\?\s*$', utterance):
+            elif re.search('\?\s*$', utterance['utterance_raw']):
                 return 'question'
-            elif re.search('\!', utterance):
+            elif re.search('\!', utterance['utterance_raw']):
                 return 'imperative'
             else:
-                return
+                return None
 
         # https://github.com/uzling/acqdiv/issues/253
         # \eng: . = default, ? = question, ! = exclamation
         # \nep: । = default, rest identical. Note this is not a "pipe" but the so-called danda at U+0964
         if self.config['corpus']['corpus'] == "Chintang":
-            if not utterance is None:
-                match_punctuation = re.search('([।\?!])$', utterance)
+            if 'nepali' in utterance.keys() and not utterance['nepali'] is None:
+                match_punctuation = re.search('([।\?!])$', utterance['nepali'])
                 if match_punctuation is not None:
                     sentence_type = None
                     if match_punctuation.group(1) == '।':
@@ -213,6 +219,20 @@ class ToolboxFile(object):
                     if match_punctuation.group(1) == '!':
                         sentence_type = 'exclamation'
                     return sentence_type
+            elif 'eng' in utterance.keys() and not utterance['translation'] is None:
+                match_punctuation = re.search('([।\?!])$', utterance['translation'])
+                if match_punctuation is not None:
+                    sentence_type = None
+                    if match_punctuation.group(1) == '.':
+                        sentence_type = 'default'
+                    if match_punctuation.group(1) == '?':
+                        sentence_type = 'question'
+                    if match_punctuation.group(1) == '!':
+                        sentence_type = 'exclamation'
+                    return sentence_type
+            else:
+                return None
+
 
     def get_warnings(self, utterance):
         """ Extracts warnings for insecure transcriptions for Russian and Indonesian (incl. intended form for Russian).
@@ -239,6 +259,7 @@ class ToolboxFile(object):
                     return transcription_warning
         else:
             pass
+
 
     def clean_utterance(self, utterance):
         """ Cleans up corpus-specific utterances from punctuation marks, comments, etc.
@@ -286,8 +307,35 @@ class ToolboxFile(object):
                 return utterance
     
             if self.config['corpus']['corpus'] == "Chintang":
-                # No specific stuff here.
+                utterance = re.sub('\*\*\*', '???', utterance)
                 return utterance
+
+    """ TODO: talk to Robert
+    # Clean up Chintang
+    if self.config['corpus']['corpus'] == 'Chintang':
+        utterance['morpheme'] = None if utterance['morpheme'] is None else re.sub('\*\*\*', '???', utterance['morpheme'])
+        utterance['gloss_raw'] = None if utterance['gloss_raw'] is None else re.sub('\*\*\*', '???', utterance['gloss_raw'])
+        utterance['pos_raw'] = None if utterance['pos_raw'] is None else re.sub('\*\*\*', '???', utterance['pos_raw'])
+        # We infer sentence type from Chintang \nep but we do not add the nepali field to the database yet
+        if 'nepali' in utterance:
+            del utterance['nepali']
+
+    # Clean up Russian
+    if self.config['corpus']['corpus'] == 'Russian':
+        utterance['utterance_raw'] = None if utterance['utterance_raw'] is None else re.sub('xxx?|www', '???', utterance['utterance_raw'])
+        utterance['pos_raw'] = None if utterance['pos_raw'] is None else re.sub('xxx?|www', '???', utterance['pos_raw'])
+        utterance['morpheme'] = None if utterance['morpheme'] is None else re.sub('xxx?|www', '???', utterance['morpheme'])
+
+    # Clean up Indonesian
+    if self.config['corpus']['corpus'] == 'Russian':
+        utterance['morpheme'] = None if utterance['morpheme'] is None else re.sub('xxx?|www', '???', utterance['morpheme'])
+        utterance['gloss_raw'] = None if utterance['gloss_raw'] is None else re.sub('xxx?|www', '???', utterance['gloss_raw'])
+        utterance['utterance_raw'] = None if utterance['utterance_raw'] is None else re.sub('xxx?|www', '???', utterance['utterance_raw'])
+        utterance['translation'] = None if utterance['translation'] is None else re.sub('xxx?|www', '???', utterance['translation'])
+
+    # Create clean utterance
+    utterance['utterance'] = None if utterance['utterance_raw'] is None else self.clean_utterance(utterance['utterance_raw'])
+    """
 
     def get_morphemes(self, utterance):
         """ Return ordered list of lists of morphemes where each morpheme is a dict of key-value pairs
@@ -296,7 +344,7 @@ class ToolboxFile(object):
             utterance: a dict of utterance information
 
         Returns:
-            result: a list of lists that contain dicts
+            result: a list of lists that contain dicts of morphemes and their gloss and pos
         """
         result = []
         morphemes = []
@@ -369,7 +417,6 @@ class ToolboxFile(object):
                 morphemes_cleaned = re.sub('xxx?|www', '???', morphemes_cleaned)
                 morphemes_split = morphemes_cleaned.split()
                 morphemes = [morphemes_split[i:i+1] for i in range(0, len(morphemes_split), 1)]
-                # print("morphemes:", morphemes)
 
             if 'gloss_raw' in utterance.keys():
                 # TODO: move this to post-processing?
@@ -379,9 +426,9 @@ class ToolboxFile(object):
                 glosses = [glosses_split[i:i+1] for i in range(0, len(glosses_split), 1)]
                 # There are no POS in Indonesian, so we populate empty data that becomes NULL in the database.
                 poses = [[] for i in range(0, len(glosses_split), 1)]
-
             else:
                 warnings.append('not glossed')
+                # TODO: add in some logic to extract relevant source 'nt' (comment) field?
 
         # Chintang specific morpheme stuff
         elif self.config['corpus']['corpus'] == "Chintang":
@@ -400,6 +447,8 @@ class ToolboxFile(object):
                 # word_boundaries = re.sub('(\s\-)|(\-\s)','%%%%%', morphemes_cleaned)
                 word_boundaries = re.split(self.chintang_word_boundary, morphemes_cleaned)
                 for word in word_boundaries:
+                    # TODO: double check this logic is correct with Robert
+                    word = word.replace(" - ", " ") # remove floating clitic marker
                     morphemes.append(word.split())
             else:
                 warnings.append('no morpheme tier')
@@ -407,6 +456,7 @@ class ToolboxFile(object):
             if 'gloss_raw' in utterance.keys():
                 word_boundaries = re.split(self.chintang_word_boundary, utterance['gloss_raw'])
                 for word in word_boundaries:
+                    word = word.replace(" - ", " ") # remove floating clitic marker
                     glosses.append(word.split())
             else:
                 warnings.append('not glossed')
@@ -414,6 +464,7 @@ class ToolboxFile(object):
             if 'pos_raw' in utterance.keys():
                 word_boundaries = re.split(self.chintang_word_boundary, utterance['pos_raw'])
                 for word in word_boundaries:
+                    word = word.replace(" - ", " ") # remove floating clitic marker
                     poses.append(word.split())
             else:
                 warnings.append('pos missing')
@@ -421,32 +472,30 @@ class ToolboxFile(object):
         else:
             raise TypeError("Corpus format is not supported by this parser.")
 
-        # Do the morphemes data structure processing
-        if len(morphemes) == len(glosses) == len(poses):
-            # Here we Loop over the words to create nested lists of morphemes for potential one-to-many mappings
-            # Note this will log of the input tiers are wrong, i.e. not the same length
-            for i in range(0, len(morphemes)):
-                l = []
-                for (morph, gloss, pos) in zip_longest(morphemes[i], glosses[i], poses[i]):
-                    d = {}
-                    d['morpheme'] = morph
-                    d['gloss_raw'] = gloss
-                    d['pos_raw'] = pos
-                    # d['warning'] = warning
-                    l.append(d)
-                result.append(l)
-        else:
-            # TODO: log this stuff!
-            logging.info("Length of morphemes, glosses, poses don't match in the Toolbox file: " + utterance['source_id'])
+
+        # This bit adds None (NULL in the DB) for any mis-alignments
+        tiers = list(zip_longest(morphemes, glosses, poses, fillvalue=[]))
+        for tier in tiers:
+            alignment = zip_longest(tier[0], tier[1], tier[2], fillvalue=None)
+            l = []
+            for morpheme in alignment:
+                d = {}
+                d['morpheme'] = morpheme[0]
+                d['gloss_raw'] = morpheme[1]
+                d['pos_raw'] = morpheme[2]
+                # TODO: move to postprocessing if faster
+                d['type'] = self.config['morphemes']['type'] # what type of morpheme as defined in the corpus .ini
+                d['warning'] = None if len(warnings) == 0 else " ".join(warnings)
+                l.append(d)
+                logging.info("Length of morphemes, glosses, poses don't match in the Toolbox file: " + utterance['source_id'])
+            result.append(l)
         return result
 
-    def make_rec(self, data):
-        # probably not needed
-        return data.decode(self.encoding)
 
     def __repr__(self):
         # for pretty printing
         return '%s(%r)' % (self.__class__.__name__, self.path)
+
 
 @contextlib.contextmanager
 def memorymapped(path, access=mmap.ACCESS_READ):
@@ -462,6 +511,7 @@ def memorymapped(path, access=mmap.ACCESS_READ):
     finally:
         m.close()
         fd.close()
+
 
 if __name__ == "__main__":
     from parsers import CorpusConfigParser
