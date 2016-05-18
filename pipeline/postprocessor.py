@@ -37,7 +37,7 @@ def setup(args):
     global roles
     roles = ConfigParser(delimiters=('='))
     roles.optionxform = str
-    roles.read("role_mapping.ini")
+    roles.read("ini/role_mapping.ini")
 
     # Load the corpus configs
     global chintang, cree, indonesian, inuktitut, miyata, miipro, russian, sesotho, turkish, yucatec
