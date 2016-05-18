@@ -94,7 +94,7 @@ def get_config(corpus_name):
         return russian
     elif corpus_name == "Sesotho":
         return sesotho
-    elif corpus_name == "Turkish_KULLD":
+    elif corpus_name == "Turkish":
         return turkish
     elif corpus_name == "Yucatec":
         return yucatec
