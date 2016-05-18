@@ -118,7 +118,8 @@ class MiyataCleaner(XMLCleaner):
                             del morphology[midx]
                             midx -= 1
                     except IndexError:
-                        print(midx, len(morphology))
+                        #print(midx, len(morphology))
+                        continue
                                                   
             # if there is no morphology, add warning to present word and count up
             elif morphology is None:
