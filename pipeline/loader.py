@@ -53,4 +53,4 @@ if __name__ == "__main__":
 
     print("%s seconds --- Finished" % (time.time() - start_time))
     print()
-    print("Next, call: python3 postprocessor.py")
+    print("Next, call: python3 postprocessor.py or python3 postprocessor.py -t")
