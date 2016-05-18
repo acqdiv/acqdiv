@@ -2,7 +2,7 @@
 """
 
 from processors import *
-from postprocessor import *
+from processors.postprocessor import *
 from parsers import *
 from database_backend import *
 
