@@ -145,8 +145,8 @@ def format_imdi_age(birthdate, sessiondate):
     else: 
         age_cform = "{0};0.0".format(diff.years)
 
-    age_days = str(diff_days.days)
-    return([age_cform if age_cform != "0;0.0" else None, age_days if age_days != "0" else None])
+    age_days = int(diff_days.days)
+    return([age_cform if age_cform != "0;0.0" else None, age_days if age_days != 0 else None])
 
 
 def clean_incomplete_ages(age):
