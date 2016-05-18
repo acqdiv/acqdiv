@@ -15,13 +15,7 @@ from parsers.metadata import Chat
 
 class XMLCleaner(object):
 
-    logging.basicConfig(filemode='w')
-    logger = logging.getLogger(__name__)
-    handler = logging.FileHandler('errors.log')
-    handler.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    logger = logging.getLogger('pipeline.' + __name__)
 
     @staticmethod
     def creadd(location, key, value):
