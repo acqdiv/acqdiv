@@ -1,34 +1,26 @@
 """ Post-processing processes on the corpora in the ACQDIV-DB.
 """
 
-import sys
-import re
-
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
+# from sqlalchemy import create_engine
+
+import age
+import sys
+import re
 
 import database_backend as backend
 from configparser import ConfigParser
 from parsers import CorpusConfigParser
-from processors import age
 
 session = None
 cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 age_pattern = re.compile(".*;.*\..*")
 
-
-def setup(args):
-    """
-    Global setup
-    """
+def setup():
     global cfg, session
-
-    # If testing mode
-    if args.t:
-        engine = sa.create_engine('sqlite:///tests/test.sqlite3')
-    else:
-        engine = sa.create_engine('sqlite:///../database/acqdiv.sqlite3')
-
+    engine = sa.create_engine('sqlite:///tests/test.sqlite3')
+    # engine = sa.create_engine('sqlite:///../database/beta.sqlite3')
     meta = sa.MetaData(engine, reflect=True)
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -99,6 +91,7 @@ def get_config(corpus_name):
     elif corpus_name == "Yucatec":
         return yucatec
     else:
+        print(corpus_name)
         raise Exception
 
 
@@ -117,95 +110,15 @@ def postprocessor():
     # TODO: duplicate primary keys to additional roles
 
 
-def clean_tlbx_pos_morphemes(row):
-    """ Function that cleans pos and morphemes in Chintang and Indonesian.
-        It also cleans the morpheme (for Chintang and Russian) and gloss_raw (Indonesian) column in the utterances
-        table because cleaning them within the Toolbox parser messes up the morphemes table.
-
-    Args:
-        session: SQLAlchemy session object.
-        config: CorpusConfigParser object.
-    """
-    # if config["corpus"]["corpus"] == "Chintang":
-    # get pfx and sfx
-
-    if row.corpus == "Chintang":
-        try:
-            if row.pos_raw.startswith('-'):
-                row.pos = 'sfx'
-                row.pos_raw = 'sfx'
-            elif row.pos_raw.endswith('-'):
-                row.pos = 'pfx'
-                row.pos_raw = 'pfx'
-            else:
-                row.pos_raw = row.pos_raw.strip('-')
-                row.pos = row.pos_raw
-            # strip '-' from morphemes and gloss_raw
-            row.morpheme = row.morpheme.strip('-')
-            row.gloss_raw = row.gloss_raw.strip('-')
-            row.gloss = row.gloss.strip('-')
-        except AttributeError:
-            pass
-
-    if row.corpus == "Indonesian":
-        try:
-            if row.gloss_raw.startswith('-'):
-                row.pos = 'sfx'
-                row.gloss_raw = row.gloss_raw.strip('-')
-            elif row.gloss_raw.endswith('-'):
-                row.pos = 'pfx'
-                row.gloss_raw = row.gloss_raw.strip('-')
-            elif row.gloss_raw == '???':
-                row.pos = '???'
-            else:
-                row.pos = 'stem'
-            row.morpheme = row.morpheme.strip('-')
-        except AttributeError:
-            pass
-        except TypeError:
-            pass
-
-
 def process_morphemes():
-    """
-    Process the morphemes table
-
-    # TODO: break this down by corpus and profile if it's faster
-    """
     table = session.query(backend.Morpheme)
     for row in table:
-        # Clean up affix markers "-"; assign sfx, pfx, stem.
-        if row.corpus == "Chintang" or row.corpus == "Indonesian":
-            clean_tlbx_pos_morphemes(row)
-        # Key-value substitutions for morphological glosses and parts-of-speech
         unify_label(row)
-        # Infer the word's part-of-speech from the morphemes
-        get_word_pos(row)
-
-
-def get_word_pos(row):
-    """
-    Populates word POS from morphemes table by taking the first non "pfx" or "sfx" value.
-
-    # TODO: Insert some debugging here if the labels are missing?
-    """
-    # get word_id_fk
-    word_id_fk = row.word_id_fk
-    pos = row.pos
-
-    table = session.query(backend.Word).filter(backend.Word.id==word_id_fk)
-    for result in table:
-        if not pos in ["sfx", "pfx"]:
-            result.pos = pos
 
 
 def process_utterances():
-    """
-    Process utterances table
-    """
     table = session.query(backend.Utterance)
     for row in table:
-        # Unify the time stamps
         if row.start_raw: #.isnot(None):
             try:
                 row.start = age.unify_timestamps(row.start_raw)
@@ -232,49 +145,18 @@ def process_utterances():
 
 
 def process_speakers():
-    """
-    Process speakers table
-    """
     table = session.query(backend.Speaker)
     for row in table:
+        # TODO: finish ages
         update_age(row)
         gender(row)
         role(row)
         macrorole(row)
-    # Run the unique speaker algorithm -- requires full table
-    unique_speakers(table)
+        # TODO: fix
+        # unique_speaker(row)
 
 
-def unique_speakers(table):
-    """ Populate the the unique speakers table. Also populate uniquespeaker_id_fk in the speakers table.
-
-    Uniqueness is determined by a combination of speaker: name, speaker label, birthdate. Yikes!
-    """
-    unique_speakers = [] # unique speaker dicts for uniquespeakers table
-    identifiers = [] # keep track of unique (name, label, birthdate) speaker tuples
-
-    for row in table:
-        t = (row.name, row.birthdate, row.speaker_label)
-        if t not in identifiers:
-            identifiers.append(t)
-            # create unique speaker row
-            d = {}
-            d['id'] = identifiers.index(t) + 1 # Python lists start at 0!
-            d['corpus'] = row.corpus
-            d['speaker_label'] = row.speaker_label
-            d['name'] = row.name
-            d['birthdate'] = row.birthdate
-            d['gender'] = row.gender
-            unique_speakers.append(backend.UniqueSpeaker(**d))
-
-        # insert uniquespeaker_fk_id in speakers table
-        row.uniquespeaker_id_fk = identifiers.index(t) + 1
-
-    # Add all unique speakers entries to uniquespeakers table; skip if the table is already populated.
-    if session.query(backend.UniqueSpeaker).count() == 0:
-        session.add_all(unique_speakers)
-
-
+# TODO: config specific!
 def unify_label(row):
     """ Key-value substitutions for morphological glosses and parts-of-speech in the database. If no key is
         defined in the corpus ini file, then None (NULL) is written to the database.
@@ -286,10 +168,8 @@ def unify_label(row):
 
 
 def get_session_date(session_id):
-    """
-    Return the session data
-    """
     rows = session.query(backend.Session).filter(backend.Session.id == session_id)
+    print(rows[0].date)
     return rows[0].date
 
 
@@ -319,13 +199,31 @@ def update_imdi_age(row):
             row.age = ages[0]
             row.age_in_days = ages[1]
         except age.BirthdateError as e:
-            print("Warning: couldn't calculate age of speaker {} from birth and recording dates".format(row.id), file=sys.stderr)
-            print("Invalid birthdate: {}. Check data in {} file {}".format(e.bad_data, row.corpus, row.id), file=sys.stderr)
-        except age.SessionDateError as e:
-            print("Warning: couldn't calculate age of speaker {} from birth and recording dates".format(row.id), file=sys.stderr)
-            print("Invalid session recording date: \"{}\"\nCheck data in {} file {}".format(e.bad_data, row.corpus, row.id), file=sys.stderr)
+            pass
+            """
+                print("Warning: couldn't calculate age of "
+                         "speaker {} from birth and recording dates"
+                        .format(row.id), file=sys.stderr)
+                print("Invalid birthdate: {}. Check data in {} file {}"
+                        .format(e.bad_data, row.corpus, row.id),
+                        file=sys.stderr)
+            """
 
+        except age.SessionDateError as e:
+            pass
+            """
+                print("Warning: couldn't calculate age of "
+                         "speaker {} from birth and recording dates"
+                        .format(row.id), file=sys.stderr)
+                print("Invalid session recording date: \"{}\"\n"
+                        "Check data in {} file {}"
+                        .format(e.bad_data, row.corpus, row.id),
+                        file=sys.stderr)
+            """
+    # Check age
+    # ["%;%.%"]
     # age_raw.like("%;%.%")
+
     if re.fullmatch(age_pattern, row.age_raw):
         row.age = row.age_raw
         row.age_in_days = age.calculate_xml_days(row.age_raw)
@@ -338,10 +236,17 @@ def update_imdi_age(row):
                 row.age = ages[0]
                 row.age_in_days = ages[1]
             except ValueError as e:
-                print("Error: Couldn't transform age of speaker {}".format(row.id), file=sys.stderr)
-                print("Age data {} could not be converted to int\nCheck data in {} file {}".format(row.age_raw, row.corpus, row.id), file=sys.stderr)
-                print("Warning: this speaker is likely to be completely without age data in the DB!")
-
+                pass
+                """
+                print("Error: Couldn't transform age of speaker {}"
+                        .format(row.id), file=sys.stderr)
+                print("Age data {} could not be converted to int\n"
+                        "Check data in {} file {}"
+                    .format(row.age_raw, row.corpus, row.id),
+                    file=sys.stderr)
+                print("Warning: this speaker is likely to be "
+                     "completely without age data in the DB!")
+                """
 
 # TODO: age is format dependent
 def update_age(row):
@@ -368,6 +273,46 @@ def update_xml_age(row):
             row.age = new_age
             aid = age.calculate_xml_days(new_age)
             row.age_in_days = aid
+
+# TODO: fix this
+def unique_speaker(row):
+    """ Populate the the unique speakers table. Also populate uniquespeaker_id_fk in the speakers table.
+
+    Uniqueness is determined by a combination of speaker: name, speaker label, birthdate. Yikes!
+    """
+    unique_speakers = [] # unique speaker dicts for uniquespeakers table
+    identifiers = [] # keep track of unique (name, label, birthdate) speaker tuples
+
+    # TODO: this logic should go away once Cree data is updated and be replaced with:
+    # t = (row.name, row.speaker_label, row.birthdate)
+    # see:
+    # https://github.com/uzling/acqdiv/issues/366
+
+    if row.corpus != 'Cree':
+        t = (row.name, row.birthdate, row.speaker_label)
+    else:
+        t = (row.name, row.birthdate)
+    print("row:", row)
+
+    if t not in identifiers:
+        identifiers.append(t)
+        # Create a unique speaker row: TODO: get these values from config?
+        d = {}
+        d['id'] = identifiers.index(t) + 1 # Python lists start at 0!
+        d['corpus'] = row.corpus
+        d['speaker_label'] = row.speaker_label
+        d['name'] = row.name
+        d['birthdate'] = row.birthdate
+        d['gender'] = row.gender
+        unique_speakers.append(backend.UniqueSpeaker(**d))
+        print("d:", d)
+    # Insert uniquespeaker_fk_id in speakers table
+    print(identifiers.index(t) + 1)
+    row.uniquespeaker_id_fk = identifiers.index(t) + 1
+
+    # Add all unique speakers entries to uniquespeakers table
+    session.add_all(unique_speakers)
+    # session.commit()
 
 
 def macrorole(row):
@@ -434,7 +379,7 @@ def role(row):
     if len(not_found) > 0:
         print("-- WARNING --")
         for item in not_found:
-            print("'"+item[0]+"'","from",item[1])
+            print("'"+item[0]+"'", "from", item[1])
         print("not found in role_mapping.ini\n--------")
 
 
@@ -455,26 +400,15 @@ def gender(row):
         row.gender = "Unspecified"
 
 
-def main(args):
-    setup(args)
+def main():
+    setup()
     postprocessor()
     commit()
 
 if __name__ == "__main__":
     import time
-    import argparse
-
     start_time = time.time()
-
-    p = argparse.ArgumentParser()
-    p.add_argument('-t', action='store_true')
-    args = p.parse_args()
-
-    main(args)
-
-    print("%s seconds --- Finished" % (time.time() - start_time))
+    main()
+    print("{0} seconds --- Stop processing".format(time.time() - start_time))
     print()
-    print('Next, run tests:')
-    print('python3 -m "nose" -s -w tests test_counts.py')
-    print('python3 -m "nose" -s -w tests test_regression.py')
-    print('python3 -m "nose" -s -w tests test_integrity.py')
+    print('Next, run tests: python3 -m "nose" -s tests/test_regression.py')

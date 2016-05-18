@@ -6,7 +6,7 @@ import re
 import sys
 
 from lxml import etree
-from xml_cleaner import XMLCleaner
+from .xml_cleaner import XMLCleaner
 
 class CreeCleaner(XMLCleaner):
 

@@ -10,7 +10,8 @@ import traceback
 
 from collections import defaultdict
 from lxml import etree
-from metadata import Chat
+
+from parsers.metadata import Chat
 
 class XMLCleaner(object):
 

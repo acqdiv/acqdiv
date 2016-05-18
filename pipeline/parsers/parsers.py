@@ -10,9 +10,9 @@ import configparser
 from configparser import ExtendedInterpolation
 from collections import namedtuple
 
-from metadata import Imdi, Chat
-from toolbox import ToolboxFile
-from xml_parser import XMLParserFactory
+from .metadata import Imdi, Chat
+from .toolbox import ToolboxFile
+from .xml_parser import XMLParserFactory
 
 
 class CorpusConfigParser(configparser.ConfigParser):

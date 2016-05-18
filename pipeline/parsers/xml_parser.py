@@ -3,24 +3,24 @@ import importlib
 import io
 import logging
 import lxml
-import metadata
 import pdb
 import re
 import traceback
-import xml_cleaner
 
 from collections import deque
 from collections import namedtuple
 from lxml import etree
-from metadata import Chat
-from xml_cleaner import XMLCleaner
+
+from .metadata import Chat
+from .xml.xml_cleaner import XMLCleaner
 
 class XMLParserFactory(object):
 
     def __init__(self, cfg):
         self.cfg = cfg
-        self.CorpusCleaner = importlib.import_module(self.cfg['paths']['cleaner'])
-        self.cleaner_cls = eval(('self.CorpusCleaner.' + 
+        self.cleaner_module = importlib.import_module(
+            '.xml.' + self.cfg['paths']['cleaner'], package='parsers')
+        self.cleaner_cls = eval(('self.cleaner_module.' + 
             self.cfg['paths']['cleaner_name']), globals(), locals())
 
     def __call__(self, fpath):
