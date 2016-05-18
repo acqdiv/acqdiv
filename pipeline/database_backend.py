@@ -193,13 +193,3 @@ class Morpheme(Base):
     pos = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     warning = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
 
-
-class Warnings(Base):
-    """ Warnings found during parsing
-    """
-    __tablename__ = 'warnings'
-
-    id = Column(Integer,primary_key=True)
-    corpus = Column(Text, nullable=True, unique=False)
-    utterance_id_fk = Column(Text, ForeignKey('utterances.id'))
-    warning = Column(Text, nullable=True, unique=False)
