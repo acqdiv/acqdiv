@@ -17,10 +17,18 @@ cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 age_pattern = re.compile(".*;.*\..*")
 
 
-def setup():
+def setup(args):
+    """
+    Global setup
+    """
     global cfg, session
-    engine = sa.create_engine('sqlite:///tests/test.sqlite3')
-    # engine = sa.create_engine('sqlite:///../database/beta.sqlite3')
+
+    # If testing mode
+    if args.t:
+        engine = sa.create_engine('sqlite:///tests/test.sqlite3')
+    else:
+        engine = sa.create_engine('sqlite:///../database/acqdiv.sqlite3')
+
     meta = sa.MetaData(engine, reflect=True)
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -159,6 +167,11 @@ def clean_tlbx_pos_morphemes(row):
 
 
 def process_morphemes():
+    """
+    Process the morphemes table
+
+    # TODO: break this down by corpus and profile if it's faster
+    """
     table = session.query(backend.Morpheme)
     for row in table:
         # Clean up affix markers "-"; assign sfx, pfx, stem.
@@ -187,6 +200,9 @@ def get_word_pos(row):
 
 
 def process_utterances():
+    """
+    Process utterances table
+    """
     table = session.query(backend.Utterance)
     for row in table:
         # Unify the time stamps
@@ -216,6 +232,9 @@ def process_utterances():
 
 
 def process_speakers():
+    """
+    Process speakers table
+    """
     table = session.query(backend.Speaker)
     for row in table:
         update_age(row)
@@ -267,6 +286,9 @@ def unify_label(row):
 
 
 def get_session_date(session_id):
+    """
+    Return the session data
+    """
     rows = session.query(backend.Session).filter(backend.Session.id == session_id)
     return rows[0].date
 
@@ -433,15 +455,23 @@ def gender(row):
         row.gender = "Unspecified"
 
 
-def main():
-    setup()
+def main(args):
+    setup(args)
     postprocessor()
     commit()
 
 if __name__ == "__main__":
     import time
+    import argparse
+
     start_time = time.time()
-    main()
+
+    p = argparse.ArgumentParser()
+    p.add_argument('-t', action='store_true')
+    args = p.parse_args()
+
+    main(args)
+
     print("%s seconds --- Finished" % (time.time() - start_time))
     print()
     print('Next, run tests:')
