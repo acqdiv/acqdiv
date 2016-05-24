@@ -17,25 +17,8 @@ from database_backend import *
 import database_backend as db
 
 # logging.basicConfig(level=logging.INFO)
-logging.basicConfig(filemode='w')
-logger = logging.getLogger(__name__)
-handler = logging.FileHandler('errors.log')
-handler.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+logger = logging.getLogger('pipeline.' + __name__)
 
-# uncomment to define a Handler which writes INFO messages or higher to the sys.stderr
-"""
-console = logging.StreamHandler()
-console.setLevel(logging.INFO)
-# set a format which is simpler for console use
-formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-# tell the handler to use this format
-console.setFormatter(formatter)
-# add the handler to the root logger
-logging.getLogger('').addHandler(console)
-"""
 
 class CorpusProcessor(object):
     """ Handler for processing each session file in particular corpus.

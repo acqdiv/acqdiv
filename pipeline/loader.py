@@ -4,11 +4,34 @@
 from processors import *
 from parsers import *
 from database_backend import *
+import logging
 
 
 def main(args):
     """ Main processing loop; for each corpus config file process all session recordings and load database.
     """
+    logging.basicConfig(filemode='w')
+    logger = logging.getLogger('pipeline')
+    logger.setLevel(logging.INFO)
+    handler = logging.FileHandler('errors.log')
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - '
+                                    '%(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    # uncomment to define a Handler which writes INFO messages or higher to the sys.stderr
+    """
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+    # set a format which is simpler for console use
+    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+    # tell the handler to use this format
+    console.setFormatter(formatter)
+    # add the handler to the root logger
+    logging.getLogger('').addHandler(console)
+    """
+
     # If testing mode
     if args.t:
         print("Writing test database to: acqdiv/pipeline/tests/test.sqlite3")
