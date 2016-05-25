@@ -78,7 +78,8 @@ class XMLCleaner(object):
             except Exception as e:
                 XMLCleaner.logger.warning("Aborted processing of utterance {} "
                         "in file {} with error: {}".format(
-                            u.attrib.get('uID'), self.fpath, repr(e)))
+                            u.attrib.get('uID'), self.fpath, repr(e)),
+                                          exc_info=sys.exc_info())
                 u.getparent().remove(u)
 
         return xmldoc
