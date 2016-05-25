@@ -8,7 +8,6 @@ import logging
 import os
 import pdb
 import re
-import traceback
 
 from sqlalchemy.orm import sessionmaker
 
@@ -44,9 +43,8 @@ class CorpusProcessor(object):
             try:
                 s.process_session()
             except Exception as e:
-                logger.warn("Aborted processing of file {}: exception: {}\n"
-                        "Stacktrace:\n{}".format(session_file, type(e), 
-                            traceback.format_exc()))
+                logger.warning("Aborted processing of file {}: "
+                            "exception: {}".format(session_file, type(e)))
             # TODO: uncomment when XMLParsers are finished
             # s.commit()
 
@@ -152,9 +150,8 @@ class SessionProcessor(object):
                         self.session.morphemes.append(morpheme)
                 except TypeError:
                     logger.warn("Error processing morphemes in "
-                                "word {} in {} utterance {}:\n{}".format(i, 
-                                    self.corpus, utterance['source_id'],
-                                    traceback.format_exc()))
+                                "word {} in {} utterance {}".format(i, 
+                                    self.corpus, utterance['source_id']))
                 except IndexError:
                     logger.info("Word {} in {} utterance {} "
                                 "has no morphemes".format(i, self.corpus,

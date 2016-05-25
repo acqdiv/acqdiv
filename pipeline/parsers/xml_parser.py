@@ -5,7 +5,6 @@ import logging
 import lxml
 import pdb
 import re
-import traceback
 
 from collections import deque
 from collections import namedtuple
@@ -135,9 +134,8 @@ class XMLParser(object):
 
             except Exception as e:
                 XMLParser.logger.warn("Encountered problem processing "
-                                      "utterance: {}\n{}"
-                                      "Skipping...".format(repr(e), 
-                                          traceback.format_exc()))
+                                      "utterance: {}. "
+                                      "Skipping...".format(repr(e)))
 
     def _clean_words(self, words):
         new_words = deque()
