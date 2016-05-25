@@ -4,11 +4,38 @@
 from processors import *
 from parsers import *
 from database_backend import *
+import logging
+import pipeline_logging
 
 
 def main(args):
     """ Main processing loop; for each corpus config file process all session recordings and load database.
     """
+    logger = logging.getLogger('pipeline')
+    handler = logging.FileHandler('errors.log', mode='w')
+    handler.setLevel(logging.INFO)
+    if args.s:
+        formatter = logging.Formatter('%(asctime)s - %(name)s - '
+                                        '%(levelname)s - %(message)s')
+    else:
+        formatter = pipeline_logging.SuppressingFormatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+
+    # uncomment to define a Handler which writes INFO messages or higher to the sys.stderr
+    """
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+    # set a format which is simpler for console use
+    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+    # tell the handler to use this format
+    console.setFormatter(formatter)
+    # add the handler to the root logger
+    logging.getLogger('').addHandler(console)
+    """
+
     # If testing mode
     if args.t:
         print("Writing test database to: acqdiv/pipeline/tests/test.sqlite3")
@@ -47,6 +74,7 @@ if __name__ == "__main__":
 
     p = argparse.ArgumentParser()
     p.add_argument('-t', action='store_true')
+    p.add_argument('-s', action='store_true')
     args = p.parse_args()
 
     main(args)

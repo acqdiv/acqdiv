@@ -5,7 +5,7 @@ import logging
 import lxml
 import pdb
 import re
-import traceback
+import sys
 
 from collections import deque
 from collections import namedtuple
@@ -28,13 +28,7 @@ class XMLParserFactory(object):
 
 class XMLParser(object):
 
-    logging.basicConfig(filemode='w')
-    logger = logging.getLogger(__name__)
-    handler = logging.FileHandler('errors.log')
-    handler.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    logger = logging.getLogger('pipeline.' + __name__)
 
     udict = { 'utterance_id':None,
               'session_id_fk':None,
@@ -140,10 +134,10 @@ class XMLParser(object):
                 yield XMLParser.rstruc(udict, words, mwords)
 
             except Exception as e:
-                XMLParser.logger.warn("Encountered problem processing "
-                                      "utterance: {}\n{}"
-                                      "Skipping...".format(repr(e), 
-                                          traceback.format_exc()))
+                XMLParser.logger.warning("Encountered problem processing "
+                                         "utterance: {}. "
+                                         "Skipping...".format(repr(e)),
+                                         exc_info=sys.exc_info())
 
     def _clean_words(self, words):
         new_words = deque()

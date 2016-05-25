@@ -6,7 +6,6 @@ import os
 import pdb
 import re
 import sys
-import traceback
 
 from collections import defaultdict
 from lxml import etree
@@ -15,13 +14,7 @@ from parsers.metadata import Chat
 
 class XMLCleaner(object):
 
-    logging.basicConfig(filemode='w')
-    logger = logging.getLogger(__name__)
-    handler = logging.FileHandler('errors.log')
-    handler.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    logger = logging.getLogger('pipeline.' + __name__)
 
     @staticmethod
     def creadd(location, key, value):
@@ -83,17 +76,18 @@ class XMLCleaner(object):
             try:
                 self._clean_xml_utterance(u)
             except Exception as e:
-                XMLCleaner.logger.warn("Aborted processing of utterance {} "
-                        "in file {} with error: {}\nStacktrace: {}".format(
-                            u.attrib.get('uID'), self.fpath, repr(e),
-                            traceback.format_exc()))
+                XMLCleaner.logger.warning("Aborted processing of utterance {} "
+                        "in file {} with error: {}".format(
+                            u.attrib.get('uID'), self.fpath, repr(e)),
+                                          exc_info=sys.exc_info())
                 u.getparent().remove(u)
 
         return xmldoc
 
     def _debug_xml(self):
         xmld = self._clean_xml()
-        sys.stdout.write(etree.tostring(xmld, encoding='unicode', pretty_print=True))
+        sys.stdout.write(etree.tostring(xmld, encoding='unicode',
+                                        pretty_print=True))
 
     def _clean_xml_utterance(self, u):
 

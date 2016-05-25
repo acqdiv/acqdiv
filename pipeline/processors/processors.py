@@ -8,7 +8,7 @@ import logging
 import os
 import pdb
 import re
-import traceback
+import sys
 
 from sqlalchemy.orm import sessionmaker
 
@@ -16,26 +16,8 @@ from parsers import *
 from database_backend import *
 import database_backend as db
 
-# logging.basicConfig(level=logging.INFO)
-logging.basicConfig(filemode='w')
-logger = logging.getLogger(__name__)
-handler = logging.FileHandler('errors.log')
-handler.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+logger = logging.getLogger('pipeline.' + __name__)
 
-# uncomment to define a Handler which writes INFO messages or higher to the sys.stderr
-"""
-console = logging.StreamHandler()
-console.setLevel(logging.INFO)
-# set a format which is simpler for console use
-formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-# tell the handler to use this format
-console.setFormatter(formatter)
-# add the handler to the root logger
-logging.getLogger('').addHandler(console)
-"""
 
 class CorpusProcessor(object):
     """ Handler for processing each session file in particular corpus.
@@ -62,9 +44,9 @@ class CorpusProcessor(object):
             try:
                 s.process_session()
             except Exception as e:
-                logger.warn("Aborted processing of file {}: exception: {}\n"
-                        "Stacktrace:\n{}".format(session_file, type(e), 
-                            traceback.format_exc()))
+                logger.warning("Aborted processing of file {}: "
+                               "exception: {}".format(session_file, type(e)),
+                               exc_info=sys.exc_info())
             # TODO: uncomment when XMLParsers are finished
             # s.commit()
 
@@ -170,9 +152,8 @@ class SessionProcessor(object):
                         self.session.morphemes.append(morpheme)
                 except TypeError:
                     logger.warn("Error processing morphemes in "
-                                "word {} in {} utterance {}:\n{}".format(i, 
-                                    self.corpus, utterance['source_id'],
-                                    traceback.format_exc()))
+                                "word {} in {} utterance {}".format(i, 
+                                    self.corpus, utterance['source_id']))
                 except IndexError:
                     logger.info("Word {} in {} utterance {} "
                                 "has no morphemes".format(i, self.corpus,
