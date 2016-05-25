@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 """ Parser for Toolbox files for the Russian, Chintang and Indonesian corpora
 """
 
@@ -10,6 +10,7 @@ import contextlib
 from itertools import zip_longest
 
 # logging.basicConfig(filename='toolbox.log', level=logging.INFO)
+logger = logging.getLogger('pipeline' + __name__)
 
 class ToolboxFile(object):
     """ Toolbox Standard Format text file as iterable over records
@@ -487,7 +488,7 @@ class ToolboxFile(object):
                 d['type'] = self.config['morphemes']['type'] # what type of morpheme as defined in the corpus .ini
                 d['warning'] = None if len(warnings) == 0 else " ".join(warnings)
                 l.append(d)
-                logging.info("Length of morphemes, glosses, poses don't match in the Toolbox file: " + utterance['source_id'])
+                logger.info("Length of morphemes, glosses, poses don't match in the Toolbox file: " + utterance['source_id'])
             result.append(l)
         return result
 
