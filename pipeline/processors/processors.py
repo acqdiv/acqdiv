@@ -16,7 +16,6 @@ from parsers import *
 from database_backend import *
 import database_backend as db
 
-# logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('pipeline.' + __name__)
 
 

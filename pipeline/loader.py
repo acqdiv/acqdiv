@@ -10,15 +10,14 @@ import logging
 def main(args):
     """ Main processing loop; for each corpus config file process all session recordings and load database.
     """
-    logging.basicConfig(filemode='w')
     logger = logging.getLogger('pipeline')
-    logger.setLevel(logging.INFO)
-    handler = logging.FileHandler('errors.log')
+    handler = logging.FileHandler('errors.log', mode='w')
     handler.setLevel(logging.INFO)
     formatter = logging.Formatter('%(asctime)s - %(name)s - '
                                     '%(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 
     # uncomment to define a Handler which writes INFO messages or higher to the sys.stderr
     """
