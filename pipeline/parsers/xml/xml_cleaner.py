@@ -235,7 +235,12 @@ class XMLCleaner(object):
             #    w.attrib['warning'] = ''
 
     def _clean_groups(self, u):
-        for group in u.iterfind('.//g'):
+        for group in u.iterfind('g'):
+
+            subgroups = group.findall('g')
+            if subgroups != []:
+                for subgroup in subgroups:
+                    self._clean_groups(subgroup)
 
             parent = group.getparent()
             idx = parent.index(group)
