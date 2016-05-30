@@ -293,20 +293,21 @@ def update_imdi_age(row):
     # Check birthdate
     # ["Un%", "None"]
     # TODO: Cazim fix this part
-    if not (row.birthdate.__contains__("Un") or row.birthdate.__contains__("None")):
-        try:
-            session_date = get_session_date(row.session_id_fk)
-            recording_date = age.numerize_date(session_date)
-            birth_date = age.numerize_date(row.birthdate)
-            ages = age.format_imdi_age(birth_date, recording_date)
-            row.age = ages[0]
-            row.age_in_days = ages[1]
-        except age.BirthdateError as e:
-            print("Warning: couldn't calculate age of speaker {} from birth and recording dates".format(row.id), file=sys.stderr)
-            print("Invalid birthdate: {}. Check data in {} file {}".format(e.bad_data, row.corpus, row.id), file=sys.stderr)
-        except age.SessionDateError as e:
-            print("Warning: couldn't calculate age of speaker {} from birth and recording dates".format(row.id), file=sys.stderr)
-            print("Invalid session recording date: \"{}\"\nCheck data in {} file {}".format(e.bad_data, row.corpus, row.id), file=sys.stderr)
+    if not row.birthdate is None:
+        if not (row.birthdate.__contains__("Un") or row.birthdate.__contains__("None")):
+            try:
+                session_date = get_session_date(row.session_id_fk)
+                recording_date = age.numerize_date(session_date)
+                birth_date = age.numerize_date(row.birthdate)
+                ages = age.format_imdi_age(birth_date, recording_date)
+                row.age = ages[0]
+                row.age_in_days = ages[1]
+            except age.BirthdateError as e:
+                print("Warning: couldn't calculate age of speaker {} from birth and recording dates".format(row.id), file=sys.stderr)
+                print("Invalid birthdate: {}. Check data in {} file {}".format(e.bad_data, row.corpus, row.id), file=sys.stderr)
+            except age.SessionDateError as e:
+                print("Warning: couldn't calculate age of speaker {} from birth and recording dates".format(row.id), file=sys.stderr)
+                print("Invalid session recording date: \"{}\"\nCheck data in {} file {}".format(e.bad_data, row.corpus, row.id), file=sys.stderr)
 
     # age_raw.like("%;%.%")
     if re.fullmatch(age_pattern, row.age_raw):
