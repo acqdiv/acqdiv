@@ -15,7 +15,7 @@ from processors import age
 session = None
 cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 age_pattern = re.compile(".*;.*\..*")
-
+pos_index = {}
 
 def setup(args):
     """
@@ -112,6 +112,8 @@ def postprocessor():
     process_speakers()
     print("Processing morphemes...")
     process_morphemes()
+    print("Processing words...")
+    process_words()
 
     # Additional data
     # TODO: duplicate primary keys to additional roles
@@ -162,24 +164,21 @@ def process_morphemes():
             infer_pos(row)
         # Key-value substitutions for morphological glosses and parts-of-speech
         unify_label(row)
-        # Infer the word's part-of-speech from the morphemes
-        get_word_pos(row)
+        # Infer the word's part-of-speech from the morphemes table as index for word pos assignment
+        get_pos_index(row)
 
 
-def get_word_pos(row):
-    """
-    Populates word POS from morphemes table by taking the first non "pfx" or "sfx" value.
+def get_pos_index(row):
+    if not row.pos in ["sfx", "pfx"]:
+        # row.id will be int type in other tables when look up occurs; type it int here for convenience
+        pos_index[int(row.word_id_fk)] = row.pos
 
-    # TODO: Insert some debugging here if the labels are missing?
-    """
-    # get word_id_fk
-    word_id_fk = row.word_id_fk
-    pos = row.pos
 
-    table = session.query(backend.Word).filter(backend.Word.id==word_id_fk)
-    for result in table:
-        if not pos in ["sfx", "pfx"]:
-            result.pos = pos
+def process_words():
+    table = session.query(backend.Word)
+    for row in table:
+        if row.id in pos_index:
+            row.pos = pos_index[row.id]
 
 
 def process_utterances():
