@@ -1,6 +1,7 @@
 """ Post-processing processes on the corpora in the ACQDIV-DB.
 """
 
+import logging
 import sys
 import re
 
@@ -16,6 +17,7 @@ session = None
 cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 age_pattern = re.compile(".*;.*\..*")
 
+logger = logging.getLogger('pipeline' + __name__)
 
 def setup(args):
     """
@@ -212,7 +214,8 @@ def process_utterances():
                 row.end = age.unify_timestamps(row.end_raw)
             except Exception as e:
                 # TODO: log this
-                print("Error unifying timestamps: {}".format(row, e))
+                logger.warning('Error unifying timestamps: {}'.format(
+                    row, e), exc_info=sys.exc_info())
 
         # TODO: talk to Robert; remove if not needed
         if row.corpus == "Chintang":
@@ -319,11 +322,15 @@ def update_imdi_age(row):
             row.age = ages[0]
             row.age_in_days = ages[1]
         except age.BirthdateError as e:
-            print("Warning: couldn't calculate age of speaker {} from birth and recording dates".format(row.id), file=sys.stderr)
-            print("Invalid birthdate: {}. Check data in {} file {}".format(e.bad_data, row.corpus, row.id), file=sys.stderr)
+            logger.warning('Couldn\'t calculate age of speaker {} '
+                           'from birth and recording dates: '
+                           'Invalid birthdate.'.format(
+                               row.id), exc_info=sys.exc_info())
         except age.SessionDateError as e:
-            print("Warning: couldn't calculate age of speaker {} from birth and recording dates".format(row.id), file=sys.stderr)
-            print("Invalid session recording date: \"{}\"\nCheck data in {} file {}".format(e.bad_data, row.corpus, row.id), file=sys.stderr)
+            logger.warning('Couldn\'t calculate age of speaker {} '
+                           'from birth and recording dates: '
+                           'Invalid recording date.'.format(
+                               row.id), exc_info=sys.exc_info())
 
     # age_raw.like("%;%.%")
     if re.fullmatch(age_pattern, row.age_raw):
@@ -338,9 +345,9 @@ def update_imdi_age(row):
                 row.age = ages[0]
                 row.age_in_days = ages[1]
             except ValueError as e:
-                print("Error: Couldn't transform age of speaker {}".format(row.id), file=sys.stderr)
-                print("Age data {} could not be converted to int\nCheck data in {} file {}".format(row.age_raw, row.corpus, row.id), file=sys.stderr)
-                print("Warning: this speaker is likely to be completely without age data in the DB!")
+                logger.warning('Couldn\'t transform age of '
+                               'speaker {}'.format(row.id),
+                               exc_info=sys.exc_info())
 
 
 # TODO: age is format dependent
@@ -432,10 +439,10 @@ def role(row):
             pass
 
     if len(not_found) > 0:
-        print("-- WARNING --")
         for item in not_found:
-            print("'"+item[0]+"'","from",item[1])
-        print("not found in role_mapping.ini\n--------")
+            logger.warning('\'{}\' from {} not found in '
+                           'role_mapping.ini'.format(item[0], item[1]),
+                           exc_info=sys.exc_info())
 
 
 def gender(row):

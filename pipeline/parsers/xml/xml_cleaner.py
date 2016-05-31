@@ -303,7 +303,8 @@ class XMLCleaner(object):
                                 group_ws[j].attrib['warning'])
                 else:
                     if 'warning' in group_ws[j].attrib:
-                        re.sub('; search ahead', '', group_ws[j].attrib['warning'])
+                        re.sub('; search ahead', '',
+                               group_ws[j].attrib['warning'])
                 group_ws[j].find('target').text = u_ws[i].find('target').text
                 if 'glossed' in group_ws[j].attrib:
                     del group_ws[j].attrib['glossed']

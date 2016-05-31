@@ -63,9 +63,14 @@ class TurkishCleaner(XMLCleaner):
 
                 # some words in <w> have a warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
                 # -> incremeent the <w> counter by one as long as the present morphological word is associated with the next <w>
-                while('warning' in full_words[word_index].attrib and
-                    re.search('not glossed',full_words[word_index].attrib['warning'])):
-                    word_index += 1
+                try:
+                    while('warning' in full_words[word_index].attrib and
+                        re.search('not glossed',
+                                  full_words[word_index].attrib['warning'])):
+                        word_index += 1
+                except IndexError:
+                    u.remove(morphology)
+                    return
                                                         
                 # full_words[word_index]['morphemes'] is a list of morphemes; initial index is -1
                 
