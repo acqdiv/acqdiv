@@ -29,6 +29,5 @@ if __name__=="__main__":
     write_table("speakers")
     write_table("uniquespeakers")
     write_table("utterances")
-    write_table("warnings")
     write_table("words")
     write_table("morphemes")    

@@ -3,7 +3,7 @@
 # path were CSV tables lie
 base = "./csv/"
 # list of table names
-tables = c("morphemes","sessions","speakers","uniquespeakers","utterances","warnings","words")
+tables = c("morphemes","sessions","speakers","uniquespeakers","utterances","words")
 
 # read CSV tables from base directory
 for (table in tables){
