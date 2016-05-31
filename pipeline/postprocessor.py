@@ -2,8 +2,9 @@
 """
 
 import logging
-import sys
+import pipeline_logging
 import re
+import sys
 
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
@@ -17,7 +18,7 @@ session = None
 cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 age_pattern = re.compile(".*;.*\..*")
 
-logger = logging.getLogger('pipeline' + __name__)
+
 pos_index = {}
 
 def setup(args):
@@ -318,7 +319,8 @@ def update_imdi_age(row):
         row.age_in_days = age.calculate_xml_days(row.age_raw)
 
     # Check age again?
-    if not row.age_raw.__contains__("None") or not row.age_raw.__contains__("Un") or row.age == None:
+    if not ("None" in row.age_raw or
+            "Un" in row.age_raw or row.age == None):
         if not cleaned_age.fullmatch(row.age_raw):
             try:
                 ages = age.clean_incomplete_ages(row.age_raw)
@@ -455,7 +457,22 @@ if __name__ == "__main__":
 
     p = argparse.ArgumentParser()
     p.add_argument('-t', action='store_true')
+    p.add_argument('-s', action='store_true')
     args = p.parse_args()
+
+    global logger
+    logger = logging.getLogger('pipeline.postprocessor')
+    handler = logging.FileHandler('errors.log', mode='a')
+    handler.setLevel(logging.INFO)
+    if args.s:
+        formatter = logging.Formatter('%(asctime)s - %(name)s - '
+                                        '%(levelname)s - %(message)s')
+    else:
+        formatter = pipeline_logging.SuppressingFormatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 
     main(args)
 
