@@ -149,7 +149,7 @@ class Session:
             logger.error("Date in wrong format", extra={"object_number": Session.session_number, "object_id": self.code})
 
         # after all corrections being made before, finally check if the format of the code is now right
-        if not re.fullmatch(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-[A-Z]+)?", self.code):
+        if not re.fullmatch(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-([A-Z]+|\d+|\d+[A-Z]+))?", self.code):
             logger.error("General error in code", extra={"object_number": Session.session_number, "object_id": self.code})
 
 
@@ -197,7 +197,7 @@ class Session:
                 "cousin", "grandmother", "sister", "father", "aunt",
                 "uncle", "grandfather", "teacher", "older brother", "stepfather",
                 "researcher", "older sister", "nephew", "family friend", "linguist",
-                "great grandmother", "great grandfather", "cousin"
+                "great grandmother", "great grandfather", "cousin", "relative"
             }
 
             # hash for replacing certain informal terms or non-standard spellings
@@ -205,7 +205,7 @@ class Session:
                 "auntie": "aunt", "grandma": "grandmother", "grandpa": "grandfather",
                 "dad": "father", "mum": "mother", "step-father": "stepfather",
                 "step-mother": "stepmother", "great-grandmother": "great grandmother",
-                "great-grandfather": "great grandfather"
+                "great-grandfather": "great grandfather", "brother 2": "brother"
             }
 
             # sometimes commas occur at the end of the participant and roles, so strip them away too
@@ -381,9 +381,6 @@ class Participant:
             self.birthdate = self.birthdate.strip(" ")
             self.birthdate = validate_date(self.birthdate, Participant.participant_number, self.shortname)
 
-        else:
-            logger.warning("Birthdate missing",
-                extra={"object_number": Participant.participant_number, "object_id": self.shortname})
 
 
     def check_Age(self):
@@ -427,14 +424,14 @@ class Participant:
                     extra={"object_number": Participant.participant_number, "object_id": self.shortname})
 
         else:
-            logger.info("Age value missing", extra={"object_number": Participant.participant_number, "object_id": self.shortname})
+            if not self.birthdate:
+                logger.info("Both age and date of birth missing", extra={"object_number": Participant.participant_number, "object_id": self.shortname})
 
 
     def check_Gender(self):
         """Check if the gender field has either the value Female or Male."""
         if self.gender:
-            self.gender = self.gender.strip(" ")
-
+            self.gender = self.gender.strip(" ").title()
             if self.gender != "Female" and self.gender != "Male":
                 logger.error("Gender value not correct - allowed values are 'Female' or 'Male'",
                     extra={"object_number": Participant.participant_number, "object_id": self.shortname})
@@ -445,6 +442,10 @@ class Participant:
 
     def check_Lang(self):
         """Check if the language fields have the values English or Dene."""
+        # replace 'n/a' by empty string
+        self.firstlang = self.firstlang.strip(" ").replace("n/a", "")
+        self.mainlang = self.mainlang.strip(" ").replace("n/a", "")
+
         if self.firstlang and self.mainlang:
             self.firstlang = replace_i(self.firstlang.strip(" "))
             self.mainlang = replace_i(self.mainlang.strip(" "))
@@ -557,7 +558,7 @@ if __name__ == "__main__":
                         "Gender": participant.gender,
                         "Education": replace_i(row["Education"].strip(" ")),
                         "First languages": participant.firstlang,
-                        "Second languages": replace_i(row["Second languages"].strip(" ")),
+                        "Second languages": replace_i(row["Second languages"].strip(" ").replace("n/a", "")),
                         "Main language": participant.mainlang,
                         "Language biography": replace_i(row["Language biography"].strip(" ")),
                         "Description": replace_i(row["Description"].strip(" ")),

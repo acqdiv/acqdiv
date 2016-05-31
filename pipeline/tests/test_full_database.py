@@ -51,7 +51,7 @@ def test_database_integrity():
     yield check_values, query, gender
 
     query = "select role from speakers group by role"
-    role = ["Adult", "Aunt", "Babysitter", "Brother", "Caller", "Caretaker", "Cousin", "Daughter", "Family_Friend", "Father", "Friend", "Grandfather", "Grandmother", "Great-Grandmother", "Host", "Housekeeper", "Mother", "Neighbour", "Niece", "Non_Human", "Playmate", "Research_Team", "Sibling", "Sister", "Sister-in-law", "Son", "Speaker", "Student", "Subject", "Target_Child", "Teacher", "Toy", "Twin_Brother", "Uncle", "Unknown", "Visitor"]
+    role = ["Adult", "Aunt", "Babysitter", "Brother", "Caller", "Caretaker", "Cousin", "Daughter", "Family_Friend", "Father", "Friend", "Grandfather", "Grandmother", "Great-Grandmother", "Host", "Housekeeper", "Mother", "Neighbour", "Niece", "Playmate", "Research_Team", "Sibling", "Sister", "Sister-in-law", "Son", "Speaker", "Student", "Subject", "Target_Child", "Teacher", "Toy", "Twin_Brother", "Uncle", "Unknown", "Visitor"]
     yield check_values, query, role
 
     query = "select macrorole from speakers group by macrorole"

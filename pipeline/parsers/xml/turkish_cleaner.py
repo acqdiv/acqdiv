@@ -197,7 +197,7 @@ class TurkishCleaner(XMLCleaner):
         # if there is no morphology, add warning to complete utterance
 
 
-    # EOF Turkish_KULLD
+    # EOF Turkish
     
 
 if __name__ == '__main__':
@@ -205,7 +205,7 @@ if __name__ == '__main__':
     from parsers import CorpusConfigParser as Ccp
     conf = Ccp()
     conf.read('ini/Turkish.ini')
-    corpus = TurkishCleaner(conf, 'tests/corpora/Turkish_KULLD/xml/Turkish_KULLD.xml')
+    corpus = TurkishCleaner(conf, 'tests/corpora/Turkish/xml/Turkish_KULLD.xml')
 
     corpus._debug_xml()
 

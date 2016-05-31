@@ -18,6 +18,7 @@ cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 age_pattern = re.compile(".*;.*\..*")
 
 logger = logging.getLogger('pipeline' + __name__)
+pos_index = {}
 
 def setup(args):
     """
@@ -39,7 +40,7 @@ def setup(args):
     global roles
     roles = ConfigParser(delimiters=('='))
     roles.optionxform = str
-    roles.read("role_mapping.ini")
+    roles.read("ini/role_mapping.ini")
 
     # Load the corpus configs
     global chintang, cree, indonesian, inuktitut, miyata, miipro, russian, sesotho, turkish, yucatec
@@ -96,7 +97,7 @@ def get_config(corpus_name):
         return russian
     elif corpus_name == "Sesotho":
         return sesotho
-    elif corpus_name == "Turkish_KULLD":
+    elif corpus_name == "Turkish":
         return turkish
     elif corpus_name == "Yucatec":
         return yucatec
@@ -114,58 +115,43 @@ def postprocessor():
     process_speakers()
     print("Processing morphemes...")
     process_morphemes()
+    print("Processing words...")
+    process_words()
 
     # Additional data
     # TODO: duplicate primary keys to additional roles
 
 
-def clean_tlbx_pos_morphemes(row):
-    """ Function that cleans pos and morphemes in Chintang and Indonesian.
-        It also cleans the morpheme (for Chintang and Russian) and gloss_raw (Indonesian) column in the utterances
-        table because cleaning them within the Toolbox parser messes up the morphemes table.
-
-    Args:
-        session: SQLAlchemy session object.
-        config: CorpusConfigParser object.
+def infer_pos(row):
+    """ Chintang and Indonesian part-of-speech inference. Also removes hyphens from raw input data.
     """
-    # if config["corpus"]["corpus"] == "Chintang":
-    # get pfx and sfx
+
+    # Linguistic-specific stuff
+    if row.corpus == "Indonesian":
+        if not row.gloss_raw is None:
+            if row.gloss_raw.startswith('-'):
+                row.pos_raw = 'sfx'
+            elif row.gloss_raw.endswith('-'):
+                row.pos_raw = 'pfx'
+            elif row.gloss_raw == '???':
+                row.pos_raw = '???'
+            else:
+                row.pos_raw = 'stem'
 
     if row.corpus == "Chintang":
-        try:
+        if not row.pos_raw is None:
             if row.pos_raw.startswith('-'):
-                row.pos = 'sfx'
                 row.pos_raw = 'sfx'
             elif row.pos_raw.endswith('-'):
-                row.pos = 'pfx'
                 row.pos_raw = 'pfx'
-            else:
-                row.pos_raw = row.pos_raw.strip('-')
-                row.pos = row.pos_raw
-            # strip '-' from morphemes and gloss_raw
-            row.morpheme = row.morpheme.strip('-')
-            row.gloss_raw = row.gloss_raw.strip('-')
-            row.gloss = row.gloss.strip('-')
-        except AttributeError:
-            pass
 
-    if row.corpus == "Indonesian":
-        try:
-            if row.gloss_raw.startswith('-'):
-                row.pos = 'sfx'
-                row.gloss_raw = row.gloss_raw.strip('-')
-            elif row.gloss_raw.endswith('-'):
-                row.pos = 'pfx'
-                row.gloss_raw = row.gloss_raw.strip('-')
-            elif row.gloss_raw == '???':
-                row.pos = '???'
-            else:
-                row.pos = 'stem'
-            row.morpheme = row.morpheme.strip('-')
-        except AttributeError:
-            pass
-        except TypeError:
-            pass
+    # Clean everything
+    if not row.morpheme is None:
+        row.morpheme = row.morpheme.replace('-', '')
+    if not row.gloss_raw is None:
+        row.gloss_raw = row.gloss_raw.replace('-', '')
+    if not row.pos_raw is None:
+        row.pos_raw = row.pos_raw.replace('-', '')
 
 
 def process_morphemes():
@@ -178,27 +164,24 @@ def process_morphemes():
     for row in table:
         # Clean up affix markers "-"; assign sfx, pfx, stem.
         if row.corpus == "Chintang" or row.corpus == "Indonesian":
-            clean_tlbx_pos_morphemes(row)
+            infer_pos(row)
         # Key-value substitutions for morphological glosses and parts-of-speech
         unify_label(row)
-        # Infer the word's part-of-speech from the morphemes
-        get_word_pos(row)
+        # Infer the word's part-of-speech from the morphemes table as index for word pos assignment
+        get_pos_index(row)
 
 
-def get_word_pos(row):
-    """
-    Populates word POS from morphemes table by taking the first non "pfx" or "sfx" value.
+def get_pos_index(row):
+    if not row.pos in ["sfx", "pfx"]:
+        # row.id will be int type in other tables when look up occurs; type it int here for convenience
+        pos_index[int(row.word_id_fk)] = row.pos
 
-    # TODO: Insert some debugging here if the labels are missing?
-    """
-    # get word_id_fk
-    word_id_fk = row.word_id_fk
-    pos = row.pos
 
-    table = session.query(backend.Word).filter(backend.Word.id==word_id_fk)
-    for result in table:
-        if not pos in ["sfx", "pfx"]:
-            result.pos = pos
+def process_words():
+    table = session.query(backend.Word)
+    for row in table:
+        if row.id in pos_index:
+            row.pos = pos_index[row.id]
 
 
 def process_utterances():
@@ -310,9 +293,6 @@ def update_imdi_age(row):
     Finally, it looks for speakers that only have an age in years and does the same.
     """
 
-    # Check birthdate
-    # ["Un%", "None"]
-    # TODO: Cazim fix this part
     if not (row.birthdate.__contains__("Un") or row.birthdate.__contains__("None")):
         try:
             session_date = get_session_date(row.session_id_fk)
