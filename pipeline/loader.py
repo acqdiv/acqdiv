@@ -48,8 +48,9 @@ def main(args):
         engine = db_connect('sqlite:///../database/acqdiv.sqlite3')
         create_tables(engine)
 
-    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
-                'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
+    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini',
+               'Japanese_Miyata.ini', 'Japanese_MiiPro.ini', 'Russian.ini',
+               'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
 
     # Parse the config file and call the sessions processor
     for config in configs:

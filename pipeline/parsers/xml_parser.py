@@ -82,7 +82,8 @@ class XMLParser(object):
                 udict['warning'] = u.attrib.get('warning')
 
                 udict['addressee'] = XMLCleaner.find_text(u, 'addressee')
-                udict['translation'] = XMLCleaner.find_text(u, 'translation')
+                udict['english_translation'] = XMLCleaner.find_text(
+                    u, 'english_translation')
                 udict['comment'] = XMLCleaner.find_text(u, 'comment')
 
                 udict['starts_at'] = XMLCleaner.find_xpath(u, 'media/@start')
