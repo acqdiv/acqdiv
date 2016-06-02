@@ -5,6 +5,7 @@ from processors import *
 from parsers import *
 from database_backend import *
 import logging
+import pipeline_logging
 
 
 def main(args):
@@ -13,8 +14,12 @@ def main(args):
     logger = logging.getLogger('pipeline')
     handler = logging.FileHandler('errors.log', mode='w')
     handler.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - '
-                                    '%(levelname)s - %(message)s')
+    if args.s:
+        formatter = logging.Formatter('%(asctime)s - %(name)s - '
+                                        '%(levelname)s - %(message)s')
+    else:
+        formatter = pipeline_logging.SuppressingFormatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
@@ -43,8 +48,9 @@ def main(args):
         engine = db_connect('sqlite:///../database/acqdiv.sqlite3')
         create_tables(engine)
 
-    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini', 'Japanese_Miyata.ini',
-                'Japanese_MiiPro.ini', 'Russian.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
+    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini',
+               'Japanese_Miyata.ini', 'Japanese_MiiPro.ini', 'Russian.ini',
+               'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
 
     # Parse the config file and call the sessions processor
     for config in configs:
@@ -69,6 +75,7 @@ if __name__ == "__main__":
 
     p = argparse.ArgumentParser()
     p.add_argument('-t', action='store_true')
+    p.add_argument('-s', action='store_true')
     args = p.parse_args()
 
     main(args)

@@ -78,14 +78,15 @@ class XMLCleaner(object):
             except Exception as e:
                 XMLCleaner.logger.warning("Aborted processing of utterance {} "
                         "in file {} with error: {}".format(
-                            u.attrib.get('uID'), self.fpath, repr(e)))
+                            u.attrib.get('uID'), self.fpath, repr(e)),
+                                          exc_info=sys.exc_info())
                 u.getparent().remove(u)
 
         return xmldoc
 
-    def _debug_xml(self):
+    def _debug_xml(self, fd):
         xmld = self._clean_xml()
-        sys.stdout.write(etree.tostring(xmld, encoding='unicode',
+        fd.write(etree.tostring(xmld, encoding='unicode',
                                         pretty_print=True))
 
     def _clean_xml_utterance(self, u):
@@ -234,7 +235,12 @@ class XMLCleaner(object):
             #    w.attrib['warning'] = ''
 
     def _clean_groups(self, u):
-        for group in u.iterfind('.//g'):
+        for group in u.iterfind('g'):
+
+            subgroups = group.findall('g')
+            if subgroups != []:
+                for subgroup in subgroups:
+                    self._clean_groups(subgroup)
 
             parent = group.getparent()
             idx = parent.index(group)
@@ -270,7 +276,8 @@ class XMLCleaner(object):
                     if mor is not None:
                         w.append(copy.deepcopy(mor))
                         if 'warning' in w.attrib:
-                            w.attrib['warning'] = re.sub('not glossed; search ahead',
+                            w.attrib['warning'] = re.sub(
+                                'not glossed; search ahead',
                                     '', w.attrib['warning'])
                             if w.attrib['warning'] == '':
                                 del w.attrib['warning']
@@ -289,15 +296,16 @@ class XMLCleaner(object):
             base_index = u_ws.index(group_ws[-1]) + 1
             max_index = base_index + len(group_ws)
             for i,j in zip(range(base_index, max_index), itertools.count()):
-                if u_ws[i].find('mor') is not None: 
-                    mor = etree.SubElement(group_ws[j], 'mor')
-                    mor.text = u_ws[i].find('mor').text
+                mor = u_ws[i].find('mor')
+                if mor is not None: 
+                    group_ws[j].append(copy.deepcopy(mor))
                     if 'warning' in group_ws[j].attrib:
                         re.sub('not glossed; search ahead', '', 
                                 group_ws[j].attrib['warning'])
                 else:
                     if 'warning' in group_ws[j].attrib:
-                        re.sub('; search ahead', '', group_ws[j].attrib['warning'])
+                        re.sub('; search ahead', '',
+                               group_ws[j].attrib['warning'])
                 group_ws[j].find('target').text = u_ws[i].find('target').text
                 if 'glossed' in group_ws[j].attrib:
                     del group_ws[j].attrib['glossed']
@@ -324,10 +332,10 @@ class XMLCleaner(object):
             XMLCleaner.creadd(u.attrib, 'warning', 'not glossed')
         else:
             for w in u.findall('.//w'):
-                #print('alignment problem in ' + self.fpath + ', utterance ' + str(utterance_index) + ': general word tier <w> has
-                #+ str(length_words) + ' words vs ' + str(length_morphology) + ' in "mor" (= morphology)')
                 if w.find('./mor') is None:
-                    XMLCleaner.creadd(u.attrib, 'warning', 'broken alignment full_word : segments/glosses')
+                    XMLCleaner.creadd(u.attrib, 'warning',
+                                      'broken alignment full_word : '
+                                      'segments/glosses')
                     break
 
     def _restructure_metadata(self, u):
@@ -338,7 +346,7 @@ class XMLCleaner(object):
             else:
                 ntag = a.attrib['type']
                 if ' ' in ntag:
-                    ntag = ntag.split()[0]
+                    ntag = ntag.replace(' ', '_')
             a.tag = ntag
             del a.attrib['type']
 

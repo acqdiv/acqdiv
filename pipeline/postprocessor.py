@@ -1,8 +1,10 @@
 """ Post-processing processes on the corpora in the ACQDIV-DB.
 """
 
-import sys
+import logging
+import pipeline_logging
 import re
+import sys
 
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
@@ -15,6 +17,8 @@ from processors import age
 session = None
 cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 age_pattern = re.compile(".*;.*\..*")
+
+
 pos_index = {}
 
 def setup(args):
@@ -194,7 +198,8 @@ def process_utterances():
                 row.end = age.unify_timestamps(row.end_raw)
             except Exception as e:
                 # TODO: log this
-                print("Error unifying timestamps: {}".format(row, e))
+                logger.warning('Error unifying timestamps: {}'.format(
+                    row, e), exc_info=sys.exc_info())
 
         # TODO: talk to Robert; remove if not needed
         if row.corpus == "Chintang":
@@ -289,24 +294,24 @@ def update_imdi_age(row):
     Finally, it looks for speakers that only have an age in years and does the same.
     """
 
-    # Check birthdate
-    # ["Un%", "None"]
-    # TODO: Cazim fix this part
-    if not row.birthdate is None:
-        if not (row.birthdate.__contains__("Un") or row.birthdate.__contains__("None")):
-            try:
-                session_date = get_session_date(row.session_id_fk)
-                recording_date = age.numerize_date(session_date)
-                birth_date = age.numerize_date(row.birthdate)
-                ages = age.format_imdi_age(birth_date, recording_date)
-                row.age = ages[0]
-                row.age_in_days = ages[1]
-            except age.BirthdateError as e:
-                print("Warning: couldn't calculate age of speaker {} from birth and recording dates".format(row.id), file=sys.stderr)
-                print("Invalid birthdate: {}. Check data in {} file {}".format(e.bad_data, row.corpus, row.id), file=sys.stderr)
-            except age.SessionDateError as e:
-                print("Warning: couldn't calculate age of speaker {} from birth and recording dates".format(row.id), file=sys.stderr)
-                print("Invalid session recording date: \"{}\"\nCheck data in {} file {}".format(e.bad_data, row.corpus, row.id), file=sys.stderr)
+    if not (row.birthdate.__contains__("Un") or row.birthdate.__contains__("None")):
+        try:
+            session_date = get_session_date(row.session_id_fk)
+            recording_date = age.numerize_date(session_date)
+            birth_date = age.numerize_date(row.birthdate)
+            ages = age.format_imdi_age(birth_date, recording_date)
+            row.age = ages[0]
+            row.age_in_days = ages[1]
+        except age.BirthdateError as e:
+            logger.warning('Couldn\'t calculate age of speaker {} '
+                           'from birth and recording dates: '
+                           'Invalid birthdate.'.format(
+                               row.id), exc_info=sys.exc_info())
+        except age.SessionDateError as e:
+            logger.warning('Couldn\'t calculate age of speaker {} '
+                           'from birth and recording dates: '
+                           'Invalid recording date.'.format(
+                               row.id), exc_info=sys.exc_info())
 
     # age_raw.like("%;%.%")
     if re.fullmatch(age_pattern, row.age_raw):
@@ -314,16 +319,17 @@ def update_imdi_age(row):
         row.age_in_days = age.calculate_xml_days(row.age_raw)
 
     # Check age again?
-    if not row.age_raw.__contains__("None") or not row.age_raw.__contains__("Un") or row.age == None:
+    if not ("None" in row.age_raw or
+            "Un" in row.age_raw or row.age == None):
         if not cleaned_age.fullmatch(row.age_raw):
             try:
                 ages = age.clean_incomplete_ages(row.age_raw)
                 row.age = ages[0]
                 row.age_in_days = ages[1]
             except ValueError as e:
-                print("Error: Couldn't transform age of speaker {}".format(row.id), file=sys.stderr)
-                print("Age data {} could not be converted to int\nCheck data in {} file {}".format(row.age_raw, row.corpus, row.id), file=sys.stderr)
-                print("Warning: this speaker is likely to be completely without age data in the DB!")
+                logger.warning('Couldn\'t transform age of '
+                               'speaker {}'.format(row.id),
+                               exc_info=sys.exc_info())
 
 
 # TODO: age is format dependent
@@ -415,10 +421,10 @@ def role(row):
             pass
 
     if len(not_found) > 0:
-        print("-- WARNING --")
         for item in not_found:
-            print("'"+item[0]+"'","from",item[1])
-        print("not found in role_mapping.ini\n--------")
+            logger.warning('\'{}\' from {} not found in '
+                           'role_mapping.ini'.format(item[0], item[1]),
+                           exc_info=sys.exc_info())
 
 
 def gender(row):
@@ -451,7 +457,22 @@ if __name__ == "__main__":
 
     p = argparse.ArgumentParser()
     p.add_argument('-t', action='store_true')
+    p.add_argument('-s', action='store_true')
     args = p.parse_args()
+
+    global logger
+    logger = logging.getLogger('pipeline.postprocessor')
+    handler = logging.FileHandler('errors.log', mode='a')
+    handler.setLevel(logging.INFO)
+    if args.s:
+        formatter = logging.Formatter('%(asctime)s - %(name)s - '
+                                        '%(levelname)s - %(message)s')
+    else:
+        formatter = pipeline_logging.SuppressingFormatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 
     main(args)
 

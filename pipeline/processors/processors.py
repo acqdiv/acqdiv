@@ -8,6 +8,7 @@ import logging
 import os
 import pdb
 import re
+import sys
 
 from sqlalchemy.orm import sessionmaker
 
@@ -44,7 +45,8 @@ class CorpusProcessor(object):
                 s.process_session()
             except Exception as e:
                 logger.warning("Aborted processing of file {}: "
-                            "exception: {}".format(session_file, type(e)))
+                               "exception: {}".format(session_file, type(e)),
+                               exc_info=sys.exc_info())
             # TODO: uncomment when XMLParsers are finished
             # s.commit()
 
