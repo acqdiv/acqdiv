@@ -423,7 +423,7 @@ class ToolboxFile(object):
                 morphemes_cleaned = re.sub('xxx?|www', '???', morphemes_cleaned)
 
                 # Indonesian morphemes tier \mb may contain morpheme markers "-"
-                word_boundaries = re.split(_word_boundary, morphemes_cleaned)
+                word_boundaries = re.split(self._word_boundary, morphemes_cleaned)
                 for word in word_boundaries:
                     morphemes.append(word.split())
 
@@ -432,7 +432,7 @@ class ToolboxFile(object):
                 glosses_cleaned = re.sub('xxx?|www', '???', glosses_cleaned)
 
                 # This is the morpheme gloss line \ge may contain morpheme markers "-"
-                word_boundaries = re.split(_word_boundary, glosses_cleaned)
+                word_boundaries = re.split(self._word_boundary, glosses_cleaned)
                 for word in word_boundaries:
                     glosses.append(word.split())
 
@@ -455,7 +455,7 @@ class ToolboxFile(object):
                 # words = re.sub('(\s\-)|(\-\s)','-', morphemes_cleaned)
 
                 # word_boundaries = re.sub('(\s\-)|(\-\s)','%%%%%', morphemes_cleaned)
-                word_boundaries = re.split(_word_boundary, morphemes_cleaned)
+                word_boundaries = re.split(self._word_boundary, morphemes_cleaned)
                 for word in word_boundaries:
                     # TODO: double check this logic is correct with Robert
                     word = word.replace(" - ", " ") # remove floating clitic marker
@@ -464,7 +464,7 @@ class ToolboxFile(object):
                 warnings.append('no morpheme tier')
 
             if 'gloss_raw' in utterance.keys():
-                word_boundaries = re.split(_word_boundary, utterance['gloss_raw'])
+                word_boundaries = re.split(self._word_boundary, utterance['gloss_raw'])
                 for word in word_boundaries:
                     word = word.replace(" - ", " ") # remove floating clitic marker
                     glosses.append(word.split())
@@ -472,7 +472,7 @@ class ToolboxFile(object):
                 warnings.append('not glossed')
 
             if 'pos_raw' in utterance.keys():
-                word_boundaries = re.split(_word_boundary, utterance['pos_raw'])
+                word_boundaries = re.split(self._word_boundary, utterance['pos_raw'])
                 for word in word_boundaries:
                     word = word.replace(" - ", " ") # remove floating clitic marker
                     poses.append(word.split())
