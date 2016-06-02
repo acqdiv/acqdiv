@@ -499,7 +499,6 @@ class ToolboxFile(object):
                 l.append(d)
                 logger.info("Length of morphemes, glosses, poses don't match in the Toolbox file: " + utterance['source_id'])
             result.append(l)
-        print(result)
         return result
 
 
