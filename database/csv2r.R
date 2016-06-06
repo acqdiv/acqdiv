@@ -31,26 +31,22 @@ names(words)[names(words)=="pos"] <- "pos_word_stem"
 names(sessions)[names(sessions)=="source_id"] <- "session_id_source"
 names(morphemes)[names(morphemes)=="type"] <- "morpheme_type"
 
-# get rid of columns that would only create duplicates, including warnings
-words <- words[,c("word_id","utterance_id_fk","word","pos_word_stem","word_actual","word_target")]
-morphemes <- morphemes[,c("morpheme_id","word_id_fk","morpheme_type","morpheme","gloss_raw","gloss","pos_raw","pos")]
-sessions <- sessions[,c("session_id","session_id_source","date","media","media_type")]
-speakers <- speakers[,c("speaker_id","session_id_fk","uniquespeaker_id_fk","speaker_label","name","age_raw","age","age_in_days","gender_raw","gender","role_raw","role","macrorole","languages_spoken","birthdate")]
+# create alternative tables without columns that would only create duplicates, including warnings
+words_slim <- words[,c("word_id","utterance_id_fk","word","pos_word_stem","word_actual","word_target")]
+morphemes_slim <- morphemes[,c("morpheme_id","word_id_fk","morpheme_type","morpheme","gloss_raw","gloss","pos_raw","pos")]
+sessions_slim <- sessions[,c("session_id","session_id_source","date","media","media_type")]
+speakers_slim <- speakers[,c("speaker_id","session_id_fk","uniquespeaker_id_fk","speaker_label","name","age_raw","age","age_in_days","gender_raw","gender","role_raw","role","macrorole","languages_spoken","birthdate")]
 
 # merge tables one by one
-merge(utterances, words, by.x="utterance_id", by.y="utterance_id_fk", all.x=TRUE, all.y=FALSE) -> u_w
-merge(u_w, morphemes, by.x="word_id", by.y="word_id_fk", all.x=TRUE, all.y=FALSE) -> u_w_m
-merge(sessions, u_w_m, by.x="session_id", by.y="session_id_fk", all.x=FALSE, all.y=TRUE) -> u_w_m_s
+merge(utterances, words_slim, by.x="utterance_id", by.y="utterance_id_fk", all.x=TRUE, all.y=FALSE) -> u_w
+merge(u_w, morphemes_slim, by.x="word_id", by.y="word_id_fk", all.x=TRUE, all.y=FALSE) -> u_w_m
+merge(sessions_slim, u_w_m, by.x="session_id", by.y="session_id_fk", all.x=FALSE, all.y=TRUE) -> u_w_m_s
 # speakers can only be merged in by composite key -> change once fixed in DB
-merge(u_w_m_s, speakers, by.x=c("session_id","speaker_label"), by.y=c("session_id_fk","speaker_label"), all.x=TRUE, all.y=FALSE) -> all_data
+merge(u_w_m_s, speakers_slim, by.x=c("session_id","speaker_label"), by.y=c("session_id_fk","speaker_label"), all.x=TRUE, all.y=FALSE) -> all_data
 all_data <- all_data[,c("corpus", "language", "session_id", "session_id_source", "date", "speaker_id", "speaker_label", "name", "birthdate", "age_raw", "age", "age_in_days", "gender_raw", "gender", "role_raw", "role", "macrorole", "addressee", "utterance_id", "utterance_id_source", "utterance_raw", "start_raw", "start", "end_raw", "end", "utterance", "translation", "utterance_morphemes", "utterance_glosses_raw", "utterance_poses_raw", "sentence_type", "comment", "word_id", "word", "word_actual", "word_target", "pos_word_stem", "morpheme_id", "morpheme_type", "morpheme", "gloss_raw", "gloss", "pos_raw", "pos")]
 
-# dropped from final table:
-# "media"
-# "media_type"
-# "languages_spoken"
-# "uniquespeaker_id_fk"
-# all duplicate columns (.x, .y)
+# drop slim tables
+rm(words_slim, morphemes_slim, sessions_slim, speakers_slim)
 
 # save all tables to an R object named "acqdiv_corpus-YYYY-MM-DD.rda"
 date = format(Sys.time(), "%Y-%m-%d")
