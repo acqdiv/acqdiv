@@ -243,8 +243,8 @@ class System:
             # store file names from files.csv
             file_names_from_files = {row["File name"] for row in csv.DictReader(files_file)}
             # create DictWriter instance for writing the metadata of those new files
-            files_writer = csv.DictWriter(files_file, fieldnames=["Session code", "Recording code", "File name", "Type",
-            "Format", "Duration", "Byte size", "Word size", "Location"])
+            files_writer = csv.DictWriter(files_file, lineterminator="\n", fieldnames=["Session code", "Recording code",
+                "File name", "Type", "Format", "Duration", "Byte size", "Word size", "Location"])
 
             # go through media folders
             for path in folder_path_list:
