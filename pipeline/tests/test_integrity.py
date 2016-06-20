@@ -1,6 +1,7 @@
 import configparser
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
+import time
 from nose.tools import assert_equal, assert_in, assert_not_equal, assert_true, assert_false
 
 
@@ -72,37 +73,69 @@ def test_database_integrity():
     table = 'words'
     column = 'word'
     search_expression = '^\s*$'
-    yield check_string, table, column, search_expression
+    permission = 'disallow'
+    yield check_string, table, column, search_expression, permission
 
     table = 'words'
     column = 'word'
     search_expression = '^[-.̃]'
-    yield check_string, table, column, search_expression
+    permission = 'disallow'
+    yield check_string, table, column, search_expression, permission
     
     table = 'words'
     column = 'word'
     search_expression = '[\'\(\)\*\"\^_\[\]]'
-    yield check_string, table, column, search_expression
+    permission = 'disallow'
+    yield check_string, table, column, search_expression, permission
 
     table = 'words'
     column = 'word'
     search_expression = '(?<![^\?])\?(?![^\?])\|^\?[^\?]|[^\?]\?$'
-    yield check_string, table, column, search_expression
+    permission = 'disallow'
+    yield check_string, table, column, search_expression, permission
 
     table = 'speakers'
     column = 'speaker_label'
-    search_expression = '^[^a-zA-Z]|[^a-zA-Z\d]|^..?$'
-    yield check_string, table, column, search_expression
+    search_expression = '^[a-zA-Z]{2,}\d*$'
+    permission = 'allow'
+    yield check_string, table, column, search_expression, permission
     
     table = 'speakers'
     column = 'name'
     search_expression = '\d'
-    yield check_string, table, column, search_expression
+    permission = 'disallow'
+    yield check_string, table, column, search_expression, permission
     
+    table = 'speakers'
+    column = 'age'
+    search_expression = '^(\d\d?(;([0-9]|1[01]).([12]?[0-9]|30))?)$'
+    permission = 'allow'
+    yield check_string, table, column, search_expression, permission
     
+    for check in (('sessions','date'),('speakers','birthdate'),('uniquespeakers','birthdate')):
+        table = check[0]
+        column = check[1]
+        yield check_time, table, column
+
+
+# check if values can be parsed as datetime
+def check_time(table, column):
+    query = 'select ' + column + ' from ' + table
+    res = session.execute(query)
+    rows = res.fetchall()
+    for row in rows:
+        label = row[0]
+        try:
+            time.strptime(label, '%Y-%m-%d')
+        except:
+            try:
+                time.strptime(label, '%Y')
+            except:
+                assert_true(0, msg=table+'.'+column+' cannot be parsed as YYYY-MM-DD')
+            
 # compare values in table against standardized set
 def check_values(table, column, values):
-    query = "select " + column + " from " + table + " group by " + column
+    query = 'select ' + column + ' from ' + table + ' group by ' + column
     res = session.execute(query)
     rows = res.fetchall()
     for row in rows:
@@ -110,16 +143,22 @@ def check_values(table, column, values):
         assert_in(label, values, msg='%s in database, but not in valid labels' % (label))
 
 # check if column values contain characters
-def check_string(table, column, search_expression):
-    query = 'select ' + column + 'from ' + table
+def check_string(table, column, search_expression, permission):
+    query = 'select ' + column + ' from ' + table
     res = session.execute(query)
     rows = res.fetchall()
     regex = re.compile(search_expression)
     for row in rows:
-        assert_false(
-            re.search(regex,row),
-            msg=table+'.'+column+' contains invalid characters (regex '+regex+')'
-        )
+        if permission == 'disallow':
+            assert_false(
+                re.search(regex,row),
+                msg=table+'.'+column+' contains invalid characters (regex '+regex+' disallowed)'
+            )
+        elif permission == 'allow':
+            assert_true(
+                re.search(regex,row),
+                msg=table+'.'+column+' contains invalid characters (only regex '+regex+' allowed)'
+            )
 
 # check if a column in a table contains at least one NULL
 def check_any_null(table, column):
@@ -159,15 +198,6 @@ def check_words_actual_target():
 
 # TODO
 # 
-# def time_checks():
-#     pass
-#
-#     # date, age - is this needed at all? already tested in postprocessing?
-#     # sessions.date is ^((19|20)\d\d(-(0[1-9]|1[012])-([012][1-9]|3[01]))?)$
-#     # speakers.age is ^(\d\d?(;([0-9]|1[01]).([12]?[0-9]|30))?)$ or NULL
-#     # speakers., uniquespeakers.birthdate is like sessions.date or "Unknown"
-#
-# # more complicated stuff
 # # name can be anything or "Unknown" but not "Unspecified" or "None" (the problem with these values is that they can create additional unique pseudo-speakers)
 # # the majority of rows should not have NULL in macrorole. A threshold of 15% should be realistic.
 # # extract list of all speakers where out of {speaker_label, name, birthdate} two are identical. Sort by speaker label and check manually for mistakes (two speakers as one, one speaker as two)
