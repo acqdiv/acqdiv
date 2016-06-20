@@ -1,7 +1,7 @@
 import configparser
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
-from nose.tools import assert_equal, assert_in, assert_not_equal, assert_true
+from nose.tools import assert_equal, assert_in, assert_not_equal, assert_true, assert_false
 
 
 session = None
@@ -17,8 +17,7 @@ def setup():
 def test_database_integrity():
     # Note: SQL "NULL" returns as Python None
 
-    # Check various value sets
-    # TODO: should not be None once we implement BB's suggestion
+    # check various value sets
     table = "morphemes"
     column = "gloss"
     values = [None, "0", "1", "2", "3", "4", "4SYL", "A", "ABIL", "ABL", "ABS", "ACC", "ACROSS", "ACT", "ADESS", "ADJ", "ADJZ", "ADN", "ADV", "ADVZ", "AFF", "AGT", "AGR", "ALL", "ALT", "AMBUL", "ANIM", "ANTIP", "AOR", "APPL", "ART", "ASP", "ASS", "ASSOC", "ATTN", "AUTOBEN", "AUX", "AV", "BABBLE", "BEN", "CAUS", "CHOS", "CLF", "CLIT", "CM", "COM", "COMP", "COMPAR", "COMPL", "CONC", "COND", "CONJ", "CONJ", "CON", "CONT", "CONTEMP", "CONTING", "CONTR", "COP", "CVB", "DAT", "DECL", "DEF", "DEICT", "DEM", "DEP", "DEPR", "DESID", "DESTR", "DET", "DETR", "DIM", "DIR", "DIR", "DIST", "DISTR", "DOWN", "DU", "DUB", "DUR", "DYN", "ECHO", "EMPH", "EQU", "ERG", "EVID", "EXCL", "EXCLA", "EXIST", "EXT", "F", "FILLER", "FOC", "FUT", "GEN", "HAB", "HES", "HHON", "HON", "HORT", "IDEOPH", "IMIT", "IMP", "IMPERS", "INAL", "INAN", "INCEP", "INCH", "INCL", "INCOMPL", "IND", "INDF", "INDIR", "INF", "INS", "INSIST", "INTJ", "INTR", "INTRG", "INV", "IPFV", "IRR", "LNK", "LOC", "M", "MED", "MHON", "MIR", "MOD", "MOOD", "MV", "N", "N", "N", "NAG", "NAME", "NC", "NEG", "NICKNAMER", "NMLZ", "NOM", "NPST", "NSG", "NTVZ", "NUM", "OBJ", "OBJVZ", "OBL", "OBLIG", "OBV", "ONOM", "OPT", "ORD", "P", "PARTIT", "PASS", "PEJ", "PERL", "PERMIS", "PERSIST", "PFV", "PL", "POL", "POSS", "POT", "PRAG", "PRED", "PREDADJ", "PREP", "PREP", "PRF", "PRO", "PROB", "PROG", "PROH", "PROP", "PROX", "PRS", "PST", "PTCL", "PTCP", "PURP", "PV", "PVB", "Q", "QUANT", "QUOT", "RECENT", "RECNF", "RECP", "REF", "REFL", "REL", "REM", "REP", "RES", "REVERS", "S", "SBJ", "SBJV", "SEQ", "SG", "SIM", "SOC", "SPEC", "STAT", "STEM", "SUPERL", "SURP", "TEASER", "TEL", "TEMP", "TENSE", "TERM", "TOP", "TR", "UP", "V", "V2", "V.AUX", "V.CAUS", "V.IMP", "V.ITR", "V.PASS", "V.POS", "V.TR", "VBZ", "VOICE", "VN", "VOC", "VOL", "WH", "???"]
@@ -50,7 +49,7 @@ def test_database_integrity():
     values = ["Adult", "Child", "Target_Child", "Unknown"]
     yield check_values, table, column, values
 
-    # Check columns for at least one NULL
+    # check columns for at least one NULL
     for check in (("sessions","date"),("utterances","speaker_label"),("utterances","utterance_raw"),("utterances","utterance"),("words","word"),("speakers","speaker_label"),("speakers","macrorole"),("uniquespeakers","speaker_label"),("uniquespeakers","corpus")):
         table = check[0]
         column = check[1]
@@ -60,16 +59,47 @@ def test_database_integrity():
     # query = "select count(*) from speakers where name is null"
     # yield check_any_null, query
 
-    # Check columns for all NULL
+    # check columns for all NULL
     for check in (("utterances","translation"),("utterances","morpheme"),("utterances","gloss_raw"),("utterances","pos_raw"),("words","pos"),("morphemes","morpheme"),("morphemes","gloss_raw"),("morphemes","gloss"),("morphemes","pos_raw"),("morphemes","pos"),("speakers","name"),("speakers","age_raw"),("speakers","age"),("speakers","age_in_days"),("speakers","gender_raw"),("speakers","gender"),("speakers","role_raw"),("speakers","role")):
         table = check[0]
         column = check[1]
         yield check_all_null, table, column
 
-    # Compare word_actual and word_target
+    # compare word_actual and word_target
     yield check_words_actual_target
         
+    # skim columns for funny characters
+    table = 'words'
+    column = 'word'
+    search_expression = '^\s*$'
+    yield check_string, table, column, search_expression
 
+    table = 'words'
+    column = 'word'
+    search_expression = '^[-.̃]'
+    yield check_string, table, column, search_expression
+    
+    table = 'words'
+    column = 'word'
+    search_expression = '[\'\(\)\*\"\^_\[\]]'
+    yield check_string, table, column, search_expression
+
+    table = 'words'
+    column = 'word'
+    search_expression = '(?<![^\?])\?(?![^\?])\|^\?[^\?]|[^\?]\?$'
+    yield check_string, table, column, search_expression
+
+    table = 'speakers'
+    column = 'speaker_label'
+    search_expression = '^[^a-zA-Z]|[^a-zA-Z\d]|^..?$'
+    yield check_string, table, column, search_expression
+    
+    table = 'speakers'
+    column = 'name'
+    search_expression = '\d'
+    yield check_string, table, column, search_expression
+    
+    
 # compare values in table against standardized set
 def check_values(table, column, values):
     query = "select " + column + " from " + table + " group by " + column
@@ -78,6 +108,18 @@ def check_values(table, column, values):
     for row in rows:
         label = row[0]
         assert_in(label, values, msg='%s in database, but not in valid labels' % (label))
+
+# check if column values contain characters
+def check_string(table, column, search_expression):
+    query = 'select ' + column + 'from ' + table
+    res = session.execute(query)
+    rows = res.fetchall()
+    regex = re.compile(search_expression)
+    for row in rows:
+        assert_false(
+            re.search(regex,row),
+            msg=table+'.'+column+' contains invalid characters (regex '+regex+')'
+        )
 
 # check if a column in a table contains at least one NULL
 def check_any_null(table, column):
@@ -111,21 +153,12 @@ def check_words_actual_target():
             (count_word_actual == 0 and count_word_target > 0) or 
             (count_word_actual > 0 and count_word_target == 0) or 
             (count_word_actual > 0 and count_word_target > 0 and count_differences > 0),
-            msg="word_actual/word_target distinction doesn't make sense in " + corpus + "(either the distinction is not made or if it is made, the columns have to have different contents)."
+            msg="word_actual/word_target distinction doesn't make sense in " + corpus + "(either the distinction is not made or if it is made, the columns have to have different contents)"
         )
 
-# def check_characters():
-#     pass
-#
-#     # word shouldn't be ^\s*$
-#     # word should not contain [\'()*\"^_[]]
-#     # word should not start with [-.̃]
-#     # word should be "???" or not contain any "?" at all
-#
-#     # speaker_label should be [a-zA-Z\d]{2,}
-#
-#     # speaker.name can't contain numerals
-#
+
+# TODO
+# 
 # def time_checks():
 #     pass
 #
