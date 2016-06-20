@@ -1,7 +1,7 @@
 import configparser
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
-from nose.tools import assert_equal, assert_in, assert_not_equal
+from nose.tools import assert_equal, assert_in, assert_not_equal, assert_true
 
 
 session = None
@@ -66,6 +66,11 @@ def test_database_integrity():
         column = check[1]
         yield check_all_null, table, column
 
+    # Compare word_actual and word_target
+    yield check_words_actual_target
+        
+
+# compare values in table against standardized set
 def check_values(table, column, values):
     query = "select " + column + " from " + table + " group by " + column
     res = session.execute(query)
@@ -74,13 +79,14 @@ def check_values(table, column, values):
         label = row[0]
         assert_in(label, values, msg='%s in database, but not in valid labels' % (label))
 
+# check if a column in a table contains at least one NULL
 def check_any_null(table, column):
-    for corpus in ('Chintang', 'Cree', 'Indonesian', 'Inuktitut', 'Japanese_Miyata', 'Japanese_MiiPro', 'Russian', 'Sesotho', 'Turkish', 'Yucatec'):
-        query = 'select count(*) from ' + table + ' where corpus="' + corpus + '" and ' + column + ' is null'
-        res = session.execute(query)
-        actual = res.fetchone()[0]
-        assert_equal(actual, 0, msg=corpus+'.'+table+'.'+column+' contains NULL')
+    query = 'select count(*) from ' + table + ' where ' + column + ' is null'
+    res = session.execute(query)
+    actual = res.fetchone()[0]
+    assert_equal(actual, 0, msg=table+'.'+column+' contains NULL')
 
+# check if a column in a table contains nothing but NULL (for all corpora separately)
 def check_all_null(table, column):
     for corpus in ('Chintang', 'Cree', 'Indonesian', 'Inuktitut', 'Japanese_Miyata', 'Japanese_MiiPro', 'Russian', 'Sesotho', 'Turkish', 'Yucatec'):
         query = 'select count(*) from ' + table + ' where corpus="' + corpus + '" and ' + column + ' is not null'
@@ -88,14 +94,26 @@ def check_all_null(table, column):
         actual = res.fetchone()[0]
         assert_not_equal(actual, 0, msg=corpus+'.'+table+'.'+column+' contains only NULL')
 
-# def check_words_actual_target():
-#     pass
-#
-#     # count NULL in words_target, words_actual
-#     # test is okay if
-#     #   either one of the two counts is 0 (but not both)
-#     #   or there are >0 rows where word_target != word_actual
-#
+# check if actual/target distinction is correctly parsed: either the distinction is not made at all in a corpus (-> exactly one column all NULL) or it is made (-> at least one row where two columns have different values)
+def check_words_actual_target():
+    for corpus in ('Chintang', 'Cree', 'Indonesian', 'Inuktitut', 'Japanese_Miyata', 'Japanese_MiiPro', 'Russian', 'Sesotho', 'Turkish', 'Yucatec'):
+        query = 'select count(*) from words where corpus="' + corpus + '" and word_actual is not null'
+        res = session.execute(query)
+        count_word_actual = res.fetchone()[0]
+        query = 'select count(*) from words where corpus="' + corpus + '" and word_target is not null'
+        res = session.execute(query)
+        count_word_target = res.fetchone()[0]
+        query = 'select count(*) from words where corpus="' + corpus + '" and word_actual != word_target'
+        res = session.execute(query)
+        count_differences = res.fetchone()[0]
+        
+        assert_true(
+            (count_word_actual == 0 and count_word_target > 0) or 
+            (count_word_actual > 0 and count_word_target == 0) or 
+            (count_word_actual > 0 and count_word_target > 0 and count_differences > 0),
+            msg="word_actual/word_target distinction doesn't make sense in " + corpus + "(either the distinction is not made or if it is made, the columns have to have different contents)."
+        )
+
 # def check_characters():
 #     pass
 #
