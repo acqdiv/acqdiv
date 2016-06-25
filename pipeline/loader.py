@@ -62,7 +62,8 @@ def main(args):
             cfg['paths']['path'] = "tests/corpora"
 
         # Process by parsing the files and adding extracted data to the db
-        print("{0} seconds --- Start processing: {1}".format(time.time() - start_time, config.split(".")[0]))
+        print("{0} seconds --- Start processing: {1}".format(
+            time.time() - start_time, config.split(".")[0]))
         c = CorpusProcessor(cfg, engine)
         c.process_corpus()
 

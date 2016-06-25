@@ -49,11 +49,13 @@ class YucatecCleaner(XMLCleaner):
                             
             #initialize word index
             word_index = -1
+            wlen = len(full_words)
             #mwords is a list of lists of morphemes
             for w in new_words:
                 
                 # count up word index, extend list if necessary
-                word_index += 1
+                XMLCleaner.word_index_up(
+                    full_words, wlen, word_index, u)
 
                 # some words in <w> have a warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
                 # -> incremeent the <w> counter by one as long as the present morphological word is associated with the next <w>

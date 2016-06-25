@@ -145,6 +145,7 @@ class SessionProcessor(object):
                         # TODO: move this post processing (before the age, etc.) if it improves performance
                         morphemes[i][j]['corpus'] = self.corpus
                         morphemes[i][j]['language'] = self.language
+                        morphemes[i][j]['type'] = self.morpheme_type
 
                         morpheme = Morpheme(**morphemes[i][j])
                         word.morphemes.append(morpheme)

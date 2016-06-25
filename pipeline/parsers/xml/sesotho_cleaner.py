@@ -93,12 +93,12 @@ class SesothoCleaner(XMLCleaner):
             if mor is None:
                 continue
             else:
-                seg = mor.find('seg')
-                gl  = mor.find('gl')
+                seg = XMLCleaner.find_text(mor, 'seg')
+                gl  = XMLCleaner.find_text(mor, 'gl')
 
             # split into morphemes
-            segments = re.split('\\-', seg.text)
-            glosses = re.split('[\\-]', gl.text)
+            segments = re.split('\\-', seg) if seg is not None else []
+            glosses = re.split('[\\-]', gl) if gl is not None else []
             passed_stem = False
 
             
@@ -178,8 +178,12 @@ class SesothoCleaner(XMLCleaner):
                 m.attrib['segments_target'] = segment
                             
                     # EOF word loop
-            mor.remove(seg)
-            mor.remove(gl)
+            seg_n = mor.find('seg')
+            gl_n = mor.find('gl')
+            if seg_n is not None:
+                mor.remove(seg_n)
+            if gl_n is not None:
+                mor.remove(gl_n)
             # EOF Sesotho        
 
 if __name__ == "__main__":
