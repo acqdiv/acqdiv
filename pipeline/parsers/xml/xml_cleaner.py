@@ -265,9 +265,11 @@ class XMLCleaner(object):
         reps = group.find('r')
         if reps is not None:
             ws = group.findall('.//w')
+            idx = group.index(ws[-1])
             for i in range(int(reps.attrib['times'])-1):
                 for w in ws:
-                    group.insert(len(ws)-1, copy.deepcopy(w))
+                    group.insert(idx+1, copy.deepcopy(w))
+                    idx += 1
 
     def _clean_retracings(self, group, u):
         retracings = group.find('k[@type="retracing"]')

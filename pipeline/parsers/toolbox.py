@@ -160,10 +160,12 @@ class ToolboxFile(object):
                 if re.search('\(', word):
                     d['word_target'] = re.sub('[\(\)]', '', word)
                     d['word'] = re.sub('\([^\)]+\)', '', word)
+                    d['word_actual'] = d['word']
                     result.append(d)
                 else:
                     d['word_target'] = re.sub('xxx?|www', '???', word)
                     d['word'] = re.sub('xxx?', '???', word)
+                    d['word_actual'] = d['word']
                     result.append(d)
             else:
                 d['word'] = re.sub('xxx?|www|\*\*\*', '???', word)
