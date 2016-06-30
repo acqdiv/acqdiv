@@ -48,6 +48,9 @@ all_data <- all_data[,c("corpus", "language", "session_id", "session_id_source",
 # drop slim tables
 rm(words_slim, morphemes_slim, sessions_slim, speakers_slim)
 
+# sort big table so morphemes are displayed in order
+all_data <- all_data[order(all_data$corpus, all_data$session_id, all_data$utterance_id, all_data$word_id, all_data$morpheme_id),]
+
 # save all tables to an R object named "acqdiv_corpus-YYYY-MM-DD.rda"
 date = format(Sys.time(), "%Y-%m-%d")
 path_to_R = paste("acqdiv_corpus_",date,".rda",sep="")
