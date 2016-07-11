@@ -4,6 +4,7 @@ import re
 import sys
 import itertools
 import pdb
+import xml
 
 from lxml import etree
 from .xml_cleaner import XMLCleaner
@@ -54,7 +55,7 @@ class YucatecCleaner(XMLCleaner):
             for w in new_words:
                 
                 # count up word index, extend list if necessary
-                XMLCleaner.word_index_up(
+                word_index, llen = XMLCleaner.word_index_up(
                     full_words, wlen, word_index, u)
 
                 # some words in <w> have a warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
@@ -68,7 +69,7 @@ class YucatecCleaner(XMLCleaner):
                 wmor = etree.SubElement(full_words[word_index], 'mor')
                 wmor.text = w
 
-            #u.remove(morphology)
+            u.remove(morphology)
                 
         # if there is no morphology, add warning to complete utterance
         else:
@@ -197,6 +198,7 @@ class YucatecCleaner(XMLCleaner):
                         XMLCleaner.creadd(morphemes[morpheme_index].attrib, 'warning', 'no segment/gloss structure')
 
             morphemes.text = ''
+
             # EOF suffixes
             
             # check if morpheme list has been filled; if not delete key
