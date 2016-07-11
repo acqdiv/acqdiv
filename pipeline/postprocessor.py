@@ -294,6 +294,9 @@ def update_imdi_age(row):
     Finally, it looks for speakers that only have an age in years and does the same.
     """
 
+    if row.birthdate is None:
+        return
+    
     if not (row.birthdate.__contains__("Un") or row.birthdate.__contains__("None")):
         try:
             session_date = get_session_date(row.session_id_fk)
@@ -319,8 +322,7 @@ def update_imdi_age(row):
         row.age_in_days = age.calculate_xml_days(row.age_raw)
 
     # Check age again?
-    if not ("None" in row.age_raw or
-            "Un" in row.age_raw or row.age == None):
+    if not row.age_raw.__contains__("None") or not row.age_raw.__contains__("Un") or row.age == None:
         if not cleaned_age.fullmatch(row.age_raw):
             try:
                 ages = age.clean_incomplete_ages(row.age_raw)

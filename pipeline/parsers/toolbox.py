@@ -17,6 +17,7 @@ class ToolboxFile(object):
     """
     _separator = re.compile(b'\r?\n\r?\n(\r?\n)')
     _record_marker = re.compile(br'\\ref')
+    _word_boundary = re.compile('(?<![\-\s])\s+(?![\-\s])')
 
     def __init__(self, config, file_path):
         """ Initializes a Toolbox file object
@@ -28,7 +29,7 @@ class ToolboxFile(object):
         self.config = config
         self.path = file_path
         self.tier_separator = re.compile(b'\n')
-        self.chintang_word_boundary = re.compile('(?<![\-\s])\s+(?![\-\s])')
+
 
         # get database column names
         self.field_markers = []
@@ -132,6 +133,11 @@ class ToolboxFile(object):
         # Create words and morphemes
         words = [] if utterance['utterance'] is None else self.get_words(utterance['utterance'])
         morphemes = [] if utterance['utterance'] is None else self.get_morphemes(utterance)
+
+        # Fix words less than morphemes misalignments
+        if len(morphemes) - len(words) > 0:
+            misalignment = len(morphemes) - len(words)
+            for i in range(0, misalignment): words.append({})
 
         return utterance, words, morphemes
 
@@ -422,21 +428,24 @@ class ToolboxFile(object):
         # Indonesian specific morpheme inference stuff
         elif self.config['corpus']['corpus'] == "Indonesian":
             if 'morpheme' in utterance.keys():
-                # TODO: move this to post-processing?
-                # Remove punctuation from morphemes
+                # Remove punctuation from morphemes and normalize missing data with ???
                 morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterance['morpheme'])
                 morphemes_cleaned = re.sub('xxx?|www', '???', morphemes_cleaned)
-                morphemes_split = morphemes_cleaned.split()
-                morphemes = [morphemes_split[i:i+1] for i in range(0, len(morphemes_split), 1)]
+
+                # Indonesian morphemes tier \mb may contain morpheme markers "-"
+                word_boundaries = re.split(self._word_boundary, morphemes_cleaned)
+                for word in word_boundaries:
+                    morphemes.append(word.split())
 
             if 'gloss_raw' in utterance.keys():
-                # TODO: move this to post-processing?
-                glosses_Indonesian = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterance['gloss_raw'])
-                glosses_Indonesian = re.sub('xxx?|www', '???', glosses_Indonesian)
-                glosses_split = glosses_Indonesian.split()
-                glosses = [glosses_split[i:i+1] for i in range(0, len(glosses_split), 1)]
-                # There are no POS in Indonesian, so we populate empty data that becomes NULL in the database.
-                poses = [[] for i in range(0, len(glosses_split), 1)]
+                glosses_cleaned = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterance['gloss_raw'])
+                glosses_cleaned = re.sub('xxx?|www', '???', glosses_cleaned)
+
+                # This is the morpheme gloss line \ge may contain morpheme markers "-"
+                word_boundaries = re.split(self._word_boundary, glosses_cleaned)
+                for word in word_boundaries:
+                    glosses.append(word.split())
+
             else:
                 warnings.append('not glossed')
                 # TODO: add in some logic to extract relevant source 'nt' (comment) field?
@@ -456,7 +465,7 @@ class ToolboxFile(object):
                 # words = re.sub('(\s\-)|(\-\s)','-', morphemes_cleaned)
 
                 # word_boundaries = re.sub('(\s\-)|(\-\s)','%%%%%', morphemes_cleaned)
-                word_boundaries = re.split(self.chintang_word_boundary, morphemes_cleaned)
+                word_boundaries = re.split(self._word_boundary, morphemes_cleaned)
                 for word in word_boundaries:
                     # TODO: double check this logic is correct with Robert
                     word = word.replace(" - ", " ") # remove floating clitic marker
@@ -465,7 +474,7 @@ class ToolboxFile(object):
                 warnings.append('no morpheme tier')
 
             if 'gloss_raw' in utterance.keys():
-                word_boundaries = re.split(self.chintang_word_boundary, utterance['gloss_raw'])
+                word_boundaries = re.split(self._word_boundary, utterance['gloss_raw'])
                 for word in word_boundaries:
                     word = word.replace(" - ", " ") # remove floating clitic marker
                     glosses.append(word.split())
@@ -473,7 +482,7 @@ class ToolboxFile(object):
                 warnings.append('not glossed')
 
             if 'pos_raw' in utterance.keys():
-                word_boundaries = re.split(self.chintang_word_boundary, utterance['pos_raw'])
+                word_boundaries = re.split(self._word_boundary, utterance['pos_raw'])
                 for word in word_boundaries:
                     word = word.replace(" - ", " ") # remove floating clitic marker
                     poses.append(word.split())

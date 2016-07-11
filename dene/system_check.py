@@ -1,15 +1,22 @@
-"""Extracts the metadata for resources and checks the resources on the server.
+"""This module checks various sets representing sessions, recordings, and file names in the Dene corpus
+for mutual consistency and automatically creates file-related metadata.
 
-This modules includes two classes, one extracting metadata from resources and one checking the whole recording file system on
-the server. If you run this module, make sure exiftool (http://www.sno.phy.queensu.ca/~phil/exiftool/) and
-the python wrapper for it (https://smarnach.github.io/pyexiftool/) is installed.
+Requirements:
+exiftool (http://www.sno.phy.queensu.ca/~phil/exiftool/)
+pyexiftool (https://smarnach.github.io/pyexiftool/)
 
-If the script is run without any path specifications (via command line), the script will look for 'sessions.csv' and
-'resources.csv' in the folder 'Metadata', for 'locations.csv' and 'monitor.csv' in the folder 'Workflow' and for the
-resources itself in 'Media', all folders lying one level higher than the script itself. In this case the script will check
-everything. You can also specify the paths to all those aforementioned files (see python3 system_check --help).
-In this case, what checks are done effectively depends on which file paths were specified over the command line.
+Input (default locations; execute python3 system_check.py --help for help on how to set different locations):
+../Media
+../Workflow/file_locations.csv
+../Workflow/monitor.csv
+../Metadata/sessions.csv
+../Metadata/files.csv
+
+Output:
+../Metadata/files.csv
+./filess.log
 """
+
 
 import os
 import re
@@ -25,7 +32,7 @@ from collections import defaultdict
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-handler = logging.FileHandler("resources.log", mode="w")
+handler = logging.FileHandler("files.log", mode="w")
 handler.setLevel(logging.INFO)
 
 formatter = logging.Formatter("%(funcName)s|%(levelname)s|%(message)s")
@@ -35,9 +42,8 @@ logger.addHandler(handler)
 ########################################################################################################################
 ########################################################################################################################
 
-class Resource:
-    """Class for extracting, checking and correcting the metadata of a resource."""
-
+class File:
+    """Class for extracting, checking and correcting the metadata of a file."""
 
     # the four media file extensions are mapped to their MIME-Type and exiftool's key to access the duration
     media_dict = {
@@ -82,19 +88,19 @@ class Resource:
 
     def get_Type(self):
         """Return the MIME-Type of the media file."""
-        return Resource.media_dict[self.extension][0]
+        return File.media_dict[self.extension][0]
 
 
     def get_Format(self):
         """Return the MIME-Type of the media file followed by its extension."""
-        return Resource.media_dict[self.extension][0] + "/" + self.extension
+        return File.media_dict[self.extension][0] + "/" + self.extension
 
 
     def get_Duration(self):
         """Extract the duration (recording length) of a media file and return it in the format HH:MM:SS."""
         # try to extract the media file's duration in secs
         try:
-            duration_in_secs = self.exifTool[Resource.media_dict[self.extension][1] + ":Duration"]
+            duration_in_secs = self.exifTool[File.media_dict[self.extension][1] + ":Duration"]
         except KeyError:
             logger.error("Duration cannot be extracted for " + self.file_name)
             return ""
@@ -131,70 +137,63 @@ class Resource:
 
     def in_media_dict(self):
         """Check if the file has one of the following extensions: wav, mp4, mts, mov. Return True or False."""
-        return self.extension in Resource.media_dict
+        return self.extension in File.media_dict
 
 ########################################################################################################################
 ########################################################################################################################
 
-class System_check:
+class System:
     """Checks whole system on server."""
 
-
     def __init__(self):
-        """Initializes various sets for the recording files."""
+        """Initialize various sets for the file names."""
         # data structure for system: {session_code: {rec_code_A: {file.mp4, file.mts/mov, file.wav},...},...}
         self.media_structure = defaultdict(lambda: defaultdict(set))
-        self.recs_from_media_folder = set()
+        self.file_names_from_media_folders = set()
         self.session_codes_from_sessions = set()
-        self.recs_from_locations = set()
+        self.file_names_from_locations = set()
         self.rec_codes_from_locations = set()
         self.rec_codes_from_monitor = set()
 
 
-    def set_media(self, media_path):
-        """Get and set recording names from Media folder.
+    def set_media(self, folder_path_list):
+        """Get and set file names from Media folders.
 
         Positional args:
-            media_path: path to media folder
+            folder_path_list: list containing paths to folders containing media(-related) files
         """
-        for rec in os.listdir(media_path):
+        # go through media folders
+        for path in folder_path_list:
+            # walk folders recursively
+            for root, folders, files in os.walk(path):
+                # go through all file names
+                for file_name in files:
+                    # get recording code
+                    rec_code = file_name[:-4]
 
-            # get recording code
-            rec_code = rec[:-4]
+                    # Check format of recording code
+                    if self.has_correct_format(file_name):
 
-            # regex for checking and extracting parts of the recording code
-            rec_code_regex = re.compile(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-([A-Z]+|\d+|\d+[A-Z]+))?")
+                        # infer the session code
+                        session_code = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+)?", rec_code).group()
 
-            # check the format of recording code
-            if rec_code_regex.fullmatch(rec_code):
+                        # store file name under the right session and recording code
+                        self.media_structure[session_code][rec_code].add(file_name)
 
-                # infer the session code
-                session_code = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+)?", rec_code).group()
-
-                # store recording name under the right session and recording code
-                self.media_structure[session_code][rec_code].add(rec)
-
-                # store recording name in a separate set
-                self.recs_from_media_folder.add(rec)
-
-            # if file is a hidden file, produce warning
-            elif rec.startswith("."):
-                logger.warning("File '" + rec + "' is a hidden file")
-
-            else:
-                logger.error("Format of " + rec + " wrong")
+                        # store file name in a separate set
+                        self.file_names_from_media_folders.add(file_name)
 
 
     def set_locations(self, locations_path):
-        """Get and set recording names and recording codes from file_locations.csv.
+        """Get and set file names and recording codes from file_locations.csv.
 
         Positional args:
             locations_path: path to file_locations.csv
         """
         with open(locations_path, "r") as locations_file:
             for row in csv.DictReader(locations_file):
-                if "yes" in row["UZH"]:
-                    self.recs_from_locations.add(row["File name"])
+                if "yes" in row["UZH"] or "sync" in row["UZH"]:
+                    self.file_names_from_locations.add(row["File name"])
                     self.rec_codes_from_locations.add(row["File name"][:-4])
 
 
@@ -218,77 +217,82 @@ class System_check:
             self.session_codes_from_sessions = {row["Code"] for row in csv.DictReader(sessions_file)}
 
 
-    def set_all(self, media_path, locations_path, monitor_path, sessions_path):
+    def set_all(self, folder_path_list, locations_path, monitor_path, sessions_path):
         """Gets and sets all data.
 
         Positional args:
-            media_path: path to media folder
+            folder_path_list: list containing paths to folders containing media(-related) files
             locations_path: path to file_locations.csv
             monitor_path: path to monitor.csv
             sessions_path: path to sessions.csv
         """
-        self.set_media(media_path)
+        self.set_media(folder_path_list)
         self.set_locations(locations_path)
         self.set_monitor(monitor_path)
         self.set_sessions(sessions_path)
 
 
-    def autocomplete(self, resources_path, media_path):
-        """Autocompletes resources.csv.
+    def autocomplete(self, files_path, folder_path_list):
+        """Autocompletes files.csv.
 
         Positional args:
-            resources_path: path to resources.csv
-            media_path: path to media folder
+            files_path: path to files.csv
+            folder_path_list: list containing paths to folders containing media(-related) files
         """
-        with open(resources_path, "r+") as resources_file, exiftool.ExifTool() as exifTool:
-            # store recording names from resources.csv
-            recs_from_resources = {row["File name"] for row in csv.DictReader(resources_file)}
+        with open(files_path, "r+") as files_file, exiftool.ExifTool() as exifTool:
+            # store file names from files.csv
+            file_names_from_files = {row["File name"] for row in csv.DictReader(files_file)}
+            # create DictWriter instance for writing the metadata of those new files
+            files_writer = csv.DictWriter(files_file, fieldnames=["Session code", "Recording code", "File name", "Type",
+            "Format", "Duration", "Byte size", "Word size", "Location"])
 
-            # create DictWriter instance for writing the metadata of new resources
-            resources_writer = csv.DictWriter(resources_file, fieldnames=["Session code", "Recording code", "File name", "Type",
-                "Format", "Duration", "Byte size", "Word size", "Location"])
+            # go through media folders
+            for path in folder_path_list:
+                # walk folders recursively
+                for root, folders, files in os.walk(path):
+                    # get file names not yet in files.csv and exclude those having a wrong format
+                    new_files = [file_name for file_name in files
+                        if file_name not in file_names_from_files and self.has_correct_format(file_name)]
 
-            # system -> resources.csv
-            new_recs = self.recs_from_media_folder - recs_from_resources
+                    # if there a new files
+                    if new_files:
 
-            # keep track of progress
-            n_recs = len(new_recs)
-            if n_recs:
-                n_recs = str(len(new_recs))
-                counter = 0
-                print("Autocompletion for:")
+                        print("Autocompletion for files in " + root)
+                        n_files = str(len(new_files))
 
-            for rec in new_recs:
+                        #  go through those files
+                        for index, new_file in enumerate(new_files, 1):
 
-                # count and print progress
-                counter += 1
-                print(rec + "\t\t\t" + str(counter) + "/" + n_recs)
+                            # create an instance of the File class
+                            file = File(root + "/" + new_file, exifTool)
 
-                # create an instance of the Resource class
-                resource = Resource(media_path + "/" + rec, exifTool)
+                            # exclude any files that do not have the proper extension
+                            if file.in_media_dict():
 
-                # exclude any files that do not have the proper extension
-                if resource.in_media_dict():
+                                print(new_file + "\t\t\t" + str(index) + "/" + n_files)
 
-                    # write metadata to the file 'resources.csv'
-                    resources_writer.writerow({
-                        "Session code": resource.get_Session_code(),
-                        "Recording code": resource.get_Recording_code(),
-                        "File name": rec,
-                        "Type": resource.get_Type(),
-                        "Format": resource.get_Format(),
-                        "Duration": resource.get_Duration(),
-                        "Byte size": resource.get_Byte_size(),
-                        "Word size": resource.get_Word_size(),
-                        "Location": resource.get_Location()
-                    })
+                                # write metadata to the file 'files.csv'
+                                files_writer.writerow({
+                                    "Session code": file.get_Session_code(),
+                                    "Recording code": file.get_Recording_code(),
+                                    "File name": new_file,
+                                    "Type": file.get_Type(),
+                                    "Format": file.get_Format(),
+                                    "Duration": file.get_Duration(),
+                                    "Byte size": file.get_Byte_size(),
+                                    "Word size": file.get_Word_size(),
+                                    "Location": file.get_Location()
+                                })
 
-                else:
-                    logger.warning("File '" + rec + "' has unknown file extension")
+                            else:
+                                logger.warning("File '" + new_file + "' has unknown file extension")
+
+                    else:
+                        print("No autocompletion from " + root)
 
 
     def media_check(self):
-        """Checks consistency of recording files in the Media folder.
+        """Checks consistency of file names in the media folders.
 
         The following checks are made:
             - consecutive letters in recording codes
@@ -315,7 +319,7 @@ class System_check:
             # Go through all recording codes mapped to that session code
             for rec_code in self.media_structure[session_code]:
 
-                # extract partial code letter
+                # the letter coding the partial session
                 match = re.search(r"[A-Z]+$", rec_code)
                 if match:
                     letter_seq_list += list(match.group())
@@ -327,29 +331,23 @@ class System_check:
         self.consecutive_number_check(same_day_session_codes)
 
 
-    def three_files_check(self, rec_code, rec_set):
+    def three_files_check(self, rec_code, file_name_set):
         """Checks if every recording code occurs with a wav, mp4 and mts/mov extension.
 
         positional args:
             rec_code: recording code under which the three files are subsumed
-            rec_set: (ideally) contains three different file types
+            file_name_set: (ideally) contains three different file types
         """
-        wav = rec_code + ".wav"
-        mp4 = rec_code + ".mp4"
-        mts = rec_code + ".mts"
-        mov = rec_code + ".mov"
 
-        # Check if file with wav-extension exists
-        if wav not in rec_set:
-            logger.warning(wav + " missing")
+        # Check if files with those extension exist
+        for file_extension in [".wav", ".mp4"]:
+            file_name = rec_code + file_extension
+            if file_name not in file_name_set:
+                logger.warning(file_name + " not in media folders")
 
-        # Check if file with mp4-extension exists
-        if mp4 not in rec_set:
-            logger.warning(mp4 + " missing")
-
-        # Check if file with mov/mts-extension exists
-        if mts not in rec_set and mov not in rec_set:
-            logger.warning(mts + "/" + mov + " missing")
+        # Check if file with mov or mts extension exists
+        if rec_code + ".mts" not in file_name_set and rec_code + ".mov" not in file_name_set:
+            logger.warning(rec_code + ".mts/.mov" + " not in media folders")
 
 
     def consecutive_letter_check(self, session_code, letter_seq_list):
@@ -375,13 +373,13 @@ class System_check:
 
             # check if recording code with 'A' exists, but not with 'B'
             if len(letter_seq_list) == 1 and "A" in letter_seq_list:
-                logger.warning("Recording code " + session_code + "(-)B missing")
+                logger.warning("Recording code " + session_code + "(-)B not in media folders")
 
             # otherwise check if all required letters occur
             else:
                 for letter in letters_that_should_occur:
                     if letter not in letter_seq_list:
-                        logger.warning("Recording code " + session_code + "-" + letter + " missing")
+                        logger.warning("Recording code " + session_code + "-" + letter + " not in media folders")
 
 
     def consecutive_number_check(self, same_day_codes):
@@ -401,48 +399,48 @@ class System_check:
 
             # check if session code with '1' exists, but not with '2'
             if len(numbers) == 1 and 1 in numbers:
-                logger.warning("Session code " + session_code_without_number + "-2 missing")
+                logger.warning("Session code " + session_code_without_number + "-2 not in media folders")
 
             # otherwise check if all required numbers occur
             else:
                 for number in range(1, largest_number + 1):
                     if number not in numbers:
-                        logger.warning("Session code " + session_code_without_number + "-" + str(number) + " missing")
+                        logger.warning("Session code " + session_code_without_number + "-" + str(number) + " not in media folders")
 
 
     def compare_sessions_media(self):
-        """Check if every session code in sessions.csv has at least one file in the media folder and vice versa."""
-        # Check session.csv -> media folder
+        """Check if every session code in sessions.csv has at least one file in the media folders and vice versa."""
+        # Check sessions.csv -> media folders
         for session_code in self.session_codes_from_sessions:
             if session_code not in self.media_structure:
-                logger.warning(session_code + " from sessions.csv not in media folder")
+                logger.warning(session_code + " from sessions.csv not in media folders")
 
-        # Check media folder -> sessions.csv
+        # Check media folders -> sessions.csv
         for session_code in self.media_structure:
             if session_code not in self.session_codes_from_sessions:
-                logger.warning(session_code + " from media folder not in sessions.csv")
+                logger.warning(session_code + " from media folders not in sessions.csv")
 
 
     def compare_locations_media(self):
-        """Check if every recording name in file_locations.csv has a corresponding file in the media folder and vice versa."""
-        # Check file_locations.csv -> media folder
-        for rec in self.recs_from_locations - self.recs_from_media_folder:
-            logger.warning(rec + " from file_locations.csv not in media folder")
+        """Check if every file name in file_locations.csv has a corresponding file in the media folders and vice versa."""
+        # Check file_locations.csv -> media folders
+        for file_name in self.file_names_from_locations - self.file_names_from_media_folders:
+            logger.warning(file_name + " from file_locations.csv not in media folders")
 
-        # Check media folder -> file_locations.csv
-        for rec in self.recs_from_media_folder - self.recs_from_locations:
-            logger.warning(rec + " from media folder not in file_locations.csv")
+        # Check media folders -> file_locations.csv
+        for file_name in self.file_names_from_media_folders - self.file_names_from_locations:
+            logger.warning(file_name + " from media folders not in file_locations.csv")
 
 
     def compare_locations_monitor(self):
         """Check if every recording code in file_locations.csv is also listed in monitor.csv and vice versa."""
         # Check file_locations.csv -> monitor.csv
-        for rec in self.rec_codes_from_locations - self.rec_codes_from_monitor:
-            logger.warning(rec + " from file_locations.csv not in monitor.csv")
+        for rec_code in self.rec_codes_from_locations - self.rec_codes_from_monitor:
+            logger.warning(rec_code + " from file_locations.csv not in monitor.csv")
 
         # Check monitor.csv -> file_locations.csv
-        for rec in self.rec_codes_from_monitor - self.rec_codes_from_locations:
-            logger.warning(rec + " from monitor.csv not in file_locations.csv or not at UZH yet")
+        for rec_code in self.rec_codes_from_monitor - self.rec_codes_from_locations:
+            logger.warning(rec_code + " from monitor.csv not in file_locations.csv or not at UZH yet")
 
 
     def check_all(self):
@@ -453,84 +451,104 @@ class System_check:
         self.compare_locations_monitor()
 
 
+    def has_correct_format(self, file_name):
+        """Check if the recording code is in the right format"""
+        # strip extension part
+        rec_code = file_name[:-4]
+        # regex for checking recording code
+        rec_code_regex = re.compile(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d*[A-Z]*)?")
+        # check format of recording code
+        if rec_code_regex.fullmatch(rec_code):
+            return True
+        # if file is a hidden file, produce warning (except for '.DS_Store')
+        elif file_name.startswith("."):
+            if file_name != ".DS_Store":
+                logger.warning("File '" + rec_code + "' is a hidden file")
+            return False
+        else:
+            logger.error("Format of recording code '" + rec_code + "' not correct")
+            return False
+
+########################################################################################################################
+########################################################################################################################
+
 if __name__ == "__main__":
 
     # set up command line arguments
     arg_description =   """
-                        Specify paths for media folder, sessions.csv, file_locations.csv, monitor.csv and resources.csv.
-                        Keep in mind that one or more of the following file combinations must be given:
-                        - media folder only
-                        - media folder and resources.csv
-                        - media folder and file_locations.csv
-                        - media folder and sessions.csv
-                        - locations.csv and monitor.csv
+                        Specify paths for media folders, sessions.csv, file_locations.csv, monitor.csv and files.csv.
+                        Keep in mind that only some of the file combinations are valid:
+                        - system_check.py
+                        - system_check.py -f (-r)? (-s)? (-l (-m)?)?
+                        - system_check.py -l -m
                         """
 
     parser = argparse.ArgumentParser(description=arg_description)
-    parser.add_argument("-f", "--media", help="path to the media folder")
+    parser.add_argument("-f", "--media", help="paths to folders containing media(-related files)", nargs="+")
     parser.add_argument("-l", "--locations", help ="path to file_locations.csv")
     parser.add_argument("-m", "--monitor", help="path to monitor.csv")
-    parser.add_argument("-r", "--resources", help="path ro resources.csv")
+    parser.add_argument("-r", "--files", help="path ro files.csv")
     parser.add_argument("-s", "--sessions", help="path to sessions.csv")
     args = parser.parse_args()
 
     # create instance for system check
-    dene_recs = System_check()
+    dene_files = System()
 
     # default settings if no arguments were given via command line
     if len(sys.argv) == 1:
 
         # all default paths
         media_path = "../Media"
+        rsync_path = "../rsync-folder"
         locations_path = "../Workflow/file_locations.csv"
         monitor_path = "../Workflow/monitor.csv"
         sessions_path = "../Metadata/sessions.csv"
-        resources_path = "../Metadata/resources.csv"
+        files_path = "../Metadata/files.csv"
 
         # get all data from all files
-        dene_recs.set_all(media_path, locations_path, monitor_path, sessions_path)
+        dene_files.set_all([media_path, rsync_path], locations_path, monitor_path, sessions_path)
         # then check everything
-        dene_recs.check_all()
-        # finally complete resources.csv
-        dene_recs.autocomplete(resources_path, media_path)
+        dene_files.check_all()
+        # finally complete files.csv
+        dene_files.autocomplete(files_path, [media_path, rsync_path])
 
     elif args.media:
-        # get and set recording files in the media folder
-        dene_recs.set_media(args.media)
+        # get and set file names in the media folder
+        dene_files.set_media(args.media)
         # check the file names from the media folder
-        dene_recs.media_check()
+        dene_files.media_check()
 
-        if args.resources:
-            # autocomplete resources.csv
-            dene_recs.autocomplete(args.resources, args.media)
+        if args.files:
+            # autocomplete files.csv
+            dene_files.autocomplete(args.files, args.media)
 
         if args.sessions:
             # get and set session codes from sessions.csv
-            dene_recs.set_sessions(args.sessions)
+            dene_files.set_sessions(args.sessions)
             # check sessions.csv <-> media folder
-            dene_recs.compare_sessions_media()
+            dene_files.compare_sessions_media()
 
         if args.locations:
-            # get and set recording names from locations.csv
-            dene_recs.set_locations(args.locations)
+            # get and set file names from locations.csv
+            dene_files.set_locations(args.locations)
             # check media folder <-> locations.csv
-            dene_recs.compare_locations_media()
+            dene_files.compare_locations_media()
 
             if args.monitor:
                 # get and set recording codes from monitor.csv
-                dene_recs.set_monitor(args.monitor)
+                dene_files.set_monitor(args.monitor)
                 # check locations.csv <-> monitor.csv
-                dene_recs.compare_locations_monitor()
+                dene_files.compare_locations_monitor()
 
     else:
 
         if args.locations and args.monitor:
             # get and set recording codes from locations.csv
-            dene_recs.set_locations(args.locations)
+            dene_files.set_locations(args.locations)
             # get and set recording codes from monitor.csv
-            dene_recs.set_monitor(args.monitor)
+            dene_files.set_monitor(args.monitor)
             # check locations.csv <-> monitor.csv
-            dene_recs.compare_locations_monitor()
+            dene_files.compare_locations_monitor()
 
         else:
             print("You have not given the right combination of files via command line. Try again.")
