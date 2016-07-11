@@ -116,6 +116,13 @@ class XMLParser(object):
                             mdict = {}
                             for tier_name in m.attrib:
                                 mdict[tier_name] = m.attrib.get(tier_name)
+                                try:
+                                    mlen = len(mdict['gloss_raw'])
+                                    for tier in mdict:
+                                        if len(mdict[tier]) != mlen:
+                                            mdict[tier] = [None for i in range(mlen)]
+                                except KeyError:
+                                    continue
                             morphemes.append(mdict)
 
                     words.append(wdict)

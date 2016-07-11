@@ -359,14 +359,20 @@ class ToolboxFile(object):
         if self.config['corpus']['corpus'] == "Russian":
             if 'pos_raw' in utterance.keys():
                 # remove PUNCT pos
-                pos_cleaned = [] if utterance['pos_raw'] is None else utterance['pos_raw'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
+                pos_cleaned = [] if utterance['pos_raw'] is None else (
+                    utterance['pos_raw'].replace('PUNCT', '').replace(
+                        'ANNOT','').replace('<NA: lt;> ','').split())
 
             if 'morpheme' in utterance.keys():
                 # Remove punctuation from morphemes
-                morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\-\?\+\/]', '', utterance['morpheme'])
-                morphemes_cleaned = re.sub('xxx?|www', '???', morphemes_cleaned)
+                morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\-\?\+\/]', '',
+                                           utterance['morpheme'])
+                morphemes_cleaned = re.sub('xxx?|www', '???', 
+                                           morphemes_cleaned)
                 morphemes_split = morphemes_cleaned.split()
-                morphemes = [morphemes_split[i:i+1] for i in range(0, len(morphemes_split), 1)] # make list of lists
+                morphemes = [morphemes_split[i:i+1] for i in range(
+                    0, len(morphemes_split), 1)] # make list of lists
+
 
             if 'pos_raw' in utterance.keys():
                 # Get pos and gloss in Russian, see:
@@ -374,7 +380,9 @@ class ToolboxFile(object):
 
                 # Remove PUNCT in POS; if the POS in input data is missing, insert empty list for processing
                 # TODO: log it
-                pos_cleaned = [] if utterance['pos_raw'] is None else utterance['pos_raw'].replace('PUNCT', '').replace('ANNOT','').replace('<NA: lt;> ','').split()
+                pos_cleaned = [] if utterance['pos_raw'] is None else (
+                    utterance['pos_raw'].replace('PUNCT', '').replace(
+                        'ANNOT','').replace('<NA: lt;> ','').split())
 
 
                 # The Russian tier \mor contains both glosses and POS, separated by "-" or ":".
@@ -476,10 +484,18 @@ class ToolboxFile(object):
             raise TypeError("Corpus format is not supported by this parser.")
 
 
-        # This bit adds None (NULL in the DB) for any mis-alignments
-        tiers = list(zip_longest(morphemes, glosses, poses, fillvalue=[]))
-        for tier in tiers:
-            alignment = zip_longest(tier[0], tier[1], tier[2], fillvalue=None)
+        len_align = len(glosses)
+        tiers = []
+        for t in (morphemes, glosses, poses):
+            if len(t) == len_align:
+                tiers.append(t)
+            else:
+                tiers.append([[] for i in range(len_align)])
+        #This bit adds None (NULL in the DB) for any mis-alignments
+        #tiers = list(zip_longest(morphemes, glosses, poses, fillvalue=[]))
+        mwords = zip(*tiers)
+        for mw in mwords:
+            alignment = zip_longest(mw[0], mw[1], mw[2], fillvalue=None)
             l = []
             for morpheme in alignment:
                 d = {}
@@ -490,10 +506,10 @@ class ToolboxFile(object):
                 d['type'] = self.config['morphemes']['type'] # what type of morpheme as defined in the corpus .ini
                 d['warning'] = None if len(warnings) == 0 else " ".join(warnings)
                 l.append(d)
-                logger.info("Length of morphemes, glosses, poses don't match in the Toolbox file: " + utterance['source_id'])
+                #logger.info("Length of morphemes, glosses, poses don't match in the Toolbox file: " + utterance['source_id'])
             result.append(l)
         return result
-
+    
 
     def __repr__(self):
         # for pretty printing
