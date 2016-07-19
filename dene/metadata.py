@@ -197,7 +197,8 @@ class Session:
                 "cousin", "grandmother", "sister", "father", "aunt",
                 "uncle", "grandfather", "teacher", "older brother", "stepfather",
                 "researcher", "older sister", "nephew", "family friend", "linguist",
-                "great grandmother", "great grandfather", "cousin", "relative"
+                "great grandmother", "great grandfather", "cousin", "relative",
+                "unknown"
             }
 
             # hash for replacing certain informal terms or non-standard spellings
