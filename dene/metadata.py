@@ -452,8 +452,8 @@ class Participant:
             self.mainlang = replace_i(self.mainlang.strip(" "))
 
             for lang in [self.firstlang, self.mainlang]:
-                if lang != "English" and lang != "Dene":
-                    logger.warning("Language other than English and Dene",
+                if lang not in ['Dene','English','German','French']:
+                    logger.warning("Language value not permitted",
                         extra={"object_number": Participant.participant_number, "object_id": self.shortname})
 
         else:
