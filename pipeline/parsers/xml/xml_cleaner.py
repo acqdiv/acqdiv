@@ -132,14 +132,22 @@ class XMLCleaner(object):
     def _clean_word_text(self, words):
         for w in words:
             wt = w.find('actual')
+            #TODO: what with p in replacements etc. ?
             for path in ('.//p', './/ca-element', './/wk'):
                 for t in w.findall(path):
+                    parent = t.getparent()
                     if t.tail is not None:
-                        if wt.text is None:
-                            wt.text = t.tail
+                        if parent == w:
+                            if wt.text is None:
+                                wt.text = t.tail
+                            else:
+                                wt.text += t.tail
                         else:
-                            wt.text += t.tail
-                    w.remove(t)
+                            if parent.text is None:
+                                parent.text = t.tail
+                            else:
+                                parent.text += t.tail
+                    parent.remove(t)
             if wt.text:
                 # Sometimes words may be partially untranscribed
                 # (-xxx, xxx-, -xxx-) - transform this to unified ???
@@ -257,9 +265,11 @@ class XMLCleaner(object):
         reps = group.find('r')
         if reps is not None:
             ws = group.findall('.//w')
+            idx = group.index(ws[-1])
             for i in range(int(reps.attrib['times'])-1):
                 for w in ws:
-                    group.insert(len(ws)-1, copy.deepcopy(w))
+                    group.insert(idx+1, copy.deepcopy(w))
+                    idx += 1
 
     def _clean_retracings(self, group, u):
         retracings = group.find('k[@type="retracing"]')
@@ -296,17 +306,22 @@ class XMLCleaner(object):
             base_index = u_ws.index(group_ws[-1]) + 1
             max_index = base_index + len(group_ws)
             for i,j in zip(range(base_index, max_index), itertools.count()):
-                mor = u_ws[i].find('mor')
-                if mor is not None: 
-                    group_ws[j].append(copy.deepcopy(mor))
-                    if 'warning' in group_ws[j].attrib:
-                        re.sub('not glossed; search ahead', '', 
+                try:
+                    mor = u_ws[i].find('mor')
+                    if mor is not None: 
+                        group_ws[j].append(copy.deepcopy(mor))
+                        if 'warning' in group_ws[j].attrib:
+                            re.sub('not glossed; search ahead', '', 
+                                    group_ws[j].attrib['warning'])
+                    else:
+                        if 'warning' in group_ws[j].attrib:
+                            re.sub('; search ahead', '',
                                 group_ws[j].attrib['warning'])
-                else:
+                    group_ws[j].find('target').text = u_ws[i].find('target').text
+                except IndexError:
                     if 'warning' in group_ws[j].attrib:
                         re.sub('; search ahead', '',
-                               group_ws[j].attrib['warning'])
-                group_ws[j].find('target').text = u_ws[i].find('target').text
+                            group_ws[j].attrib['warning'])
                 if 'glossed' in group_ws[j].attrib:
                     del group_ws[j].attrib['glossed']
 
@@ -355,7 +370,7 @@ class XMLCleaner(object):
             stype.attrib['type'] = \
                     self.cfg['correspondences'][stype.attrib.get('type')]
 
-        timestamp = u.find('time')
+        timestamp = u.find('time') if u.find('time') is not None else u.find('time_stamp')
         if timestamp is not None:
             timestamp.attrib['start'] = timestamp.text
             timestamp.text = ''

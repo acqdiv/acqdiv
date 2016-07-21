@@ -118,6 +118,9 @@ class SessionProcessor(object):
 
             u = Utterance(**utterance)
 
+            wlen = len(words)
+            mlen = len(morphemes)
+
             # TODO: Deal with Indonesian...
 
             # In Chintang the number of words may be longer than the number of morphemes -- error handling
@@ -128,7 +131,7 @@ class SessionProcessor(object):
             #    "{} utterance {}".format(self.corpus, utterance['source_id']))
 
             # Populate the words
-            for i in range(0, len(words)):
+            for i in range(0, wlen):
                 # TODO: move this post processing (before the age, etc.) if it improves performance
                 words[i]['corpus'] = self.corpus
                 words[i]['language'] = self.language
@@ -145,9 +148,11 @@ class SessionProcessor(object):
                         # TODO: move this post processing (before the age, etc.) if it improves performance
                         morphemes[i][j]['corpus'] = self.corpus
                         morphemes[i][j]['language'] = self.language
+                        morphemes[i][j]['type'] = self.morpheme_type
 
                         morpheme = Morpheme(**morphemes[i][j])
-                        word.morphemes.append(morpheme)
+                        if wlen == mlen:
+                            word.morphemes.append(morpheme)
                         u.morphemes.append(morpheme)
                         self.session.morphemes.append(morpheme)
                 except TypeError:

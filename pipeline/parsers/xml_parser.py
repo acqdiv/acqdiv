@@ -80,7 +80,7 @@ class XMLParser(object):
                 udict['utterance_id'] = u.attrib.get('uID')
                 udict['speaker_label'] = u.attrib.get('who')
                 udict['warning'] = u.attrib.get('warning')
-
+                
                 udict['addressee'] = XMLCleaner.find_text(u, 'addressee')
                 udict['english_translation'] = XMLCleaner.find_text(
                     u, 'english_translation')
@@ -116,6 +116,13 @@ class XMLParser(object):
                             mdict = {}
                             for tier_name in m.attrib:
                                 mdict[tier_name] = m.attrib.get(tier_name)
+                                try:
+                                    mlen = len(mdict['gloss_raw'])
+                                    for tier in mdict:
+                                        if len(mdict[tier]) != mlen:
+                                            mdict[tier] = [None for i in range(mlen)]
+                                except KeyError:
+                                    continue
                             morphemes.append(mdict)
 
                     words.append(wdict)
@@ -150,7 +157,7 @@ class XMLParser(object):
                         label = self.cfg['xml_mappings'][k]
                         word[label] = raw_word[k]
                     else:
-                        pass
+                        word[k] = raw_word[k]
                 word['word'] = word[self.cfg['xml_mappings']['word']]
                 new_words.append(word)
         except TypeError:
