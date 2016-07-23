@@ -1,4 +1,4 @@
-"""Collects all metadata of dene and generates their CMDIs
+""""Reads session and speaker metadata from a tabular format and converts them to one IMDI (as defined in the CMDI framework) per session."
 
 Example:
     python3 CMDIMaker.py
@@ -19,66 +19,37 @@ from lxml.etree import *
 
 def commandline_setup():
     """Set up command line arguments"""
-    arg_description = """Specify paths for sessions.csv, participants.csv and resources.csv"""
-    parser = argparse.ArgumentParser(description=arg_description)
-    parser.add_argument("-s", "--sessions", help="path to sessions.csv")
-    parser.add_argument("-p", "--participants", help="path to participants.csv")
-    parser.add_argument("-f", "--files", help="path to files.csv")
-    parser.add_argument("-m", "--monitor", help="path to monitor.csv")
-    parser.add_argument("-i", "--imdi", help="path for IMDI file")
-    parser.add_argument("-d", "--ini", help="path to Dene.ini")
+    parser = argparse.ArgumentParser(description="Specify paths for metadata files.")
+    parser.add_argument("-s", "--sessions", help="path to sessions.csv", default="../Metadata/sessions.csv")
+    parser.add_argument("-p", "--participants", help="path to participants.csv", default="../Metadata/participants.csv")
+    parser.add_argument("-f", "--files", help="path to files.csv", default="../Metadata/files.csv")
+    parser.add_argument("-m", "--monitor", help="path to monitor.csv", default="../Workflow/monitor.csv")
+    parser.add_argument("-i", "--imdi", help="path for IMDI file", default="../Metadata/IMDI/")
+    parser.add_argument("-d", "--ini", help="path to Dene.ini", default="../Metadata/Dene.ini")
 
     return parser.parse_args()
 
 
-class DeneCMDIMaker:
+class IMDIMaker:
     """Generate CMDI files of profile IMDI for dene"""
 
     def __init__(self):
-        """Intialize paths and variables for metadata files"""
-
-        # set all default paths for the metadata files
-        self.sessions_path = "../Metadata/sessions.csv"
-        self.files_path = "../Metadata/files.csv"
-        self.participants_path = "../Metadata/participants.csv"
-        self.monitor_path = "../Workflow/monitor.csv"
-        # @rabart, what's the default path here for all CMDI files?
-        self.imdi_path = "../Metadata/CMDI/"
-        self.ini_path = "../Metadata/Dene.ini"
-
-        # overwrite those paths above, if paths were given over the terminal
-        self.set_paths()
+        """Intialize variables for metadata files"""
+        # get parsed arguments
+        self.args = commandline_setup()
         # get logger to track errors while creating the CMDI files
         self.logger = self.get_logger()
 
         # load Dene.ini where all the fixed values are stored
         self.config = configparser.ConfigParser()
-        self.config.read(self.ini_path)
+        # preserve case
+        self.config.optionxform = str
+        self.config.read(self.args.ini)
 
         # intialize variables storing metadata
         self.session_metadata = {}
         self.participants = {}
         self.resources = defaultdict(list)
-
-
-    def set_paths(self):
-        """Overwrite the default paths if command line arguments were given"""
-        # read in the command line arguments
-        args = commandline_setup()
-
-        # overwrite paths if some or all paths were given
-        if args.sessions:
-            self.sessions_path = args.sessions
-        if args.files:
-            self.files_path = args.files
-        if args.participants:
-            self.participants_path = args.participants
-        if args.monitor:
-            self.monitor_path = args.monitor
-        if args.imdi:
-            self.imdi_path = args.imdi
-        if args.ini:
-            self.ini_path = args.ini
 
 
     def get_logger(self):
@@ -99,7 +70,7 @@ class DeneCMDIMaker:
     def generate_cmdis(self):
         """Generate CMDI's for all sessions from session.csv"""
         # open sessions.csv for reading
-        with open(self.sessions_path, "r") as sessions_file:
+        with open(self.args.sessions, "r") as sessions_file:
 
             # get and store metadata of all participants and files
             self.get_participants()
@@ -110,6 +81,7 @@ class DeneCMDIMaker:
                 # store metadata of this session
                 self.session_metadata = session
 
+                # TODO: make this more corpus-independent
                 # extract and add shortname since it is needed several times
                 match = re.search(r"deslas-([A-Z]{3})", self.session_metadata["Code"])
                 if match:
@@ -121,15 +93,23 @@ class DeneCMDIMaker:
 
     def create_cmd(self):
         """Create CMDI element 'CMD'"""
-        cmd_element = Element("CMD", CMDVersion="1.1")
+
+        # set namespace
+        clarin_ns = "http://www.clarin.eu/cmd/"
+        clarin = "{%s}" % clarin_ns
+        NSMAP = {None : clarin_ns}
+
+        # create root element of CMDI
+        cmd_element = Element(clarin + "CMD", nsmap=NSMAP, CMDVersion="1.1")
+
         self.create_header(cmd_element)
         self.create_cmd_resources(cmd_element)
         self.create_components(cmd_element)
 
         # set path for CMDI file
-        path = os.path.join(self.imdi_path, self.session_metadata["Code"] + ".cmdi")
+        path = os.path.join(self.args.imdi, self.session_metadata["Code"] + ".cmdi")
         # write XML to this file
-        ElementTree(cmd_element).write(path, pretty_print=True, encoding="utf-8")
+        ElementTree(cmd_element).write(path, pretty_print=True, encoding="utf-8", xml_declaration=True)
 
         print(self.session_metadata["Code"])
 
@@ -139,10 +119,10 @@ class DeneCMDIMaker:
         header_element = SubElement(cmd_element, "Header")
 
         for key, value in [
-            ("MDCreator", sys.argv[0]),
-            ("MDCreationDate", time.strftime("%Y-%m-%d")),
-            ("MdSelfLink", "smb://server.ivs.uzh.ch/Dene/Metadata/IMDI/" + self.session_metadata["Code"] + ".cmdi"),
-            ("MDProfile", self.config["CMD"]["MDProfile"]),
+            ("MdCreator", sys.argv[0]),
+            ("MdCreationDate", time.strftime("%Y-%m-%d")),
+            ("MdSelfLink", self.config["CMD"]["MdSelfLink"] + self.session_metadata["Code"] + ".cmdi"),
+            ("MdProfile", self.config["CMD"]["MdProfile"]),
             ("MdCollectionDisplayName", self.config["CMD"]["MdCollectionDisplayName"])
             ]:
 
@@ -168,15 +148,16 @@ class DeneCMDIMaker:
         for key, value in [
             ("Name", self.session_metadata["Code"]),
             ("Title", self.get_title()),
-            ("Date", self.session_metadata["Date"])
+            ("Date", self.session_metadata["Date"].replace(".", "-"))
             ]:
 
             SubElement(session_element, key).text = value
 
 
         if self.session_metadata["Situation"]:
-            descriptions_element = SubElement(session_element, "descriptions", LanguageId=self.config["LanguageId"]["descriptions"])
-            SubElement(descriptions_element, "Description").text = self.session_metadata["Situation"]
+            descriptions_element = SubElement(session_element, "descriptions")
+            SubElement(descriptions_element, "Description",
+                LanguageId=self.config["LanguageId"]["Description"]).text = self.session_metadata["Situation"]
 
         self.create_mdgroup(session_element)
         self.create_session_resources(session_element)
@@ -184,8 +165,8 @@ class DeneCMDIMaker:
 
     def get_title(self):
         """Get title for a certain session"""
-        # inital part of title
-        title = " session of " + self.session_metadata["Short name"] + " on " + self.session_metadata["Date"]
+        # initial part of title
+        title = " session of target child " + self.session_metadata["Short name"] + " on " + self.session_metadata["Date"]
         # regex to extract number of a session code
         match = re.search(r"-\d\d-\d\d-(\d)[A-Z]*", self.session_metadata["Code"])
         # if there is number, get its ordinal and concatenate to title, otherwise concatenate 'only'
@@ -233,8 +214,9 @@ class DeneCMDIMaker:
         for key, value in self.config.items("Contact"):
             SubElement(contact_element, key).text = value
 
-        descriptions_element = SubElement(project_element, "descriptions", LanguageId=self.config["LanguageId"]["descriptions"])
-        SubElement(descriptions_element, "Description").text = self.config["Project"]["descriptions"]
+        descriptions_element = SubElement(project_element, "descriptions")
+        SubElement(descriptions_element, "Description",
+            LanguageId=self.config["LanguageId"]["Description"]).text = self.config["Project"]["descriptions"]
 
 
     def create_content(self, mdgroup_element):
@@ -251,7 +233,7 @@ class DeneCMDIMaker:
 
         content_languages_element = SubElement(content_element, "Content_Languages")
 
-        for language in ["Dene", "English"]:
+        for language in self.config["Languages"]:
             content_language_element = SubElement(content_languages_element, "Content_Language")
             for key, value in self.config.items(language):
                 SubElement(content_language_element, key).text = value
@@ -259,8 +241,9 @@ class DeneCMDIMaker:
         SubElement(content_element, "Keys")
 
         if self.session_metadata["Content"]:
-            descriptions_element = SubElement(content_element, "descriptions", LanguageId=self.config["LanguageId"]["descriptions"])
-            SubElement(descriptions_element, "Description").text = self.session_metadata["Content"]
+            descriptions_element = SubElement(content_element, "descriptions")
+            SubElement(descriptions_element, "Description",
+                LanguageId=self.config["LanguageId"]["Description"]).text = self.session_metadata["Content"]
 
 
     def create_actors(self, mdgroup_element):
@@ -289,17 +272,22 @@ class DeneCMDIMaker:
                 continue
 
             # modify the fields whose values depend on the role of an actor
-            if role != "researcher" and role != "recorder":
+            if role == "researcher":
                 # change 'Role' element
-                actor_element[0].text = "speaker"
+                actor_element[0].text = role
                 # change 'FamilySocialRole' element
-                actor_element[4].text = role
+                actor_element[4].text = "Not-related"
                 # change 'EthnicGroup' element
                 actor_element[5].text = "German"
 
-            else:
+            elif role == "recorder":
                 actor_element[0].text = role
-                actor_element[4].text = "not-related"
+                actor_element[4].text = "Not-related"
+                actor_element[5].text = "Unknown"
+
+            else:
+                actor_element[0].text = "Speaker"
+                actor_element[4].text = role
                 actor_element[5].text = "Dene"
 
             # finally add the actor element
@@ -318,7 +306,7 @@ class DeneCMDIMaker:
         """Get all metadata of the partcipants from participants.csv"""
 
         # open participants.csv for reading
-        with open(self.participants_path, "r") as participants_file:
+        with open(self.args.participants, "r") as participants_file:
 
             # go through each participant
             for participant in csv.DictReader(participants_file):
@@ -333,7 +321,7 @@ class DeneCMDIMaker:
                     ("FamilySocialRole", ""),
                     ("EthnicGroup", ""),
                     ("Age", participant["Age"]),
-                    ("BirthDate", participant["Birth date"]),
+                    ("BirthDate", participant["Birth date"].replace(".", "-")),
                     ("Sex", participant["Gender"]),
                     ("Education", participant["Education"]),
                     ("Anonymized", "false")
@@ -344,7 +332,7 @@ class DeneCMDIMaker:
                     else:
                         SubElement(actor_element, key).text = "Unspecified"
 
-                # only create contact if there is also data availiable for this actor
+                # only create contact if there is also data available for this actor
                 if participant["Contact address"] or "@" in participant["E-mail/Phone"]:
                     contact_element = SubElement(actor_element, "Contact")
                     SubElement(contact_element, "Name").text = participant["Full name"]
@@ -358,14 +346,16 @@ class DeneCMDIMaker:
                 SubElement(actor_element, "Keys")
 
                 if participant["Description"]:
-                    descriptions_element = SubElement(actor_element, "descriptions", LanguageId=self.config["LanguageId"]["descriptions"])
-                    SubElement(descriptions_element, "Description").text = participant["Description"]
+                    descriptions_element = SubElement(actor_element, "descriptions")
+                    SubElement(descriptions_element, "Description",
+                        LanguageId=self.config["LanguageId"]["Description"]).text = participant["Description"]
 
                 actor_languages_element = SubElement(actor_element, "Actor_Languages")
 
                 if participant["Language biography"]:
-                    descriptions_element = SubElement(actor_languages_element, "descriptions", LanguageId=self.config["LanguageId"]["descriptions"])
-                    SubElement(descriptions_element, "Description").text = participant["Language biography"]
+                    descriptions_element = SubElement(actor_languages_element, "descriptions")
+                    SubElement(descriptions_element, "Description",
+                        LanguageId=self.config["LanguageId"]["Description"]).text = participant["Language biography"]
 
                 # first collect the languages the actor speaks
                 actor_languages = set()
@@ -388,7 +378,6 @@ class DeneCMDIMaker:
                         SubElement(actor_language_element, "Id").text = "Unknown"
                         SubElement(actor_language_element, "Name").text = actor_language
 
-                    # @rabart: do you agree with this mapping here?
                     if actor_language in participant["First languages"]:
                         SubElement(actor_language_element, "MotherTongue").text = "true"
                     else:
@@ -408,7 +397,7 @@ class DeneCMDIMaker:
     def get_files(self):
         """Get all metadata of the resources from files.csv"""
         # open files.csv for reading
-        with open(self.files_path, "r") as files_file:
+        with open(self.args.files, "r") as files_file:
 
             # first get the recording qualities which are needed when creating the 'MediaFile' elements
             quality = self.get_qualities()
@@ -419,6 +408,8 @@ class DeneCMDIMaker:
                 # first create 'ResourceProxy' elments of CMD/ResourceProxyList
                 resource_proxy_element = Element("ResourceProxy", id=file["File name"])
                 SubElement(resource_proxy_element, "ResourceType", mimetype=file["Format"]).text = self.config["CMD"]["ResourceType"]
+                SubElement(resource_proxy_element, "ResourceRef").text = file["Location"]
+
 
                 # then create 'MediaFile'/'WrittenResource' elements of CMD/Components/Session
                 # check if it is a media file or a written resource
@@ -428,7 +419,7 @@ class DeneCMDIMaker:
 
                     for key, value in [
                         ("ResourceLink", file["Location"]),
-                        ("Type", file["Type"]),
+                        ("Type", file["Type"].lower()),
                         ("Format", file["Format"]),
                         ("Size", file["Byte size"])
                         ]:
@@ -441,11 +432,11 @@ class DeneCMDIMaker:
                         self.logger.error("Recording code '" + file["Recording code"] + "' missing in monitor.csv")
                         SubElement(resource_element, "Quality").text = "Unknown"
 
-                    # What are the RecordingConditions here, @rabart?
                     SubElement(resource_element, "RecordingConditions").text = "Unspecified"
                     time_position_element = SubElement(resource_element, "TimePosition")
-                    SubElement(time_position_element, "Start").text = "0"
-                    SubElement(time_position_element, "End").text = file["Duration"]
+                    SubElement(time_position_element, "Start").text = "00:00:00"
+                    if file["Duration"]:
+                        SubElement(time_position_element, "End").text = file["Duration"]
 
                 else:
                     resource_element = Element("WrittenResource")
@@ -453,7 +444,7 @@ class DeneCMDIMaker:
                     for key, value in [
                         ("ResourceLink", file["Location"]),
                         ("MediaResourceLink", ""),
-                        ("Type", file["Type"]),
+                        ("Type", file["Type"].lower()),
                         ("SubType", ""),
                         ("Format", file["Format"]),
                         ("Derivation", ""),
@@ -493,7 +484,7 @@ class DeneCMDIMaker:
         """Get for each recording its quality"""
         quality = {}
         # open monitor.csv for reading
-        with open(self.monitor_path, "r") as monitor_file:
+        with open(self.args.monitor, "r") as monitor_file:
             quality_mapping = {"low": "1", "high": "5", "medium": "3", "": "Unspecified"}
 
             for row in csv.DictReader(monitor_file):
@@ -507,9 +498,9 @@ class DeneCMDIMaker:
 
 
 def main():
-    """Generate all CMDI files for Dene"""
-    cmdi_maker = DeneCMDIMaker()
-    cmdi_maker.generate_cmdis()
+    """Generate all IMDI files for Dene"""
+    imdi_maker = IMDIMaker()
+    imdi_maker.generate_cmdis()
 
 
 if __name__ == '__main__':
