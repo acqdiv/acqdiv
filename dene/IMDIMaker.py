@@ -1,7 +1,21 @@
 """"Reads session and speaker metadata from a tabular format and converts them to one IMDI (as defined in the CMDI framework) per session."
 
+Input (default locations; execute python3 IMDIMaker.py --help for help on how to set different locations):
+../Metadata/sessions.csv
+../Metadata/participants.csv
+../Metadata/files.csv
+../Workflow/monitor.csv
+../Metadata/IMDI/
+../Metadata/Dene_IMDI.ini
+
+Output:
+../Metadata/IMDI/<imdi file>
+./imdi.log
+
+If the flag '-v' is set, then all XMLs will be created in the IMDI version 1.2.
+
 Example:
-    python3 CMDIMaker.py
+    python3 IMDIMaker.py
 """
 
 
@@ -25,7 +39,8 @@ def commandline_setup():
     parser.add_argument("-f", "--files", help="path to files.csv", default="../Metadata/files.csv")
     parser.add_argument("-m", "--monitor", help="path to monitor.csv", default="../Workflow/monitor.csv")
     parser.add_argument("-i", "--imdi", help="path for IMDI file", default="../Metadata/IMDI/")
-    parser.add_argument("-d", "--ini", help="path to Dene.ini", default="../Metadata/Dene.ini")
+    parser.add_argument("-d", "--ini", help="path to Dene.ini", default="../Metadata/Dene_IMDI.ini")
+    parser.add_argument("-v", "--new-version", help="create file(s) in IMDI 1.2", action="store_true")
 
     return parser.parse_args()
 
@@ -37,19 +52,29 @@ class IMDIMaker:
         """Intialize variables for metadata files"""
         # get parsed arguments
         self.args = commandline_setup()
-        # get logger to track errors while creating the CMDI files
+        # get logger to track errors while creating the IMDI files
         self.logger = self.get_logger()
 
         # load Dene.ini where all the fixed values are stored
         self.config = configparser.ConfigParser()
         # preserve case
         self.config.optionxform = str
-        self.config.read(self.args.ini)
+        if not self.config.read(self.args.ini):
+            print("Path to Dene_IMDI.ini is not correct")
+            sys.exit(1)
 
         # intialize variables storing metadata
         self.session_metadata = {}
         self.participants = {}
         self.resources = defaultdict(list)
+
+        # create IMDI directory if does not already exist
+        if not os.path.isdir(self.args.imdi):
+            try:
+                os.mkdir(self.args.imdi)
+            except FileNotFoundError:
+                print("Path to IMDI files is not correct.")
+                sys.exit(1)
 
 
     def get_logger(self):
@@ -57,7 +82,7 @@ class IMDIMaker:
         logger = logging.getLogger(__name__)
         logger.setLevel(logging.INFO)
 
-        handler = logging.FileHandler("cmdi.log", mode="w")
+        handler = logging.FileHandler("imdi.log", mode="w")
         handler.setLevel(logging.INFO)
 
         formatter = logging.Formatter("%(funcName)s|%(levelname)s|%(message)s")
@@ -67,11 +92,15 @@ class IMDIMaker:
         return logger
 
 
-    def generate_cmdis(self):
-        """Generate CMDI's for all sessions from session.csv"""
-        # open sessions.csv for reading
-        with open(self.args.sessions, "r") as sessions_file:
-
+    def generate_imdis(self):
+        """Generate IMDI's for all sessions from session.csv"""
+        try:
+            # open sessions.csv for reading
+            sessions_file = open(self.args.sessions, "r")
+        except FileNotFoundError:
+            print("Path to sessions.csv is not correct.")
+            sys.exit(1)
+        else:
             # get and store metadata of all participants and files
             self.get_participants()
             self.get_files()
@@ -87,8 +116,13 @@ class IMDIMaker:
                 if match:
                     self.session_metadata["Short name"] = match.group(1)
 
-                # generate cmdi for this session
-                self.create_cmd()
+                # check in which IMDI version the file should be created
+                if self.args.new_version:
+                    # IMDI 1.2
+                    self.create_session()
+                else:
+                    # IMDI 1.1
+                    self.create_cmd()
 
 
     def create_cmd(self):
@@ -99,19 +133,16 @@ class IMDIMaker:
         clarin = "{%s}" % clarin_ns
         NSMAP = {None : clarin_ns}
 
-        # create root element of CMDI
+        # create root element
         cmd_element = Element(clarin + "CMD", nsmap=NSMAP, CMDVersion="1.1")
 
         self.create_header(cmd_element)
         self.create_cmd_resources(cmd_element)
-        self.create_components(cmd_element)
+        components_element = SubElement(cmd_element, "Components")
+        self.create_session(components_element)
 
-        # set path for CMDI file
-        path = os.path.join(self.args.imdi, self.session_metadata["Code"] + ".cmdi")
-        # write XML to this file
-        ElementTree(cmd_element).write(path, pretty_print=True, encoding="utf-8", xml_declaration=True)
-
-        print(self.session_metadata["Code"])
+        # write to file
+        self.write_file(cmd_element)
 
 
     def create_header(self, cmd_element):
@@ -121,7 +152,7 @@ class IMDIMaker:
         for key, value in [
             ("MdCreator", sys.argv[0]),
             ("MdCreationDate", time.strftime("%Y-%m-%d")),
-            ("MdSelfLink", self.config["CMD"]["MdSelfLink"] + self.session_metadata["Code"] + ".cmdi"),
+            ("MdSelfLink", self.config["CMD"]["MdSelfLink"] + self.session_metadata["Code"] + ".imdi"),
             ("MdProfile", self.config["CMD"]["MdProfile"]),
             ("MdCollectionDisplayName", self.config["CMD"]["MdCollectionDisplayName"])
             ]:
@@ -141,9 +172,12 @@ class IMDIMaker:
         resource_relation_list_element = SubElement(resources_element, "ResourceRelationList")
 
 
-    def create_components(self, cmd_element):
+    def create_session(self, components_element=None):
         """Creates CMDI element 'Components'"""
-        session_element = SubElement(SubElement(cmd_element, "Components"), "Session")
+        if self.args.new_version:
+            session_element = Element("Session")
+        else:
+            session_element = SubElement(components_element, "Session")
 
         for key, value in [
             ("Name", self.session_metadata["Code"]),
@@ -153,7 +187,6 @@ class IMDIMaker:
 
             SubElement(session_element, key).text = value
 
-
         if self.session_metadata["Situation"]:
             descriptions_element = SubElement(session_element, "descriptions")
             SubElement(descriptions_element, "Description",
@@ -161,6 +194,21 @@ class IMDIMaker:
 
         self.create_mdgroup(session_element)
         self.create_session_resources(session_element)
+
+        if self.args.new_version:
+            # write to file
+            self.write_file(session_element)
+
+
+    def write_file(self, element):
+        """Write XML to file"""
+        # set path for IMDI file
+        path = os.path.join(self.args.imdi, self.session_metadata["Code"] + ".imdi")
+
+        # write XML to this file
+        ElementTree(element).write(path, pretty_print=True, encoding="utf-8", xml_declaration=True)
+
+        print(self.session_metadata["Code"])
 
 
     def get_title(self):
@@ -304,10 +352,13 @@ class IMDIMaker:
 
     def get_participants(self):
         """Get all metadata of the partcipants from participants.csv"""
-
-        # open participants.csv for reading
-        with open(self.args.participants, "r") as participants_file:
-
+        try:
+            # open participants.csv for reading
+            participants_file = open(self.args.participants, "r")
+        except FileNotFoundError:
+            print("Path to participants.csv is not correct.")
+            sys.exit(1)
+        else:
             # go through each participant
             for participant in csv.DictReader(participants_file):
 
@@ -315,7 +366,7 @@ class IMDIMaker:
 
                 for key, value in [
                     ("Role", ""),
-                    ("Name", participant["Full name"].split()[0]),
+                    ("Name", participant["Full name"].split(" ")[0]),
                     ("FullName", participant["Full name"]),
                     ("Code", participant["Short name"]),
                     ("FamilySocialRole", ""),
@@ -396,9 +447,13 @@ class IMDIMaker:
 
     def get_files(self):
         """Get all metadata of the resources from files.csv"""
-        # open files.csv for reading
-        with open(self.args.files, "r") as files_file:
-
+        try:
+            # open files.csv for reading
+            files_file = open(self.args.files, "r")
+        except FileNotFoundError:
+            print("Path to files.csv not corect.")
+            sys.exit(1)
+        else:
             # first get the recording qualities which are needed when creating the 'MediaFile' elements
             quality = self.get_qualities()
 
@@ -413,13 +468,14 @@ class IMDIMaker:
 
                 # then create 'MediaFile'/'WrittenResource' elements of CMD/Components/Session
                 # check if it is a media file or a written resource
-                is_media_file = file["Type"] == "Video" or file["Type"] == "Audio"
+                file["Type"] = file["Type"].lower()
+                is_media_file = file["Type"] == "video" or file["Type"] == "audio"
                 if is_media_file:
                     resource_element = Element("MediaFile")
 
                     for key, value in [
                         ("ResourceLink", file["Location"]),
-                        ("Type", file["Type"].lower()),
+                        ("Type", file["Type"]),
                         ("Format", file["Format"]),
                         ("Size", file["Byte size"])
                         ]:
@@ -444,7 +500,7 @@ class IMDIMaker:
                     for key, value in [
                         ("ResourceLink", file["Location"]),
                         ("MediaResourceLink", ""),
-                        ("Type", file["Type"].lower()),
+                        ("Type", file["Type"]),
                         ("SubType", ""),
                         ("Format", file["Format"]),
                         ("Derivation", ""),
@@ -477,30 +533,40 @@ class IMDIMaker:
                     # prepend since media files must come before written resources
                     self.resources[file["Session code"]].insert(0, (resource_proxy_element, resource_element))
                 else:
-                    self.resources[file["Session code"]].append(resource_proxy_element, resource_element)
+                    self.resources[file["Session code"]].append((resource_proxy_element, resource_element))
 
 
     def get_qualities(self):
         """Get for each recording its quality"""
-        quality = {}
-        # open monitor.csv for reading
-        with open(self.args.monitor, "r") as monitor_file:
+        try:
+            # open monitor.csv for reading
+            monitor_file = open(self.args.monitor, "r")
+        except FileNotFoundError:
+            print("Path to monitor.csv is not correct.")
+            sys.exit(1)
+        else:
+            quality = {}
             quality_mapping = {"low": "1", "high": "5", "medium": "3", "": "Unspecified"}
 
-            for row in csv.DictReader(monitor_file):
+            monitor_reader = csv.DictReader(monitor_file)
+
+            # skip line with value 'quality' under 'quality of recording'
+            next(monitor_reader)
+
+            for row in monitor_reader:
                 try:
                     quality[row["recording"]] = quality_mapping[row["quality of recording"]]
                 except KeyError:
-                    self.logger("Unknown quality: " + row["quality of recording"] + "|" + row["recording"])
-                    self.recording_quality[row["recording"]] = "Unknown"
+                    self.logger.error("Unknown quality: " + row["quality of recording"] + "|" + row["recording"])
+                    quality[row["recording"]] = "Unknown"
 
-        return quality
+            return quality
 
 
 def main():
     """Generate all IMDI files for Dene"""
     imdi_maker = IMDIMaker()
-    imdi_maker.generate_cmdis()
+    imdi_maker.generate_imdis()
 
 
 if __name__ == '__main__':
