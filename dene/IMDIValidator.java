@@ -10,7 +10,7 @@ import javax.xml.XMLConstants;
  *
  * @author Anna Jancso
  */
-public class XSDValidator {
+public class IMDIValidator {
 
     private Validator validator;
 
@@ -75,7 +75,7 @@ public class XSDValidator {
         File imdiFile = new File(imdiPath);
 
         // set validator with XSD file
-        XSDValidator validator = new XSDValidator();
+        IMDIValidator validator = new IMDIValidator();
         validator.setValidator(xsdFile);
 
         // get all files in IMDI directory

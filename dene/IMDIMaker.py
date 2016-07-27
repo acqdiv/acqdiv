@@ -60,7 +60,7 @@ class IMDIMaker:
         # preserve case
         self.config.optionxform = str
         if not self.config.read(self.args.ini):
-            print("Path to Dene_IMDI.ini is not correct")
+            print("Couldn't find Dene_IMDI.ini at", self.args.ini)
             sys.exit(1)
 
         # intialize variables storing metadata
@@ -73,7 +73,7 @@ class IMDIMaker:
             try:
                 os.mkdir(self.args.imdi)
             except FileNotFoundError:
-                print("Path to IMDI files is not correct.")
+                print("Folder IMDI couldn't be created at", self.args.imdi)
                 sys.exit(1)
 
 
@@ -98,7 +98,7 @@ class IMDIMaker:
             # open sessions.csv for reading
             sessions_file = open(self.args.sessions, "r")
         except FileNotFoundError:
-            print("Path to sessions.csv is not correct.")
+            print("Couldn't find sessions.csv at", self.args.sessions)
             sys.exit(1)
         else:
             # get and store metadata of all participants and files
@@ -356,7 +356,7 @@ class IMDIMaker:
             # open participants.csv for reading
             participants_file = open(self.args.participants, "r")
         except FileNotFoundError:
-            print("Path to participants.csv is not correct.")
+            print("Couldn't find participants.csv at", self.args.participants)
             sys.exit(1)
         else:
             # go through each participant
@@ -451,7 +451,7 @@ class IMDIMaker:
             # open files.csv for reading
             files_file = open(self.args.files, "r")
         except FileNotFoundError:
-            print("Path to files.csv not corect.")
+            print("Couldn't find files.csv at", self.args.files)
             sys.exit(1)
         else:
             # first get the recording qualities which are needed when creating the 'MediaFile' elements
@@ -542,7 +542,7 @@ class IMDIMaker:
             # open monitor.csv for reading
             monitor_file = open(self.args.monitor, "r")
         except FileNotFoundError:
-            print("Path to monitor.csv is not correct.")
+            print("Couldn't find monitor.csv at", self.args.monitor)
             sys.exit(1)
         else:
             quality = {}
