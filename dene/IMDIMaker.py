@@ -26,6 +26,7 @@ import csv
 import time
 import logging
 import argparse
+import datetime
 import configparser
 from collections import defaultdict
 from lxml.etree import *
@@ -338,6 +339,26 @@ class IMDIMaker:
                 actor_element[4].text = role
                 actor_element[5].text = "Dene"
 
+            # try to parse birth date of this actor
+            for format in ["%Y-%m-%d", "%Y"]:
+                try:
+                    birthdate = datetime.datetime.strptime(actor_element[7].text, format)
+                except ValueError:
+                    birthdate = None
+                else:
+                    break
+
+            # try to parse date of this session
+            try:
+                recording_date = datetime.datetime.strptime(self.session_metadata["Date"], "%Y-%m-%d")
+            except ValueError:
+                recording_date = None
+
+            # if both birth date and recording date could be parsed
+            if birthdate and recording_date:
+                # then calculate age of this actor at this session
+                actor_element[6].text = str(int(abs((recording_date - birthdate).days) / 365))
+
             # finally add the actor element
             actors_element.append(actor_element)
 
@@ -371,8 +392,8 @@ class IMDIMaker:
                     ("Code", participant["Short name"]),
                     ("FamilySocialRole", ""),
                     ("EthnicGroup", ""),
-                    ("Age", participant["Age"]),
-                    ("BirthDate", participant["Birth date"].replace(".", "-")),
+                    ("Age", ""),
+                    ("BirthDate", participant["Birth date"]),
                     ("Sex", participant["Gender"]),
                     ("Education", participant["Education"]),
                     ("Anonymized", "false")

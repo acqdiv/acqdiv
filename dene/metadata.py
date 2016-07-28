@@ -58,23 +58,28 @@ def validate_date(str_date, object_number=0, object_id=""):
         empty string if date is not correct, otherwise the (corrected) date
     """
     # try to parse any of the three given date formats
-    for format_index, format in enumerate(["%Y-%m-%d", "%Y.%m.%d", "%Y/%m/%d"]):
+    for format in ["%Y-%m-%d", "%Y.%m.%d", "%Y", "%Y/%m/%d"]:
         try:
             date = datetime.datetime.strptime(str_date, format)
-        except:
+        except ValueError:
             pass
         else:
+            if format == "%Y":
+                # leave unchanged
+                return str_date
+
             # check if date delimiter was '-'
-            if format_index != 0:
+            if format != "%Y-%m-%d":
                 logger.info("Delimiter in Session.date replaced by '-'",
                     extra={"object_number": object_number, "object_id": object_id})
 
             return date.strftime("%Y-%m-%d")
 
     # if date cannot be parsed with any of the given formats, produce warning and return empty string
-    logger.error("Date cannot be parsed - date is not possible or the required format \d{4}-\d{2}-\d{2} is wrong",
+    logger.error("Date cannot be parsed - date is not possible or the required format \d{4}-\d{2}-\d{2} or \d{4} is wrong",
         extra={"object_number": object_number, "object_id": object_id})
     return ""
+
 
 
 ################################################################################
@@ -411,29 +416,32 @@ class Participant:
         if self.age:
 
             # age value must be a number optionally followed by a year in brackets
-            match = re.fullmatch(r"\d+( \(\d{4}\))?", self.age)
+            match = re.fullmatch(r"\d{1,3}( \(\d{4}\))?", self.age)
 
             if match:
+                # if there is a year given
+                if match.group(1):
+                    # remove it
+                    self.age = self.age[:-7]
 
-                # check if date of birth and year is missing
-                if not self.birthdate and not match.group(1):
+                # check if birth date or year is missing
+                if not self.birthdate:
 
                     # go through the list of dates and participants and roles
                     for date, partrole in date_partrole_list:
 
                         # if the shortname is among the participants and roles of a session
                         if self.shortname in partrole:
-                            # save the corresponding date of the session
-                            recording_date = date
-                            # add it to the age value by extracting the year only
-                            self.age = self.age + " (" + recording_date[:4] + ")"
-                            logger.info("Date of birth is missing, but age is known - recording year is added",
+
+                            # save year as birth date value
+                            self.birthdate = str(int(date[:4]) - int(self.age))
+                            logger.info("Date of birth is missing, but age is known - year of birth calculated and added",
                                 extra={"object_number": Participant.participant_number, "object_id": self.shortname})
 
                             break
 
             else:
-                logger.error("Age cannot be parsed - expected format is \d+( \(\d{4}\))?",
+                logger.error("Age value not correct - expected format is \d{1,3}( \(\d{4}\))?",
                     extra={"object_number": Participant.participant_number, "object_id": self.shortname})
 
         else:
@@ -463,7 +471,7 @@ class Participant:
 
         # first check value for 'Main language'
         if not self.mainlang:
-            logger.warning("Language value missing for 'Main language'",
+            logger.info("Language value missing for 'Main language'",
                 extra={"object_number": Participant.participant_number, "object_id": self.shortname})
         else:
             if len(self.mainlang.split("/")) > 1:
@@ -476,7 +484,7 @@ class Participant:
 
         # then check value for 'First languages'
         if not self.firstlang:
-            logger.warning("Language value missing for 'First languages'",
+            logger.info("Language value missing for 'First languages'",
                 extra={"object_number": Participant.participant_number, "object_id": self.shortname})
         else:
             for lang in self.firstlang.split("/"):
@@ -515,8 +523,8 @@ if __name__ == "__main__":
     # create list that stores all shortnames occuring in the participants table
     shortname_list = [row["Short name"].rstrip() for row in participants_reader]
 
-    # create list that stores the dates and the participants and roles occuring in the sessions table as a tuple
-    date_partrole_list = [(row["Date"].rstrip(), replace_i(row["Participants and roles"].rstrip())) for row in sessions_reader]
+    # create list with (date, participants and roles)-tuples from sessions.csv sorted by date
+    date_partrole_list = sorted((row["Date"].rstrip(), replace_i(row["Participants and roles"].rstrip())) for row in sessions_reader)
 
     # reset file pointers since we already iterated the files when creating the two lists above
     session_file.seek(0)
