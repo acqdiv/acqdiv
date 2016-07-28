@@ -504,7 +504,7 @@ class ToolboxFile(object):
         #tiers = list(zip_longest(morphemes, glosses, poses, fillvalue=[]))
         mwords = zip(*tiers)
         for mw in mwords:
-            alignment = zip_longest(mw[0], mw[1], mw[2], fillvalue=None)
+            alignment = list(zip_longest(mw[0], mw[1], mw[2], fillvalue=None))
             l = []
             for morpheme in alignment:
                 d = {}
@@ -517,6 +517,20 @@ class ToolboxFile(object):
                 l.append(d)
                 #logger.info("Length of morphemes, glosses, poses don't match in the Toolbox file: " + utterance['source_id'])
             result.append(l)
+
+        misaligned = False
+        for r in result:
+            for rm in r:
+                if rm['gloss_raw'] is None:
+                    misaligned = True
+
+        if misaligned:
+            for r in result:
+                for rm in r:
+                    rm['morpheme'] = None
+                    rm['gloss_raw'] = None
+                    rm['pos_raw'] = None
+
         return result
     
 
