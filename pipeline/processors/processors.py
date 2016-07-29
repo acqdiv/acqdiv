@@ -133,13 +133,14 @@ class SessionProcessor(object):
             # Populate the words
             for i in range(0, wlen):
                 # TODO: move this post processing (before the age, etc.) if it improves performance
-                words[i]['corpus'] = self.corpus
-                words[i]['language'] = self.language
+                if words[i] != {}:
+                    words[i]['corpus'] = self.corpus
+                    words[i]['language'] = self.language
 
-                # TODO: is it cheaper to append a list here?
-                word = Word(**words[i])
-                u.words.append(word)
-                self.session.words.append(word)
+                    # TODO: is it cheaper to append a list here?
+                    word = Word(**words[i])
+                    u.words.append(word)
+                    self.session.words.append(word)
 
                 # Populate the morphemes
                 try:

@@ -135,9 +135,9 @@ class ToolboxFile(object):
         morphemes = [] if utterance['utterance'] is None else self.get_morphemes(utterance)
 
         # Fix words less than morphemes misalignments
-        #if len(morphemes) - len(words) > 0:
-        #    misalignment = len(morphemes) - len(words)
-        #    for i in range(0, misalignment): words.append({})
+        if len(morphemes) - len(words) > 0:
+            misalignment = len(morphemes) - len(words)
+            for i in range(0, misalignment): words.append({})
 
         return utterance, words, morphemes
 

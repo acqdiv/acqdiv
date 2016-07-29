@@ -47,6 +47,15 @@ class XMLParser(object):
 
     rstruc = namedtuple('FlatUtterance', ['u', 'w', 'm']) 
 
+    @staticmethod
+    def has_value(dic, key):
+        try:
+            return dic[key] is not None
+        except KeyError:
+            return False
+        except TypeError:
+            return False
+
     def __init__(self, cfg, cleaner_cls, fpath):
 
         self.cfg = cfg
@@ -139,7 +148,8 @@ class XMLParser(object):
                 udict['gloss_raw'] = self._concat_mor_tier('gloss_raw', mwords)
                 udict['morpheme'] = self._concat_mor_tier('morpheme', mwords)
                 udict['utterance_raw'] = ' '.join([w['word'] for w in words
-                                                   if w['word'] is not None])
+                                                   if XMLParser.has_value(
+                                                           w, 'word')])
                 udict['utterance'] = udict['utterance_raw']
 
                 yield XMLParser.rstruc(udict, words, mwords)
@@ -164,9 +174,9 @@ class XMLParser(object):
                     else:
                         word[k] = raw_word[k]
                 word['word'] = word[self.cfg['xml_mappings']['word']]
-                new_words.append(word)
             except TypeError:
-                continue
+                pass
+            new_words.append(word)
         return new_words
 
     def _clean_morphemes(self, mors):
