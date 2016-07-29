@@ -96,13 +96,13 @@ class XMLParser(object):
                 for w in fws:
 
                     wdict = {}
+                    #wdict['corpus'] = udict['corpus']
+                    #wdict['language'] = udict['language']
 
-                    wdict['corpus'] = udict['corpus']
-                    wdict['language'] = udict['language']
+                    #wdict['word_actual'] = w.find('actual').text
+                    #wdict['word_target'] = w.find('target').text
+                    #wdict['word'] = wdict[self.cfg['xml_mappings']['word']]
 
-                    wdict['word_actual'] = w.find('actual').text
-                    wdict['word_target'] = w.find('target').text
-                    wdict['word'] = wdict[self.cfg['xml_mappings']['word']]
                     wdict['warning'] = w.attrib.get('warning')
 
                     if ((udict['warning'] is not None
@@ -116,14 +116,17 @@ class XMLParser(object):
                             mdict = {}
                             for tier_name in m.attrib:
                                 mdict[tier_name] = m.attrib.get(tier_name)
-                                try:
-                                    mlen = len(mdict['gloss_raw'])
-                                    for tier in mdict:
-                                        if len(mdict[tier]) != mlen:
-                                            mdict[tier] = [None for i in range(mlen)]
-                                except KeyError:
-                                    continue
                             morphemes.append(mdict)
+
+                    if not "dummy" in w.attrib:
+                        wdict['corpus'] = udict['corpus']
+                        wdict['language'] = udict['language']
+
+                        wdict['word_actual'] = w.find('actual').text
+                        wdict['word_target'] = w.find('target').text
+                        wdict['word'] = wdict[self.cfg['xml_mappings']['word']]
+                    else:
+                        wdict = None
 
                     words.append(wdict)
                     mwords.append(morphemes)
@@ -149,10 +152,12 @@ class XMLParser(object):
 
     def _clean_words(self, words):
         new_words = deque()
-        try:
-            for raw_word in words:
+        for raw_word in words:
+            try:
                 word = {}
                 for k in raw_word:
+                    if raw_word[k] == '???':
+                        raw_word[k] = None
                     if k in self.cfg['xml_mappings']:
                         label = self.cfg['xml_mappings'][k]
                         word[label] = raw_word[k]
@@ -160,8 +165,8 @@ class XMLParser(object):
                         word[k] = raw_word[k]
                 word['word'] = word[self.cfg['xml_mappings']['word']]
                 new_words.append(word)
-        except TypeError:
-            pass
+            except TypeError:
+                continue
         return new_words
 
     def _clean_morphemes(self, mors):
@@ -180,6 +185,24 @@ class XMLParser(object):
                                 pass
                         if morpheme != {}:
                             new_mword.append(morpheme)
+                    try:
+                        flatm = {}
+                        for tier in new_mword[0]:
+                            flatm[tier] = [m[tier] for m in new_mword
+                                           if tier in m]
+                        mlen = len(flatm['gloss_raw'])
+                        for tier in flatm:
+                            if len(flatm[tier]) != mlen:
+                                for m in new_mword:
+                                    m[tier] = None
+                    except IndexError:
+                        continue
+                    except KeyError as k:
+                        XMLParser.logger.warning(
+                            "Couldn't zip morpheme tiers in {}:"
+                            "{}".format(self.cfg['corpus']['corpus'],
+                                        repr(k)))
+                                        
                     new_mors.append(new_mword)
                 except TypeError:
                     continue

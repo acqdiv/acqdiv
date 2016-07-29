@@ -135,9 +135,9 @@ class ToolboxFile(object):
         morphemes = [] if utterance['utterance'] is None else self.get_morphemes(utterance)
 
         # Fix words less than morphemes misalignments
-        if len(morphemes) - len(words) > 0:
-            misalignment = len(morphemes) - len(words)
-            for i in range(0, misalignment): words.append({})
+        #if len(morphemes) - len(words) > 0:
+        #    misalignment = len(morphemes) - len(words)
+        #    for i in range(0, misalignment): words.append({})
 
         return utterance, words, morphemes
 
@@ -500,8 +500,12 @@ class ToolboxFile(object):
                 tiers.append(t)
             else:
                 tiers.append([[] for i in range(len_align)])
+                logger.info("Length of glosses and {} don't match in the "
+                            "Toolbox file: {}".format(
+                                t, utterance['source_id']))
         #This bit adds None (NULL in the DB) for any mis-alignments
         #tiers = list(zip_longest(morphemes, glosses, poses, fillvalue=[]))
+        #gls = [m for m in w for w in 
         mwords = zip(*tiers)
         for mw in mwords:
             alignment = list(zip_longest(mw[0], mw[1], mw[2], fillvalue=None))
@@ -515,7 +519,6 @@ class ToolboxFile(object):
                 d['type'] = self.config['morphemes']['type'] # what type of morpheme as defined in the corpus .ini
                 d['warning'] = None if len(warnings) == 0 else " ".join(warnings)
                 l.append(d)
-                #logger.info("Length of morphemes, glosses, poses don't match in the Toolbox file: " + utterance['source_id'])
             result.append(l)
 
         misaligned = False

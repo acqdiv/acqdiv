@@ -136,7 +136,6 @@ class SessionProcessor(object):
                 words[i]['corpus'] = self.corpus
                 words[i]['language'] = self.language
 
-                word = Word(**words[i])
                 # TODO: is it cheaper to append a list here?
                 word = Word(**words[i])
                 u.words.append(word)
