@@ -171,9 +171,6 @@ class Session:
 
     def replace_child(self):
         """Replace all instances of 'child' in Session.content and Session.situation by the shortname."""
-        self.content = self.content
-        self.situation = self.situation
-
         match = re.search(r"deslas\-([A-Z]{3,})\-\d+", self.code)
         if match:
             shortname = match.group(1)
