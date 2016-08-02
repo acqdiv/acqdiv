@@ -143,6 +143,8 @@ class SessionProcessor(object):
                     self.session.words.append(word)
 
                 # Populate the morphemes
+            new_wlen = len(u.words)
+            for i in range(0, wlen):
                 try:
                     for j in range(0, len(morphemes[i])): # loop morphemes
                         # TODO: move this post processing (before the age, etc.) if it improves performance
@@ -151,7 +153,7 @@ class SessionProcessor(object):
                         morphemes[i][j]['type'] = self.morpheme_type
 
                         morpheme = Morpheme(**morphemes[i][j])
-                        if wlen == mlen:
+                        if new_wlen == mlen:
                             word.morphemes.append(morpheme)
                         u.morphemes.append(morpheme)
                         self.session.morphemes.append(morpheme)
