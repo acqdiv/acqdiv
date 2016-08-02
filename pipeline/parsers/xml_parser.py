@@ -166,8 +166,6 @@ class XMLParser(object):
             try:
                 word = {}
                 for k in raw_word:
-                    if raw_word[k] == '???':
-                        raw_word[k] = None
                     if k in self.cfg['xml_mappings']:
                         label = self.cfg['xml_mappings'][k]
                         word[label] = raw_word[k]
