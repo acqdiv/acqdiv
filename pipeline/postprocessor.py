@@ -175,8 +175,10 @@ def process_morphemes():
 def get_pos_index(row):
     if not row.pos in ["sfx", "pfx"]:
         # row.id will be int type in other tables when look up occurs; type it int here for convenience
-        pos_index[int(row.word_id_fk)] = row.pos
-
+        try:
+            pos_index[int(row.word_id_fk)] = row.pos
+        except TypeError:
+            pass
 
 def process_words():
     table = session.query(backend.Word)

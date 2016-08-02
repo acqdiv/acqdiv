@@ -140,7 +140,10 @@ class ToolboxParser(SessionParser):
         # TODO: fix this to just session or just __attrs__ in the metadata parser
         # this is an ugly hack due to the Indonesian corpus (body=Toolbox, but meta=XML)
         if self.metadata_parser.__class__.__name__ == "Imdi":
-            return self.metadata_parser.metadata['session']
+            md = self.metadata_parser.metadata['session']
+            md['media_type'] = (
+                self.metadata_parser.metadata['media']['mediafile']['type'])
+            return md
         elif self.metadata_parser.__class__.__name__ == "Chat":
             return self.metadata_parser.metadata['__attrs__']
         else:

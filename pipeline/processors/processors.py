@@ -118,6 +118,9 @@ class SessionProcessor(object):
 
             u = Utterance(**utterance)
 
+            wlen = len(words)
+            mlen = len(morphemes)
+
             # TODO: Deal with Indonesian...
 
             # In Chintang the number of words may be longer than the number of morphemes -- error handling
@@ -128,26 +131,30 @@ class SessionProcessor(object):
             #    "{} utterance {}".format(self.corpus, utterance['source_id']))
 
             # Populate the words
-            for i in range(0, len(words)):
+            for i in range(0, wlen):
                 # TODO: move this post processing (before the age, etc.) if it improves performance
-                words[i]['corpus'] = self.corpus
-                words[i]['language'] = self.language
+                if words[i] != {}:
+                    words[i]['corpus'] = self.corpus
+                    words[i]['language'] = self.language
 
-                word = Word(**words[i])
-                # TODO: is it cheaper to append a list here?
-                word = Word(**words[i])
-                u.words.append(word)
-                self.session.words.append(word)
+                    # TODO: is it cheaper to append a list here?
+                    word = Word(**words[i])
+                    u.words.append(word)
+                    self.session.words.append(word)
 
                 # Populate the morphemes
+            new_wlen = len(u.words)
+            for i in range(0, wlen):
                 try:
                     for j in range(0, len(morphemes[i])): # loop morphemes
                         # TODO: move this post processing (before the age, etc.) if it improves performance
                         morphemes[i][j]['corpus'] = self.corpus
                         morphemes[i][j]['language'] = self.language
+                        morphemes[i][j]['type'] = self.morpheme_type
 
                         morpheme = Morpheme(**morphemes[i][j])
-                        word.morphemes.append(morpheme)
+                        if new_wlen == mlen:
+                            word.morphemes.append(morpheme)
                         u.morphemes.append(morpheme)
                         self.session.morphemes.append(morpheme)
                 except TypeError:
