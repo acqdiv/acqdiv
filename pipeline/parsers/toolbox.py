@@ -493,13 +493,14 @@ class ToolboxFile(object):
             raise TypeError("Corpus format is not supported by this parser.")
 
 
-        len_align = len(glosses)
+        len_mw = len(glosses)
+        len_align = len([i for gw in glosses for i in gw])
         tiers = []
         for t in (morphemes, glosses, poses):
-            if len(t) == len_align:
+            if len([i for tw in t for i in tw]) == len_align:
                 tiers.append(t)
             else:
-                tiers.append([[] for i in range(len_align)])
+                tiers.append([[] for i in range(len_mw)])
                 logger.info("Length of glosses and {} don't match in the "
                             "Toolbox file: {}".format(
                                 t, utterance['source_id']))
@@ -520,19 +521,6 @@ class ToolboxFile(object):
                 d['warning'] = None if len(warnings) == 0 else " ".join(warnings)
                 l.append(d)
             result.append(l)
-
-        misaligned = False
-        for r in result:
-            for rm in r:
-                if rm['gloss_raw'] is None:
-                    misaligned = True
-
-        if misaligned:
-            for r in result:
-                for rm in r:
-                    rm['morpheme'] = None
-                    rm['gloss_raw'] = None
-                    rm['pos_raw'] = None
 
         return result
     
