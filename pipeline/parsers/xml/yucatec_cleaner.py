@@ -151,7 +151,7 @@ class YucatecCleaner(XMLCleaner):
                 # the part after the "|" is always the phonological form of the stem
                 morphemes[morpheme_index].attrib['segments_target'] = stem_struc.group(2)
                 # for most stems with lexical meaning the part before the "|" is a POS
-                if stem_struc.group(1) in ['VT', 'DEICT', 'S', 'INT', 'N', 'INTERJ', 'ADV', 'V', 'VI', 'AUX', 'ADJ', 'DET', 'N:PROP', 'PREP', 'N.PROP', 'NUM', 'QUANT', 'DEM', 'CONJ', 'CLFR', 'CLFR.INAN', 'V:AUX']:
+                if stem_struc.group(1) in ['3PRON', 'ADJ', 'ADV', 'AUX', 'CLFR', 'CLFR.INAN', 'CONJ', 'DEICT', 'DEM', 'DET', 'INT', 'INTERJ', 'N', 'N.PROP', 'N:PROP', 'NUM', 'PREP', 'PTL', 'QUANT', 'S', 'V', 'V.AUX', 'V:AUX', 'VI', 'V.INTRANS', 'VT', 'V.TRANS']:
                     morphemes[morpheme_index].attrib['glosses_target'] = '???'
                     morphemes[morpheme_index].attrib['pos_target'] = stem_struc.group(1)
                 # for other stems it's a gloss
