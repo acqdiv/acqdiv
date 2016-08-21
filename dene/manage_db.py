@@ -63,16 +63,16 @@ class DB_Manager:
         try:
             self.cur.execute(command, values)
         except db.OperationalError:
-            #print("\n")
-            #print("******************************")
-            #traceback.print_exc(limit=0)
-            #print("Check the following row:", values)
+#            print("\n")
+#            print("******************************")
+#            traceback.print_exc(limit=0)
+#            print("Check the following row:", values)
             pass
         except db.DataError:
-            #print("\n")
-            #print("******************************")
-            #traceback.print_exc(limit=0)
-            #print("Check the following row:", values)
+#            print("\n")
+#            print("******************************")
+#            traceback.print_exc(limit=0)
+#            print("Check the following row:", values)
             pass
 
         self.con.commit()
@@ -101,13 +101,21 @@ class DB_Manager:
         return update_command
 
 
-    def get_insert_update_command(self, table, db_attributes):
+    def get_insert_update_command(self, table, db_attributes, has_id=True):
+        """Create INSERT with UPDATE command"""
 
-        insert_update_command = """INSERT INTO {} ({}) VALUES ({}) ON DUPLICATE KEY UPDATE {}""".format(
+        # check if table has a column called 'id'
+        if has_id:
+            return_id = ", id = LAST_INSERT_ID(id)"
+        else:
+            return_id = ""
+
+        insert_update_command = """INSERT INTO {} ({}) VALUES ({}) ON DUPLICATE KEY UPDATE {}{}""".format(
             table,
             ",".join(db_attributes),
             ",".join(["%s"]*len(db_attributes)),
-            ','.join((attr + "=%s") for attr in db_attributes)
+            ','.join((attr + "=%s") for attr in db_attributes),
+            return_id
         )
 
         return insert_update_command
@@ -118,8 +126,7 @@ class DB_Manager:
 
         db_attributes = ("name", "date", "location", "duration", "situation", "content", "notes")
 
-        insert_command = self.get_insert_command("sessions", db_attributes)
-        update_command = self.get_update_command("sessions", db_attributes)
+        command = self.get_insert_update_command("sessions", db_attributes)
 
         # try reading sessions.csv
         try:
@@ -138,31 +145,53 @@ class DB_Manager:
                 p["Situation"], p["Content"], p["Comments"]
             )
 
-            # get index of session (NB: returns None if session code not yet in database)
-            self.cur.execute("SELECT id FROM sessions WHERE name = '{}'".format(p["Code"]))
-            session_index = self.cur.fetchone()
+            # insert/update session
+            self.execute(command, values + values)
 
-            # if session is already in database, update its metadata
-            if session_index:
-                self.execute(update_command.format(session_index[0]), values)
-            # otherwise create session in the database
-            else:
-                self.execute(insert_command, values)
+            # get session id in database
+            self.cur.execute("""SELECT LAST_INSERT_ID()""")
+            session_id = self.cur.fetchone()[0]
 
-            #self.update_sessions_participants(p["Participants and roles"], session_index)
+            # link session to participants
+            self.refresh_sessions_participants(p["Participants and roles"], session_id)
 
 
-    def update_sessions_participants(participants_roles):
+    # TODO: uzh:phpmyadmin -> change in sessions_and_participants, 'role' enum to -> set
+    def refresh_sessions_participants(self, participants_roles, session_id):
+        """Refresh the table sessions_and_participants"""
 
-        part_role_list = participants_roles.split("), ")
+        db_attributes = ("session_fk", "participant_fk", "role")
 
-        for part_role in part_role_list:
+        if participants_roles:
 
-            shortname, role = part_role.split(" (")
+            # go through participants and their roles
+            for part_roles in participants_roles.split("), "):
 
-            self.cur.execute("""INSERT """)
+                # try to extract shortname and its roles
+                try:
+                    shortname, roles = part_roles.split(" (")
+                except ValueError:
+                    # TODO: log
+                    continue
 
+                # create set of roles
+                role_set = set(roles.split(" & "))
 
+                # get id of this participant with this short name
+                # TODO: create index on short_name to make it faster?
+                self.cur.execute("""SELECT id FROM participants WHERE short_name = '{}'""".format(shortname))
+
+                participant_id = self.cur.fetchone()
+
+                if participant_id is None:
+                    # TODO: log
+                    continue
+
+                command = self.get_insert_update_command("sessions_and_participants", db_attributes, has_id=False)
+
+                values = (session_id, participant_id[0], role_set)
+
+                self.execute(command, values + values)
 
 
     def import_participants(self):
@@ -174,8 +203,7 @@ class DB_Manager:
             "language_biography", "description", "contact_address", "email_phone"
         )
 
-        insert_command = self.get_insert_command("participants", db_attributes)
-        update_command = self.get_update_command("participants", db_attributes)
+        command = self.get_insert_update_command("participants", db_attributes)
 
         # try reading participants.csv
         try:
@@ -213,23 +241,15 @@ class DB_Manager:
                 p["Contact address"], p["E-mail/Phone"]
             )
 
-            # get index of participant (NB: returns None if not in database yet)
-            self.cur.execute("SELECT id FROM participants WHERE short_name = '{}'".format(p["Short name"]))
-            index = self.cur.fetchone()
-
-            # if participant is already in database, update its metadata
-            if index:
-                self.execute(update_command.format(index[0]), values)
-            # otherwise create participant in the database
-            else:
-                self.execute(insert_command, values)
+            self.execute(command, values + values)
 
 
     def refresh_database(self):
-        self.wipe("sessions")
-        self.wipe("participants")
+        #self.wipe("sessions")
+        #self.wipe("participants")
         self.import_participants()
         self.import_sessions()
+        #self.refresh_sessions_participants()
 
 
     def test(self):
