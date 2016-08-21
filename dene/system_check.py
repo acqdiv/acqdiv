@@ -284,6 +284,8 @@ class System:
                                     "Location": file.get_Location()
                                 })
 
+                                file_names_from_files.add(new_file)
+
                             else:
                                 logger.warning("File '" + new_file + "' has unknown file extension")
 
