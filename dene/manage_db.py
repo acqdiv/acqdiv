@@ -3,6 +3,7 @@ import csv
 import argparse
 import traceback
 import sys
+import re
 
 
 def commandline_setup():
@@ -15,7 +16,6 @@ def commandline_setup():
     parser.add_argument("--participants", help="path to participants.csv", default="../Metadata/participants.csv")
     parser.add_argument("--files", help="path to files.csv", default="../Metadata/files.csv")
     parser.add_argument("--monitor", help="path to monitor.csv", default="../Workflow/monitor.csv")
-    ####### task options
 
     return parser.parse_args()
 
@@ -52,9 +52,16 @@ class DB_Manager:
 
     def empty_str_to_none(self, row):
         "Set all empty strings to None"
-        for field in row:
-            if not row[field]:
-                row[field] = None
+
+        # check if 'row' is a list or dictionary
+        if isinstance(row, dict):
+            for field in row:
+                if not row[field]:
+                    row[field] = None
+        else:
+            for index, field in enumerate(row):
+                if not field:
+                    row[index] = None
 
 
     def execute(self, command, values):
@@ -122,7 +129,7 @@ class DB_Manager:
 
 
     def import_sessions(self):
-        """Refreshe table 'sessions' completely by filling it with data from sessions.csv"""
+        """Refreshe table 'sessions'"""
 
         db_attributes = ("name", "date", "location", "duration", "situation", "content", "notes")
 
@@ -158,7 +165,7 @@ class DB_Manager:
 
     # TODO: uzh:phpmyadmin -> change in sessions_and_participants, 'role' enum to -> set
     def refresh_sessions_participants(self, participants_roles, session_id):
-        """Refresh the table sessions_and_participants"""
+        """Refresh table 'sessions_and_participants'"""
 
         db_attributes = ("session_fk", "participant_fk", "role")
 
@@ -178,9 +185,7 @@ class DB_Manager:
                 role_set = set(roles.split(" & "))
 
                 # get id of this participant with this short name
-                # TODO: create index on short_name to make it faster?
-                self.cur.execute("""SELECT id FROM participants WHERE short_name = '{}'""".format(shortname))
-
+                self.cur.execute("SELECT id FROM participants WHERE short_name = '{}'".format(shortname))
                 participant_id = self.cur.fetchone()
 
                 if participant_id is None:
@@ -195,7 +200,7 @@ class DB_Manager:
 
 
     def import_participants(self):
-        """Refresh table 'participants' completely by filling it with data from participants.csv"""
+        """Refresh table 'participants'"""
 
         db_attributes = (
             "short_name", "first_name", "last_name", "birthdate", "age", "gender",
@@ -244,12 +249,101 @@ class DB_Manager:
             self.execute(command, values + values)
 
 
+    def import_monitor(self):
+        """Refresh tables 'recordings' and 'progress'"""
+
+        db_attributes = (
+            "name", "session_fk", "availability", "assignee_fk", "overall_quality",
+            "child_speech", "directedness", "how_much_dene", "audio_quality", "notes"
+        )
+
+        command = self.get_insert_update_command("recordings", db_attributes)
+
+        # try reading monitor.csv
+        try:
+            monitor_file = open(self.args.monitor, "r")
+        except FileNotFoundError:
+            print("Path to monitor.csv not correct!")
+            sys.exit(1)
+
+        # go through each recording
+        for rec in csv.DictReader(monitor_file):
+
+            # convert empty strings to None
+            self.empty_str_to_none(rec)
+
+            # extract session code
+            match = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+)?", rec["recording name"])
+
+            if match:
+                session_code = match.group()
+            else:
+                # TODO: log
+                #print("wrong session code")
+                continue
+
+            # get id of associated session
+            self.cur.execute("SELECT id FROM sessions WHERE name = '{}'".format(session_code))
+            session_id = self.cur.fetchone()
+
+            if session_id is None:
+                # TODO: log
+                #print("cant get session id")
+                continue
+
+            # find out availability and assignee
+            for task_type in [
+                "segmentation", "transcription/translation",
+                "check transcription/translation", "glossing"
+            ]:
+                status_type = rec["status " + task_type]
+
+                if status_type == "in progress":
+                    availability = "assigned"
+                    assignee = rec["person " + task_type]
+                    break
+                elif status_type == "barred":
+                    availability = "barred"
+                    assignee = rec["person " + task_type]
+                    break
+                elif status_type == "defer":
+                    availability = "defer"
+                    assignee = rec["person " + task_type]
+                    break
+            else:
+                availability = "free"
+                assignee = None
+
+            if assignee:
+                # get id of assignee
+                self.cur.execute("""SELECT id FROM employees
+                                    WHERE CONCAT(first_name, ' ', last_name) = '{}'
+                                    """.format(assignee))
+
+                assignee_id = self.cur.fetchone()
+
+                if assignee_id is None:
+                    # TODO: log
+                    #print("cant get assignee id")
+                    continue
+            else:
+                assignee_id = None
+
+            values = (
+                rec["recording name"], session_id, availability, assignee_id,
+                rec["quality"], rec["child speech"], rec["directedness"],
+                rec["Dene"], rec["audio"], rec["notes"]
+            )
+
+            self.execute(command, values + values)
+
+
     def refresh_database(self):
         #self.wipe("sessions")
         #self.wipe("participants")
-        self.import_participants()
-        self.import_sessions()
-        #self.refresh_sessions_participants()
+        #self.import_participants()
+        #self.import_sessions()
+        self.import_monitor()
 
 
     def test(self):
