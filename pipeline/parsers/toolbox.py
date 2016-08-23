@@ -143,6 +143,10 @@ class ToolboxFile(object):
         words = [] if utterance['utterance'] is None else self.get_words(utterance['utterance'])
         morphemes = [] if utterance['utterance'] is None else self.get_morphemes(utterance)
 
+        if self.config['corpus']['corpus'] == 'Russian':
+            utterance['gloss_raw'] = ' '.join(
+                mor['gloss_raw'] for mword in morphemes for mor in mword)
+            
         # Fix words less than morphemes misalignments
         if len(morphemes) - len(words) > 0:
             misalignment = len(morphemes) - len(words)
