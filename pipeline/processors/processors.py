@@ -95,9 +95,6 @@ class SessionProcessor(object):
 
         self.session = db.Session(**d)
 
-        # TODO: remove this when we're on XML
-        self.session_entry = Session(**d)
-
         # Get speaker metadata and populate the speakers table
         self.speaker_entries = []
         for speaker in self.parser.next_speaker():
@@ -161,7 +158,7 @@ class SessionProcessor(object):
                         if new_wlen == mlen:
                             # only link words and morpheme words if there are
                             # equal amounts of both
-                            word.morphemes.append(morpheme)
+                            u.words[i].morphemes.append(morpheme)
                         u.morphemes.append(morpheme)
                         self.session.morphemes.append(morpheme)
                 except TypeError:
