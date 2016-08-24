@@ -86,13 +86,13 @@ class XMLParser(object):
                 udict['corpus'] = self.cfg['corpus']['corpus']
                 udict['language'] = self.cfg['corpus']['language']
 
-                udict['utterance_id'] = u.attrib.get('uID')
+                udict['source_id'] = u.attrib.get('uID')
                 udict['speaker_label'] = u.attrib.get('who')
                 udict['warning'] = u.attrib.get('warning')
                 
                 udict['addressee'] = XMLCleaner.find_text(u, 'addressee')
-                udict['english_translation'] = XMLCleaner.find_text(
-                    u, 'english_translation')
+                udict['translation'] = XMLCleaner.find_text(
+                    u, 'translation')
                 udict['comment'] = XMLCleaner.find_text(u, 'comment')
 
                 udict['starts_at'] = XMLCleaner.find_xpath(u, 'media/@start')
@@ -221,13 +221,13 @@ class XMLParser(object):
     def _clean_utterance(self, raw_u):
 
         utterance = {}
+        uvs = self.cfg['xml_mappings'].values()
         for k in raw_u:
-            if k in self.cfg['xml_mappings']:
-                label = self.cfg['xml_mappings'][k]
+            if k in uvs:
                 if raw_u[k] in self.cfg['correspondences']:
-                    utterance[label] = self.cfg['correspondences'][raw_u[k]]
+                    utterance[k] = self.cfg['correspondences'][raw_u[k]]
                 else:
-                    utterance[label] = raw_u[k]
+                    utterance[k] = raw_u[k]
             else:
                 pass
         return utterance
@@ -254,15 +254,13 @@ class XMLParser(object):
 
 if __name__ == '__main__':
 
-    from inuktitut_cleaner import InuktitutCleaner
     from parsers import CorpusConfigParser as Ccp
     import sys
     
     cname = sys.argv[1]
     conf = Ccp()
     conf.read('ini/{}.ini'.format(cname))
-    corpus = InuktitutCleaner
-    parser = XMLParser(conf, corpus, 'tests/corpora/{0}/xml/{0}.xml'.format(cname))
+    parser = XMLParserFactory(conf)('tests/corpora/{0}/xml/{0}.xml'.format(cname))
     i = 0
     for u in parser.next_utterance():
         i += 1

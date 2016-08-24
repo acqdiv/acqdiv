@@ -375,7 +375,7 @@ class XMLCleaner(object):
                 ntag = a.attrib['type']
                 if ' ' in ntag:
                     ntag = ntag.replace(' ', '_')
-            a.tag = ntag
+            a.tag = self.cfg['xml_mappings'].get(ntag, ntag)
             del a.attrib['type']
 
         stype = u.find('t')
