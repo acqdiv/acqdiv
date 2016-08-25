@@ -252,12 +252,18 @@ class DB_Manager:
     def import_monitor(self):
         """Refresh tables 'recordings' and 'progress'"""
 
-        db_attributes = (
+        rec_db_attributes = (
             "name", "session_fk", "availability", "assignee_fk", "overall_quality",
             "child_speech", "directedness", "how_much_dene", "audio_quality", "notes"
         )
 
-        command = self.get_insert_update_command("recordings", db_attributes)
+        progress_db_attributes = (
+            "recording_fk", "task_type_fk", "task_status", "quality_check", "notes"
+        )
+
+        recordings_command = self.get_insert_update_command("recordings", rec_db_attributes)
+        progress_command = self.get_insert_update_command("progress", progress_db_attributes, has_id=False)
+
 
         # try reading monitor.csv
         try:
@@ -272,30 +278,27 @@ class DB_Manager:
             # convert empty strings to None
             self.empty_str_to_none(rec)
 
-            # extract session code
-            match = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+)?", rec["recording name"])
-
-            if match:
-                session_code = match.group()
-            else:
+            #******** 'recordings' stuff **********
+            try:
+                # try to extract session code from recording code
+                session_code = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+)?",
+                    rec["recording name"]).group()
+            except AttributeError:
                 # TODO: log
-                #print("wrong session code")
+                print("wrong session code")
                 continue
 
             # get id of associated session
             self.cur.execute("SELECT id FROM sessions WHERE name = '{}'".format(session_code))
-            session_id = self.cur.fetchone()
 
-            if session_id is None:
+            try:
+                session_id = self.cur.fetchone()[0]
+            except TypeError:
                 # TODO: log
-                #print("cant get session id")
                 continue
 
-            # find out availability and assignee
-            for task_type in [
-                "segmentation", "transcription/translation",
-                "check transcription/translation", "glossing"
-            ]:
+            # find out availability and assignee of this rec
+            for task_type in ["segmentation", "transcription/translation", "glossing"]:
                 status_type = rec["status " + task_type]
 
                 if status_type == "in progress":
@@ -304,38 +307,86 @@ class DB_Manager:
                     break
                 elif status_type == "barred":
                     availability = "barred"
-                    assignee = rec["person " + task_type]
+                    assignee = None
+
                     break
                 elif status_type == "defer":
                     availability = "defer"
-                    assignee = rec["person " + task_type]
+                    assignee = None
                     break
             else:
                 availability = "free"
                 assignee = None
 
+            # if there's assignee for a task
             if assignee:
-                # get id of assignee
+                # get id of this assignee
                 self.cur.execute("""SELECT id FROM employees
                                     WHERE CONCAT(first_name, ' ', last_name) = '{}'
                                     """.format(assignee))
 
-                assignee_id = self.cur.fetchone()
-
-                if assignee_id is None:
+                # try to get id of this assignee
+                try:
+                    assignee_id = self.cur.fetchone()[0]
+                except TypeError:
                     # TODO: log
                     #print("cant get assignee id")
-                    continue
+                    pass
+
             else:
                 assignee_id = None
 
-            values = (
+            rec_values = (
                 rec["recording name"], session_id, availability, assignee_id,
                 rec["quality"], rec["child speech"], rec["directedness"],
                 rec["Dene"], rec["audio"], rec["notes"]
             )
 
-            self.execute(command, values + values)
+            self.execute(recordings_command, rec_values + rec_values)
+
+            # ********** progress stuff **********
+
+            progress_db_attributes = (
+            "recording_fk", "task_type_fk", "task_status", "quality_check", "notes"
+            )
+
+            # get id of this rec in database
+            self.cur.execute("""SELECT LAST_INSERT_ID()""")
+            rec_id = self.cur.fetchone()[0]
+
+            # go through each task type from monitor.csv
+            for task_type in ["segmentation", "transcription/translation", "glossing"]:
+
+                # get id of this task type
+                self.cur.execute("SELECT id FROM task_types WHERE name = '{}'".format(task_type))
+
+                try:
+                    task_type_id = self.cur.fetchone()[0]
+                except TypeError:
+                    print("task type not found:", task_type)
+                    continue
+
+                # get status of this task
+                task_status = rec["status " + task_type]
+
+                if task_status == "barred" or task_status == "defer":
+                    task_status = "not started"
+
+                if task_type == "segmentation":
+                    quality_check = "not required"
+                else:
+                    # TODO: what about person?
+                    # get check status
+                    quality_check = rec["status check " + task_type]
+
+
+                # TODO: notes, -> can also be NULL
+
+                progress_values = (
+                    rec_id, task_type_id, task_status, quality_check, None
+                )
+
+                self.execute(progress_command, progress_values + progress_values)
 
 
     def refresh_database(self):
