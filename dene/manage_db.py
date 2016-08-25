@@ -8,14 +8,14 @@ import re
 
 def commandline_setup():
     """Set up command line arguments"""
-    arg_description = """Specify paths for sessions.csv, participants.csv and resources.csv"""
+    arg_description = """Specify paths for metadata files"""
     parser = argparse.ArgumentParser(description=arg_description)
 
-    ####### files
     parser.add_argument("--sessions", help="path to sessions.csv", default="../Metadata/sessions.csv")
     parser.add_argument("--participants", help="path to participants.csv", default="../Metadata/participants.csv")
     parser.add_argument("--files", help="path to files.csv", default="../Metadata/files.csv")
     parser.add_argument("--monitor", help="path to monitor.csv", default="../Workflow/monitor.csv")
+    parser.add_argument("--locations", help="path to file_locations.csv", default="../Workflow/file_locations.csv")
 
     return parser.parse_args()
 
@@ -162,6 +162,8 @@ class DB_Manager:
             # link session to participants
             self.refresh_sessions_participants(p["Participants and roles"], session_id)
 
+        sessions_file.close()
+
 
     # TODO: uzh:phpmyadmin -> change in sessions_and_participants, 'role' enum to -> set
     def refresh_sessions_participants(self, participants_roles, session_id):
@@ -247,6 +249,8 @@ class DB_Manager:
             )
 
             self.execute(command, values + values)
+
+        participants_file.close()
 
 
     def import_monitor(self):
@@ -388,22 +392,94 @@ class DB_Manager:
 
                 self.execute(progress_command, progress_values + progress_values)
 
+        monitor_file.close()
 
-    def refresh_database(self):
-        #self.wipe("sessions")
-        #self.wipe("participants")
-        #self.import_participants()
-        #self.import_sessions()
+
+    def import_files(self):
+        """Refresh table 'files'"""
+
+        db_attributes = (
+            "name", "recording_fk", "file_type", "file_extension", "duration",
+            "byte_size", "word_size", "at_UZH", "at_FNUniv", "at_CRDN", "location", "notes"
+        )
+
+        command = self.get_insert_update_command("files", db_attributes)
+
+        # try reading sessions.csv
+        try:
+            files_file = open(self.args.files, "r")
+        except FileNotFoundError:
+            print("Path to files.csv not correct!")
+            sys.exit(1)
+
+        # try reading file_locations.csv
+        try:
+            locations_file = open(self.args.locations, "r")
+        except FileNotFoundError:
+            print("Path to file_locations.csv not correct!")
+            sys.exit(1)
+
+        # store metadata of file_locations.csv for fast retrieval
+        locations = {}
+        for file in csv.DictReader(locations_file):
+            locations[file["File name"]] = {"at_UZH": file["UZH"],
+                                            "at_FNUniv": file["FNUniv (backup F:)"],
+                                            "at_CRDN": file["CRDN"],
+                                            "notes": file["Notes"]}
+
+            # TODO: what's the exact mapping?
+            locations[file["File name"]] = {"at_UZH": None,
+                                            "at_FNUniv": None,
+                                            "at_CRDN": None,
+                                            "notes": None}
+
+        locations_file.close()
+
+        # TODO: int -> bigint
+
+        for file in csv.DictReader(files_file):
+
+            self.empty_str_to_none(file)
+
+            # get id of recording for this file
+            self.cur.execute("SELECT id FROM recordings WHERE name = '{}'".format(file["Recording code"]))
+
+            try:
+                rec_id = self.cur.fetchone()[0]
+            except TypeError:
+                #print("recording does not exist in db", file["Recording code"])
+                continue
+
+            try:
+                loc = locations[file["File name"]]
+            except KeyError:
+                #print("file not found in locations.csv:", file["File name"])
+                continue
+
+            values = (
+                file["File name"], rec_id, file["Type"].lower(), file["Format"][-3:],
+                file["Duration"], file["Byte size"], file["Word size"], loc["at_UZH"],
+                loc["at_FNUniv"], loc["at_CRDN"], file["Location"], loc["notes"]
+            )
+
+            self.execute(command, values + values)
+
+        files_file.close()
+
+
+    def refresh_database(self, deep=False):
+
+        # instead of updating all records, all records are deleted and inserted again
+        if deep:
+            for table in ["files", "sessions_and_participants", "progress",
+                          "recordings", "sessions", "participants"]:
+
+                self.wipe(table)
+
+        self.import_participants()
+        self.import_sessions()
         self.import_monitor()
-
-
-    def test(self):
-        """Just for testing"""
-        self.cur.execute("""INSERT INTO participants (short_name, first_name, last_name) VALUES (%s, %s, %s)""", ("CDF", "töst", "Töst"))
-        self.con.commit()
-        self.cur.execute("""SELECT * FROM participants;""")
-        print(self.cur.fetchone())
-
+        self.import_files()
 
 
 def main():
