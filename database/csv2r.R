@@ -37,6 +37,7 @@ names(morphemes)[names(morphemes)=="type"] <- "morpheme_type"
 utterances_slim <- utterances[,c("utterance_id","session_id_fk","utterance_id_source","corpus","language","speaker_label","addressee","utterance","translation","utterance_morphemes","start","end","comment","warning")]
 words_slim <- words[,c("word_id","utterance_id_fk","word","pos_word_stem","word_actual","word_target")]
 morphemes_slim <- morphemes[,c("morpheme_id","word_id_fk","morpheme_type","morpheme","gloss_raw","gloss","pos_raw","pos")]
+morphemes_slim <- morphemes_slim[!is.na(morphemes_slim$word_id_fk),] # take out NA foreign keys for easier merging
 sessions_slim <- sessions[,c("session_id","session_id_source","date","media","media_type")]
 speakers_slim <- speakers[,c("speaker_id","session_id_fk","uniquespeaker_id_fk","speaker_label","name","age_raw","age","age_in_days","gender_raw","gender","role_raw","role","macrorole","languages_spoken","birthdate")]
 
@@ -52,7 +53,7 @@ left_join(u_w_m_s, speakers_slim, by=c("session_id"="session_id_fk","speaker_lab
 # merge(sessions_slim, u_w_m, by.x="session_id", by.y="session_id_fk", all.x=FALSE, all.y=TRUE) -> u_w_m_s
 # # speakers can only be merged in by composite key -> change once fixed in DB
 # merge(u_w_m_s, speakers_slim, by.x=c("session_id","speaker_label"), by.y=c("session_id_fk","speaker_label"), all.x=TRUE, all.y=FALSE) -> all_data
-all_data <- all_data[,c("corpus", "language", "session_id", "session_id_source", "date", "speaker_id", "speaker_label", "name", "birthdate", "age_raw", "age", "age_in_days", "gender_raw", "gender", "role_raw", "role", "macrorole", "addressee", "utterance_id", "utterance_id_source", "utterance_raw", "start_raw", "start", "end_raw", "end", "utterance", "translation", "utterance_morphemes", "utterance_glosses_raw", "utterance_poses_raw", "sentence_type", "comment", "word_id", "word", "word_actual", "word_target", "pos_word_stem", "morpheme_id", "morpheme_type", "morpheme", "gloss_raw", "gloss", "pos_raw", "pos")]
+all_data <- all_data[,c("corpus", "language", "session_id", "session_id_source", "date", "speaker_id", "speaker_label", "name", "birthdate", "age_raw", "age", "age_in_days", "gender_raw", "gender", "role_raw", "role", "macrorole", "addressee", "utterance_id", "utterance_id_source", "start", "end", "utterance", "translation", "utterance_morphemes", "comment", "word_id", "word", "word_actual", "word_target", "pos_word_stem", "morpheme_id", "morpheme_type", "morpheme", "gloss_raw", "gloss", "pos_raw", "pos")]
 
 # drop slim tables
 rm(words_slim, morphemes_slim, sessions_slim, speakers_slim)
