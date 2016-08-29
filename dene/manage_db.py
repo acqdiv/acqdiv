@@ -1,37 +1,67 @@
-import MySQLdb as db
 import csv
 import argparse
 import traceback
 import sys
 import re
+import logging
+
+try:
+    import MySQLdb as db
+except ImportError:
+    print("Please install mysqlclient first, e.g. by running pip3 install mysqlclient")
+    sys.exit(1)
+
+try:
+    # tool for showing progress
+    from tqdm import tqdm
+except ImportError:
+    print("Please install tqdm first, e.g. by running pip3 install tqdm")
+    sys.exit(1)
 
 
-def commandline_setup():
-    """Set up command line arguments"""
-    arg_description = """Specify paths for metadata files"""
-    parser = argparse.ArgumentParser(description=arg_description)
-
-    parser.add_argument("--sessions", help="path to sessions.csv", default="../Metadata/sessions.csv")
-    parser.add_argument("--participants", help="path to participants.csv", default="../Metadata/participants.csv")
-    parser.add_argument("--files", help="path to files.csv", default="../Metadata/files.csv")
-    parser.add_argument("--monitor", help="path to monitor.csv", default="../Workflow/monitor.csv")
-    parser.add_argument("--locations", help="path to file_locations.csv", default="../Workflow/file_locations.csv")
-
-    return parser.parse_args()
-
-
-class DB_Manager:
+class DB_Import:
 
     def __init__(self, con):
 
         self.con = con
         self.cur = self.con.cursor()
-        self.args = commandline_setup()
+        self.args = self.commandline_setup()
+        self.logger = self.get_logger()
 
 
-    def wipe(self, table, associated_tables=()):
+    def commandline_setup(self):
+        """Set up command line arguments"""
+        arg_description = """Specify paths for metadata files"""
+        parser = argparse.ArgumentParser(description=arg_description)
+
+        parser.add_argument("--sessions", help="path to sessions.csv", default="../Metadata/sessions.csv")
+        parser.add_argument("--participants", help="path to participants.csv", default="../Metadata/participants.csv")
+        parser.add_argument("--files", help="path to files.csv", default="../Metadata/files.csv")
+        parser.add_argument("--monitor", help="path to monitor.csv", default="../Workflow/monitor.csv")
+        parser.add_argument("--locations", help="path to file_locations.csv", default="../Workflow/file_locations.csv")
+        parser.add_argument("--deep", help="deletes complete database before import", action="store_true")
+
+        return parser.parse_args()
+
+
+    def get_logger(self):
+        """Produce logs if database errors occur"""
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.INFO)
+
+        handler = logging.FileHandler("db.log", mode="w")
+        handler.setLevel(logging.INFO)
+
+        formatter = logging.Formatter("%(funcName)s|%(levelname)s|%(message)s")
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+
+        return logger
+
+
+    def wipe(self, table, associated_tables=[]):
         """Delete all rows of a table"""
-        # disable foreign key checks in all tables associated with this table
+        # disable foreign key checks in all tables linked to this table
         for associated_table in associated_tables:
             self.cur.execute("""ALTER TABLE {} NOCHECK CONSTRAINT all""".format(associated_table))
             self.con.commit()
@@ -40,7 +70,7 @@ class DB_Manager:
         self.cur.execute("""DELETE FROM {};""".format(table))
         self.con.commit()
 
-        # enable foreign key checks again in all tables associated with this table
+        # enable foreign key checks again in all tables linked to this table
         for associated_table in associated_tables:
             self.cur.execute("""ALTER TABLE {} CHECK CONSTRAINT all""".format(associated_table))
             self.con.commit()
@@ -52,60 +82,25 @@ class DB_Manager:
 
     def empty_str_to_none(self, row):
         "Set all empty strings to None"
-
-        # check if 'row' is a list or dictionary
-        if isinstance(row, dict):
-            for field in row:
-                if not row[field]:
-                    row[field] = None
-        else:
-            for index, field in enumerate(row):
-                if not field:
-                    row[index] = None
+        for field in row:
+            if not row[field]:
+                row[field] = None
 
 
-    def execute(self, command, values):
-        """Execute SQL commands and catch any SQL errors"""
+    def execute(self, command, values, table, key=""):
+        """Execute SQL commands and log any SQL errors."""
+        if not key:
+            key = str(values[0])
 
         try:
             self.cur.execute(command, values)
-        except db.OperationalError:
-#            print("\n")
-#            print("******************************")
-#            traceback.print_exc(limit=0)
-#            print("Check the following row:", values)
-            pass
-        except db.DataError:
-#            print("\n")
-#            print("******************************")
-#            traceback.print_exc(limit=0)
-#            print("Check the following row:", values)
-            pass
+        except db.OperationalError as e:
+            self.logger.error("{} : {}, {}".format(repr(e), table, key))
+
+        except db.DataError as e:
+            self.logger.error(repr(e) + ": " + key)
 
         self.con.commit()
-
-
-    def get_insert_command(self, table, db_attributes):
-        """Create INSERT command with given attributes and return it"""
-
-        insert_command = "INSERT INTO {} ({}) VALUES ({})".format(
-            table,
-            ",".join(db_attributes),
-            ",".join(["%s"]*len(db_attributes))
-        )
-
-        return insert_command
-
-
-    def get_update_command(self, table, db_attributes):
-        """Create UPDATE command with given attributes and return it"""
-
-        update_command = "UPDATE {} SET {} WHERE id = {{}}".format(
-            table,
-            ','.join((attr + "=%s") for attr in db_attributes),
-        )
-
-        return update_command
 
 
     def get_insert_update_command(self, table, db_attributes, has_id=True):
@@ -143,7 +138,7 @@ class DB_Manager:
             sys.exit(1)
 
         # go through each session
-        for p in csv.DictReader(sessions_file):
+        for p in tqdm(csv.DictReader(sessions_file), desc="Importing sessions"):
 
             self.empty_str_to_none(p)
 
@@ -153,20 +148,19 @@ class DB_Manager:
             )
 
             # insert/update session
-            self.execute(command, values + values)
+            self.execute(command, values + values, "sessions")
 
             # get session id in database
             self.cur.execute("""SELECT LAST_INSERT_ID()""")
             session_id = self.cur.fetchone()[0]
 
             # link session to participants
-            self.refresh_sessions_participants(p["Participants and roles"], session_id)
+            self.link_sessions_participants(p["Participants and roles"], session_id, p["Code"])
 
         sessions_file.close()
 
 
-    # TODO: uzh:phpmyadmin -> change in sessions_and_participants, 'role' enum to -> set
-    def refresh_sessions_participants(self, participants_roles, session_id):
+    def link_sessions_participants(self, participants_roles, session_id, session_code=""):
         """Refresh table 'sessions_and_participants'"""
 
         db_attributes = ("session_fk", "participant_fk", "role")
@@ -174,13 +168,15 @@ class DB_Manager:
         if participants_roles:
 
             # go through participants and their roles
-            for part_roles in participants_roles.split("), "):
+            for part_roles in participants_roles.split(", "):
 
                 # try to extract shortname and its roles
                 try:
-                    shortname, roles = part_roles.split(" (")
+                    shortname, roles = re.split(r" (?=\()", part_roles)
+                    # strip braces around role(s)
+                    roles = roles[1:-1]
                 except ValueError:
-                    # TODO: log
+                    self.logger.error("Format of Participants and roles not correct: " + session_code)
                     continue
 
                 # create set of roles
@@ -191,14 +187,14 @@ class DB_Manager:
                 participant_id = self.cur.fetchone()
 
                 if participant_id is None:
-                    # TODO: log
+                    self.logger.error("Short name not in table participants: " + shortname)
                     continue
 
                 command = self.get_insert_update_command("sessions_and_participants", db_attributes, has_id=False)
 
                 values = (session_id, participant_id[0], role_set)
 
-                self.execute(command, values + values)
+                self.execute(command, values + values, "sessions/participants", key="{}/{}".format(session_code, shortname))
 
 
     def import_participants(self):
@@ -220,7 +216,7 @@ class DB_Manager:
             sys.exit(1)
 
         # go through each participant
-        for p in csv.DictReader(participants_file):
+        for p in tqdm(csv.DictReader(participants_file), desc="Importing participants"):
 
             # convert empty strings to None
             self.empty_str_to_none(p)
@@ -248,7 +244,7 @@ class DB_Manager:
                 p["Contact address"], p["E-mail/Phone"]
             )
 
-            self.execute(command, values + values)
+            self.execute(command, values + values, "participants")
 
         participants_file.close()
 
@@ -277,7 +273,7 @@ class DB_Manager:
             sys.exit(1)
 
         # go through each recording
-        for rec in csv.DictReader(monitor_file):
+        for rec in tqdm(csv.DictReader(monitor_file), desc="Importing monitor"):
 
             # convert empty strings to None
             self.empty_str_to_none(rec)
@@ -288,8 +284,7 @@ class DB_Manager:
                 session_code = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+)?",
                     rec["recording name"]).group()
             except AttributeError:
-                # TODO: log
-                print("wrong session code")
+                self.logger.error("Session code cannot be extracted from recording code: " + rec["recording name"])
                 continue
 
             # get id of associated session
@@ -298,23 +293,24 @@ class DB_Manager:
             try:
                 session_id = self.cur.fetchone()[0]
             except TypeError:
-                # TODO: log
+                self.logger.error("Session code not in table sessions: " + session_code)
                 continue
 
-            # find out availability and assignee of this rec
-            for task_type in ["segmentation", "transcription/translation", "glossing"]:
-                status_type = rec["status " + task_type]
+            # find out availability and assignee of this recording
+            for task in ["segmentation", "transcription/translation", "glossing", "check transcription/translation", "check glossing"]:
 
-                if status_type == "in progress":
+                # get status of this task
+                status = rec["status " + task]
+
+                if status == "in progress":
                     availability = "assigned"
-                    assignee = rec["person " + task_type]
+                    assignee = rec["person " + task]
                     break
-                elif status_type == "barred":
+                elif status == "barred":
                     availability = "barred"
                     assignee = None
-
                     break
-                elif status_type == "defer":
+                elif status == "defer":
                     availability = "defer"
                     assignee = None
                     break
@@ -333,9 +329,7 @@ class DB_Manager:
                 try:
                     assignee_id = self.cur.fetchone()[0]
                 except TypeError:
-                    # TODO: log
-                    #print("cant get assignee id")
-                    pass
+                    self.logger.error("Assignee not in table employees: " + assignee)
 
             else:
                 assignee_id = None
@@ -346,7 +340,7 @@ class DB_Manager:
                 rec["Dene"], rec["audio"], rec["notes"]
             )
 
-            self.execute(recordings_command, rec_values + rec_values)
+            self.execute(recordings_command, rec_values + rec_values, "recordings")
 
             # ********** progress stuff **********
 
@@ -379,18 +373,14 @@ class DB_Manager:
                 if task_type == "segmentation":
                     quality_check = "not required"
                 else:
-                    # TODO: what about person?
                     # get check status
                     quality_check = rec["status check " + task_type]
-
-
-                # TODO: notes, -> can also be NULL
 
                 progress_values = (
                     rec_id, task_type_id, task_status, quality_check, None
                 )
 
-                self.execute(progress_command, progress_values + progress_values)
+                self.execute(progress_command, progress_values + progress_values, "progress")
 
         monitor_file.close()
 
@@ -435,9 +425,8 @@ class DB_Manager:
 
         locations_file.close()
 
-        # TODO: int -> bigint
 
-        for file in csv.DictReader(files_file):
+        for file in tqdm(csv.DictReader(files_file), desc="Importing files"):
 
             self.empty_str_to_none(file)
 
@@ -447,13 +436,13 @@ class DB_Manager:
             try:
                 rec_id = self.cur.fetchone()[0]
             except TypeError:
-                #print("recording does not exist in db", file["Recording code"])
+                self.logger.error("Recording code not in recordings: " + file["Recording code"])
                 continue
 
             try:
                 loc = locations[file["File name"]]
             except KeyError:
-                #print("file not found in locations.csv:", file["File name"])
+                self.logger.error("File not in file_locations.csv: " + file["File name"])
                 continue
 
             values = (
@@ -462,33 +451,35 @@ class DB_Manager:
                 loc["at_FNUniv"], loc["at_CRDN"], file["Location"], loc["notes"]
             )
 
-            self.execute(command, values + values)
+            self.execute(command, values + values, "files")
 
         files_file.close()
 
 
-    def refresh_database(self, deep=False):
-
+    def import_all(self):
+        """Import from all files"""
         # instead of updating all records, all records are deleted and inserted again
-        if deep:
-            for table in ["files", "sessions_and_participants", "progress",
-                          "recordings", "sessions", "participants"]:
-
+        if self.args.deep:
+            for table in ["files", "sessions_and_participants", "progress", "recordings", "sessions", "participants"]:
                 self.wipe(table)
 
         self.import_participants()
+        print()
         self.import_sessions()
+        print()
         self.import_monitor()
+        print()
         self.import_files()
+        print()
+        print("Import finished!")
 
 
 def main():
 
     con = db.connect(host="localhost", user="anna", passwd="anna", db="deslas", charset="utf8")
 
-    populator = DB_Manager(con)
-    populator.refresh_database()
-    print("done")
+    populator = DB_Import(con)
+    populator.import_all()
     con.close()
 
 
