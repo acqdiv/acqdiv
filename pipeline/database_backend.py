@@ -47,7 +47,6 @@ class Session(Base):
         Note:
             - session_id field is the input filename
             - source_id field is the id given in the session file
-            - media field is an associate media file by filename
     """
     __tablename__ = 'sessions'
 
@@ -56,10 +55,7 @@ class Session(Base):
     corpus = Column(Text, nullable=False, unique=False)
     language = Column(Text, nullable=False, unique=False)
     date = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    media = Column(Text, nullable=True, unique=False)
-    media_type = Column(Text, nullable=True, unique=False)
-
-    # SQLAlchemy relationship definitions
+    # SQLAlchemy relationship definitions:
     speakers = relationship('Speaker', backref='Session')
     utterances = relationship('Utterance', backref='Session')
     words = relationship('Word', backref='Session')
@@ -89,8 +85,7 @@ class Speaker(Base):
     languages_spoken = Column(Text, nullable=True, unique=False)
     birthdate = Column(Text, nullable=True, unique=False)
 
-    # SQLAlchemy relationship definitions
-    # hook to unique speakers?
+    # SQLAlchemy relationship definitions (hook to unique speakers?)
 
     # TODO: optional pretty formatting for printing
     def __repr__(self):
@@ -113,22 +108,19 @@ class UniqueSpeaker(Base):
 class Utterance(Base):
     """ Utterances in all sessions.
 
-    To note:
-        - source_id is the id in the original files and is not unique across corpora, e.g. u1, u1, u1
-        - addressee field is not present in all corpora (see corpus manual for more info)
-        - x_raw vs x is distinction between original input and cleaned/manipulated output
+        Note:
+            - source_id is the id in the original files and is not unique across corpora, e.g. u1, u1, u1
+            - addressee field is not present in all corpora (see corpus manual for more info)
+            - x_raw vs x is distinction between original input and cleaned/manipulated output
     """
     __tablename__ = 'utterances'
 
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
-    # TODO: remove the old session_id
     source_id = Column(Text, nullable=True, unique=False)
     # uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
-
     corpus = Column(Text, nullable=False, unique=False)
     language = Column(Text, nullable=False, unique=False)
-    # utterance_id = Column(Text, nullable=True, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     addressee = Column(Text, nullable=True, unique=False)
     utterance_raw = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
@@ -145,8 +137,7 @@ class Utterance(Base):
     # word = Column(Text, nullable=True, unique=False)
     comment = Column(Text, nullable=True, unique=False)
     warning = Column(Text, nullable=True, unique=False)
-
-    # SQLAlchemy relationship definitions
+    # SQLAlchemy relationship definitions:
     words = relationship('Word', backref='Utterance')
     morphemes = relationship('Morpheme', backref='Utterance')
 
@@ -168,8 +159,7 @@ class Word(Base):
     word_actual = Column(Text, nullable=True, unique=False)
     word_target = Column(Text, nullable=True, unique=False)
     warning = Column(Text, nullable=True, unique=False)
-
-    # SQLAlchemy relationship definitions
+    # SQLAlchemy relationship definitions:
     morphemes = relationship('Morpheme', backref='Word')
 
 
@@ -179,10 +169,9 @@ class Morpheme(Base):
     __tablename__ = 'morphemes'
 
     id = Column(Integer, primary_key=True)
-    session_id_fk = Column(Text, ForeignKey('sessions.id'))
-    utterance_id_fk = Column(Text, ForeignKey('utterances.id'))
-    word_id_fk = Column(Text, ForeignKey('words.id'))
-
+    session_id_fk = Column(Integer, ForeignKey('sessions.id'))
+    utterance_id_fk = Column(Integer, ForeignKey('utterances.id'))
+    word_id_fk = Column(Integer, ForeignKey('words.id'))
     corpus = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     language = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     type = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
@@ -192,4 +181,3 @@ class Morpheme(Base):
     pos_raw = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     pos = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     warning = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-
