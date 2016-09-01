@@ -167,6 +167,7 @@ def process_morphemes():
         if row.corpus == "Chintang" or row.corpus == "Indonesian":
             infer_pos(row)
         # Key-value substitutions for morphological glosses and parts-of-speech
+        infer_label(row)
         unify_label(row)
         # Infer the word's part-of-speech from the morphemes table as index for word pos assignment
         get_pos_index(row)
@@ -175,8 +176,10 @@ def process_morphemes():
 def get_pos_index(row):
     if not row.pos in ["sfx", "pfx"]:
         # row.id will be int type in other tables when look up occurs; type it int here for convenience
-        pos_index[int(row.word_id_fk)] = row.pos
-
+        try:
+            pos_index[int(row.word_id_fk)] = row.pos
+        except TypeError:
+            pass
 
 def process_words():
     table = session.query(backend.Word)
@@ -270,6 +273,16 @@ def unify_label(row):
     config = get_config(row.corpus)
     row.gloss = config['gloss'].get(row.gloss_raw, None)
     row.pos = config['pos'].get(row.pos_raw, None)
+
+
+def infer_label(row):
+    config = get_config(row.corpus)
+    if config['morphemes']['substitutions'] == 'yes':
+        source_tier = config['morphemes']['source_tier']
+        target_tier = config['morphemes']['target_tier']
+        exec("row.{0} = config['substitutions'].get(row.{1}, row.{0})".format(
+            target_tier, source_tier)
+        )
 
 
 def get_session_date(session_id):

@@ -95,9 +95,6 @@ class SessionProcessor(object):
 
         self.session = db.Session(**d)
 
-        # TODO: remove this when we're on XML
-        self.session_entry = Session(**d)
-
         # Get speaker metadata and populate the speakers table
         self.speaker_entries = []
         for speaker in self.parser.next_speaker():
@@ -113,10 +110,17 @@ class SessionProcessor(object):
         # Get the sessions utterances, words and morphemes to populate those db tables
         for utterance, words, morphemes in self.parser.next_utterance():
             # TODO: move this post processing (before the age, etc.) if it improves performance
+            if utterance is None:
+                logger.info("Skipping nonce utterance in {}".format(
+                    self.file_path))
+                continue
             utterance['corpus'] = self.corpus
             utterance['language'] = self.language
 
             u = Utterance(**utterance)
+
+            wlen = len(words)
+            mlen = len(morphemes)
 
             # TODO: Deal with Indonesian...
 
@@ -128,26 +132,33 @@ class SessionProcessor(object):
             #    "{} utterance {}".format(self.corpus, utterance['source_id']))
 
             # Populate the words
-            for i in range(0, len(words)):
+            for i in range(0, wlen):
                 # TODO: move this post processing (before the age, etc.) if it improves performance
-                words[i]['corpus'] = self.corpus
-                words[i]['language'] = self.language
+                if words[i] != {}:
+                    words[i]['corpus'] = self.corpus
+                    words[i]['language'] = self.language
 
-                word = Word(**words[i])
-                # TODO: is it cheaper to append a list here?
-                word = Word(**words[i])
-                u.words.append(word)
-                self.session.words.append(word)
+                    # TODO: is it cheaper to append a list here?
+                    word = Word(**words[i])
+                    u.words.append(word)
+                    self.session.words.append(word)
 
-                # Populate the morphemes
+            # Populate the morphemes
+            # wlen with dummy words excluded
+            new_wlen = len(u.words)
+            for i in range(0, wlen):
                 try:
                     for j in range(0, len(morphemes[i])): # loop morphemes
                         # TODO: move this post processing (before the age, etc.) if it improves performance
                         morphemes[i][j]['corpus'] = self.corpus
                         morphemes[i][j]['language'] = self.language
+                        morphemes[i][j]['type'] = self.morpheme_type
 
                         morpheme = Morpheme(**morphemes[i][j])
-                        word.morphemes.append(morpheme)
+                        if new_wlen == mlen:
+                            # only link words and morpheme words if there are
+                            # equal amounts of both
+                            u.words[i].morphemes.append(morpheme)
                         u.morphemes.append(morpheme)
                         self.session.morphemes.append(morpheme)
                 except TypeError:

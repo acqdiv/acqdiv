@@ -14,7 +14,7 @@ Input (default locations; execute python3 system_check.py --help for help on how
 
 Output:
 ../Metadata/files.csv
-./filess.log
+./files.log
 """
 
 
@@ -47,10 +47,10 @@ class File:
 
     # the four media file extensions are mapped to their MIME-Type and exiftool's key to access the duration
     media_dict = {
-        "wav": ("Audio", "Composite"),
-        "mp4": ("Video", "QuickTime"),
-        "mts": ("Video", "M2TS"),
-        "mov": ("Video", "QuickTime")
+        "wav": ("audio", "Composite"),
+        "mp4": ("video", "QuickTime"),
+        "mts": ("video", "M2TS"),
+        "mov": ("video", "QuickTime")
     }
 
 

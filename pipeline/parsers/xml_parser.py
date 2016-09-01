@@ -47,6 +47,15 @@ class XMLParser(object):
 
     rstruc = namedtuple('FlatUtterance', ['u', 'w', 'm']) 
 
+    @staticmethod
+    def has_value(dic, key):
+        try:
+            return dic[key] is not None
+        except KeyError:
+            return False
+        except TypeError:
+            return False
+
     def __init__(self, cfg, cleaner_cls, fpath):
 
         self.cfg = cfg
@@ -77,13 +86,13 @@ class XMLParser(object):
                 udict['corpus'] = self.cfg['corpus']['corpus']
                 udict['language'] = self.cfg['corpus']['language']
 
-                udict['utterance_id'] = u.attrib.get('uID')
+                udict['source_id'] = u.attrib.get('uID')
                 udict['speaker_label'] = u.attrib.get('who')
                 udict['warning'] = u.attrib.get('warning')
-
+                
                 udict['addressee'] = XMLCleaner.find_text(u, 'addressee')
-                udict['english_translation'] = XMLCleaner.find_text(
-                    u, 'english_translation')
+                udict['translation'] = XMLCleaner.find_text(
+                    u, 'translation')
                 udict['comment'] = XMLCleaner.find_text(u, 'comment')
 
                 udict['starts_at'] = XMLCleaner.find_xpath(u, 'media/@start')
@@ -96,13 +105,13 @@ class XMLParser(object):
                 for w in fws:
 
                     wdict = {}
+                    #wdict['corpus'] = udict['corpus']
+                    #wdict['language'] = udict['language']
 
-                    wdict['corpus'] = udict['corpus']
-                    wdict['language'] = udict['language']
+                    #wdict['word_actual'] = w.find('actual').text
+                    #wdict['word_target'] = w.find('target').text
+                    #wdict['word'] = wdict[self.cfg['xml_mappings']['word']]
 
-                    wdict['word_actual'] = w.find('actual').text
-                    wdict['word_target'] = w.find('target').text
-                    wdict['word'] = wdict[self.cfg['xml_mappings']['word']]
                     wdict['warning'] = w.attrib.get('warning')
 
                     if ((udict['warning'] is not None
@@ -118,6 +127,16 @@ class XMLParser(object):
                                 mdict[tier_name] = m.attrib.get(tier_name)
                             morphemes.append(mdict)
 
+                    if not "dummy" in w.attrib:
+                        wdict['corpus'] = udict['corpus']
+                        wdict['language'] = udict['language']
+
+                        wdict['word_actual'] = w.find('actual').text
+                        wdict['word_target'] = w.find('target').text
+                        wdict['word'] = wdict[self.cfg['xml_mappings']['word']]
+                    else:
+                        wdict = None
+
                     words.append(wdict)
                     mwords.append(morphemes)
 
@@ -129,7 +148,8 @@ class XMLParser(object):
                 udict['gloss_raw'] = self._concat_mor_tier('gloss_raw', mwords)
                 udict['morpheme'] = self._concat_mor_tier('morpheme', mwords)
                 udict['utterance_raw'] = ' '.join([w['word'] for w in words
-                                                   if w['word'] is not None])
+                                                   if XMLParser.has_value(
+                                                           w, 'word')])
                 udict['utterance'] = udict['utterance_raw']
 
                 yield XMLParser.rstruc(udict, words, mwords)
@@ -142,19 +162,19 @@ class XMLParser(object):
 
     def _clean_words(self, words):
         new_words = deque()
-        try:
-            for raw_word in words:
+        for raw_word in words:
+            try:
                 word = {}
                 for k in raw_word:
                     if k in self.cfg['xml_mappings']:
                         label = self.cfg['xml_mappings'][k]
                         word[label] = raw_word[k]
                     else:
-                        pass
+                        word[k] = raw_word[k]
                 word['word'] = word[self.cfg['xml_mappings']['word']]
-                new_words.append(word)
-        except TypeError:
-            pass
+            except TypeError:
+                pass
+            new_words.append(word)
         return new_words
 
     def _clean_morphemes(self, mors):
@@ -173,6 +193,24 @@ class XMLParser(object):
                                 pass
                         if morpheme != {}:
                             new_mword.append(morpheme)
+                    try:
+                        flatm = {}
+                        for tier in new_mword[0]:
+                            flatm[tier] = [m[tier] for m in new_mword
+                                           if tier in m]
+                        mlen = len(flatm['gloss_raw'])
+                        for tier in flatm:
+                            if len(flatm[tier]) != mlen:
+                                for m in new_mword:
+                                    m[tier] = None
+                    except IndexError:
+                        continue
+                    except KeyError as k:
+                        XMLParser.logger.warning(
+                            "Couldn't zip morpheme tiers in {}:"
+                            "{}".format(self.cfg['corpus']['corpus'],
+                                        repr(k)))
+                                        
                     new_mors.append(new_mword)
                 except TypeError:
                     continue
@@ -183,13 +221,13 @@ class XMLParser(object):
     def _clean_utterance(self, raw_u):
 
         utterance = {}
+        uvs = self.cfg['xml_mappings'].values()
         for k in raw_u:
-            if k in self.cfg['xml_mappings']:
-                label = self.cfg['xml_mappings'][k]
+            if k in uvs:
                 if raw_u[k] in self.cfg['correspondences']:
-                    utterance[label] = self.cfg['correspondences'][raw_u[k]]
+                    utterance[k] = self.cfg['correspondences'][raw_u[k]]
                 else:
-                    utterance[label] = raw_u[k]
+                    utterance[k] = raw_u[k]
             else:
                 pass
         return utterance
@@ -216,15 +254,13 @@ class XMLParser(object):
 
 if __name__ == '__main__':
 
-    from inuktitut_cleaner import InuktitutCleaner
     from parsers import CorpusConfigParser as Ccp
     import sys
     
     cname = sys.argv[1]
     conf = Ccp()
     conf.read('ini/{}.ini'.format(cname))
-    corpus = InuktitutCleaner
-    parser = XMLParser(conf, corpus, 'tests/corpora/{0}/xml/{0}.xml'.format(cname))
+    parser = XMLParserFactory(conf)('tests/corpora/{0}/xml/{0}.xml'.format(cname))
     i = 0
     for u in parser.next_utterance():
         i += 1

@@ -5,6 +5,7 @@ import os
 import sys
 import glob
 import json
+import logging
 import collections
 import configparser
 from configparser import ExtendedInterpolation
@@ -14,6 +15,7 @@ from .metadata import Imdi, Chat
 from .toolbox import ToolboxFile
 from .xml_parser import XMLParserFactory
 
+logger = logging.getLogger('pipeline.' + __name__)
 
 class CorpusConfigParser(configparser.ConfigParser):
     """ Config parser for ACQDIV corpus-specific .ini configuration files
@@ -140,7 +142,15 @@ class ToolboxParser(SessionParser):
         # TODO: fix this to just session or just __attrs__ in the metadata parser
         # this is an ugly hack due to the Indonesian corpus (body=Toolbox, but meta=XML)
         if self.metadata_parser.__class__.__name__ == "Imdi":
-            return self.metadata_parser.metadata['session']
+            md = self.metadata_parser.metadata['session']
+            try:
+                md['media_type'] = (
+                    self.metadata_parser.metadata['media']['mediafile']['type'])
+            except KeyError:
+                md['media_type'] = None
+                logger.info('Session {} has no media type information'.format(
+                   self.file_path)) 
+            return md
         elif self.metadata_parser.__class__.__name__ == "Chat":
             return self.metadata_parser.metadata['__attrs__']
         else:

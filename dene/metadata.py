@@ -58,23 +58,28 @@ def validate_date(str_date, object_number=0, object_id=""):
         empty string if date is not correct, otherwise the (corrected) date
     """
     # try to parse any of the three given date formats
-    for format_index, format in enumerate(["%Y-%m-%d", "%Y.%m.%d", "%Y/%m/%d"]):
+    for format in ["%Y-%m-%d", "%Y.%m.%d", "%Y", "%Y/%m/%d"]:
         try:
             date = datetime.datetime.strptime(str_date, format)
-        except:
+        except ValueError:
             pass
         else:
+            if format == "%Y":
+                # leave unchanged
+                return str_date
+
             # check if date delimiter was '-'
-            if format_index != 0:
+            if format != "%Y-%m-%d":
                 logger.info("Delimiter in Session.date replaced by '-'",
                     extra={"object_number": object_number, "object_id": object_id})
 
             return date.strftime("%Y-%m-%d")
 
     # if date cannot be parsed with any of the given formats, produce warning and return empty string
-    logger.error("Date cannot be parsed - date is not possible or the required format \d{4}-\d{2}-\d{2} is wrong",
+    logger.error("Date cannot be parsed - date is not possible or the required format \d{4}-\d{2}-\d{2} or \d{4} is wrong",
         extra={"object_number": object_number, "object_id": object_id})
     return ""
+
 
 
 ################################################################################
@@ -95,15 +100,11 @@ class Session:
         Keyword args:
             all fields that must be checked can be optionally passed as a string, default value is an empty string
         """
-        self.code = code
-        self.date = date
-        self.situation = situation
-        self.content = content
-        self.people = people
-        self.genre = "Discourse"
-        self.subgenre = "Language acquisition"
-        self.plannedness = "Spontaneous"
-        self.researcher_involvement = "Non-elicited"
+        self.code = code.rstrip()
+        self.date = date.rstrip()
+        self.situation = replace_i(situation.rstrip())
+        self.content = replace_i(content.rstrip())
+        self.people = replace_i(people.rstrip())
         self.shortname_list = shortname_list
 
         # increment every time a new Session instance is created
@@ -116,8 +117,6 @@ class Session:
         Note:
             The prescribed format is <desla-shortname-year-month-day[-partial_session_letter]>.
         """
-        self.code = self.code.strip(" ")
-
         if "deslas" not in self.code:
             # desla must be lowercased, so try to correct it by lowercasing it
             self.code = re.sub(r"(?i)deslas", "deslas", self.code)
@@ -155,7 +154,6 @@ class Session:
 
     def check_Date(self):
         """Check if the recording date (Session.Date) is 2015 or later and if it matches the one in Session.code."""
-        self.date = self.date.strip(" ")
         self.date = validate_date(self.date, Session.session_number, self.code)
 
         if self.date:
@@ -173,9 +171,6 @@ class Session:
 
     def replace_child(self):
         """Replace all instances of 'child' in Session.content and Session.situation by the shortname."""
-        self.content = replace_i(self.content.strip(" "))
-        self.situation = replace_i(self.situation.strip(" "))
-
         match = re.search(r"deslas\-([A-Z]{3,})\-\d+", self.code)
         if match:
             shortname = match.group(1)
@@ -210,7 +205,7 @@ class Session:
             }
 
             # sometimes commas occur at the end of the participant and roles, so strip them away too
-            self.people = replace_i(self.people.strip(" ").rstrip(","))
+            self.people = self.people.rstrip(",")
 
             part_role_regex = re.compile(r"""
                 (
@@ -238,24 +233,49 @@ class Session:
                 # at whitespaces and commas between role and shortname
                 list_all = re.split(r"(?<=[A-Z])\s+(?=\()|(?<=\))\s*[, ]\s*(?=[A-Z])", self.people)
 
-                # extract all shortnames by taking out every even element
-                shortname_list = list_all[::2]
-                # extract all roles by taking out every odd element
-                role_list = list_all[1::2]
+                shortname_set = set()
+                role_list = []
 
-                # check if all shortnames also occur in the shortname list (i.e. in Participant.Short name)
-                for shortname in shortname_list:
+                # extract, check and store shortnames and roles
+                is_role = False
+                target_child_occurs = False
+                # part: shortname or role
+                for part in list_all:
+                    if is_role:
+                        # strip braces around role(s)
+                        role = part[1:-1]
+                        # check if it is the role 'child'
+                        if "child" in role:
+                            target_child_occurs = True
+                        # append role
+                        role_list.append(role)
+                    else:
+                        # create error log if short name is already in the list
+                        if part in shortname_set:
+                            logger.error("Short name '" + part + "' is listed more than once in Participants and roles",
+                                extra={"object_number": Session.session_number, "object_id": self.code})
+                        else:
+                            # add shortname
+                            shortname_set.add(part)
 
-                    if shortname not in self.shortname_list:
-                        logger.error("Shortname '" + shortname + "' does not exist in participants",
-                            extra={"object_number": Session.session_number, "object_id": self.code})
+                            # check if shortname also occurs in the shortname list (i.e. in Participant.Short name)
+                            if part not in self.shortname_list:
+                                logger.error("Shortname '" + part + "' does not exist in participants",
+                                    extra={"object_number": Session.session_number, "object_id": self.code})
+
+                    # switch boolean value
+                    is_role = not is_role
+
+                # check if target child is listed in Participants and roles
+                if not target_child_occurs:
+                    logger.error("Target child is not listed 'Participants and roles'",
+                        extra={"object_number": Session.session_number, "object_id": self.code})
 
                 # go through the roles of every shortname
                 for role_set_index, role_set in enumerate(role_list):
 
-                    # store role(s) of a shortname in a list by stripping away the braces
-                    # and splitting at ampersand, comma or slash
-                    roles = re.split('\s*[&,/]\s*', role_set[1:-1])
+                    # store role(s) of a shortname in a list and split at ampersand, comma or slash
+                    roles = re.split('\s*[&,/]\s*', role_set)
 
                     # now go through all roles of that shortname
                     for role_index, role in enumerate(roles):
@@ -301,7 +321,7 @@ class Session:
                     role_list[role_set_index] = "(" + " & ".join(roles) + ")"
 
                 # merge all shortnames and their corresponding roles
-                self.people = ", ".join((" ".join(pair) for pair in zip(shortname_list, role_list)))
+                self.people = ", ".join((" ".join(pair) for pair in zip(shortname_set, role_list)))
 
 
             else:
@@ -340,12 +360,12 @@ class Participant:
         Keyword args:
             all fields that must be checked can be optionally passed as a string, default value is an empty string
         """
-        self.shortname = shortname
-        self.birthdate = birthdate
-        self.age = age
-        self.gender = gender
-        self.firstlang = firstlang
-        self.mainlang = mainlang
+        self.shortname = shortname.strip()
+        self.birthdate = birthdate.strip()
+        self.age = age.strip()
+        self.gender = gender.strip()
+        self.firstlang = replace_i(firstlang.strip())
+        self.mainlang = replace_i(mainlang.strip())
         self.shortname_list = shortname_list
         self.date_partrole_list = date_partrole_list
 
@@ -355,8 +375,6 @@ class Participant:
 
     def check_ShortName(self):
         """Check if shortname is in the correct format and if it does not occur more than once in the participants table."""
-        self.shortname = self.shortname.strip(" ")
-
         # shortname must be at least 3 chars long and uppercased
         if re.fullmatch(r"[A-Z]{3,}", self.shortname):
             counter = 0
@@ -379,9 +397,7 @@ class Participant:
     def check_BirthDate(self):
         """Check birth of date (Participant.Birth date) for sanity."""
         if self.birthdate:
-            self.birthdate = self.birthdate.strip(" ")
             self.birthdate = validate_date(self.birthdate, Participant.participant_number, self.shortname)
-
 
 
     def check_Age(self):
@@ -396,32 +412,33 @@ class Participant:
         """
         if self.age:
 
-            self.age = self.age.strip(" ")
-
             # age value must be a number optionally followed by a year in brackets
-            match = re.fullmatch(r"\d+( \(\d{4}\))?", self.age)
+            match = re.fullmatch(r"\d{1,3}( \(\d{4}\))?", self.age)
 
             if match:
+                # if there is a year given
+                if match.group(1):
+                    # remove it
+                    self.age = self.age[:-7]
 
-                # check if date of birth and year is missing
-                if not self.birthdate and not match.group(1):
+                # check if birth date or year is missing
+                if not self.birthdate:
 
                     # go through the list of dates and participants and roles
                     for date, partrole in date_partrole_list:
 
                         # if the shortname is among the participants and roles of a session
                         if self.shortname in partrole:
-                            # save the corresponding date of the session
-                            recording_date = date
-                            # add it to the age value by extracting the year only
-                            self.age = self.age + " (" + recording_date[:4] + ")"
-                            logger.info("Date of birth is missing, but age is known - recording year is added",
+
+                            # save year as birth date value
+                            self.birthdate = str(int(date[:4]) - int(self.age))
+                            logger.info("Date of birth is missing, but age is known - year of birth calculated and added",
                                 extra={"object_number": Participant.participant_number, "object_id": self.shortname})
 
                             break
 
             else:
-                logger.error("Age cannot be parsed - expected format is \d+( \(\d{4}\))?",
+                logger.error("Age value not correct - expected format is \d{1,3}( \(\d{4}\))?",
                     extra={"object_number": Participant.participant_number, "object_id": self.shortname})
 
         else:
@@ -432,7 +449,7 @@ class Participant:
     def check_Gender(self):
         """Check if the gender field has either the value Female or Male."""
         if self.gender:
-            self.gender = self.gender.strip(" ").title()
+            self.gender = self.gender.title()
             if self.gender != "Female" and self.gender != "Male":
                 logger.error("Gender value not correct - allowed values are 'Female' or 'Male'",
                     extra={"object_number": Participant.participant_number, "object_id": self.shortname})
@@ -443,22 +460,34 @@ class Participant:
 
     def check_Lang(self):
         """Check if the language fields have the values English or Dene."""
-        # replace 'n/a' by empty string
-        self.firstlang = self.firstlang.strip(" ").replace("n/a", "")
-        self.mainlang = self.mainlang.strip(" ").replace("n/a", "")
+        # replace 'n/a' by empty string if it occurs
+        self.firstlang = self.firstlang.replace("n/a", "")
+        self.mainlang = self.mainlang.replace("n/a", "")
 
-        if self.firstlang and self.mainlang:
-            self.firstlang = replace_i(self.firstlang.strip(" "))
-            self.mainlang = replace_i(self.mainlang.strip(" "))
+        langs = {'Dene','English','German','French'}
 
-            for lang in [self.firstlang, self.mainlang]:
-                if lang not in ['Dene','English','German','French']:
-                    logger.warning("Language value not permitted",
+        # first check value for 'Main language'
+        if not self.mainlang:
+            logger.info("Language value missing for 'Main language'",
+                extra={"object_number": Participant.participant_number, "object_id": self.shortname})
+        else:
+            if len(self.mainlang.split("/")) > 1:
+                logger.error("Only one value allowed for 'Main language'",
+                    extra={"object_number": Participant.participant_number, "object_id": self.shortname})
+            else:
+                if self.mainlang not in langs:
+                    logger.warning("Language value not permitted for 'Main language'",
                         extra={"object_number": Participant.participant_number, "object_id": self.shortname})
 
-        else:
-            logger.info("Language value missing for main language or first language",
+        # then check value for 'First languages'
+        if not self.firstlang:
+            logger.info("Language value missing for 'First languages'",
                 extra={"object_number": Participant.participant_number, "object_id": self.shortname})
+        else:
+            for lang in self.firstlang.split("/"):
+                if lang not in langs:
+                    logger.warning("Language value not permitted for 'First languages'",
+                        extra={"object_number": Participant.participant_number, "object_id": self.shortname})
 
 
     def check_all(self):
@@ -489,10 +518,10 @@ if __name__ == "__main__":
     participants_writer = csv.DictWriter(new_participant_file, fieldnames=participants_reader.fieldnames)
 
     # create list that stores all shortnames occuring in the participants table
-    shortname_list = [row["Short name"] for row in participants_reader]
+    shortname_list = [row["Short name"].rstrip() for row in participants_reader]
 
-    # create list that stores the dates and the participants and roles occuring in the sessions table as a tuple
-    date_partrole_list = [(row["Date"], row["Participants and roles"]) for row in sessions_reader]
+    # create list with (date, participants and roles)-tuples from sessions.csv sorted by date
+    date_partrole_list = sorted((row["Date"].rstrip(), replace_i(row["Participants and roles"].rstrip())) for row in sessions_reader)
 
     # reset file pointers since we already iterated the files when creating the two lists above
     session_file.seek(0)
@@ -529,10 +558,6 @@ if __name__ == "__main__":
                         "Content": session.content,
                         "Participants and roles": session.people,
                         "Comments": replace_i(row["Comments"].strip(" "))
-                        # "Genre": session.genre,
-                        # "Subgenre": session.subgenre,
-                        # "Plannedness": session.plannedness,
-                        # "Researcher involvement": session.researcher_involvement
                         })
 
     # read the metadata of each participant line by line from the file 'participants.csv'

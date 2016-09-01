@@ -12,6 +12,7 @@ from lxml import etree
 
 from parsers.metadata import Chat
 
+
 class XMLCleaner(object):
 
     logger = logging.getLogger('pipeline.' + __name__)
@@ -118,7 +119,8 @@ class XMLCleaner(object):
         #return [{'full_word': w.text, 'full_word_target': w.attrib['target'],
         #    'warning': w.attrib['warning']} for w in words]
 
-    def _restructure_words(self, words):
+    @staticmethod
+    def _restructure_words(words):
         for w in words:
             actual = etree.SubElement(w, 'actual')
             target = etree.SubElement(w, 'target')
@@ -129,17 +131,26 @@ class XMLCleaner(object):
             target.text = ''
             w.text = ''
 
-    def _clean_word_text(self, words):
+    @staticmethod
+    def _clean_word_text(words):
         for w in words:
             wt = w.find('actual')
+            #TODO: what with p in replacements etc. ?
             for path in ('.//p', './/ca-element', './/wk'):
                 for t in w.findall(path):
+                    parent = t.getparent()
                     if t.tail is not None:
-                        if wt.text is None:
-                            wt.text = t.tail
+                        if parent == w:
+                            if wt.text is None:
+                                wt.text = t.tail
+                            else:
+                                wt.text += t.tail
                         else:
-                            wt.text += t.tail
-                    w.remove(t)
+                            if parent.text is None:
+                                parent.text = t.tail
+                            else:
+                                parent.text += t.tail
+                    parent.remove(t)
             if wt.text:
                 # Sometimes words may be partially untranscribed
                 # (-xxx, xxx-, -xxx-) - transform this to unified ???
@@ -147,7 +158,8 @@ class XMLCleaner(object):
             if 'untranscribed' in w.attrib:
                 wt.text = '???'
 
-    def _clean_fragments_and_omissions(self, words):
+    @staticmethod
+    def _clean_fragments_and_omissions(words):
         for w in words:
             if 'type' in w.attrib:
                 if w.attrib['type'] == 'omission':
@@ -156,7 +168,8 @@ class XMLCleaner(object):
                     w.find('target').text = '???'
                     w.attrib['warning'] = 'not glossed'
         
-    def _clean_shortenings(self, words):
+    @staticmethod
+    def _clean_shortenings(words):
         for w in words:
 
             w_actual = w.find('actual')
@@ -171,7 +184,8 @@ class XMLCleaner(object):
                     w_actual.text += s.tail
                 w.remove(s)
 
-    def _clean_replacements(self, words):
+    @staticmethod
+    def _clean_replacements(words):
         # replacements, e.g. 
         # <g><w>burred<replacement><w>word</w></replacement></w></g>
         # these require an additional loop over <w> in <u>,
@@ -210,7 +224,8 @@ class XMLCleaner(object):
                 #        for rep_w in r.findall('w'))
                 fw.remove(r)
 
-    def _mark_retracings(self, u):
+    @staticmethod
+    def _mark_retracings(u):
         for group in u.iterfind('.//g'):
             retracings = group.find('k[@type="retracing"]')
             retracings_wc = group.find('k[@type="retracing with correction"]')
@@ -219,8 +234,9 @@ class XMLCleaner(object):
                 for w in words: 
                     w.attrib['glossed'] = 'ahead'
                     XMLCleaner.creadd(w.attrib, 'warning', 'not glossed; search ahead')
-        
-    def _add_word_warnings(self, words):
+
+    @staticmethod    
+    def _add_word_warnings(words):
         for w in words:
             if 'glossed' in w.attrib:
                 if w.attrib['glossed'] == 'no':
@@ -234,7 +250,8 @@ class XMLCleaner(object):
             #if 'warning' not in w.attrib:
             #    w.attrib['warning'] = ''
 
-    def _clean_groups(self, u):
+    @staticmethod
+    def _clean_groups(u):
         for group in u.iterfind('g'):
 
             subgroups = group.findall('g')
@@ -245,23 +262,27 @@ class XMLCleaner(object):
             parent = group.getparent()
             idx = parent.index(group)
 
-            self._clean_repetitions(group)
-            self._clean_retracings(group, u)
-            self._clean_guesses(group)
+            XMLCleaner._clean_repetitions(group)
+            XMLCleaner._clean_retracings(group, u)
+            XMLCleaner._clean_guesses(group)
             for w in group.iterfind('.//w'):
                 parent.insert(idx, w)
                 idx += 1
             parent.remove(group)
 
-    def _clean_repetitions(self, group):
+    @staticmethod
+    def _clean_repetitions(group):
         reps = group.find('r')
         if reps is not None:
             ws = group.findall('.//w')
+            idx = group.index(ws[-1])
             for i in range(int(reps.attrib['times'])-1):
                 for w in ws:
-                    group.insert(len(ws)-1, copy.deepcopy(w))
+                    group.insert(idx+1, copy.deepcopy(w))
+                    idx += 1
 
-    def _clean_retracings(self, group, u):
+    @staticmethod
+    def _clean_retracings(group, u):
         retracings = group.find('k[@type="retracing"]')
         retracings_wc = group.find('k[@type="retracing with correction"]')
 
@@ -296,21 +317,27 @@ class XMLCleaner(object):
             base_index = u_ws.index(group_ws[-1]) + 1
             max_index = base_index + len(group_ws)
             for i,j in zip(range(base_index, max_index), itertools.count()):
-                mor = u_ws[i].find('mor')
-                if mor is not None: 
-                    group_ws[j].append(copy.deepcopy(mor))
-                    if 'warning' in group_ws[j].attrib:
-                        re.sub('not glossed; search ahead', '', 
+                try:
+                    mor = u_ws[i].find('mor')
+                    if mor is not None: 
+                        group_ws[j].append(copy.deepcopy(mor))
+                        if 'warning' in group_ws[j].attrib:
+                            re.sub('not glossed; search ahead', '', 
+                                    group_ws[j].attrib['warning'])
+                    else:
+                        if 'warning' in group_ws[j].attrib:
+                            re.sub('; search ahead', '',
                                 group_ws[j].attrib['warning'])
-                else:
+                    group_ws[j].find('target').text = u_ws[i].find('target').text
+                except IndexError:
                     if 'warning' in group_ws[j].attrib:
                         re.sub('; search ahead', '',
-                               group_ws[j].attrib['warning'])
-                group_ws[j].find('target').text = u_ws[i].find('target').text
+                            group_ws[j].attrib['warning'])
                 if 'glossed' in group_ws[j].attrib:
                     del group_ws[j].attrib['glossed']
 
-    def _clean_guesses(self, group):
+    @staticmethod
+    def _clean_guesses(group):
         words = group.findall('.//w')
         target_guess = group.find('.//ga[@type="alternative"]')
         if target_guess is not None:
@@ -327,7 +354,8 @@ class XMLCleaner(object):
     def _morphology_inference(self, u):
         pass
 
-    def _add_morphology_warnings(self, u):
+    @staticmethod
+    def _add_morphology_warnings(u):
         if u.find('.//mor') is None:
             XMLCleaner.creadd(u.attrib, 'warning', 'not glossed')
         else:
@@ -347,15 +375,15 @@ class XMLCleaner(object):
                 ntag = a.attrib['type']
                 if ' ' in ntag:
                     ntag = ntag.replace(' ', '_')
-            a.tag = ntag
+            a.tag = self.cfg['xml_mappings'].get(ntag, ntag)
             del a.attrib['type']
 
         stype = u.find('t')
         if stype is not None:
-            stype.attrib['type'] = \
-                    self.cfg['correspondences'][stype.attrib.get('type')]
+            stype.attrib['type'] = self.cfg['correspondences'][
+                stype.attrib.get('type')]
 
-        timestamp = u.find('time')
+        timestamp = u.find('time') if u.find('time') is not None else u.find('time_stamp')
         if timestamp is not None:
             timestamp.attrib['start'] = timestamp.text
             timestamp.text = ''
@@ -366,6 +394,7 @@ class XMLCleaner(object):
 
     def clean(self):
         return self._clean_xml()
+
 
 if __name__ == '__main__':
     print("Sorry, there's nothing here!")

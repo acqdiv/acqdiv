@@ -4,6 +4,7 @@ import re
 import sys
 import itertools
 import pdb
+import xml
 
 from lxml import etree
 from .xml_cleaner import XMLCleaner
@@ -49,11 +50,13 @@ class YucatecCleaner(XMLCleaner):
                             
             #initialize word index
             word_index = -1
+            wlen = len(full_words)
             #mwords is a list of lists of morphemes
             for w in new_words:
                 
                 # count up word index, extend list if necessary
-                word_index += 1
+                word_index, llen = XMLCleaner.word_index_up(
+                    full_words, wlen, word_index, u)
 
                 # some words in <w> have a warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
                 # -> incremeent the <w> counter by one as long as the present morphological word is associated with the next <w>
@@ -66,7 +69,7 @@ class YucatecCleaner(XMLCleaner):
                 wmor = etree.SubElement(full_words[word_index], 'mor')
                 wmor.text = w
 
-            #u.remove(morphology)
+            u.remove(morphology)
                 
         # if there is no morphology, add warning to complete utterance
         else:
@@ -148,7 +151,7 @@ class YucatecCleaner(XMLCleaner):
                 # the part after the "|" is always the phonological form of the stem
                 morphemes[morpheme_index].attrib['segments_target'] = stem_struc.group(2)
                 # for most stems with lexical meaning the part before the "|" is a POS
-                if stem_struc.group(1) in ['VT', 'DEICT', 'S', 'INT', 'N', 'INTERJ', 'ADV', 'V', 'VI', 'AUX', 'ADJ', 'DET', 'N:PROP', 'PREP', 'N.PROP', 'NUM', 'QUANT', 'DEM', 'CONJ', 'CLFR', 'CLFR.INAN', 'V:AUX']:
+                if stem_struc.group(1) in ['3PRON', 'ADJ', 'ADV', 'AUX', 'CLFR', 'CLFR.INAN', 'CONJ', 'DEICT', 'DEM', 'DET', 'INT', 'INTERJ', 'N', 'N.PROP', 'N:PROP', 'NUM', 'PREP', 'PTL', 'QUANT', 'S', 'V', 'V.AUX', 'V:AUX', 'VI', 'V.INTRANS', 'VT', 'V.TRANS']:
                     morphemes[morpheme_index].attrib['glosses_target'] = '???'
                     morphemes[morpheme_index].attrib['pos_target'] = stem_struc.group(1)
                 # for other stems it's a gloss
@@ -195,6 +198,7 @@ class YucatecCleaner(XMLCleaner):
                         XMLCleaner.creadd(morphemes[morpheme_index].attrib, 'warning', 'no segment/gloss structure')
 
             morphemes.text = ''
+
             # EOF suffixes
             
             # check if morpheme list has been filled; if not delete key
