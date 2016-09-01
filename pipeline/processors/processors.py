@@ -95,9 +95,6 @@ class SessionProcessor(object):
 
         self.session = db.Session(**d)
 
-        # TODO: remove this when we're on XML
-        self.session_entry = Session(**d)
-
         # Get speaker metadata and populate the speakers table
         self.speaker_entries = []
         for speaker in self.parser.next_speaker():
@@ -113,6 +110,10 @@ class SessionProcessor(object):
         # Get the sessions utterances, words and morphemes to populate those db tables
         for utterance, words, morphemes in self.parser.next_utterance():
             # TODO: move this post processing (before the age, etc.) if it improves performance
+            if utterance is None:
+                logger.info("Skipping nonce utterance in {}".format(
+                    self.file_path))
+                continue
             utterance['corpus'] = self.corpus
             utterance['language'] = self.language
 
@@ -142,7 +143,8 @@ class SessionProcessor(object):
                     u.words.append(word)
                     self.session.words.append(word)
 
-                # Populate the morphemes
+            # Populate the morphemes
+            # wlen with dummy words excluded
             new_wlen = len(u.words)
             for i in range(0, wlen):
                 try:
@@ -154,7 +156,9 @@ class SessionProcessor(object):
 
                         morpheme = Morpheme(**morphemes[i][j])
                         if new_wlen == mlen:
-                            word.morphemes.append(morpheme)
+                            # only link words and morpheme words if there are
+                            # equal amounts of both
+                            u.words[i].morphemes.append(morpheme)
                         u.morphemes.append(morpheme)
                         self.session.morphemes.append(morpheme)
                 except TypeError:

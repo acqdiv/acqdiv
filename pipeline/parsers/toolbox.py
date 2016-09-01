@@ -91,7 +91,9 @@ class ToolboxFile(object):
                 content = tokens[1].decode()
                 content = re.sub('\\s+', ' ', content)
                 content = content.strip()
-                if content.startswith('@') or content == "":
+                if content.startswith('@'):
+                    return None, None, None
+                elif content == "":
                     # TODO: log
                     continue
 
@@ -105,6 +107,13 @@ class ToolboxFile(object):
             utterance['utterance_raw'] = None
 
         utterance['sentence_type'] = None if utterance['utterance_raw'] is None else self.get_sentence_type(utterance)
+
+        if self.config['corpus']['corpus'] == 'Indonesian':
+            try:
+                if utterance['speaker_label'] == '@PAR':
+                    return None, None, None
+            except KeyError:
+                pass
 
         # We infer sentence type from Chintang \nep but we do not add the nepali field to the database yet
         if self.config['corpus']['corpus'] == 'Chintang':
@@ -134,6 +143,10 @@ class ToolboxFile(object):
         words = [] if utterance['utterance'] is None else self.get_words(utterance['utterance'])
         morphemes = [] if utterance['utterance'] is None else self.get_morphemes(utterance)
 
+        if self.config['corpus']['corpus'] == 'Russian':
+            utterance['gloss_raw'] = ' '.join(
+                mor['gloss_raw'] for mword in morphemes for mor in mword)
+            
         # Fix words less than morphemes misalignments
         if len(morphemes) - len(words) > 0:
             misalignment = len(morphemes) - len(words)
