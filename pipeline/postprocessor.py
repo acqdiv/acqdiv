@@ -219,6 +219,15 @@ def process_utterances():
             # TODO: this should be above?
             row.utterance_raw = None if row.utterance_raw is None else re.sub('xxx?|www', '???', row.utterance_raw)
             row.translation = None if row.translation is None else re.sub('xxx?|www', '???', row.translation)
+            change_speaker_labels(row)
+
+
+def change_speaker_labels(row):
+    if row.speaker_label is not None:
+        if not 'EXP' in row.speaker_label:
+            row.speaker_label = row.speaker_label[0:3]
+        else:
+            row.speaker_label = row.speaker_label[3:]
 
 
 def process_speakers():
@@ -227,12 +236,20 @@ def process_speakers():
     """
     table = session.query(backend.Speaker)
     for row in table:
+        indonesian_experimenters(row)
         update_age(row)
         gender(row)
         role(row)
         macrorole(row)
     # Run the unique speaker algorithm -- requires full table
     unique_speakers(table)
+
+
+def indonesian_experimenters(row):
+    if row.corpus == 'Indonesian':
+        cfg = get_config(row.corpus)
+        if row.speaker_label == 'EXP':
+            row.speaker_label = cfg['exp_labels'][row.name]
 
 
 def unique_speakers(table):
