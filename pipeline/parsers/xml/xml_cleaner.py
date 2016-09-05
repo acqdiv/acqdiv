@@ -19,6 +19,18 @@ class XMLCleaner(object):
 
     @staticmethod
     def creadd(location, key, value):
+        """
+        Method to add a string value to a dictionary where a value may
+        already be present. If so, the values are concatenated by '; '.
+
+        Args:
+        location: the dictionary to add to
+        key: the dictionary key
+        value: the value to add
+        
+        Returns:
+        None
+        """
         if key not in location.keys() or location[key] is None:
             location[key] = value
         else:
@@ -29,6 +41,21 @@ class XMLCleaner(object):
 
     @staticmethod
     def word_index_up(ls, llen, idx, parent):
+        """
+        Method to add a new word to an XML Utterance node that is also
+        tracked by a list. This is a common occurrence in the restructuring
+        workflow. Primarily used internally by corpus-specific subclasses for
+        dealing with misalignments between words and morphemes.
+
+        Args:
+        ls: the list of words to add to
+        llen: the list's length
+        idx: the index in ls of the position to insert after
+        parent: the parent node of the new word
+
+        Returns:
+        the new index and length of the list
+        """
         idx += 1
         if idx >= llen:
             new_word = etree.Element('w')
@@ -44,11 +71,32 @@ class XMLCleaner(object):
 
     @staticmethod
     def find_text(parent, child):
+        """
+        Convenience method to get the text of a node that may be None.
+
+        Args:
+        parent: Node to search in
+        child: Node to search for
+        
+        Returns:
+        the text of the child node if it was found, None otherwise
+        """
         se = parent.find(child)
         return se.text if se is not None else None
 
     @staticmethod
     def find_xpath(parent, xpexpr):
+        """
+        Convenience method to find the first node matching an XPath
+        expression if any.
+
+        Args:
+        parent: the node to search in
+        xpexpr: the XPath expression to use
+
+        Returns:
+        
+        """
         ses = parent.xpath(xpexpr)
         return ses[0] if len(ses) != 0 else None
 

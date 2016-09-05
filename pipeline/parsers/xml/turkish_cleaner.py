@@ -92,13 +92,25 @@ class TurkishCleaner(XMLCleaner):
                     # sometimes the part after the "_" has its own POS tag and/or suffixes. Linguistically it would be better to treat these
                     # cases as two words, but that would require further messing with <w>, so for the time being we remove the additional 
                     # POS tags and treat the whole thing as one word
-                    # Note: there is a handful of cases (~10) where the mor word consists of three words. These are presently ignored (i.e. treated as if they were two words, e.g. Tom_ve_Jerry -> Tom_ve, Jerry).                        
+                    # Note: there is a handful of cases (~10) where the mor word consists of three words.
+                    # These are presently ignored (i.e. treated as if they were two words, e.g. Tom_ve_Jerry -> Tom_ve, Jerry).    
                     if re.search('\|', mor_w2) or (re.search('\-', mor_w1) and re.search('\-', mor_w2)):
-                        mor_w2 = re.sub('.*\|', '', mor_w2)
-                        w = mor_w1 + '-' + mor_w2
+                        orthography = full_words[word_index].find(
+                            'target').text.split('_')
+                        new_word = etree.Element('w')
+                        act = etree.SubElement(new_word, 'actual')
+                        tar = etree.SubElement(new_word, 'target')
+                        act.text = orthography[1]
+                        tar.text = orthography[1]
+                        full_words[word_index].find('actual').text = orthography[0]
+                        full_words[word_index].find('target').text = orthography[0]
+                        u.insert(word_index+1, new_word)
+                        full_words.insert(word_index+1, new_word)
+                        words.insert(word_index+1, mor_w2)
+                        w = re.sub(r'^\w+/', '', mor_w1)
                     
                     # next check in the orthography if there is a corresponding full word target and a following word
-                    if (full_words[word_index].find('target').text
+                    elif (full_words[word_index].find('target').text
                             and len(full_words) > word_index+1
                             and full_words[word_index+1].find('target').text):
                         # finally check orthography of full_word_target for "_" or "+"
