@@ -89,7 +89,7 @@ class XMLParser(object):
                 udict['source_id'] = u.attrib.get('uID')
                 udict['speaker_label'] = u.attrib.get('who')
                 udict['warning'] = u.attrib.get('warning')
-                
+
                 udict['addressee'] = XMLCleaner.find_text(u, 'addressee')
                 udict['translation'] = XMLCleaner.find_text(
                     u, 'translation')
@@ -210,7 +210,7 @@ class XMLParser(object):
                             "Couldn't zip morpheme tiers in {}:"
                             "{}".format(self.cfg['corpus']['corpus'],
                                         repr(k)))
-                                        
+
                     new_mors.append(new_mword)
                 except TypeError:
                     continue
@@ -256,7 +256,7 @@ if __name__ == '__main__':
 
     from parsers import CorpusConfigParser as Ccp
     import sys
-    
+
     cname = sys.argv[1]
     conf = Ccp()
     conf.read('ini/{}.ini'.format(cname))
