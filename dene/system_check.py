@@ -239,6 +239,14 @@ class System:
             files_path: path to files.csv
             folder_path_list: list containing paths to folders containing media(-related) files
         """
+        
+        # check if file ends in newline, if not add it in order not to collapse two CSV rows
+        # can't be done in the same loop with CSV operations - seek() messes up the csv.DictReader
+        with open(files_path, "r+") as files_file:    
+            if not files_file.read()[-1] == "\n":
+                files_file.seek(0,2)
+                print("\n", file=files_file, end="", sep="")
+            
         with open(files_path, "r+") as files_file, exiftool.ExifTool() as exifTool:
             # store file names from files.csv
             file_names_from_files = {row["File name"] for row in csv.DictReader(files_file)}
@@ -254,7 +262,7 @@ class System:
                     new_files = [file_name for file_name in files
                         if file_name not in file_names_from_files and self.has_correct_format(file_name)]
 
-                    # if there a new files
+                    # if there are new files
                     if new_files:
 
                         print("Autocompletion for files in " + root)
