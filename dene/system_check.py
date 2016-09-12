@@ -204,7 +204,7 @@ class System:
             monitor_path: path to monitor.csv
         """
         with open(monitor_path, "r") as monitor_file:
-            self.rec_codes_from_monitor = {row["recording"] for row in csv.DictReader(monitor_file) if row["recording"]}
+            self.rec_codes_from_monitor = {row["recording name"] for row in csv.DictReader(monitor_file) if row["recording name"]}
 
 
     def set_sessions(self, sessions_path):
