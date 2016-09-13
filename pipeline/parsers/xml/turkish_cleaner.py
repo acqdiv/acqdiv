@@ -71,9 +71,9 @@ class TurkishCleaner(XMLCleaner):
                 except IndexError:
                     u.remove(morphology)
                     return
-                                                        
+
                 # full_words[word_index]['morphemes'] is a list of morphemes; initial index is -1
-                
+
                 # when a word contains "_", it may code a single or two words. The following cases exist:
 
                 # 1. shared tag+suffixes (PRO:INDEF|bir_şey) -> keep mor
@@ -88,12 +88,12 @@ class TurkishCleaner(XMLCleaner):
                 complex_mor = re.search('(\S+)_(\S+)', w)
                 if complex_mor:
                     (mor_w1,mor_w2) = (complex_mor.group(1),complex_mor.group(2))
-                    
+
                     # sometimes the part after the "_" has its own POS tag and/or suffixes. Linguistically it would be better to treat these
-                    # cases as two words, but that would require further messing with <w>, so for the time being we remove the additional 
+                    # cases as two words, but that would require further messing with <w>, so for the time being we remove the additional
                     # POS tags and treat the whole thing as one word
                     # Note: there is a handful of cases (~10) where the mor word consists of three words.
-                    # These are presently ignored (i.e. treated as if they were two words, e.g. Tom_ve_Jerry -> Tom_ve, Jerry).    
+                    # These are presently ignored (i.e. treated as if they were two words, e.g. Tom_ve_Jerry -> Tom_ve, Jerry).
                     if re.search('\|', mor_w2) or (re.search('\-', mor_w1) and re.search('\-', mor_w2)):
                         orthography = full_words[word_index].find(
                             'target').text.split('_')
@@ -108,13 +108,13 @@ class TurkishCleaner(XMLCleaner):
                         full_words.insert(word_index+1, new_word)
                         words.insert(word_index+1, mor_w2)
                         w = re.sub(r'^\w+/', '', mor_w1)
-                    
+
                     # next check in the orthography if there is a corresponding full word target and a following word
                     elif (full_words[word_index].find('target').text
                             and len(full_words) > word_index+1
                             and full_words[word_index+1].find('target').text):
                         # finally check orthography of full_word_target for "_" or "+"
-                        complex_orth = re.search('[_\+]', 
+                        complex_orth = re.search('[_\+]',
                                 full_words[word_index].find('target').text)
                         if not complex_orth:
                             first = full_words[word_index]
@@ -126,8 +126,8 @@ class TurkishCleaner(XMLCleaner):
                             first_target = first.find('target').text
                             second_target = second.find('target').text
 
-                            first_text = (first_text + '_' + second_text)
-                            first_target = (first_target + '_' + second_target)
+                            first.find('actual').text = (first_text + '_' + second_text)
+                            first.find('target').text = (first_target + '_' + second_target)
                             second.getparent().remove(second)
 
                 mword = etree.SubElement(full_words[word_index], 'mor')
@@ -160,7 +160,7 @@ class TurkishCleaner(XMLCleaner):
             #   after stem -> . (= non-concatenative morphology)
             #   in suffix -> . (= subgloss)
             # ==> keep for now, this should be done by postprocessing
-            
+
             # split into POS tag and gloss
             if '|' in w.text:
                 parts = w.text.partition('|')
@@ -173,7 +173,7 @@ class TurkishCleaner(XMLCleaner):
             else:
                 stem_pos = None
                 gloss = w.text
-        
+
             # morphemes per word
             # split into stem and possible suffixes; split suffix chain if exists
             check_stem = re.search('^([^\\-]+)(.*)$', gloss)
@@ -181,13 +181,13 @@ class TurkishCleaner(XMLCleaner):
             if check_stem:
                 stem = check_stem.group(1)
                 suffix_string = check_stem.group(2)
-        
+
                 # add stem, gloss (unknown), and POS for stem to corpus dic
                 m = etree.SubElement(w, 'm')
                 m.attrib['segments_target'] = stem
                 m.attrib['glosses_target'] = '???'
                 m.attrib['pos_target'] = stem_pos
-        
+
             if suffix_string:
                 # drop first hyphen in suffix string so split() doesn't produce empty elements
                 suffix_string = suffix_string.lstrip("-")
@@ -200,17 +200,16 @@ class TurkishCleaner(XMLCleaner):
             w.text = ''
 
         # EOF word loop
-        
+
         # go through words <w> and insert glosses for repetitions and retracings (warning 'not glossed; repeat/search ahead')
 
-        # EOF glosses for repetitions/retracings 
+        # EOF glosses for repetitions/retracings
 
         # check alignment with words that were found in <w>
         # if there is no morphology, add warning to complete utterance
 
 
     # EOF Turkish
-    
 
 if __name__ == '__main__':
 
