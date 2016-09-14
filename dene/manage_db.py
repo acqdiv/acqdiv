@@ -43,6 +43,179 @@ except ImportError:
     sys.exit(1)
 
 
+class DB_Manager:
+
+    def __init__(self):
+        """Parse command line arguments"""
+        self.args = self.get_args()
+
+    def __enter__(self, host, user, passwd, db, charset="utf8"):
+        """Establish database connection"""
+        self.con = db.connect(host=host, user=user, passwd=passwd, db=db, charset=charset)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Close database conncection"""
+        self.con.close()
+
+
+    def lencheck(self, n_min, n_max):
+        """Checks if the number of arguments for an action is right"""
+        class LenCheck(argparse.Action):
+
+            def __call__(self, parser, args, values, option_string=None):
+
+                n_args = len(values) - 1
+
+                if n_args < n_min:
+                    message = "Action {} requires at least {} arguments".format(self.dest, n_min)
+                    raise argparse.ArgumentTypeError(message)
+                elif n_args > n_max:
+                    message = "Action {} takes no more than {} arguments".format(self.dest, n_max)
+                    raise argparse.ArgumentTypeError(message)
+                else:
+                    setattr(args, self.dest, values)
+
+        return LenCheck
+
+
+    def get_args(self):
+        """Get command line arguments"""
+        arg_description = """Specify type of action to be taken"""
+        parser = argparse.ArgumentParser(description=arg_description)
+
+        # only one type of action should be allowed at a time
+        group = parser.add_mutually_exclusive_group(required=True)
+
+        # add import/export arguments
+        group.add_argument("--import", dest="imp", nargs="*", action=self.imp(), help="Import metadata into db")
+        group.add_argument("--export", dest="exp", nargs="*", action=self.exp(), help="Export metadata from db")
+
+        # add rest of actions
+        action_list = [
+            ("--send", self.send, "Send latest version of a file to a person"),
+            ("--assign", self.assign, "Assign recording to a person for a task"),
+            ("--update", self.update, "Upload new version of file without changing workflow status"),
+            ("--reassign", self.reassign, "Assign running task to a different person"),
+            ("--letcheck", self.letcheck, "Assign recording to specialist for feedback"),
+            ("--next", self.next, "Have same assignee do the next task in the predefined order"),
+            ("--handover", self.handover, "Hand over recording to different assignee for next task")
+            ("--checkin", self.checkin, "Upload file and set corresponding task status"),
+            ("--reset", self.reset, "reset availability and progress for a recording"),
+            ("--create", self.create, "first creation of a session, recording, or file")
+        ]
+
+        for action_string, action_method, action_help in action_list:
+            group.add_argument(action_string, action=action_method(), help=action_help, nargs="+")
+
+
+        return parser.parse_args()
+
+
+    def imp(self):
+        """Import metadata from csv-files into database using the class DB_Export"""
+        # if paths are given
+        if self.args.imp:
+            # create hash mapping metadata-type to path
+            paths = {}
+            for arg in self.args.imp:
+                name, path = arg.split("=")
+                paths[name] = path
+
+        else:
+            # use default paths instead
+            paths = {
+                "sessions": "../Metadata/sessions.csv",
+                "participants": "../Metadata/participants.csv",
+                "files": "../Metadata/files.csv",
+                "monitor": "../Workflow/monitor.csv",
+                "locations": "../Workflow/file_locations.csv"
+            }
+
+        populator = DB_Import(connection=self.con, cursor=self.cur, paths=None)
+        populator.import_all()
+
+
+    def export_action(self):
+        pass
+
+    def send_action(self):
+        self.lencheck(2,3)
+
+    def assign_action(self):
+        self.lencheck(3,4)
+
+    def update_action(self):
+        self.lencheck(1,2)
+
+    def reassign_action(self):
+        self.lencheck(2,3)
+
+    def letcheck_action(self):
+        self.lencheck(2,3)
+
+    def next_action(self):
+        self.lencheck(1,2)
+
+    def handover_action(self):
+        self.lencheck(2,3)
+
+    def checkin_action(self):
+        self.lencheck(1,4)
+
+    def reset_action(self):
+        self.lencheck(1,2)
+
+    def create_action(self):
+        self.lencheck(0, 4)
+
+
+
+class DB_Export:
+
+    def export_sessions(self):
+        """Export to sessions.csv"""
+        # open sessions.csv for writing
+        with open(self.args.sessions, "w") as sessions_file:
+
+            # fix order
+            fieldnames = ["Code", "Date", "Location", "Length of recording",
+                          "Situation", "Content", "Participants and roles" ]
+
+            sessions_writer = csv.DictWriter(sessions_file)
+
+            sessions_writer.writeheader()
+
+            self.cur.execute("SELECT * from sessions")
+
+            # get all data from the table sessions
+            for row in self.cur:
+                sessions_writer.writerows({"Code": row["name"]})
+
+
+    def export_participants(self):
+        pass
+
+
+    def export_files(self):
+        pass
+
+
+    def export_locations(self):
+        pass
+
+
+    def export_monitor(self):
+        pass
+
+
+    def none_to_empty_string(self, row):
+        """Convert """
+        for field in row:
+            if row[field] is None:
+                row[field] = ""
+
+
+
 class DB_Import:
 
     def __init__(self, con):
@@ -515,7 +688,8 @@ class DB_Import:
 
 
 def main():
-    con = db.connect(host="mysqlprod01.uzh.ch", user="deslas", passwd="", db="deslas", charset="utf8")
+    # import
+    con = db.connect(host="localhost", user="anna", passwd="anna", db="deslas", charset="utf8")
     populator = DB_Import(con)
     populator.import_all()
     con.close()
