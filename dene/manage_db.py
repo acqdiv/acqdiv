@@ -1,37 +1,20 @@
-"""Class for importing Dene metadata into a MySQL database.
-
-For a full import the following files are used:
-    - sessions.csv
-    - participants.csv
-    - files.csv
-    - file_locations.csv
-    - monitor.csv
-
-The import populates the following tables:
-    - sessions
-    - participants
-    - sessions_and_participants
-    - recordings
-    - progress
-    - files
-
-Optionally the flag -d can be set, if there should be a 'radical' import
-which means that all existing rows in the database are deleted first before all records
-are inserted again from the files.
+"""Class for blabla...
 
 The following external python modules (which can be installed by pip) are used:
     - mysqlclient (interface to MySQL)
     - tqdm (progress meter)
 """
 
-import sys
+import os
 import re
+import sys
 import csv
 import argparse
 import logging
 
 try:
     import MySQLdb as db
+    import MySQLdb.cursors
 except ImportError:
     print("Please install mysqlclient first!")
     sys.exit(1)
@@ -44,169 +27,243 @@ except ImportError:
 
 
 class DB_Manager:
+    """Interface for working with the database"""
 
-    def __init__(self):
-        """Parse command line arguments"""
-        self.args = self.get_args()
+    def __init__(self, host=None, user=None, passwd=None, database=None, charset="utf8"):
+        """Parse command line arguments to determine action to be taken"""
+        self.con = db.connect(host=host, user=user, passwd=passwd, db=database, charset=charset)
 
-    def __enter__(self, host, user, passwd, db, charset="utf8"):
-        """Establish database connection"""
-        self.con = db.connect(host=host, user=user, passwd=passwd, db=db, charset=charset)
+    def __enter__(self):
+        return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Close database conncection"""
+    def __exit__(self, exc_type, exc_value, exc_traceback):
         self.con.close()
 
+    def start(self):
+        """Start main application"""
+        # get command line parser
+        parser = self.get_parser()
+        # parse all of its arguments and store them
+        self.args = parser.parse_args()
 
-    def lencheck(self, n_min, n_max):
-        """Checks if the number of arguments for an action is right"""
-        class LenCheck(argparse.Action):
+        # get cursor (for export the special one DictCursor)
+        if self.args.command != "export":
+            self.cur = self.con.cursor()
+        else:
+            self.cur = self.con.cursor(MySQLdb.cursors.DictCursor)
 
-            def __call__(self, parser, args, values, option_string=None):
-
-                n_args = len(values) - 1
-
-                if n_args < n_min:
-                    message = "Action {} requires at least {} arguments".format(self.dest, n_min)
-                    raise argparse.ArgumentTypeError(message)
-                elif n_args > n_max:
-                    message = "Action {} takes no more than {} arguments".format(self.dest, n_max)
-                    raise argparse.ArgumentTypeError(message)
-                else:
-                    setattr(args, self.dest, values)
-
-        return LenCheck
+        # execute appropriate action function
+        self.args.func()
 
 
-    def get_args(self):
-        """Get command line arguments"""
-        arg_description = """Specify type of action to be taken"""
-        parser = argparse.ArgumentParser(description=arg_description)
 
-        # only one type of action should be allowed at a time
-        group = parser.add_mutually_exclusive_group(required=True)
+    def get_parser(self):
+        """Get command line parser"""
+        # get main parser
+        parser = argparse.ArgumentParser()
+        # add subparser holding subcommands
+        subparsers = parser.add_subparsers()
 
-        # add import/export arguments
-        group.add_argument("--import", dest="imp", nargs="*", action=self.imp(), help="Import metadata into db")
-        group.add_argument("--export", dest="exp", nargs="*", action=self.exp(), help="Export metadata from db")
+        # add subcommand 'import'
+        import_parser = subparsers.add_parser("import", help="Import metadata from csv files to database")
+        import_parser.set_defaults(command="import", func=self.imp)
 
-        # add rest of actions
-        action_list = [
-            ("--send", self.send, "Send latest version of a file to a person"),
-            ("--assign", self.assign, "Assign recording to a person for a task"),
-            ("--update", self.update, "Upload new version of file without changing workflow status"),
-            ("--reassign", self.reassign, "Assign running task to a different person"),
-            ("--letcheck", self.letcheck, "Assign recording to specialist for feedback"),
-            ("--next", self.next, "Have same assignee do the next task in the predefined order"),
-            ("--handover", self.handover, "Hand over recording to different assignee for next task")
-            ("--checkin", self.checkin, "Upload file and set corresponding task status"),
-            ("--reset", self.reset, "reset availability and progress for a recording"),
-            ("--create", self.create, "first creation of a session, recording, or file")
-        ]
+        for name1, name2, hlp, default in [
+            ("-s", "--sessions", "path to sessions.csv", "../Metadata/sessions.csv"),
+            ("-p", "--participants", "path to participants.csv", "../Metadata/participants.csv"),
+            ("-f", "--files", "path to files.csv", "../Metadata/files.csv"),
+            ("-m", "--monitor", "path to monitor.csv", "../Workflow/monitor.csv"),
+            ("-l", "--locations", "path to file_locations.csv", "../Workflow/file_locations.csv")
+            ]:
+                import_parser.add_argument(name1, name2, help=hlp, default=default)
 
-        for action_string, action_method, action_help in action_list:
-            group.add_argument(action_string, action=action_method(), help=action_help, nargs="+")
+        import_parser.add_argument("-r", "--radical",
+            help="deletes complete database before import", action="store_true")
 
+        # add subcommand checkin
+        checkin_parser = subparsers.add_parser("checkin",
+            help="Upload file and set corresponding task status to 'complete' or 'incomplete'")
+        checkin_parser.set_defaults(command="checkin", func=self.checkin)
+        checkin_parser.add_argument("f", help="file name")
+        checkin_parser.add_argument("--complete", help="set task status to complete", action="store_true")
+        checkin_parser.add_argument("--checked", help="task is checked", action="store_true")
+        checkin_parser.add_argument("-n", help="notes")
 
-        return parser.parse_args()
+        # add all other subcommands
+        for command, cmd_hlp, func, args in [
+            ("export", "Export metadata from database to csv files", self.exp,
+                 [("-p", "directory path where files are saved")]),
+            ("send", "Send latest version of a file to a person.", self.send,
+                 [("f", "file name"), ("r", "recipient"), ("-n", "notes")]),
+            ("assign", "Assign recording to a person for a task.", self.assign,
+                 [("r", "recording name"), ("a", "assignee"), ("t", "task"), ("-n", "notes")]),
+            ("update", "Upload new version of file without changing workflow status.", self.update,
+                 [("f", "file name"), ("-n", "notes")]),
+            ("reassign", "Assign running task to a different person.", self.reassign,
+                 [("r", "recording name"), ("a", "assignee"), ("-n", "notes")]),
+            ("letcheck", "Assign recording to specialist for feedback.", self.letcheck,
+                 [("r", "recording name"), ("a", "assignee"), ("n", "notes")]),
+            ("next", "Have same assignee do the next task in the predefined order.", self.next,
+                 [("r", "recording name"), ("-n", "notes")]),
+            ("feedback", "Expert gives feedback to newbie on completed task.", self.feedback,
+                 [("r", "recording name"), ("a", "assignee"), ("-n", "notes")]),
+            ("handover", "Hand over recording to different assignee for next task.", self.handover,
+                 [("r", "recording name"), ("a", "assignee"), ("-n", "notes")]),
+            ("reset", "Cancel running tasks and checks, reset availability.", self.reset,
+                 [("r", "recording name"), ("-n", "notes")]),
+            ("create", "First creation of a session, recording, or file.", self.create,
+                 [("-s", "session name"), ("-r", "recording name"), ("-f", "file name"), ("-n", "notes")])
+            ]:
 
+                subparser = subparsers.add_parser(command, help=cmd_hlp)
+                subparser.set_defaults(command=command, func=func)
+
+                for name, arg_hlp in args:
+                    subparser.add_argument(name, help=arg_hlp)
+
+        return parser
 
     def imp(self):
-        """Import metadata from csv-files into database using the class DB_Export"""
-        # if paths are given
-        if self.args.imp:
-            # create hash mapping metadata-type to path
-            paths = {}
-            for arg in self.args.imp:
-                name, path = arg.split("=")
-                paths[name] = path
+        """Import metadata from csv files into database using the class DB_Export"""
+        importer = DB_Import(self.con, self.cur, self.args)
+        importer.import_all()
 
-        else:
-            # use default paths instead
-            paths = {
-                "sessions": "../Metadata/sessions.csv",
-                "participants": "../Metadata/participants.csv",
-                "files": "../Metadata/files.csv",
-                "monitor": "../Workflow/monitor.csv",
-                "locations": "../Workflow/file_locations.csv"
-            }
+    def exp(self):
+        """Export metadata from the database using the class DB_Export"""
+        exporter = DB_Export(self.con, self.cur, self.args)
+        exporter.export_all()
 
-        populator = DB_Import(connection=self.con, cursor=self.cur, paths=None)
-        populator.import_all()
+    def send(self):
+        print(self.args)
+        print("Send command works!")
 
+    def assign(self):
+        print(self.args)
+        print("Assign command works!")
 
-    def export_action(self):
-        pass
+    def update(self):
+        print(self.args)
+        print("Update command works!")
 
-    def send_action(self):
-        self.lencheck(2,3)
+    def reassign(self):
+        print(self.args)
+        print("Reassign command works!")
 
-    def assign_action(self):
-        self.lencheck(3,4)
+    def letcheck(self):
+        print(self.args)
+        print("Letcheck command works!")
 
-    def update_action(self):
-        self.lencheck(1,2)
+    def next(self):
+        print(self.args)
+        print("Next command works!")
 
-    def reassign_action(self):
-        self.lencheck(2,3)
+    def feedback(self):
+        print(self.args)
+        print("Feedback command works!")
 
-    def letcheck_action(self):
-        self.lencheck(2,3)
+    def handover(self):
+        print(self.args)
+        print("Handover command works!")
 
-    def next_action(self):
-        self.lencheck(1,2)
+    def checkin(self):
+        print(self.args)
+        print("Checkin command works!")
 
-    def handover_action(self):
-        self.lencheck(2,3)
+    def reset(self):
+        print(self.args)
+        print("Reset command works!")
 
-    def checkin_action(self):
-        self.lencheck(1,4)
-
-    def reset_action(self):
-        self.lencheck(1,2)
-
-    def create_action(self):
-        self.lencheck(0, 4)
-
+    def create(self):
+        print(self.args)
+        print("Create command works!")
 
 
 class DB_Export:
+    """Class for exporting dene metadata from a MySQL"""
+
+    def __init__(self, connection, cursor, args):
+        """Set database connection"""
+        self.con = connection
+        self.cur = cursor
+        self.args = args
+
+        # set path for 'Export' directory
+        if self.args.p:
+            self.path = os.path.join(self.args, "Export")
+        else:
+            self.path = "./Export"
+
+        # create 'Export' directory
+        if not os.path.isdir(self.path):
+            try:
+                os.mkdir(self.path)
+            except FileNotFoundError:
+                print("Export directory couldn't be created at", self.path)
+                sys.exit(1)
+
 
     def export_sessions(self):
         """Export to sessions.csv"""
-        # open sessions.csv for writing
-        with open(self.args.sessions, "w") as sessions_file:
+        # session.csv path
+        sessions_path = os.path.join(self.path, "sessions.csv")
 
-            # fix order
+
+        with open(sessions_path, "w") as sessions_file:
+
+            # fix order here
             fieldnames = ["Code", "Date", "Location", "Length of recording",
-                          "Situation", "Content", "Participants and roles" ]
+                          "Situation", "Content", "Participants and roles"]
 
-            sessions_writer = csv.DictWriter(sessions_file)
+            sessions_writer = csv.DictWriter(sessions_file, fieldnames=fieldnames)
 
             sessions_writer.writeheader()
 
+            # go through sessions
             self.cur.execute("SELECT * from sessions")
+            for row in self.cur.fetchall():
 
-            # get all data from the table sessions
-            for row in self.cur:
-                sessions_writer.writerows({"Code": row["name"]})
+                # get participants and roles for this session
+                self.cur.execute("""
+                    SELECT role, short_name FROM sessions_and_participants
+                    JOIN participants ON sessions_and_participants.participant_fk=participants.id
+                    WHERE session_fk = {}""".format(row["id"]))
+
+                # create Participants and roles string
+                part_roles = ", ".join("{} ({})".format(
+                    pair["short_name"], " & ".join(role for role in pair["role"].split(",")))
+                        for pair in self.cur)
+
+                # write to sessions.csv
+                sessions_writer.writerow({
+                    "Code": row["name"],
+                    "Date": row["date"],
+                    "Location": row["location"],
+                    "Length of recording": row["duration"],
+                    "Situation": row["situation"],
+                    "Content": row["content"],
+                    "Participants and roles": part_roles
+                })
 
 
     def export_participants(self):
-        pass
+
+        fieldnames = ["Added by", "Short name", "Full name", "Birth date",	"Age", "Gender",
+                      "Education", "First languages", "Second languages", "Main language",
+                      "Language biography",	"Description", "Contact address", "E-mail/Phone"]
 
 
     def export_files(self):
         pass
 
-
     def export_locations(self):
         pass
-
 
     def export_monitor(self):
         pass
 
+    def export_all(self):
+        self.export_sessions()
+        print("Export finished!")
 
     def none_to_empty_string(self, row):
         """Convert """
@@ -217,33 +274,37 @@ class DB_Export:
 
 
 class DB_Import:
+    """Class for importing Dene metadata into a MySQL database.
 
-    def __init__(self, con):
-        self.con = con
-        self.cur = self.con.cursor()
-        self.args = self.commandline_setup()
+    For a full import the following files are used:
+        - sessions.csv
+        - participants.csv
+        - files.csv
+        - file_locations.csv
+        - monitor.csv
+
+    The import populates the following tables:
+        - sessions
+        - participants
+        - sessions_and_participants
+        - recordings
+        - progress
+        - files
+
+    Optionally the flag -d can be set, if there should be a 'radical' import
+    which means that all existing rows in the database are deleted first before all records
+    are inserted again from the files.
+
+    The following external python modules (which can be installed by pip) are used:
+        - mysqlclient (interface to MySQL)
+        - tqdm (progress meter)
+    """
+
+    def __init__(self, connection, cursor, args):
+        self.con = connection
+        self.cur = cursor
         self.logger = self.get_logger()
-
-
-    def commandline_setup(self):
-        """Set up command line arguments"""
-        arg_description = """Specify paths for import files"""
-        parser = argparse.ArgumentParser(description=arg_description)
-
-        parser.add_argument("--sessions", help="path to sessions.csv",
-            default="../Metadata/sessions.csv")
-        parser.add_argument("--participants", help="path to participants.csv",
-            default="../Metadata/participants.csv")
-        parser.add_argument("--files", help="path to files.csv",
-            default="../Metadata/files.csv")
-        parser.add_argument("--monitor", help="path to monitor.csv",
-            default="../Workflow/monitor.csv")
-        parser.add_argument("--locations", help="path to file_locations.csv",
-            default="../Workflow/file_locations.csv")
-        parser.add_argument("--deep", help="deletes complete database before import",
-            action="store_true")
-
-        return parser.parse_args()
+        self.args = args
 
 
     def get_logger(self):
@@ -668,7 +729,7 @@ class DB_Import:
 
     def import_all(self):
         """Import from all files"""
-        if self.args.deep:
+        if self.args.radical:
             # delete all rows from all tables
             for table in [
                 "files", "sessions_and_participants", "progress",
@@ -688,11 +749,9 @@ class DB_Import:
 
 
 def main():
-    # import
-    con = db.connect(host="localhost", user="anna", passwd="anna", db="deslas", charset="utf8")
-    populator = DB_Import(con)
-    populator.import_all()
-    con.close()
+    """Start database interface application"""
+    with DB_Manager(host="localhost", user="anna", passwd="anna", database="deslas") as manager:
+        manager.start()
 
 
 if __name__ == '__main__':
