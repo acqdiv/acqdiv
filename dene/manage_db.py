@@ -46,7 +46,7 @@ class DB_Manager:
         # parse all of its arguments and store them
         self.args = parser.parse_args()
 
-        # get cursor (for export the special one DictCursor)
+        # get cursor (for 'export' the special one 'DictCursor')
         if self.args.command != "export":
             self.cur = self.con.cursor()
         else:
@@ -178,6 +178,9 @@ class DB_Manager:
         print("Create command works!")
 
 
+# TODO: name correspondences of database and text files should be in one place,
+# because they are used twice (import and export) -> create base class of import/export class?
+
 class DB_Export:
     """Class for exporting dene metadata from a MySQL"""
 
@@ -207,12 +210,11 @@ class DB_Export:
         # session.csv path
         sessions_path = os.path.join(self.path, "sessions.csv")
 
-
         with open(sessions_path, "w") as sessions_file:
 
             # fix order here
             fieldnames = ["Code", "Date", "Location", "Length of recording",
-                          "Situation", "Content", "Participants and roles"]
+                          "Situation", "Content", "Participants and roles", "Comments"]
 
             sessions_writer = csv.DictWriter(sessions_file, fieldnames=fieldnames)
 
@@ -241,37 +243,100 @@ class DB_Export:
                     "Length of recording": row["duration"],
                     "Situation": row["situation"],
                     "Content": row["content"],
-                    "Participants and roles": part_roles
+                    "Participants and roles": part_roles,
+                    "Comments": row["notes"]
                 })
 
 
     def export_participants(self):
+        """Export to participants.csv"""
+        # participants.csv path
+        participants_path = os.path.join(self.path, "participants.csv")
 
-        fieldnames = ["Added by", "Short name", "Full name", "Birth date",	"Age", "Gender",
+        with open(participants_path, "w") as participants_file:
+
+            # fix order here
+            fieldnames = ["Short name", "Full name", "Birth date", "Age", "Gender",
                       "Education", "First languages", "Second languages", "Main language",
                       "Language biography",	"Description", "Contact address", "E-mail/Phone"]
 
+            participants_writer = csv.DictWriter(participants_file, fieldnames=fieldnames)
 
-    def export_files(self):
-        pass
+            participants_writer.writeheader()
 
-    def export_locations(self):
-        pass
+            # go through participants
+            self.cur.execute("SELECT * from participants")
+            for row in self.cur:
+
+                # write to participants.csv
+                participants_writer.writerow({
+                    "Short name": row["short_name"],
+                    "Full name": row["first_name"] + " " + row["last_name"],
+                    "Birth date": row["birthdate"], "Age": row["age"],
+                    "Gender": row["gender"], "Education": row["education"],
+                    "First languages": row["first_languages"],
+                    "Second languages": row["second_languages"],
+                    "Main language": row["main_language"],
+                    "Language biography": row["language_biography"],
+                    "Description": row["description"],
+                    "Contact address": row["contact_address"],
+                    "E-mail/Phone": row["email_phone"]
+                })
+
+
+    def export_files_locations(self):
+        # files.csv and file_locations.csv path
+        files_path = os.path.join(self.path, "files.csv")
+        locations_path = os.path.join(self.path, "file_locations.csv")
+
+        with open(files_path, "w") as files_file, open(locations_path, "w") as locations_file:
+
+            # fix orders here
+            files_fieldnames = ["Session code", "Recording code", "File name", "Type",
+                                "Format", "Duration", "Byte size", "Word size", "Location"]
+
+            locations_fieldnames = ["File name", "CRDN", "FNUniv (project HD)", "UZH", "Notes"]
+
+            files_writer = csv.DictWriter(files_file, fieldnames=files_fieldnames)
+            locations_writer = csv.DictWriter(locations_file, fieldnames=locations_fieldnames)
+
+            files_writer.writeheader()
+            locations_writer.writeheader()
+
+            # go through files
+            self.cur.execute("""SELECT files.*, recordings.name, sessions.name from files
+                                JOIN recordings ON files.recording_fk=recordings.id
+                                JOIN sessions ON recordings.session_fk=sessions.id""")
+            for row in self.cur:
+
+                # write to files.csv
+                files_writer.writerow({
+                    "Session code": row["sessions.name"],
+                    "Recording code": row["recordings.name"],
+                    "File name": row["name"], "Type": row["file_type"],
+                    "Format": row["file_type"] + "/" + row["file_extension"],
+                    "Duration": row["duration"], "Byte size": row["byte_size"],
+                    "Word size": row["word_size"], "Location": row["location"],
+                })
+
+                # write to file_locations.csv
+                locations_writer.writerow({
+                    "File name": row["name"], "CRDN": row["at_CRDN"],
+                    "FNUniv (project HD)": row["at_FNUniv"],
+                    "UZH": row["at_UZH"], "Notes": row["notes"]
+                })
+
 
     def export_monitor(self):
         pass
 
     def export_all(self):
         self.export_sessions()
+        self.export_participants()
+        self.export_files_locations()
         print("Export finished!")
 
-    def none_to_empty_string(self, row):
-        """Convert """
-        for field in row:
-            if row[field] is None:
-                row[field] = ""
-
-
+# TODO: DictCursor also for import?
 
 class DB_Import:
     """Class for importing Dene metadata into a MySQL database.
