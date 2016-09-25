@@ -55,8 +55,6 @@ class DB_Manager:
         # execute appropriate action function
         self.args.func()
 
-
-
     def get_parser(self):
         """Get command line parser"""
         # get main parser
@@ -217,7 +215,6 @@ class DB_Export:
                           "Situation", "Content", "Participants and roles", "Comments"]
 
             sessions_writer = csv.DictWriter(sessions_file, fieldnames=fieldnames)
-
             sessions_writer.writeheader()
 
             # go through sessions
@@ -265,7 +262,7 @@ class DB_Export:
             participants_writer.writeheader()
 
             # go through participants
-            self.cur.execute("SELECT * from participants")
+            self.cur.execute("SELECT * FROM participants")
             for row in self.cur:
 
                 # write to participants.csv
@@ -298,9 +295,8 @@ class DB_Export:
             locations_fieldnames = ["File name", "CRDN", "FNUniv (project HD)", "UZH", "Notes"]
 
             files_writer = csv.DictWriter(files_file, fieldnames=files_fieldnames)
-            locations_writer = csv.DictWriter(locations_file, fieldnames=locations_fieldnames)
-
             files_writer.writeheader()
+            locations_writer = csv.DictWriter(locations_file, fieldnames=locations_fieldnames)
             locations_writer.writeheader()
 
             # go through files
@@ -328,12 +324,85 @@ class DB_Export:
 
 
     def export_monitor(self):
-        pass
+        # monitor.csv path
+        monitor_path = os.path.join(self.path, "monitor.csv")
+
+        with open(monitor_path, "w") as monitor_file:
+
+            fieldnames = ["recording name",	"quality", "child speech",
+                          "directedness", "Dene", "audio", "notes"]
+
+            # add rest of fields (in right order!)
+            for task in ["segmentation", "transcription/translation", "glossing"]:
+                # add task fields
+                for field in ["status", "person", "start", "end"]:
+                    fieldnames.append(field + " " + task)
+                # add check fields except for task 'segmentation'
+                if task != "segmentation":
+                    for field in ["status", "person", "start", "end"]:
+                        fieldnames.append(field + " " + "check" + " " + task)
+
+            monitor_writer = csv.DictWriter(monitor_file, fieldnames=fieldnames)
+            monitor_writer.writeheader()
+
+            # go through recordings
+            self.cur.execute("""SELECT recordings.*, first_name, last_name FROM recordings
+                                LEFT JOIN employees ON recordings.assignee_fk=employees.id""")
+
+            for rec in self.cur.fetchall():
+
+                # inital content of dict
+                monitor_dict = {"recording name": rec["name"], "quality": rec["overall_quality"],
+                    "child speech": rec["child_speech"], "directedness": rec["directedness"],
+                    "Dene": rec["how_much_dene"], "audio": rec["audio_quality"],
+                    "notes": rec["notes"]
+                }
+
+                # get all progress rows belonging to this recording
+                self.cur.execute("""SELECT progress.*, name FROM progress
+                                    JOIN task_types ON progress.task_type_fk=task_types.id
+                                    WHERE progress.recording_fk={}""".format(rec["id"]))
+
+                # check if someone is working on this recording
+                if rec["availability"] == "assigned":
+                    # get assignee name
+                    assignee = rec["first_name"] + " " + rec["last_name"]
+                else:
+                    assignee = ""
+
+                # go through those progress rows
+                for progress in self.cur:
+                    # get task name
+                    task = progress["name"]
+                    # get status of this task and add to monitor_dict
+                    monitor_dict["status " + task] = progress["task_status"]
+
+                    # get check status for this task except for 'segmentation'
+                    if task != "segmentation":
+                        monitor_dict["status check " + task] = progress["quality_check"]
+
+                    # if there's an assignee, check if task or its check is in progress
+                    if assignee:
+                        for string, status in [
+                            ("", progress["task_status"]),
+                            ("check ", progress["quality_check"])
+                            ]:
+
+                            if status == "in progress":
+                                monitor_dict["person " + string + task] = assignee
+                                break
+
+                monitor_writer.writerow(monitor_dict)
+
+                # TODO: start/end fields?
+                # TODO: assignees for already completed tasks -> lost during import
+
 
     def export_all(self):
         self.export_sessions()
         self.export_participants()
         self.export_files_locations()
+        self.export_monitor()
         print("Export finished!")
 
 # TODO: DictCursor also for import?
