@@ -1,4 +1,9 @@
-"""Class for blabla...
+"""Module providing classes for interacting with the Dene database.
+
+The main class DB_Manager can be used to manipulate the database over the terminal
+by using one of the following commands:
+import, export, send, assign, update, reassign, checkin, letcheck, feedback, handover, reset, create
+For more details on these commands, run python3 db_manager.py [command] --help
 
 The following external python modules (which can be installed by pip) are used:
     - mysqlclient (interface to MySQL)
@@ -9,8 +14,10 @@ import os
 import re
 import sys
 import csv
-import argparse
 import logging
+import warnings
+import argparse
+
 
 try:
     import MySQLdb as db
@@ -27,20 +34,29 @@ except ImportError:
 
 
 class DB_Manager:
-    """Interface for working with the database"""
+    """Interface for working with the Dene database"""
 
-    def __init__(self, host=None, user=None, passwd=None, database=None, charset="utf8"):
-        """Parse command line arguments to determine action to be taken"""
+    def __init__(self, host, user, passwd, database, charset="utf8"):
+        """Establish a database connection.
+
+        Positional args:
+            Specify host, user, password and a database
+        Optional args:
+            Specify a character set to be used
+
+        """
         self.con = db.connect(host=host, user=user, passwd=passwd, db=database, charset=charset)
 
     def __enter__(self):
+        """Return class object"""
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
+        """Close database connection"""
         self.con.close()
 
     def start(self):
-        """Start main application"""
+        """Start main application by parsing command line arguments to determine action to be taken."""
         # get command line parser
         parser = self.get_parser()
         # parse all of its arguments and store them
@@ -180,10 +196,26 @@ class DB_Manager:
 # because they are used twice (import and export) -> create base class of import/export class?
 
 class DB_Export:
-    """Class for exporting dene metadata from a MySQL"""
+    """Class for exporting dene metadata from a MySQL database.
+
+    Exports the following files to a directory called 'Export':
+        - sessions.csv
+        - participants.csv
+        - files.csv
+        - file_locations.csv
+        - monitor.csv
+
+    The flag -p can be used to change the path (default: current working directory) of the 'Export' folder.
+    """
 
     def __init__(self, connection, cursor, args):
-        """Set database connection"""
+        """Set database connection, cursor and command line arguments and create 'Export' directory.
+
+        positional args:
+            connection:     a MySQL connection
+            cursor:         must be of cursor class 'DictCursor'
+            args:           command line argument '-p' must be defined
+        """
         self.con = connection
         self.cur = cursor
         self.args = args
@@ -282,6 +314,7 @@ class DB_Export:
 
 
     def export_files_locations(self):
+        """Export to files.csv and file_locations.csv"""
         # files.csv and file_locations.csv path
         files_path = os.path.join(self.path, "files.csv")
         locations_path = os.path.join(self.path, "file_locations.csv")
@@ -324,6 +357,7 @@ class DB_Export:
 
 
     def export_monitor(self):
+        """Export to monitor.csv"""
         # monitor.csv path
         monitor_path = os.path.join(self.path, "monitor.csv")
 
@@ -428,17 +462,24 @@ class DB_Import:
     Optionally the flag -d can be set, if there should be a 'radical' import
     which means that all existing rows in the database are deleted first before all records
     are inserted again from the files.
-
-    The following external python modules (which can be installed by pip) are used:
-        - mysqlclient (interface to MySQL)
-        - tqdm (progress meter)
     """
 
     def __init__(self, connection, cursor, args):
+        """Set database connection, cursor and command line arguments and get logger.
+
+        positional args:
+            connection:     a MySQL connection
+            cursor:         must be of cursor class 'DictCursor'
+            args:           the following command line arguments must be defined:
+                            sessions, participants, files, monitor, locations, radical
+        """
         self.con = connection
         self.cur = cursor
         self.logger = self.get_logger()
         self.args = args
+
+        # turn MySQLdb warnings into errors, so that they can be caught by an exception and be logged
+        warnings.filterwarnings("error", category=MySQLdb.Warning)
 
 
     def get_logger(self):
@@ -493,12 +534,17 @@ class DB_Import:
             table: for logging, specify table into which values are to be inserted
             key: for logging, specify some identfier for the record to be inserted (e.g. session code)
         """
+        counter = 0
+
         try:
             self.cur.execute(command, values)
         except db.Error as e:
             self.logger.error("{}|{}|{}".format(repr(e), table, key))
+            counter += 1
 
         self.con.commit()
+
+        return counter
 
 
     def get_insert_update_command(self, table, db_attributes):
@@ -524,7 +570,7 @@ class DB_Import:
         else:
             db_attributes = ("name", "date", "location", "duration", "situation", "content", "notes")
             command = self.get_insert_update_command("sessions", db_attributes)
-
+            counter = 0
             # go through each session
             for p in tqdm(csv.DictReader(sessions_file), desc="Importing sessions"):
 
@@ -535,7 +581,7 @@ class DB_Import:
                     p["Situation"], p["Content"], p["Comments"]
                 )
 
-                self.execute(command, values + values, "sessions", p["Code"])
+                counter += self.execute(command, values + values, "sessions", p["Code"])
 
                 # get session id in database
                 self.cur.execute("""SELECT id FROM sessions WHERE name = '{}'""".format(p["Code"]))
@@ -550,6 +596,9 @@ class DB_Import:
                 self.link_sessions_participants(p["Participants and roles"], session_id, p["Code"])
 
             sessions_file.close()
+
+            print("Number of sessions not imported:", counter)
+            sys.stdout.flush()
 
 
     def link_sessions_participants(self, participants_roles, session_id, session_code=""):
@@ -606,6 +655,7 @@ class DB_Import:
             )
 
             command = self.get_insert_update_command("participants", db_attributes)
+            counter = 0
 
             # go through each participant
             for p in tqdm(csv.DictReader(participants_file), desc="Importing participants"):
@@ -637,9 +687,14 @@ class DB_Import:
                     p["Contact address"], p["E-mail/Phone"]
                 )
 
-                self.execute(command, values + values, "participants", p["Short name"])
+                counter += self.execute(command, values + values, "participants", p["Short name"])
 
             participants_file.close()
+
+            print("Number of participants not imported:", counter)
+            sys.stdout.flush()
+
+
 
 
     def import_monitor(self):
@@ -662,6 +717,7 @@ class DB_Import:
 
             recordings_command = self.get_insert_update_command("recordings", rec_db_attributes)
             progress_command = self.get_insert_update_command("progress", progress_db_attributes)
+            counter = 0
 
             # go through each recording
             for rec in tqdm(csv.DictReader(monitor_file), desc="Importing monitor"):
@@ -677,6 +733,7 @@ class DB_Import:
                 except AttributeError:
                     self.logger.error("Session code cannot be extracted from recording code: "
                         + rec["recording name"])
+                    counter += 1
                     continue
 
                 # try to get id of associated session
@@ -686,6 +743,7 @@ class DB_Import:
                     session_id = self.cur.fetchone()[0]
                 except TypeError:
                     self.logger.error("Session code '{}' not in table 'sessions': ".format(session_code))
+                    counter += 1
                     continue
 
                 # find out availability and assignee of this recording
@@ -721,6 +779,7 @@ class DB_Import:
                         assignee_id = self.cur.fetchone()[0]
                     except TypeError:
                         self.logger.error("Assignee '{}' not in table 'employees'".format(assignee))
+                        counter += 1
                         continue
 
                 else:
@@ -732,7 +791,9 @@ class DB_Import:
                     rec["Dene"], rec["audio"], rec["notes"]
                 )
 
-                self.execute(recordings_command, rec_values + rec_values, "recordings", rec["recording name"])
+                counter += self.execute(recordings_command, rec_values + rec_values,
+                    "recordings", rec["recording name"])
+
 
                 # ********** 'progress' stuff **********
 
@@ -784,9 +845,12 @@ class DB_Import:
 
             monitor_file.close()
 
+            print("Number of recordings not imported:", counter)
+            sys.stdout.flush()
+
 
     def import_files(self):
-        """Populate table 'files' by import from files.csv"""
+        """Populate table 'files' by import from files.csv and file_locations.csv"""
         # try reading files.csv
         try:
             files_file = open(self.args.files, "r")
@@ -815,6 +879,7 @@ class DB_Import:
                 )
 
                 command = self.get_insert_update_command("files", db_attributes)
+                counter = 0
 
                 for file in tqdm(csv.DictReader(files_file), desc="Importing files"):
 
@@ -829,6 +894,7 @@ class DB_Import:
                     except TypeError:
                         self.logger.error("Recording code '{}' not in table 'recordings'".format(
                             file["Recording code"]))
+                        counter += 1
                         continue
 
                     # try to get the locations of this file
@@ -836,6 +902,7 @@ class DB_Import:
                         loc = locations[file["File name"]]
                     except KeyError:
                         self.logger.error("File '{}' not in 'file_locations.csv'".format(file["File name"]))
+                        counter += 1
                         continue
 
                     # media files: no versions, thus only 'no' and 'latest version'
@@ -856,9 +923,12 @@ class DB_Import:
                         loc["at_FNUniv"], loc["at_CRDN"], file["Location"], loc["notes"]
                     )
 
-                    self.execute(command, values + values, "files", file["File name"])
+                    counter += self.execute(command, values + values, "files", file["File name"])
 
                 files_file.close()
+
+                print("Number of files not imported:", counter)
+                sys.stdout.flush()
 
 
     def import_all(self):
@@ -880,6 +950,8 @@ class DB_Import:
         self.import_files()
         print()
         print("Import finished!")
+        print()
+        print("See db.log for a detailed error report")
 
 
 def main():
