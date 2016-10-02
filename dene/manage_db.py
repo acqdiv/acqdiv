@@ -98,35 +98,37 @@ class DB_Manager:
         checkin_parser = subparsers.add_parser("checkin",
             help="Upload file and set corresponding task status to 'complete' or 'incomplete'")
         checkin_parser.set_defaults(command="checkin", func=self.checkin)
-        checkin_parser.add_argument("f", help="file name")
-        checkin_parser.add_argument("--complete", help="set task status to complete", action="store_true")
+        checkin_parser.add_argument("file", help="file name")
+        checkin_parser.add_argument("status", help="set task status",
+            choices=["complete", "incomplete"])
         checkin_parser.add_argument("--checked", help="task is checked", action="store_true")
-        checkin_parser.add_argument("-n", help="notes")
+        checkin_parser.add_argument("--notes", help="notes")
 
         # add all other subcommands
         for command, cmd_hlp, func, args in [
             ("export", "Export metadata from database to csv files", self.exp,
-                 [("-p", "directory path where files are saved")]),
+                 [("--path", "directory path where files are saved")]),
             ("send", "Send latest version of a file to a person.", self.send,
-                 [("f", "file name"), ("r", "recipient"), ("-n", "notes")]),
+                 [("file", "file name"), ("recipient", "recipient"), ("--notes", "notes")]),
             ("assign", "Assign recording to a person for a task.", self.assign,
-                 [("r", "recording name"), ("a", "assignee"), ("t", "task"), ("-n", "notes")]),
+                 [("rec", "recording name"), ("assignee", "assignee"), ("task", "task"), ("--notes", "notes")]),
             ("update", "Upload new version of file without changing workflow status.", self.update,
-                 [("f", "file name"), ("-n", "notes")]),
+                 [("file", "file name"), ("--notes", "notes")]),
             ("reassign", "Assign running task to a different person.", self.reassign,
-                 [("r", "recording name"), ("a", "assignee"), ("-n", "notes")]),
+                 [("rec", "recording name"), ("assignee", "assignee"), ("--notes", "notes")]),
             ("letcheck", "Assign recording to specialist for feedback.", self.letcheck,
-                 [("r", "recording name"), ("a", "assignee"), ("n", "notes")]),
+                 [("rec", "recording name"), ("assignee", "assignee"), ("--notes", "notes")]),
             ("next", "Have same assignee do the next task in the predefined order.", self.next,
-                 [("r", "recording name"), ("-n", "notes")]),
+                 [("rec", "recording name"), ("--notes", "notes")]),
             ("feedback", "Expert gives feedback to newbie on completed task.", self.feedback,
-                 [("r", "recording name"), ("a", "assignee"), ("-n", "notes")]),
+                 [("rec", "recording name"), ("assignee", "assignee"), ("--notes", "notes")]),
             ("handover", "Hand over recording to different assignee for next task.", self.handover,
-                 [("r", "recording name"), ("a", "assignee"), ("-n", "notes")]),
+                 [("rec", "recording name"), ("assignee", "assignee"), ("--notes", "notes")]),
             ("reset", "Cancel running tasks and checks, reset availability.", self.reset,
-                 [("r", "recording name"), ("-n", "notes")]),
+                 [("rec", "recording name"), ("--notes", "notes")]),
             ("create", "First creation of a session, recording, or file.", self.create,
-                 [("-s", "session name"), ("-r", "recording name"), ("-f", "file name"), ("-n", "notes")])
+                 [("--session", "session name"), ("--rec", "recording name"),
+                  ("--file", "file name"), ("--notes", "notes")])
             ]:
 
                 subparser = subparsers.add_parser(command, help=cmd_hlp)
@@ -214,15 +216,15 @@ class DB_Export:
         positional args:
             connection:     a MySQL connection
             cursor:         must be of cursor class 'DictCursor'
-            args:           command line argument '-p' must be defined
+            args:           command line argument '--path' must be defined
         """
         self.con = connection
         self.cur = cursor
         self.args = args
 
         # set path for 'Export' directory
-        if self.args.p:
-            self.path = os.path.join(self.args, "Export")
+        if self.args.path:
+            self.path = os.path.join(self.args.path, "Export")
         else:
             self.path = "./Export"
 
@@ -363,8 +365,7 @@ class DB_Export:
 
         with open(monitor_path, "w") as monitor_file:
 
-            fieldnames = ["recording name",	"quality", "child speech",
-                          "directedness", "Dene", "audio", "notes"]
+            fieldnames = ["recording name",	"quality", "child speech", "directedness", "Dene", "audio"]
 
             # add rest of fields (in right order!)
             for task in ["segmentation", "transcription/translation", "glossing"]:
@@ -376,6 +377,8 @@ class DB_Export:
                     for field in ["status", "person", "start", "end"]:
                         fieldnames.append(field + " " + "check" + " " + task)
 
+            fieldnames.append("notes")
+
             monitor_writer = csv.DictWriter(monitor_file, fieldnames=fieldnames)
             monitor_writer.writeheader()
 
@@ -386,7 +389,8 @@ class DB_Export:
             for rec in self.cur.fetchall():
 
                 # inital content of dict
-                monitor_dict = {"recording name": rec["name"], "quality": rec["overall_quality"],
+                monitor_dict = {
+                    "recording name": rec["name"], "quality": rec["overall_quality"],
                     "child speech": rec["child_speech"], "directedness": rec["directedness"],
                     "Dene": rec["how_much_dene"], "audio": rec["audio_quality"],
                     "notes": rec["notes"]
@@ -408,7 +412,7 @@ class DB_Export:
                 for progress in self.cur:
                     # get task name
                     task = progress["name"]
-                    # get status of this task and add to monitor_dict
+                    # get status of this task
                     monitor_dict["status " + task] = progress["task_status"]
 
                     # get check status for this task except for 'segmentation'
@@ -560,6 +564,17 @@ class DB_Import:
         return insert_update_command
 
 
+    def get_id(self, command, error_msg):
+        """Get id of some table"""
+        self.cur.execute(command)
+        try:
+            id = self.cur.fetchone()[0]
+        except TypeError:
+            self.logger.error(error_msg)
+            return None
+
+        return id
+
     def import_sessions(self):
         """Populate table 'sessions' by import from sessions.csv"""
         # try reading sessions.csv
@@ -572,32 +587,33 @@ class DB_Import:
             command = self.get_insert_update_command("sessions", db_attributes)
             counter = 0
             # go through each session
-            for p in tqdm(csv.DictReader(sessions_file), desc="Importing sessions"):
+            for s in tqdm(csv.DictReader(sessions_file),
+                desc="Reading from sessions.csv", unit=" sessions"):
 
-                self.empty_str_to_none(p)
+                self.empty_str_to_none(s)
 
                 values = (
-                    p["Code"], p["Date"], p["Location"], p["Length of recording"],
-                    p["Situation"], p["Content"], p["Comments"]
+                    s["Code"], s["Date"], s["Location"], s["Length of recording"],
+                    s["Situation"], s["Content"], s["Comments"]
                 )
 
-                counter += self.execute(command, values + values, "sessions", p["Code"])
+                counter += self.execute(command, values + values, "sessions", s["Code"])
 
                 # get session id in database
-                self.cur.execute("""SELECT id FROM sessions WHERE name = '{}'""".format(p["Code"]))
+                self.cur.execute("""SELECT id FROM sessions WHERE name = '{}'""".format(s["Code"]))
 
                 try:
                     session_id = self.cur.fetchone()[0]
                 except TypeError:
-                    self.logger.error("Session code '{}' not in table 'sessions'".format(p["Code"]))
+                    self.logger.error("Session code '{}' not in table 'sessions'".format(s["Code"]))
                     continue
 
                 # link session to participants
-                self.link_sessions_participants(p["Participants and roles"], session_id, p["Code"])
+                self.link_sessions_participants(s["Participants and roles"], session_id, s["Code"])
 
             sessions_file.close()
 
-            print("Number of sessions not imported:", counter)
+            print(counter, "sessions not imported")
             sys.stdout.flush()
 
 
@@ -658,7 +674,8 @@ class DB_Import:
             counter = 0
 
             # go through each participant
-            for p in tqdm(csv.DictReader(participants_file), desc="Importing participants"):
+            for p in tqdm(csv.DictReader(participants_file),
+                desc="Reading from participants.csv", unit=" participants"):
 
                 # convert empty strings to None
                 self.empty_str_to_none(p)
@@ -691,10 +708,8 @@ class DB_Import:
 
             participants_file.close()
 
-            print("Number of participants not imported:", counter)
+            print(counter, "participants not imported")
             sys.stdout.flush()
-
-
 
 
     def import_monitor(self):
@@ -710,83 +725,154 @@ class DB_Import:
                 "name", "session_fk", "availability", "assignee_fk", "overall_quality",
                 "child_speech", "directedness", "how_much_dene", "audio_quality", "notes"
             )
-
             progress_db_attributes = (
                 "recording_fk", "task_type_fk", "task_status", "quality_check", "notes"
+            )
+            action_log_db_attributes = (
+                "time", "action_fk", "recording_fk", "file_fk", "task_type_fk", "client_fk",
+                "assignee_fk", "notes"
             )
 
             recordings_command = self.get_insert_update_command("recordings", rec_db_attributes)
             progress_command = self.get_insert_update_command("progress", progress_db_attributes)
+            action_log_command = self.get_insert_update_command("action_log", action_log_db_attributes)
+
             counter = 0
 
+            def get_assignee_id(assignee):
+                """Get id of an assignee"""
+                command = """
+                    SELECT id FROM employees
+                    WHERE CONCAT(first_name, ' ', last_name) = '{}'
+                    """.format(assignee)
+                error_msg = "Assignee '{}' not in table 'employees'".format(assignee)
+
+                return self.get_id(command, error_msg)
+
+            def get_session_id(rec):
+                """Get session code from recording name"""
+                try:
+                    # try to extract session code from recording code
+                    session_code = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+)?", rec).group()
+                except AttributeError:
+                    self.logger.error("Session code cannot be extracted from recording code: " + rec)
+                    return None
+
+                command = "SELECT id FROM sessions WHERE name = '{}'".format(session_code)
+                error_msg = "Session code '{}' not in table 'sessions': ".format(session_code)
+
+                return self.get_id(command, error_msg)
+
+            def get_action_id(action):
+                """Get id of an action name"""
+                command = "SELECT id FROM actions WHERE action = '{}'".format(action)
+                error_msg = "Action '{}' not in table 'actions': ".format(action)
+
+                return self.get_id(command, error_msg)
+
+            def get_task_type_id(task_type):
+                """Get id of a task type"""
+                command = "SELECT id FROM task_types WHERE name = '{}'".format(task_type)
+                error_msg = "Task type '{}' not in table 'task_types'".format(task_type)
+
+                return self.get_id(command, error_msg)
+
+            def get_rec_id(rec):
+                """Get id of a recording"""
+                command = "SELECT id from recordings WHERE name = '{}'".format(rec)
+                error_msg = "Recording name '{}' not in table 'recordings'".format(rec)
+
+                return self.get_id(command, error_msg)
+
             # go through each recording
-            for rec in tqdm(csv.DictReader(monitor_file), desc="Importing monitor"):
+            for rec in tqdm(csv.DictReader(monitor_file),
+                desc="Reading from monitor.csv", unit=" recordings"):
 
                 # convert empty strings to None
                 self.empty_str_to_none(rec)
 
                 #******** 'recordings' stuff **********
-                try:
-                    # try to extract session code from recording code
-                    session_code = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+)?",
-                        rec["recording name"]).group()
-                except AttributeError:
-                    self.logger.error("Session code cannot be extracted from recording code: "
-                        + rec["recording name"])
+                # try to get session id
+                session_id = get_session_id(rec["recording name"])
+                if session_id is None:
                     counter += 1
                     continue
 
-                # try to get id of associated session
-                self.cur.execute("SELECT id FROM sessions WHERE name = '{}'".format(session_code))
+                # assignee for a recording
+                rec_assignee = None
+                rec_assignee_id = None
+                # availability for recording is per default 'free'
+                availability = "free"
+                # action logs for a recording
+                action_logs = []
 
-                try:
-                    session_id = self.cur.fetchone()[0]
-                except TypeError:
-                    self.logger.error("Session code '{}' not in table 'sessions': ".format(session_code))
+                # go through the tasks
+                for task in ["segmentation", "transcription/translation", "glossing"]:
+
+                    # go through task and its check
+                    for is_check, field in [(False, task), (True, "check " + task)]:
+
+                        # ignore segmentation check field
+                        if is_check and task == "segmentation":
+                            continue
+
+                        # get status
+                        status = rec["status " + field]
+
+                        # overwrite some of the values depending on status value
+                        if status == "in progress":
+                            availability = "assigned"
+                            rec_assignee = rec["person " + field]
+                            rec_assignee_id = get_assignee_id(rec_assignee)
+                            task_type_id = get_task_type_id(task)
+
+                            # get different actions and fields for task and its check
+                            if is_check:
+                                action_id = get_action_id("letcheck")
+                            else:
+                                action_id = get_action_id("assign")
+
+                            # if all id's could be fetched
+                            if rec_assignee_id and task_type_id and action_id:
+                                # add to action_logs
+                                action_logs.append((
+                                    rec["start " + field], action_id, None, None,
+                                    task_type_id, None, rec_assignee_id, None))
+
+                        elif status == "complete" or status == "incomplete":
+                            assignee_id = get_assignee_id(rec["person " + field])
+                            task_type_id = get_task_type_id(task)
+
+                            if is_check:
+                                action_id = get_action_id("letcheck")
+                            else:
+                                action_id = get_action_id("assign")
+
+                            if assignee_id and task_type_id and action_id:
+                                action_logs.append((
+                                    rec["start " + field], action_id, None, None,
+                                    task_type_id, None, assignee_id, None))
+                                action_logs.append((
+                                    rec["end " + field], "checkin", None, None,
+                                    task_type_id, None, assignee_id, None))
+
+                        elif status == "defer" or status == "barred":
+                            availability = status
+
+                if rec["recording name"] == "deslas-AMM-2015-12-05-B":
+                    print("yes")
+                    print(rec_assignee)
+                    print(rec_assignee_id)
+                    print(availability)
+
+                # if there's an assignee, but its id couldn't be retrieved
+                if rec_assignee and rec_assignee_id is None:
+                    # do not insert/update recording
                     counter += 1
                     continue
-
-                # find out availability and assignee of this recording
-                for task in ["segmentation", "transcription/translation", "glossing",
-                             "check transcription/translation", "check glossing"]:
-
-                    # get status of this task
-                    status = rec["status " + task]
-
-                    if status == "in progress":
-                        availability = "assigned"
-                        assignee = rec["person " + task]
-                        break
-                    elif status == "barred":
-                        availability = "barred"
-                        assignee = None
-                        break
-                    elif status == "defer":
-                        availability = "defer"
-                        assignee = None
-                        break
-                else:
-                    availability = "free"
-                    assignee = None
-
-                # if there is an assignee for a task
-                if assignee:
-                    # try to get id of this assignee
-                    self.cur.execute("""SELECT id FROM employees
-                                        WHERE CONCAT(first_name, ' ', last_name) = '{}'""".format(assignee))
-
-                    try:
-                        assignee_id = self.cur.fetchone()[0]
-                    except TypeError:
-                        self.logger.error("Assignee '{}' not in table 'employees'".format(assignee))
-                        counter += 1
-                        continue
-
-                else:
-                    assignee_id = None
 
                 rec_values = (
-                    rec["recording name"], session_id, availability, assignee_id,
+                    rec["recording name"], session_id, availability, rec_assignee_id,
                     rec["quality"], rec["child speech"], rec["directedness"],
                     rec["Dene"], rec["audio"], rec["notes"]
                 )
@@ -794,6 +880,13 @@ class DB_Import:
                 counter += self.execute(recordings_command, rec_values + rec_values,
                     "recordings", rec["recording name"])
 
+                # ********** 'action_log' stuff **********
+
+                # add actions for recording to action_log
+
+
+                #TODO: tell rabart that I dropped session_fk
+                #TODO: monitor needs also metadata check, especially -, ?, none are problematic values
 
                 # ********** 'progress' stuff **********
 
@@ -801,15 +894,9 @@ class DB_Import:
                     "recording_fk", "task_type_fk", "task_status", "quality_check", "notes"
                 )
 
-                # try to get id of this recording in database
-                self.cur.execute("""SELECT id from recordings WHERE name = '{}'""".format(
-                    rec["recording name"]))
+                rec_id = get_rec_id(rec["recording name"])
 
-                try:
-                    rec_id = self.cur.fetchone()[0]
-                except TypeError:
-                    self.logger.error("Recording name '{}' not in table 'recordings'".format(
-                        rec["recording name"]))
+                if rec_id is None:
                     continue
 
                 # go through each task type from monitor.csv
@@ -845,7 +932,7 @@ class DB_Import:
 
             monitor_file.close()
 
-            print("Number of recordings not imported:", counter)
+            print(counter, "recordings not imported")
             sys.stdout.flush()
 
 
@@ -881,7 +968,8 @@ class DB_Import:
                 command = self.get_insert_update_command("files", db_attributes)
                 counter = 0
 
-                for file in tqdm(csv.DictReader(files_file), desc="Importing files"):
+                for file in tqdm(csv.DictReader(files_file),
+                    desc="Reading from files.csv", unit=" files"):
 
                     self.empty_str_to_none(file)
 
@@ -905,8 +993,10 @@ class DB_Import:
                         counter += 1
                         continue
 
+                    file_type = file["Type"].lower()
+
                     # media files: no versions, thus only 'no' and 'latest version'
-                    if file["Type"] == "Video" or file["Type"] == "Audio":
+                    if file_type == "video" or file_type == "audio":
 
                         for field in ["at_UZH", "at_FNUniv", "at_CRDN"]:
 
@@ -927,7 +1017,7 @@ class DB_Import:
 
                 files_file.close()
 
-                print("Number of files not imported:", counter)
+                print(counter, "files not imported")
                 sys.stdout.flush()
 
 
