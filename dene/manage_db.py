@@ -720,220 +720,223 @@ class DB_Import:
         except FileNotFoundError:
             print("Path to monitor.csv not correct! Import not possible!")
 
-        else:
-            rec_db_attributes = (
-                "name", "session_fk", "availability", "assignee_fk", "overall_quality",
-                "child_speech", "directedness", "how_much_dene", "audio_quality", "notes"
-            )
-            progress_db_attributes = (
-                "recording_fk", "task_type_fk", "task_status", "quality_check", "notes"
-            )
-            action_log_db_attributes = (
-                "time", "action_fk", "recording_fk", "file_fk", "task_type_fk", "client_fk",
-                "assignee_fk", "notes"
-            )
+        rec_db_attributes = (
+            "name", "session_fk", "availability", "assignee_fk", "overall_quality",
+            "child_speech", "directedness", "how_much_dene", "audio_quality", "notes"
+        )
+        progress_db_attributes = (
+            "recording_fk", "task_type_fk", "task_status", "quality_check", "notes"
+        )
+        action_log_db_attributes = (
+            "time", "action_fk", "recording_fk", "file_fk", "task_type_fk", "client_fk",
+            "assignee_fk", "notes"
+        )
+        progress_db_attributes = (
+            "recording_fk", "task_type_fk", "task_status", "quality_check", "notes"
+        )
 
-            recordings_command = self.get_insert_update_command("recordings", rec_db_attributes)
-            progress_command = self.get_insert_update_command("progress", progress_db_attributes)
-            action_log_command = self.get_insert_update_command("action_log", action_log_db_attributes)
+        recordings_command = self.get_insert_update_command("recordings", rec_db_attributes)
+        progress_command = self.get_insert_update_command("progress", progress_db_attributes)
+        action_log_command = self.get_insert_update_command("action_log", action_log_db_attributes)
 
-            counter = 0
+        # number of records not imported
+        rec_counter = 0
+        progress_counter = 0
 
-            def get_assignee_id(assignee):
-                """Get id of an assignee"""
-                command = """
-                    SELECT id FROM employees
-                    WHERE CONCAT(first_name, ' ', last_name) = '{}'
-                    """.format(assignee)
-                error_msg = "Assignee '{}' not in table 'employees'".format(assignee)
+        def get_assignee_id(assignee):
+            """Get id of an assignee"""
+            command = """
+                SELECT id FROM employees
+                WHERE CONCAT(first_name, ' ', last_name) = '{}'
+                """.format(assignee)
+            error_msg = "Assignee '{}' not in table 'employees'".format(assignee)
 
-                return self.get_id(command, error_msg)
+            return self.get_id(command, error_msg)
 
-            def get_session_id(rec):
-                """Get session code from recording name"""
-                try:
-                    # try to extract session code from recording code
-                    session_code = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+)?", rec).group()
-                except AttributeError:
-                    self.logger.error("Session code cannot be extracted from recording code: " + rec)
-                    return None
+        def get_session_id(rec):
+            """Get session code from recording name"""
+            try:
+                # try to extract session code from recording code
+                session_code = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+)?", rec).group()
+            except AttributeError:
+                self.logger.error("Session code cannot be extracted from recording code: " + rec)
+                return None
 
-                command = "SELECT id FROM sessions WHERE name = '{}'".format(session_code)
-                error_msg = "Session code '{}' not in table 'sessions': ".format(session_code)
+            command = "SELECT id FROM sessions WHERE name = '{}'".format(session_code)
+            error_msg = "Session code '{}' not in table 'sessions': ".format(session_code)
 
-                return self.get_id(command, error_msg)
+            return self.get_id(command, error_msg)
 
-            def get_action_id(action):
-                """Get id of an action name"""
-                command = "SELECT id FROM actions WHERE action = '{}'".format(action)
-                error_msg = "Action '{}' not in table 'actions': ".format(action)
+        def get_action_id(action):
+            """Get id of an action name"""
+            command = "SELECT id FROM actions WHERE action = '{}'".format(action)
+            error_msg = "Action '{}' not in table 'actions': ".format(action)
 
-                return self.get_id(command, error_msg)
+            return self.get_id(command, error_msg)
 
-            def get_task_type_id(task_type):
-                """Get id of a task type"""
-                command = "SELECT id FROM task_types WHERE name = '{}'".format(task_type)
-                error_msg = "Task type '{}' not in table 'task_types'".format(task_type)
+        def get_task_type_id(task_type):
+            """Get id of a task type"""
+            command = "SELECT id FROM task_types WHERE name = '{}'".format(task_type)
+            error_msg = "Task type '{}' not in table 'task_types'".format(task_type)
 
-                return self.get_id(command, error_msg)
+            return self.get_id(command, error_msg)
 
-            def get_rec_id(rec):
-                """Get id of a recording"""
-                command = "SELECT id from recordings WHERE name = '{}'".format(rec)
-                error_msg = "Recording name '{}' not in table 'recordings'".format(rec)
+        def get_rec_id(rec):
+            """Get id of a recording"""
+            command = "SELECT id from recordings WHERE name = '{}'".format(rec)
+            error_msg = "Recording name '{}' not in table 'recordings'".format(rec)
 
-                return self.get_id(command, error_msg)
+            return self.get_id(command, error_msg)
 
-            # go through each recording
-            for rec in tqdm(csv.DictReader(monitor_file),
-                desc="Reading from monitor.csv", unit=" recordings"):
+        # go through each recording
+        for rec in tqdm(csv.DictReader(monitor_file), desc="Reading from monitor.csv",
+            unit=" recordings"):
 
-                # convert empty strings to None
-                self.empty_str_to_none(rec)
+            # convert empty strings to None
+            self.empty_str_to_none(rec)
 
-                #******** 'recordings' stuff **********
-                # try to get session id
-                session_id = get_session_id(rec["recording name"])
-                if session_id is None:
-                    counter += 1
-                    continue
+            # try to get session id
+            session_id = get_session_id(rec["recording name"])
+            if session_id is None:
+                rec_counter += 1
+                continue
 
-                # assignee for a recording
-                rec_assignee = None
-                rec_assignee_id = None
-                # availability for recording is per default 'free'
-                availability = "free"
-                # action logs for a recording
-                action_logs = []
+            # assignee for a recording
+            rec_assignee = None
+            rec_assignee_id = None
+            # default value for availability of a recording
+            availability = "free"
+            # action logs for a recording
+            action_logs = []
 
-                # go through the tasks
-                for task in ["segmentation", "transcription/translation", "glossing"]:
+            # go through the tasks
+            for task in ["segmentation", "transcription/translation", "glossing"]:
 
-                    # go through task and its check
-                    for is_check, field in [(False, task), (True, "check " + task)]:
+                # go through task and check fields
+                # and collect values for tables 'recordings' and 'action_log'
+                for is_check, field in [(False, task), (True, "check " + task)]:
 
-                        # ignore segmentation check field
-                        if is_check and task == "segmentation":
-                            continue
-
-                        # get status
-                        status = rec["status " + field]
-
-                        # overwrite some of the values depending on status value
-                        if status == "in progress":
-                            availability = "assigned"
-                            rec_assignee = rec["person " + field]
-                            rec_assignee_id = get_assignee_id(rec_assignee)
-                            task_type_id = get_task_type_id(task)
-
-                            # get different actions and fields for task and its check
-                            if is_check:
-                                action_id = get_action_id("letcheck")
-                            else:
-                                action_id = get_action_id("assign")
-
-                            # if all id's could be fetched
-                            if rec_assignee_id and task_type_id and action_id:
-                                # add to action_logs
-                                action_logs.append((
-                                    rec["start " + field], action_id, None, None,
-                                    task_type_id, None, rec_assignee_id, None))
-
-                        elif status == "complete" or status == "incomplete":
-                            assignee_id = get_assignee_id(rec["person " + field])
-                            task_type_id = get_task_type_id(task)
-
-                            if is_check:
-                                action_id = get_action_id("letcheck")
-                            else:
-                                action_id = get_action_id("assign")
-
-                            if assignee_id and task_type_id and action_id:
-                                action_logs.append((
-                                    rec["start " + field], action_id, None, None,
-                                    task_type_id, None, assignee_id, None))
-                                action_logs.append((
-                                    rec["end " + field], "checkin", None, None,
-                                    task_type_id, None, assignee_id, None))
-
-                        elif status == "defer" or status == "barred":
-                            availability = status
-
-                if rec["recording name"] == "deslas-AMM-2015-12-05-B":
-                    print("yes")
-                    print(rec_assignee)
-                    print(rec_assignee_id)
-                    print(availability)
-
-                # if there's an assignee, but its id couldn't be retrieved
-                if rec_assignee and rec_assignee_id is None:
-                    # do not insert/update recording
-                    counter += 1
-                    continue
-
-                rec_values = (
-                    rec["recording name"], session_id, availability, rec_assignee_id,
-                    rec["quality"], rec["child speech"], rec["directedness"],
-                    rec["Dene"], rec["audio"], rec["notes"]
-                )
-
-                counter += self.execute(recordings_command, rec_values + rec_values,
-                    "recordings", rec["recording name"])
-
-                # ********** 'action_log' stuff **********
-
-                # add actions for recording to action_log
-
-
-                #TODO: tell rabart that I dropped session_fk
-                #TODO: monitor needs also metadata check, especially -, ?, none are problematic values
-
-                # ********** 'progress' stuff **********
-
-                progress_db_attributes = (
-                    "recording_fk", "task_type_fk", "task_status", "quality_check", "notes"
-                )
-
-                rec_id = get_rec_id(rec["recording name"])
-
-                if rec_id is None:
-                    continue
-
-                # go through each task type from monitor.csv
-                for task_type in ["segmentation", "transcription/translation", "glossing"]:
-
-                    # try to get id of this task type
-                    self.cur.execute("SELECT id FROM task_types WHERE name = '{}'".format(task_type))
-
-                    try:
-                        task_type_id = self.cur.fetchone()[0]
-                    except TypeError:
-                        print("Task type '{}' not in table 'task_types':".format(task_type))
+                    # ignore segmentation check field
+                    if is_check and task == "segmentation":
                         continue
 
-                    # get status of this task
-                    task_status = rec["status " + task_type]
+                    # get status field
+                    status = rec["status " + field]
 
-                    if task_status == "barred" or task_status == "defer":
-                        task_status = "not started"
+                    is_in_progress = status == "in progress"
+                    is_complete = status == "complete" or status == "incomplete"
 
-                    if task_type == "segmentation":
-                        quality_check = "not required"
-                    else:
-                        # get check status
-                        quality_check = rec["status check " + task_type]
+                    if is_in_progress or is_complete:
 
-                    progress_values = (
-                        rec_id, task_type_id, task_status, quality_check, None
-                    )
+                        # get person field
+                        person = rec["person " + field]
 
-                    self.execute(progress_command, progress_values + progress_values, "progress",
-                        rec["recording name"])
+                        # get task and assignee id
+                        task_type_id = get_task_type_id(task)
+                        assignee_id = get_assignee_id(person)
 
-            monitor_file.close()
+                        if is_in_progress:
+                            availability = "assigned"
+                            rec_assignee = person
+                            rec_assignee_id = assignee_id
 
-            print(counter, "recordings not imported")
-            sys.stdout.flush()
+                        # get appropriate 'start' action
+                        if is_check:
+                            action_id = get_action_id("letcheck")
+                        else:
+                            action_id = get_action_id("assign")
+
+                        # if all id's could be fetched
+                        if assignee_id and task_type_id and action_id:
+
+                            # add to action_logs list
+                            action_logs.append([
+                                rec["start " + field], action_id, None, None,
+                                task_type_id, None, assignee_id, None])
+
+                            if is_complete:
+                                # add additional log with checkin action
+                                action_id = get_action_id("checkin")
+                                if action_id:
+                                    action_logs.append([
+                                        rec["end " + field], action_id, None,
+                                        None, task_type_id, None, assignee_id, None])
+
+
+                    elif status == "defer" or status == "barred":
+                        availability = status
+
+
+            # if there's an assignee but its id could not be retrieved
+            if rec_assignee and rec_assignee_id is None:
+                # do not insert/update recording
+                rec_counter += 1
+                continue
+
+            # ******** fill table 'recordings'*********
+
+            rec_values = (
+                rec["recording name"], session_id, availability, rec_assignee_id,
+                rec["quality"], rec["child speech"], rec["directedness"],
+                rec["Dene"], rec["audio"], rec["notes"]
+            )
+
+            rec_counter += self.execute(recordings_command, rec_values + rec_values,
+                "recordings", rec["recording name"])
+
+            # ****************************************
+
+            # get id of just imported recording
+            rec_id = get_rec_id(rec["recording name"])
+
+            if rec_id is None:
+                continue
+
+            # ******** fill table 'action_log'*********
+
+            # insert/update actions of a recording to action_log
+            for action_values in action_logs:
+                # add recording id
+                action_values[2] = rec_id
+                self.execute(action_log_command, action_values + action_values,
+                    "action_log", rec["recording name"])
+
+            #TODO: monitor needs also metadata check, especially -, ?, none are problematic values
+            #TODO: prevent duplicate entries in action_log, add unique key: ADD UNIQUE KEY action_key (action_fk,recording_fk,file_fk, task_type_fk);
+
+            # ********** fill table 'progress' **********
+
+            # go through each task type from monitor.csv
+            for task in ["segmentation", "transcription/translation", "glossing"]:
+
+                task_type_id = get_task_type_id(task)
+
+                if task_type_id is None:
+                    progress_counter += 1
+                    continue
+
+                # get status of this task
+                task_status = rec["status " + task]
+
+                if task_status == "barred" or task_status == "defer":
+                    task_status = "not started"
+
+                if task == "segmentation":
+                    quality_check = "not required"
+                else:
+                    quality_check = rec["status check " + task]
+
+                progress_values = (rec_id, task_type_id, task_status, quality_check, None)
+
+                progress_counter += self.execute(progress_command,
+                    progress_values + progress_values, "progress", rec["recording name"])
+
+
+        monitor_file.close()
+
+        print(rec_counter, "recordings not imported")
+        print(progress_counter, "progress records not imported")
+        sys.stdout.flush()
 
 
     def import_files(self):
