@@ -197,6 +197,16 @@ class DB_Manager:
 # TODO: name correspondences of database and text files should be in one place,
 # because they are used twice (import and export) -> create base class of import/export class?
 
+class DB_Import_Export:
+    """Base class for import and export classes.
+
+    Contains correspondences of database attributes and text files fields.
+    """
+
+    def __init__(self):
+        pass
+
+
 class DB_Export:
     """Class for exporting dene metadata from a MySQL database.
 
@@ -445,6 +455,8 @@ class DB_Export:
 
 # TODO: DictCursor also for import?
 
+
+
 class DB_Import:
     """Class for importing Dene metadata into a MySQL database.
 
@@ -468,6 +480,76 @@ class DB_Import:
     are inserted again from the files.
     """
 
+    class ID:
+        """Class providing methods for getting IDs"""
+
+        def __init__(self, outer_class):
+            self.importer = outer_class
+
+        def get_id(self, command, error_msg):
+            """Get id of some table"""
+            self.importer.cur.execute(command)
+            try:
+                id = self.importer.cur.fetchone()[0]
+            except TypeError:
+                self.importer.logger.error(error_msg)
+                return None
+
+            return id
+
+        def get_assignee(self, assignee):
+            """Get id of an assignee"""
+            command = """
+                SELECT id FROM employees
+                WHERE CONCAT(first_name, ' ', last_name) = '{}'
+                """.format(assignee)
+            error_msg = "Assignee '{}' not in table 'employees'".format(assignee)
+
+            return self.get_id(command, error_msg)
+
+        def get_session(self, rec):
+            """Get session code from recording name"""
+            try:
+                # try to extract session code from recording code
+                session_code = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+)?", rec).group()
+            except AttributeError:
+                self.logger.error("Session code cannot be extracted from recording code: " + rec)
+                return None
+
+            command = "SELECT id FROM sessions WHERE name = '{}'".format(session_code)
+            error_msg = "Session code '{}' not in table 'sessions': ".format(session_code)
+
+            return self.get_id(command, error_msg)
+
+        def get_action(self, action):
+            """Get id of an action name"""
+            command = "SELECT id FROM actions WHERE action = '{}'".format(action)
+            error_msg = "Action '{}' not in table 'actions': ".format(action)
+
+            return self.get_id(command, error_msg)
+
+        def get_task_type(self, task_type):
+            """Get id of a task type"""
+            command = "SELECT id FROM task_types WHERE name = '{}'".format(task_type)
+            error_msg = "Task type '{}' not in table 'task_types'".format(task_type)
+
+            return self.get_id(command, error_msg)
+
+        def get_rec(self, rec):
+            """Get id of a recording"""
+            command = "SELECT id from recordings WHERE name = '{}'".format(rec)
+            error_msg = "Recording name '{}' not in table 'recordings'".format(rec)
+
+            return self.get_id(command, error_msg)
+
+        def get_participant(self, shortname):
+            """Get id of a participant"""
+            command = "SELECT id FROM participants WHERE short_name = '{}'".format(shortname)
+            error_msg = "Short name '{}' not in table 'participants'".format(shortname)
+
+            return self.get_id(command, error_msg)
+
+
     def __init__(self, connection, cursor, args):
         """Set database connection, cursor and command line arguments and get logger.
 
@@ -481,6 +563,7 @@ class DB_Import:
         self.cur = cursor
         self.logger = self.get_logger()
         self.args = args
+        self.id = self.ID(self)
 
         # turn MySQLdb warnings into errors, so that they can be caught by an exception and be logged
         warnings.filterwarnings("error", category=MySQLdb.Warning)
@@ -533,7 +616,7 @@ class DB_Import:
         """Execute SQL commands and log any SQL errors.
 
         args:
-            command: insert or/and update SQL command
+            command: (ideally) an insert or/and update SQL command
             values: values to be inserted/updated
             table: for logging, specify table into which values are to be inserted
             key: for logging, specify some identfier for the record to be inserted (e.g. session code)
@@ -564,17 +647,6 @@ class DB_Import:
         return insert_update_command
 
 
-    def get_id(self, command, error_msg):
-        """Get id of some table"""
-        self.cur.execute(command)
-        try:
-            id = self.cur.fetchone()[0]
-        except TypeError:
-            self.logger.error(error_msg)
-            return None
-
-        return id
-
     def import_sessions(self):
         """Populate table 'sessions' by import from sessions.csv"""
         # try reading sessions.csv
@@ -585,6 +657,7 @@ class DB_Import:
         else:
             db_attributes = ("name", "date", "location", "duration", "situation", "content", "notes")
             command = self.get_insert_update_command("sessions", db_attributes)
+            # number of sessions not imported
             counter = 0
             # go through each session
             for s in tqdm(csv.DictReader(sessions_file),
@@ -599,13 +672,8 @@ class DB_Import:
 
                 counter += self.execute(command, values + values, "sessions", s["Code"])
 
-                # get session id in database
-                self.cur.execute("""SELECT id FROM sessions WHERE name = '{}'""".format(s["Code"]))
-
-                try:
-                    session_id = self.cur.fetchone()[0]
-                except TypeError:
-                    self.logger.error("Session code '{}' not in table 'sessions'".format(s["Code"]))
+                session_id = self.id.get_session(s["Code"])
+                if session_id is None:
                     continue
 
                 # link session to participants
@@ -639,13 +707,8 @@ class DB_Import:
                 # create set of roles
                 role_set = set(roles.split(" & "))
 
-                # try to get id of this participant with this short name
-                self.cur.execute("SELECT id FROM participants WHERE short_name = '{}'".format(shortname))
-
-                try:
-                    participant_id = self.cur.fetchone()[0]
-                except TypeError:
-                    self.logger.error("Short name '{}' not in table 'participants'".format(shortname))
+                participant_id = self.id.get_participant(shortname)
+                if participant_id is None:
                     continue
 
                 command = self.get_insert_update_command("sessions_and_participants", db_attributes)
@@ -719,6 +782,7 @@ class DB_Import:
             monitor_file = open(self.args.monitor, "r")
         except FileNotFoundError:
             print("Path to monitor.csv not correct! Import not possible!")
+            return
 
         rec_db_attributes = (
             "name", "session_fk", "availability", "assignee_fk", "overall_quality",
@@ -743,51 +807,6 @@ class DB_Import:
         rec_counter = 0
         progress_counter = 0
 
-        def get_assignee_id(assignee):
-            """Get id of an assignee"""
-            command = """
-                SELECT id FROM employees
-                WHERE CONCAT(first_name, ' ', last_name) = '{}'
-                """.format(assignee)
-            error_msg = "Assignee '{}' not in table 'employees'".format(assignee)
-
-            return self.get_id(command, error_msg)
-
-        def get_session_id(rec):
-            """Get session code from recording name"""
-            try:
-                # try to extract session code from recording code
-                session_code = re.search(r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+)?", rec).group()
-            except AttributeError:
-                self.logger.error("Session code cannot be extracted from recording code: " + rec)
-                return None
-
-            command = "SELECT id FROM sessions WHERE name = '{}'".format(session_code)
-            error_msg = "Session code '{}' not in table 'sessions': ".format(session_code)
-
-            return self.get_id(command, error_msg)
-
-        def get_action_id(action):
-            """Get id of an action name"""
-            command = "SELECT id FROM actions WHERE action = '{}'".format(action)
-            error_msg = "Action '{}' not in table 'actions': ".format(action)
-
-            return self.get_id(command, error_msg)
-
-        def get_task_type_id(task_type):
-            """Get id of a task type"""
-            command = "SELECT id FROM task_types WHERE name = '{}'".format(task_type)
-            error_msg = "Task type '{}' not in table 'task_types'".format(task_type)
-
-            return self.get_id(command, error_msg)
-
-        def get_rec_id(rec):
-            """Get id of a recording"""
-            command = "SELECT id from recordings WHERE name = '{}'".format(rec)
-            error_msg = "Recording name '{}' not in table 'recordings'".format(rec)
-
-            return self.get_id(command, error_msg)
-
         # go through each recording
         for rec in tqdm(csv.DictReader(monitor_file), desc="Reading from monitor.csv",
             unit=" recordings"):
@@ -796,7 +815,7 @@ class DB_Import:
             self.empty_str_to_none(rec)
 
             # try to get session id
-            session_id = get_session_id(rec["recording name"])
+            session_id = self.id.get_session(rec["recording name"])
             if session_id is None:
                 rec_counter += 1
                 continue
@@ -832,8 +851,8 @@ class DB_Import:
                         person = rec["person " + field]
 
                         # get task and assignee id
-                        task_type_id = get_task_type_id(task)
-                        assignee_id = get_assignee_id(person)
+                        task_type_id = self.id.get_task_type(task)
+                        assignee_id = self.id.get_assignee(person)
 
                         if is_in_progress:
                             availability = "assigned"
@@ -842,9 +861,9 @@ class DB_Import:
 
                         # get appropriate 'start' action
                         if is_check:
-                            action_id = get_action_id("letcheck")
+                            action_id = self.id.get_action("letcheck")
                         else:
-                            action_id = get_action_id("assign")
+                            action_id = self.id.get_action("assign")
 
                         # if all id's could be fetched
                         if assignee_id and task_type_id and action_id:
@@ -856,7 +875,7 @@ class DB_Import:
 
                             if is_complete:
                                 # add additional log with checkin action
-                                action_id = get_action_id("checkin")
+                                action_id = self.id.get_action("checkin")
                                 if action_id:
                                     action_logs.append([
                                         rec["end " + field], action_id, None,
@@ -887,7 +906,7 @@ class DB_Import:
             # ****************************************
 
             # get id of just imported recording
-            rec_id = get_rec_id(rec["recording name"])
+            rec_id = self.id.get_rec(rec["recording name"])
 
             if rec_id is None:
                 continue
@@ -904,32 +923,7 @@ class DB_Import:
             #TODO: monitor needs also metadata check, especially -, ?, none are problematic values
             #TODO: prevent duplicate entries in action_log, add unique key: ADD UNIQUE KEY action_key (action_fk,recording_fk,file_fk, task_type_fk);
 
-            # ********** fill table 'progress' **********
-
-            # go through each task type from monitor.csv
-            for task in ["segmentation", "transcription/translation", "glossing"]:
-
-                task_type_id = get_task_type_id(task)
-
-                if task_type_id is None:
-                    progress_counter += 1
-                    continue
-
-                # get status of this task
-                task_status = rec["status " + task]
-
-                if task_status == "barred" or task_status == "defer":
-                    task_status = "not started"
-
-                if task == "segmentation":
-                    quality_check = "not required"
-                else:
-                    quality_check = rec["status check " + task]
-
-                progress_values = (rec_id, task_type_id, task_status, quality_check, None)
-
-                progress_counter += self.execute(progress_command,
-                    progress_values + progress_values, "progress", rec["recording name"])
+            progress_counter = self.fill_progress(rec, rec_id, progress_command, progress_counter)
 
 
         monitor_file.close()
@@ -939,6 +933,37 @@ class DB_Import:
         sys.stdout.flush()
 
 
+    def fill_progress(self, rec, rec_id, progress_command, progress_counter):
+        """Insert or update progress records for a recording"""
+
+        # go through each task type from monitor.csv
+        for task in ["segmentation", "transcription/translation", "glossing"]:
+
+            task_type_id = self.id.get_task_type(task)
+
+            if task_type_id is None:
+                progress_counter += 1
+                continue
+
+            # get status of this task
+            task_status = rec["status " + task]
+
+            if task_status == "barred" or task_status == "defer":
+                task_status = "not started"
+
+            if task == "segmentation":
+                quality_check = "not required"
+            else:
+                quality_check = rec["status check " + task]
+
+            progress_values = (rec_id, task_type_id, task_status, quality_check, None)
+
+            progress_counter += self.execute(progress_command,
+                progress_values + progress_values, "progress", rec["recording name"])
+
+        return progress_counter
+
+
     def import_files(self):
         """Populate table 'files' by import from files.csv and file_locations.csv"""
         # try reading files.csv
@@ -946,82 +971,78 @@ class DB_Import:
             files_file = open(self.args.files, "r")
         except FileNotFoundError:
             print("Path to files.csv not correct! Import not possible!")
-        else:
-            # try reading file_locations.csv
+            return
+
+        # try reading file_locations.csv
+        try:
+            locations_file = open(self.args.locations, "r")
+        except FileNotFoundError:
+            print("Path to file_locations.csv not correct! Import not possible!")
+            return
+
+        # store metadata of file_locations.csv for fast retrieval
+        locations = {}
+        for file in csv.DictReader(locations_file):
+            locations[file["File name"]] = {"at_UZH": file["UZH"],
+                                            "at_FNUniv": file["FNUniv (project HD)"],
+                                            "at_CRDN": file["CRDN"],
+                                            "notes": file["Notes"]}
+
+        locations_file.close()
+
+        db_attributes = (
+            "name", "recording_fk", "file_type", "file_extension", "duration",
+            "byte_size", "word_size", "at_UZH", "at_FNUniv", "at_CRDN", "location", "notes"
+        )
+
+        command = self.get_insert_update_command("files", db_attributes)
+        # number of files not imported
+        counter = 0
+
+        for file in tqdm(csv.DictReader(files_file),
+            desc="Reading from files.csv", unit=" files"):
+
+            self.empty_str_to_none(file)
+
+            rec_id = self.id.get_rec(file["Recording code"])
+            if rec_id is None:
+                counter += 1
+                continue
+
+            # try to get the locations of this file
             try:
-                locations_file = open(self.args.locations, "r")
-            except FileNotFoundError:
-                print("Path to file_locations.csv not correct! Import not possible!")
-            else:
-                # store metadata of file_locations.csv for fast retrieval
-                locations = {}
-                for file in csv.DictReader(locations_file):
-                    locations[file["File name"]] = {"at_UZH": file["UZH"],
-                                                    "at_FNUniv": file["FNUniv (project HD)"],
-                                                    "at_CRDN": file["CRDN"],
-                                                    "notes": file["Notes"]}
+                loc = locations[file["File name"]]
+            except KeyError:
+                self.logger.error("File '{}' not in 'file_locations.csv'".format(file["File name"]))
+                counter += 1
+                continue
 
-                locations_file.close()
+            file_type = file["Type"].lower()
 
-                db_attributes = (
-                    "name", "recording_fk", "file_type", "file_extension", "duration",
-                    "byte_size", "word_size", "at_UZH", "at_FNUniv", "at_CRDN", "location", "notes"
-                )
+            # media files: no versions, thus only 'no' and 'latest version'
+            if file_type == "video" or file_type == "audio":
 
-                command = self.get_insert_update_command("files", db_attributes)
-                counter = 0
+                for field in ["at_UZH", "at_FNUniv", "at_CRDN"]:
 
-                for file in tqdm(csv.DictReader(files_file),
-                    desc="Reading from files.csv", unit=" files"):
+                    if "yes" in loc[field]:
+                        loc[field] = "latest version"
+                    else:
+                        loc[field] = "no"
 
-                    self.empty_str_to_none(file)
+            # TODO: textual files
 
-                    # try to get id of recording for this file
-                    self.cur.execute("SELECT id FROM recordings WHERE name = '{}'".format(
-                        file["Recording code"]))
+            values = (
+                file["File name"], rec_id, file["Type"].lower(), file["Format"][-3:],
+                file["Duration"], file["Byte size"], file["Word size"], loc["at_UZH"],
+                loc["at_FNUniv"], loc["at_CRDN"], file["Location"], loc["notes"]
+            )
 
-                    try:
-                        rec_id = self.cur.fetchone()[0]
-                    except TypeError:
-                        self.logger.error("Recording code '{}' not in table 'recordings'".format(
-                            file["Recording code"]))
-                        counter += 1
-                        continue
+            counter += self.execute(command, values + values, "files", file["File name"])
 
-                    # try to get the locations of this file
-                    try:
-                        loc = locations[file["File name"]]
-                    except KeyError:
-                        self.logger.error("File '{}' not in 'file_locations.csv'".format(file["File name"]))
-                        counter += 1
-                        continue
+        files_file.close()
 
-                    file_type = file["Type"].lower()
-
-                    # media files: no versions, thus only 'no' and 'latest version'
-                    if file_type == "video" or file_type == "audio":
-
-                        for field in ["at_UZH", "at_FNUniv", "at_CRDN"]:
-
-                            if "yes" in loc[field]:
-                                loc[field] = "latest version"
-                            else:
-                                loc[field] = "no"
-
-                    # TODO: textual files
-
-                    values = (
-                        file["File name"], rec_id, file["Type"].lower(), file["Format"][-3:],
-                        file["Duration"], file["Byte size"], file["Word size"], loc["at_UZH"],
-                        loc["at_FNUniv"], loc["at_CRDN"], file["Location"], loc["notes"]
-                    )
-
-                    counter += self.execute(command, values + values, "files", file["File name"])
-
-                files_file.close()
-
-                print(counter, "files not imported")
-                sys.stdout.flush()
+        print(counter, "files not imported")
+        sys.stdout.flush()
 
 
     def import_all(self):
