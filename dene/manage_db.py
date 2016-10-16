@@ -1,8 +1,8 @@
 """Module providing classes for interacting with the Dene database.
 
-The main class DB_Manager can be used to manipulate the database over the
-terminal by using one of the following commands: import, export, send, assign,
-update, reassign, checkin, letcheck, feedback, handover, reset, create.
+This module can be used to manipulate the database over the terminal by using
+one of the following commands: import, export, send, assign, update, reassign,
+checkin, letcheck, feedback, handover, reset, create.
 For more details on these commands, run python3 db_manager.py [command] --help.
 
 The following external python modules (which can be installed by pip) are used:
@@ -17,7 +17,6 @@ import csv
 import logging
 import warnings
 import argparse
-
 
 try:
     import MySQLdb as db
@@ -40,27 +39,25 @@ class DB_Manager:
         """Establish a database connection.
 
         Positional args:
-            Specify host, user, password and a database
+            Specify host, user, password and a database name
         Optional args:
             Specify a character set to be used
-
         """
         self.con = db.connect(host=host, user=user, passwd=passwd,
                               db=database, charset=charset)
 
     def __enter__(self):
-        """Return class object"""
+        """Return class object."""
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        """Close database connection"""
+        """Close database connection."""
         self.con.close()
 
     def start(self):
         """Start main application.
 
-        Command line arguments are parsed and based on given command
-        the appropriate action is taken.
+        Command line arguments are parsed to determine action to be taken.
         """
         # get command line parser
         parser = self.get_parser()
@@ -78,9 +75,12 @@ class DB_Manager:
 
     def get_parser(self):
         """Get command line parser."""
+        # TODO: it might be sensible to make this more modular
+        # if this method gets larger and more complex
+
         # get main parser
         parser = argparse.ArgumentParser()
-        # add subparser holding subcommands
+        # add subparsers that will hold the subcommands
         subparsers = parser.add_subparsers()
 
         # add subcommand 'import'
@@ -109,9 +109,10 @@ class DB_Manager:
 
         # add subcommand checkin
         checkin_parser = subparsers.add_parser(
-            "checkin", help="Upload file and set corresponding task status" +
-            " to 'complete'or 'incomplete'")
+            "checkin", help="Upload file and set corresponding task status"
+                            + " to 'complete'or 'incomplete'")
         checkin_parser.set_defaults(command="checkin", func=self.checkin)
+
         checkin_parser.add_argument("file", help="file name")
         checkin_parser.add_argument("status", help="set task status",
                                     choices=["complete", "incomplete"])
@@ -138,8 +139,8 @@ class DB_Manager:
                   ("assignee", "assignee"), ("task", "task"),
                   ("--notes", "notes")]),
                 ("update",
-                 "Upload new version of file" +
-                 "without changing workflow status.",
+                 "Upload new version of file"
+                 + "without changing workflow status.",
                  self.update,
                  [("file", "file name"),
                   ("--notes", "notes")]),
@@ -156,8 +157,8 @@ class DB_Manager:
                   ("assignee", "assignee"),
                   ("--notes", "notes")]),
                 ("next",
-                 "Have same assignee do the next task" +
-                 "in the predefined order.",
+                 "Have same assignee do the next task"
+                 + "in the predefined order.",
                  self.next,
                  [("rec", "recording name"),
                   ("--notes", "notes")]),
@@ -260,105 +261,53 @@ class ImpExp:
     """Base class for import and export class."""
 
     def __init__(self, con, cur, args):
-
+        """Initialize database connection and cursor and cmd-line arguments."""
         self.con = con
         self.cur = cur
         self.args = args
-
-        self.csv_attrs = {
-            "sessions": [
-                "Code", "Date", "Location", "Length of recording",
-                "Situation", "Content", "Participants and roles", "Comments"
-                ],
-
-            "participants": [
-                "Short name", "Full name", "Birth date", "Age", "Gender",
-                "Education", "First languages", "Second languages",
-                "Main language", "Language biography", "Description",
-                "Contact address", "E-mail/Phone"
-                ],
-
-            "files": [
-                "Session code", "Recording code", "File name", "Type",
-                "Format", "Duration", "Byte size", "Word size", "Location"
-                ],
-
-            "locations": [
-                "File name", "CRDN", "FNUniv (project HD)", "UZH", "Notes"
-                ],
-
-            "monitor": [
-                "recording name",	"quality", "child speech",
-                "directedness", "Dene", "audio"
-                ]
-            }
-
-        # add rest of fields for monitor (in right order!)
-        for task in ["segmentation", "transcription/translation", "glossing"]:
-            # add task fields
-            for field in ["status", "person", "start", "end"]:
-                self.csv_attrs["monitor"].append(field + " " + task)
-            # add check fields except for task 'segmentation'
-            if task != "segmentation":
-                for field in ["status", "person", "start", "end"]:
-                    self.csv_attrs["monitor"].append(field + " check " + task)
-
-        self.csv_attrs["monitor"].append("notes")
-
-        self.db_attrs = {
-
-            "action_log": [
-                "time", "action_fk", "recording_fk", "file_fk", "task_type_fk",
-                "client_fk", "assignee_fk", "notes"],
-
-            "files": [
-                "name", "recording_fk", "file_type", "file_extension",
-                "duration", "byte_size", "word_size", "at_UZH", "at_FNUniv",
-                "at_CRDN", "location", "notes"
-                ],
-
-            "participants": [
-                "short_name", "first_name", "last_name", "birthdate", "age",
-                "gender", "education", "first_languages", "second_languages",
-                "main_language", "language_biography", "description",
-                "contact_address", "email_phone"
-                ],
-
-            "progress": [
-                "recording_fk", "task_type_fk", "task_status",
-                "quality_check", "notes"
-                ],
-
-            "recordings": [
-                "name", "session_fk", "availability", "assignee_fk",
-                "overall_quality", "child_speech", "directedness",
-                "how_much_dene", "audio_quality", "notes"
-                ],
-
-            "sessions": [
-                "name", "date", "location", "duration",
-                "situation", "content", "notes"
-                ],
-
-            "sessions_and_participants": [
-                "session_fk", "participant_fk", "role"
-                ]
-        }
 
 
 class Export(ImpExp):
     """Class for exporting dene metadata from a MySQL database.
 
-    Exports the following files to a directory called 'Export':
+    Exports the following files to a directory called 'Export'
+    (default path: current working directory):
         - sessions.csv
         - participants.csv
         - files.csv
         - file_locations.csv
         - monitor.csv
 
-    The flag -p can be used to change the path
-    (default: current working directory) of the 'Export' folder.
+    The flag -p can be used to set the path of the 'Export' folder.
     """
+
+    CSV_ATTRS = {
+        "sessions": [
+            "Code", "Date", "Location", "Length of recording",
+            "Situation", "Content", "Participants and roles", "Comments"
+            ],
+
+        "participants": [
+            "Short name", "Full name", "Birth date", "Age", "Gender",
+            "Education", "First languages", "Second languages",
+            "Main language", "Language biography", "Description",
+            "Contact address", "E-mail/Phone"
+            ],
+
+        "files": [
+            "Session code", "Recording code", "File name", "Type",
+            "Format", "Duration", "Byte size", "Word size", "Location"
+            ],
+
+        "locations": [
+            "File name", "CRDN", "FNUniv (project HD)", "UZH", "Notes"
+            ],
+
+        "monitor": [
+            "recording name",	"quality", "child speech",
+            "directedness", "Dene", "audio", "notes"
+            ]
+    }
 
     def __init__(self, con, cur, args):
         """Create 'Export' directory"""
@@ -378,6 +327,25 @@ class Export(ImpExp):
                 print("Export directory couldn't be created at", self.path)
                 sys.exit(1)
 
+    @classmethod
+    def add_progress_fields(cls, tasks, fields, check_exceptions):
+        """Add progress fields for monitor."""
+        monitor = Export.CSV_ATTRS["monitor"]
+
+        for task in tasks:
+            # add task fields
+            for field in fields:
+                monitor.append(field + " " + task)
+            # add check fields
+            if task not in check_exceptions:
+                for field in fields:
+                    monitor.append(field + " check " + task)
+
+    def get_hash(self, name, values):
+        """Get hash for writing file."""
+        return {Export.CSV_ATTRS[name][index]: value
+                for index, value in enumerate(values)}
+
     def export_sessions(self):
         """Export to sessions.csv"""
         sessions_path = os.path.join(self.path, "sessions.csv")
@@ -385,7 +353,7 @@ class Export(ImpExp):
         with open(sessions_path, "w") as sessions_file:
 
             sessions_writer = csv.DictWriter(
-                sessions_file, fieldnames=self.csv_attrs["sessions"])
+                sessions_file, fieldnames=Export.CSV_ATTRS["sessions"])
             sessions_writer.writeheader()
 
             # go through table 'sessions' in database
@@ -406,14 +374,12 @@ class Export(ImpExp):
                     " & ".join(role for role in pair["role"].split(",")))
                         for pair in self.cur)
 
+                values = (row["name"], row["date"], row["location"],
+                          row["situation"], row["duration"], row["content"],
+                          row["notes"], part_roles)
+
                 # write to sessions.csv
-                sessions_writer.writerow({
-                    "Code": row["name"], "Date": row["date"],
-                    "Location": row["location"], "Situation": row["situation"],
-                    "Length of recording": row["duration"],
-                    "Content": row["content"], "Comments": row["notes"],
-                    "Participants and roles": part_roles
-                })
+                sessions_writer.writerow(self.get_hash("sessions", values))
 
     def export_participants(self):
         """Export to participants.csv"""
@@ -422,7 +388,7 @@ class Export(ImpExp):
         with open(participants_path, "w") as participants_file:
 
             participants_writer = csv.DictWriter(
-                participants_file, fieldnames=self.csv_attrs["participants"])
+                participants_file, fieldnames=Export.CSV_ATTRS["participants"])
 
             participants_writer.writeheader()
 
@@ -430,20 +396,17 @@ class Export(ImpExp):
             self.cur.execute("SELECT * FROM participants")
             for row in self.cur:
 
+                values = (row["short_name"],
+                          " ".join((row["first_name"], row["last_name"])),
+                          row["birthdate"], row["age"], row["gender"],
+                          row["education"], row["first_languages"],
+                          row["second_languages"], row["main_language"],
+                          row["language_biography"], row["description"],
+                          row["contact_address"], row["email_phone"])
+
                 # write to participants.csv
-                participants_writer.writerow({
-                    "Short name": row["short_name"],
-                    "Full name": row["first_name"] + " " + row["last_name"],
-                    "Birth date": row["birthdate"], "Age": row["age"],
-                    "Gender": row["gender"], "Education": row["education"],
-                    "First languages": row["first_languages"],
-                    "Second languages": row["second_languages"],
-                    "Main language": row["main_language"],
-                    "Language biography": row["language_biography"],
-                    "Description": row["description"],
-                    "Contact address": row["contact_address"],
-                    "E-mail/Phone": row["email_phone"]
-                })
+                participants_writer.writerow(self.get_hash("participants",
+                                                           values))
 
     def export_files_locations(self):
         """Export to files.csv and file_locations.csv"""
@@ -454,9 +417,9 @@ class Export(ImpExp):
                 open(locations_path, "w") as locations_file:
 
             files_writer = csv.DictWriter(
-                files_file, fieldnames=self.csv_attrs["files"])
+                files_file, fieldnames=Export.CSV_ATTRS["files"])
             locations_writer = csv.DictWriter(
-                locations_file, fieldnames=self.csv_attrs["locations"])
+                locations_file, fieldnames=Export.CSV_ATTRS["locations"])
 
             files_writer.writeheader()
             locations_writer.writeheader()
@@ -469,31 +432,36 @@ class Export(ImpExp):
 
             for row in self.cur:
 
+                values = (row["sessions.name"], row["recordings.name"],
+                          row["name"], row["file_type"],
+                          "/".join((row["file_type"], row["file_extension"])),
+                          row["duration"], row["byte_size"], row["word_size"],
+                          row["location"])
+
                 # write to files.csv
-                files_writer.writerow({
-                    "Session code": row["sessions.name"],
-                    "Recording code": row["recordings.name"],
-                    "File name": row["name"], "Type": row["file_type"],
-                    "Format": row["file_type"] + "/" + row["file_extension"],
-                    "Duration": row["duration"], "Byte size": row["byte_size"],
-                    "Word size": row["word_size"], "Location": row["location"],
-                })
+                files_writer.writerow(self.get_hash("files", values))
+
+                values = (row["name"], row["at_CRDN"], row["at_FNUniv"],
+                          row["at_UZH"], row["notes"])
 
                 # write to file_locations.csv
-                locations_writer.writerow({
-                    "File name": row["name"], "CRDN": row["at_CRDN"],
-                    "FNUniv (project HD)": row["at_FNUniv"],
-                    "UZH": row["at_UZH"], "Notes": row["notes"]
-                })
+                locations_writer.writerow(self.get_hash("locations", values))
 
     def export_monitor(self):
         """Export to monitor.csv"""
         monitor_path = os.path.join(self.path, "monitor.csv")
 
+        # add progress fields for monitor
+        Export.add_progress_fields(
+            ["segmentation", "transcription/translation", "glossing"],
+            ["status", "person", "start", "end"],
+            ["segmentation"]
+        )
+
         with open(monitor_path, "w") as monitor_file:
 
             monitor_writer = csv.DictWriter(
-                monitor_file, fieldnames=self.csv_attrs["monitor"])
+                monitor_file, fieldnames=Export.CSV_ATTRS["monitor"])
             monitor_writer.writeheader()
 
             # go through table 'recordings' in database
@@ -503,57 +471,54 @@ class Export(ImpExp):
 
             for rec in self.cur.fetchall():
 
+                values = (rec["name"], rec["overall_quality"],
+                          rec["child_speech"], rec["directedness"],
+                          rec["how_much_dene"], rec["audio_quality"],
+                          rec["notes"])
+
                 # inital content of dict
-                monitor_dict = {
-                    "recording name": rec["name"],
-                    "quality": rec["overall_quality"],
-                    "child speech": rec["child_speech"],
-                    "directedness": rec["directedness"],
-                    "Dene": rec["how_much_dene"],
-                    "audio": rec["audio_quality"],
-                    "notes": rec["notes"]
-                }
+                monitor_dict = self.get_hash("monitor", values)
 
-                # get all progress rows belonging to this recording
-                self.cur.execute("""SELECT progress.*, name FROM progress
-                                    JOIN task_types
-                                    ON progress.task_type_fk=task_types.id
-                                    WHERE progress.recording_fk={}
-                                    """.format(rec["id"]))
-
-                # check if someone is working on this recording
-                if rec["availability"] == "assigned":
-                    # get assignee name
-                    assignee = rec["first_name"] + " " + rec["last_name"]
-                else:
-                    assignee = ""
-
-                # go through those progress rows
-                for progress in self.cur:
-                    # get task name
-                    task = progress["name"]
-                    # get status of this task
-                    monitor_dict["status " + task] = progress["task_status"]
-
-                    # get check status for this task except for 'segmentation'
-                    if task != "segmentation":
-                        monitor_dict["status check " + task] = \
-                            progress["quality_check"]
-
-                    # if there's an assignee,
-                    # check if task or its check is in progress
-                    if assignee:
-                        for string, status in [
-                                ("", progress["task_status"]),
-                                ("check ", progress["quality_check"])
-                                ]:
-
-                            if status == "in progress":
-                                monitor_dict["person " + string + task] = \
-                                    assignee
-                                break
+                self.get_progress_values(rec, monitor_dict)
 
                 monitor_writer.writerow(monitor_dict)
+
+    def get_progress_values(self, rec, monitor_dict):
+        """Add progress values to monitor dictionary for a recording."""
+        # check if someone is working on this recording
+        if rec["availability"] == "assigned":
+            # get assignee name
+            assignee = rec["first_name"] + " " + rec["last_name"]
+        else:
+            assignee = ""
+
+        self.cur.execute("""
+            SELECT progress.*, name FROM progress
+            JOIN task_types ON progress.task_type_fk=task_types.id
+            WHERE progress.recording_fk={}
+            """.format(rec["id"]))
+
+        # go through those progress rows
+        for progress in self.cur:
+            # get task name
+            task = progress["name"]
+            # get status of this task
+            monitor_dict["status " + task] = progress["task_status"]
+
+            # get check status for this task except for 'segmentation'
+            if task != "segmentation":
+                monitor_dict["status check " + task] = \
+                    progress["quality_check"]
+
+            # if there's an assignee,
+            # check if task or its check is in progress
+            if assignee:
+                for string, status in [("", progress["task_status"]),
+                                       ("check ", progress["quality_check"])]:
+
+                    if status == "in progress":
+                        monitor_dict["person " + string + task] = assignee
+                        break
 
     def export_all(self):
         self.export_sessions()
@@ -585,6 +550,46 @@ class Import(ImpExp):
     which means that all existing rows in the database are deleted first
     before all records are inserted again from the files.
     """
+
+    DB_ATTRS = {
+
+        "action_log": [
+            "time", "action_fk", "recording_fk", "file_fk", "task_type_fk",
+            "client_fk", "assignee_fk", "notes"],
+
+        "files": [
+            "name", "recording_fk", "file_type", "file_extension",
+            "duration", "byte_size", "word_size", "at_UZH", "at_FNUniv",
+            "at_CRDN", "location", "notes"
+            ],
+
+        "participants": [
+            "short_name", "first_name", "last_name", "birthdate", "age",
+            "gender", "education", "first_languages", "second_languages",
+            "main_language", "language_biography", "description",
+            "contact_address", "email_phone"
+            ],
+
+        "progress": [
+            "recording_fk", "task_type_fk", "task_status",
+            "quality_check", "notes"
+            ],
+
+        "recordings": [
+            "name", "session_fk", "availability", "assignee_fk",
+            "overall_quality", "child_speech", "directedness",
+            "how_much_dene", "audio_quality", "notes"
+            ],
+
+        "sessions": [
+            "name", "date", "location", "duration",
+            "situation", "content", "notes"
+            ],
+
+        "sessions_and_participants": [
+            "session_fk", "participant_fk", "role"
+            ]
+    }
 
     class ID:
         """Class providing methods for getting IDs"""
@@ -744,21 +749,21 @@ class Import(ImpExp):
 
         return counter
 
-    def get_insertupdate_cmd(self, table, db_attributes):
+    def get_insertupdate_cmd(self, table):
         """Create INSERT/UPDATE command.
 
         Command updates values if a record already exists,
         otherwise it inserts a new record.
         """
-        cmd = """INSERT INTO {} ({}) VALUES ({}) ON DUPLICATE KEY UPDATE {}
-              """.format(
+        db_attributes = Import.DB_ATTRS[table]
+
+        return """INSERT INTO {} ({}) VALUES ({}) ON DUPLICATE KEY UPDATE {}
+               """.format(
                     table,
                     ",".join(db_attributes),
-                    ",".join(["%s"]*len(db_attributes)),
+                    ",".join("%s" for attr in db_attributes),
                     ','.join((attr + "=%s") for attr in db_attributes)
                     )
-
-        return cmd
 
     def import_sessions(self):
         """Populate table 'sessions' by import from sessions.csv"""
@@ -770,7 +775,7 @@ class Import(ImpExp):
             return
 
         # get command for inserting/updating session records
-        cmd = self.get_insertupdate_cmd("sessions", self.db_attrs["sessions"])
+        cmd = self.get_insertupdate_cmd("sessions")
 
         # number of sessions not imported
         counter = 0
@@ -788,24 +793,21 @@ class Import(ImpExp):
 
             counter += self.execute(cmd, values, "sessions", s["Code"])
 
-            session_id = self.id.get_session(s["Code"])
-            if session_id is None:
-                continue
-
             # link session to participants
             self.link_sessions_participants(s["Participants and roles"],
-                                            session_id, s["Code"])
+                                            s["Code"])
 
         sessions_file.close()
 
         print(counter, "sessions not imported")
         sys.stdout.flush()
 
-    def link_sessions_participants(self, participants_roles, session_id,
-                                   session_code=""):
-        """Populate table 'sessions_and_participants'"""
-        # if participants and roles is not empty
-        if participants_roles:
+    def link_sessions_participants(self, participants_roles, session_code):
+        """Populate table 'sessions_and_participants'."""
+        session_id = self.id.get_session(session_code)
+
+        # if participants and roles is not empty and session code is not null
+        if participants_roles and session_id:
 
             # go through participants and their roles
             for part_roles in participants_roles.split(", "):
@@ -817,8 +819,8 @@ class Import(ImpExp):
                     roles = roles[1:-1]
                 except ValueError:
                     self.logger.error(
-                        "Format of Participants and roles not correct: " +
-                        session_code)
+                        "Format of Participants and roles not correct|"
+                        + session_code)
                     continue
 
                 # create set of roles
@@ -828,9 +830,7 @@ class Import(ImpExp):
                 if participant_id is None:
                     continue
 
-                cmd = self.get_insertupdate_cmd(
-                    "sessions_and_participants",
-                    self.db_attrs["sessions_and_participants"])
+                cmd = self.get_insertupdate_cmd("sessions_and_participants")
 
                 values = 2*(session_id, participant_id, role_set)
 
@@ -847,8 +847,7 @@ class Import(ImpExp):
             return
 
         # get command for inserting/updating participant records
-        cmd = self.get_insertupdate_cmd("participants",
-                                        self.db_attrs["participants"])
+        cmd = self.get_insertupdate_cmd("participants")
 
         # number of participants not imported
         counter = 0
@@ -905,12 +904,9 @@ class Import(ImpExp):
             print("Path to monitor.csv not correct! Import not possible!")
             return
 
-        recordings_cmd = self.get_insertupdate_cmd("recordings",
-                                                   self.db_attrs["recordings"])
-        progress_cmd = self.get_insertupdate_cmd("progress",
-                                                 self.db_attrs["progress"])
-        action_log_cmd = self.get_insertupdate_cmd("action_log",
-                                                   self.db_attrs["action_log"])
+        recordings_cmd = self.get_insertupdate_cmd("recordings")
+        progress_cmd = self.get_insertupdate_cmd("progress")
+        action_log_cmd = self.get_insertupdate_cmd("action_log")
 
         # number of recordings not imported
         counter = 0
@@ -928,12 +924,14 @@ class Import(ImpExp):
                 continue
 
             # assignee for a recording
-            rec_assignee = None
             rec_assignee_id = None
             # default value for availability of a recording
             availability = "free"
             # action logs for a recording
             action_logs = []
+
+            # TODO: disentangle recordings and action logs (like for progress)
+            # to improve readability? But performance might be a bit worse...
 
             # go through the tasks
             for task in ["segmentation", "transcription/translation",
@@ -967,7 +965,6 @@ class Import(ImpExp):
 
                         if is_in_progress:
                             availability = "assigned"
-                            rec_assignee = person
                             rec_assignee_id = assignee_id
 
                         # get appropriate 'start' action
@@ -993,8 +990,8 @@ class Import(ImpExp):
                                         None, task_type_id, None,
                                         assignee_id, None])
 
-            # if there's an assignee but its id could not be retrieved
-            if availability == "assigned" and not rec_assignee:
+            # skip if a recording is assigned but there is no assignee (id)
+            if availability == "assigned" and not rec_assignee_id:
                 counter += 1
                 continue
 
@@ -1014,14 +1011,9 @@ class Import(ImpExp):
             if rec["id"] is None:
                 continue
 
+            # populate tables action_log and progress
             self.fill_action_log(action_log_cmd, action_logs, rec)
             self.fill_progress(progress_cmd, rec)
-
-            # TODO: monitor, problematic values: +, -
-            # TODO: prevent duplicate entries
-            # in action_log, add unique key:
-            # ADD UNIQUE KEY action_key
-            # (action_fk,recording_fk,file_fk, task_type_fk);
 
         monitor_file.close()
 
@@ -1080,8 +1072,8 @@ class Import(ImpExp):
         try:
             locations_file = open(self.args.locations, "r")
         except FileNotFoundError:
-            print("Path to file_locations.csv not correct! " +
-                  "Import not possible!")
+            print("Path to file_locations.csv not correct! "
+                  + "Import not possible!")
             return
 
         # store metadata of file_locations.csv for fast retrieval
@@ -1095,7 +1087,7 @@ class Import(ImpExp):
 
         locations_file.close()
 
-        cmd = self.get_insertupdate_cmd("files", self.db_attrs["files"])
+        cmd = self.get_insertupdate_cmd("files")
 
         # number of files not imported
         counter = 0
@@ -1150,11 +1142,16 @@ class Import(ImpExp):
     def import_all(self):
         """Import from all files"""
         if self.args.radical:
+
+            # TODO: action log must not (!) be completely deleted
+            # -> only actions that can be read from monitor:
+            # assign, letcheck, checkin
+
             # delete all rows from all tables
-            for table in [
-                "action_log", "files", "sessions_and_participants", "progress",
-                "recordings", "sessions", "participants"
-            ]:
+            for table in ["action_log", "files", "sessions_and_participants",
+                          "progress", "recordings", "sessions", "participants"
+                          ]:
+
                 self.wipe(table)
 
         self.import_participants()
