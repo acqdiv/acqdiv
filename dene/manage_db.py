@@ -12,6 +12,7 @@ The following external python modules (which can be installed by pip) are used:
 
 import os
 import re
+import abc
 import sys
 import csv
 import logging
@@ -32,29 +33,16 @@ except ImportError:
     sys.exit(1)
 
 
-class DB_Manager:
+class DB_Interface:
     """Interface for working with the Dene database"""
 
-    def __init__(self, host, user, passwd, database, charset="utf8"):
-        """Establish a database connection.
+    db_credentials = {"host": "localhost",
+                      "user": "anna",
+                      "passwd": "anna",
+                      "db": "deslas",
+                      "charset": "utf8"}
 
-        Positional args:
-            Specify host, user, password and a database name
-        Optional args:
-            Specify a character set to be used
-        """
-        self.con = db.connect(host=host, user=user, passwd=passwd,
-                              db=database, charset=charset)
-
-    def __enter__(self):
-        """Return class object."""
-        return self
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        """Close database connection."""
-        self.con.close()
-
-    def start(self):
+    def run(self):
         """Start main application.
 
         Command line arguments are parsed to determine action to be taken.
@@ -64,14 +52,9 @@ class DB_Manager:
         # parse all of its arguments and store them
         self.args = parser.parse_args()
 
-        # get cursor (for 'export' the special one 'DictCursor')
-        if self.args.command != "export":
-            self.cur = self.con.cursor()
-        else:
-            self.cur = self.con.cursor(MySQLdb.cursors.DictCursor)
-
-        # execute appropriate action function
-        self.args.func()
+        # execute appropriate action
+        with self.args.cls(self.args, **self.db_credentials) as action:
+            action.start()
 
     def get_parser(self):
         """Get command line parser."""
@@ -86,7 +69,7 @@ class DB_Manager:
         # add subcommand 'import'
         import_parser = subparsers.add_parser(
             "import", help="Import metadata from csv files to database")
-        import_parser.set_defaults(command="import", func=self.imp)
+        import_parser.set_defaults(command="import", cls=Import)
 
         for name1, name2, hlp, default in [
                 ("-s", "--sessions", "path to sessions.csv",
@@ -111,7 +94,7 @@ class DB_Manager:
         checkin_parser = subparsers.add_parser(
             "checkin", help="Upload file and set corresponding task status"
                             + " to 'complete'or 'incomplete'")
-        checkin_parser.set_defaults(command="checkin", func=self.checkin)
+        checkin_parser.set_defaults(command="checkin", cls=Checkin)
 
         checkin_parser.add_argument("file", help="file name")
         checkin_parser.add_argument("status", help="set task status",
@@ -121,67 +104,67 @@ class DB_Manager:
         checkin_parser.add_argument("--notes", help="notes")
 
         # add all other subcommands
-        for command, cmd_hlp, func, args in [
+        for command, cmd_hlp, cls, args in [
                 ("export",
                  "Export metadata from database to csv files",
-                 self.exp,
+                 Export,
                  [("--path", "directory path where files are saved")]),
                 ("send",
                  "Send latest version of a file to a person.",
-                 self.send,
+                 Send,
                  [("file", "file name"),
                   ("recipient", "recipient"),
                   ("--notes", "notes")]),
                 ("assign",
                  "Assign recording to a person for a task.",
-                 self.assign,
+                 Assign,
                  [("rec", "recording name"),
                   ("assignee", "assignee"), ("task", "task"),
                   ("--notes", "notes")]),
                 ("update",
                  "Upload new version of file"
                  + "without changing workflow status.",
-                 self.update,
+                 Update,
                  [("file", "file name"),
                   ("--notes", "notes")]),
                 ("reassign",
                  "Assign running task to a different person.",
-                 self.reassign,
+                 Reassign,
                  [("rec", "recording name"),
                   ("assignee", "assignee"),
                   ("--notes", "notes")]),
                 ("letcheck",
                  "Assign recording to specialist for feedback.",
-                 self.letcheck,
+                 Letcheck,
                  [("rec", "recording name"),
                   ("assignee", "assignee"),
                   ("--notes", "notes")]),
                 ("next",
                  "Have same assignee do the next task"
                  + "in the predefined order.",
-                 self.next,
+                 Next,
                  [("rec", "recording name"),
                   ("--notes", "notes")]),
                 ("feedback",
                  "Expert gives feedback to newbie on completed task.",
-                 self.feedback,
+                 Feedback,
                  [("rec", "recording name"),
                   ("assignee", "assignee"),
                   ("--notes", "notes")]),
                 ("handover",
                  "Hand over recording to different assignee for next task.",
-                 self.handover,
+                 Handover,
                  [("rec", "recording name"),
                   ("assignee", "assignee"),
                   ("--notes", "notes")]),
                 ("reset",
                  "Cancel running tasks and checks, reset availability.",
-                 self.reset,
+                 Reset,
                  [("rec", "recording name"),
                   ("--notes", "notes")]),
                 ("create",
                  "First creation of a session, recording, or file.",
-                 self.create,
+                 Create,
                  [("--session", "session name"),
                   ("--rec", "recording name"),
                   ("--file", "file name"),
@@ -189,85 +172,120 @@ class DB_Manager:
                 ]:
 
             subparser = subparsers.add_parser(command, help=cmd_hlp)
-            subparser.set_defaults(command=command, func=func)
+            subparser.set_defaults(command=command, cls=cls)
 
             for name, arg_hlp in args:
                 subparser.add_argument(name, help=arg_hlp)
 
         return parser
 
-    def imp(self):
-        """Import metadata from csv-files into database.
 
-        Method will use class Import.
-        """
-        importer = Import(self.con, self.cur, self.args)
-        importer.import_all()
+class Action(metaclass=abc.ABCMeta):
+    """Abstract base class for all action types."""
 
-    def exp(self):
-        """Export metadata from the database to csv-files.
+    def __init__(self, args, dict_cur=False, **db_credentials):
+        """Initialize database connection/cursor and cmd-line arguments."""
+        self.con = db.connect(**db_credentials)
 
-        Method will use class Export.
-        """
-        exporter = Export(self.con, self.cur, self.args)
-        exporter.export_all()
+        if dict_cur:
+            self.cur = self.con.cursor(MySQLdb.cursors.DictCursor)
+        else:
+            self.cur = self.con.cursor()
 
-    def send(self):
+        self.args = args
+
+    def __enter__(self):
+        """Return class object."""
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        """Close database cursor and connection."""
+        self.cur.close()
+        self.con.close()
+
+    @abc.abstractmethod
+    def start(self):
+        pass
+
+
+class Send(Action):
+    """Add doc."""
+    def start(self):
         print(self.args)
         print("Send command works!")
 
-    def assign(self):
+
+class Assign(Action):
+    """Add doc."""
+    def start(self):
         print(self.args)
         print("Assign command works!")
 
-    def update(self):
+
+class Update(Action):
+    """Add doc."""
+    def start(self):
         print(self.args)
         print("Update command works!")
 
-    def reassign(self):
+
+class Reassign(Action):
+    """Add doc."""
+    def start(self):
         print(self.args)
         print("Reassign command works!")
 
-    def letcheck(self):
+
+class Letcheck(Action):
+    """Add doc."""
+    def start(self):
         print(self.args)
         print("Letcheck command works!")
 
-    def next(self):
+
+class Next(Action):
+    """Add doc."""
+    def start(self):
         print(self.args)
         print("Next command works!")
 
-    def feedback(self):
+
+class Feedback(Action):
+    """Add doc."""
+    def start(self):
         print(self.args)
         print("Feedback command works!")
 
-    def handover(self):
+
+class Handover(Action):
+    """Add doc."""
+    def start(self):
         print(self.args)
         print("Handover command works!")
 
-    def checkin(self):
+
+class Checkin(Action):
+    """Add doc."""
+    def start(self):
         print(self.args)
         print("Checkin command works!")
 
-    def reset(self):
+
+class Reset(Action):
+    """Add doc."""
+    def start(self):
         print(self.args)
         print("Reset command works!")
 
-    def create(self):
+
+class Create(Action):
+    """Add doc."""
+    def start(self):
         print(self.args)
         print("Create command works!")
 
 
-class ImpExp:
-    """Base class for import and export class."""
-
-    def __init__(self, con, cur, args):
-        """Initialize database connection and cursor and cmd-line arguments."""
-        self.con = con
-        self.cur = cur
-        self.args = args
-
-
-class Export(ImpExp):
+class Export(Action):
     """Class for exporting dene metadata from a MySQL database.
 
     Exports the following files to a directory called 'Export'
@@ -309,9 +327,9 @@ class Export(ImpExp):
             ]
     }
 
-    def __init__(self, con, cur, args):
+    def __init__(self, args, **db_credentials):
         """Create 'Export' directory"""
-        super().__init__(con, cur, args)
+        super().__init__(args, dict_cur=True, **db_credentials)
 
         # set path for 'Export' directory
         if self.args.path:
@@ -357,7 +375,7 @@ class Export(ImpExp):
             sessions_writer.writeheader()
 
             # go through table 'sessions' in database
-            self.cur.execute("SELECT * from sessions")
+            self.cur.execute("SELECT * FROM sessions")
             for row in self.cur.fetchall():
 
                 # get participants and roles for this session
@@ -375,8 +393,8 @@ class Export(ImpExp):
                         for pair in self.cur)
 
                 values = (row["name"], row["date"], row["location"],
-                          row["situation"], row["duration"], row["content"],
-                          row["notes"], part_roles)
+                          row["duration"], row["situation"], row["content"],
+                          part_roles, row["notes"])
 
                 # write to sessions.csv
                 sessions_writer.writerow(self.get_hash("sessions", values))
@@ -520,15 +538,16 @@ class Export(ImpExp):
                         monitor_dict["person " + string + task] = assignee
                         break
 
-    def export_all(self):
+    def start(self):
         self.export_sessions()
         self.export_participants()
         self.export_files_locations()
         self.export_monitor()
         print("Export finished!")
+        print()
 
 
-class Import(ImpExp):
+class Import(Action):
     """Class for importing Dene metadata into a MySQL database.
 
     For a full import the following files are used:
@@ -670,9 +689,9 @@ class Import(ImpExp):
 
             return self.get_id(cmd, error_msg)
 
-    def __init__(self, con, cur, args):
+    def __init__(self, args, **db_credentials):
         """Get logger and ID-getter."""
-        super().__init__(con, cur, args)
+        super().__init__(args, **db_credentials)
 
         self.logger = self.get_logger()
         self.id = self.ID(self)
@@ -1139,7 +1158,7 @@ class Import(ImpExp):
         print(counter, "files not imported")
         sys.stdout.flush()
 
-    def import_all(self):
+    def start(self):
         """Import from all files"""
         if self.args.radical:
 
@@ -1165,13 +1184,12 @@ class Import(ImpExp):
         print("Import finished!")
         print()
         print("See db.log for a detailed error report")
+        print()
 
 
 def main():
     """Start database interface application"""
-    with DB_Manager(host="localhost", user="anna", passwd="anna",
-                    database="deslas") as manager:
-        manager.start()
+    DB_Interface().run()
 
 
 if __name__ == '__main__':
