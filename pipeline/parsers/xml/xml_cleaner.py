@@ -3,7 +3,6 @@ import itertools
 import json
 import logging
 import os
-import pdb
 import re
 import sys
 
@@ -27,7 +26,7 @@ class XMLCleaner(object):
         location: the dictionary to add to
         key: the dictionary key
         value: the value to add
-        
+
         Returns:
         None
         """
@@ -77,7 +76,7 @@ class XMLCleaner(object):
         Args:
         parent: Node to search in
         child: Node to search for
-        
+
         Returns:
         the text of the child node if it was found, None otherwise
         """
@@ -95,7 +94,6 @@ class XMLCleaner(object):
         xpexpr: the XPath expression to use
 
         Returns:
-        
         """
         ses = parent.xpath(xpexpr)
         return ses[0] if len(ses) != 0 else None
