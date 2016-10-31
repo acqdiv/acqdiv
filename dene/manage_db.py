@@ -58,8 +58,7 @@ class DB_Interface:
 
     def get_parser(self):
         """Get command line parser."""
-        # TODO: it might be sensible to make this more modular
-        # if this method gets larger and more complex
+        # TODO: make method shorter or more modular?
 
         # get main parser
         parser = argparse.ArgumentParser()
@@ -299,7 +298,7 @@ class Export(Action):
     The flag -p can be used to set the path of the 'Export' folder.
     """
 
-    CSV_ATTRS = {
+    csv_attrs = {
         "sessions": [
             "Code", "Date", "Location", "Length of recording",
             "Situation", "Content", "Participants and roles", "Comments"
@@ -348,7 +347,7 @@ class Export(Action):
     @classmethod
     def add_progress_fields(cls, tasks, fields, check_exceptions):
         """Add progress fields for monitor."""
-        monitor = Export.CSV_ATTRS["monitor"]
+        monitor = cls.csv_attrs["monitor"]
 
         for task in tasks:
             # add task fields
@@ -361,7 +360,7 @@ class Export(Action):
 
     def get_hash(self, name, values):
         """Get hash for writing file."""
-        return {Export.CSV_ATTRS[name][index]: value
+        return {self.csv_attrs[name][index]: value
                 for index, value in enumerate(values)}
 
     def export_sessions(self):
@@ -371,7 +370,7 @@ class Export(Action):
         with open(sessions_path, "w") as sessions_file:
 
             sessions_writer = csv.DictWriter(
-                sessions_file, fieldnames=Export.CSV_ATTRS["sessions"])
+                sessions_file, fieldnames=self.csv_attrs["sessions"])
             sessions_writer.writeheader()
 
             # go through table 'sessions' in database
@@ -406,7 +405,7 @@ class Export(Action):
         with open(participants_path, "w") as participants_file:
 
             participants_writer = csv.DictWriter(
-                participants_file, fieldnames=Export.CSV_ATTRS["participants"])
+                participants_file, fieldnames=self.csv_attrs["participants"])
 
             participants_writer.writeheader()
 
@@ -435,16 +434,16 @@ class Export(Action):
                 open(locations_path, "w") as locations_file:
 
             files_writer = csv.DictWriter(
-                files_file, fieldnames=Export.CSV_ATTRS["files"])
+                files_file, fieldnames=self.csv_attrs["files"])
             locations_writer = csv.DictWriter(
-                locations_file, fieldnames=Export.CSV_ATTRS["locations"])
+                locations_file, fieldnames=self.csv_attrs["locations"])
 
             files_writer.writeheader()
             locations_writer.writeheader()
 
             # go through table 'files' in database
             self.cur.execute("""
-                SELECT files.*, recordings.name, sessions.name from files
+                SELECT files.*, recordings.name, sessions.name FROM files
                 JOIN recordings ON files.recording_fk=recordings.id
                 JOIN sessions ON recordings.session_fk=sessions.id""")
 
@@ -458,6 +457,12 @@ class Export(Action):
 
                 # write to files.csv
                 files_writer.writerow(self.get_hash("files", values))
+
+                for field in ["at_CRDN", "at_FNUniv", "at_UZH"]:
+                    if row[field] == "latest version":
+                        row[field] = "yes"
+                    else:
+                        row[field] = "no"
 
                 values = (row["name"], row["at_CRDN"], row["at_FNUniv"],
                           row["at_UZH"], row["notes"])
@@ -479,7 +484,7 @@ class Export(Action):
         with open(monitor_path, "w") as monitor_file:
 
             monitor_writer = csv.DictWriter(
-                monitor_file, fieldnames=Export.CSV_ATTRS["monitor"])
+                monitor_file, fieldnames=self.csv_attrs["monitor"])
             monitor_writer.writeheader()
 
             # go through table 'recordings' in database
@@ -570,7 +575,7 @@ class Import(Action):
     before all records are inserted again from the files.
     """
 
-    DB_ATTRS = {
+    db_attrs = {
 
         "action_log": [
             "time", "action_fk", "recording_fk", "file_fk", "task_type_fk",
@@ -774,7 +779,7 @@ class Import(Action):
         Command updates values if a record already exists,
         otherwise it inserts a new record.
         """
-        db_attributes = Import.DB_ATTRS[table]
+        db_attributes = self.db_attrs[table]
 
         return """INSERT INTO {} ({}) VALUES ({}) ON DUPLICATE KEY UPDATE {}
                """.format(
@@ -1132,6 +1137,7 @@ class Import(Action):
 
             file_type = file["Type"].lower()
 
+            # TODO: ask rabart: distinction 'no' and 'no longer'?
             # media files: no versions, thus only 'no' and 'latest version'
             if file_type == "video" or file_type == "audio":
 
@@ -1158,20 +1164,22 @@ class Import(Action):
         print(counter, "files not imported")
         sys.stdout.flush()
 
+    def wipe_all(self):
+        """Delete all tables in the database."""
+        # TODO: action log must not (!) be completely deleted
+        # -> only actions that can be read from monitor:
+        # assign, letcheck, checkin
+
+        # delete all rows from all tables
+        for table in ["action_log", "files", "sessions_and_participants",
+                      "progress", "recordings", "sessions", "participants"]:
+
+            self.wipe(table)
+
     def start(self):
         """Import from all files"""
         if self.args.radical:
-
-            # TODO: action log must not (!) be completely deleted
-            # -> only actions that can be read from monitor:
-            # assign, letcheck, checkin
-
-            # delete all rows from all tables
-            for table in ["action_log", "files", "sessions_and_participants",
-                          "progress", "recordings", "sessions", "participants"
-                          ]:
-
-                self.wipe(table)
+            self.wipe_all()
 
         self.import_participants()
         print()

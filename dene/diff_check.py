@@ -1,16 +1,61 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Oct 14 17:51:28 2016
+"""This module checks if the module manage_db.py works properly.
 
-@author: anna
+It imports and exports twice and compares the content of the databases and
+csv files. If the contents are not identical, an file will be created
+where the lines that differ are shown. Output format can be a txt or html file.
 """
-
 
 import difflib
-import sys
+import argparse
 import os
+import sys
 import manage_db
 from tqdm import tqdm
+import MySQLdb as db
+
+# TODO: class structure
+# TODO: integrate joins -> resolving foreign keys
+# TODO: create folder for diffs
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--format", choices=["html", "txt"])
+args = parser.parse_args()
+
+
+# tables with foreign keys: (fk attributes, join command)
+# used for constructing the SQL command to get the contents of the tables
+joins = {
+    "action_log":
+        ("""action,recordings.name,files.name,task_types.name,
+            e1.short_name,e2.short_name""",
+         """JOIN actions ON action_log.action_fk=actions.id
+            JOIN recordings ON action_log.recording_fk=recordings.id
+            JOIN files ON action_log.file_fk=files.id
+            JOIN task_types ON action_log.fk_task_type=task_types.id
+            LEFT JOIN employees e1 ON action_log.client_fk=e1.id
+            LEFT JOIN employees e2 ON action_log.assignee_fk=e2.id"""),
+    "files":
+        ("recordings.name",
+         "JOIN recordings ON files.recording_fk=recordings.id"),
+    "progress":
+        ("recordings.name,task_types.name",
+         """JOIN recordings ON progress.recording_fk=recordings.id
+            JOIN task_types ON progress.task_type_fk=task_types.id"""),
+    "recordings":
+        ("sessions.name",
+         "JOIN sessions ON session_fk=sessions.id"),
+    "sessions_and_participants":
+        ("name,short_name",
+         """JOIN sessions
+            ON sessions_and_participants.session_fk=sessions.id
+            JOIN participants
+            ON sessions_and_participants.participant_fk=participants.id"""),
+    "versions":
+        ("files.name,time,recordings.name",
+         """JOIN files ON versions.file_fk=files.id
+            JOIN action_logs ON versions.trigger_fk=action_logs.id
+            JOIN recordings ON action_logs.recording_fk=recordings.id""")
+}
 
 
 def get_import_args(dir_path):
@@ -32,13 +77,7 @@ def get_import_args(dir_path):
     return split_args
 
 
-def run(args):
-    """Set command line arguments and run database interface application."""
-    sys.argv[1:] = args
-    manage_db.main()
-
-
-def get_contents(path):
+def get_csv_content(path):
     """Get content of all metadata files as strings."""
     content = {}
     for filename in os.listdir(path):
@@ -50,53 +89,106 @@ def get_contents(path):
     return content
 
 
-diff = difflib.HtmlDiff()
-html = open("diff.html", "w")
+def get_db_content():
+    """Get content of all database tables as strings."""
+    content = {}
 
-# default argument for import and export
+    con = db.connect(host="localhost", user="anna", passwd="anna",
+                     db="deslas", charset="utf8")
+
+    cur = con.cursor()
+
+    for table in manage_db.Import.db_attrs:
+
+        cur.execute("SELECT * FROM {}".format(table))
+
+        # stringify and save data as list of lines
+        content[table] = [",".join(str(field) for field in record)
+                          for record in cur]
+
+    cur.close()
+    con.close()
+
+    return content
+
+
+def run(args):
+    """Set command line arguments and run database interface application."""
+    sys.argv[1:] = args
+    manage_db.main()
+
+
+def compare(content1, content2):
+    global args
+    """Compare contents of databases or csv files.
+
+    content1/content2:
+        dictionaries containing list of stringifed data
+        for each csv-file/db-table. Both contents must contain the same keys.
+    """
+
+    diff = difflib.HtmlDiff()
+
+    for key in tqdm(content1):
+
+        lines1 = content1[key]
+        lines2 = content2[key]
+
+        if lines1 == lines2:
+            print(key, "identical!")
+            sys.stdout.flush()
+        else:
+            print(key, "not identical! Diff will be created...")
+            sys.stdout.flush()
+
+            if args.format == "html":
+
+                with open(key + ".html", "w") as f:
+
+                    f.write(diff.make_file(lines1, lines2,
+                                           fromdesc=key + "1",
+                                           todesc=key + "2"))
+            else:
+                with open(key + ".diff", "w") as f:
+                    for line in difflib.unified_diff(lines1, lines2,
+                                                     fromfile=key + "1",
+                                                     tofile=key + "2"):
+
+                        f.write(line)
+                        f.write("\n")
+
+            print("done")
+            sys.stdout.flush()
+
+
+# default command line arguments for import and export
 import_args = ["import"]
 export_args = ["export"]
 
 print("**********First Import**********")
 sys.stdout.flush()
-import_args = get_import_args("shared/metadata/")
-run(import_args)
-# TODO: get sql dump
+run(get_import_args("shared/metadata/"))
+db_content1 = get_db_content()
 
 print("**********First Export**********")
 sys.stdout.flush()
 run(export_args)
-content1 = get_contents("Export/")
+csv_content1 = get_csv_content("Export/")
 
-# second import
 print("**********Second Import**********")
 sys.stdout.flush()
-import_args = get_import_args("Export/")
-run(import_args)
+run(get_import_args("Export/"))
+db_content2 = get_db_content()
 
-# TODO: get sql dump
-
-# second export
 print("**********Second Export**********")
 sys.stdout.flush()
 run(export_args)
-content2 = get_contents("Export/")
+csv_content2 = get_csv_content("Export/")
 
+print("**********Comparison of csv files**********")
+sys.stdout.flush()
+compare(csv_content1, csv_content2)
 
-# compare csv files
-for mdata in tqdm(["sessions.csv", "participants.csv", "files.csv",
-                   "file_locations.csv", "monitor.csv"]):
-
-    lines1 = content1[mdata]
-    lines2 = content2[mdata]
-
-    if lines1 == lines2:
-        print(mdata, "files are identical!")
-        sys.stdout.flush()
-    else:
-        print(mdata, "files not identical! HTML diff will be created...")
-        sys.stdout.flush()
-
-        html.write(diff.make_file(content1[mdata], content2[mdata],
-                                  fromdesc="Import", todesc="Export"))
-
+print("**********Comparison of database tables**********")
+sys.stdout.flush()
+compare(db_content1, db_content2)
