@@ -344,19 +344,21 @@ class Export(Action):
                 print("Export directory couldn't be created at", self.path)
                 sys.exit(1)
 
-    @classmethod
-    def add_progress_fields(cls, tasks, fields, check_exceptions):
-        """Add progress fields for monitor."""
-        monitor = cls.csv_attrs["monitor"]
+    @staticmethod
+    def get_progress_fields(tasks, fields, check_exceptions):
+        """Get progress fields."""
+        progress = []
 
         for task in tasks:
             # add task fields
             for field in fields:
-                monitor.append(field + " " + task)
+                progress.append(field + " " + task)
             # add check fields
             if task not in check_exceptions:
                 for field in fields:
-                    monitor.append(field + " check " + task)
+                    progress.append(field + " check " + task)
+
+        return progress
 
     def get_hash(self, name, values):
         """Get hash for writing file."""
@@ -474,8 +476,8 @@ class Export(Action):
         """Export to monitor.csv"""
         monitor_path = os.path.join(self.path, "monitor.csv")
 
-        # add progress fields for monitor
-        Export.add_progress_fields(
+        # get progress fields for monitor
+        progress = self.get_progress_fields(
             ["segmentation", "transcription/translation", "glossing"],
             ["status", "person", "start", "end"],
             ["segmentation"]
@@ -484,7 +486,7 @@ class Export(Action):
         with open(monitor_path, "w") as monitor_file:
 
             monitor_writer = csv.DictWriter(
-                monitor_file, fieldnames=self.csv_attrs["monitor"])
+                monitor_file, fieldnames=self.csv_attrs["monitor"] + progress)
             monitor_writer.writeheader()
 
             # go through table 'recordings' in database
@@ -501,6 +503,10 @@ class Export(Action):
 
                 # inital content of dict
                 monitor_dict = self.get_hash("monitor", values)
+
+                # add progress fields (initialized as empty strings) to dict
+                for field in progress:
+                    monitor_dict[field] = ""
 
                 self.get_progress_values(rec, monitor_dict)
 
@@ -542,6 +548,22 @@ class Export(Action):
                     if status == "in progress":
                         monitor_dict["person " + string + task] = assignee
                         break
+
+        # if availability is 'defer' or 'barred', find out which task it is
+        # and set this status for this task
+        if rec["availability"] == "defer" or "barred":
+
+            for task in ["segmentation", "transcription/translation",
+                         "glossing"]:
+
+                if monitor_dict["status " + task] == "not started":
+                    monitor_dict["status " + task] = rec["availability"]
+                    break
+                elif (task != "segmentation" and
+                      monitor_dict["status check " + task] == "not started"):
+
+                    monitor_dict["status check " + task] = rec["availability"]
+                    break
 
     def start(self):
         self.export_sessions()
