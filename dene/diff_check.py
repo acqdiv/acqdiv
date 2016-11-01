@@ -14,47 +14,45 @@ from tqdm import tqdm
 import MySQLdb as db
 
 # TODO: class structure
-# TODO: integrate joins -> resolving foreign keys
-# TODO: create folder for diffs
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--format", choices=["html", "txt"])
 args = parser.parse_args()
 
-
-# tables with foreign keys: (fk attributes, join command)
-# used for constructing the SQL command to get the contents of the tables
+# tables with (fk attributes, join command)-tuples for resolving foreign keys
 joins = {
     "action_log":
-        ("""action,recordings.name,files.name,task_types.name,
-            e1.short_name,e2.short_name""",
+        (["action", "recordings.name", "files.name", "task_types.name",
+          "e1.short_name", "e2.short_name"],
          """JOIN actions ON action_log.action_fk=actions.id
             JOIN recordings ON action_log.recording_fk=recordings.id
             JOIN files ON action_log.file_fk=files.id
-            JOIN task_types ON action_log.fk_task_type=task_types.id
+            JOIN task_types ON action_log.task_type_fk=task_types.id
             LEFT JOIN employees e1 ON action_log.client_fk=e1.id
             LEFT JOIN employees e2 ON action_log.assignee_fk=e2.id"""),
     "files":
-        ("recordings.name",
+        (["recordings.name"],
          "JOIN recordings ON files.recording_fk=recordings.id"),
     "progress":
-        ("recordings.name,task_types.name",
+        (["recordings.name", "task_types.name"],
          """JOIN recordings ON progress.recording_fk=recordings.id
             JOIN task_types ON progress.task_type_fk=task_types.id"""),
     "recordings":
-        ("sessions.name",
+        (["sessions.name"],
          "JOIN sessions ON session_fk=sessions.id"),
     "sessions_and_participants":
-        ("name,short_name",
+        (["name", "short_name"],
          """JOIN sessions
             ON sessions_and_participants.session_fk=sessions.id
             JOIN participants
             ON sessions_and_participants.participant_fk=participants.id"""),
     "versions":
-        ("files.name,time,recordings.name",
+        (["files.name", "time", "recordings.name"],
          """JOIN files ON versions.file_fk=files.id
             JOIN action_logs ON versions.trigger_fk=action_logs.id
-            JOIN recordings ON action_logs.recording_fk=recordings.id""")
+            JOIN recordings ON action_logs.recording_fk=recordings.id"""),
+    "participants": ([], ""),
+    "sessions": ([], "")
 }
 
 
@@ -98,9 +96,20 @@ def get_db_content():
 
     cur = con.cursor()
 
-    for table in manage_db.Import.db_attrs:
+    db_attrs = manage_db.Import.db_attrs
 
-        cur.execute("SELECT * FROM {}".format(table))
+    for table in db_attrs:
+
+        # get and stringify to be selected attributes ignoring foreign keys
+        selected_attrs = ",".join(
+            [table + "." + attr for attr in db_attrs[table]
+             if not attr.endswith("_fk")]
+            + joins[table][0])
+
+        # fetch data from table
+        cur.execute("SELECT {} FROM {} {}".format(selected_attrs,
+                                                  table,
+                                                  joins[table][1]))
 
         # stringify and save data as list of lines
         content[table] = [",".join(str(field) for field in record)
@@ -138,18 +147,25 @@ def compare(content1, content2):
             print(key, "identical!")
             sys.stdout.flush()
         else:
-            print(key, "not identical! Diff will be created...")
+            print(key, "not identical! Diff will be created...", end="")
             sys.stdout.flush()
+
+            # path for all diffs
+            path = "./diffs"
+
+            # create 'diffs' directory if it not already exists
+            if not os.path.isdir(path):
+                os.mkdir(path)
 
             if args.format == "html":
 
-                with open(key + ".html", "w") as f:
+                with open(os.path.join(path, key + ".html"), "w") as f:
 
                     f.write(diff.make_file(lines1, lines2,
                                            fromdesc=key + "1",
                                            todesc=key + "2"))
             else:
-                with open(key + ".diff", "w") as f:
+                with open(os.path.join(path, key + ".diff"), "w") as f:
                     for line in difflib.unified_diff(lines1, lines2,
                                                      fromfile=key + "1",
                                                      tofile=key + "2"):
@@ -157,7 +173,7 @@ def compare(content1, content2):
                         f.write(line)
                         f.write("\n")
 
-            print("done")
+            print("done.")
             sys.stdout.flush()
 
 
@@ -188,6 +204,8 @@ csv_content2 = get_csv_content("Export/")
 print("**********Comparison of csv files**********")
 sys.stdout.flush()
 compare(csv_content1, csv_content2)
+
+print()
 
 print("**********Comparison of database tables**********")
 sys.stdout.flush()
