@@ -109,6 +109,7 @@ class TestDbInterface:
 
             with open(filepath, "r") as f:
                 content[filename] = f.readlines()
+                f.flush()
 
         return content
 
@@ -172,12 +173,13 @@ class TestDbInterface:
                 sys.stdout.flush()
 
                 # directory path for all diffs
-                path = os.path.join(self.OUTPUT_PATH, "diff")
+                path = os.path.join(self.OUTPUT_PATH, "diffs")
 
                 # create directory for all diffs
                 if os.path.exists(path):
                     shutil.rmtree(path)
-                    os.mkdir(path)
+
+                os.mkdir(path)
 
                 if self.args.format == "html":
 

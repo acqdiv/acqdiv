@@ -1014,9 +1014,21 @@ class Import(Action):
                         # get person field
                         person = rec["person " + field]
 
-                        # get task and assignee id
+                        # log if there is no assignee
+                        # for completed/assigned tasks
+                        if person is None:
+                            self.logger.error(
+                                "Assignee missing for task '{}'|{}".format(
+                                    field,
+                                    rec["recording name"]))
+
+                            assignee_id = None
+
+                        else:
+                            assignee_id = self.id.get_assignee(person)
+
+                        # get task id
                         task_type_id = self.id.get_task_type(task)
-                        assignee_id = self.id.get_assignee(person)
 
                         if is_in_progress:
                             availability = "assigned"
