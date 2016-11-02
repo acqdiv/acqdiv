@@ -551,7 +551,7 @@ class Export(Action):
 
         # if availability is 'defer' or 'barred', find out which task it is
         # and set this status for this task
-        if rec["availability"] == "defer" or "barred":
+        if rec["availability"] == "defer" or rec["availability"] == "barred":
 
             for task in ["segmentation", "transcription/translation",
                          "glossing"]:
@@ -726,6 +726,15 @@ class Import(Action):
         # turn MySQLdb warnings into errors,
         # so that they can be caught by exceptions and be logged
         warnings.filterwarnings("error", category=MySQLdb.Warning)
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        """Close and remove file handler."""
+        super().__exit__(exc_type, exc_value, exc_traceback)
+
+        for handler in self.logger.handlers:
+            self.logger.removeHandler(handler)
+            handler.flush()
+            handler.close()
 
     def get_logger(self):
         """Produce logs if database errors occur"""
