@@ -30,7 +30,7 @@ class TestDbInterface:
               "e1.short_name", "e2.short_name"],
              """JOIN actions ON action_log.action_fk=actions.id
                 JOIN recordings ON action_log.recording_fk=recordings.id
-                JOIN files ON action_log.file_fk=files.id
+                LEFT JOIN files ON action_log.file_fk=files.id
                 JOIN task_types ON action_log.task_type_fk=task_types.id
                 LEFT JOIN employees e1 ON action_log.client_fk=e1.id
                 LEFT JOIN employees e2 ON action_log.assignee_fk=e2.id"""),
@@ -172,14 +172,10 @@ class TestDbInterface:
                 print(key, "not identical! Diff will be created...", end="")
                 sys.stdout.flush()
 
-                # directory path for all diffs
+                # create directory for all diffs if does not already exist
                 path = os.path.join(self.OUTPUT_PATH, "diffs")
-
-                # create directory for all diffs
-                if os.path.exists(path):
-                    shutil.rmtree(path)
-
-                os.mkdir(path)
+                if not os.path.isdir(path):
+                    os.mkdir(path)
 
                 if self.args.format == "html":
 
@@ -245,7 +241,8 @@ class TestDbInterface:
 def main():
     """Start test."""
     test = TestDbInterface()
-    test.import_args = test.get_import_args("metadata/")
+    # set path to original metadata files
+    test.import_args = test.get_import_args("shared/metadata/")
     test.check()
 
 if __name__ == '__main__':
