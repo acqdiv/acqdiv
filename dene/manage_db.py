@@ -528,17 +528,70 @@ class Export(Action):
             """.format(rec["id"]))
 
         # go through those progress rows
-        for progress in self.cur:
+        for progress in self.cur.fetchall():
             # get task name
             task = progress["name"]
             # get status of this task
             monitor_dict["status " + task] = progress["task_status"]
+            # check if task has a check
+            task_has_check = task != "segmentation"
 
-            # get check status for this task except for 'segmentation'
-            if task != "segmentation":
+            # get check status for this task
+            if task_has_check:
                 monitor_dict["status check " + task] = \
                     progress["quality_check"]
 
+            # get data from action log for this recording and task type
+            self.cur.execute("""
+                SELECT time, actions.action, recordings.name, task_types.name,
+                employees.first_name, employees.last_name FROM action_log
+                JOIN actions ON action_log.action_fk=actions.id
+                JOIN recordings ON action_log.recording_fk=recordings.id
+                JOIN task_types ON action_log.task_type_fk=task_types.id
+                JOIN employees ON action_log.assignee_fk=employees.id
+                WHERE action_log.recording_fk={} and action_log.task_type_fk={}
+                """.format(rec["id"], progress["task_type_fk"]))
+
+            # get all actions of this recording sorted by time
+            rec_actions = sorted(
+                [(log["action"], log["time"],
+                  log["first_name"] + " " + log["last_name"])
+                 for log in self.cur],
+                key=lambda x: x[1])
+
+            # get number actions
+            n_rec_actions = len(rec_actions)
+
+            # if there are actions for this task
+            if n_rec_actions != 0:
+
+                # get first assign time and assignee
+                monitor_dict["start " + task] = rec_actions[0][1]
+                monitor_dict["person " + task] = rec_actions[0][2]
+
+                # get first letcheck time and assignee (if existing)
+                if task_has_check:
+                    for action, time, assignee in rec_actions:
+                        if action == "letcheck":
+                            monitor_dict["start check " + task] = time
+                            monitor_dict["person check " + task] = assignee
+                            break
+
+                # get last checkin time for task and check (if existing)
+                for index in range(n_rec_actions - 2, -1, -1):
+                    action = rec_actions[index][0]
+
+                    if action == "assign" and not monitor_dict["end " + task]:
+                        monitor_dict["end " + task] = rec_actions[index + 1][1]
+                    elif (action == "letcheck"
+                          and task_has_check
+                          and not monitor_dict["end check " + task]):
+
+                        monitor_dict["end check " + task] = \
+                            rec_actions[index + 1][1]
+
+
+            # TODO: is this needed?
             # if there's an assignee,
             # check if task or its check is in progress
             if assignee:
