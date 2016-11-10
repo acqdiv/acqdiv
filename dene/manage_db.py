@@ -707,8 +707,19 @@ class Import(Action):
 
             return id
 
-        def get_assignee(self, assignee):
-            """Get id of an assignee"""
+        def get_assignee(self, assignee, task="", rec_name=""):
+            """Get id of an assignee.
+
+            task (string): name of the task, for logging
+            rec_name (string): name of the recording, for logging
+            """
+            # check if assignee name is not empty or null
+            if not assignee:
+                self.importer.logger.error(
+                    """Assignee of task {} for recording {}
+                       is missing""".format(task, rec_name))
+                return None
+
             cmd = """SELECT id FROM employees
                      WHERE CONCAT(first_name, ' ', last_name) = '{}'
                   """.format(assignee)
@@ -717,17 +728,23 @@ class Import(Action):
 
             return self.get_id(cmd, error_msg)
 
-        def get_session(self, rec):
-            """Get session code from recording name"""
-            try:
-                # try to extract session code from recording code
-                regex = r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+)?"
-                session_code = re.search(regex, rec).group()
-            except AttributeError:
-                self.logger.error(
-                    "Session code cannot be extracted from recording code",
-                    rec)
-                return None
+        def get_session(self, name, isrec=False):
+            """Get id of a session.
+
+            isrec (boolean): specify if a recording or session name is given
+            """
+            if isrec:
+                try:
+                    # try to extract session code from recording code
+                    regex = r"deslas\-[A-Z]{3,}\-\d\d\d\d\-\d\d\-\d\d(\-\d+)?"
+                    session_code = re.search(regex, name).group()
+                except AttributeError:
+                    self.logger.error(
+                        "Session code cannot be extracted from recording code "
+                        + name)
+                    return None
+            else:
+                session_code = name
 
             cmd = """SELECT id FROM sessions WHERE name = '{}'
                   """.format(session_code)
@@ -845,17 +862,17 @@ class Import(Action):
                 for logging, specify some identfier for the record
                 to be inserted (e.g. session code)
         """
-        counter = 0
+        has_error = 0
 
         try:
             self.cur.execute(cmd, values)
         except db.Error as e:
             self.logger.error("{}|{}|{}".format(repr(e), table, key))
-            counter += 1
+            has_error = 1
 
         self.con.commit()
 
-        return counter
+        return has_error
 
     def get_insertupdate_cmd(self, table):
         """Create INSERT/UPDATE command.
@@ -1019,162 +1036,251 @@ class Import(Action):
         # number of recordings not imported
         counter = 0
 
-        # go through each recording in database
+        # go through each recording in monitor.csv
         for rec in tqdm(csv.DictReader(monitor_file),
                         desc="Reading from monitor.csv", unit=" recordings"):
 
             self.empty_str_to_none(rec)
 
-            # try to get session id
-            session_id = self.id.get_session(rec["recording name"])
-            if session_id is None:
-                counter += 1
-                continue
+            # get recording name
+            rec_name = rec["recording name"]
 
-            # assignee for a recording
-            rec_assignee_id = None
-            # default value for availability of a recording
-            availability = "free"
-            # action logs for a recording
-            action_logs = []
+            # track if there are errors for this recording
+            has_error = 0
 
-            # TODO: disentangle recordings and action logs (like for progress)
-            # to improve readability? But performance might be a bit worse...
+            # get all values for this recording
+            rec_values = self.get_rec_values(rec)
 
-            # go through the tasks
-            for task in ["segmentation", "transcription/translation",
-                         "glossing"]:
-
-                # go through task and check fields
-                # and collect values for tables 'recordings' and 'action_log'
-                for is_check, field in [(False, task),
-                                        (True, "check " + task)]:
-
-                    # ignore segmentation check field
-                    if is_check and task == "segmentation":
-                        continue
-
-                    # get status field
-                    status = rec["status " + field]
-
-                    is_in_progress = status == "in progress"
-                    is_complete = status == "complete" \
-                        or status == "incomplete"
-
-                    if status == "defer" or status == "barred":
-                        availability = status
-                    elif is_in_progress or is_complete:
-                        # get person field
-                        person = rec["person " + field]
-
-                        # log if there is no assignee
-                        # for completed/assigned tasks
-                        if person is None:
-                            self.logger.error(
-                                "Assignee missing for task '{}'|{}".format(
-                                    field,
-                                    rec["recording name"]))
-
-                            assignee_id = None
-
-                        else:
-                            assignee_id = self.id.get_assignee(person)
-
-                        # get task id
-                        task_type_id = self.id.get_task_type(task)
-
-                        if is_in_progress:
-                            availability = "assigned"
-                            rec_assignee_id = assignee_id
-
-                        # get appropriate 'start' action
-                        if is_check:
-                            action_id = self.id.get_action("letcheck")
-                        else:
-                            action_id = self.id.get_action("assign")
-
-                        # if all id's could be fetched
-                        if assignee_id and task_type_id and action_id:
-
-                            # add to action_logs list
-                            action_logs.append([
-                                rec["start " + field], action_id, None, None,
-                                task_type_id, None, assignee_id, None])
-
-                            if is_complete:
-                                # add additional log with checkin action
-                                action_id = self.id.get_action("checkin")
-                                if action_id:
-                                    action_logs.append([
-                                        rec["end " + field], action_id, None,
-                                        None, task_type_id, None,
-                                        assignee_id, None])
-
-            # skip if a recording is assigned but there is no assignee (id)
-            if availability == "assigned" and not rec_assignee_id:
+            if rec_values is None:
                 counter += 1
                 continue
 
             # insert recording
+            has_error = self.execute(recordings_cmd, rec_values,
+                                     "recordings", rec_name)
 
-            rec_values = 2*(
-                rec["recording name"], session_id, availability,
-                rec_assignee_id, rec["quality"], rec["child speech"],
-                rec["directedness"], rec["Dene"], rec["audio"], rec["notes"]
-            )
-
-            counter += self.execute(recordings_cmd, rec_values, "recordings",
-                                    rec["recording name"])
-
-            # get id of just imported recording
-            rec["id"] = self.id.get_rec(rec["recording name"])
-            if rec["id"] is None:
+            # get id of just imported recording and add to rec hash if no error
+            if has_error:
+                counter += 1
                 continue
+            else:
+                rec["id"] = self.id.get_rec(rec_name)
 
-            # populate tables action_log and progress
-            self.fill_action_log(action_log_cmd, action_logs, rec)
-            self.fill_progress(progress_cmd, rec)
+            # get progress records and action logs for this recording
+            progress_records = self.get_progress_values(rec)
+            action_logs = self.get_action_log_values(rec)
+
+            if progress_records is None or action_logs is None:
+                has_error = 1
+
+            # insert progress records if there are no previous errors
+            if not has_error:
+                for progress in progress_records:
+                    has_error = self.execute(progress_cmd, progress,
+                                             "progress", rec_name)
+                    if has_error:
+                        break
+
+            # insert action logs if there are no previous errors
+            if not has_error:
+                for action_log in action_logs:
+                    has_error = self.execute(action_log_cmd, action_log,
+                                             "action_log", rec_name)
+                    if has_error:
+                        break
+
+            # if anything went wrong until here
+            # delete every item in the database associated with this recording
+            if has_error:
+                # first delete action logs and progress records associated
+                # with this recording
+                for table in ["action_log", "progress"]:
+                    self.cur.execute(
+                        "DELETE FROM {} WHERE recording_fk='{}'".format(
+                            table, rec["id"]))
+                    self.con.commit()
+
+                # then delete recording itself
+                self.cur.execute(
+                    "DELETE FROM recordings WHERE id = '{}'".format(rec["id"]))
+                self.con.commit()
 
         monitor_file.close()
 
         print(counter, "recordings not imported")
         sys.stdout.flush()
 
-    def fill_action_log(self, action_log_cmd, action_logs, rec):
-        """Insert or update action logs for a recording"""
-        # insert/update actions of a recording to action_log
-        for action_values in action_logs:
-            # add recording id
-            action_values[2] = rec["id"]
-            self.execute(action_log_cmd, 2*action_values, "action_log",
-                         rec["recording name"])
+    def get_rec_values(self, rec):
+        """Insert or update recordings."""
+        # get recording name
+        rec_name = rec["recording name"]
+        # get session id
+        session_id = self.id.get_session(rec_name, isrec=True)
+        if session_id is None:
+            return None
 
-    def fill_progress(self, progress_cmd, rec):
-        """Insert or update progress records for a recording"""
+        # default values
+        availability = "free"
+        assignee_id = None
+
+        # find out availability and assignee id for a recording by iterating
+        # through monitor fields backwards and break loop as soon one of the
+        # following status's is found: 'in progress', 'defer' or 'barred'
+        # and overwrite the default values for availability and assignee
+        for task in ["glossing", "transcription/translation", "segmentation"]:
+
+            # get task status and assignee
+            task_status = rec["status " + task]
+            task_assignee = rec["person " + task]
+
+            # get check status and assignee
+            # additionally check if task has a check field
+            if task == "segmentation":
+                check_status = None
+                check_assignee = None
+            else:
+                check_status = rec["status check " + task]
+                check_assignee = rec["person check " + task]
+
+            # overwrite default values for availability and assignee if status
+            # is 'in progress'; if status is 'defer' or 'barred'
+            # only overwrite availability
+            if check_status == "in progress":
+                availability = "assigned"
+                assignee_id = self.id.get_assignee(
+                    check_assignee, task=task + "/check", rec_name=rec_name)
+                if assignee_id is None:
+                    return None
+                break
+            elif check_status in ["defer", "barred"]:
+                availability = check_status
+                break
+            elif task_status == "in progress":
+                availability = "assigned"
+                assignee_id = self.id.get_assignee(
+                    task_assignee, task=task, rec_name=rec_name)
+                if assignee_id is None:
+                    return None
+                break
+            elif task_status in ["defer", "barred"]:
+                availability = "assigned"
+                break
+
+        # bundle all values of a recording and return them
+        return 2*(rec["recording name"], session_id, availability,
+                  assignee_id, rec["quality"], rec["child speech"],
+                  rec["directedness"], rec["Dene"], rec["audio"], rec["notes"])
+
+    def get_progress_values(self, rec):
+        """Get progress values for a recording"""
+        # collect all progress records associated with a recording
+        progress_values = []
+
         # go through each task type from monitor.csv
         for task in ["segmentation", "transcription/translation", "glossing"]:
 
+            # get id of this task
             task_type_id = self.id.get_task_type(task)
-
-            if task_type_id is None:
-                continue
-
             # get status of this task
             task_status = rec["status " + task]
 
-            if task_status == "barred" or task_status == "defer":
+            # 'defer' and 'barred' status become 'not started' in progress
+            if task_status in ["barred", "defer"]:
                 task_status = "not started"
-
+            # get status for quality check
             if task == "segmentation":
                 quality_check = "not required"
             else:
                 quality_check = rec["status check " + task]
 
-            progress_values = 2*(rec["id"], task_type_id, task_status,
-                                 quality_check, None)
+            progress_values.append(
+                2*(rec["id"], task_type_id, task_status, quality_check, None))
 
-            self.execute(progress_cmd, progress_values,
-                         "progress", rec["recording name"])
+        return progress_values
+
+    def get_action_log_values(self, rec):
+        """Get action log values for a recording"""
+        # collect all action logs associated with a recording
+        action_logs = []
+        # get recording name and id
+        rec_name = rec["recording name"]
+        rec_id = rec["id"]
+
+        # only actions 'assign', 'letcheck' and 'checkin' are relevant
+        # for monitor, so get id of only those actions.
+        assign_id = self.id.get_action("assign")
+        checkin_id = self.id.get_action("checkin")
+        letcheck_id = self.id.get_action("letcheck")
+
+        # go through every task
+        for task in ["segmentation", "transcription/translation", "glossing"]:
+
+            # get task id and status
+            task_type_id = self.id.get_task_type(task)
+            task_status = rec["status " + task]
+
+            # if task status is 'complete', 'incomplete' or 'in progress'
+            # append an action log with the right action, time and assignee
+            if task_status in ["complete", "incomplete", "in progress"]:
+
+                # get id of task assignee
+                task_assignee_id = self.id.get_assignee(
+                    rec["person " + task], task=task, rec_name=rec_name)
+                if task_assignee_id is None:
+                    return None
+
+                # for the task status's 'complete' and 'incomplete'
+                # the actions 'assign' and 'checkin' are triggered
+                if task_status == "complete" or task_status == "incomplete":
+                    action_logs.append(
+                        2*(rec["start " + task], assign_id, rec_id, None,
+                           task_type_id, None, task_assignee_id, None))
+                    action_logs.append(
+                        2*(rec["end " + task], checkin_id, rec_id, None,
+                           task_type_id, None, task_assignee_id, None))
+                # for task status 'in progress'
+                # the action 'assign' is triggered
+                elif task_status == "in progress":
+                    action_logs.append(
+                        2*(rec["start " + task], assign_id, rec_id, None,
+                           task_type_id, None, task_assignee_id, None))
+
+            # do the same for check fields
+            # first check if task has a check field
+            if task != "segmentation":
+
+                # get check status
+                check_status = rec["status check " + task]
+
+                if check_status in ["complete", "incomplete", "in progress"]:
+
+                    # get id of check assignee
+                    check_assignee_id = self.id.get_assignee(
+                        rec["person check " + task], task=task + "/check",
+                        rec_name=rec_name)
+                    if check_assignee_id is None:
+                        return None
+
+                    # for the check status's 'complete' and 'incomplete'
+                    # the actions 'assign' and 'checkin' are triggered
+                    if check_status in ["complete", "incomplete"]:
+                        action_logs.append(
+                            2*(rec["start check " + task], letcheck_id,
+                               rec_id, None, task_type_id, None,
+                               check_assignee_id, None))
+                        action_logs.append(
+                            2*(rec["end check " + task], checkin_id,
+                               rec_id, None, task_type_id, None,
+                               check_assignee_id, None))
+                    # for check status 'in progress'
+                    # the action 'letcheck' is triggered
+                    elif check_status == "in progress":
+                        action_logs.append(
+                            2*(rec["start check " + task], letcheck_id,
+                               rec_id, None, task_type_id, None,
+                               check_assignee_id, None))
+
+        return action_logs
 
     def import_files(self):
         """Populate table 'files'.
@@ -1298,3 +1404,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# TODO: id getter -> function name in log
