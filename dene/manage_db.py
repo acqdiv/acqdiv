@@ -34,7 +34,7 @@ except ImportError:
 
 
 class DB_Interface:
-    """Interface for working with the Dene database"""
+    """Interface for working with the Dene database."""
 
     db_credentials = {"host": "localhost",
                       "user": "anna",
@@ -327,7 +327,7 @@ class Export(Action):
     }
 
     def __init__(self, args, **db_credentials):
-        """Create 'Export' directory"""
+        """Create 'Export' directory."""
         super().__init__(args, dict_cur=True, **db_credentials)
 
         # set path for 'Export' directory
@@ -401,7 +401,7 @@ class Export(Action):
                 sessions_writer.writerow(self.get_hash("sessions", values))
 
     def export_participants(self):
-        """Export to participants.csv"""
+        """Export to participants.csv."""
         participants_path = os.path.join(self.path, "participants.csv")
 
         with open(participants_path, "w") as participants_file:
@@ -428,7 +428,7 @@ class Export(Action):
                                                            values))
 
     def export_files_locations(self):
-        """Export to files.csv and file_locations.csv"""
+        """Export to files.csv and file_locations.csv."""
         files_path = os.path.join(self.path, "files.csv")
         locations_path = os.path.join(self.path, "file_locations.csv")
 
@@ -473,7 +473,7 @@ class Export(Action):
                 locations_writer.writerow(self.get_hash("locations", values))
 
     def export_monitor(self):
-        """Export to monitor.csv"""
+        """Export to monitor.csv."""
         monitor_path = os.path.join(self.path, "monitor.csv")
 
         # get progress fields for monitor
@@ -590,18 +590,6 @@ class Export(Action):
                         monitor_dict["end check " + task] = \
                             rec_actions[index + 1][1]
 
-
-            # TODO: is this needed?
-            # if there's an assignee,
-            # check if task or its check is in progress
-            if assignee:
-                for string, status in [("", progress["task_status"]),
-                                       ("check ", progress["quality_check"])]:
-
-                    if status == "in progress":
-                        monitor_dict["person " + string + task] = assignee
-                        break
-
         # if availability is 'defer' or 'barred', find out which task it is
         # and set this status for this task
         if rec["availability"] == "defer" or rec["availability"] == "barred":
@@ -691,7 +679,7 @@ class Import(Action):
     }
 
     class ID:
-        """Class providing methods for getting IDs"""
+        """Class providing methods for getting IDs."""
 
         def __init__(self, outer_class):
             self.importer = outer_class
@@ -707,31 +695,38 @@ class Import(Action):
 
             return id
 
-        def get_assignee(self, assignee, task="", rec_name=""):
+        def get_assignee(self, assignee, task="", rec_name="", func=""):
             """Get id of an assignee.
 
-            task (string): name of the task, for logging
-            rec_name (string): name of the recording, for logging
+            task (string):
+                name of the task, for logging
+            rec_name (string):
+                name of the recording, for logging
+            func (string):
+                name of function that called this function, for logging
             """
             # check if assignee name is not empty or null
             if not assignee:
                 self.importer.logger.error(
                     """Assignee of task {} for recording {}
-                       is missing""".format(task, rec_name))
+                       is missing|{}""".format(task, rec_name, func))
                 return None
 
             cmd = """SELECT id FROM employees
                      WHERE CONCAT(first_name, ' ', last_name) = '{}'
                   """.format(assignee)
-            error_msg = """Assignee '{}' not in table 'employees'
-                        """.format(assignee)
+            error_msg = """Assignee '{}' not in table 'employees'|{}
+                        """.format(assignee, func)
 
             return self.get_id(cmd, error_msg)
 
-        def get_session(self, name, isrec=False):
+        def get_session(self, name, isrec=False, func=""):
             """Get id of a session.
 
-            isrec (boolean): specify if a recording or session name is given
+            isrec (boolean):
+                specify if a recording or session name is given
+            func (string):
+                name of function that called this function, for logging
             """
             if isrec:
                 try:
@@ -748,20 +743,20 @@ class Import(Action):
 
             cmd = """SELECT id FROM sessions WHERE name = '{}'
                   """.format(session_code)
-            error_msg = """Session code '{}' not in table 'sessions'
-                        """.format(session_code)
+            error_msg = """Session code '{}' not in table 'sessions|{}'
+                        """.format(session_code, func)
 
             return self.get_id(cmd, error_msg)
 
         def get_action(self, action):
-            """Get id of an action name"""
+            """Get id of an action name."""
             cmd = "SELECT id FROM actions WHERE action = '{}'".format(action)
             error_msg = "Action '{}' not in table 'actions' ".format(action)
 
             return self.get_id(cmd, error_msg)
 
         def get_task_type(self, task_type):
-            """Get id of a task type"""
+            """Get id of a task type."""
             cmd = """SELECT id FROM task_types WHERE name = '{}'
                   """.format(task_type)
             error_msg = """Task type '{}' not in table 'task_types'
@@ -769,16 +764,20 @@ class Import(Action):
 
             return self.get_id(cmd, error_msg)
 
-        def get_rec(self, rec):
-            """Get id of a recording"""
+        def get_rec(self, rec, func=""):
+            """Get id of a recording.
+
+            func (string):
+                name of function that called this function, for logging
+            """
             cmd = "SELECT id from recordings WHERE name = '{}'".format(rec)
-            error_msg = """Recording name '{}' not in table 'recordings'
-                        """.format(rec)
+            error_msg = """Recording name '{}' not in table 'recordings'|{}
+                        """.format(rec, func)
 
             return self.get_id(cmd, error_msg)
 
         def get_participant(self, shortname):
-            """Get id of a participant"""
+            """Get id of a participant."""
             cmd = """SELECT id FROM participants WHERE short_name = '{}'
                   """.format(shortname)
             error_msg = """Short name '{}' not in table 'participants'
@@ -807,7 +806,7 @@ class Import(Action):
             handler.close()
 
     def get_logger(self):
-        """Produce logs if database errors occur"""
+        """Produce logs if database errors occur."""
         logger = logging.getLogger(__name__)
         logger.setLevel(logging.INFO)
 
@@ -821,7 +820,7 @@ class Import(Action):
         return logger
 
     def wipe(self, table, associated_tables=[]):
-        """Delete all rows of a table"""
+        """Delete all rows of a table."""
         # disable foreign key checks in all tables linked to this table
         for associated_table in associated_tables:
             self.cur.execute("""ALTER TABLE {} NOCHECK CONSTRAINT all
@@ -843,7 +842,7 @@ class Import(Action):
         self.con.commit()
 
     def empty_str_to_none(self, row):
-        """Set all empty strings to None"""
+        """Set all empty strings to None."""
         for field in row:
             if not row[field]:
                 row[field] = None
@@ -891,7 +890,7 @@ class Import(Action):
                     )
 
     def import_sessions(self):
-        """Populate table 'sessions' by import from sessions.csv"""
+        """Populate table 'sessions' by import from sessions.csv."""
         # try reading sessions.csv
         try:
             sessions_file = open(self.args.sessions, "r")
@@ -929,7 +928,8 @@ class Import(Action):
 
     def link_sessions_participants(self, participants_roles, session_code):
         """Populate table 'sessions_and_participants'."""
-        session_id = self.id.get_session(session_code)
+        session_id = self.id.get_session(session_code,
+                                         func="link_sessions_participants")
 
         # if participants and roles is not empty and session code is not null
         if participants_roles and session_id:
@@ -963,7 +963,7 @@ class Import(Action):
                              key="{}/{}".format(session_code, shortname))
 
     def import_participants(self):
-        """Populate table 'participants' by import from participants.csv"""
+        """Populate table 'participants' by import from participants.csv."""
         # try reading participants.csv
         try:
             participants_file = open(self.args.participants, "r")
@@ -1064,7 +1064,7 @@ class Import(Action):
                 counter += 1
                 continue
             else:
-                rec["id"] = self.id.get_rec(rec_name)
+                rec["id"] = self.id.get_rec(rec_name, func="import_monitor")
 
             # get progress records and action logs for this recording
             progress_records = self.get_progress_values(rec)
@@ -1115,7 +1115,8 @@ class Import(Action):
         # get recording name
         rec_name = rec["recording name"]
         # get session id
-        session_id = self.id.get_session(rec_name, isrec=True)
+        session_id = self.id.get_session(rec_name, isrec=True,
+                                         func="get_rec_values")
         if session_id is None:
             return None
 
@@ -1148,7 +1149,8 @@ class Import(Action):
             if check_status == "in progress":
                 availability = "assigned"
                 assignee_id = self.id.get_assignee(
-                    check_assignee, task=task + "/check", rec_name=rec_name)
+                    check_assignee, task=task + "/check",
+                    rec_name=rec_name, func="get_rec_values")
                 if assignee_id is None:
                     return None
                 break
@@ -1158,7 +1160,8 @@ class Import(Action):
             elif task_status == "in progress":
                 availability = "assigned"
                 assignee_id = self.id.get_assignee(
-                    task_assignee, task=task, rec_name=rec_name)
+                    task_assignee, task=task,
+                    rec_name=rec_name, func="get_rec_values")
                 if assignee_id is None:
                     return None
                 break
@@ -1167,12 +1170,12 @@ class Import(Action):
                 break
 
         # bundle all values of a recording and return them
-        return 2*(rec["recording name"], session_id, availability,
+        return 2*(rec_name, session_id, availability,
                   assignee_id, rec["quality"], rec["child speech"],
                   rec["directedness"], rec["Dene"], rec["audio"], rec["notes"])
 
     def get_progress_values(self, rec):
-        """Get progress values for a recording"""
+        """Get progress values for a recording."""
         # collect all progress records associated with a recording
         progress_values = []
 
@@ -1199,7 +1202,7 @@ class Import(Action):
         return progress_values
 
     def get_action_log_values(self, rec):
-        """Get action log values for a recording"""
+        """Get action log values for a recording."""
         # collect all action logs associated with a recording
         action_logs = []
         # get recording name and id
@@ -1225,7 +1228,8 @@ class Import(Action):
 
                 # get id of task assignee
                 task_assignee_id = self.id.get_assignee(
-                    rec["person " + task], task=task, rec_name=rec_name)
+                    rec["person " + task], task=task,
+                    rec_name=rec_name, func="get_action_log_values")
                 if task_assignee_id is None:
                     return None
 
@@ -1257,7 +1261,7 @@ class Import(Action):
                     # get id of check assignee
                     check_assignee_id = self.id.get_assignee(
                         rec["person check " + task], task=task + "/check",
-                        rec_name=rec_name)
+                        rec_name=rec_name, func="get_action_log_values")
                     if check_assignee_id is None:
                         return None
 
@@ -1323,7 +1327,8 @@ class Import(Action):
 
             self.empty_str_to_none(file)
 
-            rec_id = self.id.get_rec(file["Recording code"])
+            rec_id = self.id.get_rec(file["Recording code"],
+                                     func="import_files")
             if rec_id is None:
                 counter += 1
                 continue
@@ -1379,7 +1384,7 @@ class Import(Action):
             self.wipe(table)
 
     def start(self):
-        """Import from all files"""
+        """Import from all files."""
         if self.args.radical:
             self.wipe_all()
 
@@ -1398,11 +1403,9 @@ class Import(Action):
 
 
 def main():
-    """Start database interface application"""
+    """Start database interface application."""
     DB_Interface().run()
 
 
 if __name__ == '__main__':
     main()
-
-# TODO: id getter -> function name in log
