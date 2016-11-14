@@ -33,14 +33,16 @@ class CorpusProcessor(object):
         self.engine = engine
         # Create the correct SessionParser (e.g. ToolboxParser, XMLParser)
         self.parser_factory = SessionParser.create_parser_factory(self.cfg)
+        self.unique_speakers = {}
 
     def process_corpus(self):
         """ Loops all raw corpus session input files and processes each and the commits the data to the database.
         """
         for session_file in glob.glob(self.cfg['paths']['sessions']):
             print("\t", session_file)
-            s = SessionProcessor(self.cfg, session_file, 
-                    self.parser_factory, self.engine)
+            s = SessionProcessor(self.cfg, session_file,
+                                 self.parser_factory, self.engine,
+                                 self.unique_speakers)
             try:
                 s.process_session()
             except Exception as e:
@@ -55,7 +57,7 @@ class SessionProcessor(object):
     """ SessionProcessor invokes a parser to get the extracted data, and then interacts
         with the SQLAlchemy ORM backend to push data to it.
     """
-    def __init__(self, cfg, file_path, parser_factory, engine):
+    def __init__(self, cfg, file_path, parser_factory, engine, unique_speakers):
         """ Init parser with corpus config, file path, a parser factory and a database engine.
 
         Args:
@@ -67,6 +69,7 @@ class SessionProcessor(object):
         self.config = cfg
         self.file_path = file_path
         self.parser_factory = parser_factory
+        self.unique_speakers = unique_speakers
 
         # TODO: do we need these variables?
         self.language = self.config['corpus']['language']
@@ -96,16 +99,28 @@ class SessionProcessor(object):
         self.session = db.Session(**d)
 
         # Get speaker metadata and populate the speakers table
-        self.speaker_entries = []
         for speaker in self.parser.next_speaker():
             d = {}
             for k, v in speaker.items():
                 if k in self.config['speaker_labels'].keys():
                     d[self.config['speaker_labels'][k]] = v
-            # TODO: move this post processing (before the age, etc.) if it improves performance
             d['corpus'] = self.corpus
             d['language'] = self.language
-            self.session.speakers.append(Speaker(**d))
+
+            t = (d.get('name'), d.get('birthdate'), d.get('speaker_label'))
+            if t not in self.unique_speakers:
+                # create unique speaker row
+                d_ = {}
+                d_['corpus'] = d.get('corpus')
+                d_['speaker_label'] = d.get('speaker_label')
+                d_['name'] = d.get('name')
+                d_['birthdate'] = d.get('birthdate')
+                self.unique_speakers[t] = db.UniqueSpeaker(**d_)
+
+            s = Speaker(**d)
+            self.unique_speakers[t].speakers.append(s)
+            self.session.speakers.append(s)
+
 
         # Get the sessions utterances, words and morphemes to populate those db tables
         for utterance, words, morphemes in self.parser.next_utterance():
@@ -116,8 +131,25 @@ class SessionProcessor(object):
                 continue
             utterance['corpus'] = self.corpus
             utterance['language'] = self.language
+            try:
+                this_speaker = next(filter(
+                    lambda s: s.speaker_label == utterance['speaker_label'],
+                    self.session.speakers))
+                this_unique_speaker = self.unique_speakers[
+                    (this_speaker.name, this_speaker.birthdate,
+                    this_speaker.speaker_label)]
+            except KeyError:
+                this_speaker = None
+                this_unique_speaker = None
+            except StopIteration:
+                this_speaker = None
+                this_unique_speaker = None
 
             u = Utterance(**utterance)
+            if this_speaker is not None:
+                this_speaker.utterances.append(u)
+            if this_unique_speaker is not None:
+                this_unique_speaker.utterances.append(u)
 
             wlen = len(words)
             mlen = len(morphemes)
@@ -180,6 +212,7 @@ class SessionProcessor(object):
         session = self.Session()
         try:
             session.add(self.session)
+            session.add_all(self.unique_speakers.values())
             session.commit()
         except:
             # TODO: print some error message? log it?

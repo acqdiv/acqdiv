@@ -86,6 +86,7 @@ class Speaker(Base):
     birthdate = Column(Text, nullable=True, unique=False)
 
     # SQLAlchemy relationship definitions (hook to unique speakers?)
+    utterances = relationship('Utterance', backref='Speaker')
 
     # TODO: optional pretty formatting for printing
     def __repr__(self):
@@ -103,6 +104,10 @@ class UniqueSpeaker(Base):
     birthdate = Column(Text, nullable=True, unique=False)
     gender = Column(Text, nullable=True, unique=False)
     corpus = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    # SQLAlchemy relationship definitions
+    speakers = relationship('Speaker', backref='unique_speaker')
+    utterances = relationship('Utterance', backref='unique_speaker')
+
 
 
 class Utterance(Base):
@@ -118,9 +123,10 @@ class Utterance(Base):
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
     source_id = Column(Text, nullable=True, unique=False)
-    # uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
     corpus = Column(Text, nullable=False, unique=False)
     language = Column(Text, nullable=False, unique=False)
+    speaker_id_fk = Column(Integer, ForeignKey('speakers.id'))
+    uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
     speaker_label = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     addressee = Column(Text, nullable=True, unique=False)
     utterance_raw = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
@@ -138,8 +144,8 @@ class Utterance(Base):
     comment = Column(Text, nullable=True, unique=False)
     warning = Column(Text, nullable=True, unique=False)
     # SQLAlchemy relationship definitions:
-    words = relationship('Word', backref='Utterance')
-    morphemes = relationship('Morpheme', backref='Utterance')
+    words = relationship('Word', backref='utterance')
+    morphemes = relationship('Morpheme', backref='utterance')
 
 
 class Word(Base):
@@ -160,7 +166,7 @@ class Word(Base):
     word_target = Column(Text, nullable=True, unique=False)
     warning = Column(Text, nullable=True, unique=False)
     # SQLAlchemy relationship definitions:
-    morphemes = relationship('Morpheme', backref='Word')
+    morphemes = relationship('Morpheme', backref='word')
 
 
 class Morpheme(Base):
