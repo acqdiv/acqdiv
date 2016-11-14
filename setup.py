@@ -30,7 +30,7 @@ setup(
         'Intended Audience :: Other Audience',
         'Topic :: Text Processing :: Linguistic',
 
-        'License :: OSI Approved :: MIT License',
+        'License :: Other/Proprietary License',
 
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
