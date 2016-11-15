@@ -521,6 +521,7 @@ class Export(Action):
         else:
             assignee = ""
 
+        # get progress records associated with this recording
         self.cur.execute("""
             SELECT progress.*, name FROM progress
             JOIN task_types ON progress.task_type_fk=task_types.id
@@ -559,7 +560,7 @@ class Export(Action):
                  for log in self.cur],
                 key=lambda x: x[1])
 
-            # get number actions
+            # get number of actions
             n_rec_actions = len(rec_actions)
 
             # if there are actions for this task
@@ -1105,6 +1106,8 @@ class Import(Action):
                     "DELETE FROM recordings WHERE id = '{}'".format(rec["id"]))
                 self.con.commit()
 
+                counter += 1
+
         monitor_file.close()
 
         print(counter, "recordings not imported")
@@ -1166,7 +1169,7 @@ class Import(Action):
                     return None
                 break
             elif task_status in ["defer", "barred"]:
-                availability = "assigned"
+                availability = task_status
                 break
 
         # bundle all values of a recording and return them

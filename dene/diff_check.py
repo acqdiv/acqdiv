@@ -108,7 +108,7 @@ class TestDbInterface:
             filepath = os.path.join(self.EXPORT_PATH, filename)
 
             with open(filepath, "r") as f:
-                content[filename] = f.readlines()
+                content[filename] = sorted(f.readlines())
                 f.flush()
 
         return content
@@ -136,9 +136,9 @@ class TestDbInterface:
             cur.execute("SELECT {} FROM {} {}".format(
                 selected_attrs, table, self.JOIN_DATA[table][1]))
 
-            # stringify and save data as list of lines
-            content[table] = [",".join(str(field) for field in record)
-                              for record in cur]
+            # stringify and save data as sorted list of lines
+            content[table] = sorted([",".join(str(field) for field in record)
+                                    for record in cur])
 
         cur.close()
         con.close()
