@@ -38,13 +38,18 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
 
-    keywords='linguistics diachrony conlanging',
+    keywords='data linguistics',
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
     packages=['pipeline', 'pyacqdiv'],
 
-    # If there are data files included in your packages that need to be
-    # have to be included in MANIFEST.in as well.
-
+    include_package_data=True,
+    zip_safe=False,
+    install_requires=requires,
+    entry_points={
+        'console_scripts': ['acqdiv=pyacqdiv.scripts.cli:main'],
+    },
+    tests_require=[],
+    test_suite="acqdiv"
 )
