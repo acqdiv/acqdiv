@@ -42,7 +42,7 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=['pipeline'],
+    packages=['pipeline', 'pyacqdiv'],
 
     # If there are data files included in your packages that need to be
     # have to be included in MANIFEST.in as well.
