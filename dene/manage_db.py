@@ -19,6 +19,8 @@ import logging
 import warnings
 import argparse
 
+from datetime import datetime, timedelta
+
 try:
     import MySQLdb as db
     import MySQLdb.cursors
@@ -558,7 +560,7 @@ class Export(Action):
                 [(log["action"], log["time"],
                   log["first_name"] + " " + log["last_name"])
                  for log in self.cur],
-                key=lambda x: x[1])
+                key=lambda x: (x[1], x[0]))
 
             # get number of actions
             n_rec_actions = len(rec_actions)
@@ -1043,6 +1045,8 @@ class Import(Action):
 
             self.empty_str_to_none(rec)
 
+            self.clean_up_monitor(rec)
+
             # get recording name
             rec_name = rec["recording name"]
 
@@ -1112,6 +1116,72 @@ class Import(Action):
 
         print(counter, "recordings not imported")
         sys.stdout.flush()
+
+    def clean_up_monitor(self, rec):
+        """Do some cleaning up before importing monitor data.
+
+        Assign specific dates/times for missing start and end fields.
+        Unknown dates always get the time '23:59:99'.
+        Unknown task starts get the date '1111-11-11'.
+        Unknown task ends get the date from the task start.
+        Unknown check starts get the date from the task end.
+        Unknown check ends get the date value from check start + 1 day
+        """
+        def get_dt(date, obj=False):
+            """Helper function for creating dates that are unknown."""
+
+            formats = ["%Y-%m-%d", "%Y.%m.%d", "%Y-%m-%d %H:%M:%S",
+                       "%Y.%m.%d %H:%M:%S"]
+
+            for frmt in formats:
+                try:
+                    dt = datetime.strptime(date, frmt)
+                except ValueError:
+                    pass
+                else:
+                    dt = dt.replace(hour=23, minute=59, second=59)
+
+                    if obj:
+                        return dt
+                    else:
+                        return dt.strftime("%Y-%m-%d %H:%M:%S")
+
+        # possible values for unknown dates
+        empty_values = ["", "-", "?", None]
+
+        for task in ["segmentation", "transcription/translation", "glossing"]:
+
+            task_status = rec["status " + task]
+
+            if task_status in ["complete", "incomplete", "in progress"]:
+
+                if rec["start " + task] in empty_values:
+                    rec["start " + task] = "1111-11-11 23:59:59"
+
+                if task_status in ["complete", "incomplete"]:
+
+                    if rec["end " + task] in empty_values:
+                        rec["end " + task] = get_dt(rec["start " + task])
+
+            if task != "segmentation":
+                check_status = rec["status check " + task]
+
+                if check_status in ["complete", "incomplete", "in progress"]:
+
+                    if rec["start check " + task] in empty_values:
+                        rec["start check " + task] = get_dt(rec["end " + task])
+
+                    if check_status in ["complete", "incomplete"]:
+
+                        if rec["end check " + task] in empty_values:
+
+                            # add one day since two different checkins are
+                            # possible: after assign and letcheck
+                            org_date = get_dt(rec["start check " + task],
+                                              obj=True)
+
+                            rec["end check " + task] = \
+                                org_date + timedelta(days=1)
 
     def get_rec_values(self, rec):
         """Insert or update recordings."""
