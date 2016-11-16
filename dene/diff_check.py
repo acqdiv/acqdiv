@@ -1,8 +1,17 @@
 """This module checks if the module manage_db.py works properly.
 
-It imports and exports twice and compares the content of the databases and
-csv files. If the contents are not identical, an file will be created
-where the lines that differ are shown. Output format can be a txt or html file.
+It imports and exports the metadata of Dene twice and compares the content of
+the databases and csv files. If the contents are not identical, a file will be
+created where the lines that differ are highlighted.
+
+Output format can be a txt or html file (default: txt) and can be set by the
+argument --format. This test module has to lie in the same directory as the
+module manage_db.py. The module will create a directory called
+'Unittest-diffcheck_<date>' where the files of both exports, the database logs
+of the import and all diffs are contained.
+
+Example test:
+    python3 diff_check.py [--format txt|html]
 """
 
 
@@ -242,7 +251,7 @@ def main():
     """Start test."""
     test = TestDbInterface()
     # set path to original metadata files
-    test.import_args = test.get_import_args("shared/metadata/")
+    # test.import_args = test.get_import_args("shared/metadata/")
     test.check()
 
 if __name__ == '__main__':

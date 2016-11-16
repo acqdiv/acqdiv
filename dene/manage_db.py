@@ -3,7 +3,8 @@
 This module can be used to manipulate the database over the terminal by using
 one of the following commands: import, export, send, assign, update, reassign,
 checkin, letcheck, feedback, handover, reset, create.
-For more details on these commands, run python3 db_manager.py [command] --help.
+For more details on these commands run like this:
+    python3 db_manager.py [command] --help
 
 The following external python modules (which can be installed by pip) are used:
     - mysqlclient (interface to MySQL)
@@ -35,7 +36,7 @@ except ImportError:
     sys.exit(1)
 
 
-class DB_Interface:
+class DBInterface:
     """Interface for working with the Dene database."""
 
     db_credentials = {"host": "localhost",
@@ -555,7 +556,7 @@ class Export(Action):
                 WHERE action_log.recording_fk={} and action_log.task_type_fk={}
                 """.format(rec["id"], progress["task_type_fk"]))
 
-            # get all actions of this recording sorted by time
+            # get all actions of this recording sorted by time and action
             rec_actions = sorted(
                 [(log["action"], log["time"],
                   log["first_name"] + " " + log["last_name"])
@@ -1121,11 +1122,11 @@ class Import(Action):
         """Do some cleaning up before importing monitor data.
 
         Assign specific dates/times for missing start and end fields.
-        Unknown dates always get the time '23:59:99'.
+        Unknown dates always get the time '23:59:59'.
         Unknown task starts get the date '1111-11-11'.
         Unknown task ends get the date from the task start.
         Unknown check starts get the date from the task end.
-        Unknown check ends get the date value from check start + 1 day
+        Unknown check ends get the date from check start + 1 day
         """
         def get_dt(date, obj=False):
             """Helper function for creating dates that are unknown."""
@@ -1175,8 +1176,9 @@ class Import(Action):
 
                         if rec["end check " + task] in empty_values:
 
-                            # add one day since two different checkins are
-                            # possible: after assign and letcheck
+                            # add one day to avoid dupblicates since two
+                            # different checkins are possible:
+                            # after assign and letcheck
                             org_date = get_dt(rec["start check " + task],
                                               obj=True)
 
@@ -1477,7 +1479,7 @@ class Import(Action):
 
 def main():
     """Start database interface application."""
-    DB_Interface().run()
+    DBInterface().run()
 
 
 if __name__ == '__main__':
