@@ -39,9 +39,9 @@ except ImportError:
 class DBInterface:
     """Interface for working with the Dene database."""
 
-    db_credentials = {"host": "localhost",
-                      "user": "anna",
-                      "passwd": "anna",
+    db_credentials = {"host": "mysqlprod01.uzh.ch",
+                      "user": "deslas",
+                      "passwd": "",
                       "db": "deslas",
                       "charset": "utf8"}
 
