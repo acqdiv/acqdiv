@@ -517,13 +517,6 @@ class Export(Action):
 
     def get_progress_values(self, rec, monitor_dict):
         """Add progress values to monitor dictionary for a recording."""
-        # check if someone is working on this recording
-        if rec["availability"] == "assigned":
-            # get assignee name
-            assignee = rec["first_name"] + " " + rec["last_name"]
-        else:
-            assignee = ""
-
         # get progress records associated with this recording
         self.cur.execute("""
             SELECT progress.*, name FROM progress
@@ -537,11 +530,9 @@ class Export(Action):
             task = progress["name"]
             # get status of this task
             monitor_dict["status " + task] = progress["task_status"]
-            # check if task has a check
-            task_has_check = task != "segmentation"
 
-            # get check status for this task
-            if task_has_check:
+            # get check status for this task (except for segmentation)
+            if task != "segmentation":
                 monitor_dict["status check " + task] = \
                     progress["quality_check"]
 
@@ -557,46 +548,44 @@ class Export(Action):
                 """.format(rec["id"], progress["task_type_fk"]))
 
             # get all actions of this recording sorted by time and action
-            rec_actions = sorted(
+            actions = sorted(
                 [(log["action"], log["time"],
                   log["first_name"] + " " + log["last_name"])
                  for log in self.cur],
                 key=lambda x: (x[1], x[0]))
 
-            # get number of actions
-            n_rec_actions = len(rec_actions)
+            assign_found = False
+            letcheck_found = False
 
-            # if there are actions for this task
-            if n_rec_actions != 0:
+            for index in range(len(actions)):
+                action = actions[index][0]
 
-                # get first assign time and assignee
-                monitor_dict["start " + task] = rec_actions[0][1]
-                monitor_dict["person " + task] = rec_actions[0][2]
+                # find first assign
+                if not assign_found and action == "assign":
+                    assign_found = True
+                    monitor_dict["start " + task] = actions[index][1]
+                    monitor_dict["person " + task] = actions[index][2]
 
-                # get first letcheck time and assignee (if existing)
-                if task_has_check:
-                    for action, time, assignee in rec_actions:
-                        if action == "letcheck":
-                            monitor_dict["start check " + task] = time
-                            monitor_dict["person check " + task] = assignee
-                            break
+                # find first letcheck
+                if not letcheck_found and action == "letcheck":
+                    letcheck_found = True
+                    monitor_dict["start check " + task] = actions[index][1]
+                    monitor_dict["person check " + task] = actions[index][2]
 
-                # get last checkin time for task and check (if existing)
-                for index in range(n_rec_actions - 2, -1, -1):
-                    action = rec_actions[index][0]
+                # find last checkins
+                if action == "checkin":
+                    previous_action = actions[index - 1][0]
 
-                    if action == "assign" and not monitor_dict["end " + task]:
-                        monitor_dict["end " + task] = rec_actions[index + 1][1]
-                    elif (action == "letcheck"
-                          and task_has_check
-                          and not monitor_dict["end check " + task]):
-
-                        monitor_dict["end check " + task] = \
-                            rec_actions[index + 1][1]
+                    # checkin for task
+                    if previous_action == "assign":
+                        monitor_dict["end " + task] = actions[index][1]
+                    # checkin for task check
+                    elif previous_action == "letcheck":
+                        monitor_dict["end check " + task] = actions[index][1]
 
         # if availability is 'defer' or 'barred', find out which task it is
         # and set this status for this task
-        if rec["availability"] == "defer" or rec["availability"] == "barred":
+        if rec["availability"] in ["defer", "barred"]:
 
             for task in ["segmentation", "transcription/translation",
                          "glossing"]:
