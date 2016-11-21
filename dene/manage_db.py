@@ -61,14 +61,15 @@ class DBInterface:
 
     def get_parser(self):
         """Get command line parser."""
-        # TODO: make method shorter or more modular?
-
         # get main parser
         parser = argparse.ArgumentParser()
         # add subparsers that will hold the subcommands
         subparsers = parser.add_subparsers()
 
+        #******** subcommands ********
+
         # add subcommand 'import'
+
         import_parser = subparsers.add_parser(
             "import", help="Import metadata from csv files to database")
         import_parser.set_defaults(command="import", cls=Import)
@@ -92,20 +93,38 @@ class DBInterface:
             "-r", "--radical", help="deletes complete database before import",
             action="store_true")
 
-        # add subcommand checkin
+        # add subcommand 'assign'
+
+        assign_parser = subparsers.add_parser(
+            "assign", help="Assign recording to a person for a task")
+
+        assign_parser.set_defaults(command="assign", cls=Assign)
+
+        assign_parser.add_argument("type", help="task or check is assigned",
+                                   choices=["task", "check"])
+        assign_parser.add_argument("rec", help="recording name")
+        assign_parser.add_argument("task", help="task name",
+                                   choices=["segmentation",
+                                            "transcription/translation",
+                                            "glossing"])
+        assign_parser.add_argument("--notes", help="notes")
+
+        # add subcommand 'checkin'
+
         checkin_parser = subparsers.add_parser(
-            "checkin", help="Upload file and set corresponding task status"
-                            + " to 'complete'or 'incomplete'")
+            "checkin", help="""Upload file and set corresponding task status"
+                               to 'complete'or 'incomplete'""")
+
         checkin_parser.set_defaults(command="checkin", cls=Checkin)
 
+        checkin_parser.add_argument("type", help="task or check",
+                                    choices=["task", "check"])
         checkin_parser.add_argument("file", help="file name")
         checkin_parser.add_argument("status", help="set task status",
                                     choices=["complete", "incomplete"])
-        checkin_parser.add_argument("--checked", help="task is checked",
-                                    action="store_true")
         checkin_parser.add_argument("--notes", help="notes")
 
-        # add all other subcommands
+        # add the rest of subcommands
         for command, cmd_hlp, cls, args in [
                 ("export",
                  "Export metadata from database to csv files",
@@ -117,12 +136,6 @@ class DBInterface:
                  [("file", "file name"),
                   ("recipient", "recipient"),
                   ("--notes", "notes")]),
-                ("assign",
-                 "Assign recording to a person for a task.",
-                 Assign,
-                 [("rec", "recording name"),
-                  ("assignee", "assignee"), ("task", "task"),
-                  ("--notes", "notes")]),
                 ("update",
                  "Upload new version of file"
                  + "without changing workflow status.",
@@ -132,12 +145,6 @@ class DBInterface:
                 ("reassign",
                  "Assign running task to a different person.",
                  Reassign,
-                 [("rec", "recording name"),
-                  ("assignee", "assignee"),
-                  ("--notes", "notes")]),
-                ("letcheck",
-                 "Assign recording to specialist for feedback.",
-                 Letcheck,
                  [("rec", "recording name"),
                   ("assignee", "assignee"),
                   ("--notes", "notes")]),
@@ -236,13 +243,6 @@ class Reassign(Action):
     def start(self):
         print(self.args)
         print("Reassign command works!")
-
-
-class Letcheck(Action):
-    """Add doc."""
-    def start(self):
-        print(self.args)
-        print("Letcheck command works!")
 
 
 class Next(Action):
@@ -547,41 +547,35 @@ class Export(Action):
                 WHERE action_log.recording_fk={} and action_log.task_type_fk={}
                 """.format(rec["id"], progress["task_type_fk"]))
 
-            # get all actions of this recording sorted by time and action
+            # get all actions of this recording sorted by action and time
             actions = sorted(
                 [(log["action"], log["time"],
                   log["first_name"] + " " + log["last_name"])
                  for log in self.cur],
-                key=lambda x: (x[1], x[0]))
+                key=lambda x: (x[0], x[1]))
 
-            assign_found = False
-            letcheck_found = False
+            assigntask_found = False
+            assigncheck_found = False
 
             for index in range(len(actions)):
                 action = actions[index][0]
 
-                # find first assign
-                if not assign_found and action == "assign":
-                    assign_found = True
+                # find first assigntask
+                if action == "assigntask" and not assigntask_found:
+                    assigntask_found = True
                     monitor_dict["start " + task] = actions[index][1]
                     monitor_dict["person " + task] = actions[index][2]
-
-                # find first letcheck
-                if not letcheck_found and action == "letcheck":
-                    letcheck_found = True
+                # find first assigncheck
+                elif action == "assigncheck" and not assigncheck_found:
+                    assigncheck_found = True
                     monitor_dict["start check " + task] = actions[index][1]
                     monitor_dict["person check " + task] = actions[index][2]
-
-                # find last checkins
-                if action == "checkin":
-                    previous_action = actions[index - 1][0]
-
-                    # checkin for task
-                    if previous_action == "assign":
-                        monitor_dict["end " + task] = actions[index][1]
-                    # checkin for task check
-                    elif previous_action == "letcheck":
-                        monitor_dict["end check " + task] = actions[index][1]
+                # find last checkintask
+                elif action == "checkintask":
+                    monitor_dict["end " + task] = actions[index][1]
+                # find last checkincheck
+                elif action == "checkincheck":
+                    monitor_dict["end check " + task] = actions[index][1]
 
         # if availability is 'defer' or 'barred', find out which task it is
         # and set this status for this task
@@ -1035,7 +1029,12 @@ class Import(Action):
 
             self.empty_str_to_none(rec)
 
-            self.clean_up_monitor(rec)
+            # assign default dates for fields with missing dates
+            for task in ["segmentation", "transcription/translation",
+                         "glossing"]:
+                self.assign_default_date(rec, task, "task")
+                if task != "segmentation":
+                    self.assign_default_date(rec, task, "check")
 
             # get recording name
             rec_name = rec["recording name"]
@@ -1107,72 +1106,36 @@ class Import(Action):
         print(counter, "recordings not imported")
         sys.stdout.flush()
 
-    def clean_up_monitor(self, rec):
-        """Do some cleaning up before importing monitor data.
-
-        Assign specific dates/times for missing start and end fields.
-        Unknown dates always get the time '23:59:59'.
-        Unknown task starts get the date '1111-11-11'.
-        Unknown task ends get the date from the task start.
-        Unknown check starts get the date from the task end.
-        Unknown check ends get the date from check start + 1 day
-        """
-        def get_dt(date, obj=False):
-            """Helper function for creating dates that are unknown."""
-
-            formats = ["%Y-%m-%d", "%Y.%m.%d", "%Y-%m-%d %H:%M:%S",
-                       "%Y.%m.%d %H:%M:%S"]
-
-            for frmt in formats:
-                try:
-                    dt = datetime.strptime(date, frmt)
-                except ValueError:
-                    pass
-                else:
-                    dt = dt.replace(hour=23, minute=59, second=59)
-
-                    if obj:
-                        return dt
-                    else:
-                        return dt.strftime("%Y-%m-%d %H:%M:%S")
-
+    def assign_default_date(self, rec, task, field):
+        """Assign default dates for missing dates in a task."""
         # possible values for unknown dates
         empty_values = ["", "-", "?", None]
 
-        for task in ["segmentation", "transcription/translation", "glossing"]:
+        default_date = "1111-11-11 11:11:11"
 
-            task_status = rec["status " + task]
+        if field == "task":
+            s = ""
+        elif field == "check":
+            s = "check "
+        else:
+            raise ValueError(
+                "Invalid value for 'field'. Valid are 'task'|'check'")
 
-            if task_status in ["complete", "incomplete", "in progress"]:
+        status = rec["status " + task]
 
-                if rec["start " + task] in empty_values:
-                    rec["start " + task] = "1111-11-11 23:59:59"
+        # if task is completed or in progress
+        if status in ["complete", "incomplete", "in progress"]:
 
-                if task_status in ["complete", "incomplete"]:
+            # and start time is missing, assign default date
+            if rec["start " + s + task] in empty_values:
+                rec["start " + s + task] = default_date
 
-                    if rec["end " + task] in empty_values:
-                        rec["end " + task] = get_dt(rec["start " + task])
+            # if task is completed
+            if status in ["complete", "incomplete"]:
 
-            if task != "segmentation":
-                check_status = rec["status check " + task]
-
-                if check_status in ["complete", "incomplete", "in progress"]:
-
-                    if rec["start check " + task] in empty_values:
-                        rec["start check " + task] = get_dt(rec["end " + task])
-
-                    if check_status in ["complete", "incomplete"]:
-
-                        if rec["end check " + task] in empty_values:
-
-                            # add one day to avoid dupblicates since two
-                            # different checkins are possible:
-                            # after assign and letcheck
-                            org_date = get_dt(rec["start check " + task],
-                                              obj=True)
-
-                            rec["end check " + task] = \
-                                org_date + timedelta(days=1)
+                # and end time is missing, assign default date
+                if rec["end " + s + task] in empty_values:
+                    rec["end " + s + task] = default_date
 
     def get_rec_values(self, rec):
         """Insert or update recordings."""
@@ -1273,11 +1236,12 @@ class Import(Action):
         rec_name = rec["recording name"]
         rec_id = rec["id"]
 
-        # only actions 'assign', 'letcheck' and 'checkin' are relevant
+        # only actions assigntask/check and checkintask/check are relevant
         # for monitor, so get id of only those actions.
-        assign_id = self.id.get_action("assign")
-        checkin_id = self.id.get_action("checkin")
-        letcheck_id = self.id.get_action("letcheck")
+        assigntask_id = self.id.get_action("assigntask")
+        assigncheck_id = self.id.get_action("assigncheck")
+        checkintask_id = self.id.get_action("checkintask")
+        checkincheck_id = self.id.get_action("checkincheck")
 
         # go through every task
         for task in ["segmentation", "transcription/translation", "glossing"]:
@@ -1298,19 +1262,19 @@ class Import(Action):
                     return None
 
                 # for the task status's 'complete' and 'incomplete'
-                # the actions 'assign' and 'checkin' are triggered
+                # the actions 'assigntask'/'checkintask' are triggered
                 if task_status == "complete" or task_status == "incomplete":
                     action_logs.append(
-                        2*(rec["start " + task], assign_id, rec_id, None,
+                        2*(rec["start " + task], assigntask_id, rec_id, None,
                            task_type_id, None, task_assignee_id, None))
                     action_logs.append(
-                        2*(rec["end " + task], checkin_id, rec_id, None,
+                        2*(rec["end " + task], checkintask_id, rec_id, None,
                            task_type_id, None, task_assignee_id, None))
                 # for task status 'in progress'
-                # the action 'assign' is triggered
+                # the only action 'assigntask' is triggered
                 elif task_status == "in progress":
                     action_logs.append(
-                        2*(rec["start " + task], assign_id, rec_id, None,
+                        2*(rec["start " + task], assigntask_id, rec_id, None,
                            task_type_id, None, task_assignee_id, None))
 
             # do the same for check fields
@@ -1330,21 +1294,21 @@ class Import(Action):
                         return None
 
                     # for the check status's 'complete' and 'incomplete'
-                    # the actions 'assign' and 'checkin' are triggered
+                    # the actions 'assigncheck'/'checkincheck' are triggered
                     if check_status in ["complete", "incomplete"]:
                         action_logs.append(
-                            2*(rec["start check " + task], letcheck_id,
+                            2*(rec["start check " + task], assigncheck_id,
                                rec_id, None, task_type_id, None,
                                check_assignee_id, None))
                         action_logs.append(
-                            2*(rec["end check " + task], checkin_id,
+                            2*(rec["end check " + task], checkincheck_id,
                                rec_id, None, task_type_id, None,
                                check_assignee_id, None))
                     # for check status 'in progress'
                     # the action 'letcheck' is triggered
                     elif check_status == "in progress":
                         action_logs.append(
-                            2*(rec["start check " + task], letcheck_id,
+                            2*(rec["start check " + task], assigncheck_id,
                                rec_id, None, task_type_id, None,
                                check_assignee_id, None))
 
