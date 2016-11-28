@@ -16,11 +16,10 @@ import re
 import abc
 import sys
 import csv
+import getpass
 import logging
 import warnings
 import argparse
-
-from datetime import datetime, timedelta
 
 try:
     import MySQLdb as db
@@ -35,13 +34,18 @@ except ImportError:
     print("Please install tqdm first!")
     sys.exit(1)
 
+try:
+    import keyring
+except ImportError:
+    print("Please install keyring first!")
+    sys.exit()
+
 
 class DBInterface:
     """Interface for working with the Dene database."""
 
     db_credentials = {"host": "mysqlprod01.uzh.ch",
                       "user": "deslas",
-                      "passwd": "",
                       "db": "deslas",
                       "charset": "utf8"}
 
@@ -54,6 +58,21 @@ class DBInterface:
         parser = self.get_parser()
         # parse all of its arguments and store them
         self.args = parser.parse_args()
+
+        # system and username under which password for database is saved
+        system = self.db_credentials["host"]
+        username = self.db_credentials["user"]
+
+        # try to fetch password
+        password = keyring.get_password(system, username)
+
+        # Set the password for system if it is not set yet
+        if not password:
+            keyring.set_password(system, username, getpass.getpass())
+            password = keyring.get_password(system, username)
+
+        # add password to db credential hash
+        self.db_credentials["passwd"] = password
 
         # execute appropriate action
         with self.args.cls(self.args, **self.db_credentials) as action:
