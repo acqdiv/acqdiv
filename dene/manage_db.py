@@ -4,7 +4,7 @@ This module can be used to manipulate the database over the terminal by using
 one of the following commands: import, export, send, assign, update, reassign,
 checkin, letcheck, feedback, handover, reset, create.
 For more details on these commands run like this:
-    python3 db_manager.py [command] --help
+    python3 manage_db.py [command] --help
 
 The following external python modules (which can be installed by pip) are used:
     - mysqlclient (interface to MySQL)
@@ -620,7 +620,7 @@ class Import(Action):
         - progress
         - files
 
-    Optionally the flag -d can be set, if there should be a 'radical' import
+    Optionally the flag -r can be set, if there should be a 'radical' import
     which means that all existing rows in the database are deleted first
     before all records are inserted again from the files.
     """
@@ -835,7 +835,7 @@ class Import(Action):
                 row[field] = None
 
     def execute(self, cmd, values, table, key=""):
-        """Execute SQL commands and log any SQL errors.
+        """Execute SQL commands and log any SQL errors/warnings.
 
         args:
             cmd:
@@ -852,7 +852,7 @@ class Import(Action):
 
         try:
             self.cur.execute(cmd, values)
-        except db.Error as e:
+        except (db.Error, db.Warning) as e:
             self.logger.error("{}|{}|{}".format(repr(e), table, key))
             has_error = 1
 
