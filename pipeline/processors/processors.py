@@ -86,38 +86,41 @@ class SessionProcessor(object):
 
         # Returns all session metadata and gets corpus-specific sessions table mappings to populate the db
         session_metadata = self.parser.get_session_metadata()
-        d = {}
+        sessiondict = {}
         for k, v in session_metadata.items():
             if k in self.config['session_labels'].keys():
-                d[self.config['session_labels'][k]] = v
+                sessiondict[self.config['session_labels'][k]] = v
 
-        # SM: someday we could clean this up across ini files
-        d['source_id'] = self.filename
-        d['language'] = self.language
-        d['corpus'] = self.corpus
+        # SM: someday we coulsessiondict clean this up across ini files
+        sessiondict['source_id'] = self.filename
+        sessiondict['language'] = self.language
+        sessiondict['corpus'] = self.corpus
 
-        self.session = db.Session(**d)
+        self.session = db.Session(**sessiondict)
 
         # Get speaker metadata and populate the speakers table
         for speaker in self.parser.next_speaker():
-            d = {}
+            speakerdict = {}
             for k, v in speaker.items():
                 if k in self.config['speaker_labels'].keys():
-                    d[self.config['speaker_labels'][k]] = v
-            d['corpus'] = self.corpus
-            d['language'] = self.language
+                    speakerdict[self.config['speaker_labels'][k]] = v
+            speakerdict['corpus'] = self.corpus
+            speakerdict['language'] = self.language
 
-            t = (d.get('name'), d.get('birthdate'), d.get('speaker_label'))
+            # A unique speaker is defined as a unique combination of name,
+            # birth date, speaker label and corpus
+            t = (speakerdict.get('name'), speakerdict.get('birthdate'),
+                 speakerdict.get('speaker_label'))
             if t not in self.unique_speakers:
                 # create unique speaker row
-                d_ = {}
-                d_['corpus'] = d.get('corpus')
-                d_['speaker_label'] = d.get('speaker_label')
-                d_['name'] = d.get('name')
-                d_['birthdate'] = d.get('birthdate')
-                self.unique_speakers[t] = db.UniqueSpeaker(**d_)
+                uniquedict = {}
+                uniquedict['corpus'] = speakerdict.get('corpus')
+                uniquedict['speaker_label'] = speakerdict.get('speaker_label')
+                uniquedict['name'] = speakerdict.get('name')
+                uniquedict['birthdate'] = speakerdict.get('birthdate')
+                self.unique_speakers[t] = db.UniqueSpeaker(**uniquedict)
 
-            s = Speaker(**d)
+            s = Speaker(**speakerdict)
             self.unique_speakers[t].speakers.append(s)
             self.session.speakers.append(s)
 
