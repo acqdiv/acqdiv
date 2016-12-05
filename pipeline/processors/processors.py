@@ -91,7 +91,7 @@ class SessionProcessor(object):
             if k in self.config['session_labels'].keys():
                 sessiondict[self.config['session_labels'][k]] = v
 
-        # SM: someday we coulsessiondict clean this up across ini files
+        # SM: someday we could clean this up across ini files
         sessiondict['source_id'] = self.filename
         sessiondict['language'] = self.language
         sessiondict['corpus'] = self.corpus
