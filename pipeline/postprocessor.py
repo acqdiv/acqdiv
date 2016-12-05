@@ -204,9 +204,6 @@ def process_utterances():
                 logger.warning('Error unifying timestamps: {}'.format(
                     row, e), exc_info=sys.exc_info())
 
-        if row.corpus not in ["Chintang", "Russian"]:
-            row.childdirected = get_directedness(row)
-
         # TODO: talk to Robert; remove if not needed
         if row.corpus == "Chintang":
             row.morpheme = None if row.morpheme is None else re.sub('\*\*\*', '???', row.morpheme)
@@ -224,18 +221,6 @@ def process_utterances():
             row.translation = None if row.translation is None else re.sub('xxx?|www', '???', row.translation)
             change_speaker_labels(row)
 
-
-def get_directedness(utt):
-    if utt.addressee is not None:
-        addressee = session.query(backend.Speaker).filter(
-            backend.Speaker.speaker_label == utt.addressee).first()
-        if addressee is not None:
-            if addressee.macrorole in ['Child', 'Target_Child']:
-                utt.childdirected = True
-            else:
-                utt.childdirected = False
-        else:
-            pass
 
 def change_speaker_labels(row):
     if row.speaker_label is not None:
