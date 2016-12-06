@@ -572,14 +572,13 @@ class IMDIMaker:
             monitor_reader = csv.DictReader(monitor_file)
 
             # skip line with value 'quality' under 'quality of recording'
-            next(monitor_reader)
 
             for row in monitor_reader:
                 try:
-                    quality[row["recording"]] = quality_mapping[row["quality of recording"]]
+                    quality[row["recording name"]] = quality_mapping[row["quality"]]
                 except KeyError:
-                    self.logger.error("Unknown quality: " + row["quality of recording"] + "|" + row["recording"])
-                    quality[row["recording"]] = "Unknown"
+                    self.logger.error("Unknown quality: " + row["quality"] + "|" + row["recording name"])
+                    quality[row["recording name"]] = "Unknown"
 
             return quality
 
