@@ -119,6 +119,9 @@ class ToolboxFile(object):
         if self.config['corpus']['corpus'] == 'Chintang':
             if 'nepali' in utterance:
                 del utterance['nepali']
+            if 'childdirected' in utterance:
+                utterance['childdirected'] = True if 'child' in utterance[
+                    'childdirected'] else False
 
         # Clean up Russian
         if self.config['corpus']['corpus'] == 'Russian':
