@@ -3,7 +3,7 @@ library(ggplot2)
 library(grid)
 
 
-load('~/RData/acqdiv_corpus_2016-09-22.rda')
+load('../../database/acqdiv_corpus_2016-09-22.rda')
 
 
 common_theme <- 
@@ -11,8 +11,7 @@ common_theme <-
   theme_bw() +
   # common font size
   # theme(text = element_text(family = 'CMU Sans Serif', size=12))
-  theme(text = element_text(family = 'Linux Libertine', size=12),
-  legend.title=element_text(face='italic'),
+  theme(text = element_text(family = 'Linux Libertine O', size=12),
   axis.title.y = element_text(vjust=0.9),
   legend.text=element_text(size=11),
   strip.text = element_text(size=12)
@@ -22,10 +21,10 @@ common_theme <-
 # colorblind-friendly palette from
 # http://jfly.iam.u-tokyo.ac.jp/color/
 # substitutes black with gray
-cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-darkPalette <- c("#377eb8", "#ff7f00", "#e6ab02", "#4daf4a", "#e41a1c", "#984ea3", "#D55E00")
-scale_colour_discrete <- function(...) scale_colour_manual(values=cbPalette, ...)
-scale_fill_discrete <- function(...) scale_fill_manual(values=cbPalette, ...)	
+# cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+# darkPalette <- c("#377eb8", "#ff7f00", "#e6ab02", "#4daf4a", "#e41a1c", "#984ea3", "#D55E00")
+# scale_colour_discrete <- function(...) scale_colour_manual(values=darkPalette, ...)
+# scale_fill_discrete <- function(...) scale_fill_manual(values=darkPalette, ...)
 
 
 theme_set(common_theme)
@@ -42,42 +41,39 @@ age.labels <- c("0;6", "1;0", "1;6", "2;0", "2;6",
 				"8;0", "8;6", "9;0")
 
 
-
 # plot showing age range of target children
-target_children_ages <- all_data %>%
+target_children_ages <- speakers %>%
 	filter(!is.na(age_in_days)) %>% 
-	select(age_in_days, macrorole, speaker_id, language, corpus, session_id, speaker_label, name) %>%
+	select(age_in_days, macrorole, speaker_id, language, corpus, speaker_label, name) %>%
 	mutate(speaker_id2=paste(speaker_label, name, sep='_')) %>%
 	filter(grepl('Target_Child', macrorole)) %>%
-	group_by(language, speaker_id2) %>%
+	group_by(corpus, speaker_id2) %>%
 	summarize(youngest.at = min(age_in_days),
 		 		oldest.at = max(age_in_days)) %>%
-	select(language, speaker_id2, age=youngest.at, oldest.at) %>% as.data.frame
-
-
+	select(corpus, speaker_id2, age=youngest.at, oldest.at) %>% as.data.frame
 
 # ok, this is lame, but whatever, not in the mood to thing harder
 target_children_ages2 <- target_children_ages %>% 
-		select(language, speaker_id2, age=oldest.at) %>% 
+		select(corpus, speaker_id2, age=oldest.at) %>% 
 		as.data.frame
-target_children_ages <- rbind(target_children_ages[,c('language', 'speaker_id2', 'age')], target_children_ages2)
+target_children_ages <- rbind(target_children_ages[,c('corpus', 'speaker_id2', 'age')], target_children_ages2)
 
 
 
 # Cree has "other child", dunno who that's supposed to be, but probably not target...
 # therefore, filter out "CH2_Other_Child" in Cree
 target_children_ages <- target_children_ages %>% 
-	filter(!(language %in% c('Cree', 'Indonesian'))) %>%
-	mutate(Language=language, 
+	## filter(!(language %in% c('Cree', 'Indonesian'))) %>%
+	mutate(Corpus=corpus, 
 		Age=age)
 
 
 # add order number to have ... err yeah, order:
-target_children_ages$order <- rep(1:35,2)
+target_children_ages$order <- rep(1:45,2)
+## target_children_ages$order <- rep(1:35,2)
 
 
-
-ggplot(target_children_ages, aes(x=Age, y=1, color=Language)) + 
+ggplot(target_children_ages, aes(x=Age, y=1, color=Corpus)) + 
 	geom_point(size=.8) + 
 	geom_line(size=1.5) + 
 	# cheat and do facets :)
@@ -93,4 +89,5 @@ ggplot(target_children_ages, aes(x=Age, y=1, color=Language)) +
 		panel.border = element_blank()) +
 	labs(y="")  +
 	scale_x_continuous(breaks=age.breaks,
-						labels=age.labels)
+						labels=age.labels) +
+	guides(fill=guide_legend(title=""))
