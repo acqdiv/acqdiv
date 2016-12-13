@@ -157,7 +157,8 @@ class ToolboxFile(object):
 
         for i in range(len(words)):
             try:
-                words[i]['language'] = morphemes[i][0]['language']
+                if words[i] != {}:
+                    words[i]['language'] = morphemes[i][0]['language']
             except IndexError:
                 break
 
