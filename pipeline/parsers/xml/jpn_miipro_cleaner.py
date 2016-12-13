@@ -7,7 +7,7 @@ import itertools
 import pdb
 
 from lxml import etree
-from .xml_cleaner import XMLCleaner
+from pipeline.parsers.xml.xml_cleaner import XMLCleaner
 
 class MiiProCleaner(XMLCleaner):
 

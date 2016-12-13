@@ -155,6 +155,12 @@ class ToolboxFile(object):
             misalignment = len(morphemes) - len(words)
             for i in range(0, misalignment): words.append({})
 
+        for i in range(len(words)):
+            try:
+                words[i]['language'] = morphemes[i][0]['language']
+            except IndexError:
+                break
+
         return utterance, words, morphemes
 
 
@@ -376,6 +382,7 @@ class ToolboxFile(object):
         poses = [] # parts of speeches :)
         glosses = []
         warnings = []
+        langs = []
 
         # Russian specific morpheme inference
         if self.config['corpus']['corpus'] == "Russian":
@@ -410,6 +417,12 @@ class ToolboxFile(object):
                 # The Russian tier \mor contains both glosses and POS, separated by "-" or ":".
                 # Method for distinguishing and extracting them:
                 for pos in pos_cleaned:
+                    #get morpheme language
+                    if 'FOREIGN' in pos:
+                        langs.append('Foreign')
+                    else:
+                        langs.append('Russian')
+
                     # 1) If there is no ":" in a word string, gloss and POS are identical (most frequently the case with
                     # PCL 'particle').
                     if ':' not in pos:
@@ -437,6 +450,7 @@ class ToolboxFile(object):
                 # Make list of lists to follow the structure of the other languages
                 poses = [poses[i:i+1] for i in range(0, len(poses), 1)]
                 glosses = [glosses[i:i+1] for i in range(0, len(glosses), 1)]
+                langs = [langs[i:i+1] for i in range(0, len(langs), 1)]
 
             else:
                 warnings.append('not glossed')
@@ -452,6 +466,8 @@ class ToolboxFile(object):
                 word_boundaries = re.split(self._word_boundary, morphemes_cleaned)
                 for word in word_boundaries:
                     morphemes.append(word.split())
+
+                langs = [list(map(lambda x: 'Indonesian', m)) for m in morphemes]
 
             if 'gloss_raw' in utterance.keys():
                 glosses_cleaned = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterance['gloss_raw'])
@@ -486,6 +502,7 @@ class ToolboxFile(object):
                     # TODO: double check this logic is correct with Robert
                     word = word.replace(" - ", " ") # remove floating clitic marker
                     morphemes.append(word.split())
+
             else:
                 warnings.append('no morpheme tier')
 
@@ -505,6 +522,18 @@ class ToolboxFile(object):
             else:
                 warnings.append('pos missing')
 
+            if 'morpheme_lang' in utterance.keys():
+
+                lang_words = re.split(self._word_boundary, utterance['morpheme_lang'])
+                for word in lang_words:
+                    word = word.replace(" - ", " ") # remove floating clitic marker
+                    langs.append([self.config['languages'][w.strip('-')]
+                                  for w in word.split()])
+                del utterance['morpheme_lang']
+
+            else:
+                warnings.append('language information missing')
+
         else:
             raise TypeError("Corpus format is not supported by this parser.")
 
@@ -512,7 +541,7 @@ class ToolboxFile(object):
         len_mw = len(glosses)
         len_align = len([i for gw in glosses for i in gw])
         tiers = []
-        for t in (morphemes, glosses, poses):
+        for t in (morphemes, glosses, poses, langs):
             if len([i for tw in t for i in tw]) == len_align:
                 tiers.append(t)
             else:
@@ -525,13 +554,15 @@ class ToolboxFile(object):
         #gls = [m for m in w for w in 
         mwords = zip(*tiers)
         for mw in mwords:
-            alignment = list(zip_longest(mw[0], mw[1], mw[2], fillvalue=None))
+            alignment = list(zip_longest(mw[0], mw[1], mw[2], mw[3],
+                                         fillvalue=None))
             l = []
             for morpheme in alignment:
                 d = {}
                 d['morpheme'] = morpheme[0]
                 d['gloss_raw'] = morpheme[1]
                 d['pos_raw'] = morpheme[2]
+                d['language'] = morpheme[3]
                 # TODO: move to postprocessing if faster
                 d['type'] = self.config['morphemes']['type'] # what type of morpheme as defined in the corpus .ini
                 d['warning'] = None if len(warnings) == 0 else " ".join(warnings)
@@ -539,7 +570,7 @@ class ToolboxFile(object):
             result.append(l)
 
         return result
-    
+
 
     def __repr__(self):
         # for pretty printing

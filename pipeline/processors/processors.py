@@ -171,7 +171,8 @@ class SessionProcessor(object):
                 # TODO: move this post processing (before the age, etc.) if it improves performance
                 if words[i] != {}:
                     words[i]['corpus'] = self.corpus
-                    words[i]['language'] = self.language
+                    if words[i].get('language') is None:
+                        words[i]['language'] = self.language
 
                     # TODO: is it cheaper to append a list here?
                     word = Word(**words[i])
@@ -186,7 +187,8 @@ class SessionProcessor(object):
                     for j in range(0, len(morphemes[i])): # loop morphemes
                         # TODO: move this post processing (before the age, etc.) if it improves performance
                         morphemes[i][j]['corpus'] = self.corpus
-                        morphemes[i][j]['language'] = self.language
+                        if morphemes[i][j].get('language') is None:
+                            morphemes[i][j]['language'] = self.language
                         morphemes[i][j]['type'] = self.morpheme_type
 
                         morpheme = Morpheme(**morphemes[i][j])
