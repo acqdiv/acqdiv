@@ -119,7 +119,7 @@ class ToolboxFile(object):
         if self.config['corpus']['corpus'] == 'Chintang':
             if 'nepali' in utterance:
                 del utterance['nepali']
-            if 'childdirected' in utterance:
+            if 'addressee' in utterance:
                 utterance['childdirected'] = True if 'child' in utterance[
                     'childdirected'] else False
 
@@ -167,13 +167,13 @@ class ToolboxFile(object):
 
     def get_words(self, utterance):
         """ Return ordered list of words where each word is a dict of key-value pairs
-        
+
         This function does Toolbox corpus-specific word processing and distinguishes between
         word and word_target if necessary.
-        
+
         Args:
             utterance: str
-            
+
         Returns:
             result: A list of ordered dictionaries with word and parent utterance id (utterance_id_fk).
         """

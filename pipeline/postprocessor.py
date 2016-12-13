@@ -231,9 +231,9 @@ def get_directedness(utt):
             backend.Speaker.speaker_label == utt.addressee).first()
         if addressee is not None:
             if addressee.macrorole in ['Child', 'Target_Child']:
-                utt.childdirected = True
+                return True
             else:
-                utt.childdirected = False
+                return False
         else:
             pass
 

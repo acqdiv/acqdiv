@@ -30,6 +30,7 @@ def test_database_integrity():
         ("morphemes","morpheme",1),
         ("morphemes","pos",1),
         ("morphemes","pos_raw",1),
+        ("morphemes", "language", mini),
         ("sessions","date",mini),
         ("speakers","age",1),
         ("speakers","age_in_days",1),
@@ -52,6 +53,7 @@ def test_database_integrity():
         ("utterances","utterance",0.15),
         ("utterances","utterance_raw",0.15),
         ("words","pos",1),
+        ("words", "language", mini),
         ("words","word",0.15)):
         table = check[0]
         column = check[1]
