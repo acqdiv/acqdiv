@@ -112,8 +112,6 @@ class MiiProCleaner(XMLCleaner):
                     
                     stem = check_stem.group(1)
                     suffix_string = check_stem.group(2)
-                    # Japanese MiiPro specialty: grammatical categories in suppletive forms are marked by '&' (e.g. da&POL = des); replace by '.'
-                    stem = stem.replace('&','.')
                 
                     # add stem, suffixes, and POS for all to corpus dic
                     m = etree.SubElement(mw, 'm')
