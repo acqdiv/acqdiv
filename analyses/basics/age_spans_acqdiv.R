@@ -12,6 +12,7 @@ common_theme <-
   # common font size
   # theme(text = element_text(family = 'CMU Sans Serif', size=12))
   theme(text = element_text(family = 'Linux Libertine O', size=12),
+  axis.text = element_text(size=12),
   axis.title.y = element_text(vjust=0.9),
   legend.text=element_text(size=11),
   strip.text = element_text(size=12)
@@ -60,10 +61,8 @@ target_children_ages <- rbind(target_children_ages[,c('corpus', 'speaker_id2', '
 
 
 
-# Cree has "other child", dunno who that's supposed to be, but probably not target...
-# therefore, filter out "CH2_Other_Child" in Cree
 target_children_ages <- target_children_ages %>% 
-	## filter(!(language %in% c('Cree', 'Indonesian'))) %>%
+	# filter(!(corpus %in% c('Cree', 'Indonesian'))) %>%
 	mutate(Corpus=corpus, 
 		Age=age)
 
