@@ -120,8 +120,8 @@ class ToolboxFile(object):
             if 'nepali' in utterance:
                 del utterance['nepali']
             if 'addressee' in utterance:
-                utterance['childdirected'] = True if 'child' in utterance[
-                    'childdirected'] else False
+                utterance['childdirected'] = 'yes' if 'child' in utterance[
+                    'childdirected'] else 'no'
 
         # Clean up Russian
         if self.config['corpus']['corpus'] == 'Russian':

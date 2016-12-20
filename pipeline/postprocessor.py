@@ -110,10 +110,10 @@ def postprocessor():
     """ Postprocessing postprocesses.
     """
     # Update database tables
-    print("Processing utterances...")
-    process_utterances()
     print("Processing speakers...")
     process_speakers()
+    print("Processing utterances...")
+    process_utterances()
     print("Processing morphemes...")
     process_morphemes()
     print("Processing words...")
@@ -204,8 +204,7 @@ def process_utterances():
                 logger.warning('Error unifying timestamps: {}'.format(
                     row, e), exc_info=sys.exc_info())
 
-        if row.corpus not in ["Chintang", "Russian"]:
-            row.childdirected = get_directedness(row)
+        row.childdirected = get_directedness(row)
 
         # TODO: talk to Robert; remove if not needed
         if row.corpus == "Chintang":
@@ -226,16 +225,20 @@ def process_utterances():
 
 
 def get_directedness(utt):
+    if utt.childdirected is not None:
+        return utt.childdirected
     if utt.addressee is not None:
         addressee = session.query(backend.Speaker).filter(
             backend.Speaker.speaker_label == utt.addressee).first()
         if addressee is not None:
             if addressee.macrorole in ['Child', 'Target_Child']:
-                return True
+                return 'yes'
             else:
-                return False
+                return 'no'
         else:
-            pass
+            return 'no'
+    else:
+        return 'no'
 
 def change_speaker_labels(row):
     if row.speaker_label is not None:

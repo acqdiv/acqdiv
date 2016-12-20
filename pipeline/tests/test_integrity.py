@@ -82,6 +82,12 @@ def test_database_integrity():
     permission = "allow"
     yield check_values, table, column, values, permission
 
+    table = "utterances"
+    column = "childdirected"
+    values = ["yes", "no"]
+    permission = "allow"
+    yield check_values, table, column, values, permission
+
     table = "morphemes"
     column = "pos"
     values = [None, "ADJ", "ADV", "ART", "AUX", "CLF", "CONJ", "IDEOPH", "INTJ", "N", "NUM", "pfx", "POST", "PREP", "PRODEM", "PTCL", "QUANT", "sfx", "stem", "V", "???"]
