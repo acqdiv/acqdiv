@@ -2,11 +2,14 @@
 @author: Anna Jancso
 """
 import logging
+import os
+import re
+from collections import OrderedDict
 
 
 class CorpusPropagater:
 
-    original_cp_path = "cp/corpus"
+    org_cp_path = "cp/corpus"
     new_cp_path = "cp/corpus_new"
     dic_path = "cp/DeneDic.txt"
     vtdic_path = "cp/DeneVTDic.txt"
@@ -52,8 +55,7 @@ class CorpusPropagater:
                 line = line.rstrip()
 
                 # if start of lemma entry is found
-                if "\lem" in line:
-
+                if "\\lem" in line:
                     if is_vtdic:
                         # get lemma which becomes the id
                         id = line.split()[1]
@@ -70,7 +72,7 @@ class CorpusPropagater:
                     # initialize glosses as empty list
                     dic[id]["glosses"] = []
 
-                elif "\glo" in line:
+                elif "\\glo" in line:
                     dic[id]["glosses"].append(line.split()[1])
 
     def get_log_data(self, is_vtlog=False):
@@ -117,12 +119,69 @@ class CorpusPropagater:
         self.get_log_data()
         self.get_log_data(is_vtlog=True)
 
-    def process_corpus():
-        pass
+    def process_corpus(self):
+
+        # go through each corpus file
+        for file in os.listdir(self.org_cp_path):
+            # get path of this file
+            file_path = os.path.join(self.org_cp_path, file)
+
+            # check if it is really a file, not a dictionary
+            if os.path.isfile(file_path):
+                # then open file for reading
+                with open(file_path, "r") as org_file:
+
+                    # save data for a certain \ref using a sorted dictionary
+                    ref_dict = OrderedDict()
+
+                    for line in org_file:
+
+                        line = line.rstrip("\n")
+
+                        if "\\ref" in line:
+                            # first delete data of previous ref
+                            ref_dict.clear()
+                            # add entry ref
+                            ref_dict["\\ref"] = line
+                            # blabla
+                            words = OrderedDict()
+
+                        elif line.startswith("\\"):
+                            # extract field marker and its data
+                            match = re.match(r"(\\\w+)(.*)", line)
+                            if match:
+                                label = match.group(1)
+                                data = match.group(2)
+
+                                # check if there are several defintions of the
+                                # same fieldmarker in one \ref
+                                if label in ref_dict:
+                                    # concatenate
+                                    ref_dict[label] += line
+                                else:
+                                    # add to ref dictionary
+                                    ref_dict[label] = line
+                        else:
+                            # if string of fieldmarker continues on a new line
+                            if line:
+                                # get last added fieldmarker
+                                label = next(reversed(ref_dict))
+                                # concatenate content
+                                ref_dict[label] += line
+                                #print(ref_dict[label])
+
+
+
+
+#                regex = re.compile(r"((\\S+-\\s+)*\\S+(\\s+-\\S+)*)")
+#                for tuple in regex.finditer(string):
+#                    print(tuple.group())
+
 
     def run(self):
         self.activate_logger()
         self.collect_data()
+        self.process_corpus()
 
 
 def main():
@@ -132,6 +191,8 @@ def main():
 #    print(cp.vtdic)
 #    print(cp.logs)
 #    print(cp.vtlogs)
+
+
 
 if __name__ == "__main__":
     main()
