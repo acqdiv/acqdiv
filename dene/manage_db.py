@@ -59,9 +59,25 @@ class DBInterface:
         # parse all of its arguments and store them
         self.args = parser.parse_args()
 
+        # set password for access to database
+        self.set_password()
+
+        # execute appropriate action
+        with self.args.cls(self.args, **self.db_credentials) as action:
+            action.start()
+
+    @classmethod
+    def set_password(cls, db_credentials=None):
+        """Set the password in db_credentials if not set yet.
+
+        db_credentials (hash): must contain host and username
+        """
+        if db_credentials is None:
+            db_credentials = cls.db_credentials
+
         # system and username under which password for database is saved
-        system = self.db_credentials["host"]
-        username = self.db_credentials["user"]
+        system = db_credentials["host"]
+        username = db_credentials["user"]
 
         # try to fetch password
         password = keyring.get_password(system, username)
@@ -72,11 +88,7 @@ class DBInterface:
             password = keyring.get_password(system, username)
 
         # add password to db credential hash
-        self.db_credentials["passwd"] = password
-
-        # execute appropriate action
-        with self.args.cls(self.args, **self.db_credentials) as action:
-            action.start()
+        db_credentials["passwd"] = password
 
     def get_parser(self):
         """Get command line parser."""
@@ -85,7 +97,7 @@ class DBInterface:
         # add subparsers that will hold the subcommands
         subparsers = parser.add_subparsers()
 
-        #******** subcommands ********
+        # ******** subcommands ********
 
         # add subcommand 'import'
 
@@ -221,6 +233,15 @@ class Action(metaclass=abc.ABCMeta):
             self.cur = self.con.cursor()
 
         self.args = args
+
+        # turn MySQLdb warnings into errors,
+        # so that they can be caught by exceptions and be logged
+        warnings.filterwarnings("error", category=MySQLdb.Warning)
+
+        # set this sql mode so that errors are thrown
+        # if invalid or missing values are inserted
+        self.cur.execute("SET SESSION sql_mode = 'STRICT_ALL_TABLES'")
+        self.con.commit()
 
     def __enter__(self):
         """Return class object."""
@@ -798,10 +819,6 @@ class Import(Action):
         self.logger = self.get_logger()
         self.id = self.ID(self)
 
-        # turn MySQLdb warnings into errors,
-        # so that they can be caught by exceptions and be logged
-        warnings.filterwarnings("error", category=MySQLdb.Warning)
-
     def __exit__(self, exc_type, exc_value, exc_traceback):
         """Close and remove file handler."""
         super().__exit__(exc_type, exc_value, exc_traceback)
@@ -1236,6 +1253,7 @@ class Import(Action):
             # 'defer' and 'barred' status become 'not started' in progress
             if task_status in ["barred", "defer"]:
                 task_status = "not started"
+
             # get status for quality check
             if task == "segmentation":
                 quality_check = "not required"

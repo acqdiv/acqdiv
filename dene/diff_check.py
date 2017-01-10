@@ -22,8 +22,18 @@ import shutil
 import difflib
 import argparse
 import manage_db
-from tqdm import tqdm
-import MySQLdb as db
+
+try:
+    import MySQLdb as db
+except ImportError:
+    print("Please install mysqlclient first!")
+    sys.exit(1)
+
+try:
+    from tqdm import tqdm
+except ImportError:
+    print("Please install tqdm first!")
+    sys.exit(1)
 
 
 class TestDbInterface:
@@ -92,6 +102,8 @@ class TestDbInterface:
         self.import_args = ["import"]
         self.export_args = ["export", "--path", self.OUTPUT_PATH]
 
+        manage_db.DBInterface.set_password()
+
     def get_import_args(self, dir_path):
         """Get list of command line arguments for database import"""
 
@@ -126,8 +138,7 @@ class TestDbInterface:
         """Get content of all database tables as strings."""
         content = {}
 
-        con = db.connect(host="localhost", user="anna", passwd="anna",
-                         db="deslas", charset="utf8")
+        con = db.connect(**manage_db.DBInterface.db_credentials)
 
         cur = con.cursor()
 
