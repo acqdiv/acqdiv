@@ -742,8 +742,8 @@ class Import(Action):
             cmd = """SELECT id FROM employees
                      WHERE CONCAT(first_name, ' ', last_name) = '{}'
                   """.format(assignee)
-            error_msg = """Assignee '{}' not in table 'employees'|{}
-                        """.format(assignee, func)
+            error_msg = """Assignee '{}' not in table 'employees'|{}|{}|
+                        """.format(assignee, rec_name, func)
 
             return self.get_id(cmd, error_msg)
 
@@ -1158,9 +1158,10 @@ class Import(Action):
                 "Invalid value for 'field'. Valid are 'task'|'check'")
 
         status = rec["status " + task]
+        assignee = rec["person " + task]
 
-        # if task is completed or in progress
-        if status in ["complete", "incomplete", "in progress"]:
+        # if task is assigned to a person
+        if assignee:
 
             # and start time is missing, assign default date
             if rec["start " + s + task] in empty_values:
@@ -1206,10 +1207,16 @@ class Import(Action):
                 check_status = rec["status check " + task]
                 check_assignee = rec["person check " + task]
 
-            # overwrite default values for availability and assignee if status
-            # is 'in progress'; if status is 'defer' or 'barred'
-            # only overwrite availability
-            if check_status == "in progress":
+            # overwrite rec availability if status is 'defer' or 'barred'
+            if check_status in ["defer", "barred"]:
+                availability = check_status
+                break
+            elif task_status in ["defer", "barred"]:
+                availability = task_status
+                break
+
+            # if a task is reserved for a person, set status to 'assigned'
+            if check_assignee:
                 availability = "assigned"
                 assignee_id = self.id.get_assignee(
                     check_assignee, task=task + "/check",
@@ -1217,19 +1224,13 @@ class Import(Action):
                 if assignee_id is None:
                     return None
                 break
-            elif check_status in ["defer", "barred"]:
-                availability = check_status
-                break
-            elif task_status == "in progress":
+            elif task_assignee:
                 availability = "assigned"
                 assignee_id = self.id.get_assignee(
                     task_assignee, task=task,
                     rec_name=rec_name, func="get_rec_values")
                 if assignee_id is None:
                     return None
-                break
-            elif task_status in ["defer", "barred"]:
-                availability = task_status
                 break
 
         # bundle all values of a recording and return them
@@ -1283,17 +1284,18 @@ class Import(Action):
         # go through every task
         for task in ["segmentation", "transcription/translation", "glossing"]:
 
-            # get task id and status
+            # get task id, status and assignee
             task_type_id = self.id.get_task_type(task)
             task_status = rec["status " + task]
+            task_assignee = rec["person " + task]
 
-            # if task status is 'complete', 'incomplete' or 'in progress'
-            # append an action log with the right action, time and assignee
-            if task_status in ["complete", "incomplete", "in progress"]:
+            # if task is assigned to a person, append an action log
+            # with the right action, time and assignee
+            if task_assignee:
 
                 # get id of task assignee
                 task_assignee_id = self.id.get_assignee(
-                    rec["person " + task], task=task,
+                    task_assignee, task=task,
                     rec_name=rec_name, func="get_action_log_values")
                 if task_assignee_id is None:
                     return None
@@ -1307,21 +1309,28 @@ class Import(Action):
                     action_logs.append(
                         2*(rec["end " + task], checkintask_id, rec_id, None,
                            task_type_id, None, task_assignee_id, None))
-                # for task status 'in progress'
-                # the only action 'assigntask' is triggered
-                elif task_status == "in progress":
+                # for task status 'in progress' or 'not started'
+                # only the action 'assigntask' is triggered
+                elif task_status in ["in progress", "not started"]:
                     action_logs.append(
                         2*(rec["start " + task], assigntask_id, rec_id, None,
                            task_type_id, None, task_assignee_id, None))
+                # unkown or impossible task status for assigned person
+                else:
+                    warning = """Task status {} impossible for assigned
+                                 person in task {} of rec {}
+                              """.format(task_status, task, rec_name)
+                    self.logger.warning(warning)
 
             # do the same for check fields
             # first check if task has a check field
             if task != "segmentation":
 
-                # get check status
+                # get check status and assignee
                 check_status = rec["status check " + task]
+                check_assignee = rec["person check " + task]
 
-                if check_status in ["complete", "incomplete", "in progress"]:
+                if check_assignee:
 
                     # get id of check assignee
                     check_assignee_id = self.id.get_assignee(
@@ -1341,13 +1350,18 @@ class Import(Action):
                             2*(rec["end check " + task], checkincheck_id,
                                rec_id, None, task_type_id, None,
                                check_assignee_id, None))
-                    # for check status 'in progress'
+                    # for check status 'in progress' or 'not started'
                     # the action 'letcheck' is triggered
-                    elif check_status == "in progress":
+                    elif check_status in ["in progress", "not started"]:
                         action_logs.append(
                             2*(rec["start check " + task], assigncheck_id,
                                rec_id, None, task_type_id, None,
                                check_assignee_id, None))
+                    else:
+                        warning = """Check status {} impossible for assigned
+                                     person in task {} of rec {}
+                                  """.format(check_status, task, rec_name)
+                        self.logger.warning(warning)
 
         return action_logs
 
