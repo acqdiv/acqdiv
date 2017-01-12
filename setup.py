@@ -1,31 +1,54 @@
 from setuptools import setup, find_packages
+from os import path
 
+here = path.abspath(path.dirname(__file__))
 
-requires = [
-    # list required third-party packages here
-    'chardet',
-]
+# Get the long description from the README file
+with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(
-    name='pyacqdiv',
-    version='0.0',
-    description='python package for the acqdiv project',
-    long_description='',
+    name='acqdiv',
+
+    #Using semver
+    version='1.0.0',
+
+    description='The ACQDIV corpus pipeline',
+    long_description=long_description,
+
+    url='https://github.com/uzling/acqdiv',
+
+    author='The ACQDIV team',
+    author_email='robert.schikowski@uzh.ch',
+
+    license='custom',
+
+    # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.2",
+        'Development Status :: 2 - Pre-Alpha',
+
+        'Intended Audience :: Other Audience',
+        'Topic :: Text Processing :: Linguistic',
+
+        'License :: Other/Proprietary License',
+
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
     ],
-    author='',
-    author_email='',
-    url='',
+
     keywords='data linguistics',
-    packages=find_packages(),
+
+    # You can just specify the packages manually here if your project is
+    # simple. Or you can use find_packages().
+    packages=['pipeline', 'pyacqdiv'],
+
     include_package_data=True,
     zip_safe=False,
-    install_requires=requires,
     entry_points={
         'console_scripts': ['acqdiv=pyacqdiv.scripts.cli:main'],
     },
     tests_require=[],
-    test_suite="acqdiv")
+    test_suite="acqdiv"
+)
