@@ -101,16 +101,18 @@ class CorpusPropagater:
                 action = log[0].upper()
                 # affected id (log) or lemma (vtlog)
                 id = log[1]
-                # initialze log hash with id/lemma as key
-                logs[id] = []
+                # initialze log hash with id/lemma as key if necessary
+                if id not in logs:
+                    logs[id] = []
 
-                # read rest of data
+                # format for UPDATE: UPDATE|id|glo/seg|old_glo/seg>new_glo/seg
                 if action == "UPDATE":
-                    # old string gets replaced by new string
+                    # get old and new gloss/lemma
                     old, new = log[3].split(">")
                     # add under correct id to logs
                     logs[id].append({"action": action, "tier": log[2],
                                      "old": old, "new": new})
+                # format for MERGE: MERGE|
                 elif action == "MERGE":
                     logs[id].append({"action": action, "merging_id": log[2]})
 
@@ -266,21 +268,49 @@ class CorpusPropagater:
             self.write_file()
         else:
             # check all words for ids in log
-            for word, morpheme_data in self.ref_dict["words"]:
+            for w_pos, (word, data) in enumerate(self.ref_dict["words"]):
 
                 # if there is morpheme data for this word
-                if morpheme_data:
+                if data:
 
-                    # go through every id of this word
-                    for id in morpheme_data["\\id"]:
+                    # go through every lemma id of this word
+                    for m_pos, m_id in enumerate(data["\\id"]):
 
                         # strip '-' left and right of id (if there is)
-                        stripped_id = id.strip("-")
+                        norm_id = m_id.strip("-")
 
-                        # check if this id is in the log
-                        if stripped_id in self.logs:
+                        # check if this id is in the log file
+                        if norm_id in self.logs:
 
-                            print(stripped_id)
+                            # go through all logs with this id
+                            for l_pos, log in enumerate(self.logs[norm_id]):
+
+                                # get function based on action name of this log
+                                action = getattr(self, log["action"].lower())
+
+                                # call it
+                                action(w_pos, m_pos, norm_id, l_pos)
+
+    def update(self, w_pos, m_pos, norm_id, l_pos):
+        """Update data of a lemma."""
+        # get right log data
+        log = self.logs[norm_id][l_pos]
+        # get glo or seg tier
+        tier = self.ref_dict["words"][w_pos][1]["\\" + log["tier"]]
+
+        # change tier at the right position
+        if log["old"] in tier[m_pos]:
+            tier[m_pos] = tier[m_pos].replace(log["old"], log["new"])
+
+    def merge(self, w_pos, m_pos, norm_id, l_pos):
+        """"""
+        print("merge")
+        pass
+
+    def split(self, w_pos, m_pos, norm_id, l_pos):
+        """"""
+        print("split")
+        pass
 
     def write_file(self):
         """Write data of a utterance to a file."""
