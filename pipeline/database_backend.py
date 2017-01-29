@@ -110,7 +110,6 @@ class UniqueSpeaker(Base):
     target_of = relationship('Session', backref='target_child')
 
 
-
 class Utterance(Base):
     """ Utterances in all sessions.
 
