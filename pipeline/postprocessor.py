@@ -118,10 +118,18 @@ def postprocessor():
     process_morphemes()
     print("Processing words...")
     process_words()
+    print("Linking target children...")
+    link_target_child()
 
     # Additional data
     # TODO: duplicate primary keys to additional roles
 
+
+def link_target_child():
+    for s in session.query(backend.Session):
+        for p in s.speakers:
+            if p.macrorole == "Target_Child":
+                s.target_child = p.unique_speaker
 
 def infer_pos(row):
     """ Chintang and Indonesian part-of-speech inference. Also removes hyphens from raw input data.
@@ -311,7 +319,7 @@ def update_imdi_age(row):
 
     if row.birthdate is None:
         return
-    
+
     if not (row.birthdate.__contains__("Un") or row.birthdate.__contains__("None")):
         try:
             session_date = get_session_date(row.session_id_fk)
