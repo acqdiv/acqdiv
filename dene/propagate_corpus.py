@@ -75,13 +75,13 @@ class CorpusPropagater:
                         # create entry in dic with this id as key
                         dic[id] = {}
                         # add the lemma
-                        dic[id]["lemma"] = line.split()[1]
+                        dic[id]["lem"] = line.split()[1]
 
                     # initialize glosses as empty list
-                    dic[id]["glosses"] = []
+                    dic[id]["glo"] = []
 
                 elif "\\glo" in line:
-                    dic[id]["glosses"].append(line.split()[1])
+                    dic[id]["glo"].append(line.split()[1])
 
     def get_log_data(self, is_vtlog=False):
         """Collect data from log file."""
@@ -110,6 +110,7 @@ class CorpusPropagater:
                     # get old and new gloss/lemma
                     old, new = log[3].split(">")
                     # add under correct id to logs
+                    # TODO: do we need here 'old' at all?
                     logs[id].append({"action": action, "tier": log[2],
                                      "old": old, "new": new})
                 # format for MERGE: MERGE|
@@ -118,7 +119,7 @@ class CorpusPropagater:
 
                 elif action == "SPLIT":
                     logs[id].append({"action": action, "splitting_id": log[2],
-                                     "tier": log[3], "word": log[4]})
+                                     "tier": log[3], "criterion": log[4]})
                 else:
                     self.logger.error("Action {} not defined.".format(action))
 
@@ -268,13 +269,13 @@ class CorpusPropagater:
             self.write_file()
         else:
             # check all words for ids in log
-            for w_pos, (word, data) in enumerate(self.ref_dict["words"]):
+            for word, morphemes in self.ref_dict["words"]:
 
                 # if there is morpheme data for this word
-                if data:
+                if morphemes:
 
-                    # go through every lemma id of this word
-                    for m_pos, m_id in enumerate(data["\\id"]):
+                    # go through every morpheme id of this word
+                    for m_pos, m_id in enumerate(morphemes["\\id"]):
 
                         # strip '-' left and right of id (if there is)
                         norm_id = m_id.strip("-")
@@ -283,34 +284,67 @@ class CorpusPropagater:
                         if norm_id in self.logs:
 
                             # go through all logs with this id
-                            for l_pos, log in enumerate(self.logs[norm_id]):
+                            for log in self.logs[norm_id]:
 
                                 # get function based on action name of this log
                                 action = getattr(self, log["action"].lower())
 
                                 # call it
-                                action(w_pos, m_pos, norm_id, l_pos)
+                                action(word, morphemes, m_pos, log)
 
-    def update(self, w_pos, m_pos, norm_id, l_pos):
+    def update(self, word, morphemes, m_pos, log):
         """Update data of a lemma."""
-        # get right log data
-        log = self.logs[norm_id][l_pos]
         # get glo or seg tier
-        tier = self.ref_dict["words"][w_pos][1]["\\" + log["tier"]]
-
+        tier = morphemes["\\" + log["tier"]]
         # change tier at the right position
         if log["old"] in tier[m_pos]:
             tier[m_pos] = tier[m_pos].replace(log["old"], log["new"])
+        #print(self.ref_dict)
 
-    def merge(self, w_pos, m_pos, norm_id, l_pos):
-        """"""
-        print("merge")
-        pass
+    def sub_ms(self, new, string):
+        """Substitute seg's, glo's and id's in a string."""
+        # regex for replacing morpheme data
+        rgx = re.compile(r"(-)?(.*?)(-)?$")
+        # replace string
+        repl = r"\g<1>{}\g<3>".format(new)
 
-    def split(self, w_pos, m_pos, norm_id, l_pos):
-        """"""
-        print("split")
-        pass
+        return rgx.sub(repl, string)
+
+    # TODO: id, seg and glo adjustments could be put in one single method
+    # TODO: what if there are several glosses in dic defined?
+    def merge(self, word, morphemes, m_pos, log):
+        """Merge lemma into another."""
+        # id of the lemma into which lemma is merged
+        new_id = log["merging_id"]
+
+        # adjust id, glo and seg
+        morphemes["\\id"][m_pos] = self.sub_ms(new_id,
+                                               morphemes["\\id"][m_pos])
+
+        morphemes["\\seg"][m_pos] = self.sub_ms(self.dic[new_id]["lem"],
+                                                morphemes["\\seg"][m_pos])
+
+        morphemes["\\glo"][m_pos] = self.sub_ms(self.dic[new_id]["glo"][0],
+                                                morphemes["\\glo"][m_pos])
+        #print(self.ref_dict)
+
+    def split(self, word, morphemes, m_pos, log):
+        """Split lemma entry into two separate ones."""
+        # check if criterion for disambiguation is in \full or \glo
+        if log["criterion"] in [word, morphemes["\\glo"][m_pos].strip("-")]:
+            # id for new entry
+            new_id = log["splitting_id"]
+            # adjust id, glo, seg
+            morphemes["\\id"][m_pos] = self.sub_ms(new_id,
+                                                   morphemes["\\id"][m_pos])
+
+            morphemes["\\seg"][m_pos] = self.sub_ms(self.dic[new_id]["lem"],
+                                                    morphemes["\\seg"][m_pos])
+
+            morphemes["\\glo"][m_pos] = self.sub_ms(self.dic[new_id]["glo"][0],
+                                                    morphemes["\\glo"][m_pos])
+
+        #print(self.ref_dict)
 
     def write_file(self):
         """Write data of a utterance to a file."""
