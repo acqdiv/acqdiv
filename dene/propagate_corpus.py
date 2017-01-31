@@ -9,7 +9,8 @@ from collections import OrderedDict
 
 
 class CorpusPropagater:
-    
+    """Class for propagting changes in dictionary in corpus."""
+
     # paths to dictionary, log and corpus files
     org_cp_path = "cp/corpus"
     new_cp_path = "cp/corpus_new"
@@ -19,6 +20,7 @@ class CorpusPropagater:
     vtlog_path = "cp/DeneVTLog.txt"
 
     def __init__(self):
+        """Initialize dictionaries, logs and and utterance hash."""
         self.vtdic = {}
         self.dic = {}
         self.logs = {}
@@ -29,6 +31,8 @@ class CorpusPropagater:
         # field marker label) except for \glo, \seg, \id which are
         # temporarily saved in a special data structure under "words"
         self.ref_dict = OrderedDict()
+        # if \ref has errors in it
+        self.has_errors = False
 
     def activate_logger(self):
         """Activate logger."""
@@ -98,7 +102,7 @@ class CorpusPropagater:
                 # get log as a list of data
                 log = line.rstrip().split("|")
                 # UPDATE/MERGE/SPLIT
-                action = log[0].upper()
+                cmd = log[0].upper()
                 # affected id (log) or lemma (vtlog)
                 id = log[1]
                 # initialze log hash with id/lemma as key if necessary
@@ -106,25 +110,24 @@ class CorpusPropagater:
                     logs[id] = []
 
                 # format for UPDATE: UPDATE|id|glo/seg|old_glo/seg>new_glo/seg
-                if action == "UPDATE":
+                if cmd == "UPDATE":
                     # get old and new gloss/lemma
                     old, new = log[3].split(">")
                     # add under correct id to logs
-                    # TODO: do we need here 'old' at all?
-                    logs[id].append({"action": action, "tier": log[2],
+                    logs[id].append({"cmd": cmd, "tier": log[2],
                                      "old": old, "new": new})
                 # format for MERGE: MERGE|
-                elif action == "MERGE":
-                    logs[id].append({"action": action, "merging_id": log[2]})
+                elif cmd == "MERGE":
+                    logs[id].append({"cmd": cmd, "new_id": log[2]})
 
-                elif action == "SPLIT":
-                    logs[id].append({"action": action, "splitting_id": log[2],
+                elif cmd == "SPLIT":
+                    logs[id].append({"cmd": cmd, "new_id": log[2],
                                      "tier": log[3], "criterion": log[4]})
                 else:
-                    self.logger.error("Action {} not defined.".format(action))
+                    self.logger.error("Command {} not defined.".format(cmd))
 
     def collect_data(self):
-        """Collect data from dictionary and log file"""
+        """Collect data from dictionary and log files."""
         self.get_dic_data()
         self.get_dic_data(is_vtdic=True)
         self.get_log_data()
@@ -154,27 +157,27 @@ class CorpusPropagater:
                 new_file_path = os.path.join(self.new_cp_path, file)
 
                 # then open original file for reading and new file for writing
-                with open(org_file_path, "r") as org_file, \
-                     open(new_file_path, "w") as new_file:
+                with open(org_file_path, "r") as self.org_file, \
+                     open(new_file_path, "w") as self.new_file:
 
-                    self.process_file(org_file, new_file)
+                    self.process_file()
 
-    def process_file(self, org_file, new_file):
-        """"""
-        has_errors = False
+    def process_file(self):
+        """Read data of utterances and process them."""
+        self.has_errors = False
         # go through all data fomr a corpus file
         # and save data per utterance unter ref_dict
-        for line in org_file:
+        for line in self.org_file:
 
             # throw away the newline at the end of a line
             line = line.rstrip("\n")
 
             # if new utterance starts
             if line.startswith("\\ref"):
-                # check previous utterance for any necessary changes
-                self.check_utterance(has_errors=has_errors)
+                # process previous utterance
+                self.process_utterance()
                 # reset to False
-                has_errors = False
+                self.has_errors = False
                 # delete data of previous utterance
                 self.ref_dict.clear()
                 # add \ref to hash
@@ -201,10 +204,12 @@ class CorpusPropagater:
                                                    {}))
                     n_words += 1
 
-            # add morpheme data from \seg, \glo and \id
-            elif (line.startswith("\\seg") or
-                  line.startswith("\\glo") or
-                  line.startswith("\\id")):
+            # add morpheme data from \seg, \glo, \id, \vt and \vtg
+            elif (line.startswith("\\seg")
+                  or line.startswith("\\glo")
+                  or line.startswith("\\id")
+                  or line.startswith("\\vt")
+                  or line.startswith("\\vtg")):
 
                 # get regex & iterator for extracting units per word
                 regex = re.compile(r"((\S+-\s+)*\S+(\s+-\S+)*)")
@@ -213,27 +218,36 @@ class CorpusPropagater:
                 # get field marker label which is the first unit
                 label = next(unitgroup_iterator).group()
 
-                # count number of unit groups (i.e. glos, segs, ids)
+                # count number of unit groups
                 n_unitgroups = 0
                 # go over those units per word
                 for i, unitgroup in enumerate(unitgroup_iterator):
 
-                    # add units to the right word (via index)
-                    # to morpheme dictionary (at index 1)
-                    # under the right label (\seg, \glo or \id)
-                    self.ref_dict["words"][i][1][label] = \
-                        re.split("\s+", unitgroup.group())
-
                     n_unitgroups += 1
 
+                    # extract units of a unitgroup splitting at whitespaces
+                    units = re.split("\s+", unitgroup.group())
+
+                    try:
+                        # add units to the right word (via index)
+                        # to morpheme dictionary (at index 1)
+                        # under the right label (\seg,\glo,\id,\vt,\vtg)
+                        self.ref_dict["words"][i][1][label] = units
+
+                    # if there are less words than unit groups
+                    except IndexError:
+                        # add it under an empty word
+                        self.ref_dict["words"].append(("", {label: units}))
+
+                # log it if number of words and unit groups is not equal
                 if n_words != n_unitgroups:
                     self.logger.error(
                         "number of {}s and words unequal for {}".
                         format(label, self.ref_dict["\\ref"]))
 
-                    has_errors = True
+                    self.has_errors = True
 
-            # if any other new fieldmarker starts
+            # if any other new field marker starts
             elif line.startswith("\\"):
                 # extract field marker label and its data
                 match = re.match(r"(\\\w+)(.*)", line)
@@ -259,15 +273,13 @@ class CorpusPropagater:
                 self.ref_dict[label] += line
 
         # check last ref inserted
-        self.check_utterance(has_errors=has_errors)
+        self.process_utterance()
 
-    def check_utterance(self, has_errors=False):
-        """Check utterance for ids in the log."""
-        # if utterance has errors or no words in it
-        if has_errors or "words" not in self.ref_dict:
-            # write unchanged to file
-            self.write_file()
-        else:
+    def process_utterance(self):
+        """Check utterance for ids and lemmas in the logs."""
+        # if utterance has words and no errors
+        if not self.has_errors and "words" in self.ref_dict:
+
             # check all words for ids in log
             for word, morphemes in self.ref_dict["words"]:
 
@@ -280,29 +292,42 @@ class CorpusPropagater:
                         # strip '-' left and right of id (if there is)
                         norm_id = m_id.strip("-")
 
-                        # check if this id is in the log file
-                        if norm_id in self.logs:
+                        # do the same for the lemma in \vt
+                        norm_lem = morphemes["\\vt"][m_pos].strip("-")
 
-                            # go through all logs with this id
-                            for log in self.logs[norm_id]:
+                        # go through log files
+                        for key, logs, vt in [(norm_id, self.logs, False),
+                                              (norm_lem, self.vtlogs, True)]:
 
-                                # get function based on action name of this log
-                                action = getattr(self, log["action"].lower())
+                            # check if id/lemma is in log file
+                            if key in logs:
 
-                                # call it
-                                action(word, morphemes, m_pos, log)
+                                # go through all logs with this id/lemma
+                                for log in logs[key]:
 
-    def update(self, word, morphemes, m_pos, log):
+                                    # get command type
+                                    cmd = log["cmd"].upper()
+
+                                    if cmd == "UPDATE":
+                                        self.update(morphemes, m_pos, log)
+                                    elif cmd == "MERGE":
+                                        self.merge(morphemes, m_pos, log, vt)
+                                    elif cmd == "SPLIT":
+                                        self.split(word, morphemes,
+                                                   m_pos, log, vt)
+
+        self.write_file()
+
+    def update(self, morphemes, m_pos, log):
         """Update data of a lemma."""
         # get glo or seg tier
         tier = morphemes["\\" + log["tier"]]
         # change tier at the right position
         if log["old"] in tier[m_pos]:
             tier[m_pos] = tier[m_pos].replace(log["old"], log["new"])
-        #print(self.ref_dict)
 
     def sub_ms(self, new, string):
-        """Substitute seg's, glo's and id's in a string."""
+        """Substitute morpheme data in a string."""
         # regex for replacing morpheme data
         rgx = re.compile(r"(-)?(.*?)(-)?$")
         # replace string
@@ -310,48 +335,62 @@ class CorpusPropagater:
 
         return rgx.sub(repl, string)
 
-    # TODO: id, seg and glo adjustments could be put in one single method
     # TODO: what if there are several glosses in dic defined?
-    def merge(self, word, morphemes, m_pos, log):
+    def merge(self, morphemes, m_pos, log, vt=False):
         """Merge lemma into another."""
-        # id of the lemma into which lemma is merged
-        new_id = log["merging_id"]
+        # id/lemma into which lemma is merged
+        key = log["new_id"]
 
-        # adjust id, glo and seg
-        morphemes["\\id"][m_pos] = self.sub_ms(new_id,
-                                               morphemes["\\id"][m_pos])
+        if vt:
+            # adjust \vt and \vtg
+            morphemes["\\vt"][m_pos] = self.sub_ms(key,
+                                                   morphemes["\\vt"][m_pos])
 
-        morphemes["\\seg"][m_pos] = self.sub_ms(self.dic[new_id]["lem"],
-                                                morphemes["\\seg"][m_pos])
+            morphemes["\\vtg"][m_pos] = self.sub_ms(self.vtdic[key]["glo"][0],
+                                                    morphemes["\\vtg"][m_pos])
 
-        morphemes["\\glo"][m_pos] = self.sub_ms(self.dic[new_id]["glo"][0],
-                                                morphemes["\\glo"][m_pos])
-        #print(self.ref_dict)
+        else:
+            # adjust id, glo and seg
+            morphemes["\\id"][m_pos] = self.sub_ms(key,
+                                                   morphemes["\\id"][m_pos])
 
-    def split(self, word, morphemes, m_pos, log):
+            morphemes["\\seg"][m_pos] = self.sub_ms(self.dic[key]["lem"],
+                                                    morphemes["\\seg"][m_pos])
+
+            morphemes["\\glo"][m_pos] = self.sub_ms(self.dic[key]["glo"][0],
+                                                    morphemes["\\glo"][m_pos])
+
+    def split(self, word, morphemes, m_pos, log, vt=False):
         """Split lemma entry into two separate ones."""
         # check if criterion for disambiguation is in \full or \glo
         if log["criterion"] in [word, morphemes["\\glo"][m_pos].strip("-")]:
-            # id for new entry
-            new_id = log["splitting_id"]
-            # adjust id, glo, seg
-            morphemes["\\id"][m_pos] = self.sub_ms(new_id,
-                                                   morphemes["\\id"][m_pos])
 
-            morphemes["\\seg"][m_pos] = self.sub_ms(self.dic[new_id]["lem"],
-                                                    morphemes["\\seg"][m_pos])
-
-            morphemes["\\glo"][m_pos] = self.sub_ms(self.dic[new_id]["glo"][0],
-                                                    morphemes["\\glo"][m_pos])
-
-        #print(self.ref_dict)
+            # merge with data from new entry
+            self.merge(morphemes, m_pos, log, vt=vt)
 
     def write_file(self):
-        """Write data of a utterance to a file."""
-        pass
+        """Write data of an utterance to the file."""
+        # Go through every tier in an utterance
+        for tier in self.ref_dict:
+            # content of the tier
+            content = self.ref_dict[tier]
 
-    def run(self):
-        """"""
+            # if normal tier
+            if tier != "words":
+                self.new_file.write(content)
+            else:
+
+                for word, morphemes in content:
+                    pass
+
+            # new line after every tier
+            self.new_file.write("\n")
+
+        # insert empty line between utterances
+        self.new_file.write("\n")
+
+    def propagate(self):
+        """Propagate changes in dictionary in corpus."""
         self.activate_logger()
         self.collect_data()
         self.process_corpus()
@@ -359,12 +398,7 @@ class CorpusPropagater:
 
 def main():
     cp = CorpusPropagater()
-    cp.run()
-#    print(cp.dic)
-#    print(cp.vtdic)
-#    print(cp.logs)
-#    print(cp.vtlogs)
-
+    cp.propagate()
 
 if __name__ == "__main__":
     main()
