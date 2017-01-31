@@ -335,30 +335,37 @@ class CorpusPropagater:
 
         return rgx.sub(repl, string)
 
-    # TODO: what if there are several glosses in dic defined?
     def merge(self, morphemes, m_pos, log, vt=False):
         """Merge lemma into another."""
         # id/lemma into which lemma is merged
         key = log["new_id"]
 
         if vt:
-            # adjust \vt and \vtg
+            # adjust \vt
             morphemes["\\vt"][m_pos] = self.sub_ms(key,
                                                    morphemes["\\vt"][m_pos])
 
-            morphemes["\\vtg"][m_pos] = self.sub_ms(self.vtdic[key]["glo"][0],
-                                                    morphemes["\\vtg"][m_pos])
+            # if original vtg is not in the new dictionary entry
+            if morphemes["\\vtg"][m_pos] not in self.vtdic[key]["glo"]:
+
+                # replace by the first vtg of the new dictionary entry
+                morphemes["\\vtg"][m_pos] = self.sub_ms(
+                    self.vtdic[key]["glo"][0], morphemes["\\vtg"][m_pos])
 
         else:
-            # adjust id, glo and seg
+            # adjust id and seg
             morphemes["\\id"][m_pos] = self.sub_ms(key,
                                                    morphemes["\\id"][m_pos])
 
             morphemes["\\seg"][m_pos] = self.sub_ms(self.dic[key]["lem"],
                                                     morphemes["\\seg"][m_pos])
 
-            morphemes["\\glo"][m_pos] = self.sub_ms(self.dic[key]["glo"][0],
-                                                    morphemes["\\glo"][m_pos])
+            # if original glo is not in the new dictionary entry
+            if morphemes["\\glo"][m_pos] not in self.dic[key]["glo"]:
+
+                # replace by the first gloss of the new dictionary entry
+                morphemes["\\glo"][m_pos] = self.sub_ms(
+                    self.dic[key]["glo"][0], morphemes["\\glo"][m_pos])
 
     def split(self, word, morphemes, m_pos, log, vt=False):
         """Split lemma entry into two separate ones."""
@@ -372,19 +379,84 @@ class CorpusPropagater:
         """Write data of an utterance to the file."""
         # Go through every tier in an utterance
         for tier in self.ref_dict:
+
             # content of the tier
             content = self.ref_dict[tier]
 
-            # if normal tier
-            if tier != "words":
-                self.new_file.write(content)
-            else:
+            # if tier is a morpheme tier
+            if tier in {"\\full", "\\seg", "\\glo", "\\id", "\vt", "\\vtg"}:
 
+                # and the morphemes tiers are unequal in number
+                if self.has_errors:
+                    # write its content directly to file
+                    self.new_file.write(content)
+                    # new line after every tier
+                    self.new_file.write("\n")
+
+            # if 'words' create its morpheme tiers first before writing
+            elif tier == "words":
+
+                # build tiers here
+                tiers = OrderedDict([("\\full", "\\full "),
+                                     ("\\seg", "\\seg  "),
+                                     ("\\glo", "\\glo  "),
+                                     ("\\id", "\\id   "),
+                                     ("\\vt", "\\vt   "),
+                                     ("\\vtg", "\\vtg  ")])
+
+                # go through each word
                 for word, morphemes in content:
-                    pass
 
-            # new line after every tier
-            self.new_file.write("\n")
+                    # concatenate word to tier \full
+                    tiers["\\full"] += word
+
+                    # keep track of the longest unit group
+                    longest_group = 0
+                    # go through each slot in the word (e.g. via \seg)
+                    for i, _ in enumerate(morphemes["\\seg"]):
+
+                        # save the no. of chars for every unit in this slot
+                        lens = {}
+
+                        # keep track of the longest type of unit
+                        longest_unit = 0
+                        # go through every type of unit
+                        for unit in morphemes:
+
+                            # concatenate unit i to tier of this unit type
+                            tiers[unit] += morphemes[unit][i]
+
+                            # save no. of chars of this unit
+                            lens[unit] = len(morphemes[unit][i])
+
+                            # compare it to the longest unit seen so far
+                            if longest_unit < lens[unit]:
+                                longest_unit = lens[unit]
+
+                        # add number
+                        longest_group += longest_unit
+
+                        # iterate again and add the necessary whitespaces
+                        for unit in morphemes:
+                            # take difference between longest unit and this
+                            # unit plus 1 because there is always a whitespace
+                            # between units
+                            tiers[unit] += (longest_unit - lens[unit] + 1)*" "
+
+                    tiers["\\full"] += (longest_group - len(word) + 1)*" "
+
+                for tier in tiers:
+                    # write morpheme tier stripping trailing whitespaces
+                    self.new_file.write(tiers[tier].rstrip())
+                    # new line after every tier
+                    self.new_file.write("\n")
+
+            # any other tier
+            else:
+                # write its content directly to the file
+                self.new_file.write(content)
+                # new line after every tier
+                self.new_file.write("\n")
 
         # insert empty line between utterances
         self.new_file.write("\n")
