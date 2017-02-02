@@ -40,7 +40,7 @@ class CorpusPropagater:
         self.logger.setLevel(logging.INFO)
 
         handler = logging.FileHandler("cp.log", mode="w")
-        handler.setLevel(logging.INFO)
+        handler.setLevel(logging.WARNING)
 
         formatter = logging.Formatter("%(funcName)s|%(levelname)s|%(message)s")
         handler.setFormatter(formatter)
@@ -185,6 +185,9 @@ class CorpusPropagater:
 
             # if fieldmarker \full of utterance starts
             elif line.startswith("\\full"):
+                # add \full to hash as a backup in case of errors
+                self.ref_dict["\\full"] = line
+
                 # save morpheme data in a special data structure
                 # words: [(word1, {"\\seg": [seg1, seg2]
                 #                  "\\glo": [glo1, glo2],
@@ -204,51 +207,9 @@ class CorpusPropagater:
                                                    {}))
                     n_words += 1
 
-            # add morpheme data from \seg, \glo, \id, \vt and \vtg
-            elif (line.startswith("\\seg")
-                  or line.startswith("\\glo")
-                  or line.startswith("\\id")
-                  or line.startswith("\\vt")
-                  or line.startswith("\\vtg")):
-
-                # get regex & iterator for extracting units per word
-                regex = re.compile(r"((\S+-\s+)*\S+(\s+-\S+)*)")
-                unitgroup_iterator = regex.finditer(line)
-
-                # get field marker label which is the first unit
-                label = next(unitgroup_iterator).group()
-
-                # count number of unit groups
-                n_unitgroups = 0
-                # go over those units per word
-                for i, unitgroup in enumerate(unitgroup_iterator):
-
-                    n_unitgroups += 1
-
-                    # extract units of a unitgroup splitting at whitespaces
-                    units = re.split("\s+", unitgroup.group())
-
-                    try:
-                        # add units to the right word (via index)
-                        # to morpheme dictionary (at index 1)
-                        # under the right label (\seg,\glo,\id,\vt,\vtg)
-                        self.ref_dict["words"][i][1][label] = units
-
-                    # if there are less words than unit groups
-                    except IndexError:
-                        # add it under an empty word
-                        self.ref_dict["words"].append(("", {label: units}))
-
-                # log it if number of words and unit groups is not equal
-                if n_words != n_unitgroups:
-                    self.logger.error(
-                        "number of {}s and words unequal for {}".
-                        format(label, self.ref_dict["\\ref"]))
-
-                    self.has_errors = True
-
-            # if any other new field marker starts
+            # if any field marker starts
             elif line.startswith("\\"):
+
                 # extract field marker label and its data
                 match = re.match(r"(\\\w+)(.*)", line)
                 if match:
@@ -264,6 +225,42 @@ class CorpusPropagater:
                         # add to hash
                         self.ref_dict[label] = line
 
+                if label in {"\\seg", "\\glo", "\\id", "\\vt", "\\vtg"}:
+                    # get regex & iterator for extracting units per word
+                    regex = re.compile(r"((\S+-\s+)*\S+(\s+-\S+)*)")
+                    unitgroup_iterator = regex.finditer(line)
+
+                    # get field marker label which is the first unit
+                    label = next(unitgroup_iterator).group()
+
+                    # count number of unit groups
+                    n_unitgroups = 0
+                    # go over those units per word
+                    for i, unitgroup in enumerate(unitgroup_iterator):
+
+                        n_unitgroups += 1
+
+                        # extract units of a unitgroup splitting at whitespaces
+                        units = re.split("\s+", unitgroup.group())
+
+                        try:
+                            # add units to the right word (via index)
+                            # to morpheme dictionary (at index 1)
+                            # under the right label (\seg,\glo,\id,\vt,\vtg)
+                            self.ref_dict["words"][i][1][label] = units
+
+                        # if there are less words than unit groups
+                        except IndexError:
+                            # add it under an empty word
+                            self.ref_dict["words"].append(("", {label: units}))
+
+                    # log it if number of words and unit groups is not equal
+                    if n_words != n_unitgroups:
+                        self.logger.error(
+                            "no. unit groups and words unequal for {}".
+                            format(self.ref_dict["\\ref"]))
+                        self.has_errors = True
+
             # if line does not start with \\, its data must belong
             # to the fieldmarker that directly comes before
             elif line:
@@ -276,45 +273,67 @@ class CorpusPropagater:
         self.process_utterance()
 
     def process_utterance(self):
-        """Check utterance for ids and lemmas in the logs."""
-        # if utterance has words and no errors
-        if not self.has_errors and "words" in self.ref_dict:
+        """Check utterance for errors and ids and lemmas in the logs."""
 
-            # check all words for ids in log
-            for word, morphemes in self.ref_dict["words"]:
+        # if utterance has errors or no words in it, write directly to file
+        if self.has_errors or "words" not in self.ref_dict:
+            return self.write_file()
 
-                # if there is morpheme data for this word
-                if morphemes:
+        # for logging purposes
+        ref = self.ref_dict["\\ref"]
 
-                    # go through every morpheme id of this word
-                    for m_pos, m_id in enumerate(morphemes["\\id"]):
+        # check all words for ids in log
+        for word, morphemes in self.ref_dict["words"]:
 
-                        # strip '-' left and right of id (if there is)
-                        norm_id = m_id.strip("-")
+            # check if there is morpheme data
+            if not morphemes:
+                self.logger.info("missing morpheme data for {}".format(ref))
+                self.has_errors = True
+                return self.write_file()
 
-                        # do the same for the lemma in \vt
-                        norm_lem = morphemes["\\vt"][m_pos].strip("-")
+            # check if all morpheme tiers are available
+            if len(morphemes) != 6:
+                self.logger.info("missing tier for {}".format(ref))
+                self.has_errors = True
+                return self.write_file()
 
-                        # go through log files
-                        for key, logs, vt in [(norm_id, self.logs, False),
-                                              (norm_lem, self.vtlogs, True)]:
+            # check if no. units in this word is equal for all morpheme tiers
+            # take no. \seg's as a random reference point
+            n_units = len(morphemes["\\seg"])
+            for tier in morphemes:
+                if len(morphemes[tier]) != n_units:
+                    self.logger.error("no. units unequal for {}".format(ref))
+                    self.has_errors = True
+                    return self.write_file()
 
-                            # check if id/lemma is in log file
-                            if key in logs:
+            # go through every morpheme id of this word
+            for m_pos, m_id in enumerate(morphemes["\\id"]):
 
-                                # go through all logs with this id/lemma
-                                for log in logs[key]:
+                # strip '-' left and right of id (if there is)
+                norm_id = m_id.strip("-")
 
-                                    # get command type
-                                    cmd = log["cmd"].upper()
+                # do the same for the lemma in \vt
+                norm_lem = morphemes["\\vt"][m_pos].strip("-")
 
-                                    if cmd == "UPDATE":
-                                        self.update(morphemes, m_pos, log)
-                                    elif cmd == "MERGE":
-                                        self.merge(morphemes, m_pos, log, vt)
-                                    elif cmd == "SPLIT":
-                                        self.split(word, morphemes,
-                                                   m_pos, log, vt)
+                # go through log files
+                for key, logs, vt in [(norm_id, self.logs, False),
+                                      (norm_lem, self.vtlogs, True)]:
+
+                    # check if id/lemma is in log file
+                    if key in logs:
+
+                        # go through all logs with this id/lemma
+                        for log in logs[key]:
+
+                            # get command type
+                            cmd = log["cmd"].upper()
+
+                            if cmd == "UPDATE":
+                                self.update(morphemes, m_pos, log)
+                            elif cmd == "MERGE":
+                                self.merge(morphemes, m_pos, log, vt)
+                            elif cmd == "SPLIT":
+                                self.split(word, morphemes, m_pos, log, vt)
 
         self.write_file()
 
@@ -384,7 +403,7 @@ class CorpusPropagater:
             content = self.ref_dict[tier]
 
             # if tier is a morpheme tier
-            if tier in {"\\full", "\\seg", "\\glo", "\\id", "\vt", "\\vtg"}:
+            if tier in {"\\full", "\\seg", "\\glo", "\\id", "\\vt", "\\vtg"}:
 
                 # and the morphemes tiers are unequal in number
                 if self.has_errors:
@@ -395,6 +414,10 @@ class CorpusPropagater:
 
             # if 'words' create its morpheme tiers first before writing
             elif tier == "words":
+
+                # morpheme data is written unchanged (see above)
+                if self.has_errors:
+                    continue
 
                 # build tiers here
                 tiers = OrderedDict([("\\full", "\\full "),
