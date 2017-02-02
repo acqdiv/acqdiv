@@ -86,7 +86,7 @@ class CorpusPropagater:
 
                 elif "\\glo" in line:
                     dic[id]["glo"].append(line.split()[1])
-    # TODO: change log format
+
     def get_log_data(self, is_vtlog=False):
         """Collect data from log file."""
         if is_vtlog:
@@ -119,7 +119,7 @@ class CorpusPropagater:
                 # format for MERGE: MERGE|old_id|new_id
                 elif cmd == "MERGE":
                     logs[id].append({"cmd": cmd, "new_id": log[2]})
-                
+
                 # format for SPLIT: SPLIT|old_id|new_id|tier==criterion
                 elif cmd == "SPLIT":
                     # get tier (full|glo|vtg) and criterion value
@@ -167,7 +167,10 @@ class CorpusPropagater:
 
     def process_file(self):
         """Read data of utterances and process them."""
+        # reset
+        self.ref_dict.clear()
         self.has_errors = False
+
         # go through all data fomr a corpus file
         # and save data per utterance unter ref_dict
         for line in self.org_file:
@@ -181,6 +184,8 @@ class CorpusPropagater:
                 self.process_utterance()
                 # reset to False
                 self.has_errors = False
+                # reset no. words
+                n_words = 0
                 # delete data of previous utterance
                 self.ref_dict.clear()
                 # add \ref to hash
@@ -188,48 +193,34 @@ class CorpusPropagater:
 
             # if fieldmarker \full of utterance starts
             elif line.startswith("\\full"):
-                # add \full to hash as a backup in case of errors
-                self.ref_dict["\\full"] = line
 
-                # save morpheme data in a special data structure
-                # words: [(word1, {"\\seg": [seg1, seg2]
-                #                  "\\glo": [glo1, glo2],
-                #                  "\\id": [id1, id2]}), (word2, {...})]
-                self.ref_dict["words"] = []
+                has_label = self.process_tier(line)[2]
+
+                if not has_label:
+                    # save morpheme data in a special data structure
+                    # words: [(word1, {"\\seg": [seg1, seg2]
+                    #                  "\\glo": [glo1, glo2],
+                    #                  "\\id": [id1, id2]}), (word2, {...})]
+                    self.ref_dict["words"] = []
 
                 # extract words splitting the processed line at whitespaces
                 word_iterator = re.finditer(r"\S+", line)
                 # skip the field marker label
                 next(word_iterator)
 
-                # count the words
-                n_words = 0
                 # add every word to the hash
                 for word in word_iterator:
-                    self.ref_dict["words"].append((word.group(),
-                                                   {}))
+                    self.ref_dict["words"].append((word.group(), {}))
                     n_words += 1
 
             # if any field marker starts
             elif line.startswith("\\"):
 
-                # extract field marker label and its data
-                match = re.match(r"(\\\w+)(.*)", line)
-                if match:
-                    label = match.group(1)
-                    data = match.group(2)
-                    
-                    # TODO: this must be implemented for all field markers
-                    # check if there are several defintions of the
-                    # same fieldmarker in one \ref
-                    if label in self.ref_dict:
-                        # concatenate with hash content
-                        self.ref_dict[label] += data
-                    else:
-                        # add to hash
-                        self.ref_dict[label] = line
+                label, data, has_label = self.process_tier(line)
 
+                # deal with morpheme tiers separately
                 if label in {"\\seg", "\\glo", "\\id", "\\vt", "\\vtg"}:
+
                     # get regex & iterator for extracting units per word
                     regex = re.compile(r"((\S+-\s+)*\S+(\s+-\S+)*)")
                     unitgroup_iterator = regex.finditer(line)
@@ -237,10 +228,16 @@ class CorpusPropagater:
                     # get field marker label which is the first unit
                     label = next(unitgroup_iterator).group()
 
-                    # count number of unit groups
+                    # find out no. of unit groups so far inserted for this tier
                     n_unitgroups = 0
+                    if has_label:
+                        for word, morphemes in self.ref_dict["words"]:
+                            if label in morphemes:
+                                n_unitgroups += 1
+
                     # go over those units per word
-                    for i, unitgroup in enumerate(unitgroup_iterator):
+                    for i, unitgroup in enumerate(unitgroup_iterator,
+                                                  start=n_unitgroups):
 
                         n_unitgroups += 1
 
@@ -275,6 +272,29 @@ class CorpusPropagater:
 
         # check last ref inserted
         self.process_utterance()
+
+    def process_tier(self, line):
+        """Extract label and data and check if label is already in ref_dict."""
+        # extract field marker label and its data
+        match = re.match(r"(\\\w+)(.*)", line)
+
+        label = match.group(1)
+        data = match.group(2)
+
+        # field marker in ref_dict
+        has_label = False
+
+        # check if there are several defintions of the
+        # same fieldmarker in one \ref
+        if label in self.ref_dict:
+            has_label = True
+            # concatenate with hash content
+            self.ref_dict[label] += data
+        else:
+            # add to hash
+            self.ref_dict[label] = line
+
+        return (label, data, has_label)
 
     def process_utterance(self):
         """Check utterance for errors and ids and lemmas in the logs."""
@@ -425,11 +445,11 @@ class CorpusPropagater:
 
                 # build tiers here
                 tiers = OrderedDict([("\\full", "\\full "),
-                                     ("\\seg", "\\seg  "),
-                                     ("\\glo", "\\glo  "),
-                                     ("\\id", "\\id   "),
-                                     ("\\vt", "\\vt   "),
-                                     ("\\vtg", "\\vtg  ")])
+                                     ("\\seg", "\\seg "),
+                                     ("\\glo", "\\glo "),
+                                     ("\\id", "\\id "),
+                                     ("\\vt", "\\vt "),
+                                     ("\\vtg", "\\vtg ")])
 
                 # go through each word
                 for word, morphemes in content:
@@ -460,17 +480,18 @@ class CorpusPropagater:
                             if longest_unit < lens[unit]:
                                 longest_unit = lens[unit]
 
-                        # add number
+                        # there is one whitespace between morphemes/words
+                        longest_unit += 1
+
+                        # add it to the unit group length
                         longest_group += longest_unit
 
-                        # iterate again and add the necessary whitespaces
+                        # add necessary whitespaces between morphemes
                         for unit in morphemes:
-                            # take difference between longest unit and this
-                            # unit plus 1 because there is always a whitespace
-                            # between units
-                            tiers[unit] += (longest_unit - lens[unit] + 1)*" "
+                            tiers[unit] += (longest_unit - lens[unit])*" "
 
-                    tiers["\\full"] += (longest_group - len(word) + 1)*" "
+                    # add necessary whitespaces between words
+                    tiers["\\full"] += (longest_group - len(word))*" "
 
                 for tier in tiers:
                     # write morpheme tier stripping trailing whitespaces
