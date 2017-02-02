@@ -86,7 +86,7 @@ class CorpusPropagater:
 
                 elif "\\glo" in line:
                     dic[id]["glo"].append(line.split()[1])
-
+    # TODO: change log format
     def get_log_data(self, is_vtlog=False):
         """Collect data from log file."""
         if is_vtlog:
@@ -109,20 +109,23 @@ class CorpusPropagater:
                 if id not in logs:
                     logs[id] = []
 
-                # format for UPDATE: UPDATE|id|glo/seg|old_glo/seg>new_glo/seg
+                # format for UPDATE: UPDATE|id|tier==old|new
                 if cmd == "UPDATE":
-                    # get old and new gloss/lemma
-                    old, new = log[3].split(">")
+                    # get tier (seg|glo|vtg) and old seg/glo/vtg value
+                    tier, old = re.split("==", log[2])
                     # add under correct id to logs
-                    logs[id].append({"cmd": cmd, "tier": log[2],
-                                     "old": old, "new": new})
-                # format for MERGE: MERGE|
+                    logs[id].append({"cmd": cmd, "tier": tier,
+                                     "old": old, "new": log[3]})
+                # format for MERGE: MERGE|old_id|new_id
                 elif cmd == "MERGE":
                     logs[id].append({"cmd": cmd, "new_id": log[2]})
-
+                
+                # format for SPLIT: SPLIT|old_id|new_id|tier==criterion
                 elif cmd == "SPLIT":
+                    # get tier (full|glo|vtg) and criterion value
+                    tier, criterion = re.split("==", log[3])
                     logs[id].append({"cmd": cmd, "new_id": log[2],
-                                     "tier": log[3], "criterion": log[4]})
+                                     "tier": tier, "criterion": criterion})
                 else:
                     self.logger.error("Command {} not defined.".format(cmd))
 
@@ -215,7 +218,8 @@ class CorpusPropagater:
                 if match:
                     label = match.group(1)
                     data = match.group(2)
-
+                    
+                    # TODO: this must be implemented for all field markers
                     # check if there are several defintions of the
                     # same fieldmarker in one \ref
                     if label in self.ref_dict:
@@ -292,7 +296,7 @@ class CorpusPropagater:
                 return self.write_file()
 
             # check if all morpheme tiers are available
-            if len(morphemes) != 6:
+            if len(morphemes) != 5:
                 self.logger.info("missing tier for {}".format(ref))
                 self.has_errors = True
                 return self.write_file()
