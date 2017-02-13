@@ -1,10 +1,13 @@
 """
-@author: Anna Jancso
+This module provides a class for propagating changes in corpus files according
+to the log and dictionary files. The following files are used and their paths:
+    - corpus files
+    - normal/vt dictionary
+    - normal/vt log
 """
-import logging
 import os
 import re
-import sys
+import logging
 from collections import OrderedDict
 
 
@@ -49,7 +52,7 @@ class CorpusPropagater:
     def get_dic_data(self, is_vtdic=False):
         """Collect data from a dictionary.
 
-        is_vtdic: specify if it is a verb theme dictionary
+        is_vtdic (bool): verb theme dictionary or not
         """
         # check which dictionary type should be processed
         if is_vtdic:
@@ -58,6 +61,12 @@ class CorpusPropagater:
         else:
             dic = self.dic
             path = self.dic_path
+
+        # check if path is valid
+        if not os.path.isfile(path):
+            print("Path '{}' for dictionary file does not exist".format(path))
+            print()
+            return
 
         with open(path, "r") as dic_file:
 
@@ -88,13 +97,22 @@ class CorpusPropagater:
                     dic[id]["glo"].append(line.split()[1])
 
     def get_log_data(self, is_vtlog=False):
-        """Collect data from log file."""
+        """Collect data from log file.
+
+        is_vtlog (bool): verb theme log or not
+        """
         if is_vtlog:
             path = self.vtlog_path
             logs = self.vtlogs
         else:
             path = self.log_path
             logs = self.logs
+
+        # check if path is valid
+        if not os.path.isfile(path):
+            print("Path '{}' for log file does not exist".format(path))
+            print()
+            return
 
         with open(path, "r") as log_file:
 
@@ -143,9 +161,10 @@ class CorpusPropagater:
             try:
                 os.mkdir(self.new_cp_path)
             except FileNotFoundError:
-                print("Corpus directory couldn't be created at",
-                      self.new_cp_path)
-                sys.exit(1)
+                print("Path '{}' for corpus directory does not exist".format(
+                      self.new_cp_path))
+                print()
+                return
 
         # go through each original corpus file
         for file in os.listdir(self.org_cp_path):
@@ -274,7 +293,10 @@ class CorpusPropagater:
         self.process_utterance()
 
     def process_tier(self, line):
-        """Extract label and data and check if label is already in ref_dict."""
+        """Extract label and data and check if label is already in ref_dict.
+
+        line (str): tier
+        """
         # extract field marker label and its data
         match = re.match(r"(\\\w+)(.*)", line)
 
@@ -362,7 +384,12 @@ class CorpusPropagater:
         self.write_file()
 
     def update(self, morphemes, m_pos, log):
-        """Update data of a lemma."""
+        """Update data of a lemma.
+
+        morphemes (hash): morpheme tiers of a word
+        m_pos (int): morpheme position in a word
+        log (hash): normal/vt log
+        """
         # get glo or seg tier
         tier = morphemes["\\" + log["tier"]]
         # change tier at the right position
@@ -370,20 +397,35 @@ class CorpusPropagater:
             tier[m_pos] = tier[m_pos].replace(log["old"], log["new"])
 
     def sub_ms(self, new, string):
-        """Substitute morpheme data in a string."""
+        """Substitute morpheme data in a string.
+
+        new (str): new morpheme value
+        string (str): where old morpheme value is replaced by new one
+        """
         # regex for replacing morpheme data
         rgx = re.compile(r"(-)?(.*?)(-)?$")
-        # replace string
+        # replace string (note: \g<> is needed because ids are also integers)
         repl = r"\g<1>{}\g<3>".format(new)
 
         return rgx.sub(repl, string)
 
     def merge(self, morphemes, m_pos, log, vt=False):
-        """Merge lemma into another."""
+        """Merge lemma into another.
+
+        morphemes (hash): morpheme tiers of a word
+        m_pos (int): morpheme position in a word
+        log (hash): normal/vt log
+        vt (bool): verbe theme or not
+        """
         # id/lemma into which lemma is merged
         key = log["new_id"]
 
         if vt:
+            # check if lemma has an entry in the vt-dictionary
+            if key not in self.vtdic:
+                self.logger.error("Lemma {} not in vt-dictionary".format(key))
+                return
+
             # adjust \vt
             morphemes["\\vt"][m_pos] = self.sub_ms(key,
                                                    morphemes["\\vt"][m_pos])
@@ -396,6 +438,11 @@ class CorpusPropagater:
                     self.vtdic[key]["glo"][0], morphemes["\\vtg"][m_pos])
 
         else:
+            # check if id has an entry in the dictionary
+            if key not in self.dic:
+                self.logger.error("Id {} not in dictionary".format(key))
+                return
+
             # adjust id and seg
             morphemes["\\id"][m_pos] = self.sub_ms(key,
                                                    morphemes["\\id"][m_pos])
@@ -411,7 +458,14 @@ class CorpusPropagater:
                     self.dic[key]["glo"][0], morphemes["\\glo"][m_pos])
 
     def split(self, word, morphemes, m_pos, log, vt=False):
-        """Split lemma entry into two separate ones."""
+        """Split lemma entry into two separate ones.
+
+        word (str): concerned word
+        morphemes (hash): morpheme tiers of a word
+        m_pos (int): morpheme position in a word
+        log (hash): normal/vt log
+        vt (bool): verbe theme or not
+        """
         # check if criterion for disambiguation is in \full or \glo
         if log["criterion"] in [word, morphemes["\\glo"][m_pos].strip("-")]:
 
