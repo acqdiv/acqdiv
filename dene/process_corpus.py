@@ -68,7 +68,7 @@ class CorpusProcesser():
 
         if activate:
             handler = logging.FileHandler("cp.log", mode="w")
-            handler.setLevel(logging.WARNING)
+            handler.setLevel(logging.INFO)
 
             formatter = logging.Formatter(
                 "%(funcName)s|%(levelname)s|%(message)s")

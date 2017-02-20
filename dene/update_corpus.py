@@ -51,6 +51,9 @@ class Propagator:
         if new_cp_path is not None:
             self.new_cp_path = new_cp_path
 
+        # get a corpus processer
+        self.cp = CorpusProcesser(self.org_cp_path, self.new_cp_path)
+
     def get_dic_data(self, is_vtdic=False):
         """Collect data from a dictionary.
 
@@ -207,6 +210,10 @@ class Propagator:
         if log["old"] in tier[m_pos]:
             tier[m_pos] = tier[m_pos].replace(log["old"], log["new"])
 
+            self.cp.logger.info("changed \{} '{}' to '{}' in {}".format(
+                log["tier"], log["old"], log["new"],
+                self.cp.ref_dict["\\ref"]))
+
     def sub_ms(self, new, string):
         """Substitute morpheme data in a string.
 
@@ -237,22 +244,40 @@ class Propagator:
                 self.logger.error("Lemma {} not in vt-dictionary".format(key))
                 return
 
+            self.cp.logger.info("changed \\vt '{}' to '{}' in {}".format(
+                morphemes["\\vt"][m_pos].strip("-"), key,
+                self.cp.ref_dict["\\ref"]))
+
             # adjust \vt
             morphemes["\\vt"][m_pos] = self.sub_ms(key,
                                                    morphemes["\\vt"][m_pos])
 
+            norm_vtg = morphemes["\\vtg"][m_pos].strip("-")
+
             # if original vtg is not in the new dictionary entry
-            if morphemes["\\vtg"][m_pos] not in self.vtdic[key]["glo"]:
+            if norm_vtg not in self.vtdic[key]["glo"]:
 
                 # replace by the first vtg of the new dictionary entry
                 morphemes["\\vtg"][m_pos] = self.sub_ms(
                     self.vtdic[key]["glo"][0], morphemes["\\vtg"][m_pos])
+
+                self.cp.logger.info("changed \\vtg '{}' to '{}' in {}".format(
+                    norm_vtg, self.vtdic[key]["glo"][0],
+                    self.cp.ref_dict["\\ref"]))
 
         else:
             # check if id has an entry in the dictionary
             if key not in self.dic:
                 self.logger.error("Id {} not in dictionary".format(key))
                 return
+
+            self.cp.logger.info("changed \\id '{}' to '{}' in {}".format(
+                morphemes["\\id"][m_pos].strip("-"), key,
+                self.cp.ref_dict["\\ref"]))
+
+            self.cp.logger.info("changed \\seg '{}' to '{}' in {}".format(
+                morphemes["\\seg"][m_pos].strip("-"), self.dic[key]["lem"],
+                self.cp.ref_dict["\\ref"]))
 
             # adjust id and seg
             morphemes["\\id"][m_pos] = self.sub_ms(key,
@@ -261,12 +286,18 @@ class Propagator:
             morphemes["\\seg"][m_pos] = self.sub_ms(self.dic[key]["lem"],
                                                     morphemes["\\seg"][m_pos])
 
+            norm_glo = morphemes["\\glo"][m_pos].strip("-")
+
             # if original glo is not in the new dictionary entry
-            if morphemes["\\glo"][m_pos] not in self.dic[key]["glo"]:
+            if norm_glo not in self.dic[key]["glo"]:
 
                 # replace by the first gloss of the new dictionary entry
                 morphemes["\\glo"][m_pos] = self.sub_ms(
                     self.dic[key]["glo"][0], morphemes["\\glo"][m_pos])
+
+                self.cp.logger.info("changed \\glo '{}' to '{}' in {}".format(
+                    norm_glo, self.dic[key]["glo"][0],
+                    self.cp.ref_dict["\\ref"]))
 
     def split(self, word, morphemes, m_pos, log, vt=False):
         """Split lemma entry into two separate ones.
@@ -288,18 +319,15 @@ class Propagator:
         # get dictionary and log data
         self.collect_data()
 
-        # get a corpus processer
-        cp = CorpusProcesser(self.org_cp_path, self.new_cp_path)
-
         # go through each utterance of all corpus files
-        for utterance in cp:
+        for utterance in self.cp:
             # if there are no errors in the utterance
-            if not cp.has_errors:
+            if not self.cp.has_errors:
                 # change data if necessary
                 self.update_utterance(utterance)
 
             # write (un)changed utterance back to file
-            cp.write_file()
+            self.cp.write_file()
 
 
 def main():
