@@ -150,10 +150,12 @@ class SessionProcessor(object):
                 this_unique_speaker = None
 
             u = Utterance(**utterance)
-            if this_speaker is not None:
-                this_speaker.utterances.append(u)
-            if this_unique_speaker is not None:
-                this_unique_speaker.utterances.append(u)
+            # Turn off autoflush to prevent commits while db is locked
+            with self.Session.no_autoflush:
+                if this_speaker is not None:
+                    this_speaker.utterances.append(u)
+                if this_unique_speaker is not None:
+                    this_unique_speaker.utterances.append(u)
 
             wlen = len(words)
             mlen = len(morphemes)
