@@ -100,8 +100,12 @@ class TurkishCleaner(XMLCleaner):
                         new_word = etree.Element('w')
                         act = etree.SubElement(new_word, 'actual')
                         tar = etree.SubElement(new_word, 'target')
-                        act.text = orthography[1]
-                        tar.text = orthography[1]
+                        if len(orthography) > 1:
+                            act.text = orthography[1]
+                            tar.text = orthography[1]
+                        else:
+                            act.text = ""
+                            tar.text = ""
                         full_words[word_index].find('actual').text = orthography[0]
                         full_words[word_index].find('target').text = orthography[0]
                         u.insert(word_index+1, new_word)
