@@ -47,15 +47,15 @@ class YucatecCleaner(XMLCleaner):
                 # both components to "unknown"
                 w = re.sub('xxx', '???|???', w)
                 new_words.append(w)
-
+                            
             #initialize word index
             word_index = -1
             wlen = len(full_words)
             #mwords is a list of lists of morphemes
             for w in new_words:
-
+                
                 # count up word index, extend list if necessary
-                word_index, wlen = XMLCleaner.word_index_up(
+                word_index, llen = XMLCleaner.word_index_up(
                     full_words, wlen, word_index, u)
 
                 # some words in <w> have a warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
@@ -63,11 +63,9 @@ class YucatecCleaner(XMLCleaner):
                 while(('warning' in full_words[word_index].attrib and
                     'not glossed' in full_words[word_index].attrib['warning'])
                     or 'untranscribed' in full_words[word_index].attrib):
-                        #word_index += 1
-                        word_index, wlen = XMLCleaner.word_index_up(
-                            full_words, wlen, word_index, u)
+                        word_index += 1                                                       
 
-
+                
                 wmor = etree.SubElement(full_words[word_index], 'mor')
                 wmor.text = w
 

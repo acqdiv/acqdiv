@@ -60,7 +60,7 @@ class Session(Base):
     utterances = relationship('Utterance', backref='Session')
     words = relationship('Word', backref='Session')
     morphemes = relationship('Morpheme', backref='Session')
-    target_child_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
+
 
 class Speaker(Base):
     """ Speaker table includes a row for each speaker in a session. Speakers may appear in > 1 session.
@@ -107,7 +107,7 @@ class UniqueSpeaker(Base):
     # SQLAlchemy relationship definitions
     speakers = relationship('Speaker', backref='unique_speaker')
     utterances = relationship('Utterance', backref='unique_speaker')
-    target_of = relationship('Session', backref='target_child')
+
 
 
 class Utterance(Base):

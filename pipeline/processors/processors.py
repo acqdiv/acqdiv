@@ -6,6 +6,7 @@ import glob
 import itertools as it
 import logging
 import os
+import pdb
 import re
 import sys
 
@@ -68,7 +69,7 @@ class SessionProcessor(object):
         self.config = cfg
         self.file_path = file_path
         self.parser_factory = parser_factory
-        self.unique_speaker_ids = unique_speakers
+        self.unique_speakers = unique_speakers
 
         # TODO: do we need these variables?
         self.language = self.config['corpus']['language']
@@ -77,9 +78,7 @@ class SessionProcessor(object):
         self.morpheme_type = self.config['morphemes']['type']
 
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
-        self.Session = sessionmaker(bind=engine)()
-        self.unique_speakers = {k: self.Session.query(db.UniqueSpeaker).get(v)
-                                for k, v in self.unique_speaker_ids.items()}
+        self.Session = sessionmaker(bind=engine)
 
 
     def process_session(self):
@@ -150,12 +149,10 @@ class SessionProcessor(object):
                 this_unique_speaker = None
 
             u = Utterance(**utterance)
-            # Turn off autoflush to prevent commits while db is locked
-            with self.Session.no_autoflush:
-                if this_speaker is not None:
-                    this_speaker.utterances.append(u)
-                if this_unique_speaker is not None:
-                    this_unique_speaker.utterances.append(u)
+            if this_speaker is not None:
+                this_speaker.utterances.append(u)
+            if this_unique_speaker is not None:
+                this_unique_speaker.utterances.append(u)
 
             wlen = len(words)
             mlen = len(morphemes)
@@ -217,16 +214,14 @@ class SessionProcessor(object):
     def commit(self):
         """ Commits the dictionaries returned from parsing to the database.
         """
+        session = self.Session()
         try:
-            self.Session.add(self.session)
-            self.Session.add_all(self.unique_speakers.values())
-            self.Session.flush()
-            for t in self.unique_speakers:
-                self.unique_speaker_ids[t] = self.unique_speakers[t].id
-            self.Session.commit()
+            session.add(self.session)
+            session.add_all(self.unique_speakers.values())
+            session.commit()
         except:
             # TODO: print some error message? log it?
-            self.Session.rollback()
+            session.rollback()
             raise
         finally:
-            self.Session.close()
+            session.close()

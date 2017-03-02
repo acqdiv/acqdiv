@@ -27,7 +27,7 @@ class XMLCleaner(object):
         location: the dictionary to add to
         key: the dictionary key
         value: the value to add
-
+        
         Returns:
         None
         """
@@ -217,7 +217,7 @@ class XMLCleaner(object):
                 elif w.attrib['type'] == 'fragment':
                     w.find('target').text = '???'
                     w.attrib['warning'] = 'not glossed'
-
+        
     @staticmethod
     def _clean_shortenings(words):
         for w in words:
@@ -312,11 +312,12 @@ class XMLCleaner(object):
                 elif w.attrib['glossed'] == 'ahead':
                     XMLCleaner.creadd(w.attrib, 'warning', 'not glossed; search ahead')
             if 'transcribed' in w.attrib and w.attrib['transcribed'] == 'insecure':
-                XMLCleaner.creadd(w.attrib, 'warning', 'transcription insecure')
+                XMLCleaner.creadd(w.attrib, 'warning', 'transcription insecure')            
             #if 'warning' not in w.attrib:
             #    w.attrib['warning'] = ''
 
-    def _clean_groups(self, u):
+    @staticmethod
+    def _clean_groups(u):
         for group in u.iterfind('g'):
 
             subgroups = group.findall('g')

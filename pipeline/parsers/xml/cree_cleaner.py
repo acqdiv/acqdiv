@@ -46,14 +46,13 @@ class CreeCleaner(XMLCleaner):
 
     def _remove_junk(self, u):
         pg = u.find('pg')
-        if pg is not None:
-            actpho = pg.find('actual')
-            tarpho = pg.find('model')
+        actpho = pg.find('actual')
+        tarpho = pg.find('model')
 
-            if actpho is not None:
-                pg.remove(actpho)
-            if tarpho is not None:
-                pg.remove(tarpho)
+        if actpho is not None:
+            pg.remove(actpho)
+        if tarpho is not None:
+            pg.remove(tarpho)
 
     def _set_morpheme_language(self, u):
         pass
