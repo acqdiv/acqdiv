@@ -7,7 +7,7 @@ import sys
 import itertools
 
 from lxml import etree
-from pipeline.parsers.xml.xml_cleaner import XMLCleaner
+from .xml_cleaner import XMLCleaner
 
 class MiyataCleaner(XMLCleaner):
 
@@ -120,7 +120,7 @@ class MiyataCleaner(XMLCleaner):
                     except IndexError:
                         #print(midx, len(morphology))
                         continue
-
+                                                  
             # if there is no morphology, add warning to present word and count up
             elif morphology is None:
                 XMLCleaner.creadd(w.attrib, 'warnings', 'not glossed')
@@ -132,11 +132,10 @@ class MiyataCleaner(XMLCleaner):
 
 if __name__ == '__main__':
 
-    path = sys.argv[1]
-    from pipeline.parsers.parsers import CorpusConfigParser as Ccp
+    from parsers import CorpusConfigParser as Ccp
     conf = Ccp()
-    conf.read('../../ini/Japanese_Miyata.ini')
-    corpus = MiyataCleaner(conf, path)
+    conf.read('ini/Japanese_Miyata.ini')
+    corpus = MiyataCleaner(conf, 'tests/corpora/Japanese_Miyata/xml/Japanese_Miyata.xml')
 
-    corpus._debug_xml(sys.stdout)
+    corpus._debug_xml()
 

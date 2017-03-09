@@ -110,10 +110,10 @@ def postprocessor():
     """ Postprocessing postprocesses.
     """
     # Update database tables
-    print("Processing speakers...")
-    process_speakers()
     print("Processing utterances...")
     process_utterances()
+    print("Processing speakers...")
+    process_speakers()
     print("Processing morphemes...")
     process_morphemes()
     print("Processing words...")
@@ -204,8 +204,6 @@ def process_utterances():
                 logger.warning('Error unifying timestamps: {}'.format(
                     row, e), exc_info=sys.exc_info())
 
-        row.childdirected = get_directedness(row)
-
         # TODO: talk to Robert; remove if not needed
         if row.corpus == "Chintang":
             row.morpheme = None if row.morpheme is None else re.sub('\*\*\*', '???', row.morpheme)
@@ -223,22 +221,6 @@ def process_utterances():
             row.translation = None if row.translation is None else re.sub('xxx?|www', '???', row.translation)
             change_speaker_labels(row)
 
-
-def get_directedness(utt):
-    if utt.childdirected is not None:
-        return utt.childdirected
-    if utt.addressee is not None:
-        addressee = session.query(backend.Speaker).filter(
-            backend.Speaker.speaker_label == utt.addressee).first()
-        if addressee is not None:
-            if addressee.macrorole in ['Child', 'Target_Child']:
-                return 'yes'
-            else:
-                return 'no'
-        else:
-            return 'no'
-    else:
-        return 'no'
 
 def change_speaker_labels(row):
     if row.speaker_label is not None:
@@ -259,12 +241,45 @@ def process_speakers():
         gender(row)
         role(row)
         macrorole(row)
+    # Run the unique speaker algorithm -- requires full table
+    unique_speakers(table)
+
 
 def indonesian_experimenters(row):
     if row.corpus == 'Indonesian':
         cfg = get_config(row.corpus)
         if row.speaker_label == 'EXP':
             row.speaker_label = cfg['exp_labels'][row.name]
+
+
+def unique_speakers(table):
+    """ Populate the the unique speakers table. Also populate uniquespeaker_id_fk in the speakers table.
+
+    Uniqueness is determined by a combination of speaker: name, speaker label, birthdate. Yikes!
+    """
+    unique_speakers = [] # unique speaker dicts for uniquespeakers table
+    identifiers = [] # keep track of unique (name, label, birthdate) speaker tuples
+
+    for row in table:
+        t = (row.name, row.birthdate, row.speaker_label)
+        if t not in identifiers:
+            identifiers.append(t)
+            # create unique speaker row
+            d = {}
+            d['id'] = identifiers.index(t) + 1 # Python lists start at 0!
+            d['corpus'] = row.corpus
+            d['speaker_label'] = row.speaker_label
+            d['name'] = row.name
+            d['birthdate'] = row.birthdate
+            d['gender'] = row.gender
+            unique_speakers.append(backend.UniqueSpeaker(**d))
+
+        # insert uniquespeaker_fk_id in speakers table
+        row.uniquespeaker_id_fk = identifiers.index(t) + 1
+
+    # Add all unique speakers entries to uniquespeakers table; skip if the table is already populated.
+    if session.query(backend.UniqueSpeaker).count() == 0:
+        session.add_all(unique_speakers)
 
 
 def unify_label(row):
@@ -424,7 +439,6 @@ def role(row):
     if (row.gender_raw is None or row.gender_raw in ['Unspecified', 'Unknown']):
         try:
             row.gender = roles['role2gender'][row.role_raw]
-            row.unique_speaker.gender = row.gender
         except KeyError:
             pass
 
@@ -460,9 +474,6 @@ def gender(row):
             row.gender = "Unspecified"
     else:
         row.gender = "Unspecified"
-
-    if row.unique_speaker.gender is None:
-        row.unique_speaker.gender = row.gender
 
 
 def main(args):
