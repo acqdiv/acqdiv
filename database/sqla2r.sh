@@ -41,7 +41,7 @@ echo $SUCCESS
 if [ "$SUCCESS" == 'fail' ]; then
 	echo '*** Could not create R object - see above for possible errors ***\n'
 else
-	echo '*** Successfully created acqdiv_corpus_'`date +%Y-%m-%d`'.R ***\n'
+	echo '*** Successfully created acqdiv_corpus_'`date +%Y-%m-%d`'.rda ***\n'
 fi
 
 
