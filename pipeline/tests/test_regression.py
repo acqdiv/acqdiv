@@ -7,8 +7,8 @@ import sqlite3
 from nose.tools import assert_true
 
 # Set up
-test_db = sqlite3.connect("test.sqlite3")
-gold_db = sqlite3.connect("gold.sqlite3")
+test_db = sqlite3.connect("../database/test.sqlite3")
+gold_db = sqlite3.connect("fixtures/gold.sqlite3")
 
 
 def test_sessions():
@@ -107,4 +107,5 @@ def assert_frames_equal(actual, expected, use_close=False):
             try:
                 comp(act_item, exp_item)
             except AssertionError as e:
-                raise AssertionError('\n\nColumn: {!r}\nRow: {!r}'.format(j, i))
+                # raise AssertionError('\n\nColumn: {!r}\nRow: {!r}'.format(j, i))
+                raise AssertionError('\n\nColumn: %s \nRow: %s' % (str(i), str(j)))
