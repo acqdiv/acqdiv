@@ -15,6 +15,7 @@ from parsers import CorpusConfigParser
 from processors import age
 
 session = None
+cfg = None
 cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 age_pattern = re.compile(".*;.*\..*")
 
@@ -29,9 +30,9 @@ def setup(args):
 
     # If testing mode
     if args.t:
-        engine = sa.create_engine('sqlite:///tests/test.sqlite3')
+        engine = sa.create_engine('sqlite:///database/test.sqlite3')
     else:
-        engine = sa.create_engine('sqlite:///../database/acqdiv.sqlite3')
+        engine = sa.create_engine('sqlite:///database/acqdiv.sqlite3')
 
     meta = sa.MetaData(engine, reflect=True)
     Session = sessionmaker(bind=engine)
@@ -511,6 +512,5 @@ if __name__ == "__main__":
     print("%s seconds --- Finished" % (time.time() - start_time))
     print()
     print('Next, run tests:')
-    print('python3 -m "nose" -s -w tests test_counts.py')
     print('python3 -m "nose" -s -w tests test_regression.py')
     print('python3 -m "nose" -s -w tests test_integrity.py')
