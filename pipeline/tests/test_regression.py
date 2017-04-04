@@ -107,4 +107,4 @@ def assert_frames_equal(actual, expected, use_close=False):
             try:
                 comp(act_item, exp_item)
             except AssertionError as e:
-                raise AssertionError('\n\nColumn: %s \nRow: %s' % (str(j), str(i)))
+                raise AssertionError('\n\nColumn: %s \nRow: %s' % (str(j), str(i+1)))
