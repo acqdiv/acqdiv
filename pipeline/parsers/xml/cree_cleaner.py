@@ -11,7 +11,7 @@ from .xml_cleaner import XMLCleaner
 class CreeCleaner(XMLCleaner):
 
     def _clean_word_text(self, words):
-        
+
         for w in words:
             wt = w.find('actual')
             for path in ('.//p', './/ca-element', './/wk'):
@@ -48,7 +48,7 @@ class CreeCleaner(XMLCleaner):
         pg = u.find('pg')
         actpho = pg.find('actual')
         tarpho = pg.find('model')
-        
+
         if actpho is not None:
             pg.remove(actpho)
         if tarpho is not None:
@@ -58,8 +58,8 @@ class CreeCleaner(XMLCleaner):
         for morph_tier in ('tarmor', 'actmor', 'mormea', 'mortyp'):
             tier = u.find("a[@type='extension'][@flavor='" + morph_tier + "']")
             if tier is not None:
-                
-                # edit tier syntax                    
+
+                # edit tier syntax
                 # first remove spaces within glosses so that only word boundary markers remain
                 tier.text = re.sub('\\s+(&gt;|>)\\s+', '>', tier.text)
                 # remove square brackets at edges of any of these tiers, they are semantically redundant
@@ -80,7 +80,7 @@ class CreeCleaner(XMLCleaner):
                 full_words = u.findall('.//w')
                 wlen = len(full_words)
                 word_index = -1
-                
+
                 for w in words:
 
                     word_index, wlen = XMLCleaner.word_index_up(
@@ -94,7 +94,7 @@ class CreeCleaner(XMLCleaner):
                     mtier.text = words[word_index]
 
                 u.remove(tier)
-                    
+
     def _morphology_inference(self, u):
 
         full_words = u.findall('.//w')
@@ -118,10 +118,10 @@ class CreeCleaner(XMLCleaner):
                         morpheme_index += 1
 
                 wd.remove(temp)
-                word_index += 1                    
+                word_index += 1
             else:
                 XMLCleaner.creadd(wd.attrib, 'warning', 'not glossed')
-                word_index += 1                    
+                word_index += 1
                 continue
 
         mortyp_t = self.cfg['correspondences']['mortyp']
@@ -139,7 +139,14 @@ class CreeCleaner(XMLCleaner):
                         w.attrib[mortyp_t] = 'sfx'
                     # English words are glossed as "Eng" -> replace this by the word itself (e.g. "two", gloss "Eng" -> "two", gloss "two")
                     if mormea_t in w.attrib and w.attrib[mormea_t] == 'Eng':
+                        wdl = etree.SubElement(wd, 'language')
+                        wdl.text = 'English'
+                        w.attrib['language'] = 'English'
                         w.attrib[mormea_t] = wd.find('actual').text
+                    else:
+                        wdl = etree.SubElement(wd, 'language')
+                        wdl.text = 'Cree'
+                        w.attrib['language'] = 'Cree'
                     # check for "?" attached to gloss; replace by warning that gloss is insecure
                     if mormea_t is w.attrib and w.attrib[mormea_t].endswith('?'):
                         w.attrib[mormea_t] = w.attrib[mormea_t][:-1]

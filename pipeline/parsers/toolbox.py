@@ -12,6 +12,29 @@ from itertools import zip_longest
 # logging.basicConfig(filename='toolbox.log', level=logging.INFO)
 logger = logging.getLogger('pipeline' + __name__)
 
+def longer_of(a, b):
+    if len(a) > len(b):
+        return a
+    else:
+        return b
+
+def struct_eqv(xs, ys):
+    """
+    Handy function to test whether two lists have the same nested structure
+    """
+    if (len(xs) == len(ys)):
+        for x,y in zip(xs, ys):
+            if isinstance(x, list) or isinstance(y, list):
+                if not (isinstance(x, list) and isinstance(y, list)):
+                    return False
+                else:
+                    if not struct_eqv(x, y):
+                        return False
+        return True
+    else:
+        return False
+
+
 class ToolboxFile(object):
     """ Toolbox Standard Format text file as iterable over records
     """
@@ -157,7 +180,13 @@ class ToolboxFile(object):
         if self.config['corpus']['corpus'] == 'Russian':
             utterance['gloss_raw'] = ' '.join(
                 mor['gloss_raw'] for mword in morphemes for mor in mword)
-            
+
+        for i in range(len(words)):
+            try:
+                words[i]['word_language'] = morphemes[i][0]['morpheme_language']
+            except IndexError:
+                break
+
         # Fix words less than morphemes misalignments
         if len(morphemes) - len(words) > 0:
             misalignment = len(morphemes) - len(words)
@@ -384,6 +413,7 @@ class ToolboxFile(object):
         poses = [] # parts of speeches :)
         glosses = []
         warnings = []
+        langs = []
 
         # Russian specific morpheme inference
         if self.config['corpus']['corpus'] == "Russian":
@@ -418,6 +448,12 @@ class ToolboxFile(object):
                 # The Russian tier \mor contains both glosses and POS, separated by "-" or ":".
                 # Method for distinguishing and extracting them:
                 for pos in pos_cleaned:
+                    #get morpheme language
+                    if 'FOREIGN' in pos:
+                        langs.append('Unknown')
+                    else:
+                        langs.append('Russian')
+
                     # 1) If there is no ":" in a word string, gloss and POS are identical (most frequently the case with
                     # PCL 'particle').
                     if ':' not in pos:
@@ -445,30 +481,35 @@ class ToolboxFile(object):
                 # Make list of lists to follow the structure of the other languages
                 poses = [poses[i:i+1] for i in range(0, len(poses), 1)]
                 glosses = [glosses[i:i+1] for i in range(0, len(glosses), 1)]
+                langs = [langs[i:i+1] for i in range(0, len(langs), 1)]
 
             else:
                 warnings.append('not glossed')
 
         # Indonesian specific morpheme inference stuff
         elif self.config['corpus']['corpus'] == "Indonesian":
-            if 'morpheme' in utterance.keys():
-                # Remove punctuation from morphemes and normalize missing data with ???
-                morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterance['morpheme'])
-                morphemes_cleaned = re.sub('xxx?|www', '???', morphemes_cleaned)
 
-                # Indonesian morphemes tier \mb may contain morpheme markers "-"
-                word_boundaries = re.split(self._word_boundary, morphemes_cleaned)
-                for word in word_boundaries:
-                    morphemes.append(word.split())
+            if 'morpheme' in utterance.keys() or 'gloss_raw' in utterance.keys():
+                if 'morpheme' in utterance.keys():
+                    # Remove punctuation from morphemes and normalize missing data with ???
+                    morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterance['morpheme'])
+                    morphemes_cleaned = re.sub('xxx?|www', '???', morphemes_cleaned)
 
-            if 'gloss_raw' in utterance.keys():
-                glosses_cleaned = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterance['gloss_raw'])
-                glosses_cleaned = re.sub('xxx?|www', '???', glosses_cleaned)
+                    # Indonesian morphemes tier \mb may contain morpheme markers "-"
+                    word_boundaries = re.split(self._word_boundary, morphemes_cleaned)
+                    for word in word_boundaries:
+                        morphemes.append(word.split())
 
-                # This is the morpheme gloss line \ge may contain morpheme markers "-"
-                word_boundaries = re.split(self._word_boundary, glosses_cleaned)
-                for word in word_boundaries:
-                    glosses.append(word.split())
+                if 'gloss_raw' in utterance.keys():
+                    glosses_cleaned = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterance['gloss_raw'])
+                    glosses_cleaned = re.sub('xxx?|www', '???', glosses_cleaned)
+
+                    # This is the morpheme gloss line \ge may contain morpheme markers "-"
+                    word_boundaries = re.split(self._word_boundary, glosses_cleaned)
+                    for word in word_boundaries:
+                        glosses.append(word.split())
+
+                langs = [['Indonesian' for m in mw] for mw in longer_of(morphemes, glosses)]
 
             else:
                 warnings.append('not glossed')
@@ -476,6 +517,10 @@ class ToolboxFile(object):
 
         # Chintang specific morpheme stuff
         elif self.config['corpus']['corpus'] == "Chintang":
+            word_boundaries = []
+            # this is a somewhat hacky solution to the problem of default language assignment
+            # it would be good to be able to do defaults later in the pipeline but I think
+            # that that doesn't quite work
             if 'morpheme' in utterance.keys():
                 # Remove non-linguistic punctuation from morphemes
                 morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\?\+\/]', '', utterance['morpheme'])
@@ -488,16 +533,18 @@ class ToolboxFile(object):
                 # we need to infer first the word boundaries and then the morphemes
                 # words = re.sub('(\s\-)|(\-\s)','-', morphemes_cleaned)
 
-                # word_boundaries = re.sub('(\s\-)|(\-\s)','%%%%%', morphemes_cleaned)
-                word_boundaries = re.split(self._word_boundary, morphemes_cleaned)
-                for word in word_boundaries:
+                # m_word_boundaries = re.sub('(\s\-)|(\-\s)','%%%%%', morphemes_cleaned)
+                m_word_boundaries = re.split(self._word_boundary, morphemes_cleaned)
+                for word in m_word_boundaries:
                     # TODO: double check this logic is correct with Robert
                     word = word.replace(" - ", " ") # remove floating clitic marker
                     morphemes.append(word.split())
+
             else:
                 warnings.append('no morpheme tier')
 
             if 'gloss_raw' in utterance.keys():
+                # reference word boundaries are in the glosses tier
                 word_boundaries = re.split(self._word_boundary, utterance['gloss_raw'])
                 for word in word_boundaries:
                     word = word.replace(" - ", " ") # remove floating clitic marker
@@ -506,22 +553,49 @@ class ToolboxFile(object):
                 warnings.append('not glossed')
 
             if 'pos_raw' in utterance.keys():
-                word_boundaries = re.split(self._word_boundary, utterance['pos_raw'])
-                for word in word_boundaries:
+                p_word_boundaries = re.split(self._word_boundary, utterance['pos_raw'])
+                for word in p_word_boundaries:
                     word = word.replace(" - ", " ") # remove floating clitic marker
                     poses.append(word.split())
             else:
                 warnings.append('pos missing')
+
+            if 'morpheme_lang' in utterance.keys():
+
+                lang_words = re.split(self._word_boundary, utterance['morpheme_lang'])
+                for word in lang_words:
+                    word = word.replace(" - ", " ") # remove floating clitic marker
+                    try:
+                        langs.append([self.config['languages'][w.strip('-')]
+                                      for w in word.split()])
+                    except KeyError:
+                        langs.append(['Chintang'])
+
+                del utterance['morpheme_lang']
+
+            else:
+                # this is at least an empty list
+                for word in word_boundaries:
+                    langs.append(['Chintang'])
+                warnings.append('language information missing')
+
+            #try aligning glosses and langs
+            try:
+                langs2 = [[langs[i][j] for j in range(len(glosses[i]))]
+                          for i in range(len(glosses))]
+                langs = langs2
+            except IndexError:
+                pass
 
         else:
             raise TypeError("Corpus format is not supported by this parser.")
 
 
         len_mw = len(glosses)
-        len_align = len([i for gw in glosses for i in gw])
+        #len_align = len([i for gw in glosses for i in gw])
         tiers = []
-        for t in (morphemes, glosses, poses):
-            if len([i for tw in t for i in tw]) == len_align:
+        for t in (morphemes, glosses, poses, langs):
+            if struct_eqv(t, glosses):
                 tiers.append(t)
             else:
                 tiers.append([[] for i in range(len_mw)])
@@ -533,13 +607,15 @@ class ToolboxFile(object):
         #gls = [m for m in w for w in 
         mwords = zip(*tiers)
         for mw in mwords:
-            alignment = list(zip_longest(mw[0], mw[1], mw[2], fillvalue=None))
+            alignment = list(zip_longest(mw[0], mw[1], mw[2], mw[3],
+                                         fillvalue=None))
             l = []
             for morpheme in alignment:
                 d = {}
                 d['morpheme'] = morpheme[0]
                 d['gloss_raw'] = morpheme[1]
                 d['pos_raw'] = morpheme[2]
+                d['morpheme_language'] = morpheme[3]
                 # TODO: move to postprocessing if faster
                 d['type'] = self.config['morphemes']['type'] # what type of morpheme as defined in the corpus .ini
                 d['warning'] = None if len(warnings) == 0 else " ".join(warnings)
@@ -547,7 +623,7 @@ class ToolboxFile(object):
             result.append(l)
 
         return result
-    
+
 
     def __repr__(self):
         # for pretty printing

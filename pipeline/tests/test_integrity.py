@@ -113,7 +113,7 @@ class ValidationTest(object):
     def test_gender(self):
         """ Check genders in database vs whitelist. """
         query = "select gender from speakers group by gender"
-        gender = ["Female", "Male", "Unspecified"]
+        gender = ["Female", "Male", "Unspecified", "None"]
         self._in_whitelist(query, gender)
 
     def test_pos(self):
@@ -130,7 +130,7 @@ class ValidationTest(object):
                  "Family_Friend", "Father", "Friend", "Grandfather", "Grandmother", "Great-Grandmother", "Host",
                  "Housekeeper", "Mother", "Neighbour", "Niece", "Playmate", "Research_Team", "Sibling", "Sister",
                  "Sister-in-law", "Son", "Speaker", "Student", "Subject", "Target_Child", "Teacher", "Toy",
-                 "Twin_Brother", "Uncle", "Visitor"]
+                 "Twin_Brother", "Uncle", "Visitor", "None", "Unknown"]
         self._in_whitelist(query, roles)
 
     def test_macrorole(self):
@@ -172,6 +172,27 @@ class ValidationTest(object):
         """ Check birthdates in uniquespeakers.birthdate """
         query = "select birthdate from uniquespeakers group by birthdate"
         self._is_valid_date(query)
+
+    def test_language_per_morpheme(self):
+        """ Check whether the language mapping is working as intended """
+<<<<<<< HEAD
+        query = "select morpheme_language from morphemes group by morpheme_language"
+        langs = ["Chintang", "Nepali", "English", "Bantawa", "Chintang/Nepali",
+                 "Nepali/English", "Chintang/Nepali/English", "Bantawa",
+                 "Chintang/Bantawa", "Chintang (Mulgaũ)", "Chintang (Sambugaũ)",
+                 "Chintang+Nepali", "Hindi", "Nepali/Arabic", "Nepali/Hindi",
+                 "Japanese", "German", "Turkish", "Sesotho", "Yucatec", "Cree",
+                 "Inuktitut", "Indonesian", "Russian", "Unknown"]
+=======
+        query = "select language from morphemes group by language"
+        langs = ["Chintang", "Nepali", "English", "Bantawa", "Chintang/Nepali",
+                 "Nepali/English", "Chintang/Nepali/English", "Bantawa",
+                 "Chintang/Belhare", "Japanese", "German", "Turkish",
+                 "Sesotho", "Yucatec", "Cree", "Inuktitut", "Indonesian",
+                 "Russian", "Unknown"]
+>>>>>>> 11d0f29fe8e018aed13b419fe38a62cd4d3d63e6
+        self._in_whitelist(query, langs)
+
 
     """ Private methods below. """
     def _column_contains_null(self, table, column):
@@ -277,5 +298,3 @@ class ValidationTest_ProductionDB(unittest.TestCase, ValidationTest):
 
 if __name__ == '__main__':
     unittest.main()
-
-
