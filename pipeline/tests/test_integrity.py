@@ -173,6 +173,17 @@ class ValidationTest(object):
         query = "select birthdate from uniquespeakers group by birthdate"
         self._is_valid_date(query)
 
+    def test_language_per_morpheme(self):
+        """ Check whether the language mapping is working as intended """
+        query = "select language from morphemes group by language"
+        langs = ["Chintang", "Nepali", "English", "Bantawa", "Chintang/Nepali",
+                 "Nepali/English", "Chintang/Nepali/English", "Bantawa",
+                 "Chintang/Belhare", "Japanese", "German", "Turkish",
+                 "Sesotho", "Yucatec", "Cree", "Inuktitut", "Indonesian",
+                 "Russian", "Unknown"]
+        self._in_whitelist(query, langs)
+
+
     """ Private methods below. """
     def _column_contains_null(self, table, column):
         """ Test if any row in column is NULL. """
@@ -277,5 +288,3 @@ class ValidationTest_ProductionDB(unittest.TestCase, ValidationTest):
 
 if __name__ == '__main__':
     unittest.main()
-
-

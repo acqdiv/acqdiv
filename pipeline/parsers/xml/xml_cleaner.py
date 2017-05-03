@@ -10,7 +10,7 @@ import sys
 from collections import defaultdict
 from lxml import etree
 
-from parsers.metadata import Chat
+from pipeline.parsers.metadata import Chat
 
 
 class XMLCleaner(object):
@@ -150,6 +150,7 @@ class XMLCleaner(object):
             self._clean_groups(u)
         self._morphology_inference(u)
         self._add_morphology_warnings(u)
+        self._set_morpheme_language(u)
         self._restructure_metadata(u)
         self._remove_junk(u)
 
@@ -170,12 +171,13 @@ class XMLCleaner(object):
     @staticmethod
     def _restructure_words(words):
         for w in words:
+            if w.text is not None:
+                wt = w.text
+            else:
+                wt = ''.join(e.tail if e.tail is not None else '' for e in w)
             actual = etree.SubElement(w, 'actual')
             target = etree.SubElement(w, 'target')
-            if w.text is not None:
-                actual.text = w.text
-            else:
-                actual.text = ''
+            actual.text = wt
             target.text = ''
             w.text = ''
 
@@ -231,6 +233,24 @@ class XMLCleaner(object):
                     w_target.text += s.tail
                     w_actual.text += s.tail
                 w.remove(s)
+
+    def _set_morpheme_language(self, u):
+        if self.cfg['morphemes']['language'] == 'yes':
+            for fw in u.iterfind('.//w'):
+                l = fw.find('langs')
+                if l is not None:
+                    ltext = self.cfg['languages'][l[0].text]
+                    fw.remove(l)
+                else:
+                    ltext = self.cfg['corpus']['language']
+                nl = etree.SubElement(fw, 'language')
+                nl.text = ltext
+                for m in fw.iterfind('.//m'):
+                    m.attrib['morpheme_language'] = ltext
+        else:
+            for fw in u.iterfind('.//w'):
+                for m in fw.iterfind('.//m'):
+                    m.attrib['morpheme_language'] = self.cfg['corpus']['language']
 
     @staticmethod
     def _clean_replacements(words):

@@ -11,8 +11,8 @@ from collections import deque
 from collections import namedtuple
 from lxml import etree
 
-from .metadata import Chat
-from .xml.xml_cleaner import XMLCleaner
+from pipeline.parsers.metadata import Chat
+from pipeline.parsers.xml.xml_cleaner import XMLCleaner
 
 class XMLParserFactory(object):
 
@@ -43,7 +43,8 @@ class XMLParser(object):
 
     mdict = { 'morphemes':'???',
               'gloss_raw':'???',
-              'pos_raw':'???'    }
+              'pos_raw':'???',
+              'morpheme_language': '???' }
 
     rstruc = namedtuple('FlatUtterance', ['u', 'w', 'm']) 
 
@@ -55,6 +56,17 @@ class XMLParser(object):
             return False
         except TypeError:
             return False
+
+    @staticmethod
+    def empty_except(dic, key):
+        if key in dic:
+            tmp = dic[key]
+            del dic[key]
+            ret = (dic == {})
+            dic[key] = tmp
+            return ret
+        else:
+            return dic == {}
 
     def __init__(self, cfg, cleaner_cls, fpath):
 
@@ -130,6 +142,11 @@ class XMLParser(object):
                     if not "dummy" in w.attrib:
                         wdict['corpus'] = udict['corpus']
                         wdict['language'] = udict['language']
+                        wl = w.find('language')
+                        if wl is not None:
+                            wdict['word_language'] = wl.text
+                        else:
+                            wdict['word_language'] = udict['language']
 
                         wdict['word_actual'] = w.find('actual').text
                         wdict['word_target'] = w.find('target').text
@@ -191,7 +208,7 @@ class XMLParser(object):
                                 morpheme[label] = raw_morpheme[k]
                             else:
                                 pass
-                        if morpheme != {}:
+                        if not self.empty_except(morpheme, 'morpheme_language'):
                             new_mword.append(morpheme)
                     try:
                         flatm = {}

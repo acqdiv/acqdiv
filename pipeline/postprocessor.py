@@ -205,8 +205,12 @@ def process_utterances():
                 logger.warning('Error unifying timestamps: {}'.format(
                     row, e), exc_info=sys.exc_info())
 
+<<<<<<< HEAD
+        row.childdirected = get_directedness(row)
+=======
         if row.corpus != "Chintang":
             row.childdirected = get_directedness(row)
+>>>>>>> master
 
         # TODO: talk to Robert; remove if not needed
         if row.corpus == "Chintang":

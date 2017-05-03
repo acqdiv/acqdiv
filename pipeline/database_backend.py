@@ -156,6 +156,7 @@ class Word(Base):
     utterance_id_fk = Column(Integer, ForeignKey('utterances.id'))
     corpus = Column(Text, nullable=False, unique=False)
     language = Column(Text, nullable=False, unique=False)
+    word_language = Column(Text, nullable=True, unique=False)
     word = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     pos = Column(Text, nullable=True, unique=False)
     word_actual = Column(Text, nullable=True, unique=False)
@@ -176,6 +177,7 @@ class Morpheme(Base):
     word_id_fk = Column(Integer, ForeignKey('words.id'))
     corpus = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     language = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    morpheme_language = Column(Text, nullable=True, unique=False)
     type = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     morpheme = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     gloss_raw = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
