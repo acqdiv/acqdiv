@@ -38,14 +38,14 @@ def main(args):
 
     # If testing mode
     if args.t:
-        print("Writing test database to: acqdiv/pipeline/tests/test.sqlite3")
+        print("Writing test database to: pipeline/database/test.sqlite3")
         print()
-        engine = db_connect('sqlite:///tests/test.sqlite3')
+        engine = db_connect('sqlite:///database/test.sqlite3')
         create_tables(engine)
     else:
-        print("Writing database to: acqdiv/database/acqdiv.sqlite3")
+        print("Writing database to: pipeline/database/acqdiv.sqlite3")
         print()
-        engine = db_connect('sqlite:///../database/acqdiv.sqlite3')
+        engine = db_connect('sqlite:///database/acqdiv.sqlite3')
         create_tables(engine)
 
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini',

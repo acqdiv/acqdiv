@@ -15,6 +15,7 @@ from parsers import CorpusConfigParser
 from processors import age
 
 session = None
+cfg = None
 cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 age_pattern = re.compile(".*;.*\..*")
 
@@ -29,9 +30,9 @@ def setup(args):
 
     # If testing mode
     if args.t:
-        engine = sa.create_engine('sqlite:///tests/test.sqlite3')
+        engine = sa.create_engine('sqlite:///database/test.sqlite3')
     else:
-        engine = sa.create_engine('sqlite:///../database/acqdiv.sqlite3')
+        engine = sa.create_engine('sqlite:///database/acqdiv.sqlite3')
 
     meta = sa.MetaData(engine, reflect=True)
     Session = sessionmaker(bind=engine)
@@ -110,10 +111,10 @@ def postprocessor():
     """ Postprocessing postprocesses.
     """
     # Update database tables
-    print("Processing utterances...")
-    process_utterances()
     print("Processing speakers...")
     process_speakers()
+    print("Processing utterances...")
+    process_utterances()
     print("Processing morphemes...")
     process_morphemes()
     print("Processing words...")
@@ -204,6 +205,9 @@ def process_utterances():
                 logger.warning('Error unifying timestamps: {}'.format(
                     row, e), exc_info=sys.exc_info())
 
+        if row.corpus != "Chintang":
+            row.childdirected = get_directedness(row)
+
         # TODO: talk to Robert; remove if not needed
         if row.corpus == "Chintang":
             row.morpheme = None if row.morpheme is None else re.sub('\*\*\*', '???', row.morpheme)
@@ -220,6 +224,21 @@ def process_utterances():
             row.utterance_raw = None if row.utterance_raw is None else re.sub('xxx?|www', '???', row.utterance_raw)
             row.translation = None if row.translation is None else re.sub('xxx?|www', '???', row.translation)
             change_speaker_labels(row)
+
+
+def get_directedness(utt):
+    if utt.addressee is not None:
+        addressee = session.query(backend.Speaker).filter(
+            backend.Speaker.speaker_label == utt.addressee).filter(
+                backend.Speaker.session_id_fk == utt.session_id_fk).first()
+        if addressee is not None:
+            if (addressee.macrorole == 'Target_Child'
+                and utt.speaker_label != utt.addressee):
+                return True
+            else:
+                return False
+        else:
+            return None
 
 
 def change_speaker_labels(row):
@@ -511,6 +530,5 @@ if __name__ == "__main__":
     print("%s seconds --- Finished" % (time.time() - start_time))
     print()
     print('Next, run tests:')
-    print('python3 -m "nose" -s -w tests test_counts.py')
     print('python3 -m "nose" -s -w tests test_regression.py')
     print('python3 -m "nose" -s -w tests test_integrity.py')
