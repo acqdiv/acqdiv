@@ -9,7 +9,8 @@ from sqlalchemy.engine.url import URL
 
 """
 
-from sqlalchemy import create_engine, Text, Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import (create_engine, Text, Column, Integer, String, DateTime,
+                        Boolean, ForeignKey)
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -130,6 +131,7 @@ class Utterance(Base):
     gloss_raw = Column(Text, nullable=True, unique=False)
     pos_raw = Column(Text, nullable=True, unique=False)
     sentence_type = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    childdirected = Column(Boolean, nullable=True, unique=False)
     start = Column(Text, nullable=True, unique=False)
     end = Column(Text, nullable=True, unique=False)
     start_raw = Column(Text, nullable=True, unique=False)

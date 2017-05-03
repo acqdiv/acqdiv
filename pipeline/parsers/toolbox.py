@@ -115,10 +115,21 @@ class ToolboxFile(object):
             except KeyError:
                 pass
 
-        # We infer sentence type from Chintang \nep but we do not add the nepali field to the database yet
         if self.config['corpus']['corpus'] == 'Chintang':
+        # We infer sentence type from Chintang \nep but we do not add the nepali field to the database yet
             if 'nepali' in utterance:
                 del utterance['nepali']
+
+        # Clean up directedness in Chintang
+            if 'childdirected' in utterance:
+                tos_raw = utterance['childdirected']
+                if 'directed' in tos_raw:
+                    if 'child' in tos_raw:
+                        utterance['childdirected'] = True
+                    else:
+                        utterance['childdirected'] = False
+                else:
+                    del utterance['childdirected']
 
         # Clean up Russian
         if self.config['corpus']['corpus'] == 'Russian':

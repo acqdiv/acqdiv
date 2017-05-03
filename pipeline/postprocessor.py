@@ -111,10 +111,10 @@ def postprocessor():
     """ Postprocessing postprocesses.
     """
     # Update database tables
-    print("Processing utterances...")
-    process_utterances()
     print("Processing speakers...")
     process_speakers()
+    print("Processing utterances...")
+    process_utterances()
     print("Processing morphemes...")
     process_morphemes()
     print("Processing words...")
@@ -205,6 +205,9 @@ def process_utterances():
                 logger.warning('Error unifying timestamps: {}'.format(
                     row, e), exc_info=sys.exc_info())
 
+        if row.corpus != "Chintang":
+            row.childdirected = get_directedness(row)
+
         # TODO: talk to Robert; remove if not needed
         if row.corpus == "Chintang":
             row.morpheme = None if row.morpheme is None else re.sub('\*\*\*', '???', row.morpheme)
@@ -221,6 +224,21 @@ def process_utterances():
             row.utterance_raw = None if row.utterance_raw is None else re.sub('xxx?|www', '???', row.utterance_raw)
             row.translation = None if row.translation is None else re.sub('xxx?|www', '???', row.translation)
             change_speaker_labels(row)
+
+
+def get_directedness(utt):
+    if utt.addressee is not None:
+        addressee = session.query(backend.Speaker).filter(
+            backend.Speaker.speaker_label == utt.addressee).filter(
+                backend.Speaker.session_id_fk == utt.session_id_fk).first()
+        if addressee is not None:
+            if (addressee.macrorole == 'Target_Child'
+                and utt.speaker_label != utt.addressee):
+                return True
+            else:
+                return False
+        else:
+            return None
 
 
 def change_speaker_labels(row):
