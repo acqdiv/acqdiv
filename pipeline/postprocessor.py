@@ -208,9 +208,13 @@ def process_utterances():
 <<<<<<< HEAD
         row.childdirected = get_directedness(row)
 =======
+<<<<<<< HEAD
+        row.childdirected = get_directedness(row)
+=======
         if row.corpus != "Chintang":
             row.childdirected = get_directedness(row)
 >>>>>>> master
+>>>>>>> 11d0f29fe8e018aed13b419fe38a62cd4d3d63e6
 
         # TODO: talk to Robert; remove if not needed
         if row.corpus == "Chintang":
@@ -233,6 +237,16 @@ def process_utterances():
 def get_directedness(utt):
     if utt.addressee is not None:
         addressee = session.query(backend.Speaker).filter(
+<<<<<<< HEAD
+            backend.Speaker.speaker_label == utt.addressee).first()
+        if addressee is not None:
+            if addressee.macrorole in ['Child', 'Target_Child']:
+                utt.childdirected = True
+            else:
+                utt.childdirected = False
+        else:
+            pass
+=======
             backend.Speaker.speaker_label == utt.addressee).filter(
                 backend.Speaker.session_id_fk == utt.session_id_fk).first()
         if addressee is not None:
@@ -243,6 +257,7 @@ def get_directedness(utt):
                 return False
         else:
             return None
+>>>>>>> 11d0f29fe8e018aed13b419fe38a62cd4d3d63e6
 
 
 def change_speaker_labels(row):
