@@ -175,7 +175,6 @@ class ValidationTest(object):
 
     def test_language_per_morpheme(self):
         """ Check whether the language mapping is working as intended """
-<<<<<<< HEAD
         query = "select morpheme_language from morphemes group by morpheme_language"
         langs = ["Chintang", "Nepali", "English", "Bantawa", "Chintang/Nepali",
                  "Nepali/English", "Chintang/Nepali/English", "Bantawa",
@@ -183,14 +182,6 @@ class ValidationTest(object):
                  "Chintang+Nepali", "Hindi", "Nepali/Arabic", "Nepali/Hindi",
                  "Japanese", "German", "Turkish", "Sesotho", "Yucatec", "Cree",
                  "Inuktitut", "Indonesian", "Russian", "Unknown"]
-=======
-        query = "select language from morphemes group by language"
-        langs = ["Chintang", "Nepali", "English", "Bantawa", "Chintang/Nepali",
-                 "Nepali/English", "Chintang/Nepali/English", "Bantawa",
-                 "Chintang/Belhare", "Japanese", "German", "Turkish",
-                 "Sesotho", "Yucatec", "Cree", "Inuktitut", "Indonesian",
-                 "Russian", "Unknown"]
->>>>>>> 11d0f29fe8e018aed13b419fe38a62cd4d3d63e6
         self._in_whitelist(query, langs)
 
 
