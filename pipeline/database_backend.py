@@ -119,7 +119,8 @@ class Utterance(Base):
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
     source_id = Column(Text, nullable=True, unique=False)
-    # uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
+    uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
+    #speaker_id_fk = Column(Integer, ForeignKey('speakers.id'))
     corpus = Column(Text, nullable=False, unique=False)
     language = Column(Text, nullable=False, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass

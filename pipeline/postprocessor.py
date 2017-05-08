@@ -205,6 +205,7 @@ def process_utterances():
                 logger.warning('Error unifying timestamps: {}'.format(
                     row, e), exc_info=sys.exc_info())
 
+        row.uniquespeaker_id_fk = uniquespeakers_utterances(row)
         if row.corpus != "Chintang":
             row.childdirected = get_directedness(row)
 
@@ -300,6 +301,17 @@ def unique_speakers(table):
     if session.query(backend.UniqueSpeaker).count() == 0:
         session.add_all(unique_speakers)
 
+def uniquespeakers_utterances(row):
+    """
+    Link Unique speakers / utterances
+    """
+    speaker = session.query(backend.Speaker).filter(
+        backend.Speaker.speaker_label == row.speaker_label).filter(
+            backend.Speaker.corpus == row.corpus).first()
+    if speaker is not None:
+        return speaker.uniquespeaker_id_fk
+    else:
+        return None
 
 def unify_label(row):
     """ Key-value substitutions for morphological glosses and parts-of-speech in the database. If no key is
@@ -493,7 +505,6 @@ def gender(row):
             row.gender = "Unspecified"
     else:
         row.gender = "Unspecified"
-
 
 def main(args):
     setup(args)
