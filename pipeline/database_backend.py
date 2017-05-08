@@ -56,6 +56,7 @@ class Session(Base):
     corpus = Column(Text, nullable=False, unique=False)
     language = Column(Text, nullable=False, unique=False)
     date = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    target_child_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
     # SQLAlchemy relationship definitions:
     speakers = relationship('Speaker', backref='Session')
     utterances = relationship('Utterance', backref='Session')
@@ -86,8 +87,6 @@ class Speaker(Base):
     languages_spoken = Column(Text, nullable=True, unique=False)
     birthdate = Column(Text, nullable=True, unique=False)
 
-    # SQLAlchemy relationship definitions (hook to unique speakers?)
-
     # TODO: optional pretty formatting for printing
     def __repr__(self):
         return "Speaker(%s), Label(%s), Birthdate(%s)" % (self.name, self.speaker_label, self.birthdate)
@@ -105,7 +104,6 @@ class UniqueSpeaker(Base):
     gender = Column(Text, nullable=True, unique=False)
     corpus = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
 
-
 class Utterance(Base):
     """ Utterances in all sessions.
 
@@ -120,7 +118,7 @@ class Utterance(Base):
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
     source_id = Column(Text, nullable=True, unique=False)
     uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
-    #speaker_id_fk = Column(Integer, ForeignKey('speakers.id'))
+    speaker_id_fk = Column(Integer, ForeignKey('speakers.id'))
     corpus = Column(Text, nullable=False, unique=False)
     language = Column(Text, nullable=False, unique=False)
     speaker_label = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
