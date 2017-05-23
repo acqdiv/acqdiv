@@ -205,6 +205,8 @@ def process_utterances():
                 logger.warning('Error unifying timestamps: {}'.format(
                     row, e), exc_info=sys.exc_info())
 
+        # set speaker-utterance links
+        uniquespeakers_utterances(row)
         if row.corpus != "Chintang":
             row.childdirected = get_directedness(row)
 
@@ -262,6 +264,8 @@ def process_speakers():
         macrorole(row)
     # Run the unique speaker algorithm -- requires full table
     unique_speakers(table)
+    # set session target child
+    target_children(table)
 
 
 def indonesian_experimenters(row):
@@ -299,6 +303,24 @@ def unique_speakers(table):
     # Add all unique speakers entries to uniquespeakers table; skip if the table is already populated.
     if session.query(backend.UniqueSpeaker).count() == 0:
         session.add_all(unique_speakers)
+
+
+def uniquespeakers_utterances(row):
+    """
+    Link Unique speakers / utterances
+    """
+    speaker = session.query(backend.Speaker).filter(
+        backend.Speaker.speaker_label == row.speaker_label).filter(
+            backend.Speaker.corpus == row.corpus).first()
+    if speaker is not None:
+        row.uniquespeaker_id_fk = speaker.uniquespeaker_id_fk
+        row.speaker_id_fk = speaker.id
+
+def target_children(table):
+    targets = table.filter(backend.Speaker.macrorole == "Target_Child")
+    for row in targets:
+        rec = session.query(backend.Session).filter(backend.Session.id == row.session_id_fk).first()
+        rec.target_child_fk = row.uniquespeaker_id_fk
 
 
 def unify_label(row):
@@ -493,7 +515,6 @@ def gender(row):
             row.gender = "Unspecified"
     else:
         row.gender = "Unspecified"
-
 
 def main(args):
     setup(args)
