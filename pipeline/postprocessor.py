@@ -240,7 +240,9 @@ def get_directedness(utt):
             else:
                 return False
         else:
-            return None
+            return False
+    else:
+        return False
 
 
 def change_speaker_labels(row):
