@@ -14,7 +14,7 @@ def main(args):
     logger = logging.getLogger('pipeline')
     handler = logging.FileHandler('errors.log', mode='w')
     if args.i:
-        handles.setLevel(logging.INFO)
+        handler.setLevel(logging.INFO)
     else:
         handler.setLevel(logging.WARNING)
 
