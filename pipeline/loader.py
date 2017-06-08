@@ -13,7 +13,11 @@ def main(args):
     """
     logger = logging.getLogger('pipeline')
     handler = logging.FileHandler('errors.log', mode='w')
-    handler.setLevel(logging.INFO)
+    if args.i:
+        handles.setLevel(logging.INFO)
+    else:
+        handler.setLevel(logging.WARNING)
+
     if args.s:
         formatter = logging.Formatter('%(asctime)s - %(name)s - '
                                         '%(levelname)s - %(message)s')
@@ -77,6 +81,7 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument('-t', action='store_true')
     p.add_argument('-s', action='store_true')
+    p.add_argument('-i', action='store_true')
     args = p.parse_args()
 
     main(args)
