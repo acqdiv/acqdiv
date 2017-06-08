@@ -14,6 +14,14 @@ from pipeline.parsers.metadata import Chat
 
 
 class XMLCleaner(object):
+    """
+    This class transforms the XML output of Chatter into a mostly clean XML
+    format that the XML Parser can parse into the appropriate data structures
+    for the Processor. It provides methods usable for cleaning most parts of
+    most corpora, with the exception of morphology, which is handled
+    differently by each corpus and thus must be implemented by a per-corpus
+    cleaner class.
+    """
 
     logger = logging.getLogger('pipeline.' + __name__)
 
@@ -27,7 +35,7 @@ class XMLCleaner(object):
         location: the dictionary to add to
         key: the dictionary key
         value: the value to add
-        
+
         Returns:
         None
         """
@@ -77,7 +85,7 @@ class XMLCleaner(object):
         Args:
         parent: Node to search in
         child: Node to search for
-        
+
         Returns:
         the text of the child node if it was found, None otherwise
         """
@@ -95,7 +103,7 @@ class XMLCleaner(object):
         xpexpr: the XPath expression to use
 
         Returns:
-        
+
         """
         ses = parent.xpath(xpexpr)
         return ses[0] if len(ses) != 0 else None
@@ -107,6 +115,17 @@ class XMLCleaner(object):
         #self.metadata_parser = Chat(cfg, fpath)
 
     def _clean_xml(self):
+        """
+        Main method of the XML Cleaner. Parses the XML file to be cleaned
+        using LXML, strips out namespaces, then loops through the utterances
+        and calls the cleaning methods on them. If there is an otherwise
+        unhandled exception during the cleaning workflow, that utterance
+        is removed from the final XML Document.
+
+        Args: self
+
+        Returns: The cleaned XML tree
+        """
 
         xmldoc = etree.parse(self.fpath)
         root = xmldoc.getroot()
@@ -134,11 +153,26 @@ class XMLCleaner(object):
         return xmldoc
 
     def _debug_xml(self, fd):
+        """
+        Method to write the cleaned XML Tree to a file. Not used in the acqdiv
+        pipeline at the moment, but could theoretically be used to automatically
+        create pretty versions of XML corpora.
+
+        Args:
+          fd: A file-like object to write to
+        """
         xmld = self._clean_xml()
         fd.write(etree.tostring(xmld, encoding='unicode',
                                         pretty_print=True))
 
     def _clean_xml_utterance(self, u):
+        """
+        Method that calls the various cleaning methods on a specific
+        utterance.
+
+        Args:
+          u: A <u> tag in the XML tree.
+        """
 
         if self.cfg['morphemes']['repetitions_glossed'] == 'yes':
             self._word_inference(u)
@@ -155,6 +189,14 @@ class XMLCleaner(object):
         self._remove_junk(u)
 
     def _word_inference(self, u):
+        """
+        Handles special ChatXML constructs in words, lifting them to the
+        main text/morpheme level. The modifications are done in-place,
+        with no return value.
+
+        Args:
+          u: A <u> tag in the XML tree.
+        """
         words = u.findall('.//w')
         self._restructure_words(words)
         self._clean_word_text(words)
@@ -163,13 +205,16 @@ class XMLCleaner(object):
         self._clean_replacements(words)
         self._mark_retracings(u)
         self._add_word_warnings(words)
-        #words = filter(lambda w: w != None, words)
-
-        #return [{'full_word': w.text, 'full_word_target': w.attrib['target'],
-        #    'warning': w.attrib['warning']} for w in words]
 
     @staticmethod
     def _restructure_words(words):
+        """
+        Extracts the main text of a word from around any intervening tags and
+        creates the actual and target subtags. The text is stored in <actual>.
+
+        Args:
+          words: A list of <w> tags in the XML tree.
+        """
         for w in words:
             if w.text is not None:
                 wt = w.text
@@ -183,6 +228,13 @@ class XMLCleaner(object):
 
     @staticmethod
     def _clean_word_text(words):
+        """
+        Extracts text from special form tags and adds it to the text
+        of their parent tags.
+
+        Args:
+          words: A list of <w> tags in the XML tree.
+        """
         for w in words:
             wt = w.find('actual')
             #TODO: what with p in replacements etc. ?
@@ -210,6 +262,14 @@ class XMLCleaner(object):
 
     @staticmethod
     def _clean_fragments_and_omissions(words):
+        """
+        Deals with words tagged as "fragment" or "omission".
+        Fragments have no text and aren't glossed, while
+        omissions are simply empty entirely.
+
+        Args:
+          words: A list of <w> tags in the XML tree.
+        """
         for w in words:
             if 'type' in w.attrib:
                 if w.attrib['type'] == 'omission':
@@ -217,9 +277,16 @@ class XMLCleaner(object):
                 elif w.attrib['type'] == 'fragment':
                     w.find('target').text = '???'
                     w.attrib['warning'] = 'not glossed'
-        
+
     @staticmethod
     def _clean_shortenings(words):
+        """
+        Deals with shortenings. Shortenings enclose omitted text which
+        is added to the target text.
+
+        Args:
+          words: A list of <w> tags in the XML tree.
+        """
         for w in words:
 
             w_actual = w.find('actual')
@@ -235,6 +302,15 @@ class XMLCleaner(object):
                 w.remove(s)
 
     def _set_morpheme_language(self, u):
+        """
+        Sets the morpheme language for an utterance. The morpheme language is set
+        on a by-word basis, since the indicating tags, if present, are children
+        of <w>. If no such tags are found, we instead use the default language
+        of the corpus.
+
+        Args:
+          u: A <u> tag in the XML tree.
+        """
         if self.cfg['morphemes']['language'] == 'yes':
             for fw in u.iterfind('.//w'):
                 l = fw.find('langs')
@@ -254,10 +330,21 @@ class XMLCleaner(object):
 
     @staticmethod
     def _clean_replacements(words):
-        # replacements, e.g. 
-        # <g><w>burred<replacement><w>word</w></replacement></w></g>
-        # these require an additional loop over <w> in <u>,
-        # because there may be shortenings within replacements
+        """
+        Cleans replacements, e.g.
+        <g><w>burred<replacement><w>word</w></replacement></w></g>.
+        Replacement words may contain shortenings, but these don't have
+        to be specially dealt with because _clean_shortenings operates on
+        <w> nested at arbitrary depth in the utterance.
+
+        The replacement structure is transformed into an appropriate difference
+        between actual and target text in the final XML tree. Since replacement
+        targets and actuals may contain differing numbers of words, new <w>
+        elements are inserted where appropriate.
+
+        Args:
+          words: A list of <w> elements in the XML tree.
+        """
         for fw in words:
             r = fw.find('replacement')
             if r is not None:
@@ -270,7 +357,7 @@ class XMLCleaner(object):
                 for j in range(rep_len):
                     # check for morphology
                     mor = rep_words[j].find('mor')
-                    # first word: transfer content 
+                    # first word: transfer content
                     # and any morphology to parent <w> in <u>
                     if j == 0:
                         fw.find('target').text = rep_words[0].find('target').text
@@ -287,24 +374,38 @@ class XMLCleaner(object):
                         if mor is not None:
                             w.append(mor)
                         wp.insert(i+j, w)
-                        
+
                 #fw.attrib['target'] = '_'.join(rep_w.attrib['target'] 
                 #        for rep_w in r.findall('w'))
                 fw.remove(r)
 
     @staticmethod
     def _mark_retracings(u):
+        """
+        This tags words in retracings with glossed=ahead, which is required
+        by the retracing cleaning code.
+
+        Args:
+          u: A <u> element in the XML tree.
+        """
         for group in u.iterfind('.//g'):
             retracings = group.find('k[@type="retracing"]')
             retracings_wc = group.find('k[@type="retracing with correction"]')
             if (retracings is not None) or (retracings_wc is not None):
                 words = group.findall('.//w')
-                for w in words: 
+                for w in words:
                     w.attrib['glossed'] = 'ahead'
                     XMLCleaner.creadd(w.attrib, 'warning', 'not glossed; search ahead')
 
-    @staticmethod    
+    @staticmethod
     def _add_word_warnings(words):
+        """
+        Adds warnings about irregular glossing/transcription to the "warning"
+        attribute of <w> elements.
+
+        Args:
+          words: A list of words.
+        """
         for w in words:
             if 'glossed' in w.attrib:
                 if w.attrib['glossed'] == 'no':
@@ -314,12 +415,19 @@ class XMLCleaner(object):
                 elif w.attrib['glossed'] == 'ahead':
                     XMLCleaner.creadd(w.attrib, 'warning', 'not glossed; search ahead')
             if 'transcribed' in w.attrib and w.attrib['transcribed'] == 'insecure':
-                XMLCleaner.creadd(w.attrib, 'warning', 'transcription insecure')            
-            #if 'warning' not in w.attrib:
-            #    w.attrib['warning'] = ''
+                XMLCleaner.creadd(w.attrib, 'warning', 'transcription insecure')
 
     @staticmethod
     def _clean_groups(u):
+        """
+        Cleans up <g> elements, which wrap the following special forms:
+        Repetitions, retracings and guesses. <g> groups may be nested at
+        arbitrary depth, and occur in the corpus nested to at least three
+        levels, so this function recursively cleans them bottom-up.
+
+        Args:
+          u: A <u> element in the XML tree.
+        """
         for group in u.iterfind('g'):
 
             subgroups = group.findall('g')
@@ -340,6 +448,14 @@ class XMLCleaner(object):
 
     @staticmethod
     def _clean_repetitions(group):
+        """
+        Cleans repetitions. Repetitions are a special form that marks
+        that the words within it are repeated. We replace this special form
+        by simple duplication of the words in the final XML tree.
+
+        Args:
+          group: A <g> element.
+        """
         reps = group.find('r')
         if reps is not None:
             ws = group.findall('.//w')
@@ -351,6 +467,17 @@ class XMLCleaner(object):
 
     @staticmethod
     def _clean_retracings(group, u):
+        """
+        Cleans retracings. This involves a lot of searching for morphology and
+        then copying it to retraced words. Retracings with and without
+        corrections must be treated differently from each other, because
+        in the second case, we cannot match on the word text to find out which
+        elements correspond to each other.
+
+        Args:
+          group: A <g> element.
+          u: The utterance element that is the ultimate parent of group.
+        """
         retracings = group.find('k[@type="retracing"]')
         retracings_wc = group.find('k[@type="retracing with correction"]')
 
@@ -387,10 +514,10 @@ class XMLCleaner(object):
             for i,j in zip(range(base_index, max_index), itertools.count()):
                 try:
                     mor = u_ws[i].find('mor')
-                    if mor is not None: 
+                    if mor is not None:
                         group_ws[j].append(copy.deepcopy(mor))
                         if 'warning' in group_ws[j].attrib:
-                            re.sub('not glossed; search ahead', '', 
+                            re.sub('not glossed; search ahead', '',
                                     group_ws[j].attrib['warning'])
                     else:
                         if 'warning' in group_ws[j].attrib:
@@ -406,6 +533,12 @@ class XMLCleaner(object):
 
     @staticmethod
     def _clean_guesses(group):
+        """
+        Cleans guesses.
+
+        Args:
+          group: A <g> element of the XML tree.
+        """
         words = group.findall('.//w')
         target_guess = group.find('.//ga[@type="alternative"]')
         if target_guess is not None:
@@ -417,13 +550,29 @@ class XMLCleaner(object):
                 w.attrib['transcribed'] = 'insecure'
 
     def _process_morphology(self, u):
+        """
+        Morphology is handled completely differently by each corpus,
+        so we do not provide a default implementation. This method
+        must be overridden by each corpus-specific cleaner.
+        """
         pass
 
     def _morphology_inference(self, u):
+        """
+        Morphology is handled completely differently by each corpus,
+        so we do not provide a default implementation. This method
+        must be overridden by each corpus-specific cleaner.
+        """
         pass
 
     @staticmethod
     def _add_morphology_warnings(u):
+        """
+        Adds warnings about broken alignment to the morphology tiers.
+
+        Args:
+          u: A <u> element of the XML tree.
+        """
         if u.find('.//mor') is None:
             XMLCleaner.creadd(u.attrib, 'warning', 'not glossed')
         else:
@@ -435,6 +584,15 @@ class XMLCleaner(object):
                     break
 
     def _restructure_metadata(self, u):
+        """
+        Converts metadata forms of the type
+        <a type="xxx"/> into differentiated tags of the form <xxx/>.
+        Also performs tier renaming using the corpus .ini so that
+        the XML Parser can access a unified list of metadata tags.
+
+        Args:
+          u: A <u> element of the XML tree.
+        """
         for a in u.findall('a'):
             if a.attrib['type'] == 'extension':
                 ntag = a.attrib['flavor']
@@ -458,9 +616,16 @@ class XMLCleaner(object):
             timestamp.tag = 'media'
 
     def _remove_junk(self, u):
+        """
+        This is a utility method that can be overridden by corpus-specific
+        cleaners to remove any unused items in that corpus' XML utterances.
+        """
         pass
 
     def clean(self):
+        """
+        Public wrapper around _clean_xml.
+        """
         return self._clean_xml()
 
 

@@ -13,6 +13,9 @@ from itertools import zip_longest
 logger = logging.getLogger('pipeline' + __name__)
 
 def longer_of(a, b):
+    """
+    Utility function to determine and return the longer of two lists.
+    """
     if len(a) > len(b):
         return a
     else:
@@ -20,7 +23,7 @@ def longer_of(a, b):
 
 def struct_eqv(xs, ys):
     """
-    Handy function to test whether two lists have the same nested structure
+    Handy function to test whether two lists have the same nested structure.
     """
     if (len(xs) == len(ys)):
         for x,y in zip(xs, ys):
@@ -61,7 +64,7 @@ class ToolboxFile(object):
 
     def __iter__(self):
         """ Iterator that yields utterance, words, morphemes and inference information from a session transcript file.
-        
+
         Note:
             This iterator directly extracts utterances for the db column utterance_raw and calls various
             functions to extract information from the following levels:
@@ -94,9 +97,14 @@ class ToolboxFile(object):
 
 
     def make_rec(self, record):
-        """ Parse and make utterance, words and morpheme structures.
-        :param data:
-        :return:
+        """
+        Parse and make utterance, words and morpheme structures.
+
+        Args:
+          record: a bytestring representing a toolbox record.
+
+        Returns:
+          A triple of utterance, words and morphemes
         """
         utterance = {}
         words = []
@@ -161,11 +169,6 @@ class ToolboxFile(object):
         # Create clean utterance
         utterance['utterance'] = None if utterance['utterance_raw'] is None else self.clean_utterance(utterance['utterance_raw'])
 
-        # Talk to Robert
-        # utterance['morpheme'] = None if not 'morpheme' in utterance else self.clean_morpheme(utterance['morpeheme'])
-        # utterance['pos_raw'] = None if not 'morpheme' in utterance else self.clean_morpheme(utterance['pos_raw'])
-        # utterance['gloss_raw'] = None if not 'morpheme' in utterance else self.clean_morpheme(utterance['gloss_raw'])
-
         # Append utterance warnings if data fields are missing in the input
         if not utterance['utterance_raw'] is None:
             if not self.get_warnings(utterance['utterance_raw']) is None:
@@ -197,13 +200,13 @@ class ToolboxFile(object):
 
     def get_words(self, utterance):
         """ Return ordered list of words where each word is a dict of key-value pairs
-        
+
         This function does Toolbox corpus-specific word processing and distinguishes between
         word and word_target if necessary.
-        
+
         Args:
             utterance: str
-            
+
         Returns:
             result: A list of ordered dictionaries with word and parent utterance id (utterance_id_fk).
         """
@@ -240,7 +243,7 @@ class ToolboxFile(object):
 
         Args:
             utterance: str
-            
+
         Returns:
             sentence_type: str
         """
@@ -301,7 +304,7 @@ class ToolboxFile(object):
 
         Args:
             utterance: str
-        
+
         Returns:
             transcription_warning: str
         """
@@ -311,7 +314,7 @@ class ToolboxFile(object):
                     target_clean = re.sub('["\[\]\?=]','',target)
                     transcription_warning = 'transcription insecure (intended form might have been "' + target_clean +'")'
                     return transcription_warning
-                
+
         if self.config['corpus']['corpus'] == "Indonesian":
                 # Insecure transcription [?], add warning, delete marker
                 # cf. https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1605-1610
@@ -328,11 +331,11 @@ class ToolboxFile(object):
 
         Args:
             utterance: str
-            
+
         Returns:
             utterance: str
         """
-        
+
         # TODO: incorporate Russian \pho and \text tiers -- right now just utterance in general
         # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1586-L1599
         if not utterance is None: # != 'None' or utterance != '':
@@ -354,50 +357,20 @@ class ToolboxFile(object):
 
             # incorporate the Indonesian stuff
             if self.config['corpus']['corpus'] == "Indonesian":
-                # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1633-L1648
-                # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1657-L1661
                 # delete punctuation and garbage
                 utterance = re.sub('[‘’\'“”\"\.!,;:\+\/]|\?$|<|>', '', utterance)
                 utterance = re.sub('xxx?|www', '???', utterance)
                 utterance = utterance.strip()
-                                    
+
                 # Insecure transcription [?], add warning, delete marker
-                # cf. https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1605-1610
                 if re.search('\[\?\]', utterance):
                     utterance = re.sub('\[\?\]', '', utterance)
 
                 return utterance
-    
+
             if self.config['corpus']['corpus'] == "Chintang":
                 utterance = re.sub('\*\*\*', '???', utterance)
                 return utterance
-
-    """ TODO: talk to Robert
-    # Clean up Chintang
-    if self.config['corpus']['corpus'] == 'Chintang':
-        utterance['morpheme'] = None if utterance['morpheme'] is None else re.sub('\*\*\*', '???', utterance['morpheme'])
-        utterance['gloss_raw'] = None if utterance['gloss_raw'] is None else re.sub('\*\*\*', '???', utterance['gloss_raw'])
-        utterance['pos_raw'] = None if utterance['pos_raw'] is None else re.sub('\*\*\*', '???', utterance['pos_raw'])
-        # We infer sentence type from Chintang \nep but we do not add the nepali field to the database yet
-        if 'nepali' in utterance:
-            del utterance['nepali']
-
-    # Clean up Russian
-    if self.config['corpus']['corpus'] == 'Russian':
-        utterance['utterance_raw'] = None if utterance['utterance_raw'] is None else re.sub('xxx?|www', '???', utterance['utterance_raw'])
-        utterance['pos_raw'] = None if utterance['pos_raw'] is None else re.sub('xxx?|www', '???', utterance['pos_raw'])
-        utterance['morpheme'] = None if utterance['morpheme'] is None else re.sub('xxx?|www', '???', utterance['morpheme'])
-
-    # Clean up Indonesian
-    if self.config['corpus']['corpus'] == 'Russian':
-        utterance['morpheme'] = None if utterance['morpheme'] is None else re.sub('xxx?|www', '???', utterance['morpheme'])
-        utterance['gloss_raw'] = None if utterance['gloss_raw'] is None else re.sub('xxx?|www', '???', utterance['gloss_raw'])
-        utterance['utterance_raw'] = None if utterance['utterance_raw'] is None else re.sub('xxx?|www', '???', utterance['utterance_raw'])
-        utterance['translation'] = None if utterance['translation'] is None else re.sub('xxx?|www', '???', utterance['translation'])
-
-    # Create clean utterance
-    utterance['utterance'] = None if utterance['utterance_raw'] is None else self.clean_utterance(utterance['utterance_raw'])
-    """
 
     def get_morphemes(self, utterance):
         """ Return ordered list of lists of morphemes where each morpheme is a dict of key-value pairs
@@ -604,7 +577,7 @@ class ToolboxFile(object):
                                 t, utterance['source_id']))
         #This bit adds None (NULL in the DB) for any mis-alignments
         #tiers = list(zip_longest(morphemes, glosses, poses, fillvalue=[]))
-        #gls = [m for m in w for w in 
+        #gls = [m for m in w for w in
         mwords = zip(*tiers)
         for mw in mwords:
             alignment = list(zip_longest(mw[0], mw[1], mw[2], mw[3],
