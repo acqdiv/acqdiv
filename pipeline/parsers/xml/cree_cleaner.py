@@ -152,7 +152,7 @@ class CreeCleaner(XMLCleaner):
                         w.attrib[mormea_t] = w.attrib[mormea_t][:-1]
                         XMLCleaner.creadd(ms.attrib, 'warning', 'gloss insecure for tier ' + mormea_t)
          # EOF word loop
-     # EOF Cree                    
+     # EOF Cree
 
 
 if __name__ == '__main__':

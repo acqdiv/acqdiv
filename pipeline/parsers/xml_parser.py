@@ -3,7 +3,6 @@ import importlib
 import io
 import logging
 import lxml
-import pdb
 import re
 import sys
 
@@ -15,6 +14,12 @@ from pipeline.parsers.metadata import Chat
 from pipeline.parsers.xml.xml_cleaner import XMLCleaner
 
 class XMLParserFactory(object):
+    """
+    Callable object that dynamically loads the cleaner module for a given
+    corpus and fetches the cleaner class from the names given in the .ini
+    file. This allows easy extensibility: new corpora can be added simply
+    by creating a new cleaner module and an .ini file for the new corpus.
+    """
 
     def __init__(self, cfg):
         self.cfg = cfg
@@ -24,9 +29,20 @@ class XMLParserFactory(object):
             self.cfg['paths']['cleaner_name']), globals(), locals())
 
     def __call__(self, fpath):
+        """
+        Returns a new XMLParser for the file fpath, using the current
+        corpus configuration and cleaner module.
+        """
         return XMLParser(self.cfg, self.cleaner_cls, fpath)
 
 class XMLParser(object):
+    """
+    Parses unified XML trees into the data structures we use for the DB
+    pipeline. Since every XML corpus de facto uses a different set of
+    rules, and often violates its own rules, the cleaner for the appropriate
+    corpus must be used to first transform the original XML into a format
+    that XMLParser objects can understand.
+    """
 
     logger = logging.getLogger('pipeline.' + __name__)
 
@@ -50,6 +66,10 @@ class XMLParser(object):
 
     @staticmethod
     def has_value(dic, key):
+        """
+        Utility method to check whether key is present in the Dictionary dic
+        and if yes, whether that key maps to a value other than None.
+        """
         try:
             return dic[key] is not None
         except KeyError:
@@ -59,6 +79,10 @@ class XMLParser(object):
 
     @staticmethod
     def empty_except(dic, key):
+        """
+        Utility method to check whether key is the only
+        key in Dictionary dic.
+        """
         if key in dic:
             tmp = dic[key]
             del dic[key]
@@ -75,6 +99,14 @@ class XMLParser(object):
         self.metadata_parser = Chat(cfg, fpath)
 
     def _get_utts(self):
+        """
+        Main XMLParser method. Walks the cleaned XML tree using lxml's low-level
+        iterators and extracts the appropriate Utterance, Word and Morpheme
+        objects from the XML representation.
+
+        Calls the cleaner before returning a generator object yielding
+        Utterance-[Word]-[Morpheme] triples.
+        """
 
         xmldoc = self.cleaner.clean()
 
@@ -127,7 +159,7 @@ class XMLParser(object):
                     wdict['warning'] = w.attrib.get('warning')
 
                     if ((udict['warning'] is not None
-                        and 'not glossed' in udict['warning']) 
+                         and 'not glossed' in udict['warning'])
                         or (wdict['warning'] is not None
                             and 'not glossed' in wdict['warning'])):
                         morphemes = None
@@ -178,6 +210,9 @@ class XMLParser(object):
                                          exc_info=sys.exc_info())
 
     def _clean_words(self, words):
+        """
+        Removes all word tiers not mentioned for extraction in the .ini files.
+        """
         new_words = deque()
         for raw_word in words:
             try:
@@ -195,11 +230,16 @@ class XMLParser(object):
         return new_words
 
     def _clean_morphemes(self, mors):
+        """
+        Removes all morpheme tiers not mentioned for extraction in the .ini files.
+        Also ensures that all morpheme tiers taken over are the same length.
+        """
         new_mors = deque()
         try:
             for mword in mors:
                 new_mword = deque()
                 try:
+                    # extract expected morpheme tiers using the corpus config
                     for raw_morpheme in mword:
                         morpheme = {}
                         for k in raw_morpheme:
@@ -209,8 +249,17 @@ class XMLParser(object):
                             else:
                                 pass
                         if not self.empty_except(morpheme, 'morpheme_language'):
+                            # morpheme_language is automatically added to all morphemes,
+                            # so empty morphemes are those with only that tier
                             new_mword.append(morpheme)
                     try:
+                        # Flatten mword horizontally, then split into tiers.
+                        # Use the flattened mword to compare the length of
+                        # morpheme tiers.
+                        # We use gloss_raw as the tier that determines how
+                        # long the other tiers have to be.
+                        # If a tier's length doesn't match up, it is set to
+                        # all None.
                         flatm = {}
                         for tier in new_mword[0]:
                             flatm[tier] = [m[tier] for m in new_mword
@@ -236,6 +285,9 @@ class XMLParser(object):
         return new_mors
 
     def _clean_utterance(self, raw_u):
+        """
+        Removes all utterance tiers not mentioned in the .ini files for extraction.
+        """
 
         utterance = {}
         uvs = self.cfg['xml_mappings'].values()
@@ -250,6 +302,10 @@ class XMLParser(object):
         return utterance
 
     def _concat_mor_tier(self, tier, morphlist):
+        """
+        Concatenates a morphology tier into a string for easy viewing.
+        Used to create utterance level glosses.
+        """
         try:
             return ' '.join(['-'.join([m for m in map(
                 lambda x:
@@ -260,13 +316,22 @@ class XMLParser(object):
             return None
 
     def get_session_metadata(self):
+        """
+        Method called by Processor to get session metadata.
+        """
         return self.metadata_parser.metadata['__attrs__']
 
     def next_speaker(self):
+        """
+        Generator called by Processor to get speaker metadata.
+        """
         for p in self.metadata_parser.metadata['participants']:
             yield p
 
     def next_utterance(self):
+        """
+        Public-facing wrapper around _get_utts().
+        """
         return self._get_utts()
 
 if __name__ == '__main__':
