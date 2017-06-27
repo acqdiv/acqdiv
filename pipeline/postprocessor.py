@@ -205,11 +205,6 @@ def process_utterances():
                 logger.warning('Error unifying timestamps: {}'.format(
                     row, e), exc_info=sys.exc_info())
 
-        # set speaker-utterance links
-        uniquespeakers_utterances(row)
-        if row.corpus != "Chintang":
-            row.childdirected = get_directedness(row)
-
         # TODO: talk to Robert; remove if not needed
         if row.corpus == "Chintang":
             row.morpheme = None if row.morpheme is None else re.sub('\*\*\*', '???', row.morpheme)
@@ -226,6 +221,11 @@ def process_utterances():
             row.utterance_raw = None if row.utterance_raw is None else re.sub('xxx?|www', '???', row.utterance_raw)
             row.translation = None if row.translation is None else re.sub('xxx?|www', '???', row.translation)
             change_speaker_labels(row)
+
+        # set speaker-utterance links
+        uniquespeakers_utterances(row)
+        if row.corpus != "Chintang":
+            row.childdirected = get_directedness(row)
 
 
 def get_directedness(utt):
@@ -311,9 +311,12 @@ def uniquespeakers_utterances(row):
     """
     Link Unique speakers / utterances
     """
-    speaker = session.query(backend.Speaker).filter(
-        backend.Speaker.speaker_label == row.speaker_label).filter(
-            backend.Speaker.corpus == row.corpus).first()
+    speaker1 = session.query(backend.Speaker)
+    speaker2 = speaker1.filter(
+        backend.Speaker.speaker_label == row.speaker_label)
+    speaker3 = speaker2.filter(
+            backend.Speaker.corpus == row.corpus)
+    speaker = speaker3.first()
     if speaker is not None:
         row.uniquespeaker_id_fk = speaker.uniquespeaker_id_fk
         row.speaker_id_fk = speaker.id
