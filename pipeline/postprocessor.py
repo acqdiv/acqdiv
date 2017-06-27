@@ -311,12 +311,9 @@ def uniquespeakers_utterances(row):
     """
     Link Unique speakers / utterances
     """
-    speaker1 = session.query(backend.Speaker)
-    speaker2 = speaker1.filter(
-        backend.Speaker.speaker_label == row.speaker_label)
-    speaker3 = speaker2.filter(
-            backend.Speaker.corpus == row.corpus)
-    speaker = speaker3.first()
+    speaker = session.query(backend.Speaker).filter(
+        backend.Speaker.speaker_label == row.speaker_label).filter(
+            backend.Speaker.corpus == row.corpus).first()
     if speaker is not None:
         row.uniquespeaker_id_fk = speaker.uniquespeaker_id_fk
         row.speaker_id_fk = speaker.id
