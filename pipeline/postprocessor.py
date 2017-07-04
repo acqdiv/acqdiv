@@ -205,11 +205,6 @@ def process_utterances():
                 logger.warning('Error unifying timestamps: {}'.format(
                     row, e), exc_info=sys.exc_info())
 
-        # set speaker-utterance links
-        uniquespeakers_utterances(row)
-        if row.corpus != "Chintang":
-            row.childdirected = get_directedness(row)
-
         # TODO: talk to Robert; remove if not needed
         if row.corpus == "Chintang":
             row.morpheme = None if row.morpheme is None else re.sub('\*\*\*', '???', row.morpheme)
@@ -226,6 +221,11 @@ def process_utterances():
             row.utterance_raw = None if row.utterance_raw is None else re.sub('xxx?|www', '???', row.utterance_raw)
             row.translation = None if row.translation is None else re.sub('xxx?|www', '???', row.translation)
             change_speaker_labels(row)
+
+        # set speaker-utterance links
+        uniquespeakers_utterances(row)
+        if row.corpus != "Chintang":
+            row.childdirected = get_directedness(row)
 
 
 def get_directedness(utt):
