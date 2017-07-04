@@ -130,7 +130,7 @@ def infer_pos(row):
 
     # Linguistic-specific stuff
     if row.corpus == "Indonesian":
-        if not row.gloss_raw is None:
+        if row.gloss_raw is not None:
             if row.gloss_raw.startswith('-'):
                 row.pos_raw = 'sfx'
             elif row.gloss_raw.endswith('-'):
@@ -138,7 +138,8 @@ def infer_pos(row):
             elif row.gloss_raw == '???':
                 row.pos_raw = '???'
             else:
-                row.pos_raw = 'stem'
+                if row.pos_raw not in {'sfx', 'pfx', '???'}:
+                    row.pos_raw = 'stem'
 
     if row.corpus == "Chintang":
         if not row.pos_raw is None:
@@ -369,7 +370,7 @@ def update_imdi_age(row):
 
     if row.birthdate is None:
         return
-    
+
     if not (row.birthdate.__contains__("Un") or row.birthdate.__contains__("None")):
         try:
             session_date = get_session_date(row.session_id_fk)
