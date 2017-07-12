@@ -319,11 +319,80 @@ def uniquespeakers_utterances(row):
         row.uniquespeaker_id_fk = speaker.uniquespeaker_id_fk
         row.speaker_id_fk = speaker.id
 
+
 def target_children(table):
-    targets = table.filter(backend.Speaker.macrorole == "Target_Child")
-    for row in targets:
-        rec = session.query(backend.Session).filter(backend.Session.id == row.session_id_fk).first()
-        rec.target_child_fk = row.uniquespeaker_id_fk
+    """
+    Set target children for sessions.
+
+    Also adapt roles and macroroles if there are multiple target children
+    per session.
+    """
+    # store target children per session first
+    targets_per_session = {}
+    for row in table.filter(backend.Speaker.role == "Target_Child"):
+        if row.session_id_fk in targets_per_session:
+            targets_per_session[row.session_id_fk].add(row.uniquespeaker_id_fk)
+        else:
+            targets_per_session[row.session_id_fk] = {row.uniquespeaker_id_fk}
+
+    # go through all session ids
+    for session_id in targets_per_session:
+
+        # get the target children for this session
+        targets = targets_per_session[session_id]
+
+        # get session row
+        rec = session.query(backend.Session).\
+            filter(backend.Session.id == session_id).first()
+
+        # if there is one target child only
+        if len(targets) == 1:
+            # just set target child for the session
+            rec.target_child_fk = targets.pop()
+        # if there are several target children
+        else:
+            # infer target child from source id
+            if rec.corpus == "Chintang":
+                # get target child label
+                label = rec.source_id[2:7]
+                # get right target child id
+                tc_id = session.query(backend.UniqueSpeaker).\
+                    filter(backend.UniqueSpeaker.corpus == rec.corpus).\
+                    filter(backend.UniqueSpeaker.speaker_label == label).\
+                    first().id
+            elif rec.corpus == "Russian":
+                # session code's first letter matches that of speaker label
+                letter = rec.source_id[0]
+                # get right target child id
+                tc_id = session.query(backend.Speaker).\
+                    filter(backend.Speaker.corpus == rec.corpus).\
+                    filter(backend.Speaker.role == "Target_Child").\
+                    filter(backend.Speaker.speaker_label.like(
+                            "{}%".format(letter))).\
+                    first().uniquespeaker_id_fk
+            elif rec.corpus == "Yucatec":
+                label = rec.source_id[:3]
+                tc_id = session.query(backend.UniqueSpeaker).\
+                    filter(backend.UniqueSpeaker.corpus == rec.corpus).\
+                    filter(backend.UniqueSpeaker.speaker_label == label).\
+                    first().id
+            else:
+                logger.warning(
+                    "Multiple target children for session {} in {}".format(
+                        session_id, rec.corpus))
+                continue
+
+            # set this target child for the session
+            rec.target_child_fk = tc_id
+
+            # adapt role and macrorole of children that are not target anymore
+            non_targets = table.\
+                filter(backend.Speaker.role == "Target_Child").\
+                filter(backend.Speaker.session_id_fk == session_id).\
+                filter(backend.Speaker.uniquespeaker_id_fk != tc_id)
+            for row in non_targets:
+                row.role = "Child"
+                row.macrorole = "Child"
 
 
 def unify_label(row):

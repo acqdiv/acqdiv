@@ -184,6 +184,15 @@ class ValidationTest(object):
                  "Inuktitut", "Indonesian", "Russian", "Unknown"]
         self._in_whitelist(query, langs)
 
+    def test_target_children(self):
+        """Check whether there is only one target child per session."""
+        query = """SELECT session_id_fk
+                   FROM speakers
+                   WHERE role == 'Target_Child' OR macrorole == 'Target_Child'
+                   GROUP BY session_id_fk HAVING COUNT(session_id_fk) > 1"""
+        msg = "Session {} has more than one target child"
+        for session_id in self.session.execute(query):
+            self.fail(msg=msg.format(session_id[0]))
 
     """ Private methods below. """
     def _column_contains_null(self, table, column):
