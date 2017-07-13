@@ -514,20 +514,20 @@ def macrorole(row):
     handles role encoding).
     """
     # TODO: this method is completely dependent on ages -- no warnings are given if the age input is wrong!
-    # Check if macrorole is not already filled by roles()
-    if row.macrorole is None:
-        # First check age: Adults are >= 12yrs, i.e. > 4380 days
-        if row.age_in_days is not None:
-            if row.age_in_days <= 4380:
-                row.macrorole = "Child"
-            else:
-                row.macrorole = "Adult"
-        # Second check corpus-specific lists of speaker labels
+    # overwrite role mapping (except target child) if speaker is under 12
+    # (e.g. if child is an aunt which is mapped to 'Adult' per default)
+    if row.age_in_days is not None and row.macrorole != "Target_Child":
+        # Adults are >= 12yrs, i.e. > 4380 days
+        if row.age_in_days <= 4380:
+            row.macrorole = "Child"
         else:
-            try:
-                row.macrorole = roles[row.corpus][row.speaker_label]
-            except KeyError:
-                row.macrorole = "Unknown"
+            row.macrorole = "Adult"
+    # Second check corpus-specific lists of speaker labels
+    elif row.macrorole is None:
+        try:
+            row.macrorole = roles[row.corpus][row.speaker_label]
+        except KeyError:
+            row.macrorole = "Unknown"
 
 
 def role(row):
