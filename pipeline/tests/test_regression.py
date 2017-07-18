@@ -2,12 +2,22 @@
 
 import pandas as pd
 import numpy.testing as npt
+import os
+import subprocess
 
 import sqlite3
 from nose.tools import assert_true
 
-# Set up
+# connect to the test db
 test_db = sqlite3.connect("../database/test.sqlite3")
+# if the sqlite3 gold database exists
+if os.path.isfile("fixtures/gold.sqlite3"):
+    # delete it first
+    os.remove("fixtures/gold.sqlite3")
+# generate a fresh sqlite3 gold database from the dump
+command = "sqlite3 fixtures/gold.sqlite3 < fixtures/gold.dump"
+subprocess.run(command, shell=True)
+# connect to it
 gold_db = sqlite3.connect("fixtures/gold.sqlite3")
 
 
