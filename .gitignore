@@ -1,6 +1,13 @@
 .input
 .output
 
+# corpora
+/pipeline/corpora
+/pipeline/database/*.sqlite3
+
+# logs
+*.log
+
 # Docs
 .pdf
 
