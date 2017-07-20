@@ -25,7 +25,7 @@ class XMLParserFactory(object):
         self.cfg = cfg
         self.cleaner_module = importlib.import_module(
             '.xml.' + self.cfg['paths']['cleaner'], package='parsers')
-        self.cleaner_cls = eval(('self.cleaner_module.' + 
+        self.cleaner_cls = eval(('self.cleaner_module.' +
             self.cfg['paths']['cleaner_name']), globals(), locals())
 
     def __call__(self, fpath):
@@ -62,7 +62,7 @@ class XMLParser(object):
               'pos_raw':'???',
               'morpheme_language': '???' }
 
-    rstruc = namedtuple('FlatUtterance', ['u', 'w', 'm']) 
+    rstruc = namedtuple('FlatUtterance', ['u', 'w', 'm'])
 
     @staticmethod
     def has_value(dic, key):
@@ -139,8 +139,8 @@ class XMLParser(object):
                     u, 'translation')
                 udict['comment'] = XMLCleaner.find_text(u, 'comment')
 
-                udict['starts_at'] = XMLCleaner.find_xpath(u, 'media/@start')
-                udict['ends_at'] = XMLCleaner.find_xpath(u, 'media/@end')
+                udict['start_raw'] = XMLCleaner.find_xpath(u, 'media/@start')
+                udict['end_raw'] = XMLCleaner.find_xpath(u, 'media/@end')
                 udict['sentence_type'] = XMLCleaner.find_xpath(u, 't/@type')
 
                 fws = u.findall('.//w')
@@ -309,7 +309,7 @@ class XMLParser(object):
         try:
             return ' '.join(['-'.join([m for m in map(
                 lambda x:
-                    x[tier] if tier in x and x[tier] is not None 
+                    x[tier] if tier in x and x[tier] is not None
                     else '???', mword)])
                 for mword in morphlist])
         except TypeError:

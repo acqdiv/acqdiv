@@ -31,11 +31,6 @@ class ValidationTest(object):
         cls.cfg = configparser.ConfigParser()
         cls.cfg.read(cls.config) # TODO: how to close the config file this way?
 
-        # Load list of tables from csv file and check for coverage proportion.
-        cls.f_proportions = open("fixtures/tables-proportions-filled.csv", "r")
-        cls.reader_proportion_nulls = csv.reader(cls.f_proportions)
-        next(cls.reader_proportion_nulls)  # Skip the header
-
         # Load list of tables from csv file and check that the specified table and their columns contain no NULL.
         cls.f_no_nulls = open("fixtures/tables-no-nulls-allowed.csv", "r")
         cls.reader_tables_no_nulls = csv.reader(cls.f_no_nulls)
@@ -45,33 +40,7 @@ class ValidationTest(object):
     def tearDownClass(cls):
         """ Tear down the test fixtures. """
         cls.session.close()
-        cls.f_proportions.close()
         cls.f_no_nulls.close()
-
-    def test_columns_for_proportion_null(self):
-        """ Check proportion of nulls per table per corpus. """
-        # TODO: @rabart notesd that each corpus might need its own proportion tweaking. If that's the case, then we should change the CSV fixture file to handle corpus and proportion and these loops in this method to handle the tables (say viw SQLAlchemy meta reflection).
-        corpora = ["Chintang", "Cree", "Indonesian", "Inuktitut", "Japanese_Miyata", "Japanese_MiiPro", "Russian", "Sesotho", "Turkish", "Yucatec"]
-
-        for row in self.reader_proportion_nulls:
-            table = row[0]
-            column = row[1]
-            proportion = float(row[2])
-
-            for corpus in corpora:
-                # Skip corpus-specific irregularities.
-                if column == "pos_raw" and corpus == "Indonesian":
-                    continue
-                if column == "gender_raw" and corpus in ["Japanese_Miyata", "Sesotho", "Yucatec"]:
-                    continue
-                if column == "translation" and corpus in ["Japanese_Miyata","Japanese_MiiPro", "Russian", "Turkish"]:
-                    continue
-
-                query = "select count(*) from %s where %s is not NULL and corpus = '%s'" % (table, column, corpus)
-                res = self.session.execute(query)
-                result = res.fetchone()[0]
-
-                self.assertGreater(result, proportion, msg='Proportion (%s) less than proportion of NULLs in query (%s)' % (res, query))
 
     """ The tests! """
     def test(self):
@@ -294,6 +263,50 @@ class ValidationTest_ProductionDB(unittest.TestCase, ValidationTest):
         ValidationTest.database_path = "sqlite:///../database/acqdiv.sqlite3"
         ValidationTest.config = "fixtures/production_counts.ini"
         ValidationTest.setUpClass()
+
+        # Load list of tables from csv file and check for coverage proportion.
+        cls.f_proportions = open("fixtures/tables-proportions-filled.csv", "r")
+        cls.reader_proportion_nulls = csv.reader(cls.f_proportions)
+        next(cls.reader_proportion_nulls)  # Skip the header
+
+    @classmethod
+    def tearDownClass(self):
+        """ Tear down the test fixtures. """
+        super().tearDownClass()
+        self.f_proportions.close()
+
+    def test_columns_for_proportion_null(self):
+        """ Check proportion of nulls per table per corpus. """
+        corpora = ["Chintang", "Cree", "Indonesian", "Inuktitut",
+                   "Japanese_Miyata", "Japanese_MiiPro", "Russian",
+                   "Sesotho", "Turkish", "Yucatec"]
+        query = """SELECT CAST(COUNT(*) AS FLOAT)/(SELECT COUNT(*)
+                                                   FROM {table}
+                                                   WHERE corpus = '{corpus}')
+                   FROM {table}
+                   WHERE {column} IS NOT NULL AND corpus = '{corpus}'"""
+        msg = "Proportion of non-NULL values too low for {} - {} - {}"
+        for row in self.reader_proportion_nulls:
+            table = row[0]
+            column = row[1]
+            corpus = row[2]
+            proportion = float(row[3])
+
+            if corpus == "all":
+                for corpus in corpora:
+                    res = self.session.execute(query.format(
+                        table=table, column=column, corpus=corpus))
+                    result = res.fetchone()[0]
+                    self.assertGreaterEqual(
+                        result, proportion,
+                        msg=msg.format(table, column, corpus))
+            else:
+                res = self.session.execute(query.format(
+                        table=table, column=column, corpus=corpus))
+                result = res.fetchone()[0]
+                self.assertGreaterEqual(
+                    result, proportion,
+                    msg=msg.format(table, column, corpus))
 
 
 if __name__ == '__main__':
