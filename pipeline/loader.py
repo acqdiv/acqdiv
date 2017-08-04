@@ -28,7 +28,7 @@ def main(args):
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
-    # uncomment to define a Handler which writes INFO messages or higher to the sys.stderr
+    # Uncomment to define a Handler which writes INFO messages or higher to the sys.stderr.
     """
     console = logging.StreamHandler()
     console.setLevel(logging.INFO)
@@ -40,7 +40,7 @@ def main(args):
     logging.getLogger('').addHandler(console)
     """
 
-    # If testing mode
+    # If testing mode.
     if args.t:
         print("Writing test database to: pipeline/database/test.sqlite3")
         print()
@@ -56,7 +56,7 @@ def main(args):
                'Japanese_Miyata.ini', 'Japanese_MiiPro.ini', 'Russian.ini',
                'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
 
-    # Parse the config file and call the sessions processor
+    # Parse the config file and call the sessions processor.
     for config in configs:
         cfg = CorpusConfigParser()
         cfg.read("ini/"+config)
@@ -65,7 +65,7 @@ def main(args):
         if args.t:
             cfg['paths']['path'] = "tests/corpora"
 
-        # Process by parsing the files and adding extracted data to the db
+        # Process by parsing the files and adding extracted data to the database.
         print("{0} seconds --- Start processing: {1}".format(
             time.time() - start_time, config.split(".")[0]))
         c = CorpusProcessor(cfg, engine)

@@ -1,4 +1,4 @@
-""" Corpus and session processors to turn ACQDIV raw input corpora (Toolbox, ChatXML, JSON) into ACQDIV-DB
+""" Corpus and session processors to turn ACQDIV raw input corpora (Toolbox, ChatXML, JSON) into ACQDIV database.
 """
 
 import collections
@@ -34,8 +34,9 @@ class CorpusProcessor(object):
         # Create the correct SessionParser (e.g. ToolboxParser, XMLParser)
         self.parser_factory = SessionParser.create_parser_factory(self.cfg)
 
+
     def process_corpus(self):
-        """ Loops all raw corpus session input files and processes each and the commits the data to the database.
+        """ Loops over all raw corpus session input files and processes each and the commits the data to the database.
         """
         for session_file in glob.glob(self.cfg['paths']['sessions']):
             print("\t", session_file)
@@ -67,6 +68,7 @@ class SessionProcessor(object):
         self.config = cfg
         self.file_path = file_path
         self.parser_factory = parser_factory
+        self.engine = engine
 
         # TODO: do we need these variables?
         self.language = self.config['corpus']['language']
@@ -75,10 +77,11 @@ class SessionProcessor(object):
         self.morpheme_type = self.config['morphemes']['type']
 
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
-        self.Session = sessionmaker(bind=engine)
+        # self.Session = sessionmaker(bind=engine)
 
 
     def process_session(self):
+        print("Process session")
         self.parser = self.parser_factory(self.file_path)
 
         # Returns all session metadata and gets corpus-specific sessions table mappings to populate the db
@@ -92,10 +95,80 @@ class SessionProcessor(object):
         d['source_id'] = self.filename
         d['language'] = self.language
         d['corpus'] = self.corpus
+        print("session metadata", d)
 
+        insert_sess, insert_speaker, insert_utt, insert_word, insert_morph = (
+            sa.insert(model, bind=self.engine).execute
+        for model in (db.Session, db.Speaker, db.Utterance, db.Word, db.Morpheme))
+
+        print("generator")
+
+        s_id, = insert_sess(**d).inserted_primary_key
+        print(s_id)
+
+        # Get speaker metadata and populate the speakers table.
+        for speaker in self.parser.next_speaker():
+            print("Process speaker")
+            d = {}
+            for k, v in speaker.items():
+                if k in self.config['speaker_labels'].keys():
+                    d[self.config['speaker_labels'][k]] = v
+            # TODO: move this post processing (before the age, etc.) if it improves performance
+            d['corpus'] = self.corpus
+            d['language'] = self.language
+
+            print("speaker", d)
+            insert_speaker(session_id_fk=s_id, **d)
+
+        # Get the sessions utterances, words and morphemes to populate those db tables
+        for utterance, words, morphemes in self.parser.next_utterance():
+            if utterance is None:
+                logger.info("Skipping nonce utterance in {}".format(self.file_path))
+                continue
+            utterance['corpus'] = self.corpus
+            utterance['language'] = self.language
+
+            u_id, = insert_utt(session_id_fk=s_id, **utterance).inserted_primary_key
+            wlen = len(words)
+            mlen = len(morphemes)
+
+            # Populate the words.
+            for i in range(0, wlen):
+                # TODO: move this post processing (before the age, etc.) if it improves performance
+                if words[i] != {}:
+                    words[i]['corpus'] = self.corpus
+                    words[i]['language'] = self.language
+                w_id, = insert_word(session_id_fk=s_id, utterance_id_fk=u_id, **words[i]).inserted_primary_key
+
+            # Populate the morphemes
+            for i in range(0, wlen):
+                try:
+                    for j in range(0, len(morphemes[i])):  # loop morphemes
+                        # TODO: move this post processing (before the age, etc.) if it improves performance
+                        morphemes[i][j]['corpus'] = self.corpus
+                        morphemes[i][j]['language'] = self.language
+                        morphemes[i][j]['type'] = self.morpheme_type
+
+                        #if new_wlen == mlen:
+                            # only link words and morpheme words if there are
+                            # equal amounts of both
+                        #    u.words[i].morphemes.append(morpheme)
+                        #u.morphemes.append(morpheme)
+                        # self.session.morphemes.append(morpheme)
+                        insert_morph(session_id_fk=s_id, utterance_id_fk=u_id, word_id_fk=w_id, **morphemes[i][j])
+
+                except TypeError:
+                    logger.warn("Error processing morphemes in "
+                                "word {} in {} utterance {}".format(i,
+                                                                    self.corpus, utterance['source_id']))
+                except IndexError:
+                    logger.info("Word {} in {} utterance {} "
+                                "has no morphemes".format(i, self.corpus,
+                                                          utterance['source_id']))
+        """
         self.session = db.Session(**d)
 
-        # Get speaker metadata and populate the speakers table
+        # Get speaker metadata and populate the speakers table.
         self.speaker_entries = []
         for speaker in self.parser.next_speaker():
             d = {}
@@ -127,11 +200,11 @@ class SessionProcessor(object):
             # In Chintang the number of words may be longer than the number of morphemes -- error handling
             # print("words:", words)
             #
-            #if len(words) > len(morphemes):
+            # if len(words) > len(morphemes):
             #    logger.info("There are more words than morphemes in "
             #    "{} utterance {}".format(self.corpus, utterance['source_id']))
 
-            # Populate the words
+            # Populate the words.
             for i in range(0, wlen):
                 # TODO: move this post processing (before the age, etc.) if it improves performance
                 if words[i] != {}:
@@ -171,12 +244,17 @@ class SessionProcessor(object):
                                     utterance['source_id']))
 
             self.session.utterances.append(u)
-        self.commit()
+            """
+        # self.commit()
 
 
     def commit(self):
         """ Commits the dictionaries returned from parsing to the database.
         """
+        # stmt = t.update().where(t.c.id == bindparam("morpheme_id")).values(pos=bindparam("pos"))
+        # DBSession.execute(stmt, poses)
+        # DBSession.commit()
+
         session = self.Session()
         try:
             session.add(self.session)
