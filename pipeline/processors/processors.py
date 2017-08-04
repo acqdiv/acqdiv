@@ -12,6 +12,8 @@ import sys
 
 from sqlalchemy.orm import sessionmaker
 
+import sqlalchemy as sa
+
 from parsers import *
 from database_backend import *
 import database_backend as db
@@ -81,7 +83,6 @@ class SessionProcessor(object):
 
 
     def process_session(self):
-        print("Process session")
         self.parser = self.parser_factory(self.file_path)
 
         # Returns all session metadata and gets corpus-specific sessions table mappings to populate the db
@@ -95,10 +96,15 @@ class SessionProcessor(object):
         d['source_id'] = self.filename
         d['language'] = self.language
         d['corpus'] = self.corpus
-        print("session metadata", d)
 
+        insert_sess = (sa.insert(model, bind=self.engine).execute for model in (db.Session))
+        s_id, = insert_sess(**d).inserted_primary_key
+        print(s_id)
+
+
+        """
         insert_sess, insert_speaker, insert_utt, insert_word, insert_morph = (
-            sa.insert(model, bind=self.engine).execute
+            sa.insert(db.Base, bind=self.engine).execute
         for model in (db.Session, db.Speaker, db.Utterance, db.Word, db.Morpheme))
 
         print("generator")
@@ -166,102 +172,3 @@ class SessionProcessor(object):
                                 "has no morphemes".format(i, self.corpus,
                                                           utterance['source_id']))
         """
-        self.session = db.Session(**d)
-
-        # Get speaker metadata and populate the speakers table.
-        self.speaker_entries = []
-        for speaker in self.parser.next_speaker():
-            d = {}
-            for k, v in speaker.items():
-                if k in self.config['speaker_labels'].keys():
-                    d[self.config['speaker_labels'][k]] = v
-            # TODO: move this post processing (before the age, etc.) if it improves performance
-            d['corpus'] = self.corpus
-            d['language'] = self.language
-            self.session.speakers.append(Speaker(**d))
-
-        # Get the sessions utterances, words and morphemes to populate those db tables
-        for utterance, words, morphemes in self.parser.next_utterance():
-            # TODO: move this post processing (before the age, etc.) if it improves performance
-            if utterance is None:
-                logger.info("Skipping nonce utterance in {}".format(
-                    self.file_path))
-                continue
-            utterance['corpus'] = self.corpus
-            utterance['language'] = self.language
-
-            u = Utterance(**utterance)
-
-            wlen = len(words)
-            mlen = len(morphemes)
-
-            # TODO: Deal with Indonesian...
-
-            # In Chintang the number of words may be longer than the number of morphemes -- error handling
-            # print("words:", words)
-            #
-            # if len(words) > len(morphemes):
-            #    logger.info("There are more words than morphemes in "
-            #    "{} utterance {}".format(self.corpus, utterance['source_id']))
-
-            # Populate the words.
-            for i in range(0, wlen):
-                # TODO: move this post processing (before the age, etc.) if it improves performance
-                if words[i] != {}:
-                    words[i]['corpus'] = self.corpus
-                    words[i]['language'] = self.language
-
-                    # TODO: is it cheaper to append a list here?
-                    word = Word(**words[i])
-                    u.words.append(word)
-                    self.session.words.append(word)
-
-            # Populate the morphemes
-            # wlen with dummy words excluded
-            new_wlen = len(u.words)
-            for i in range(0, wlen):
-                try:
-                    for j in range(0, len(morphemes[i])): # loop morphemes
-                        # TODO: move this post processing (before the age, etc.) if it improves performance
-                        morphemes[i][j]['corpus'] = self.corpus
-                        morphemes[i][j]['language'] = self.language
-                        morphemes[i][j]['type'] = self.morpheme_type
-
-                        morpheme = Morpheme(**morphemes[i][j])
-                        if new_wlen == mlen:
-                            # only link words and morpheme words if there are
-                            # equal amounts of both
-                            u.words[i].morphemes.append(morpheme)
-                        u.morphemes.append(morpheme)
-                        self.session.morphemes.append(morpheme)
-                except TypeError:
-                    logger.warn("Error processing morphemes in "
-                                "word {} in {} utterance {}".format(i, 
-                                    self.corpus, utterance['source_id']))
-                except IndexError:
-                    logger.info("Word {} in {} utterance {} "
-                                "has no morphemes".format(i, self.corpus,
-                                    utterance['source_id']))
-
-            self.session.utterances.append(u)
-            """
-        # self.commit()
-
-
-    def commit(self):
-        """ Commits the dictionaries returned from parsing to the database.
-        """
-        # stmt = t.update().where(t.c.id == bindparam("morpheme_id")).values(pos=bindparam("pos"))
-        # DBSession.execute(stmt, poses)
-        # DBSession.commit()
-
-        session = self.Session()
-        try:
-            session.add(self.session)
-            session.commit()
-        except:
-            # TODO: print some error message? log it?
-            session.rollback()
-            raise
-        finally:
-            session.close()
