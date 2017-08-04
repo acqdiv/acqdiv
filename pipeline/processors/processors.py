@@ -104,7 +104,7 @@ class SessionProcessor(object):
         session_metadata = self.parser.get_session_metadata()
         session_labels = self.config['session_labels']
 
-        d = self._extract(session_labels, session_metadata)
+        d = self._extract(session_metadata, session_labels)
 
         # d = self._extract(session_metadata, session_labels, {'source_id': self.filename, 'language': self.language, 'corpus': self.corpus})
 
@@ -115,7 +115,7 @@ class SessionProcessor(object):
         # Get speaker metadata and populate the speakers table.
         speaker_labels = self.config['speaker_labels']
         for speaker in self.parser.next_speaker():
-            d = self._extract(speaker_labels, speaker)
+            d = self._extract(speaker, speaker_labels)
 
             # TODO: move this post processing (before the age, etc.) if it improves performance
             d['corpus'] = self.corpus
