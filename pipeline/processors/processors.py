@@ -92,6 +92,11 @@ class SessionProcessor(object):
 
     @staticmethod
     def _extract(dict_, keymap, **kwargs):
+        print("-------")
+        print(dict_)
+        for i in keymap: print(i)
+        print(keymap)
+        print("=======")
         result = {keymap[k]: dict_[k] for k in (keymap.keys() & dict_.keys())}
         result.update(kwargs)
         return result
@@ -104,7 +109,7 @@ class SessionProcessor(object):
         session_metadata = self.parser.get_session_metadata()
         session_labels = self.config['session_labels']
 
-        d = self._extract(session_metadata, session_labels)
+        d = self._extract(session_metadata, dict(session_labels))
 
         # d = self._extract(session_metadata, session_labels, {'source_id': self.filename, 'language': self.language, 'corpus': self.corpus})
 
