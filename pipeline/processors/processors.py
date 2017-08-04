@@ -85,6 +85,8 @@ class SessionProcessor(object):
 
     def process_session(self):
         with self.engine.begin() as conn:
+            conn.execute('PRAGMA synchronous = OFF')
+            conn.execute('PRAGMA journal_mode = MEMORY')
             self._process_session(conn.execution_options(compiled_cache={}))
 
     def _process_session(self, conn):
@@ -102,9 +104,7 @@ class SessionProcessor(object):
         d['language'] = self.language
         d['corpus'] = self.corpus
 
-        # insert_sess, insert_speaker, insert_utt, insert_word, insert_morph = (sa.insert(model, bind=self.engine).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word, db.Morpheme))
-
-        insert_sess, insert_speaker, insert_utt, insert_word = (sa.insert(model, bind=self.engine).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word))
+        insert_sess, insert_speaker, insert_utt, insert_word = (sa.insert(model, bind=conn).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word))
 
         s_id, = insert_sess(**d).inserted_primary_key
 
