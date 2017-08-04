@@ -97,24 +97,12 @@ class SessionProcessor(object):
         d['language'] = self.language
         d['corpus'] = self.corpus
 
-        insert_sess = (sa.insert(model, bind=self.engine).execute for model in (db.Session))
-        s_id, = insert_sess(**d).inserted_primary_key
-        print(s_id)
-
-
-        """
-        insert_sess, insert_speaker, insert_utt, insert_word, insert_morph = (
-            sa.insert(db.Base, bind=self.engine).execute
-        for model in (db.Session, db.Speaker, db.Utterance, db.Word, db.Morpheme))
-
-        print("generator")
+        insert_sess, insert_speaker, insert_utt, insert_word, insert_morph = (sa.insert(model, bind=self.engine).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word, db.Morpheme))
 
         s_id, = insert_sess(**d).inserted_primary_key
-        print(s_id)
 
         # Get speaker metadata and populate the speakers table.
         for speaker in self.parser.next_speaker():
-            print("Process speaker")
             d = {}
             for k, v in speaker.items():
                 if k in self.config['speaker_labels'].keys():
@@ -123,7 +111,6 @@ class SessionProcessor(object):
             d['corpus'] = self.corpus
             d['language'] = self.language
 
-            print("speaker", d)
             insert_speaker(session_id_fk=s_id, **d)
 
         # Get the sessions utterances, words and morphemes to populate those db tables
@@ -171,4 +158,3 @@ class SessionProcessor(object):
                     logger.info("Word {} in {} utterance {} "
                                 "has no morphemes".format(i, self.corpus,
                                                           utterance['source_id']))
-        """
