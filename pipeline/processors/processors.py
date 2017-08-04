@@ -89,9 +89,12 @@ class SessionProcessor(object):
             conn.execute('PRAGMA journal_mode = MEMORY')
             self._process_session(conn.execution_options(compiled_cache={}))
 
+
     @staticmethod
-    def _extract(dict_, keymap):
-        return {keymap[k]: v for k, v in dict_.items() if k in keymap}
+    def _extract(dict_, keymap, **kwargs):
+        result = {keymap[k]: dict_[k] for k in (keymap.keys() & dict_.keys())}
+        result.update(kwargs)
+        return result
 
 
     def _process_session(self, conn):
@@ -100,12 +103,10 @@ class SessionProcessor(object):
         # Returns all session metadata and gets corpus-specific sessions table mappings to populate the db
         session_metadata = self.parser.get_session_metadata()
         session_labels = self.config['session_labels']
-        d = self._extract(session_metadata, session_labels)
 
-        # SM: someday we could clean this up across ini files
-        d['source_id'] = self.filename
-        d['language'] = self.language
-        d['corpus'] = self.corpus
+        d = self._extract(session_labels, session_metadata)
+
+        # d = self._extract(session_metadata, session_labels, {'source_id': self.filename, 'language': self.language, 'corpus': self.corpus})
 
         insert_sess, insert_speaker, insert_utt, insert_word = (sa.insert(model, bind=conn).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word))
 
