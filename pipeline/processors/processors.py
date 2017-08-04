@@ -95,9 +95,10 @@ class SessionProcessor(object):
         # Returns all session metadata and gets corpus-specific sessions table mappings to populate the db
         session_metadata = self.parser.get_session_metadata()
         d = {}
+        session_labels = self.config['session_labels']
         for k, v in session_metadata.items():
-            if k in self.config['session_labels'].keys():
-                d[self.config['session_labels'][k]] = v
+            if k in session_labels:
+                d[session_labels[k]] = v
 
         # SM: someday we could clean this up across ini files
         d['source_id'] = self.filename
@@ -109,11 +110,10 @@ class SessionProcessor(object):
         s_id, = insert_sess(**d).inserted_primary_key
 
         # Get speaker metadata and populate the speakers table.
+        speaker_labels = self.config['speaker_labels']
         for speaker in self.parser.next_speaker():
-            d = {}
-            for k, v in speaker.items():
-                if k in self.config['speaker_labels'].keys():
-                    d[self.config['speaker_labels'][k]] = v
+            d = {speaker_labels[k]: v for k, v in speaker.items() if k in speaker_labels}
+            
             # TODO: move this post processing (before the age, etc.) if it improves performance
             d['corpus'] = self.corpus
             d['language'] = self.language
