@@ -89,16 +89,18 @@ class SessionProcessor(object):
             conn.execute('PRAGMA journal_mode = MEMORY')
             self._process_session(conn.execution_options(compiled_cache={}))
 
+    @staticmethod
+    def _extract(dict_, keymap):
+        return {keymap[k]: v for k, v in dict_.items() if k in keymap}
+
+
     def _process_session(self, conn):
         self.parser = self.parser_factory(self.file_path)
 
         # Returns all session metadata and gets corpus-specific sessions table mappings to populate the db
         session_metadata = self.parser.get_session_metadata()
-        d = {}
         session_labels = self.config['session_labels']
-        for k, v in session_metadata.items():
-            if k in session_labels:
-                d[session_labels[k]] = v
+        d = self._extract(session_metadata, session_labels)
 
         # SM: someday we could clean this up across ini files
         d['source_id'] = self.filename
@@ -112,8 +114,8 @@ class SessionProcessor(object):
         # Get speaker metadata and populate the speakers table.
         speaker_labels = self.config['speaker_labels']
         for speaker in self.parser.next_speaker():
-            d = {speaker_labels[k]: v for k, v in speaker.items() if k in speaker_labels}
-            
+            d = self._extract(speaker, speaker_labels)
+
             # TODO: move this post processing (before the age, etc.) if it improves performance
             d['corpus'] = self.corpus
             d['language'] = self.language
