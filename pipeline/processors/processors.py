@@ -50,6 +50,7 @@ class CorpusProcessor(object):
                 logger.warning("Aborted processing of file {}: "
                                "exception: {}".format(session_file, type(e)),
                                exc_info=sys.exc_info())
+
             # TODO: uncomment when XMLParsers are finished
             # s.commit()
 
@@ -83,6 +84,10 @@ class SessionProcessor(object):
 
 
     def process_session(self):
+        with self.engine.begin() as conn:
+            self._process_session(conn.execution_options(compiled_cache={}))
+
+    def _process_session(self, conn):
         self.parser = self.parser_factory(self.file_path)
 
         # Returns all session metadata and gets corpus-specific sessions table mappings to populate the db
@@ -97,7 +102,9 @@ class SessionProcessor(object):
         d['language'] = self.language
         d['corpus'] = self.corpus
 
-        insert_sess, insert_speaker, insert_utt, insert_word, insert_morph = (sa.insert(model, bind=self.engine).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word, db.Morpheme))
+        # insert_sess, insert_speaker, insert_utt, insert_word, insert_morph = (sa.insert(model, bind=self.engine).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word, db.Morpheme))
+
+        insert_sess, insert_speaker, insert_utt, insert_word = (sa.insert(model, bind=self.engine).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word))
 
         s_id, = insert_sess(**d).inserted_primary_key
 
@@ -122,17 +129,19 @@ class SessionProcessor(object):
             utterance['language'] = self.language
 
             u_id, = insert_utt(session_id_fk=s_id, **utterance).inserted_primary_key
-            wlen = len(words)
-            mlen = len(morphemes)
 
+            wlen = len(words)
             # Populate the words.
+            # new_wlen = 0
             for i in range(0, wlen):
                 # TODO: move this post processing (before the age, etc.) if it improves performance
                 if words[i] != {}:
                     words[i]['corpus'] = self.corpus
                     words[i]['language'] = self.language
-                w_id, = insert_word(session_id_fk=s_id, utterance_id_fk=u_id, **words[i]).inserted_primary_key
+                    # new_wlen = len(words[i])
+                    w_id, = insert_word(session_id_fk=s_id, utterance_id_fk=u_id, **words[i]).inserted_primary_key
 
+            """
             # Populate the morphemes
             for i in range(0, wlen):
                 try:
@@ -142,19 +151,21 @@ class SessionProcessor(object):
                         morphemes[i][j]['language'] = self.language
                         morphemes[i][j]['type'] = self.morpheme_type
 
-                        #if new_wlen == mlen:
-                            # only link words and morpheme words if there are
-                            # equal amounts of both
+                        # if new_wlen == mlen:
+                        # only link words and morpheme words if there are equal amounts of both
                         #    u.words[i].morphemes.append(morpheme)
                         #u.morphemes.append(morpheme)
                         # self.session.morphemes.append(morpheme)
+
                         insert_morph(session_id_fk=s_id, utterance_id_fk=u_id, word_id_fk=w_id, **morphemes[i][j])
+
 
                 except TypeError:
                     logger.warn("Error processing morphemes in "
                                 "word {} in {} utterance {}".format(i,
                                                                     self.corpus, utterance['source_id']))
                 except IndexError:
-                    logger.info("Word {} in {} utterance {} "
+                    logger.warn("Word {} in {} utterance {} "
                                 "has no morphemes".format(i, self.corpus,
                                                           utterance['source_id']))
+            """
