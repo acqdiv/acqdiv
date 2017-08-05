@@ -128,24 +128,16 @@ class SessionProcessor(object):
                     w_id = None
                 w_ids.append(w_id)
 
-            no_word_link = len(morphemes) != len(words)
-            # no_word_link = len(morphemes) != len(words) or any(None in w_ids)
+            no_word_link = len(morphemes) != len(words) or None in w_ids
 
-            # Morphemes
             for i in range(0, len(morphemes)):
                 w_id = None if no_word_link else w_ids[i]
                 try:
                     for j in range(0, len(morphemes[i])):
-                        # TODO: move this post processing (before the age, etc.) if it improves performance
                         morphemes[i][j]['corpus'] = self.corpus
                         morphemes[i][j]['language'] = self.language
                         morphemes[i][j]['type'] = self.morpheme_type
 
-                        # if len(w_id) == len(morphemes[i]):
-                        # only link words and morpheme words if there are equal amounts of both
-                        #    u.words[i].morphemes.append(morpheme)
-                        #u.morphemes.append(morpheme)
-                        # self.session.morphemes.append(morpheme)
                         insert_morph(session_id_fk=s_id, utterance_id_fk=u_id, word_id_fk=w_id, **morphemes[i][j])
 
                 except TypeError:
