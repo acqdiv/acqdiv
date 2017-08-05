@@ -132,7 +132,7 @@ class SessionProcessor(object):
             # no_word_link = len(morphemes) != len(words) or any(None in w_ids)
 
             # Morphemes
-            for i in range(0, w_ids):
+            for i in range(0, len(morphemes)):
                 w_id = None if no_word_link else w_ids[i]
                 try:
                     for j in range(0, len(morphemes[i])):
