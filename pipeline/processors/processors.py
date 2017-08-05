@@ -133,12 +133,11 @@ class SessionProcessor(object):
             for i in range(0, len(morphemes)):
                 w_id = None if no_word_link else w_ids[i]
                 try:
-                    for j in range(0, len(morphemes[i])):
-                        morphemes[i][j]['corpus'] = self.corpus
-                        morphemes[i][j]['language'] = self.language
-                        morphemes[i][j]['type'] = self.morpheme_type
-
-                        insert_morph(session_id_fk=s_id, utterance_id_fk=u_id, word_id_fk=w_id, **morphemes[i][j])
+                    for m in morphemes[i]:
+                        m['corpus'] = self.corpus
+                        m['language'] = self.language
+                        m['type'] = self.morpheme_type
+                        insert_morph(session_id_fk=s_id, utterance_id_fk=u_id, word_id_fk=w_id, **m)
 
                 except TypeError:
                     logger.warn("Error processing morphemes in "
