@@ -124,11 +124,10 @@ class SessionProcessor(object):
                     w_id = None
                 w_ids.append(w_id)
 
-            # When words and morphemes don't match
-            no_word_link = len(morphemes) != len(words) or None in w_ids
+            link_to_word = len(morphemes) == len(words) and None not in w_ids
 
             for i in range(0, len(morphemes)):
-                w_id = None if no_word_link else w_ids[i]
+                w_id = w_ids[i] if link_to_word else None
                 try:
                     for m in morphemes[i]:
                         m.update(corpus=self.corpus, language=self.language, type=self.morpheme_type)
@@ -136,9 +135,7 @@ class SessionProcessor(object):
 
                 except TypeError:
                     logger.warn("Error processing morphemes in "
-                                "word {} in {} utterance {}".format(i,
-                                                                    self.corpus, utterance['source_id']))
+                                "word {} in {} utterance {}".format(i, self.corpus, utterance['source_id']))
                 except IndexError:
                     logger.warn("Word {} in {} utterance {} "
-                                "has no morphemes".format(i, self.corpus,
-                                                          utterance['source_id']))
+                                "has no morphemes".format(i, self.corpus, utterance['source_id']))
