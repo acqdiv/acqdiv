@@ -9,7 +9,6 @@ import sys
 import sqlalchemy as sa
 
 from parsers import *
-from database_backend import *
 import database_backend as db
 
 logger = logging.getLogger('pipeline.' + __name__)
@@ -116,28 +115,31 @@ class SessionProcessor(object):
             utterance.update(corpus=self.corpus, language=self.language)
             u_id, = insert_utt(session_id_fk=s_id, **utterance).inserted_primary_key
 
+            w_ids = []
             for w in words:
                 if w:
                     w.update(corpus=self.corpus, language=self.language)
                     w_id, = insert_word(session_id_fk=s_id, utterance_id_fk=u_id, **w).inserted_primary_key
+                else:
+                    w_id = None
+                w_ids.append(w_id)
 
-            """
             # Morphemes
-            for i in range(0, wlen):
+            for i in range(0, w_ids):
                 try:
-                    for j in range(0, len(morphemes[i])):  # loop morphemes
+                    for j in range(0, len(morphemes[i])):
                         # TODO: move this post processing (before the age, etc.) if it improves performance
                         morphemes[i][j]['corpus'] = self.corpus
                         morphemes[i][j]['language'] = self.language
                         morphemes[i][j]['type'] = self.morpheme_type
 
-                        # if new_wlen == mlen:
+                        if len(w_ids) == morphemes[i]:
                         # only link words and morpheme words if there are equal amounts of both
                         #    u.words[i].morphemes.append(morpheme)
                         #u.morphemes.append(morpheme)
                         # self.session.morphemes.append(morpheme)
 
-                        insert_morph(session_id_fk=s_id, utterance_id_fk=u_id, word_id_fk=w_id, **morphemes[i][j])
+                            insert_morph(session_id_fk=s_id, utterance_id_fk=u_id, word_id_fk=w_id, **morphemes[i][j])
 
                 except TypeError:
                     logger.warn("Error processing morphemes in "
@@ -147,4 +149,3 @@ class SessionProcessor(object):
                     logger.warn("Word {} in {} utterance {} "
                                 "has no morphemes".format(i, self.corpus,
                                                           utterance['source_id']))
-            """
