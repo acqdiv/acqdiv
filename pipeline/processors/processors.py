@@ -1,16 +1,10 @@
 """ Corpus and session processors to turn ACQDIV raw input corpora (Toolbox, ChatXML, JSON) into ACQDIV database.
 """
 
-import collections
 import glob
-import itertools as it
 import logging
 import os
-import pdb
-import re
 import sys
-
-from sqlalchemy.orm import sessionmaker
 
 import sqlalchemy as sa
 
@@ -118,14 +112,14 @@ class SessionProcessor(object):
             if utterance is None:
                 logger.info("Skipping nonce utterance in {}".format(self.file_path))
                 continue
+
             utterance.update(corpus=self.corpus, language=self.language)
             u_id, = insert_utt(session_id_fk=s_id, **utterance).inserted_primary_key
 
-            # Words
-            for i in range(0, len(words)):
-                if words[i] != {}:
-                    words[i].update(corpus=self.corpus, language=self.language)
-                    w_id, = insert_word(session_id_fk=s_id, utterance_id_fk=u_id, **words[i]).inserted_primary_key
+            for w in words:
+                if w:
+                    w.update(corpus=self.corpus, language=self.language)
+                    w_id, = insert_word(session_id_fk=s_id, utterance_id_fk=u_id, **w).inserted_primary_key
 
             """
             # Morphemes
