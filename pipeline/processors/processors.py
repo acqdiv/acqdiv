@@ -126,10 +126,10 @@ class SessionProcessor(object):
 
             link_to_word = len(morphemes) == len(words) and None not in w_ids
 
-            for i in range(0, len(morphemes)):
+            for i, mword in enumerate(morphemes):
                 w_id = w_ids[i] if link_to_word else None
                 try:
-                    for m in morphemes[i]:
+                    for m in mword:
                         m.update(corpus=self.corpus, language=self.language, type=self.morpheme_type)
                         insert_morph(session_id_fk=s_id, utterance_id_fk=u_id, word_id_fk=w_id, **m)
 
