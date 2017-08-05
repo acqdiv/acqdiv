@@ -133,6 +133,7 @@ class SessionProcessor(object):
 
             # Morphemes
             for i in range(0, w_ids):
+                w_id = None if no_word_link else w_ids[i]
                 try:
                     for j in range(0, len(morphemes[i])):
                         # TODO: move this post processing (before the age, etc.) if it improves performance
@@ -145,8 +146,6 @@ class SessionProcessor(object):
                         #    u.words[i].morphemes.append(morpheme)
                         #u.morphemes.append(morpheme)
                         # self.session.morphemes.append(morpheme)
-
-                        w_id = None if no_word_link else w_ids[i]
                         insert_morph(session_id_fk=s_id, utterance_id_fk=u_id, word_id_fk=w_id, **morphemes[i][j])
 
                 except TypeError:
