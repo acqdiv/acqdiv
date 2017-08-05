@@ -87,8 +87,12 @@ class SessionProcessor(object):
 
 
     def _process_session(self, conn):
-        insert_sess, insert_speaker, insert_utt, insert_word = \
-            (sa.insert(model, bind=conn).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word))
+        # insert_sess, insert_speaker, insert_utt, insert_word = \
+        #    (sa.insert(model, bind=conn).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word))
+
+        insert_sess, insert_speaker, insert_utt, insert_word, insert_morph = \
+            (sa.insert(model, bind=conn).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word, db.Morpheme))
+
 
         self.parser = self.parser_factory(self.file_path)
         session_metadata = self.parser.get_session_metadata()
@@ -124,8 +128,13 @@ class SessionProcessor(object):
                     w_id = None
                 w_ids.append(w_id)
 
+            no_word_link = len(morphemes) != len(words)
+            # no_word_link = len(morphemes) != len(words) or any(None in w_ids)
+
             # Morphemes
             for i in range(0, w_ids):
+                w_id = None if no_word_link else w_ids[i]
+
                 try:
                     for j in range(0, len(morphemes[i])):
                         # TODO: move this post processing (before the age, etc.) if it improves performance
@@ -133,13 +142,13 @@ class SessionProcessor(object):
                         morphemes[i][j]['language'] = self.language
                         morphemes[i][j]['type'] = self.morpheme_type
 
-                        if len(w_ids) == morphemes[i]:
+                        if len(w_id) == len(morphemes[i]):
                         # only link words and morpheme words if there are equal amounts of both
                         #    u.words[i].morphemes.append(morpheme)
                         #u.morphemes.append(morpheme)
                         # self.session.morphemes.append(morpheme)
 
-                            insert_morph(session_id_fk=s_id, utterance_id_fk=u_id, word_id_fk=w_id, **morphemes[i][j])
+                            insert_morph(session_id_fk=s_id, utterance_id_fk=u_id, word_id_fk=w_id[i], **morphemes[i][j])
 
                 except TypeError:
                     logger.warn("Error processing morphemes in "
