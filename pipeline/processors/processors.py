@@ -87,12 +87,8 @@ class SessionProcessor(object):
 
 
     def _process_session(self, conn):
-        # insert_sess, insert_speaker, insert_utt, insert_word = \
-        #    (sa.insert(model, bind=conn).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word))
-
         insert_sess, insert_speaker, insert_utt, insert_word, insert_morph = \
             (sa.insert(model, bind=conn).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word, db.Morpheme))
-
 
         self.parser = self.parser_factory(self.file_path)
         session_metadata = self.parser.get_session_metadata()
@@ -128,15 +124,14 @@ class SessionProcessor(object):
                     w_id = None
                 w_ids.append(w_id)
 
+            # When words and morphemes don't match
             no_word_link = len(morphemes) != len(words) or None in w_ids
 
             for i in range(0, len(morphemes)):
                 w_id = None if no_word_link else w_ids[i]
                 try:
                     for m in morphemes[i]:
-                        m['corpus'] = self.corpus
-                        m['language'] = self.language
-                        m['type'] = self.morpheme_type
+                        m.update(corpus=self.corpus, language=self.language, type=self.morpheme_type)
                         insert_morph(session_id_fk=s_id, utterance_id_fk=u_id, word_id_fk=w_id, **m)
 
                 except TypeError:
