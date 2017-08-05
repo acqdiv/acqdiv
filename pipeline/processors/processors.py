@@ -101,7 +101,7 @@ class SessionProcessor(object):
         session_metadata = self.parser.get_session_metadata()
         session_labels = self.config['session_labels']
         # We overwrite a few values in the retrieved session metadata.
-        d = self._extract(session_metadata, session_labels, **{'source_id': self.filename, 'language': self.language, 'corpus': self.corpus})
+        d = self._extract(session_metadata, session_labels, source_id=self.filename, language=self.language, corpus=self.corpus)
 
         # Populate sessions table.
         s_id, = insert_sess(**d).inserted_primary_key
@@ -110,7 +110,7 @@ class SessionProcessor(object):
         speaker_labels = self.config['speaker_labels']
         for speaker in self.parser.next_speaker():
             d = self._extract(speaker, speaker_labels,
-                              **{'language': self.language, 'corpus': self.corpus})
+                              language=self.language, corpus=self.corpus)
             insert_speaker(session_id_fk=s_id, **d)
 
         # Populate the utterances, words and morphemes tables.
@@ -118,13 +118,13 @@ class SessionProcessor(object):
             if utterance is None:
                 logger.info("Skipping nonce utterance in {}".format(self.file_path))
                 continue
-            utterance.update({'corpus': self.corpus, 'language': self.language})
+            utterance.update(corpus=self.corpus, language=self.language)
             u_id, = insert_utt(session_id_fk=s_id, **utterance).inserted_primary_key
 
             # Words
             for i in range(0, len(words)):
                 if words[i] != {}:
-                    words[i].update({'corpus': self.corpus, 'language': self.language})
+                    words[i].update(corpus=self.corpus, language=self.language)
                     w_id, = insert_word(session_id_fk=s_id, utterance_id_fk=u_id, **words[i]).inserted_primary_key
 
             """
