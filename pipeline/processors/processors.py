@@ -8,7 +8,7 @@ import sys
 
 import sqlalchemy as sa
 
-from parsers import *
+from parsers import SessionParser
 import database_backend as db
 
 logger = logging.getLogger('pipeline.' + __name__)
@@ -26,7 +26,6 @@ class CorpusProcessor(object):
         """
         self.cfg = cfg
         self.engine = engine
-        # Create the correct SessionParser (e.g. ToolboxParser, XMLParser)
         self.parser_factory = SessionParser.create_parser_factory(self.cfg)
 
 
