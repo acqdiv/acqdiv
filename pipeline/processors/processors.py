@@ -119,11 +119,9 @@ class SessionProcessor(object):
                 if w:
                     w.update(corpus=self.corpus, language=self.language)
                     w_id, = insert_word(session_id_fk=s_id, utterance_id_fk=u_id, **w).inserted_primary_key
-                else:
-                    w_id = None
-                w_ids.append(w_id)
+                    w_ids.append(w_id)
 
-            link_to_word = len(morphemes) == len(words) and None not in w_ids
+            link_to_word = len(morphemes) == len(w_ids)
 
             for i, mword in enumerate(morphemes):
                 w_id = w_ids[i] if link_to_word else None
@@ -136,5 +134,5 @@ class SessionProcessor(object):
                     logger.warn("Error processing morphemes in "
                                 "word {} in {} utterance {}".format(i, self.corpus, utterance['source_id']))
                 except IndexError:
-                    logger.warn("Word {} in {} utterance {} "
+                    logger.info("Word {} in {} utterance {} "
                                 "has no morphemes".format(i, self.corpus, utterance['source_id']))
