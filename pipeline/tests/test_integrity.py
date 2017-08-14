@@ -308,6 +308,97 @@ class ValidationTest_ProductionDB(unittest.TestCase, ValidationTest):
                     result, proportion,
                     msg=msg.format(table, column, corpus))
 
+    def test_speaker_proportions(self):
+        """Check proportion of (unique)speakers in utterances."""
+        # in percent
+        lowerbound = 80
+        upperbound = 120
+
+        uspeaker_sql = """
+
+            SELECT
+                t1.corpus,
+                all_uniquespeakers,
+                uniquespeakers_in_utterances,
+                ROUND((CAST(uniquespeakers_in_utterances AS float)
+                    /all_uniquespeakers)*100) AS proportion
+
+            FROM
+                (
+                    SELECT corpus, COUNT(*) AS all_uniquespeakers
+                    FROM uniquespeakers
+                    GROUP BY corpus
+                ) t1
+
+                INNER JOIN
+
+                (
+                    SELECT corpus, COUNT(distinct uniquespeaker_id_fk)
+                      AS uniquespeakers_in_utterances
+                    FROM utterances
+                    GROUP BY corpus
+                ) t2
+
+                ON t1.corpus = t2.corpus"""
+
+        speaker_sql = """
+            SELECT
+                t1.corpus,
+                all_speakers,
+                speakers_in_utterances,
+                ROUND((CAST(speakers_in_utterances AS float)/all_speakers)*100)
+                    AS proportion
+
+            FROM
+                (
+                    SELECT corpus, COUNT(*) as all_speakers
+                    FROM speakers
+                    GROUP BY corpus
+                ) t1
+
+                INNER JOIN
+
+                (
+                    SELECT corpus, COUNT(distinct speaker_id_fk)
+                        AS speakers_in_utterances
+                    FROM utterances
+                    GROUP BY corpus
+                ) t2
+
+                ON t1.corpus = t2.corpus"""
+
+        # check the uniquespeakers
+        rows = self.session.execute(uspeaker_sql)
+        for corpus, _, _, proportion in rows:
+            self.assertGreaterEqual(
+                proportion, lowerbound,
+                msg="Proportion for uniquespeakers in {} too low.".format(
+                        corpus))
+            self.assertLessEqual(
+                proportion, upperbound,
+                msg="Proportion for uniquespeakers in {} too high.".format(
+                        corpus))
+
+        # check the speakers
+        rows = self.session.execute(speaker_sql)
+        for corpus, _, _, proportion in rows:
+            # Russian has a lower threshold due to errors in the metadata
+            # to be fixed via #512
+            if corpus == "Russian":
+                self.assertGreaterEqual(
+                    proportion, 60,
+                    msg = "Proportion for speakers in {} too low.".format(
+                            corpus))
+            else:
+                self.assertGreaterEqual(
+                    proportion, lowerbound,
+                    msg = "Proportion for speakers in {} too high.".format(
+                            corpus))
+
+            self.assertLessEqual(
+                proportion, upperbound,
+                msg="Proportion for speakers in {} too high.".format(
+                        corpus))
 
 if __name__ == '__main__':
     unittest.main()
