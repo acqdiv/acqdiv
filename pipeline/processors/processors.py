@@ -1,19 +1,14 @@
-""" Corpus and session processors to turn ACQDIV raw input corpora (Toolbox, ChatXML, JSON) into ACQDIV-DB
+""" Corpus and session processors to turn ACQDIV raw input corpora (Toolbox, ChatXML, JSON) into ACQDIV database.
 """
 
-import collections
 import glob
-import itertools as it
 import logging
 import os
-import pdb
-import re
 import sys
 
-from sqlalchemy.orm import sessionmaker
+import sqlalchemy as sa
 
-from parsers import *
-from database_backend import *
+from parsers import SessionParser
 import database_backend as db
 
 logger = logging.getLogger('pipeline.' + __name__)
@@ -31,11 +26,11 @@ class CorpusProcessor(object):
         """
         self.cfg = cfg
         self.engine = engine
-        # Create the correct SessionParser (e.g. ToolboxParser, XMLParser)
         self.parser_factory = SessionParser.create_parser_factory(self.cfg)
 
+
     def process_corpus(self):
-        """ Loops all raw corpus session input files and processes each and the commits the data to the database.
+        """ Loops over all raw corpus session input files and processes each and the commits the data to the database.
         """
         for session_file in glob.glob(self.cfg['paths']['sessions']):
             print("\t", session_file)
@@ -47,8 +42,6 @@ class CorpusProcessor(object):
                 logger.warning("Aborted processing of file {}: "
                                "exception: {}".format(session_file, type(e)),
                                exc_info=sys.exc_info())
-            # TODO: uncomment when XMLParsers are finished
-            # s.commit()
 
 
 class SessionProcessor(object):
@@ -63,127 +56,83 @@ class SessionProcessor(object):
             file_path: path to raw session input file
             parser_factory: SessionParser (given
             engine: SQLAlchemy database engine
+
         """
         self.config = cfg
         self.file_path = file_path
         self.parser_factory = parser_factory
+        self.engine = engine
+        self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
 
-        # TODO: do we need these variables?
+        # Commonly used variables from the corpus config file.
         self.language = self.config['corpus']['language']
         self.corpus = self.config['corpus']['corpus']
         self.format = self.config['corpus']['format']
         self.morpheme_type = self.config['morphemes']['type']
 
-        self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
-        self.Session = sessionmaker(bind=engine)
-
 
     def process_session(self):
+        with self.engine.begin() as conn:
+            conn.execute('PRAGMA synchronous = OFF')
+            conn.execute('PRAGMA journal_mode = MEMORY')
+            self._process_session(conn.execution_options(compiled_cache={}))
+
+
+    @staticmethod
+    def _extract(dict_, keymap, **kwargs):
+        result = {keymap[k]: dict_[k] for k in (keymap.keys() & dict_.keys())}
+        result.update(kwargs)
+        return result
+
+
+    def _process_session(self, conn):
+        insert_sess, insert_speaker, insert_utt, insert_word, insert_morph = \
+            (sa.insert(model, bind=conn).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word, db.Morpheme))
+
         self.parser = self.parser_factory(self.file_path)
-
-        # Returns all session metadata and gets corpus-specific sessions table mappings to populate the db
         session_metadata = self.parser.get_session_metadata()
-        d = {}
-        for k, v in session_metadata.items():
-            if k in self.config['session_labels'].keys():
-                d[self.config['session_labels'][k]] = v
+        session_labels = self.config['session_labels']
+        # We overwrite a few values in the retrieved session metadata.
+        d = self._extract(session_metadata, session_labels, source_id=self.filename, language=self.language, corpus=self.corpus)
 
-        # SM: someday we could clean this up across ini files
-        d['source_id'] = self.filename
-        d['language'] = self.language
-        d['corpus'] = self.corpus
+        # Populate sessions table.
+        s_id, = insert_sess(**d).inserted_primary_key
 
-        self.session = db.Session(**d)
-
-        # Get speaker metadata and populate the speakers table
-        self.speaker_entries = []
+        # Populate the speakers table.
+        speaker_labels = self.config['speaker_labels']
         for speaker in self.parser.next_speaker():
-            d = {}
-            for k, v in speaker.items():
-                if k in self.config['speaker_labels'].keys():
-                    d[self.config['speaker_labels'][k]] = v
-            # TODO: move this post processing (before the age, etc.) if it improves performance
-            d['corpus'] = self.corpus
-            d['language'] = self.language
-            self.session.speakers.append(Speaker(**d))
+            d = self._extract(speaker, speaker_labels,
+                              language=self.language, corpus=self.corpus)
+            insert_speaker(session_id_fk=s_id, **d)
 
-        # Get the sessions utterances, words and morphemes to populate those db tables
+        # Populate the utterances, words and morphemes tables.
         for utterance, words, morphemes in self.parser.next_utterance():
-            # TODO: move this post processing (before the age, etc.) if it improves performance
             if utterance is None:
-                logger.info("Skipping nonce utterance in {}".format(
-                    self.file_path))
+                logger.info("Skipping nonce utterance in {}".format(self.file_path))
                 continue
-            utterance['corpus'] = self.corpus
-            utterance['language'] = self.language
 
-            u = Utterance(**utterance)
+            utterance.update(corpus=self.corpus, language=self.language)
+            u_id, = insert_utt(session_id_fk=s_id, **utterance).inserted_primary_key
 
-            wlen = len(words)
-            mlen = len(morphemes)
+            w_ids = []
+            for w in words:
+                if w:
+                    w.update(corpus=self.corpus, language=self.language)
+                    w_id, = insert_word(session_id_fk=s_id, utterance_id_fk=u_id, **w).inserted_primary_key
+                    w_ids.append(w_id)
 
-            # TODO: Deal with Indonesian...
+            link_to_word = len(morphemes) == len(w_ids)
 
-            # In Chintang the number of words may be longer than the number of morphemes -- error handling
-            # print("words:", words)
-            #
-            #if len(words) > len(morphemes):
-            #    logger.info("There are more words than morphemes in "
-            #    "{} utterance {}".format(self.corpus, utterance['source_id']))
-
-            # Populate the words
-            for i in range(0, wlen):
-                # TODO: move this post processing (before the age, etc.) if it improves performance
-                if words[i] != {}:
-                    words[i]['corpus'] = self.corpus
-                    words[i]['language'] = self.language
-
-                    # TODO: is it cheaper to append a list here?
-                    word = Word(**words[i])
-                    u.words.append(word)
-                    self.session.words.append(word)
-
-            # Populate the morphemes
-            # wlen with dummy words excluded
-            new_wlen = len(u.words)
-            for i in range(0, wlen):
+            for i, mword in enumerate(morphemes):
+                w_id = w_ids[i] if link_to_word else None
                 try:
-                    for j in range(0, len(morphemes[i])): # loop morphemes
-                        # TODO: move this post processing (before the age, etc.) if it improves performance
-                        morphemes[i][j]['corpus'] = self.corpus
-                        morphemes[i][j]['language'] = self.language
-                        morphemes[i][j]['type'] = self.morpheme_type
+                    for m in mword:
+                        m.update(corpus=self.corpus, language=self.language, type=self.morpheme_type)
+                        insert_morph(session_id_fk=s_id, utterance_id_fk=u_id, word_id_fk=w_id, **m)
 
-                        morpheme = Morpheme(**morphemes[i][j])
-                        if new_wlen == mlen:
-                            # only link words and morpheme words if there are
-                            # equal amounts of both
-                            u.words[i].morphemes.append(morpheme)
-                        u.morphemes.append(morpheme)
-                        self.session.morphemes.append(morpheme)
                 except TypeError:
                     logger.warn("Error processing morphemes in "
-                                "word {} in {} utterance {}".format(i, 
-                                    self.corpus, utterance['source_id']))
+                                "word {} in {} utterance {}".format(i, self.corpus, utterance['source_id']))
                 except IndexError:
                     logger.info("Word {} in {} utterance {} "
-                                "has no morphemes".format(i, self.corpus,
-                                    utterance['source_id']))
-
-            self.session.utterances.append(u)
-        self.commit()
-
-
-    def commit(self):
-        """ Commits the dictionaries returned from parsing to the database.
-        """
-        session = self.Session()
-        try:
-            session.add(self.session)
-            session.commit()
-        except:
-            # TODO: print some error message? log it?
-            session.rollback()
-            raise
-        finally:
-            session.close()
+                                "has no morphemes".format(i, self.corpus, utterance['source_id']))

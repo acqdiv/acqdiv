@@ -104,6 +104,7 @@ class UniqueSpeaker(Base):
     gender = Column(Text, nullable=True, unique=False)
     corpus = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
 
+
 class Utterance(Base):
     """ Utterances in all sessions.
 
