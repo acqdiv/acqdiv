@@ -1,50 +1,46 @@
-""" Post-processing processes on the corpora in the ACQDIV-DB.
-"""
+""" Post-processing processes on the corpora in the ACQDIV-DB. """
+
+import re
+import sys
+from itertools import groupby
 
 import logging
 import pipeline_logging
-import re
-import sys
 
 import sqlalchemy as sa
-from sqlalchemy.orm import sessionmaker
+import database_backend as db
 
-import database_backend as backend
 from configparser import ConfigParser
 from parsers import CorpusConfigParser
 from processors import age
 
-session = None
-cfg = None
+engine = None
+conn = None
+
 cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 age_pattern = re.compile(".*;.*\..*")
-
-
 pos_index = {}
 
-def setup(args):
-    """
-    Global setup
-    """
-    global cfg, session
 
-    # If testing mode
+def setup(args):
+    """ Global setup. """
+
+    global engine, conn
+
+    # Testing mode vs full database.
     if args.t:
         engine = sa.create_engine('sqlite:///database/test.sqlite3')
     else:
         engine = sa.create_engine('sqlite:///database/acqdiv.sqlite3')
+    conn = engine.connect()
 
-    meta = sa.MetaData(engine, reflect=True)
-    Session = sessionmaker(bind=engine)
-    session = Session()
-
-    # Load the role mapping.ini for unifying roles
+    # Load the role mapping.ini for unifying roles.
     global roles
     roles = ConfigParser(delimiters=('='))
     roles.optionxform = str
     roles.read("ini/role_mapping.ini")
 
-    # Load the corpus configs
+    # Load the corpus configs.
     global chintang, cree, indonesian, inuktitut, miyata, miipro, russian, sesotho, turkish, yucatec
     chintang = CorpusConfigParser()
     chintang.read("ini/Chintang.ini")
@@ -68,20 +64,8 @@ def setup(args):
     yucatec.read("ini/Yucatec.ini")
 
 
-def commit():
-    """ Commits the dictionaries returned from parsing to the database.
-    """
-    try:
-        session.commit()
-    except:
-        session.rollback()
-        raise
-    finally:
-        session.close()
-
-
 def get_config(corpus_name):
-    """ Return the config
+    """ Return the config file.
     """
     if corpus_name == "Chintang":
         return chintang
@@ -107,324 +91,572 @@ def get_config(corpus_name):
         raise Exception
 
 
-def postprocessor():
-    """ Postprocessing postprocesses.
-    """
-    # Update database tables
-    print("Processing speakers...")
-    process_speakers()
-    print("Processing utterances...")
-    process_utterances()
-    print("Processing morphemes...")
-    process_morphemes()
-    print("Processing words...")
-    process_words()
+def main(args):
+    """ Global setup and then call post-processes. """
+    setup(args)
 
-    # Additional data
-    # TODO: duplicate primary keys to additional roles
+    with engine.begin() as conn:
+        conn.execute('PRAGMA synchronous = OFF')
+        conn.execute('PRAGMA journal_mode = MEMORY')
+        conn.execution_options(compiled_cache={})
 
+        # Update database tables
+        print("Processing speakers table...")
+        process_speakers_table()
 
-def infer_pos(row):
-    """ Chintang and Indonesian part-of-speech inference. Also removes hyphens from raw input data.
-    """
+        print("Processing utterances table...")
+        process_utterances_table()
 
-    # Linguistic-specific stuff
-    if row.corpus == "Indonesian":
-        if row.gloss_raw is not None:
-            if row.gloss_raw.startswith('-'):
-                row.pos_raw = 'sfx'
-            elif row.gloss_raw.endswith('-'):
-                row.pos_raw = 'pfx'
-            elif row.gloss_raw == '???':
-                row.pos_raw = '???'
-            else:
-                if row.pos_raw not in {'sfx', 'pfx', '???'}:
-                    row.pos_raw = 'stem'
+        print("Processing morphemes table...")
+        process_morphemes_table()
 
-    if row.corpus == "Chintang":
-        if not row.pos_raw is None:
-            if row.pos_raw.startswith('-'):
-                row.pos_raw = 'sfx'
-            elif row.pos_raw.endswith('-'):
-                row.pos_raw = 'pfx'
-
-    # Clean everything
-    if not row.morpheme is None:
-        row.morpheme = row.morpheme.replace('-', '')
-    if not row.gloss_raw is None:
-        row.gloss_raw = row.gloss_raw.replace('-', '')
-    if not row.pos_raw is None:
-        row.pos_raw = row.pos_raw.replace('-', '')
+        print("Processing words table...")
+        process_words_table()
 
 
-def process_morphemes():
-    """
-    Process the morphemes table
-
-    # TODO: break this down by corpus and profile if it's faster
-    """
-    table = session.query(backend.Morpheme)
-    for row in table:
-        # Clean up affix markers "-"; assign sfx, pfx, stem.
-        if row.corpus == "Chintang" or row.corpus == "Indonesian":
-            infer_pos(row)
-        # Key-value substitutions for morphological glosses and parts-of-speech
-        infer_label(row)
-        unify_label(row)
-        # Infer the word's part-of-speech from the morphemes table as index for word pos assignment
-        get_pos_index(row)
+def process_speakers_table():
+    """ Post-process speakers table. """
+    _speakers_indonesian_experimenters()
+    _speakers_update_age()
+    _speakers_standardize_gender_labels()
+    _speakers_standardize_roles()
+    _speakers_standardize_macroroles()
+    _speakers_get_unique_speakers()
+    _speakers_get_target_children()
 
 
-def get_pos_index(row):
-    if not row.pos in ["sfx", "pfx"]:
-        # row.id will be int type in other tables when look up occurs; type it int here for convenience
-        try:
-            pos_index[int(row.word_id_fk)] = row.pos
-        except TypeError:
-            pass
-
-def process_words():
-    table = session.query(backend.Word)
-    for row in table:
-        if row.id in pos_index:
-            row.pos = pos_index[row.id]
-
-
-def process_utterances():
-    """
-    Process utterances table
-    """
-    table = session.query(backend.Utterance)
-    for row in table:
-        # Unify the time stamps
-        if row.start_raw: #.isnot(None):
-            try:
-                row.start = age.unify_timestamps(row.start_raw)
-                row.end = age.unify_timestamps(row.end_raw)
-            except Exception as e:
-                # TODO: log this
-                logger.warning('Error unifying timestamps: {}'.format(
-                    row, e), exc_info=sys.exc_info())
-
-        # TODO: talk to Robert; remove if not needed
-        if row.corpus == "Chintang":
-            row.morpheme = None if row.morpheme is None else re.sub('\*\*\*', '???', row.morpheme)
-            row.gloss_raw = None if row.gloss_raw is None else re.sub('\*\*\*', '???', row.gloss_raw)
-            row.pos_raw = None if row.pos_raw is None else re.sub('\*\*\*', '???', row.pos_raw)
-
-        if row.corpus == "Russian":
-            row.morpheme = None if row.morpheme is None else re.sub('xxx?|www', '???', row.morpheme)
-
-        if row.corpus == "Indonesian":
-            row.morpheme = None if row.morpheme is None else re.sub('xxx?|www', '???', row.morpheme)
-            row.gloss_raw = None if row.gloss_raw is None else re.sub('xxx?|www', '???', row.gloss_raw)
-            # TODO: this should be above?
-            row.utterance_raw = None if row.utterance_raw is None else re.sub('xxx?|www', '???', row.utterance_raw)
-            row.translation = None if row.translation is None else re.sub('xxx?|www', '???', row.translation)
-            change_speaker_labels(row)
-
-        # set speaker-utterance links
-        uniquespeakers_utterances(row)
-        if row.corpus != "Chintang":
-            row.childdirected = get_directedness(row)
-
-
-def get_directedness(utt):
-    if utt.addressee is not None:
-        addressee = session.query(backend.Speaker).filter(
-            backend.Speaker.speaker_label == utt.addressee).filter(
-                backend.Speaker.session_id_fk == utt.session_id_fk).first()
-        if addressee is not None:
-            if (addressee.macrorole == 'Target_Child'
-                and utt.speaker_label != utt.addressee):
-                return True
-            else:
-                return False
+def _speakers_update_age():
+    """ Age standardization. Group by corpus and call age function depending on corpus input format (IMDI of CHAT XML). """
+    s = sa.select([db.Speaker.id, db.Speaker.session_id_fk, db.Speaker.corpus, db.Speaker.age_raw, db.Speaker.birthdate])
+    query = conn.execute(s)
+    for corpus, rows in groupby(query, lambda r: r[2]):
+        config = get_config(corpus)
+        results = []
+        if config["metadata"]["type"] == "imdi":
+            results = _update_imdi_age(rows)
         else:
-            return False
-    else:
-        return False
+            results = _update_xml_age(rows)
+        _update_rows(db.Speaker.__table__, "speaker_id", results)
+    query.close()
 
 
-def change_speaker_labels(row):
-    if row.speaker_label is not None:
-        if not 'EXP' in row.speaker_label:
-            row.speaker_label = row.speaker_label[0:3]
-        else:
-            row.speaker_label = row.speaker_label[3:]
-
-
-def process_speakers():
-    """
-    Process speakers table
-    """
-    table = session.query(backend.Speaker)
-    for row in table:
-        indonesian_experimenters(row)
-        update_age(row)
-        gender(row)
-        role(row)
-        macrorole(row)
-    # Run the unique speaker algorithm -- requires full table
-    unique_speakers(table)
-    # set session target child
-    target_children(table)
-
-
-def indonesian_experimenters(row):
-    if row.corpus == 'Indonesian':
-        cfg = get_config(row.corpus)
+def _speakers_indonesian_experimenters():
+    """ Configuration replacements for Indonesian experimenter speaker labels. Updates the speakers table.  """
+    cfg = get_config('Indonesian')
+    s = sa.select([db.Speaker.id, db.Speaker.speaker_label, db.Speaker.name]).where(db.Speaker.corpus == 'Indonesian')
+    rows = conn.execute(s)
+    results = []
+    for row in rows:
         if row.speaker_label == 'EXP':
-            row.speaker_label = cfg['exp_labels'][row.name]
+            results.append({'speaker_id': row.id, 'speaker_label': cfg['exp_labels'][row.name]})
+    rows.close()
+    _update_rows(db.Speaker.__table__, 'speaker_id', results)
 
 
-def unique_speakers(table):
+def _speakers_standardize_gender_labels():
+    """ Standardize gender labels in the speakers table. """
+    s = sa.select([db.Speaker.id, db.Speaker.gender_raw])
+    rows = conn.execute(s)
+    results = []
+    for row in rows:
+        if row.gender_raw:
+            if row.gender_raw.lower() == 'female':
+                results.append({'speaker_id': row.id, 'gender': 'Female'})
+            elif row.gender_raw.lower() == 'male':
+                results.append({'speaker_id': row.id, 'gender': 'Male'})
+            else:
+                results.append({'speaker_id': row.id, 'gender': 'Unspecified'})
+        else:
+            results.append({'speaker_id': row.id, 'gender': 'Unspecified'})
+    rows.close()
+    _update_rows(db.Speaker.__table__, 'speaker_id', results)
+
+
+def _speakers_standardize_roles():
+    """ Unify speaker roles and draw inferences to related values.
+
+    Each corpus has its own set of speaker roles. This function uses
+    "role_mapping.ini" to assign a unified role to each speaker according
+    to the mappings in role_mapping.ini. The mapping is either based on the original
+    role or the speaker_label (depending on how the corpora handles role encoding).
+    The role column in the speaker table contains the unified roles.
+    """
+    s = sa.select([db.Speaker.id, db.Speaker.role_raw, db.Speaker.role, db.Speaker.gender_raw,
+                   db.Speaker.gender, db.Speaker.macrorole])
+    rows = conn.execute(s)
+    results = []
+    not_found = set()
+
+    for row in rows:
+        role = row.role_raw
+        gender = row.gender
+        macrorole = row.macrorole
+
+        try:
+            role = roles['role_mapping'][row.role_raw]
+        except KeyError:
+            not_found.add((row.role_raw, row.corpus))  # Otherwise remember role
+
+        # Inference to gender
+        if row.gender_raw is None or row.gender_raw in ['Unspecified', 'Unknown']:
+            try:
+                gender = roles['role2gender'][row.role_raw]
+            except KeyError:
+                pass
+
+        # Inference to age (-> macrorole)
+        if row.macrorole is None or row.macrorole in ['Unspecified', 'Unknown']:
+            try:
+                macrorole = roles['role2macrorole'][row.role_raw]
+                if row.macrorole == 'None':
+                    macrorole = None
+            except KeyError:
+                pass
+
+        for item in not_found:
+            logger.warning('\'{}\' from {} not found in role_mapping.ini'.format(item[0], item[1]),
+                           exc_info=sys.exc_info())
+
+        results.append({'speaker_id': row.id, 'role': role, 'gender': gender, 'macrorole': macrorole})
+
+    rows.close()
+    _update_rows(db.Speaker.__table__, 'speaker_id', results)
+
+
+def _speakers_standardize_macroroles():
+    """ Define macrorole (= Adult, Child, Target_Child, Unknown)
+
+    This function assigns an age category to each speaker. If there is
+    no information on age available it uses "role_mappings.ini" to define
+    which age category a speaker belongs to. The mapping is based on either
+    the speaker's original role or speaker_label (depending on how the corpora
+    handles role encoding).
+    """
+    # TODO: this method is completely dependent on ages -- no warnings are given if the age input is wrong!
+    # overwrite role mapping (except target child) if speaker is under 12
+    # (e.g. if child is an aunt which is mapped to 'Adult' per default)
+
+    s = sa.select([db.Speaker.id, db.Speaker.corpus, db.Speaker.speaker_label, db.Speaker.age_in_days, db.Speaker.macrorole, db.Speaker.role])
+    rows = conn.execute(s)
+    results = []
+
+    for row in rows:
+        # Adults are >= 12yrs, i.e. > 4380 days.
+        if row.age_in_days and row.macrorole != "Target_Child":
+            if row.age_in_days <= 4380:
+                results.append({'speaker_id': row.id, 'macrorole': "Child"})
+            else:
+                results.append({'speaker_id': row.id, 'macrorole': "Adult"})
+
+        # Check corpus-specific lists of speaker labels.
+        elif row.macrorole is None or row.macrorole == "None":
+            try:
+                macrorole = "Unknown" if row.macrorole is None or row.macrorole == "None" else roles[row.corpus][row.speaker_label]
+                results.append({'speaker_id': row.id, 'macrorole': macrorole})
+            except KeyError:
+                pass
+    rows.close()
+    _update_rows(db.Speaker.__table__, 'speaker_id', results)
+
+
+def _speakers_get_unique_speakers():
     """ Populate the the unique speakers table. Also populate uniquespeaker_id_fk in the speakers table.
 
-    Uniqueness is determined by a combination of speaker: name, speaker label, birthdate. Yikes!
+    Uniqueness is determined by a combination of corpus, name, speaker label, and birthdate.
     """
-    unique_speakers = [] # unique speaker dicts for uniquespeakers table
-    identifiers = [] # keep track of unique (name, label, birthdate) speaker tuples
+    s = sa.select([db.Speaker])
+    rows = conn.execute(s)
+    unique_speakers = []
+    unique_speaker_ids = []
+    identifiers = []
 
-    for row in table:
-        t = (row.name, row.birthdate, row.speaker_label)
+    for row in rows:
+        t = (row.name, row.birthdate, row.speaker_label, row.corpus)
         if t not in identifiers:
             identifiers.append(t)
-            # create unique speaker row
-            d = {}
-            d['id'] = identifiers.index(t) + 1 # Python lists start at 0!
-            d['corpus'] = row.corpus
-            d['speaker_label'] = row.speaker_label
-            d['name'] = row.name
-            d['birthdate'] = row.birthdate
-            d['gender'] = row.gender
-            unique_speakers.append(backend.UniqueSpeaker(**d))
-
-        # insert uniquespeaker_fk_id in speakers table
-        row.uniquespeaker_id_fk = identifiers.index(t) + 1
-
-    # Add all unique speakers entries to uniquespeakers table; skip if the table is already populated.
-    if session.query(backend.UniqueSpeaker).count() == 0:
-        session.add_all(unique_speakers)
+            # Create unique speaker rows.
+            unique_speaker_id = identifiers.index(t) + 1
+            unique_speakers.append({'id': unique_speaker_id, 'corpus': row.corpus, 'speaker_label': row.speaker_label,
+                                        'name': row.name, 'birthdate': row.birthdate, 'gender': row.gender})
+            unique_speaker_ids.append({'speaker_id': row.id, 'uniquespeaker_id_fk': unique_speaker_id})
+    rows.close()
+    _update_rows(db.Speaker.__table__, 'speaker_id', unique_speaker_ids)
+    _insert_rows(db.UniqueSpeaker.__table__, unique_speakers)
 
 
-def uniquespeakers_utterances(row):
+def _speakers_get_target_children():
+    """ Set target children for sessions. Also adapt roles and macroroles if there are multiple target children per session.
     """
-    Link Unique speakers / utterances
-    """
-    speaker = session.query(backend.Speaker).\
-        filter(backend.Speaker.speaker_label == row.speaker_label).\
-        filter(backend.Speaker.session_id_fk == row.session_id_fk).\
-        filter(backend.Speaker.corpus == row.corpus).first()
-    if speaker is not None:
-        row.uniquespeaker_id_fk = speaker.uniquespeaker_id_fk
-        row.speaker_id_fk = speaker.id
-
-
-def target_children(table):
-    """
-    Set target children for sessions.
-
-    Also adapt roles and macroroles if there are multiple target children
-    per session.
-    """
-    # store target children per session first
+    s = sa.select([db.Speaker]).where(db.Speaker.role == "Target_Child")
+    rows = conn.execute(s)
     targets_per_session = {}
-    for row in table.filter(backend.Speaker.role == "Target_Child"):
+    tc_id_results = []
+    non_targets_results = []
+
+    # First store target children per session.
+    for row in rows:
         if row.session_id_fk in targets_per_session:
             targets_per_session[row.session_id_fk].add(row.uniquespeaker_id_fk)
         else:
             targets_per_session[row.session_id_fk] = {row.uniquespeaker_id_fk}
 
-    # go through all session ids
+    # Second go through all session ids and get the target children for this session.
     for session_id in targets_per_session:
-
-        # get the target children for this session
         targets = targets_per_session[session_id]
 
-        # get session row
-        rec = session.query(backend.Session).\
-            filter(backend.Session.id == session_id).first()
+        # Get session row.
+        query = sa.select([db.Session]).where(db.Session.id == session_id)
+        rec = conn.execute(query).fetchone()
 
-        # if there is one target child only
+        # If there is one target child only.
         if len(targets) == 1:
-            # just set target child for the session
-            rec.target_child_fk = targets.pop()
-        # if there are several target children
+            # Just set target child for the session.
+            target_child_fk = targets.pop()
+            tc_id_results.append({'session_id': session_id, 'target_child_fk': target_child_fk})
+
+        # If there are several target children infer target child from source id.
         else:
-            # infer target child from source id
             if rec.corpus == "Chintang":
-                # get target child label
+                # Get target child label and get right target child id.
                 label = rec.source_id[2:7]
-                # get right target child id
-                tc_id = session.query(backend.UniqueSpeaker).\
-                    filter(backend.UniqueSpeaker.corpus == rec.corpus).\
-                    filter(backend.UniqueSpeaker.speaker_label == label).\
-                    first().id
+                tc_id_query = sa.select([db.UniqueSpeaker]).where(sa.and_(
+                    db.UniqueSpeaker.corpus == rec.corpus,
+                    db.UniqueSpeaker.speaker_label == label))
+                tc_id_result = conn.execute(tc_id_query).fetchone()
+                tc_id = tc_id_result.id
+
             elif rec.corpus == "Russian":
-                # session code's first letter matches that of speaker label
+                # Session code's first letter matches that of speaker label.
                 letter = rec.source_id[0]
-                # get right target child id
-                tc_id = session.query(backend.Speaker).\
-                    filter(backend.Speaker.corpus == rec.corpus).\
-                    filter(backend.Speaker.role == "Target_Child").\
-                    filter(backend.Speaker.speaker_label.like(
-                            "{}%".format(letter))).\
-                    first().uniquespeaker_id_fk
+                # Get right target child id.
+                tc_id_query = sa.select([db.Speaker]).where(sa.and_(
+                    db.Speaker.corpus == rec.corpus,
+                    db.Speaker.role == "Target_Child",
+                    db.Speaker.speaker_label.like("{}%".format(letter))))
+                tc_id_result = conn.execute(tc_id_query).fetchone()
+                tc_id = tc_id_result.uniquespeaker_id_fk
+
             elif rec.corpus == "Yucatec":
                 label = rec.source_id[:3]
-                tc_id = session.query(backend.UniqueSpeaker).\
-                    filter(backend.UniqueSpeaker.corpus == rec.corpus).\
-                    filter(backend.UniqueSpeaker.speaker_label == label).\
-                    first().id
+                tc_id_query = sa.select([db.UniqueSpeaker]).where(sa.and_(
+                    db.UniqueSpeaker.corpus == rec.corpus,
+                    db.UniqueSpeaker.speaker_label == label))
+                tc_id_result = conn.execute(tc_id_query).fetchone()
+                tc_id = tc_id_result.id
+
             else:
                 logger.warning(
-                    "Multiple target children for session {} in {}".format(
-                        session_id, rec.corpus))
+                    "Multiple target children for session {} in {}".format(session_id, rec.corpus))
                 continue
 
-            # set this target child for the session
-            rec.target_child_fk = tc_id
+            # Set this target child for the session.
+            tc_id_results.append({'session_id': session_id, 'target_child_fk': tc_id})
 
-            # adapt role and macrorole of children that are not target anymore
-            non_targets = table.\
-                filter(backend.Speaker.role == "Target_Child").\
-                filter(backend.Speaker.session_id_fk == session_id).\
-                filter(backend.Speaker.uniquespeaker_id_fk != tc_id)
+            # Adapt role and macrorole of children that are not target anymore.
+            non_targets_query = sa.select([db.Speaker]).where(sa.and_(
+                db.Speaker.role == "Target_Child",
+                db.Speaker.session_id_fk == session_id,
+                db.Speaker.uniquespeaker_id_fk != tc_id))
+            non_targets = conn.execute(non_targets_query)
+
             for row in non_targets:
-                row.role = "Child"
-                row.macrorole = "Child"
+                non_targets_results.append({'speaker_id': row.id, 'role': "Child", 'macrorole': "Child"})
+    rows.close()
+    _update_rows(db.Session.__table__, 'session_id', tc_id_results)
+    _update_rows(db.Speaker.__table__, 'speaker_id', non_targets_results)
 
 
-def unify_label(row):
+def process_utterances_table():
+    """ Post-process utterances table. """
+    print("_utterances_standardize_timestamps")
+    _utterances_standardize_timestamps()
+
+    print("_utterances_replace_morphemes")
+    _utterances_replace_morphemes()
+
+    print("_utterances_change_indonesian_speaker_labels")
+    _utterances_change_indonesian_speaker_labels()
+
+    print("_utterances_get_uniquespeaker_ids")
+    _utterances_get_uniquespeaker_ids()
+
+    print("_utterances_get_directedness")
+    _utterances_get_directedness()
+
+
+def _utterances_standardize_timestamps():
+    """ Unify the time stamps. """
+    s = sa.select([db.Utterance.id, db.Utterance.start_raw, db.Utterance.end_raw])
+    rows = conn.execute(s)
+    results = []
+    for row in rows:
+        if row.start_raw: #.isnot(None):
+            try:
+                start = age.unify_timestamps(row.start_raw)
+                end = age.unify_timestamps(row.end_raw)
+                results.append({'utterance_id': row.id, 'start': start, 'end': end})
+            except Exception as e:
+                logger.warning('Error unifying timestamps: {}'.format(row, e), exc_info=sys.exc_info())
+    rows.close()
+    _update_rows(db.Utterance.__table__, 'utterance_id', results)
+
+
+def _utterances_replace_morphemes():
+    """ TODO: talk to Robert; remove if not needed. """
+    s = sa.select([db.Utterance.id,
+                   db.Utterance.corpus,
+                   db.Utterance.morpheme,
+                   db.Utterance.gloss_raw,
+                   db.Utterance.pos_raw,
+                   db.Utterance.utterance_raw,
+                   db.Utterance.translation]).where(sa.or_(
+        db.Utterance.corpus=="Chintang",
+        db.Utterance.corpus=="Russian",
+        db.Utterance.corpus=="Indonesian"))
+    rows = conn.execute(s)
+    results = []
+
+    for row in rows:
+        if row.corpus == "Chintang":
+            morpheme = None if row.morpheme is None else re.sub('\*\*\*', '???', row.morpheme)
+            gloss_raw = None if row.gloss_raw is None else re.sub('\*\*\*', '???', row.gloss_raw)
+            pos_raw = None if row.pos_raw is None else re.sub('\*\*\*', '???', row.pos_raw)
+            results.append({'utterance_id': row.id, 'morpheme': morpheme, 'gloss_raw': gloss_raw, 'pos_raw': pos_raw, 'utterance_raw': row.utterance_raw, 'translation': row.translation})
+
+        if row.corpus == "Russian":
+            morpheme = None if row.morpheme is None else re.sub('xxx?|www', '???', row.morpheme)
+            results.append({'utterance_id': row.id, 'morpheme': morpheme, 'gloss_raw': row.gloss_raw, 'pos_raw': row.pos_raw, 'utterance_raw': row.utterance_raw, 'translation': row.translation})
+
+        if row.corpus == "Indonesian":
+            morpheme = None if row.morpheme is None else re.sub('xxx?|www', '???', row.morpheme)
+            gloss_raw = None if row.gloss_raw is None else re.sub('xxx?|www', '???', row.gloss_raw)
+            utterance_raw = None if row.utterance_raw is None else re.sub('xxx?|www', '???', row.utterance_raw)
+            translation = None if row.translation is None else re.sub('xxx?|www', '???', row.translation)
+            pos_raw = None if row.pos_raw is None else re.sub('\*\*\*', '???', row.pos_raw)
+            results.append({'utterance_id': row.id, 'morpheme': morpheme, 'gloss_raw': gloss_raw, 'pos_raw': pos_raw, 'utterance_raw': utterance_raw, 'translation': translation})
+
+    rows.close()
+    _update_rows(db.Utterance.__table__, 'utterance_id', results)
+
+
+def _utterances_change_indonesian_speaker_labels():
+    s = sa.select([db.Utterance.id, db.Utterance.speaker_label]).where(db.Utterance.corpus == "Indonesian")
+    rows = conn.execute(s)
+    results = []
+    for row in rows:
+        if row.speaker_label:
+            if not 'EXP' in row.speaker_label:
+                results.append({'utterance_id': row.id, 'speaker_label': row.speaker_label[0:3]})
+            else:
+                results.append({'utterance_id': row.id, 'speaker_label': row.speaker_label[3:]})
+    rows.close()
+    _update_rows(db.Utterance.__table__, 'utterance_id', results)
+
+
+def _utterances_get_uniquespeaker_ids():
+    """ Add speaker ids and unique speaker ids to utterances table. """
+
+    rows = engine.execute('''
+    select u.id, u.speaker_label, u.session_id_fk, u.corpus, s.id as speaker_id, s.uniquespeaker_id_fk
+    from utterances u
+    left join speakers s
+    on u.speaker_label = s.speaker_label
+    and u.session_id_fk = s.session_id_fk
+    and u.corpus = s.corpus''')
+
+    results = []
+    for row in rows:
+        if row.speaker_label:
+            results.append({'utterance_id': row.id, 'uniquespeaker_id_fk': row.uniquespeaker_id_fk, 'speaker_id_fk': row.speaker_id})
+    rows.close()
+    _update_rows(db.Utterance.__table__, 'utterance_id', results)
+
+
+def _utterances_get_directedness():
+    """ Infer child directedness for each utterance. Skips Chintang. """
+
+    rows = engine.execute('''
+        select u.id, u.corpus, u.addressee, u.speaker_label, s.macrorole 
+        from utterances u
+        left join speakers s
+        on u.addressee = s.speaker_label
+        and u.session_id_fk = s.session_id_fk
+        where u.corpus != "Chintang"''')
+
+    results = []
+    for row in rows:
+        if row.addressee:
+            if row.macrorole == 'Target_Child' and row.speaker_label != row.addressee:
+                results.append({'utterance_id': row.id, 'childdirected': 1})
+            else:
+                results.append({'utterance_id': row.id, 'childdirected': 0})
+        else:
+            results.append({'utterance_id': row.id, 'childdirected': 0})
+    rows.close()
+    _update_rows(db.Utterance.__table__, 'utterance_id', results)
+
+
+def process_morphemes_table():
+    """ Post-process the morphemes table.
+    """
+    print("_morphemes_infer_pos_chintang")
+    _morphemes_infer_pos_chintang()
+
+    print("_morphemes_infer_pos_indonesian")
+    _morphemes_infer_pos_indonesian()
+
+    print("_morphemes_infer_pos")
+    _morphemes_infer_pos()
+
+    print("_morphemes_infer_labels")
+    _morphemes_infer_labels()
+
+    print("_morphemes_unify_label")
+    _morphemes_unify_label()
+
+    print("_morphemes_get_pos_index")
+    _morphemes_get_pos_index()
+
+
+def _morphemes_infer_pos_chintang():
+    """ Chintang part-of-speech inference. Also removes hyphens from raw input data. """
+    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.pos_raw]).where(db.Morpheme.corpus == "Chintang")
+    rows = conn.execute(s)
+    results = []
+    for row in rows:
+        if row.pos_raw:
+            if row.pos_raw.startswith('-'):
+                results.append({'morpheme_id': row.id, 'pos_raw': "sfx"})
+            elif row.pos_raw.endswith('-'):
+                results.append({'morpheme_id': row.id, 'pos_raw': "pfx"})
+    rows.close()
+    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
+
+
+def _morphemes_infer_pos_indonesian():
+    """ Indonesian part-of-speech inference. Clean up affix markers "-"; assign sfx, pfx, stem. """
+    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw, db.Morpheme.pos_raw]).where(db.Morpheme.corpus == "Indonesian")
+    rows = conn.execute(s)
+    results = []
+    for row in rows:
+        if row.gloss_raw:
+            if row.gloss_raw.startswith('-'):
+                results.append({'morpheme_id': row.id, 'pos_raw': "sfx"})
+            elif row.gloss_raw.endswith('-'):
+                results.append({'morpheme_id': row.id, 'pos_raw': "pfx"})
+            elif row.gloss_raw == '???':
+                results.append({'morpheme_id': row.id, 'pos_raw': "???"})
+            else:
+                if row.pos_raw not in {'sfx', 'pfx', '???'}:
+                    results.append({'morpheme_id': row.id, 'pos_raw': "stem"})
+    rows.close()
+    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
+
+
+def _morphemes_infer_pos():
+    """ Part-of-speech inference. Clean up affix markers "-"; assign sfx, pfx, stem.
+    """
+    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.morpheme, db.Morpheme.gloss_raw, db.Morpheme.pos_raw]).where(sa.or_(
+        db.Morpheme.corpus == "Indonesian",
+        db.Morpheme.corpus == "Chintang"))
+    rows = conn.execute(s)
+    results = []
+    for row in rows:
+        morpheme = None if row.morpheme is None else row.morpheme.replace('-', '')
+        gloss_raw = None if row.gloss_raw is None else row.gloss_raw.replace('-', '')
+        pos_raw = None if row.pos_raw is None else row.pos_raw.replace('-', '')
+        results.append({'morpheme_id': row.id, 'pos_raw': pos_raw, 'gloss_raw': gloss_raw, 'morpheme': morpheme})
+    rows.close()
+    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
+
+
+def _morphemes_infer_labels():
+    """ Indonesian, Japanese_MiiPro, Japanese_Miyata, Sesotho, Turkish have morpheme or pos substitutions in their config files. """
+    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw, db.Morpheme.pos, db.Morpheme.morpheme])
+    query = conn.execute(s)
+    results = []
+    for corpus, rows in groupby(query, lambda r: r[1]):
+        config = get_config(corpus)
+        if config['morphemes']['substitutions'] == 'yes':
+            target_tier = config['morphemes']['target_tier']
+            substitutions = config['substitutions']
+            for row in rows:
+                result = None if row.gloss_raw not in substitutions else substitutions[row.gloss_raw]
+                if result:
+                    if target_tier == "morpheme":
+                        results.append({'morpheme_id': row.id, 'morpheme': result, 'pos': row.pos})
+                    if target_tier == "pos":
+                        results.append({'morpheme_id': row.id, 'morpheme': row.morpheme, 'pos': result})
+    query.close()
+    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
+
+
+def _morphemes_unify_label():
     """ Key-value substitutions for morphological glosses and parts-of-speech in the database. If no key is
         defined in the corpus ini file, then None (NULL) is written to the database.
     """
     # TODO: Insert some debugging here if the labels are missing?
-    config = get_config(row.corpus)
-    row.gloss = config['gloss'].get(row.gloss_raw, None)
-    row.pos = config['pos'].get(row.pos_raw, None)
+    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw, db.Morpheme.pos_raw])
+    query = conn.execute(s)
+    results = []
+    for corpus, rows in groupby(query, lambda r: r[1]):
+        config = get_config(corpus)
+        glosses = config['gloss']
+        poses = config['pos']
+        for row in rows:
+            gloss = None if row.gloss_raw not in glosses else glosses[row.gloss_raw]
+            pos = None if row.pos_raw not in poses else poses[row.pos_raw]
+            results.append({'morpheme_id': row.id, 'gloss': gloss, 'pos': pos})
+    query.close()
+    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
 
-def infer_label(row):
-    config = get_config(row.corpus)
-    if config['morphemes']['substitutions'] == 'yes':
-        source_tier = config['morphemes']['source_tier']
-        target_tier = config['morphemes']['target_tier']
-        exec("row.{0} = config['substitutions'].get(row.{1}, row.{0})".format(
-            target_tier, source_tier)
-        )
+def _morphemes_get_pos_index():
+    """ Infer the word's part-of-speech from the morphemes table as index for word pos assignment. """
+    s = sa.select([db.Morpheme.id, db.Morpheme.pos, db.Morpheme.word_id_fk])
+    rows = conn.execute(s)
+    for row in rows:
+        if not row.pos in ["sfx", "pfx"]:
+            # row.id will be int type in other tables when look up occurs; type it int here for convenience
+            try:
+                pos_index[int(row.word_id_fk)] = row.pos
+            except TypeError:
+                pass
+    rows.close()
 
 
-def get_session_date(session_id):
-    """
-    Return the session data
-    """
-    rows = session.query(backend.Session).filter(backend.Session.id == session_id)
-    return rows[0].date
+def process_words_table():
+    """ Add POS labels to the word table. """
+    s = sa.select([db.Word.id])
+    rows = conn.execute(s)
+    results = []
+    for row in rows:
+        if row.id in pos_index:
+            results.append({'word_id': row.id, 'pos': pos_index[row.id]})
+    rows.close()
+    _update_rows(db.Word.__table__, 'word_id', results)
 
 
-def update_imdi_age(row):
+### Util functions ###
+def _update_rows(t, binder, rows):
+    """ Update rows for a given table, bindparameter and list of dictionaries contain column-value mappings. """
+    stmt = t.update().where(t.c.id == sa.bindparam(binder)).values()
+    try:
+        conn.execute(stmt, rows)
+    except sa.exc.StatementError:
+        pass
+
+
+def _insert_rows(t, rows):
+    """ Insert rows for a given table, bindparameter and list of dictionaries contain column-value mappings. """
+    stmt = t.insert().values()
+    try:
+        conn.execute(stmt, rows)
+    except sa.exc.IntegrityError:
+        pass
+
+
+def _update_imdi_age(rows):
     """ Process speaker ages in IMDI corpora.
 
     Finds all the recording sessions in the corpus in the config, then, for each speaker
@@ -438,161 +670,67 @@ def update_imdi_age(row):
     Finally, it looks for speakers that only have an age in years and does the same.
     """
 
-    if row.birthdate is None:
-        return
+    # TODO: does this actually do anything in the old code?
+    # if row.birthdate is None:
+    #    return
 
-    if not (row.birthdate.__contains__("Un") or row.birthdate.__contains__("None")):
-        try:
-            session_date = get_session_date(row.session_id_fk)
-            recording_date = age.numerize_date(session_date)
-            birth_date = age.numerize_date(row.birthdate)
-            ages = age.format_imdi_age(birth_date, recording_date)
-            row.age = ages[0]
-            row.age_in_days = ages[1]
-        except age.BirthdateError as e:
-            logger.warning('Couldn\'t calculate age of speaker {} '
-                           'from birth and recording dates: '
-                           'Invalid birthdate.'.format(
-                               row.id), exc_info=sys.exc_info())
-        except age.SessionDateError as e:
-            logger.warning('Couldn\'t calculate age of speaker {} '
-                           'from birth and recording dates: '
-                           'Invalid recording date.'.format(
-                               row.id), exc_info=sys.exc_info())
-
-    # age_raw.like("%;%.%")
-    if re.fullmatch(age_pattern, row.age_raw):
-        row.age = row.age_raw
-        row.age_in_days = age.calculate_xml_days(row.age_raw)
-
-    # Check age again?
-    if not row.age_raw.__contains__("None") or not row.age_raw.__contains__("Un") or row.age == None:
-        if not cleaned_age.fullmatch(row.age_raw):
+    results = []
+    for row in rows:
+        if "Un" not in row.birthdate and "None" not in row.birthdate:
             try:
-                ages = age.clean_incomplete_ages(row.age_raw)
-                row.age = ages[0]
-                row.age_in_days = ages[1]
-            except ValueError as e:
-                logger.warning('Couldn\'t transform age of '
-                               'speaker {}'.format(row.id),
-                               exc_info=sys.exc_info())
+                session_date = _get_session_date(row.session_id_fk)
+                recording_date = age.numerize_date(session_date)
+                birth_date = age.numerize_date(row.birthdate)
+                ages = age.format_imdi_age(birth_date, recording_date)
+                formatted_age = ages[0]
+                age_in_days = ages[1]
+                results.append({'speaker_id': row.id, 'age': formatted_age, 'age_in_days': age_in_days})
+            except age.BirthdateError as e:
+                logger.warning('Couldn\'t calculate age of speaker {} from birth and recording dates: '
+                               'Invalid birthdate.'.format(row.id), exc_info=sys.exc_info())
+            except age.SessionDateError as e:
+                logger.warning('Couldn\'t calculate age of speaker {} from birth and recording dates: '
+                               'Invalid recording date.'.format(row.id), exc_info=sys.exc_info())
+
+        if re.fullmatch(age_pattern, row.age_raw):
+            formatted_age = row.age_raw
+            age_in_days = age.calculate_xml_days(row.age_raw)
+            results.append({'speaker_id': row.id, 'age': formatted_age, 'age_in_days': age_in_days})
+
+        if "None" not in row.age_raw or "Un" not in row.age_raw or row.age is None:
+            if not cleaned_age.fullmatch(row.age_raw):
+                try:
+                    ages = age.clean_incomplete_ages(row.age_raw)
+                    formatted_age = ages[0]
+                    age_in_days = ages[1]
+                    results.append({'speaker_id': row.id, 'age': formatted_age, 'age_in_days': age_in_days})
+                except ValueError as e:
+                    logger.warning('Couldn\'t transform age of speaker {}'.format(row.id), exc_info=sys.exc_info())
+    return results
 
 
-# TODO: age is format dependent
-def update_age(row):
-    """ Age unification. Checks the config for the metadata format of the corpus,
-        then calls the appropriate function.
-    """
-    config = get_config(row.corpus)
-    if config["metadata"]["type"] == "imdi":
-        update_imdi_age(row)
-    else:
-        update_xml_age(row)
-
-
-def update_xml_age(row):
+def _update_xml_age(rows):
     """ Process speaker ages in Chat XML corpora.
 
     Finds all speakers from the corpus in the config and calls methods from age.py to
     fill in the age and age_in_days columns.
     """
-    if row.age_raw is not None:
-        new_age = age.format_xml_age(row.age_raw)
-        # TODO: why the check here?
-        if new_age:
-            row.age = new_age
-            aid = age.calculate_xml_days(new_age)
-            row.age_in_days = aid
+    results = []
+    for row in rows:
+        if row.age_raw:
+            new_age = age.format_xml_age(row.age_raw)
+            if new_age:
+                aid = age.calculate_xml_days(new_age)
+                results.append({'speaker_id': row.id, 'age': new_age, 'age_in_days': aid})
+    return results
 
 
-def macrorole(row):
-    """ Define macrorole (= Adult, Child, Target_Child, Unknown)
+def _get_session_date(session_id):
+    """ Return the session date from the session table. """
+    s = sa.select([db.Session]).where(db.Session.id == session_id)
+    row = conn.execute(s).fetchone()
+    return row.date
 
-    This function assigns an age category to each speaker. If there is
-    no information on age available it uses "role_mappings.ini" to define
-    which age category a speaker belongs to. The mapping is based on either
-    the speaker's original role or speaker_label (depending on how the corpora
-    handles role encoding).
-    """
-    # TODO: this method is completely dependent on ages -- no warnings are given if the age input is wrong!
-    # overwrite role mapping (except target child) if speaker is under 12
-    # (e.g. if child is an aunt which is mapped to 'Adult' per default)
-    if row.age_in_days is not None and row.macrorole != "Target_Child":
-        # Adults are >= 12yrs, i.e. > 4380 days
-        if row.age_in_days <= 4380:
-            row.macrorole = "Child"
-        else:
-            row.macrorole = "Adult"
-    # Second check corpus-specific lists of speaker labels
-    elif row.macrorole is None:
-        try:
-            row.macrorole = roles[row.corpus][row.speaker_label]
-        except KeyError:
-            row.macrorole = "Unknown"
-
-
-def role(row):
-    """ Unify speaker roles and draw inferences to related values.
-
-    Each corpus has its own set of speaker roles. This function uses
-    "role_mapping.ini" to assign a unified role to each speaker according
-    to the mappings in role_mapping.ini. The mapping is either based on the original
-    role or the speaker_label (depending on how the corpora handles role encoding).
-    The role column in the speaker table contains the unified roles.
-    """
-    not_found = set()
-
-    try:
-        row.role = roles['role_mapping'][row.role_raw]
-    # otherwise remember role
-    except KeyError:
-        row.role = row.role_raw
-        not_found.add((row.role_raw,row.corpus))
-
-    # inference to gender
-    if (row.gender_raw is None or row.gender_raw in ['Unspecified', 'Unknown']):
-        try:
-            row.gender = roles['role2gender'][row.role_raw]
-        except KeyError:
-            pass
-
-    # inference to age (-> macrorole)
-    if (row.macrorole is None or row.macrorole in ['Unspecified', 'Unknown']):
-        try:
-            row.macrorole = roles['role2macrorole'][row.role_raw]
-            # make sure None is not taken as a string
-            if row.macrorole == 'None':
-                row.macrorole = None
-        except KeyError:
-            pass
-
-    if len(not_found) > 0:
-        for item in not_found:
-            logger.warning('\'{}\' from {} not found in '
-                           'role_mapping.ini'.format(item[0], item[1]),
-                           exc_info=sys.exc_info())
-
-
-def gender(row):
-    """Function to unify speaker genders.
-    """
-    # if not row.gender_raw.lower().strip() in ['male', 'female']:
-    #    row.gender = "Unspecified"
-
-    if row.gender_raw is not None:
-        if row.gender_raw.lower() == 'female':
-            row.gender = 'Female'
-        elif row.gender_raw.lower() == 'male':
-            row.gender = 'Male'
-        else:
-            row.gender = "Unspecified"
-    else:
-        row.gender = "Unspecified"
-
-def main(args):
-    setup(args)
-    postprocessor()
-    commit()
 
 if __name__ == "__main__":
     import time
