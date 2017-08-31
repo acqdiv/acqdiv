@@ -134,7 +134,7 @@ class ToolboxFile(object):
                     warnings.append(self.config['record_tiers'][field_marker])
 
         # Some records will not have an utterance, append None for convenience below
-        if not 'utterance_raw' in utterance:
+        if 'utterance_raw' not in utterance:
             utterance['utterance_raw'] = None
 
         utterance['sentence_type'] = None if utterance['utterance_raw'] is None else self.get_sentence_type(utterance)
@@ -164,14 +164,13 @@ class ToolboxFile(object):
 
         # Clean up Russian
         if self.config['corpus']['corpus'] == 'Russian':
-            utterance['utterance_raw'] = None if utterance['utterance_raw'] is None else re.sub('xxx?|www', '???', utterance['utterance_raw'])
             utterance['pos_raw'] = None if utterance['pos_raw'] is None else re.sub('xxx?|www', '???', utterance['pos_raw'])
         # Create clean utterance
         utterance['utterance'] = None if utterance['utterance_raw'] is None else self.clean_utterance(utterance['utterance_raw'])
 
         # Append utterance warnings if data fields are missing in the input
-        if not utterance['utterance_raw'] is None:
-            if not self.get_warnings(utterance['utterance_raw']) is None:
+        if utterance['utterance_raw'] is not None:
+            if self.get_warnings(utterance['utterance_raw']) is not None:
                 warnings.append(self.get_warnings(utterance['utterance_raw']))
         if len(warnings) > 0:
             utterance['warning'] = "Empty value in the input for: "+", ".join(warnings)
@@ -400,7 +399,7 @@ class ToolboxFile(object):
                 # Remove punctuation from morphemes
                 morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\-\?\+\/]', '',
                                            utterance['morpheme'])
-                morphemes_cleaned = re.sub('xxx?|www', '???', 
+                morphemes_cleaned = re.sub('xxx?|www', '???',
                                            morphemes_cleaned)
                 morphemes_split = morphemes_cleaned.split()
                 morphemes = [morphemes_split[i:i+1] for i in range(

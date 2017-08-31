@@ -411,7 +411,6 @@ def _utterances_replace_morphemes():
                    db.Utterance.morpheme,
                    db.Utterance.gloss_raw,
                    db.Utterance.pos_raw,
-                   db.Utterance.utterance_raw,
                    db.Utterance.translation]).where(sa.or_(
         db.Utterance.corpus=="Chintang",
         db.Utterance.corpus=="Russian",
@@ -424,19 +423,18 @@ def _utterances_replace_morphemes():
             morpheme = None if row.morpheme is None else re.sub('\*\*\*', '???', row.morpheme)
             gloss_raw = None if row.gloss_raw is None else re.sub('\*\*\*', '???', row.gloss_raw)
             pos_raw = None if row.pos_raw is None else re.sub('\*\*\*', '???', row.pos_raw)
-            results.append({'utterance_id': row.id, 'morpheme': morpheme, 'gloss_raw': gloss_raw, 'pos_raw': pos_raw, 'utterance_raw': row.utterance_raw, 'translation': row.translation})
+            results.append({'utterance_id': row.id, 'morpheme': morpheme, 'gloss_raw': gloss_raw, 'pos_raw': pos_raw, 'translation': row.translation})
 
         if row.corpus == "Russian":
             morpheme = None if row.morpheme is None else re.sub('xxx?|www', '???', row.morpheme)
-            results.append({'utterance_id': row.id, 'morpheme': morpheme, 'gloss_raw': row.gloss_raw, 'pos_raw': row.pos_raw, 'utterance_raw': row.utterance_raw, 'translation': row.translation})
+            results.append({'utterance_id': row.id, 'morpheme': morpheme, 'gloss_raw': row.gloss_raw, 'pos_raw': row.pos_raw, 'translation': row.translation})
 
         if row.corpus == "Indonesian":
             morpheme = None if row.morpheme is None else re.sub('xxx?|www', '???', row.morpheme)
             gloss_raw = None if row.gloss_raw is None else re.sub('xxx?|www', '???', row.gloss_raw)
-            utterance_raw = None if row.utterance_raw is None else re.sub('xxx?|www', '???', row.utterance_raw)
             translation = None if row.translation is None else re.sub('xxx?|www', '???', row.translation)
             pos_raw = None if row.pos_raw is None else re.sub('\*\*\*', '???', row.pos_raw)
-            results.append({'utterance_id': row.id, 'morpheme': morpheme, 'gloss_raw': gloss_raw, 'pos_raw': pos_raw, 'utterance_raw': utterance_raw, 'translation': translation})
+            results.append({'utterance_id': row.id, 'morpheme': morpheme, 'gloss_raw': gloss_raw, 'pos_raw': pos_raw, 'translation': translation})
 
     rows.close()
     _update_rows(db.Utterance.__table__, 'utterance_id', results)
@@ -501,7 +499,9 @@ def _utterances_get_directedness():
 
 def _utterances_unify_unks():
     """Unify unknown values for utterances."""
-    s = sa.select([db.Utterance.id, db.Utterance.addressee])
+    s = sa.select([
+            db.Utterance.id, db.Utterance.addressee,
+            db.Utterance.utterance_raw])
     rows = conn.execute(s)
     results = []
     for row in rows:
@@ -514,8 +514,16 @@ def _utterances_unify_unks():
         else:
             addressee = row.addressee
 
+        if row.utterance_raw == "":
+            utterance_raw = None
+            has_changed = True
+        else:
+            utterance_raw = row.utterance_raw
+
         if has_changed:
-            results.append({"utterance_id": row.id, "addressee": addressee})
+            results.append({
+                "utterance_id": row.id, "addressee": addressee,
+                "utterance_raw": utterance_raw})
 
     rows.close()
     _update_rows(db.Utterance.__table__, "utterance_id", results)
