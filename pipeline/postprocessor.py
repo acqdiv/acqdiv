@@ -383,6 +383,9 @@ def process_utterances_table():
     print("_utterances_get_directedness")
     _utterances_get_directedness()
 
+    print("_utterances_unify_unks")
+    _utterances_unify_unks()
+
 
 def _utterances_standardize_timestamps():
     """ Unify the time stamps. """
@@ -476,7 +479,7 @@ def _utterances_get_directedness():
     """ Infer child directedness for each utterance. Skips Chintang. """
 
     rows = engine.execute('''
-        select u.id, u.corpus, u.addressee, u.speaker_label, s.macrorole 
+        select u.id, u.corpus, u.addressee, u.speaker_label, s.macrorole
         from utterances u
         left join speakers s
         on u.addressee = s.speaker_label
@@ -494,6 +497,28 @@ def _utterances_get_directedness():
             results.append({'utterance_id': row.id, 'childdirected': 0})
     rows.close()
     _update_rows(db.Utterance.__table__, 'utterance_id', results)
+
+
+def _utterances_unify_unks():
+    """Unify unknown values for utterances."""
+    s = sa.select([db.Utterance.id, db.Utterance.addressee])
+    rows = conn.execute(s)
+    results = []
+    for row in rows:
+        # only update rows whose values have changed (to save memory)
+        has_changed = False
+
+        if row.addressee == "???":
+            addressee = None
+            has_changed = True
+        else:
+            addressee = row.addressee
+
+        if has_changed:
+            results.append({"utterance_id": row.id, "addressee": addressee})
+
+    rows.close()
+    _update_rows(db.Utterance.__table__, "utterance_id", results)
 
 
 def process_morphemes_table():
