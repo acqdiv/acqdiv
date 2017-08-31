@@ -166,7 +166,8 @@ class ToolboxFile(object):
         if self.config['corpus']['corpus'] == 'Russian':
             utterance['pos_raw'] = None if utterance['pos_raw'] is None else re.sub('xxx?|www', '???', utterance['pos_raw'])
         # Create clean utterance
-        utterance['utterance'] = None if utterance['utterance_raw'] is None else self.clean_utterance(utterance['utterance_raw'])
+        utterance['utterance'] = self.clean_utterance(
+                                    utterance['utterance_raw'])
 
         # Append utterance warnings if data fields are missing in the input
         if utterance['utterance_raw'] is not None:
@@ -337,7 +338,12 @@ class ToolboxFile(object):
 
         # TODO: incorporate Russian \pho and \text tiers -- right now just utterance in general
         # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1586-L1599
-        if not utterance is None: # != 'None' or utterance != '':
+        if utterance is None:
+            return None
+        else:
+            # replace xxx/www/*** by ???
+            utterance = re.sub('xxx?|www|\*{3}', '???', utterance)
+
             if self.config['corpus']['corpus'] == "Russian":
                 utterance = re.sub('[‘’\'“”\"\.!,:\+\/]+|(&lt; )|(?<=\\s)\?(?=\\s|$)', '', utterance)
                 utterance = re.sub('\\s\-\\s', ' ', utterance)
@@ -352,24 +358,17 @@ class ToolboxFile(object):
                 utterance = re.sub('\s+', ' ', utterance).replace('=', '')
                 utterance = utterance.strip()
 
-                return utterance
-
             # incorporate the Indonesian stuff
-            if self.config['corpus']['corpus'] == "Indonesian":
+            elif self.config['corpus']['corpus'] == "Indonesian":
                 # delete punctuation and garbage
                 utterance = re.sub('[‘’\'“”\"\.!,;:\+\/]|\?$|<|>', '', utterance)
-                utterance = re.sub('xxx?|www', '???', utterance)
                 utterance = utterance.strip()
 
                 # Insecure transcription [?], add warning, delete marker
                 if re.search('\[\?\]', utterance):
                     utterance = re.sub('\[\?\]', '', utterance)
 
-                return utterance
-
-            if self.config['corpus']['corpus'] == "Chintang":
-                utterance = re.sub('\*\*\*', '???', utterance)
-                return utterance
+            return utterance
 
     def get_morphemes(self, utterance):
         """ Return ordered list of lists of morphemes where each morpheme is a dict of key-value pairs

@@ -501,7 +501,7 @@ def _utterances_unify_unks():
     """Unify unknown values for utterances."""
     s = sa.select([
             db.Utterance.id, db.Utterance.addressee,
-            db.Utterance.utterance_raw])
+            db.Utterance.utterance_raw, db.Utterance.utterance])
     rows = conn.execute(s)
     results = []
     for row in rows:
@@ -520,10 +520,16 @@ def _utterances_unify_unks():
         else:
             utterance_raw = row.utterance_raw
 
+        if row.utterance in {"???", "", "0"}:
+            utterance = None
+            has_changed = True
+        else:
+            utterance = row.utterance
+
         if has_changed:
             results.append({
                 "utterance_id": row.id, "addressee": addressee,
-                "utterance_raw": utterance_raw})
+                "utterance_raw": utterance_raw, "utterance": utterance})
 
     rows.close()
     _update_rows(db.Utterance.__table__, "utterance_id", results)
