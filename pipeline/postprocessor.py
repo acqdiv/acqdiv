@@ -408,7 +408,6 @@ def _utterances_replace_morphemes():
     """ TODO: talk to Robert; remove if not needed. """
     s = sa.select([db.Utterance.id,
                    db.Utterance.corpus,
-                   db.Utterance.morpheme,
                    db.Utterance.gloss_raw,
                    db.Utterance.pos_raw,
                    db.Utterance.translation]).where(sa.or_(
@@ -420,21 +419,15 @@ def _utterances_replace_morphemes():
 
     for row in rows:
         if row.corpus == "Chintang":
-            morpheme = None if row.morpheme is None else re.sub('\*\*\*', '???', row.morpheme)
             gloss_raw = None if row.gloss_raw is None else re.sub('\*\*\*', '???', row.gloss_raw)
             pos_raw = None if row.pos_raw is None else re.sub('\*\*\*', '???', row.pos_raw)
-            results.append({'utterance_id': row.id, 'morpheme': morpheme, 'gloss_raw': gloss_raw, 'pos_raw': pos_raw, 'translation': row.translation})
-
-        if row.corpus == "Russian":
-            morpheme = None if row.morpheme is None else re.sub('xxx?|www', '???', row.morpheme)
-            results.append({'utterance_id': row.id, 'morpheme': morpheme, 'gloss_raw': row.gloss_raw, 'pos_raw': row.pos_raw, 'translation': row.translation})
+            results.append({'utterance_id': row.id, 'gloss_raw': gloss_raw, 'pos_raw': pos_raw, 'translation': row.translation})
 
         if row.corpus == "Indonesian":
-            morpheme = None if row.morpheme is None else re.sub('xxx?|www', '???', row.morpheme)
             gloss_raw = None if row.gloss_raw is None else re.sub('xxx?|www', '???', row.gloss_raw)
             translation = None if row.translation is None else re.sub('xxx?|www', '???', row.translation)
             pos_raw = None if row.pos_raw is None else re.sub('\*\*\*', '???', row.pos_raw)
-            results.append({'utterance_id': row.id, 'morpheme': morpheme, 'gloss_raw': gloss_raw, 'pos_raw': pos_raw, 'translation': translation})
+            results.append({'utterance_id': row.id, 'gloss_raw': gloss_raw, 'pos_raw': pos_raw, 'translation': translation})
 
     rows.close()
     _update_rows(db.Utterance.__table__, 'utterance_id', results)
@@ -502,7 +495,7 @@ def _utterances_unify_unks():
     s = sa.select([
             db.Utterance.id, db.Utterance.addressee,
             db.Utterance.utterance_raw, db.Utterance.utterance,
-            db.Utterance.translation])
+            db.Utterance.translation, db.Utterance.morpheme])
     rows = conn.execute(s)
     results = []
     for row in rows:
@@ -535,11 +528,23 @@ def _utterances_unify_unks():
         else:
             translation = row.translation
 
+        if row.morpheme is None:
+            morpheme = None
+        else:
+            if (row.morpheme in {"", "?", "ww", "xxx"} or
+                    re.fullmatch(r"((\?\?\? ?)|(-\?\?\? ?))+", row.morpheme)):
+                morpheme = None
+            else:
+                morpheme = re.sub(r"www|xxx?|\*\*\*", "???", row.morpheme)
+
+            if morpheme != row.morpheme:
+                has_changed = True
+
         if has_changed:
             results.append({
                 "utterance_id": row.id, "addressee": addressee,
                 "utterance_raw": utterance_raw, "utterance": utterance,
-                "translation": translation})
+                "translation": translation, "morpheme": morpheme})
 
     rows.close()
     _update_rows(db.Utterance.__table__, "utterance_id", results)
