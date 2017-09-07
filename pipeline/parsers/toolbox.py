@@ -429,7 +429,7 @@ class ToolboxFile(object):
                     # PCL 'particle').
                     if ':' not in pos:
                         poses.append(re.sub('xxx?', '???', pos))
-                        glosses.append(re.sub('xxx?', '???', pos))
+                        glosses.append(pos)
 
                     # 2) Sub-POS are always separated by "-" (e.g. PRO-DEM-NOUN), subglosses are always separated by ":"
                     # (e.g. PST:SG:F). What varies, though, is the character that separates POS from glosses in the word
@@ -439,7 +439,7 @@ class ToolboxFile(object):
                         match_verb_adj = re.search('(V|ADJ)-(.*$)', pos)
                         if match_verb_adj:
                             poses.append(re.sub('xxx?', '???', match_verb_adj.group(1)))
-                            glosses.append(re.sub('xxx?', '???', match_verb_adj.group(2)))
+                            glosses.append(match_verb_adj.group(2))
 
                     # 3) For all other POS, the glosses start behind the first ":", e.g. PRO-DEM-NOUN:NOM:SG ->
                     # POS PRO.DEM.NOUN, gloss NOM.SG
@@ -447,7 +447,7 @@ class ToolboxFile(object):
                         match_gloss_pos = re.search('(^[^(V|ADJ)].*?):(.*$)', pos)
                         if match_gloss_pos:
                             poses.append(re.sub('xxx?', '???', match_gloss_pos.group(1)))
-                            glosses.append(re.sub('xxx?', '???', match_gloss_pos.group(2)))
+                            glosses.append(match_gloss_pos.group(2))
 
                 # Make list of lists to follow the structure of the other languages
                 poses = [poses[i:i+1] for i in range(0, len(poses), 1)]
