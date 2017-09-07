@@ -571,6 +571,9 @@ def process_morphemes_table():
     print("_morphemes_get_pos_index")
     _morphemes_get_pos_index()
 
+    print("_morphemes_unify_unks")
+    _morphemes_unify_unks()
+
 
 def _morphemes_infer_pos_chintang():
     """ Chintang part-of-speech inference. Also removes hyphens from raw input data. """
@@ -677,6 +680,28 @@ def _morphemes_get_pos_index():
             except TypeError:
                 pass
     rows.close()
+
+def _morphemes_unify_unks():
+    """Unify unknown values for words."""
+    s = sa.select([
+            db.Morpheme.id, db.Morpheme.morpheme])
+    rows = conn.execute(s)
+    results = []
+
+    for row in rows:
+        has_changed = False
+
+        if row.morpheme in {'???', '?', '', 'ww', 'xxx'}:
+            morpheme = None
+            has_changed = True
+        else:
+            morpheme = row.morpheme
+
+        if has_changed:
+            results.append({'morpheme_id': row.id, 'morpheme': morpheme})
+
+    rows.close()
+    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
 
 def process_words_table():
