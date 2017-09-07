@@ -692,7 +692,7 @@ def _words_unify_unks():
     """Unify unknown values for words."""
     s = sa.select([
             db.Word.id, db.Word.word, db.Word.word_actual,
-            db.Word.word_target])
+            db.Word.word_target, db.Word.pos])
     rows = conn.execute(s)
     results = []
     null_values = {"", "xx", "ww", "???", "?", "0"}
@@ -718,10 +718,16 @@ def _words_unify_unks():
         else:
             word_target = row.word_target
 
+        if row.pos == '???':
+            pos = None
+            has_changed = True
+        else:
+            pos = row.pos
+
         if has_changed:
             results.append({
                 'word_id': row.id, 'word': word, 'word_actual': word_actual,
-                'word_target': word_target})
+                'word_target': word_target, 'pos': pos})
 
     _update_rows(db.Word.__table__, 'word_id', results)
 
