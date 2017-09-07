@@ -681,6 +681,53 @@ def _morphemes_get_pos_index():
 
 def process_words_table():
     """ Add POS labels to the word table. """
+    print("_words_add_pos_labels")
+    _words_add_pos_labels()
+
+    print("_words_unify_unks")
+    _words_unify_unks()
+
+
+def _words_unify_unks():
+    """Unify unknown values for words."""
+    s = sa.select([
+            db.Word.id, db.Word.word, db.Word.word_actual,
+            db.Word.word_target])
+    rows = conn.execute(s)
+    results = []
+    null_values = {"", "xx", "ww", "???", "?", "0"}
+
+    for row in rows:
+        has_changed = False
+
+        if row.word in null_values:
+            word = None
+            has_changed = True
+        else:
+            word = row.word
+
+        if row.word_actual in null_values:
+            word_actual = None
+            has_changed = True
+        else:
+            word_actual = row.word_actual
+
+        if row.word_target in null_values:
+            word_target = None
+            has_changed = True
+        else:
+            word_target = row.word_target
+
+        if has_changed:
+            results.append({
+                'word_id': row.id, 'word': word, 'word_actual': word_actual,
+                'word_target': word_target})
+
+    _update_rows(db.Word.__table__, 'word_id', results)
+
+
+def _words_add_pos_labels():
+    """Add POS labels."""
     s = sa.select([db.Word.id])
     rows = conn.execute(s)
     results = []
