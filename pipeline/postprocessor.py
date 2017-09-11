@@ -686,7 +686,7 @@ def _morphemes_unify_unks():
     """Unify unknown values for words."""
     s = sa.select([
             db.Morpheme.id, db.Morpheme.morpheme, db.Morpheme.gloss_raw,
-            db.Morpheme.gloss])
+            db.Morpheme.gloss, db.Morpheme.pos, db.Morpheme.pos_raw])
     rows = conn.execute(s)
     results = []
     null_values = {'???', '?', '', 'ww', 'xxx', '***'}
@@ -712,10 +712,23 @@ def _morphemes_unify_unks():
         else:
             gloss = row.gloss
 
+        if row.pos_raw == '':
+            pos_raw = None
+            has_changed = True
+        else:
+            pos_raw = row.pos_raw
+
+        if row.pos in null_values:
+            pos = None
+            has_changed = True
+        else:
+            pos = row.pos
+
         if has_changed:
             results.append({
                 'morpheme_id': row.id, 'morpheme': morpheme,
-                'gloss_raw': gloss_raw, 'gloss': gloss})
+                'gloss_raw': gloss_raw, 'gloss': gloss, 'pos_raw': pos_raw,
+                'pos': pos})
 
     rows.close()
     _update_rows(db.Morpheme.__table__, 'morpheme_id', results)

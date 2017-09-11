@@ -162,9 +162,6 @@ class ToolboxFile(object):
                 else:
                     del utterance['childdirected']
 
-        # Clean up Russian
-        if self.config['corpus']['corpus'] == 'Russian':
-            utterance['pos_raw'] = None if utterance['pos_raw'] is None else re.sub('xxx?|www', '???', utterance['pos_raw'])
         # Create clean utterance
         utterance['utterance'] = self.clean_utterance(
                                     utterance['utterance_raw'])
@@ -388,11 +385,6 @@ class ToolboxFile(object):
 
         # Russian specific morpheme inference
         if self.config['corpus']['corpus'] == "Russian":
-            if 'pos_raw' in utterance.keys():
-                # remove PUNCT pos
-                pos_cleaned = [] if utterance['pos_raw'] is None else (
-                    utterance['pos_raw'].replace('PUNCT', '').replace(
-                        'ANNOT','').replace('<NA: lt;> ','').split())
 
             if 'morpheme' in utterance.keys():
                 # Remove punctuation from morphemes
@@ -404,22 +396,17 @@ class ToolboxFile(object):
                 morphemes = [morphemes_split[i:i+1] for i in range(
                     0, len(morphemes_split), 1)] # make list of lists
 
-
             if 'pos_raw' in utterance.keys():
-                # Get pos and gloss in Russian, see:
-                # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1751-L1762)
-
                 # Remove PUNCT in POS; if the POS in input data is missing, insert empty list for processing
                 # TODO: log it
                 pos_cleaned = [] if utterance['pos_raw'] is None else (
                     utterance['pos_raw'].replace('PUNCT', '').replace(
-                        'ANNOT','').replace('<NA: lt;> ','').split())
-
+                        'ANNOT', '').replace('<NA: lt;> ', '').split())
 
                 # The Russian tier \mor contains both glosses and POS, separated by "-" or ":".
                 # Method for distinguishing and extracting them:
                 for pos in pos_cleaned:
-                    #get morpheme language
+                    # get morpheme language
                     if 'FOREIGN' in pos:
                         langs.append('Unknown')
                     else:
@@ -428,7 +415,7 @@ class ToolboxFile(object):
                     # 1) If there is no ":" in a word string, gloss and POS are identical (most frequently the case with
                     # PCL 'particle').
                     if ':' not in pos:
-                        poses.append(re.sub('xxx?', '???', pos))
+                        poses.append(pos)
                         glosses.append(pos)
 
                     # 2) Sub-POS are always separated by "-" (e.g. PRO-DEM-NOUN), subglosses are always separated by ":"
@@ -438,7 +425,7 @@ class ToolboxFile(object):
                     elif pos.startswith('V') or pos.startswith('ADJ'):
                         match_verb_adj = re.search('(V|ADJ)-(.*$)', pos)
                         if match_verb_adj:
-                            poses.append(re.sub('xxx?', '???', match_verb_adj.group(1)))
+                            poses.append(match_verb_adj.group(1))
                             glosses.append(match_verb_adj.group(2))
 
                     # 3) For all other POS, the glosses start behind the first ":", e.g. PRO-DEM-NOUN:NOM:SG ->
@@ -446,7 +433,7 @@ class ToolboxFile(object):
                     else:
                         match_gloss_pos = re.search('(^[^(V|ADJ)].*?):(.*$)', pos)
                         if match_gloss_pos:
-                            poses.append(re.sub('xxx?', '???', match_gloss_pos.group(1)))
+                            poses.append(match_gloss_pos.group(1))
                             glosses.append(match_gloss_pos.group(2))
 
                 # Make list of lists to follow the structure of the other languages
