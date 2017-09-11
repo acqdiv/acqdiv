@@ -116,6 +116,7 @@ def main(args):
 
 def process_speakers_table():
     """ Post-process speakers table. """
+    _speakers_unify_unks()
     _speakers_indonesian_experimenters()
     _speakers_update_age()
     _speakers_standardize_gender_labels()
@@ -123,6 +124,29 @@ def process_speakers_table():
     _speakers_standardize_macroroles()
     _speakers_get_unique_speakers()
     _speakers_get_target_children()
+
+
+def _speakers_unify_unks():
+    """Unify unknown values for speakers."""
+    s = sa.select([db.Speaker.id, db.Speaker.name])
+    rows = conn.execute(s)
+    results = []
+    null_values = {'Unknown', 'Unspecified', 'None', 'Unidentified', ''}
+
+    for row in rows:
+        has_changed = False
+
+        if row.name in null_values:
+            name = None
+            has_changed = True
+        else:
+            name = row.name
+
+        if has_changed:
+            results.append({'speaker_id': row.id, 'name': name})
+
+    rows.close()
+    _update_rows(db.Speaker.__table__, 'speaker_id', results)
 
 
 def _speakers_update_age():
