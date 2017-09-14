@@ -99,7 +99,7 @@ class ValidationTest(object):
                  "Family_Friend", "Father", "Friend", "Grandfather", "Grandmother", "Great-Grandmother", "Host",
                  "Housekeeper", "Mother", "Neighbour", "Niece", "Playmate", "Research_Team", "Sibling", "Sister",
                  "Sister-in-law", "Son", "Speaker", "Student", "Subject", "Target_Child", "Teacher", "Toy",
-                 "Twin_Brother", "Uncle", "Visitor", "None", "Unknown"]
+                 "Twin_Brother", "Uncle", "Visitor", None]
         self._in_whitelist(query, roles)
 
     def test_macrorole(self):

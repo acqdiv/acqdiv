@@ -205,8 +205,10 @@ def _speakers_standardize_roles():
     role or the speaker_label (depending on how the corpora handles role encoding).
     The role column in the speaker table contains the unified roles.
     """
-    s = sa.select([db.Speaker.id, db.Speaker.role_raw, db.Speaker.role, db.Speaker.gender_raw,
-                   db.Speaker.gender, db.Speaker.macrorole])
+    s = sa.select([
+            db.Speaker.id, db.Speaker.role_raw, db.Speaker.role,
+            db.Speaker.gender_raw, db.Speaker.gender, db.Speaker.macrorole,
+            db.Speaker.corpus])
     rows = conn.execute(s)
     results = []
     not_found = set()
@@ -216,10 +218,13 @@ def _speakers_standardize_roles():
         gender = row.gender
         macrorole = row.macrorole
 
-        try:
-            role = roles['role_mapping'][row.role_raw]
-        except KeyError:
-            not_found.add((row.role_raw, row.corpus))  # Otherwise remember role
+        if role in roles['role_mapping']:
+            role = roles['role_mapping'][role]
+            # all unknown's and none's listed in the ini become NULL
+            if role == 'Unknown' or role == 'None':
+                role = None
+        else:
+            not_found.add((role, row.corpus))
 
         # Inference to gender
         if row.gender_raw is None or row.gender_raw in ['Unspecified', 'Unknown']:
@@ -327,7 +332,6 @@ def _speakers_get_target_children():
     # Second go through all session ids and get the target children for this session.
     for session_id in targets_per_session:
         targets = targets_per_session[session_id]
-
         # Get session row.
         query = sa.select([db.Session]).where(db.Session.id == session_id)
         rec = conn.execute(query).fetchone()
