@@ -82,7 +82,7 @@ class ValidationTest(object):
     def test_gender(self):
         """ Check genders in database vs whitelist. """
         query = "select gender from speakers group by gender"
-        gender = ["Female", "Male", "Unspecified", "None"]
+        gender = ["Female", "Male", None]
         self._in_whitelist(query, gender)
 
     def test_pos(self):

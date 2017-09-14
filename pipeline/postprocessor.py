@@ -183,15 +183,15 @@ def _speakers_standardize_gender_labels():
     rows = conn.execute(s)
     results = []
     for row in rows:
-        if row.gender_raw:
+        if row.gender_raw is not None:
             if row.gender_raw.lower() == 'female':
                 results.append({'speaker_id': row.id, 'gender': 'Female'})
             elif row.gender_raw.lower() == 'male':
                 results.append({'speaker_id': row.id, 'gender': 'Male'})
             else:
-                results.append({'speaker_id': row.id, 'gender': 'Unspecified'})
+                results.append({'speaker_id': row.id, 'gender': None})
         else:
-            results.append({'speaker_id': row.id, 'gender': 'Unspecified'})
+            results.append({'speaker_id': row.id, 'gender': None})
     rows.close()
     _update_rows(db.Speaker.__table__, 'speaker_id', results)
 
@@ -227,11 +227,9 @@ def _speakers_standardize_roles():
             not_found.add((role, row.corpus))
 
         # Inference to gender
-        if row.gender_raw is None or row.gender_raw in ['Unspecified', 'Unknown']:
-            try:
+        if gender is None:
+            if row.role_raw in roles['role2gender']:
                 gender = roles['role2gender'][row.role_raw]
-            except KeyError:
-                pass
 
         # Inference to age (-> macrorole)
         if row.macrorole is None or row.macrorole in ['Unspecified', 'Unknown']:
