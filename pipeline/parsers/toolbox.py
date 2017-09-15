@@ -408,7 +408,7 @@ class ToolboxFile(object):
                 for pos in pos_cleaned:
                     # get morpheme language
                     if 'FOREIGN' in pos:
-                        langs.append('Unknown')
+                        langs.append(None)
                     else:
                         langs.append('Russian')
 

@@ -146,7 +146,7 @@ class ValidationTest(object):
                  "Chintang/Bantawa", "Chintang (Mulgaũ)", "Chintang (Sambugaũ)",
                  "Chintang+Nepali", "Hindi", "Nepali/Arabic", "Nepali/Hindi",
                  "Japanese", "German", "Turkish", "Sesotho", "Yucatec", "Cree",
-                 "Inuktitut", "Indonesian", "Russian", "Unknown"]
+                 "Inuktitut", "Indonesian", "Russian", None]
         self._in_whitelist(query, langs)
 
     def test_target_children(self):
