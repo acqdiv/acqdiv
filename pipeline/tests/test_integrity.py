@@ -177,15 +177,18 @@ class ValidationTest(object):
         # msg='select corpus, count(*) from table where column is not NULL group by corpus'
 
     def _is_valid_date(self, query):
-        """ Check whether an input string is database NULL, Unspecified or adheres to dateutils format. """
+        """Check if input string is NULL or adheres to dateutils format."""
         res = self.session.execute(query)
         rows = res.fetchall()
         for row in rows:
             value = row[0]
             is_valid = False
-            if value is None or value == "Unspecified" or self._is_date(value):
+            if value is None or self._is_date(value):
                 is_valid = True
-            self.assertTrue(is_valid, msg='The date value %s is not NULL in the database, is not "Unspecified", and it does not confirm to dateutils.parser in the query (%s).' % (value, query))
+            self.assertTrue(is_valid,
+                            msg=('Date value %s is not NULL and does not '
+                                 'confirm to dateutils.parser '
+                                 'in the query (%s).') % (value, query))
 
     def _is_date(self, string):
         """ Check for valid dateutils.parser format. """

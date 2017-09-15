@@ -128,7 +128,7 @@ def process_speakers_table():
 
 def _speakers_unify_unks():
     """Unify unknown values for speakers."""
-    s = sa.select([db.Speaker.id, db.Speaker.name])
+    s = sa.select([db.Speaker.id, db.Speaker.name, db.Speaker.birthdate])
     rows = conn.execute(s)
     results = []
     null_values = {'Unknown', 'Unspecified', 'None', 'Unidentified', ''}
@@ -142,8 +142,15 @@ def _speakers_unify_unks():
         else:
             name = row.name
 
+        if row.birthdate in null_values:
+            birthdate = None
+            has_changed = True
+        else:
+            birthdate = row.birthdate
+
         if has_changed:
-            results.append({'speaker_id': row.id, 'name': name})
+            results.append({'speaker_id': row.id, 'name': name,
+                            'birthdate': birthdate})
 
     rows.close()
     _update_rows(db.Speaker.__table__, 'speaker_id', results)
@@ -860,14 +867,9 @@ def _update_imdi_age(rows):
 
     Finally, it looks for speakers that only have an age in years and does the same.
     """
-
-    # TODO: does this actually do anything in the old code?
-    # if row.birthdate is None:
-    #    return
-
     results = []
     for row in rows:
-        if "Un" not in row.birthdate and "None" not in row.birthdate:
+        if row.birthdate is not None:
             try:
                 session_date = _get_session_date(row.session_id_fk)
                 recording_date = age.numerize_date(session_date)
