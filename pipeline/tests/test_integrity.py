@@ -103,14 +103,10 @@ class ValidationTest(object):
         self._in_whitelist(query, roles)
 
     def test_macrorole(self):
-        """ Check macroles in database vs whitelist and not whitelist. """
+        """ Check macroles in database vs whitelist. """
         query = "select macrorole from speakers group by macrorole"
-        macroroles = ["Adult", "Child", "Target_Child", "Unknown"]
+        macroroles = ["Adult", "Child", "Target_Child", None]
         self._in_whitelist(query, macroroles)
-
-        # TODO: Robert do we really need this?
-        # not_macroroles = ["Unspecified", "None", "Unidentified", "Unidentified_child", "Unidentified_adult"]
-        #_not_in_blacklist(session, query, not_macroroles)
 
     def test_speaker_labels(self):
         """ Check whether the speaker labels are kosher orthographically. """

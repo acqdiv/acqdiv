@@ -216,7 +216,7 @@ def _speakers_standardize_roles():
     for row in rows:
         role = row.role_raw
         gender = row.gender
-        macrorole = row.macrorole
+        macrorole = None
 
         if role in roles['role_mapping']:
             role = roles['role_mapping'][role]
@@ -231,20 +231,18 @@ def _speakers_standardize_roles():
             if row.role_raw in roles['role2gender']:
                 gender = roles['role2gender'][row.role_raw]
 
-        # Inference to age (-> macrorole)
-        if row.macrorole is None or row.macrorole in ['Unspecified', 'Unknown']:
-            try:
-                macrorole = roles['role2macrorole'][row.role_raw]
-                if row.macrorole == 'None':
-                    macrorole = None
-            except KeyError:
-                pass
+        # Inference to macrorole
+        if row.role_raw in roles['role2macrorole']:
+            macrorole = roles['role2macrorole'][row.role_raw]
+        else:
+            macrorole = None
 
         for item in not_found:
             logger.warning('\'{}\' from {} not found in role_mapping.ini'.format(item[0], item[1]),
                            exc_info=sys.exc_info())
 
-        results.append({'speaker_id': row.id, 'role': role, 'gender': gender, 'macrorole': macrorole})
+        results.append({'speaker_id': row.id, 'role': role, 'gender': gender,
+                        'macrorole': macrorole})
 
     rows.close()
     _update_rows(db.Speaker.__table__, 'speaker_id', results)
@@ -263,25 +261,30 @@ def _speakers_standardize_macroroles():
     # overwrite role mapping (except target child) if speaker is under 12
     # (e.g. if child is an aunt which is mapped to 'Adult' per default)
 
-    s = sa.select([db.Speaker.id, db.Speaker.corpus, db.Speaker.speaker_label, db.Speaker.age_in_days, db.Speaker.macrorole, db.Speaker.role])
+    s = sa.select([
+            db.Speaker.id, db.Speaker.corpus, db.Speaker.speaker_label,
+            db.Speaker.age_in_days, db.Speaker.macrorole, db.Speaker.role])
     rows = conn.execute(s)
     results = []
 
     for row in rows:
-        # Adults are >= 12yrs, i.e. > 4380 days.
+        # Inference by age: adults are >= 12yrs, i.e. > 4380 days.
         if row.age_in_days and row.macrorole != "Target_Child":
             if row.age_in_days <= 4380:
                 results.append({'speaker_id': row.id, 'macrorole': "Child"})
             else:
                 results.append({'speaker_id': row.id, 'macrorole': "Adult"})
 
-        # Check corpus-specific lists of speaker labels.
-        elif row.macrorole is None or row.macrorole == "None":
-            try:
-                macrorole = "Unknown" if row.macrorole is None or row.macrorole == "None" else roles[row.corpus][row.speaker_label]
-                results.append({'speaker_id': row.id, 'macrorole': macrorole})
-            except KeyError:
-                pass
+        # Inference by speaker label on a per-corpus base
+        elif row.macrorole is None:
+            if row.speaker_label in roles[row.corpus]:
+                macrorole = roles[row.corpus][row.speaker_label]
+
+                # ignore all unknown's in the ini file
+                if macrorole != 'Unknown':
+                    results.append({'speaker_id': row.id,
+                                    'macrorole': macrorole})
+
     rows.close()
     _update_rows(db.Speaker.__table__, 'speaker_id', results)
 
