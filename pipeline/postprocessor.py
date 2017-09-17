@@ -507,7 +507,8 @@ def _utterances_unify_unks():
     s = sa.select([
             db.Utterance.id, db.Utterance.addressee,
             db.Utterance.utterance_raw, db.Utterance.utterance,
-            db.Utterance.translation, db.Utterance.morpheme])
+            db.Utterance.translation, db.Utterance.morpheme,
+            db.Utterance.gloss_raw, db.Utterance.pos_raw])
     rows = conn.execute(s)
     results = []
     for row in rows:
@@ -525,6 +526,18 @@ def _utterances_unify_unks():
             has_changed = True
         else:
             utterance_raw = row.utterance_raw
+
+        if row.gloss_raw == "":
+            gloss_raw = None
+            has_changed = True
+        else:
+            gloss_raw = row.gloss_raw
+
+        if row.pos_raw == "":
+            pos_raw = None
+            has_changed = True
+        else:
+            pos_raw = row.pos_raw
 
         if row.utterance in {"???", "", "0"}:
             utterance = None
@@ -563,7 +576,8 @@ def _utterances_unify_unks():
             results.append({
                 "utterance_id": row.id, "addressee": addressee,
                 "utterance_raw": utterance_raw, "utterance": utterance,
-                "translation": translation, "morpheme": morpheme})
+                "translation": translation, "morpheme": morpheme,
+                "gloss_raw": gloss_raw, "pos_raw": pos_raw})
 
     rows.close()
     _update_rows(db.Utterance.__table__, "utterance_id", results)
