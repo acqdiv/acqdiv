@@ -415,9 +415,6 @@ def process_utterances_table():
     print("_utterances_standardize_timestamps")
     _utterances_standardize_timestamps()
 
-    print("_utterances_replace_morphemes")
-    _utterances_replace_morphemes()
-
     print("_utterances_change_indonesian_speaker_labels")
     _utterances_change_indonesian_speaker_labels()
 
@@ -444,35 +441,6 @@ def _utterances_standardize_timestamps():
                 results.append({'utterance_id': row.id, 'start': start, 'end': end})
             except Exception as e:
                 logger.warning('Error unifying timestamps: {}'.format(row, e), exc_info=sys.exc_info())
-    rows.close()
-    _update_rows(db.Utterance.__table__, 'utterance_id', results)
-
-
-def _utterances_replace_morphemes():
-    """ TODO: talk to Robert; remove if not needed. """
-    s = sa.select([db.Utterance.id,
-                   db.Utterance.corpus,
-                   db.Utterance.gloss_raw,
-                   db.Utterance.pos_raw,
-                   db.Utterance.translation]).where(sa.or_(
-        db.Utterance.corpus=="Chintang",
-        db.Utterance.corpus=="Russian",
-        db.Utterance.corpus=="Indonesian"))
-    rows = conn.execute(s)
-    results = []
-
-    for row in rows:
-        if row.corpus == "Chintang":
-            gloss_raw = None if row.gloss_raw is None else re.sub('\*\*\*', '???', row.gloss_raw)
-            pos_raw = None if row.pos_raw is None else re.sub('\*\*\*', '???', row.pos_raw)
-            results.append({'utterance_id': row.id, 'gloss_raw': gloss_raw, 'pos_raw': pos_raw, 'translation': row.translation})
-
-        if row.corpus == "Indonesian":
-            gloss_raw = None if row.gloss_raw is None else re.sub('xxx?|www', '???', row.gloss_raw)
-            translation = None if row.translation is None else re.sub('xxx?|www', '???', row.translation)
-            pos_raw = None if row.pos_raw is None else re.sub('\*\*\*', '???', row.pos_raw)
-            results.append({'utterance_id': row.id, 'gloss_raw': gloss_raw, 'pos_raw': pos_raw, 'translation': translation})
-
     rows.close()
     _update_rows(db.Utterance.__table__, 'utterance_id', results)
 
@@ -564,13 +532,20 @@ def _utterances_unify_unks():
         else:
             utterance = row.utterance
 
-        if (row.translation is not None
-            and re.fullmatch(r"\?{1,3}\.?|x{2,3}\.?|0 ?\.?|w{2,3}\.?",
-                             row.translation)):
+        if row.translation is None:
             translation = None
-            has_changed = True
         else:
-            translation = row.translation
+            # Set to NULL if translation only consists of ???/xxx/www
+            if (re.fullmatch(r"\?{1,3}\.?|x{2,3}\.?|0 ?\.?|w{2,3}\.?",
+                             row.translation)):
+                translation = None
+            else:
+                # Replace by ??? if it partially consists of www/xxx
+                translation = re.sub(r"www|xxx?", "???",
+                                     row.translation)
+
+            if translation != row.translation:
+                has_changed = True
 
         if row.morpheme is None:
             morpheme = None
