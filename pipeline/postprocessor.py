@@ -128,7 +128,8 @@ def process_speakers_table():
 
 def _speakers_unify_unks():
     """Unify unknown values for speakers."""
-    s = sa.select([db.Speaker.id, db.Speaker.name, db.Speaker.birthdate])
+    s = sa.select([db.Speaker.id, db.Speaker.name, db.Speaker.birthdate,
+                   db.Speaker.speaker_label])
     rows = conn.execute(s)
     results = []
     null_values = {'Unknown', 'Unspecified', 'None', 'Unidentified', ''}
@@ -148,9 +149,16 @@ def _speakers_unify_unks():
         else:
             birthdate = row.birthdate
 
+        if row.speaker_label in null_values:
+            speaker_label = None
+            has_changed = True
+        else:
+            speaker_label = row.speaker_label
+
         if has_changed:
             results.append({'speaker_id': row.id, 'name': name,
-                            'birthdate': birthdate})
+                            'birthdate': birthdate,
+                            'speaker_label': speaker_label})
 
     rows.close()
     _update_rows(db.Speaker.__table__, 'speaker_id', results)
