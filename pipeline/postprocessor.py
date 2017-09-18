@@ -276,9 +276,15 @@ def _speakers_get_unique_speakers():
             identifiers.append(t)
             # Create unique speaker rows.
             unique_speaker_id = identifiers.index(t) + 1
-            unique_speakers.append({'id': unique_speaker_id, 'corpus': row.corpus, 'speaker_label': row.speaker_label,
-                                        'name': row.name, 'birthdate': row.birthdate, 'gender': row.gender})
-            unique_speaker_ids.append({'speaker_id': row.id, 'uniquespeaker_id_fk': unique_speaker_id})
+            unique_speakers.append({
+                'id': unique_speaker_id, 'corpus': row.corpus,
+                'speaker_label': row.speaker_label, 'name': row.name,
+                'birthdate': row.birthdate, 'gender': row.gender})
+
+        unique_speaker_ids.append({
+            'speaker_id': row.id,
+            'uniquespeaker_id_fk': identifiers.index(t) + 1})
+
     rows.close()
     _update_rows(db.Speaker.__table__, 'speaker_id', unique_speaker_ids)
     _insert_rows(db.UniqueSpeaker.__table__, unique_speakers)
@@ -476,7 +482,7 @@ def _utterances_get_directedness():
     """ Infer child directedness for each utterance. Skips Chintang. """
 
     rows = engine.execute('''
-        select u.id, u.corpus, u.addressee, u.speaker_label, s.macrorole 
+        select u.id, u.corpus, u.addressee, u.speaker_label, s.macrorole
         from utterances u
         left join speakers s
         on u.addressee = s.speaker_label
