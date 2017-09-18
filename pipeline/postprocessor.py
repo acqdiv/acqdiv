@@ -788,12 +788,6 @@ def _words_unify_unks():
     for row in rows:
         has_changed = False
 
-        if row.word in null_values:
-            word = None
-            has_changed = True
-        else:
-            word = row.word
-
         if row.word_actual in null_values:
             word_actual = None
             has_changed = True
@@ -805,6 +799,17 @@ def _words_unify_unks():
             has_changed = True
         else:
             word_target = row.word_target
+
+        if row.word in null_values or row.word is None:
+            # If word (= word_actual (except Yucatec)) is missing
+            # use word_target if it's not NULL
+            if word_target is not None:
+                word = word_target
+            else:
+                word = None
+            has_changed = True
+        else:
+            word = row.word
 
         if row.pos == '???':
             pos = None
