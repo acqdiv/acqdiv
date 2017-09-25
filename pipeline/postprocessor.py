@@ -716,7 +716,7 @@ def _morphemes_get_pos_index():
 
 
 def _morphemes_unify_unks():
-    """Unify unknown values for words."""
+    """Unify unknown values for morphemes."""
     s = sa.select([
             db.Morpheme.id, db.Morpheme.morpheme, db.Morpheme.gloss_raw,
             db.Morpheme.gloss, db.Morpheme.pos, db.Morpheme.pos_raw])
