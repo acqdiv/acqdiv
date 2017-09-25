@@ -116,7 +116,7 @@ def main(args):
 
 def process_speakers_table():
     """ Post-process speakers table. """
-    _speakers_unify_unks()
+    _speakers_unify_unknowns()
     _speakers_indonesian_experimenters()
     _speakers_update_age()
     _speakers_standardize_gender_labels()
@@ -126,7 +126,7 @@ def process_speakers_table():
     _speakers_get_target_children()
 
 
-def _speakers_unify_unks():
+def _speakers_unify_unknowns():
     """Unify unknown values for speakers."""
     s = sa.select([db.Speaker.id, db.Speaker.name, db.Speaker.birthdate,
                    db.Speaker.speaker_label])
@@ -424,8 +424,8 @@ def process_utterances_table():
     print("_utterances_get_directedness")
     _utterances_get_directedness()
 
-    print("_utterances_unify_unks")
-    _utterances_unify_unks()
+    print("_utterances_unify_unknowns")
+    _utterances_unify_unknowns()
 
 
 def _utterances_standardize_timestamps():
@@ -502,7 +502,7 @@ def _utterances_get_directedness():
     _update_rows(db.Utterance.__table__, 'utterance_id', results)
 
 
-def _utterances_unify_unks():
+def _utterances_unify_unknowns():
     """Unify unknown values for utterances."""
     s = sa.select([
             db.Utterance.id, db.Utterance.addressee,
@@ -604,8 +604,8 @@ def process_morphemes_table():
     print("_morphemes_get_pos_index")
     _morphemes_get_pos_index()
 
-    print("_morphemes_unify_unks")
-    _morphemes_unify_unks()
+    print("_morphemes_unify_unknowns")
+    _morphemes_unify_unknowns()
 
 
 def _morphemes_infer_pos_chintang():
@@ -715,7 +715,7 @@ def _morphemes_get_pos_index():
     rows.close()
 
 
-def _morphemes_unify_unks():
+def _morphemes_unify_unknowns():
     """Unify unknown values for morphemes."""
     s = sa.select([
             db.Morpheme.id, db.Morpheme.morpheme, db.Morpheme.gloss_raw,
@@ -772,11 +772,11 @@ def process_words_table():
     print("_words_add_pos_labels")
     _words_add_pos_labels()
 
-    print("_words_unify_unks")
-    _words_unify_unks()
+    print("_words_unify_unknowns")
+    _words_unify_unknowns()
 
 
-def _words_unify_unks():
+def _words_unify_unknowns():
     """Unify unknown values for words."""
     s = sa.select([
             db.Word.id, db.Word.word, db.Word.word_actual,
