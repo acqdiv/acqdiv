@@ -116,6 +116,7 @@ def main(args):
 
 def process_speakers_table():
     """ Post-process speakers table. """
+    _speakers_unify_unknowns()
     _speakers_indonesian_experimenters()
     _speakers_update_age()
     _speakers_standardize_gender_labels()
@@ -123,6 +124,44 @@ def process_speakers_table():
     _speakers_standardize_macroroles()
     _speakers_get_unique_speakers()
     _speakers_get_target_children()
+
+
+def _speakers_unify_unknowns():
+    """Unify unknown values for speakers."""
+    s = sa.select([db.Speaker.id, db.Speaker.name, db.Speaker.birthdate,
+                   db.Speaker.speaker_label])
+    rows = conn.execute(s)
+    results = []
+    null_values = {'Unknown', 'Unspecified', 'None', 'Unidentified', ''}
+
+    for row in rows:
+        has_changed = False
+
+        if row.name in null_values:
+            name = None
+            has_changed = True
+        else:
+            name = row.name
+
+        if row.birthdate in null_values:
+            birthdate = None
+            has_changed = True
+        else:
+            birthdate = row.birthdate
+
+        if row.speaker_label in null_values:
+            speaker_label = None
+            has_changed = True
+        else:
+            speaker_label = row.speaker_label
+
+        if has_changed:
+            results.append({'speaker_id': row.id, 'name': name,
+                            'birthdate': birthdate,
+                            'speaker_label': speaker_label})
+
+    rows.close()
+    _update_rows(db.Speaker.__table__, 'speaker_id', results)
 
 
 def _speakers_update_age():
@@ -159,15 +198,15 @@ def _speakers_standardize_gender_labels():
     rows = conn.execute(s)
     results = []
     for row in rows:
-        if row.gender_raw:
+        if row.gender_raw is not None:
             if row.gender_raw.lower() == 'female':
                 results.append({'speaker_id': row.id, 'gender': 'Female'})
             elif row.gender_raw.lower() == 'male':
                 results.append({'speaker_id': row.id, 'gender': 'Male'})
             else:
-                results.append({'speaker_id': row.id, 'gender': 'Unspecified'})
+                results.append({'speaker_id': row.id, 'gender': None})
         else:
-            results.append({'speaker_id': row.id, 'gender': 'Unspecified'})
+            results.append({'speaker_id': row.id, 'gender': None})
     rows.close()
     _update_rows(db.Speaker.__table__, 'speaker_id', results)
 
@@ -181,8 +220,10 @@ def _speakers_standardize_roles():
     role or the speaker_label (depending on how the corpora handles role encoding).
     The role column in the speaker table contains the unified roles.
     """
-    s = sa.select([db.Speaker.id, db.Speaker.role_raw, db.Speaker.role, db.Speaker.gender_raw,
-                   db.Speaker.gender, db.Speaker.macrorole])
+    s = sa.select([
+            db.Speaker.id, db.Speaker.role_raw, db.Speaker.role,
+            db.Speaker.gender_raw, db.Speaker.gender, db.Speaker.macrorole,
+            db.Speaker.corpus])
     rows = conn.execute(s)
     results = []
     not_found = set()
@@ -190,34 +231,33 @@ def _speakers_standardize_roles():
     for row in rows:
         role = row.role_raw
         gender = row.gender
-        macrorole = row.macrorole
+        macrorole = None
 
-        try:
-            role = roles['role_mapping'][row.role_raw]
-        except KeyError:
-            not_found.add((row.role_raw, row.corpus))  # Otherwise remember role
+        if role in roles['role_mapping']:
+            role = roles['role_mapping'][role]
+            # all unknown's and none's listed in the ini become NULL
+            if role == 'Unknown' or role == 'None':
+                role = None
+        else:
+            not_found.add((role, row.corpus))
 
         # Inference to gender
-        if row.gender_raw is None or row.gender_raw in ['Unspecified', 'Unknown']:
-            try:
+        if gender is None:
+            if row.role_raw in roles['role2gender']:
                 gender = roles['role2gender'][row.role_raw]
-            except KeyError:
-                pass
 
-        # Inference to age (-> macrorole)
-        if row.macrorole is None or row.macrorole in ['Unspecified', 'Unknown']:
-            try:
-                macrorole = roles['role2macrorole'][row.role_raw]
-                if row.macrorole == 'None':
-                    macrorole = None
-            except KeyError:
-                pass
+        # Inference to macrorole
+        if row.role_raw in roles['role2macrorole']:
+            macrorole = roles['role2macrorole'][row.role_raw]
+        else:
+            macrorole = None
 
         for item in not_found:
             logger.warning('\'{}\' from {} not found in role_mapping.ini'.format(item[0], item[1]),
                            exc_info=sys.exc_info())
 
-        results.append({'speaker_id': row.id, 'role': role, 'gender': gender, 'macrorole': macrorole})
+        results.append({'speaker_id': row.id, 'role': role, 'gender': gender,
+                        'macrorole': macrorole})
 
     rows.close()
     _update_rows(db.Speaker.__table__, 'speaker_id', results)
@@ -236,25 +276,30 @@ def _speakers_standardize_macroroles():
     # overwrite role mapping (except target child) if speaker is under 12
     # (e.g. if child is an aunt which is mapped to 'Adult' per default)
 
-    s = sa.select([db.Speaker.id, db.Speaker.corpus, db.Speaker.speaker_label, db.Speaker.age_in_days, db.Speaker.macrorole, db.Speaker.role])
+    s = sa.select([
+            db.Speaker.id, db.Speaker.corpus, db.Speaker.speaker_label,
+            db.Speaker.age_in_days, db.Speaker.macrorole, db.Speaker.role])
     rows = conn.execute(s)
     results = []
 
     for row in rows:
-        # Adults are >= 12yrs, i.e. > 4380 days.
+        # Inference by age: adults are >= 12yrs, i.e. > 4380 days.
         if row.age_in_days and row.macrorole != "Target_Child":
             if row.age_in_days <= 4380:
                 results.append({'speaker_id': row.id, 'macrorole': "Child"})
             else:
                 results.append({'speaker_id': row.id, 'macrorole': "Adult"})
 
-        # Check corpus-specific lists of speaker labels.
-        elif row.macrorole is None or row.macrorole == "None":
-            try:
-                macrorole = "Unknown" if row.macrorole is None or row.macrorole == "None" else roles[row.corpus][row.speaker_label]
-                results.append({'speaker_id': row.id, 'macrorole': macrorole})
-            except KeyError:
-                pass
+        # Inference by speaker label on a per-corpus base
+        elif row.macrorole is None:
+            if row.speaker_label in roles[row.corpus]:
+                macrorole = roles[row.corpus][row.speaker_label]
+
+                # ignore all unknown's in the ini file
+                if macrorole != 'Unknown':
+                    results.append({'speaker_id': row.id,
+                                    'macrorole': macrorole})
+
     rows.close()
     _update_rows(db.Speaker.__table__, 'speaker_id', results)
 
@@ -309,7 +354,6 @@ def _speakers_get_target_children():
     # Second go through all session ids and get the target children for this session.
     for session_id in targets_per_session:
         targets = targets_per_session[session_id]
-
         # Get session row.
         query = sa.select([db.Session]).where(db.Session.id == session_id)
         rec = conn.execute(query).fetchone()
@@ -377,9 +421,6 @@ def process_utterances_table():
     print("_utterances_standardize_timestamps")
     _utterances_standardize_timestamps()
 
-    print("_utterances_replace_morphemes")
-    _utterances_replace_morphemes()
-
     print("_utterances_change_indonesian_speaker_labels")
     _utterances_change_indonesian_speaker_labels()
 
@@ -388,6 +429,9 @@ def process_utterances_table():
 
     print("_utterances_get_directedness")
     _utterances_get_directedness()
+
+    print("_utterances_unify_unknowns")
+    _utterances_unify_unknowns()
 
 
 def _utterances_standardize_timestamps():
@@ -403,44 +447,6 @@ def _utterances_standardize_timestamps():
                 results.append({'utterance_id': row.id, 'start': start, 'end': end})
             except Exception as e:
                 logger.warning('Error unifying timestamps: {}'.format(row, e), exc_info=sys.exc_info())
-    rows.close()
-    _update_rows(db.Utterance.__table__, 'utterance_id', results)
-
-
-def _utterances_replace_morphemes():
-    """ TODO: talk to Robert; remove if not needed. """
-    s = sa.select([db.Utterance.id,
-                   db.Utterance.corpus,
-                   db.Utterance.morpheme,
-                   db.Utterance.gloss_raw,
-                   db.Utterance.pos_raw,
-                   db.Utterance.utterance_raw,
-                   db.Utterance.translation]).where(sa.or_(
-        db.Utterance.corpus=="Chintang",
-        db.Utterance.corpus=="Russian",
-        db.Utterance.corpus=="Indonesian"))
-    rows = conn.execute(s)
-    results = []
-
-    for row in rows:
-        if row.corpus == "Chintang":
-            morpheme = None if row.morpheme is None else re.sub('\*\*\*', '???', row.morpheme)
-            gloss_raw = None if row.gloss_raw is None else re.sub('\*\*\*', '???', row.gloss_raw)
-            pos_raw = None if row.pos_raw is None else re.sub('\*\*\*', '???', row.pos_raw)
-            results.append({'utterance_id': row.id, 'morpheme': morpheme, 'gloss_raw': gloss_raw, 'pos_raw': pos_raw, 'utterance_raw': row.utterance_raw, 'translation': row.translation})
-
-        if row.corpus == "Russian":
-            morpheme = None if row.morpheme is None else re.sub('xxx?|www', '???', row.morpheme)
-            results.append({'utterance_id': row.id, 'morpheme': morpheme, 'gloss_raw': row.gloss_raw, 'pos_raw': row.pos_raw, 'utterance_raw': row.utterance_raw, 'translation': row.translation})
-
-        if row.corpus == "Indonesian":
-            morpheme = None if row.morpheme is None else re.sub('xxx?|www', '???', row.morpheme)
-            gloss_raw = None if row.gloss_raw is None else re.sub('xxx?|www', '???', row.gloss_raw)
-            utterance_raw = None if row.utterance_raw is None else re.sub('xxx?|www', '???', row.utterance_raw)
-            translation = None if row.translation is None else re.sub('xxx?|www', '???', row.translation)
-            pos_raw = None if row.pos_raw is None else re.sub('\*\*\*', '???', row.pos_raw)
-            results.append({'utterance_id': row.id, 'morpheme': morpheme, 'gloss_raw': gloss_raw, 'pos_raw': pos_raw, 'utterance_raw': utterance_raw, 'translation': translation})
-
     rows.close()
     _update_rows(db.Utterance.__table__, 'utterance_id', results)
 
@@ -502,6 +508,87 @@ def _utterances_get_directedness():
     _update_rows(db.Utterance.__table__, 'utterance_id', results)
 
 
+def _utterances_unify_unknowns():
+    """Unify unknown values for utterances."""
+    s = sa.select([
+            db.Utterance.id, db.Utterance.addressee,
+            db.Utterance.utterance_raw, db.Utterance.utterance,
+            db.Utterance.translation, db.Utterance.morpheme,
+            db.Utterance.gloss_raw, db.Utterance.pos_raw])
+    rows = conn.execute(s)
+    results = []
+    for row in rows:
+        # only update rows whose values have changed (to save memory)
+        has_changed = False
+
+        if row.addressee == "???":
+            addressee = None
+            has_changed = True
+        else:
+            addressee = row.addressee
+
+        if row.utterance_raw == "":
+            utterance_raw = None
+            has_changed = True
+        else:
+            utterance_raw = row.utterance_raw
+
+        if row.gloss_raw == "":
+            gloss_raw = None
+            has_changed = True
+        else:
+            gloss_raw = row.gloss_raw
+
+        if row.pos_raw == "":
+            pos_raw = None
+            has_changed = True
+        else:
+            pos_raw = row.pos_raw
+
+        if row.utterance in {"???", "", "0"}:
+            utterance = None
+            has_changed = True
+        else:
+            utterance = row.utterance
+
+        if row.translation is None:
+            translation = None
+        else:
+            # Set to NULL if translation only consists of ???/xxx/www
+            if (re.fullmatch(r"\?{1,3}\.?|x{2,3}\.?|0 ?\.?|w{2,3}\.?",
+                             row.translation)):
+                translation = None
+            else:
+                # Replace by ??? if it partially consists of www/xxx
+                translation = re.sub(r"www|xxx?", "???",
+                                     row.translation)
+
+            if translation != row.translation:
+                has_changed = True
+
+        if row.morpheme is None:
+            morpheme = None
+        else:
+            if (row.morpheme in {"", "?", "ww", "xxx"} or
+                    re.fullmatch(r"((\?\?\? ?)|(-\?\?\? ?))+", row.morpheme)):
+                morpheme = None
+            else:
+                morpheme = re.sub(r"www|xxx?|\*\*\*", "???", row.morpheme)
+
+            if morpheme != row.morpheme:
+                has_changed = True
+
+        if has_changed:
+            results.append({
+                "utterance_id": row.id, "addressee": addressee,
+                "utterance_raw": utterance_raw, "utterance": utterance,
+                "translation": translation, "morpheme": morpheme,
+                "gloss_raw": gloss_raw, "pos_raw": pos_raw})
+
+    rows.close()
+    _update_rows(db.Utterance.__table__, "utterance_id", results)
+
+
 def process_morphemes_table():
     """ Post-process the morphemes table.
     """
@@ -522,6 +609,9 @@ def process_morphemes_table():
 
     print("_morphemes_get_pos_index")
     _morphemes_get_pos_index()
+
+    print("_morphemes_unify_unknowns")
+    _morphemes_unify_unknowns()
 
 
 def _morphemes_infer_pos_chintang():
@@ -631,8 +721,118 @@ def _morphemes_get_pos_index():
     rows.close()
 
 
+def _morphemes_unify_unknowns():
+    """Unify unknown values for morphemes."""
+    s = sa.select([
+            db.Morpheme.id, db.Morpheme.morpheme, db.Morpheme.gloss_raw,
+            db.Morpheme.gloss, db.Morpheme.pos, db.Morpheme.pos_raw])
+    rows = conn.execute(s)
+    results = []
+    null_values = {'???', '?', '', 'ww', 'xxx', '***'}
+
+    for row in rows:
+        has_changed = False
+
+        if row.morpheme in null_values:
+            morpheme = None
+            has_changed = True
+        else:
+            morpheme = row.morpheme
+
+        if row.gloss_raw == '':
+            gloss_raw = None
+            has_changed = True
+        else:
+            gloss_raw = row.gloss_raw
+
+        if row.gloss in null_values:
+            gloss = None
+            has_changed = True
+        else:
+            gloss = row.gloss
+
+        if row.pos_raw == '':
+            pos_raw = None
+            has_changed = True
+        else:
+            pos_raw = row.pos_raw
+
+        if row.pos in null_values:
+            pos = None
+            has_changed = True
+        else:
+            pos = row.pos
+
+        if has_changed:
+            results.append({
+                'morpheme_id': row.id, 'morpheme': morpheme,
+                'gloss_raw': gloss_raw, 'gloss': gloss, 'pos_raw': pos_raw,
+                'pos': pos})
+
+    rows.close()
+    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
+
+
 def process_words_table():
     """ Add POS labels to the word table. """
+    print("_words_add_pos_labels")
+    _words_add_pos_labels()
+
+    print("_words_unify_unknowns")
+    _words_unify_unknowns()
+
+
+def _words_unify_unknowns():
+    """Unify unknown values for words."""
+    s = sa.select([
+            db.Word.id, db.Word.word, db.Word.word_actual,
+            db.Word.word_target, db.Word.pos])
+    rows = conn.execute(s)
+    results = []
+    null_values = {"", "xx", "ww", "???", "?", "0"}
+
+    for row in rows:
+        has_changed = False
+
+        if row.word_actual in null_values:
+            word_actual = None
+            has_changed = True
+        else:
+            word_actual = row.word_actual
+
+        if row.word_target in null_values:
+            word_target = None
+            has_changed = True
+        else:
+            word_target = row.word_target
+
+        if row.word in null_values or row.word is None:
+            # If word (= word_actual (except Yucatec)) is missing
+            # use word_target if it's not NULL
+            if word_target is not None:
+                word = word_target
+            else:
+                word = None
+            has_changed = True
+        else:
+            word = row.word
+
+        if row.pos == '???':
+            pos = None
+            has_changed = True
+        else:
+            pos = row.pos
+
+        if has_changed:
+            results.append({
+                'word_id': row.id, 'word': word, 'word_actual': word_actual,
+                'word_target': word_target, 'pos': pos})
+
+    _update_rows(db.Word.__table__, 'word_id', results)
+
+
+def _words_add_pos_labels():
+    """Add POS labels."""
     s = sa.select([db.Word.id])
     rows = conn.execute(s)
     results = []
@@ -675,14 +875,9 @@ def _update_imdi_age(rows):
 
     Finally, it looks for speakers that only have an age in years and does the same.
     """
-
-    # TODO: does this actually do anything in the old code?
-    # if row.birthdate is None:
-    #    return
-
     results = []
     for row in rows:
-        if "Un" not in row.birthdate and "None" not in row.birthdate:
+        if row.birthdate is not None:
             try:
                 session_date = _get_session_date(row.session_id_fk)
                 recording_date = age.numerize_date(session_date)

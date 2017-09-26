@@ -82,7 +82,7 @@ class ValidationTest(object):
     def test_gender(self):
         """ Check genders in database vs whitelist. """
         query = "select gender from speakers group by gender"
-        gender = ["Female", "Male", "Unspecified", "None"]
+        gender = ["Female", "Male", None]
         self._in_whitelist(query, gender)
 
     def test_pos(self):
@@ -99,18 +99,14 @@ class ValidationTest(object):
                  "Family_Friend", "Father", "Friend", "Grandfather", "Grandmother", "Great-Grandmother", "Host",
                  "Housekeeper", "Mother", "Neighbour", "Niece", "Playmate", "Research_Team", "Sibling", "Sister",
                  "Sister-in-law", "Son", "Speaker", "Student", "Subject", "Target_Child", "Teacher", "Toy",
-                 "Twin_Brother", "Uncle", "Visitor", "None", "Unknown"]
+                 "Twin_Brother", "Uncle", "Visitor", None]
         self._in_whitelist(query, roles)
 
     def test_macrorole(self):
-        """ Check macroles in database vs whitelist and not whitelist. """
+        """ Check macroles in database vs whitelist. """
         query = "select macrorole from speakers group by macrorole"
-        macroroles = ["Adult", "Child", "Target_Child", "Unknown"]
+        macroroles = ["Adult", "Child", "Target_Child", None]
         self._in_whitelist(query, macroroles)
-
-        # TODO: Robert do we really need this?
-        # not_macroroles = ["Unspecified", "None", "Unidentified", "Unidentified_child", "Unidentified_adult"]
-        #_not_in_blacklist(session, query, not_macroroles)
 
     def test_speaker_labels(self):
         """ Check whether the speaker labels are kosher orthographically. """
@@ -150,7 +146,7 @@ class ValidationTest(object):
                  "Chintang/Bantawa", "Chintang (Mulgaũ)", "Chintang (Sambugaũ)",
                  "Chintang+Nepali", "Hindi", "Nepali/Arabic", "Nepali/Hindi",
                  "Japanese", "German", "Turkish", "Sesotho", "Yucatec", "Cree",
-                 "Inuktitut", "Indonesian", "Russian", "Unknown"]
+                 "Inuktitut", "Indonesian", "Russian", None]
         self._in_whitelist(query, langs)
 
     def test_target_children(self):
@@ -181,15 +177,18 @@ class ValidationTest(object):
         # msg='select corpus, count(*) from table where column is not NULL group by corpus'
 
     def _is_valid_date(self, query):
-        """ Check whether an input string is database NULL, Unspecified or adheres to dateutils format. """
+        """Check if input string is NULL or adheres to dateutils format."""
         res = self.session.execute(query)
         rows = res.fetchall()
         for row in rows:
             value = row[0]
             is_valid = False
-            if value is None or value == "Unspecified" or self._is_date(value):
+            if value is None or self._is_date(value):
                 is_valid = True
-            self.assertTrue(is_valid, msg='The date value %s is not NULL in the database, is not "Unspecified", and it does not confirm to dateutils.parser in the query (%s).' % (value, query))
+            self.assertTrue(is_valid,
+                            msg=('Date value %s is not NULL and does not '
+                                 'confirm to dateutils.parser '
+                                 'in the query (%s).') % (value, query))
 
     def _is_date(self, string):
         """ Check for valid dateutils.parser format. """
