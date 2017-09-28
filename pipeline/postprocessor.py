@@ -963,5 +963,10 @@ if __name__ == "__main__":
     print("%s seconds --- Finished" % (time.time() - start_time))
     print()
     print('Next, run tests:')
-    print('python3 -m "nose" -s -w tests test_regression.py')
-    print('python3 -m "nose" -s -w tests test_integrity.py:ValidationTest_DevDB')
+
+    if args.t:
+        print('python3 -m "nose" -s -w tests test_regression.py')
+        print('python3 -m "nose" -s -w tests test_integrity.py:ValidationTest_DevDB')
+    else:
+        print('python3 -m "nose" -s -w tests test_integrity.py:ValidationTest_ProductionDB')
+    print()
