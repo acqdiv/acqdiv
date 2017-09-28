@@ -11,8 +11,6 @@ import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
 
 
-_pattern_speaker_label = re.compile('^[a-zA-Z]{2,}\d*$')
-_pattern_speaker_names = re.compile('\d')
 _pattern_speaker_ages = re.compile('^(\d\d?(;([0-9]|1[01]).([12]?[0-9]|30))?)$')
 
 
@@ -107,16 +105,6 @@ class ValidationTest(object):
         query = "select macrorole from speakers group by macrorole"
         macroroles = ["Adult", "Child", "Target_Child", None]
         self._in_whitelist(query, macroroles)
-
-    def test_speaker_labels(self):
-        """ Check whether the speaker labels are kosher orthographically. """
-        query = "select speaker_label from speakers group by speaker_label"
-        self._in_string(query, _pattern_speaker_label)
-
-    def test_speaker_names(self):
-        # should be able to check it in various db columns
-        query = "select name from speakers group by name"
-        self._not_in_string(query, _pattern_speaker_names)
 
     def test_speaker_ages(self):
         # should be able to check it in various db columns
