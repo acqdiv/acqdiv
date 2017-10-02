@@ -134,7 +134,7 @@ class ToolboxFile(object):
                     warnings.append(self.config['record_tiers'][field_marker])
 
         # Some records will not have an utterance, append None for convenience below
-        if not 'utterance_raw' in utterance:
+        if 'utterance_raw' not in utterance:
             utterance['utterance_raw'] = None
 
         utterance['sentence_type'] = None if utterance['utterance_raw'] is None else self.get_sentence_type(utterance)
@@ -162,16 +162,13 @@ class ToolboxFile(object):
                 else:
                     del utterance['childdirected']
 
-        # Clean up Russian
-        if self.config['corpus']['corpus'] == 'Russian':
-            utterance['utterance_raw'] = None if utterance['utterance_raw'] is None else re.sub('xxx?|www', '???', utterance['utterance_raw'])
-            utterance['pos_raw'] = None if utterance['pos_raw'] is None else re.sub('xxx?|www', '???', utterance['pos_raw'])
         # Create clean utterance
-        utterance['utterance'] = None if utterance['utterance_raw'] is None else self.clean_utterance(utterance['utterance_raw'])
+        utterance['utterance'] = self.clean_utterance(
+                                    utterance['utterance_raw'])
 
         # Append utterance warnings if data fields are missing in the input
-        if not utterance['utterance_raw'] is None:
-            if not self.get_warnings(utterance['utterance_raw']) is None:
+        if utterance['utterance_raw'] is not None:
+            if self.get_warnings(utterance['utterance_raw']) is not None:
                 warnings.append(self.get_warnings(utterance['utterance_raw']))
         if len(warnings) > 0:
             utterance['warning'] = "Empty value in the input for: "+", ".join(warnings)
@@ -338,7 +335,12 @@ class ToolboxFile(object):
 
         # TODO: incorporate Russian \pho and \text tiers -- right now just utterance in general
         # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1586-L1599
-        if not utterance is None: # != 'None' or utterance != '':
+        if utterance is None:
+            return None
+        else:
+            # replace xxx/www/*** by ???
+            utterance = re.sub('xxx?|www|\*{3}', '???', utterance)
+
             if self.config['corpus']['corpus'] == "Russian":
                 utterance = re.sub('[‘’\'“”\"\.!,:\+\/]+|(&lt; )|(?<=\\s)\?(?=\\s|$)', '', utterance)
                 utterance = re.sub('\\s\-\\s', ' ', utterance)
@@ -353,24 +355,17 @@ class ToolboxFile(object):
                 utterance = re.sub('\s+', ' ', utterance).replace('=', '')
                 utterance = utterance.strip()
 
-                return utterance
-
             # incorporate the Indonesian stuff
-            if self.config['corpus']['corpus'] == "Indonesian":
+            elif self.config['corpus']['corpus'] == "Indonesian":
                 # delete punctuation and garbage
                 utterance = re.sub('[‘’\'“”\"\.!,;:\+\/]|\?$|<|>', '', utterance)
-                utterance = re.sub('xxx?|www', '???', utterance)
                 utterance = utterance.strip()
 
                 # Insecure transcription [?], add warning, delete marker
                 if re.search('\[\?\]', utterance):
                     utterance = re.sub('\[\?\]', '', utterance)
 
-                return utterance
-
-            if self.config['corpus']['corpus'] == "Chintang":
-                utterance = re.sub('\*\*\*', '???', utterance)
-                return utterance
+            return utterance
 
     def get_morphemes(self, utterance):
         """ Return ordered list of lists of morphemes where each morpheme is a dict of key-value pairs
@@ -390,48 +385,38 @@ class ToolboxFile(object):
 
         # Russian specific morpheme inference
         if self.config['corpus']['corpus'] == "Russian":
-            if 'pos_raw' in utterance.keys():
-                # remove PUNCT pos
-                pos_cleaned = [] if utterance['pos_raw'] is None else (
-                    utterance['pos_raw'].replace('PUNCT', '').replace(
-                        'ANNOT','').replace('<NA: lt;> ','').split())
 
             if 'morpheme' in utterance.keys():
                 # Remove punctuation from morphemes
                 morphemes_cleaned = re.sub('[‘’\'“”\"\.!,:\-\?\+\/]', '',
                                            utterance['morpheme'])
-                morphemes_cleaned = re.sub('xxx?|www', '???', 
+                morphemes_cleaned = re.sub('xxx?|www', '???',
                                            morphemes_cleaned)
                 morphemes_split = morphemes_cleaned.split()
                 morphemes = [morphemes_split[i:i+1] for i in range(
                     0, len(morphemes_split), 1)] # make list of lists
 
-
             if 'pos_raw' in utterance.keys():
-                # Get pos and gloss in Russian, see:
-                # https://github.com/uzling/acqdiv/blob/master/extraction/parsing/corpus_parser_functions.py#L1751-L1762)
-
                 # Remove PUNCT in POS; if the POS in input data is missing, insert empty list for processing
                 # TODO: log it
                 pos_cleaned = [] if utterance['pos_raw'] is None else (
                     utterance['pos_raw'].replace('PUNCT', '').replace(
-                        'ANNOT','').replace('<NA: lt;> ','').split())
-
+                        'ANNOT', '').replace('<NA: lt;> ', '').split())
 
                 # The Russian tier \mor contains both glosses and POS, separated by "-" or ":".
                 # Method for distinguishing and extracting them:
                 for pos in pos_cleaned:
-                    #get morpheme language
+                    # get morpheme language
                     if 'FOREIGN' in pos:
-                        langs.append('Unknown')
+                        langs.append(None)
                     else:
                         langs.append('Russian')
 
                     # 1) If there is no ":" in a word string, gloss and POS are identical (most frequently the case with
                     # PCL 'particle').
                     if ':' not in pos:
-                        poses.append(re.sub('xxx?', '???', pos))
-                        glosses.append(re.sub('xxx?', '???', pos))
+                        poses.append(pos)
+                        glosses.append(pos)
 
                     # 2) Sub-POS are always separated by "-" (e.g. PRO-DEM-NOUN), subglosses are always separated by ":"
                     # (e.g. PST:SG:F). What varies, though, is the character that separates POS from glosses in the word
@@ -440,16 +425,16 @@ class ToolboxFile(object):
                     elif pos.startswith('V') or pos.startswith('ADJ'):
                         match_verb_adj = re.search('(V|ADJ)-(.*$)', pos)
                         if match_verb_adj:
-                            poses.append(re.sub('xxx?', '???', match_verb_adj.group(1)))
-                            glosses.append(re.sub('xxx?', '???', match_verb_adj.group(2)))
+                            poses.append(match_verb_adj.group(1))
+                            glosses.append(match_verb_adj.group(2))
 
                     # 3) For all other POS, the glosses start behind the first ":", e.g. PRO-DEM-NOUN:NOM:SG ->
                     # POS PRO.DEM.NOUN, gloss NOM.SG
                     else:
                         match_gloss_pos = re.search('(^[^(V|ADJ)].*?):(.*$)', pos)
                         if match_gloss_pos:
-                            poses.append(re.sub('xxx?', '???', match_gloss_pos.group(1)))
-                            glosses.append(re.sub('xxx?', '???', match_gloss_pos.group(2)))
+                            poses.append(match_gloss_pos.group(1))
+                            glosses.append(match_gloss_pos.group(2))
 
                 # Make list of lists to follow the structure of the other languages
                 poses = [poses[i:i+1] for i in range(0, len(poses), 1)]
