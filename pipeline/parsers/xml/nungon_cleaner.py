@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import re
-import sys
 import itertools
 
 from lxml import etree
 from .xml_cleaner import XMLCleaner
+
 
 class NungonCleaner(XMLCleaner):
 
@@ -15,16 +15,20 @@ class NungonCleaner(XMLCleaner):
         wlen = len(full_words)
 
         segment_tier = u.find("a[@type='target gloss']")
+        if segment_tier is None:
+            segment_tier = u.find("a[@flavor='gls']")
+
         if segment_tier is not None:
-            # split into words
             word_index = -1
+            # split words at whitespaces
             segment_words = re.split('\\s+', segment_tier.text)
 
             for w in segment_words:
-                # Check brackets. In Sesotho, these are only used to mark contractions of the verb 'go' which are conventional in both child and adult speech. The form of 'go' is given in brackets from the first to the last morpheme, is completely covert, and does not correspond to an element in <w>, so drop it altogether. The following, partially bracketed INF (if-) has an effect on the contracted surface form, so only remove the brackets but keep the gloss.
+                # TODO: not attested yet
                 if re.search('^(\(.*\)|[\.\?])$', w):
                     continue
                 else:
+                    # TODO: e.g. (naedi ma muuno)?
                     w = re.sub('[\(\)]', '', w)
 
                 word_index, wlen = XMLCleaner.word_index_up(
@@ -36,40 +40,42 @@ class NungonCleaner(XMLCleaner):
 
             u.remove(segment_tier)
 
-            # Glosses and POS
-            gloss_tier = u.find("a[@flavor='cod']")
-            if gloss_tier is not None:
-                # set word index for inspecting temporary dict
-                word_index = 0
+        # Glosses and POS
+        gloss_tier = u.find("a[@flavor='cod']")
+        if gloss_tier is not None:
+            # set word index for inspecting temporary dict
+            word_index = 0
 
-                # the remaining spaces indicate word boundaries -> split
-                gloss_words = re.split('\\s+', gloss_tier.text)
+            # the remaining spaces indicate word boundaries -> split
+            gloss_words = re.split('\\s+', gloss_tier.text)
 
-                # check alignment between segments and glosses on word level
-                if len(gloss_words) != len(segment_words):
-                    self.creadd(u.attrib, 'warnings', 'broken alignment '
-                    'segments_target : glosses_target')
+            # check alignment between segments and glosses on word level
+            if len(gloss_words) != len(segment_words):
+                self.creadd(u.attrib, 'warnings', 'broken alignment '
+                            'segments_target : glosses_target')
 
-                # reset word index for writing to corpus dict
-                word_index = -1
+            # reset word index for writing to corpus dict
+            word_index = -1
 
-                # go through words
-                for w in gloss_words:
+            # go through words
+            for w in gloss_words:
 
-                    # ignore punctuation in the segment/gloss tiers; this shouldn't be counted as morphological words
-                    if re.search('^[.!\?]$', w):
-                        continue
+                # ignore punctuation in the segment/gloss tiers;
+                # this shouldn't be counted as morphological words
+                # TODO: !. not attested yet
+                if re.search('^[.!\?]$', w):
+                    continue
 
-                    # count up word index, extend list if necessary
-                    word_index += 1
+                # count up word index, extend list if necessary
+                word_index += 1
 
-                    mor = full_words[word_index].find('mor')
-                    if mor is None:
-                        mor = etree.SubElement(full_words[word_index], 'mor')
-                    gl = etree.SubElement(mor, 'gl')
-                    gl.text = w
+                mor = full_words[word_index].find('mor')
+                if mor is None:
+                    mor = etree.SubElement(full_words[word_index], 'mor')
+                gl = etree.SubElement(mor, 'gl')
+                gl.text = w
 
-                u.remove(gloss_tier)
+            u.remove(gloss_tier)
 
     def _morphology_inference(self, u):
         full_words = u.findall('.//w')
@@ -106,7 +112,7 @@ class NungonCleaner(XMLCleaner):
 
                 # n^ prefixed to all proper names: replace by 'a_', lowercase label
                 gloss = re.sub('[nN]\^([gG]ame|[nN]ame|[pP]lace|[sS]ong)', 'a_\\1', gloss)
-                if re.search('a_(Game|Name|Place|Song)', gloss): 
+                if re.search('a_(Game|Name|Place|Song)', gloss):
                     gloss = gloss.lower()
 
                 # affixes already have their POS, but replace '_' as concatenator by more standard '.'
