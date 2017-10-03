@@ -18,6 +18,8 @@ class NungonCleaner(XMLCleaner):
         if segment_tier is None:
             segment_tier = u.find("a[@flavor='gls']")
 
+        # initialize because later it's compared to gloss_words
+        segment_words = None
         if segment_tier is not None:
             word_index = -1
             # split words at whitespaces
@@ -31,6 +33,7 @@ class NungonCleaner(XMLCleaner):
                     # TODO: e.g. (naedi ma muuno)?
                     w = re.sub('[\(\)]', '', w)
 
+                # check for mismatches in the number of <w>'s and segment words
                 word_index, wlen = XMLCleaner.word_index_up(
                         full_words, wlen, word_index, u)
 
@@ -43,31 +46,30 @@ class NungonCleaner(XMLCleaner):
         # Glosses and POS
         gloss_tier = u.find("a[@flavor='cod']")
         if gloss_tier is not None:
-            # set word index for inspecting temporary dict
-            word_index = 0
 
             # the remaining spaces indicate word boundaries -> split
             gloss_words = re.split('\\s+', gloss_tier.text)
 
             # check alignment between segments and glosses on word level
-            if len(gloss_words) != len(segment_words):
-                self.creadd(u.attrib, 'warnings', 'broken alignment '
-                            'segments_target : glosses_target')
+            if segment_words is not None:
+                if len(gloss_words) != len(segment_words):
+                    self.creadd(u.attrib, 'warnings', 'broken alignment '
+                                'segments_target : glosses_target')
 
             # reset word index for writing to corpus dict
             word_index = -1
 
             # go through words
             for w in gloss_words:
-
                 # ignore punctuation in the segment/gloss tiers;
                 # this shouldn't be counted as morphological words
                 # TODO: !. not attested yet
                 if re.search('^[.!\?]$', w):
                     continue
 
-                # count up word index, extend list if necessary
-                word_index += 1
+                # check for mismatches in the number of <w>'s and gloss words
+                word_index, wlen = XMLCleaner.word_index_up(
+                        full_words, wlen, word_index, u)
 
                 mor = full_words[word_index].find('mor')
                 if mor is None:
