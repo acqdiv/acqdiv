@@ -85,68 +85,47 @@ class NungonCleaner(XMLCleaner):
                 continue
             else:
                 seg = XMLCleaner.find_text(mor, 'seg')
-                gl  = XMLCleaner.find_text(mor, 'gl')
+                gl = XMLCleaner.find_text(mor, 'gl')
 
-            # split into morphemes
-            segments = re.split('\\-', seg) if seg is not None else []
-            glosses = re.split('[\\-]', gl) if gl is not None else []
-            passed_stem = False
-
+            # split at '-'/'=' into morphemes
+            # do not split anything within square brackets
+            segments = re.split(r'-|(?<!\&)=', seg) if seg is not None else []
+            glosses = re.split(r'-|(?<!\&)=', gl) if gl is not None else []
 
             # check alignment between segments and glosses on morpheme level
             if len(glosses) != len(segments):
-                XMLCleaner.creadd(fw.attrib, 'warnings',
+                XMLCleaner.creadd(
+                        fw.attrib, 'warnings',
                         'broken alignment segments_target : glosses_target')
 
+            # iter glosses and segments
+            # in case of mismatch -> empty string
+            passed_stem = False
             ms = itertools.zip_longest(glosses, segments, fillvalue='')
             for gloss, segment in ms:
-                # check whether present element is the stem; if no, set POS to prefix/suffix
+                # TODO: handling of proper names?
+                # set pos and gloss
+                # as long as stem is not passed, treat it as prefix
+                # as soon as stem is passed, treat it as suffix
                 pos = ''
-                if len(glosses)==1 or (re.search('(v|id|n)\^|\(\d', gloss)
-                        or re.match('(aj$|nm$|ps\d+)', gloss)):
+                stem_match = re.search(r'([^-=]+)\^([^-=]+)', gloss)
+                if stem_match:
                     passed_stem = True
-                elif passed_stem == False:
-                    pos = 'pfx'
-                elif passed_stem == True:
-                    pos = 'sfx'
-
-                # n^ prefixed to all proper names: replace by 'a_', lowercase label
-                gloss = re.sub('[nN]\^([gG]ame|[nN]ame|[pP]lace|[sS]ong)', 'a_\\1', gloss)
-                if re.search('a_(Game|Name|Place|Song)', gloss):
-                    gloss = gloss.lower()
-
-                # affixes already have their POS, but replace '_' as concatenator by more standard '.'
-                if pos=='pfx' or pos=='sfx':
-                    gloss = re.sub('_', '.', gloss)
-                # verbs have v^
-                elif re.search('v\^', gloss):
-                    pos = 'v'
-                    gloss = re.sub('v\^', '', gloss)
-                #nouns have v^
-                elif re.search('n\^', gloss):
-                    pos = 'n'
-                    gloss = re.sub('n\^', '', gloss)
-                # various particles, mostly without a precise gloss
-                elif re.search('^(aj|av|cd|cj|cm|ht|ij|loc|lr|ng|nm|obr|or|pr|q|sr|wh)$', gloss):
-                    pos = gloss
-                # free person markers (rare)
-                elif re.search('^sm\d+[sp]?$', gloss):
-                    pos = 'afx.detached'
-                # copula
-                elif re.search('^cp|cp$', gloss):
-                    pos = 'cop'
-                # ideophones
-                elif re.search('id\^', gloss):
-                    pos = 'ideoph'
-                # punctuation marks
-                elif re.search('^[.!\?]$', gloss):
-                    pos = 'punct'
-                # meaningless and unclear words. Note that "xxx" in the Sesotho coding tier is not the same as CHAT "xxx" in the transcription tier - it does not stand for words that could not be transcribed but for words with unclear meaning.
-                elif gloss == 'word' or gloss == 'xxx':
-                    pos = 'none'
-                    gloss = '???'
+                    pos = stem_match.group(1)
+                    gloss = stem_match.group(2)
                 else:
-                    pos = '???'
+                    # TODO: stand-alone morphemes without explicit pos?
+                    # TODO: handling of anything within square brackets
+                    if len(glosses) == 1:
+                        pos = gloss
+                    else:
+                        # replace '_' by '.' in glosses
+                        gloss = gloss.replace('_', '.')
+
+                        if not passed_stem:
+                            pos = 'pfx'
+                        else:
+                            pos = 'sfx'
 
                 m = etree.SubElement(mor, 'm')
                 # now put together segment, gloss, and POS
@@ -154,21 +133,17 @@ class NungonCleaner(XMLCleaner):
                 m.attrib['pos_target'] = pos
                 m.attrib['segments_target'] = segment
 
-                    # EOF word loop
             seg_n = mor.find('seg')
             gl_n = mor.find('gl')
             if seg_n is not None:
                 mor.remove(seg_n)
             if gl_n is not None:
                 mor.remove(gl_n)
-            # EOF Nungon
+
 
 if __name__ == "__main__":
-
     from parsers import CorpusConfigParser as Ccp
     conf = Ccp()
-    conf.read('ini/Sesotho.ini')
-    corpus = SesothoCleaner(conf, 'tests/corpora/Sesotho/xml/Sesotho.xml')
-
+    conf.read('ini/Nungon.ini')
+    corpus = NungonCleaner(conf, 'tests/corpora/Nungon/xml/Nungon.xml')
     corpus._debug_xml()
-
