@@ -3,6 +3,7 @@ import itertools
 import json
 import logging
 import os
+import pdb
 import re
 import sys
 
@@ -102,6 +103,7 @@ class XMLCleaner(object):
         xpexpr: the XPath expression to use
 
         Returns:
+
         """
         ses = parent.xpath(xpexpr)
         return ses[0] if len(ses) != 0 else None

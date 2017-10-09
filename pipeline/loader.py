@@ -53,8 +53,8 @@ def main(args):
         create_tables(engine)
 
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini',
-               'Japanese_Miyata.ini', 'Japanese_MiiPro.ini','Nungon.ini',
-               'Russian.ini', 'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
+               'Japanese_Miyata.ini', 'Japanese_MiiPro.ini', 'Russian.ini',
+               'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini']
 
     # Parse the config file and call the sessions processor.
     for config in configs:
