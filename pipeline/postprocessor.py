@@ -40,8 +40,9 @@ def setup(args):
     roles.optionxform = str
     roles.read("ini/role_mapping.ini")
 
-    # Load the corpus configs.
-    global chintang, cree, indonesian, inuktitut, miyata, miipro, russian, sesotho, turkish, yucatec
+    # Load the corpus configs
+    global chintang, cree, indonesian, inuktitut, miyata, miipro, nungon, russian, sesotho, turkish, yucatec
+    
     chintang = CorpusConfigParser()
     chintang.read("ini/Chintang.ini")
     cree = CorpusConfigParser()
@@ -54,6 +55,8 @@ def setup(args):
     miyata.read("ini/Japanese_Miyata.ini")
     miipro = CorpusConfigParser()
     miipro.read("ini/Japanese_MiiPro.ini")
+    nungon = CorpusConfigParser()
+    nungon.read("ini/Nungon.ini")
     russian = CorpusConfigParser()
     russian.read("ini/Russian.ini")
     sesotho = CorpusConfigParser()
@@ -79,6 +82,8 @@ def get_config(corpus_name):
         return miyata
     elif corpus_name == "Japanese_MiiPro":
         return miipro
+    elif corpus_name == "Nungon":
+        return nungon
     elif corpus_name == "Russian":
         return russian
     elif corpus_name == "Sesotho":
