@@ -3,7 +3,6 @@ import itertools
 import json
 import logging
 import os
-import pdb
 import re
 import sys
 
@@ -103,7 +102,7 @@ class XMLCleaner(object):
         xpexpr: the XPath expression to use
 
         Returns:
-
+            node
         """
         ses = parent.xpath(xpexpr)
         return ses[0] if len(ses) != 0 else None
@@ -375,7 +374,7 @@ class XMLCleaner(object):
                             w.append(mor)
                         wp.insert(i+j, w)
 
-                #fw.attrib['target'] = '_'.join(rep_w.attrib['target'] 
+                #fw.attrib['target'] = '_'.join(rep_w.attrib['target']
                 #        for rep_w in r.findall('w'))
                 fw.remove(r)
 
