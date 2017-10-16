@@ -10,33 +10,47 @@ from .xml_cleaner import XMLCleaner
 class NungonCleaner(XMLCleaner):
 
     def _process_morphology(self, u):
+        """Clean segment and gloss words."""
 
         full_words = u.findall('.//w')
         wlen = len(full_words)
+        segment_words = None
+        gloss_words = None
 
+        # process segments
+        # try out which segment attribute is used (target gloss/gls)
         segment_tier = u.find("a[@type='target gloss']")
         if segment_tier is None:
             segment_tier = u.find("a[@flavor='gls']")
-
-        # initialize because later it's compared to gloss_words
-        segment_words = None
         if segment_tier is not None:
             word_index = -1
-            # split words at whitespaces
-            segment_words = re.split('\\s+', segment_tier.text)
+
+            # remove everything with brackets, e.g. '[cries]'
+            segment_tier.text = re.sub(
+                    r'\[.*?\]', '', segment_tier.text)
+            # strip trailing/leading whitespaces
+            segment_tier.text = segment_tier.text.strip(' ')
+            # strip braces
+            segment_tier.text = segment_tier.text.strip('(').strip(')')
+            # strip punctuation (.?)
+            segment_tier.text = re.sub(r'\.$|\?\.?$', '', segment_tier.text)
+
+            # create a list of segments splitting at whitespaces and =
+            segment_words = re.split(r'\s+|=', segment_tier.text)
 
             for w in segment_words:
-                # TODO: not attested yet
-                if re.search('^(\(.*\)|[\.\?])$', w):
+
+                # ignore anything starting with '&=', e.g. '&amp;=toron'
+                if w.startswith('&') or w == '+//':
                     continue
-                else:
-                    # TODO: e.g. (naedi ma muuno)?
-                    w = re.sub('[\(\)]', '', w)
+
+                # set unknown segments to 'xxx'
+                if w == '?':
+                    w = 'xxx'
 
                 # check for mismatches in the number of <w>'s and segment words
                 word_index, wlen = XMLCleaner.word_index_up(
-                        full_words, wlen, word_index, u)
-
+                                        full_words, wlen, word_index, u)
                 mor = etree.SubElement(full_words[word_index], 'mor')
                 seg = etree.SubElement(mor, 'seg')
                 seg.text = w
@@ -46,31 +60,33 @@ class NungonCleaner(XMLCleaner):
         # Glosses and POS
         gloss_tier = u.find("a[@flavor='cod']")
         if gloss_tier is not None:
-
-            # the remaining spaces indicate word boundaries -> split
-            gloss_words = re.split('\\s+', gloss_tier.text)
-
-            # check alignment between segments and glosses on word level
-            if segment_words is not None:
-                if len(gloss_words) != len(segment_words):
-                    self.creadd(u.attrib, 'warnings', 'broken alignment '
-                                'segments_target : glosses_target')
-
-            # reset word index for writing to corpus dict
             word_index = -1
+
+            # remove everything with brackets, e.g. '[cries]'
+            gloss_tier.text = re.sub(
+                    r'\[.*?\]', '', gloss_tier.text)
+            # strip trailing/leading whitespaces and trailing dots
+            gloss_tier.text = gloss_tier.text.strip(" ").rstrip(".")
+
+            # create a list of gloss-words splitting at whitespaces and =
+            gloss_words = re.split(r'\s+|=', gloss_tier.text)
 
             # go through words
             for w in gloss_words:
-                # ignore punctuation in the segment/gloss tiers;
-                # this shouldn't be counted as morphological words
-                # TODO: !. not attested yet
-                if re.search('^[.!\?]$', w):
+                # ignore anything starting with '&=', e.g. '&amp;=toron'
+                if w.startswith('&'):
                     continue
+
+                # strip leading and trailing #, e.g. 'dep#'
+                w = w.strip('#')
+                # only allow three xxx's
+                w = re.sub(r'x{4,}', 'xxx', w)
+                # set ambiguous glosses (with '#' as a separator) to 'xxx'
+                w = re.sub(r'\S+#\S+', 'xxx', w)
 
                 # check for mismatches in the number of <w>'s and gloss words
                 word_index, wlen = XMLCleaner.word_index_up(
-                        full_words, wlen, word_index, u)
-
+                                            full_words, wlen, word_index, u)
                 mor = full_words[word_index].find('mor')
                 if mor is None:
                     mor = etree.SubElement(full_words[word_index], 'mor')
@@ -79,20 +95,30 @@ class NungonCleaner(XMLCleaner):
 
             u.remove(gloss_tier)
 
+        # check alignment between segments and glosses on word level
+        if segment_words is not None and gloss_words is not None:
+            if len(gloss_words) != len(segment_words):
+                self.creadd(u.attrib, 'warnings', 'broken alignment '
+                            'segments_target : glosses_target')
+
     def _morphology_inference(self, u):
-        full_words = u.findall('.//w')
-        for fw in full_words:
+        """Clean and infer segment, gloss and pos on morpheme level."""
+        for fw in u.findall('.//w'):
             mor = fw.find('mor')
             if mor is None:
                 continue
-            else:
-                seg = XMLCleaner.find_text(mor, 'seg')
-                gl = XMLCleaner.find_text(mor, 'gl')
 
-            # split at '-'/'=' into morphemes
-            # do not split anything within square brackets
-            segments = re.split(r'-|(?<!\&)=', seg) if seg is not None else []
-            glosses = re.split(r'-|(?<!\&)=', gl) if gl is not None else []
+            # get segments and glosses of a word
+            seg = XMLCleaner.find_text(mor, 'seg')
+            gl = XMLCleaner.find_text(mor, 'gl')
+
+            # create list of segments/glosses splitting at '-'/'='
+            segments = []
+            glosses = []
+            if seg is not None:
+                segments = re.split(r'\-', seg)
+            if gl is not None:
+                glosses = re.split(r'\-', gl)
 
             # check alignment between segments and glosses on morpheme level
             if len(glosses) != len(segments):
@@ -100,37 +126,44 @@ class NungonCleaner(XMLCleaner):
                         fw.attrib, 'warnings',
                         'broken alignment segments_target : glosses_target')
 
-            # iter glosses and segments
+            # iter glosses (pos+gloss) and segments
             # in case of mismatch -> empty string
             passed_stem = False
             ms = itertools.zip_longest(glosses, segments, fillvalue='')
             for gloss, segment in ms:
-                # TODO: handling of proper names?
+                # replace '+' by '.' in gloss, e.g. '1sg+ben'
+                gloss = gloss.replace('+', '.')
+                # replace '%'/'&' by '^' as pos-gloss separator, e.g. 'd%prox'
+                gloss = gloss.replace('%', '^')
+                gloss = gloss.replace('&', '^')
+                # replace '.' by '/' between numbers in gloss, e.g.'2.3pl'
+                gloss = gloss.replace('/', '.')
+                segment = segment.strip('?')
+
+                # TODO: proper names are coded in POS
+                # e.g. tpn -> noun + Tok Pisin
+
                 # set pos and gloss
                 # as long as stem is not passed, treat it as prefix
                 # as soon as stem is passed, treat it as suffix
                 pos = ''
-                stem_match = re.search(r'([^-=]+)\^([^-=]+)', gloss)
+                stem_match = re.search(r'([^-]+)\^([^-]+)', gloss)
                 if stem_match:
                     passed_stem = True
                     pos = stem_match.group(1)
                     gloss = stem_match.group(2)
                 else:
                     # TODO: stand-alone morphemes without explicit pos?
-                    # TODO: handling of anything within square brackets
                     if len(glosses) == 1:
                         pos = gloss
                     else:
-                        # replace '_' by '.' in glosses
-                        gloss = gloss.replace('_', '.')
-
                         if not passed_stem:
                             pos = 'pfx'
                         else:
                             pos = 'sfx'
 
+                # add under 'mor' as attributes in 'm'
                 m = etree.SubElement(mor, 'm')
-                # now put together segment, gloss, and POS
                 m.attrib['glosses_target'] = gloss
                 m.attrib['pos_target'] = pos
                 m.attrib['segments_target'] = segment
