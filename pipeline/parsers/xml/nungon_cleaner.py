@@ -140,9 +140,6 @@ class NungonCleaner(XMLCleaner):
                 gloss = gloss.replace('/', '.')
                 segment = segment.strip('?')
 
-                # TODO: proper names are coded in POS
-                # e.g. tpn -> noun + Tok Pisin
-
                 # set pos and gloss
                 # as long as stem is not passed, treat it as prefix
                 # as soon as stem is passed, treat it as suffix
@@ -174,6 +171,19 @@ class NungonCleaner(XMLCleaner):
                 mor.remove(seg_n)
             if gl_n is not None:
                 mor.remove(gl_n)
+
+    def _set_morpheme_language(self, u):
+        """Set morpheme language which is encoded in pos."""
+        # iter all morphemes
+        for m in u.iterfind('.//m'):
+            # iter all morpheme languages
+            for lang in self.cfg['languages']:
+                # check if pos contains morpheme language
+                if m.attrib['pos_target'].startswith(lang):
+                    m.attrib['morpheme_language'] = self.cfg['languages'][lang]
+                    break
+            else:
+                m.attrib['morpheme_language'] = 'Nungon'
 
 
 if __name__ == "__main__":
