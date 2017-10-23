@@ -112,13 +112,13 @@ class NungonCleaner(XMLCleaner):
             seg = XMLCleaner.find_text(mor, 'seg')
             gl = XMLCleaner.find_text(mor, 'gl')
 
-            # create list of segments/glosses splitting at '-'/'='
+            # create list of segments/glosses splitting at '-'
             segments = []
             glosses = []
             if seg is not None:
-                segments = re.split(r'\-', seg)
+                segments = seg.split('-')
             if gl is not None:
-                glosses = re.split(r'\-', gl)
+                glosses = gl.split('-')
 
             # check alignment between segments and glosses on morpheme level
             if len(glosses) != len(segments):
