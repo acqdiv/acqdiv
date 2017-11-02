@@ -94,9 +94,9 @@ class ValidationTest(object):
         """ Check roles in database vs whitelist. """
         query = "select role from speakers group by role"
         roles = ["Adult", "Aunt", "Babysitter", "Brother", "Caller", "Caretaker", "Child", "Cousin", "Daughter",
-                 "Family_Friend", "Father", "Friend", "Grandfather", "Grandmother", "Great-Grandmother", "Host",
-                 "Housekeeper", "Mother", "Neighbour", "Niece", "Playmate", "Research_Team", "Sibling", "Sister",
-                 "Sister-in-law", "Son", "Speaker", "Student", "Subject", "Target_Child", "Teacher", "Toy",
+                 "Family_Friend", "Father", "Friend", "Grandfather", "Grandmother", "Great-Grandfather", "Great-Grandmother",
+                 "Housekeeper", "Mother", "Neighbour", "Nephew", "Niece", "Playmate", "Research_Team", "Sibling", "Sister",
+                 "Sister-in-law", "Son", "Speaker", "Student", "Subject", "Target_Child", "Teacher", "Teenager",
                  "Twin_Brother", "Uncle", "Visitor", None]
         self._in_whitelist(query, roles)
 
@@ -129,12 +129,9 @@ class ValidationTest(object):
     def test_language_per_morpheme(self):
         """ Check whether the language mapping is working as intended """
         query = "select morpheme_language from morphemes group by morpheme_language"
-        langs = ["Chintang", "Nepali", "English", "Bantawa", "Chintang/Nepali",
-                 "Nepali/English", "Chintang/Nepali/English", "Bantawa",
-                 "Chintang/Bantawa", "Chintang (Mulgaũ)", "Chintang (Sambugaũ)",
-                 "Chintang+Nepali", "Hindi", "Nepali/Arabic", "Nepali/Hindi",
-                 "Japanese", "German", "Turkish", "Sesotho", "Yucatec", "Cree",
-                 "Inuktitut", "Indonesian", "Russian", None]
+        langs = ["Arabic", "Bantawa", "Chintang", "Chintang/Bantawa", "Chintang/Nepali", "Cree", 
+                 "English", "German", "Hindi", "Indonesian", "Inuktitut", "Japanese", 
+                 "Nepali", "Russian", "Sesotho", "Turkish", "Yucatec", None]
         self._in_whitelist(query, langs)
 
     def test_target_children(self):
