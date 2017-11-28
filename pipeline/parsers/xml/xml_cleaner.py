@@ -139,7 +139,6 @@ class XMLCleaner(object):
                 pass
 
         for u in xmldoc.iterfind('.//u'):
-
             try:
                 self._clean_xml_utterance(u)
             except Exception as e:
@@ -312,10 +311,10 @@ class XMLCleaner(object):
         """
         if self.cfg['morphemes']['language'] == 'yes':
             for fw in u.iterfind('.//w'):
-                l = fw.find('langs')
-                if l is not None:
-                    ltext = self.cfg['languages'][l[0].text]
-                    fw.remove(l)
+                lang = fw.find('langs')
+                if lang is not None:
+                    ltext = self.cfg['languages'][lang[0].text]
+                    fw.remove(lang)
                 else:
                     ltext = self.cfg['corpus']['language']
                 nl = etree.SubElement(fw, 'language')

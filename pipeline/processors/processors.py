@@ -34,8 +34,9 @@ class CorpusProcessor(object):
         """
         for session_file in glob.glob(self.cfg['paths']['sessions']):
             print("\t", session_file)
-            s = SessionProcessor(self.cfg, session_file, 
+            s = SessionProcessor(self.cfg, session_file,
                     self.parser_factory, self.engine)
+
             try:
                 s.process_session()
             except Exception as e:
