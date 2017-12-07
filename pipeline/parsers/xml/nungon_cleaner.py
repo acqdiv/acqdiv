@@ -26,8 +26,9 @@ class NungonCleaner(XMLCleaner):
             word_index = -1
 
             # remove everything with brackets, e.g. '[cries]'
-            segment_tier.text = re.sub(
-                    r'\[.*?\]', '', segment_tier.text)
+            segment_tier.text = re.sub(r'\[.*?\]', '', segment_tier.text)
+            # remove everything starting with '&='
+            segment_tier.text = re.sub(r'&=\S+', '', segment_tier.text)
             # strip trailing/leading whitespaces
             segment_tier.text = segment_tier.text.strip(' ')
             # strip braces
@@ -39,14 +40,14 @@ class NungonCleaner(XMLCleaner):
             segment_words = re.split(r'\s+|=', segment_tier.text)
 
             for w in segment_words:
-
-                # ignore anything starting with '&=', e.g. '&amp;=toron'
-                if w.startswith('&') or w == '+//':
+                # ignore +//
+                if w == '+//':
                     continue
-
                 # set unknown segments to 'xxx'
                 if w == '?':
                     w = 'xxx'
+                # only allow three xxx's
+                w = re.sub(r'x{4,}', 'xxx', w)
 
                 # check for mismatches in the number of <w>'s and segment words
                 word_index, wlen = XMLCleaner.word_index_up(
@@ -63,8 +64,9 @@ class NungonCleaner(XMLCleaner):
             word_index = -1
 
             # remove everything with brackets, e.g. '[cries]'
-            gloss_tier.text = re.sub(
-                    r'\[.*?\]', '', gloss_tier.text)
+            gloss_tier.text = re.sub(r'\[.*?\]', '', gloss_tier.text)
+            # remove everything starting with '&='
+            gloss_tier.text = re.sub(r'&=\S+', '', gloss_tier.text)
             # strip trailing/leading whitespaces and trailing dots
             gloss_tier.text = gloss_tier.text.strip(" ").rstrip(".")
 
@@ -73,16 +75,16 @@ class NungonCleaner(XMLCleaner):
 
             # go through words
             for w in gloss_words:
-                # ignore anything starting with '&=', e.g. '&amp;=toron'
-                if w.startswith('&'):
-                    continue
-
                 # strip leading and trailing #, e.g. 'dep#'
                 w = w.strip('#')
                 # only allow three xxx's
                 w = re.sub(r'x{4,}', 'xxx', w)
-                # set ambiguous glosses (with '#' as a separator) to 'xxx'
-                w = re.sub(r'\S+#\S+', 'xxx', w)
+                # set ambiguous glosses (with '#' as a separator) to unknown
+                if re.search(r'\S+#\S+', w):
+                    # cut away latter gloss
+                    w = re.sub(r'#\S+', '', w)
+                    # insert xxx as morphemes
+                    w = re.sub(r'[^-]+', 'xxx', w)
 
                 # check for mismatches in the number of <w>'s and gloss words
                 word_index, wlen = XMLCleaner.word_index_up(
@@ -103,6 +105,12 @@ class NungonCleaner(XMLCleaner):
 
     def _morphology_inference(self, u):
         """Clean and infer segment, gloss and pos on morpheme level."""
+        # keep track of misalignments
+        mw_misaligned = False
+        if 'warnings' in u.attrib:
+            if u.attrib['warnings'].startswith('broken alignment'):
+                mw_misaligned = True
+
         for fw in u.findall('.//w'):
             mor = fw.find('mor')
             if mor is None:
@@ -121,38 +129,52 @@ class NungonCleaner(XMLCleaner):
                 glosses = gl.split('-')
 
             # check alignment between segments and glosses on morpheme level
+            mm_misaligned = False
             if len(glosses) != len(segments):
+                mm_misaligned = True
                 XMLCleaner.creadd(
-                        fw.attrib, 'warnings',
-                        'broken alignment segments_target : glosses_target')
+                    fw.attrib, 'warnings',
+                    'broken alignment segments_target : glosses_target')
+
+            # regex for extracting stem and pos (separators: ^, %, &)
+            stem_regex = re.compile(r'([^-]+)(\^|%|&)([^-]+)')
+            if stem_regex.search(gl):
+                has_stem = True
+            else:
+                has_stem = False
+            passed_stem = False
 
             # iter glosses (pos+gloss) and segments
-            # in case of mismatch -> empty string
-            passed_stem = False
+            # in case of mismatch -> empty string; gloss is standard
             ms = itertools.zip_longest(glosses, segments, fillvalue='')
             for gloss, segment in ms:
+
+                # if more segments than glosses, skip
+                if not gloss:
+                    continue
+
                 # replace '+' by '.' in gloss, e.g. '1sg+ben'
                 gloss = gloss.replace('+', '.')
-                # replace '%'/'&' by '^' as pos-gloss separator, e.g. 'd%prox'
-                gloss = gloss.replace('%', '^')
-                gloss = gloss.replace('&', '^')
                 # replace '.' by '/' between numbers in gloss, e.g.'2.3pl'
                 gloss = gloss.replace('/', '.')
-                segment = segment.strip('?')
-
-                # set pos and gloss
-                # as long as stem is not passed, treat it as prefix
-                # as soon as stem is passed, treat it as suffix
+                # default pos
                 pos = ''
-                stem_match = re.search(r'([^-]+)\^([^-]+)', gloss)
-                if stem_match:
-                    passed_stem = True
-                    pos = stem_match.group(1)
-                    gloss = stem_match.group(2)
-                else:
-                    # TODO: stand-alone morphemes without explicit pos?
-                    if len(glosses) == 1:
-                        pos = gloss
+                if has_stem:
+                    # set pos and gloss
+                    # as long as stem is not passed, treat it as prefix
+                    # as soon as stem is passed, treat it as suffix
+                    stem_match = stem_regex.search(gloss)
+                    if stem_match:
+                        passed_stem = True
+                        pos = stem_match.group(1)
+                        gloss = stem_match.group(3)
+
+                        # set word language which is coded in pos
+                        for lang in self.cfg['languages']:
+                            if pos.startswith(lang):
+                                langs = etree.SubElement(fw, 'langs')
+                                etree.SubElement(langs, 'single').text = lang
+                                break
                     else:
                         if not passed_stem:
                             pos = 'pfx'
@@ -163,7 +185,12 @@ class NungonCleaner(XMLCleaner):
                 m = etree.SubElement(mor, 'm')
                 m.attrib['glosses_target'] = gloss
                 m.attrib['pos_target'] = pos
-                m.attrib['segments_target'] = segment
+
+                # if glosses and segments are misaligned, NULL all segments
+                if mw_misaligned or mm_misaligned:
+                    m.attrib['segments_target'] = ''
+                else:
+                    m.attrib['segments_target'] = segment.strip('?')
 
             seg_n = mor.find('seg')
             gl_n = mor.find('gl')
@@ -171,19 +198,6 @@ class NungonCleaner(XMLCleaner):
                 mor.remove(seg_n)
             if gl_n is not None:
                 mor.remove(gl_n)
-
-    def _set_morpheme_language(self, u):
-        """Set morpheme language which is encoded in pos."""
-        # iter all morphemes
-        for m in u.iterfind('.//m'):
-            # iter all morpheme languages
-            for lang in self.cfg['languages']:
-                # check if pos contains morpheme language
-                if m.attrib['pos_target'].startswith(lang):
-                    m.attrib['morpheme_language'] = self.cfg['languages'][lang]
-                    break
-            else:
-                m.attrib['morpheme_language'] = 'Nungon'
 
 
 if __name__ == "__main__":
