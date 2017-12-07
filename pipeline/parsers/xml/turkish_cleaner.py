@@ -28,7 +28,7 @@ class TurkishCleaner(XMLCleaner):
                     w.find('target').text = '???'
                     XMLCleaner.creadd(w.attrib, 'warning', 'not glossed')
                     continue
-            if 'formType' in w.attrib and (w.attrib['formType'] 
+            if 'formType' in w.attrib and (w.attrib['formType']
                     in ['interjection', 'onomatopoeia', 'family-specific']):
                 w.find('target').text = '???'
                 XMLCleaner.creadd(w.attrib, 'warning', 'not glossed')
@@ -37,10 +37,11 @@ class TurkishCleaner(XMLCleaner):
     def _process_morphology(self, u):
 
         full_words = u.findall('.//w')
+        wlen = len(full_words)
 
         morphology = u.find("a[@type='extension'][@flavor='mor']")
         if morphology is not None:
-            
+
             # remove punctuation and tags
             morphology.text = re.sub('(^|\\s)[\.\?!:\+\/]+(\\s|$)', '\\1\\2', morphology.text) # utterance delimiters and codes
             morphology.text = re.sub('(^|\\s)tag\|\\S+(\\s|$)', '\\1\\2', morphology.text) # tags
@@ -50,27 +51,23 @@ class TurkishCleaner(XMLCleaner):
             morphology.text = re.sub('\+', '_', morphology.text) # marks word number mismatches between orthography and morphology (but is less frequent than "_")
             morphology.text = re.sub('([A-Z]\\S*):\\s+', '\\1', morphology.text) # POS tags gone astray: join with following word
             morphology.text = re.sub('(\S+?)\|(\S+?)\|', '\\1/\\2|', morphology.text) # double POS tags: replace "|" by "/"
-                            
+
             # split mor tier into words, reset counter to -1
             words = re.split('\\s+',morphology.text)
             word_index = -1
-            
+
             # go through words on gloss tier
             for w in words:
-                
-                # count up word index, extend list if necessary
-                word_index += 1
+
+                word_index, wlen = self.word_index_up(
+                                        full_words, wlen, word_index, u)
 
                 # some words in <w> have a warning "not glossed": this means there is no element on the morphology tier corresponding to the present <w>
                 # -> incremeent the <w> counter by one as long as the present morphological word is associated with the next <w>
-                try:
-                    while('warning' in full_words[word_index].attrib and
-                        re.search('not glossed',
-                                  full_words[word_index].attrib['warning'])):
-                        word_index += 1
-                except IndexError:
-                    u.remove(morphology)
-                    return
+                while('warning' in full_words[word_index].attrib and
+                    re.search('not glossed',
+                              full_words[word_index].attrib['warning'])):
+                    word_index += 1
 
                 # full_words[word_index]['morphemes'] is a list of morphemes; initial index is -1
 
@@ -144,7 +141,7 @@ class TurkishCleaner(XMLCleaner):
 
             word_index += 1
 
-            if ('warning' in wd.attrib.keys() 
+            if ('warning' in wd.attrib.keys()
                     and wd.attrib['warning'] == 'not glossed'):
                 word_index += 1
                 continue

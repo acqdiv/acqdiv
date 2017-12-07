@@ -55,7 +55,7 @@ class SesothoCleaner(XMLCleaner):
             if len(gloss_words) != len(segment_words):
                 #print('alignment problem in ' + file_name + ', utterance ' + str(utterance_id) + ': tier "target gloss" (= segments_target) has ' +
                 #    str(len(segment_words)) + ' words vs. ' + str(len(gloss_words)) + ' in "coding" (= glosses_target)')
-                creadd(corpus[text_id][utterance_index], 'warnings', 'broken alignment segments_target : glosses_target')
+                self.creadd(u.attrib, 'warnings', 'broken alignment segments_target : glosses_target')
 
             # reset word index for writing to corpus dict
             word_index = -1
