@@ -26,16 +26,16 @@ class CreeCleaner(XMLCleaner):
                 # Sometimes words may be partially untranscribed
                 # (-xxx, xxx-, -xxx-) - transform this to unified ???
                 wt.text = re.sub('\-?xxx\-?', '???', wt.text)
-                # Cree: where the orthography tier is missing <w> is not 
+                # Cree: where the orthography tier is missing <w> is not
                 # empty but contains 'missingortho' -> remove this
                 wt.text = re.sub('missingortho', '', wt.text)
                 # Cree: replace "zéro" (= zero morpheme) by more standard "Ø"
                 wt.text = re.sub('zéro', 'Ø', wt.text)
-                # Sometimes words may be partially untranscribed 
+                # Sometimes words may be partially untranscribed
                 # (-xxx, xxx-, -xxx-) - transform this, too
                 wt.text = re.sub('\-?xxx\-?', '???', wt.text)
                 # only in Cree: morpheme boundaries in <w> are indicated by '_'
-                # -> remove these, segments are also given in the morphology 
+                # -> remove these, segments are also given in the morphology
                 # tiers. Other corpora can have '_' in <w>, too, but there it's
                 # meaningful (e.g. for concatenating the parts of a book title
                 # treated as a single word)
@@ -55,44 +55,84 @@ class CreeCleaner(XMLCleaner):
             pg.remove(tarpho)
 
     def _process_morphology(self, u):
+        """Clean morpheme words and re-structure XML of utterance.
+
+        Restructure of XML:
+            - new element <tmor> under <w>
+            - morpheme data in <a> inserted under <tmor>
+            - <a>'s with morpheme data are deleted
+
+        Example output of <w>:
+            <w>
+                <actual>...</actual>
+                <target>...</target>
+                <tmor>
+                    <tarmor>...</tarmor>
+                    <actmor>...</actmor>
+                    <mormea>...</mormea>
+                    <mortyp>...</mortyp>
+                </tmor>
+            </w>
+        """
+        # Go through all morpheme tiers
         for morph_tier in ('tarmor', 'actmor', 'mormea', 'mortyp'):
+            # Get the element of this morpheme tier
             tier = u.find("a[@type='extension'][@flavor='" + morph_tier + "']")
+
             if tier is not None:
 
-                # edit tier syntax
-                # first remove spaces within glosses so that only word boundary markers remain
+                # Cleaning
+                # first remove spaces within glosses
+                # so that only word boundary markers remain
                 tier.text = re.sub('\\s+(&gt;|>)\\s+', '>', tier.text)
-                # remove square brackets at edges of any of these tiers, they are semantically redundant
+                # remove square brackets at edges of any of these tiers
+                # they are semantically redundant
                 tier.text = re.sub('^\[|\]$', '', tier.text)
-                # replace untranscribed and/or unglossed words by standard formalisms
-                tier.text = re.sub('#|%%%|\*|(?<=\\s)\?(?=\\s)', '???', tier.text)
-                # delete brackets in "mortyp" and uppercase content to emphasise its abstract nature
+                # replace untranscribed and/or unglossed words
+                # by standard formalisms
+                tier.text = re.sub(
+                    '#|%%%|\*|(?<=\\s)\?(?=\\s)', '???', tier.text)
+                # delete brackets in "mortyp" and uppercase content
+                # to emphasise its abstract nature
                 if morph_tier == 'mortyp':
-                    tier.text = re.sub('\(([^\)]+)\)', '\\1'.upper(), tier.text)
+                    tier.text = re.sub(
+                        '\(([^\)]+)\)', '\\1'.upper(), tier.text)
                 # delete brackets in "tarmor" and "actmor"
                 if morph_tier == 'tarmor' or morph_tier == 'actmor':
                     tier.text = re.sub('[\(\)]', '', tier.text)
                 # replace "zéro" (= zero morpheme) by more standard "Ø"
                 tier.text = re.sub('zéro', 'Ø', tier.text)
 
-                # split into words
+                # split into m-words
                 words = re.split('\\s+', tier.text)
+                # get w-words
                 full_words = u.findall('.//w')
+                # get number of w-words
                 wlen = len(full_words)
+                # current position of w-word
                 word_index = -1
 
+                # go through all m-words
                 for w in words:
 
+                    # add dummy word to w-words if < no. m-words
+                    # get updated word position and no. w-words
                     word_index, wlen = XMLCleaner.word_index_up(
                             full_words, wlen, word_index, u)
 
+                    # check if <tmor>-element is already inserted under the
+                    # the corresponding <w>-element
                     if full_words[word_index].find('tmor') is None:
                         mor = etree.SubElement(full_words[word_index], 'tmor')
                     else:
                         mor = full_words[word_index].find('tmor')
+
+                    # insert morpheme tier element under <tmor>-element
                     mtier = etree.SubElement(mor, morph_tier)
+                    # set text with content of morpheme tier
                     mtier.text = words[word_index]
 
+                # remove <a>-elements with morpheme data
                 u.remove(tier)
 
     def _morphology_inference(self, u):
