@@ -489,7 +489,8 @@ def _utterances_get_uniquespeaker_ids():
 
 
 def _utterances_get_directedness():
-    """ Infer child directedness for each utterance. Skips Chintang. """
+    """ Infer child directedness for each utterance. Skips Chintang. If the utterance is or is not child directed, we denote 
+        this with 1 or 0. We use None (NULL) if the corpus is not annotated for child directedness. """
 
     rows = engine.execute('''
         select u.id, u.corpus, u.addressee, u.speaker_label, s.macrorole
@@ -507,7 +508,7 @@ def _utterances_get_directedness():
             else:
                 results.append({'utterance_id': row.id, 'childdirected': 0})
         else:
-            results.append({'utterance_id': row.id, 'childdirected': 0})
+            results.append({'utterance_id': row.id, 'childdirected': None})
     rows.close()
     _update_rows(db.Utterance.__table__, 'utterance_id', results)
 
