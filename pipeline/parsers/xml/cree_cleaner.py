@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import itertools
-import pdb
 import re
-import sys
 
 from lxml import etree
 from .xml_cleaner import XMLCleaner
+
 
 class CreeCleaner(XMLCleaner):
 
@@ -136,63 +134,104 @@ class CreeCleaner(XMLCleaner):
                 u.remove(tier)
 
     def _morphology_inference(self, u):
-
+        # get all <w> elements
         full_words = u.findall('.//w')
-        # split words into morphemes, add to temporary Vividict
+        # position of word in utterance
         word_index = 0
+        # go through all <w> elements
         for wd in full_words:
+            # get the <tmor> element
             temp = wd.find('tmor')
+            # check if it exists
             if temp is not None:
+                # get all morpheme elements which are under <tmor>
                 tiers = temp.getchildren()
+                # create the element <mor> under the <tmor> element
                 mword = etree.SubElement(wd, 'mor')
+                # go through morpheme elements
                 for tier in tiers:
+                    # position of a morpheme within word
                     morpheme_index = 0
+                    # split into morphemes at '~'
                     morphemes = re.split('~', tier.text)
+                    # go through all morphemes
                     for m in morphemes:
+                        # create as many <m> elements as there are morphemes
+                        # (taking the morpheme tier with most morphemes)
                         if morpheme_index >= len(mword):
+                            # create the <m> under the <mor> element
+                            # TODO: rename this variable to 'm_element'
                             mor = etree.SubElement(mword, 'm')
                         else:
+                            # get the <m> element
                             mor = mword[morpheme_index]
 
+                        # get morpheme tier name and look up the standard name
+                        # in the ini and add this name and the morpheme value
+                        # as an attribute of the <m> element
                         mor.attrib[self.cfg['correspondences'][tier.tag]] = m
                         morpheme_index += 1
 
+                # remove the <tmor> element
                 wd.remove(temp)
                 word_index += 1
             else:
+                # create a warning if <tmor> element does not exist
                 XMLCleaner.creadd(wd.attrib, 'warning', 'not glossed')
                 word_index += 1
                 continue
 
+        # get standard name of morpheme tiers mortyp and mormea in ini
         mortyp_t = self.cfg['correspondences']['mortyp']
         mormea_t = self.cfg['correspondences']['mormea']
+        # go through <w> elements
         for wd in full_words:
-
+            # get <mor> element
             ms = wd.find('mor')
+            # check if it exists
             if ms is not None:
+                # go through <m> elements
                 for w in ms:
-
-                    # some corrections where the Cree tier names don't match our target tiers exactly
+                    # some corrections where the Cree tier names don't match
+                    # our target tiers exactly
                     if (mortyp_t in w.attrib and w.attrib[mortyp_t] == 'IMP'
                             and mormea_t in w.attrib):
-                        w.attrib[mormea_t] += '.' + w_attrib[mortyp_t]
+                        # concatenate '.IMP' to mormea
+                        w.attrib[mormea_t] += '.' + w.attrib[mortyp_t]
+                        # replace 'IMP' by 'sfx'
                         w.attrib[mortyp_t] = 'sfx'
-                    # English words are glossed as "Eng" -> replace this by the word itself (e.g. "two", gloss "Eng" -> "two", gloss "two")
+
+                    # English words are glossed as "Eng"
+                    # replace this by the word itself
+                    # (e.g. "two", gloss "Eng" -> "two", gloss "two")
                     if mormea_t in w.attrib and w.attrib[mormea_t] == 'Eng':
+                        # create <language> under <w> element
                         wdl = etree.SubElement(wd, 'language')
+                        # set text of this element to 'English'
                         wdl.text = 'English'
+                        # create an attribute 'language' with value 'English'
+                        # in the <m> element
                         w.attrib['language'] = 'English'
+                        # set mormea to the actual word form
                         w.attrib[mormea_t] = wd.find('actual').text
                     else:
+                        # create language <language> element with text 'Cree'
+                        # under <w> element
                         wdl = etree.SubElement(wd, 'language')
                         wdl.text = 'Cree'
+                        # create an attribute 'language' with value 'Cree'
+                        # in the <m> element
                         w.attrib['language'] = 'Cree'
-                    # check for "?" attached to gloss; replace by warning that gloss is insecure
-                    if mormea_t is w.attrib and w.attrib[mormea_t].endswith('?'):
+
+                    # check for "?" attached to gloss
+                    if (mormea_t in w.attrib
+                            and w.attrib[mormea_t].endswith('?')):
+                        # delete '?'
                         w.attrib[mormea_t] = w.attrib[mormea_t][:-1]
-                        XMLCleaner.creadd(ms.attrib, 'warning', 'gloss insecure for tier ' + mormea_t)
-         # EOF word loop
-     # EOF Cree
+                        # create warning that gloss is insecure
+                        XMLCleaner.creadd(
+                            ms.attrib, 'warning',
+                            'gloss insecure for tier ' + mormea_t)
 
 
 if __name__ == '__main__':
@@ -202,4 +241,3 @@ if __name__ == '__main__':
     corpus = CreeCleaner(conf, 'tests/corpora/Cree/xml/Cree.xml')
 
     corpus._debug_xml()
-
