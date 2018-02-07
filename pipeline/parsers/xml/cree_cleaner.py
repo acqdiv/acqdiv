@@ -72,8 +72,15 @@ class CreeCleaner(XMLCleaner):
                 </tmor>
             </w>
         """
+        # segment tier is (unlike other corpora) principal tier
+        # as it is often the only tier that is filled
+        # number of segment words
+        n_tarmor_words = 0
+
         # Go through all morpheme tiers
+        # do not change order as number of tarmor words is computed first!
         for morph_tier in ('tarmor', 'actmor', 'mormea', 'mortyp'):
+
             # Get the element of this morpheme tier
             tier = u.find("a[@type='extension'][@flavor='" + morph_tier + "']")
 
@@ -103,10 +110,22 @@ class CreeCleaner(XMLCleaner):
 
                 # split into m-words
                 words = re.split('\\s+', tier.text)
+
+                # set number of segment words
+                if morph_tier == 'tarmor':
+                    n_tarmor_words = len(words)
+
                 # get w-words
                 full_words = u.findall('.//w')
                 # get number of w-words
                 wlen = len(full_words)
+
+                # check for w/m misalignments
+                if len(words) != n_tarmor_words or wlen != n_tarmor_words:
+                    self.creadd(
+                        u.attrib, 'warnings',
+                        'broken alignment of w-words and m-words')
+
                 # current position of w-word
                 word_index = -1
 
@@ -134,6 +153,12 @@ class CreeCleaner(XMLCleaner):
                 u.remove(tier)
 
     def _morphology_inference(self, u):
+        # check for m/w misalignments
+        wm_misaligned = False
+        if 'warnings' in u.attrib:
+            if u.attrib['warnings'].startswith('broken alignment'):
+                wm_misaligned = True
+
         # get all <w> elements
         full_words = u.findall('.//w')
         # position of word in utterance
@@ -144,33 +169,55 @@ class CreeCleaner(XMLCleaner):
             temp = wd.find('tmor')
             # check if it exists
             if temp is not None:
-                # get all morpheme elements which are under <tmor>
-                tiers = temp.getchildren()
-                # create the element <mor> under the <tmor> element
+                # create the element <mor> under the <w> element
                 mword = etree.SubElement(wd, 'mor')
+
+                # segment tier is (unlike other corpora) principal tier
+                # as it is often the only tier that is filled
+                tarmor_element = temp.find('tarmor')
+                # number of segments
+                n_segments = 0
+                # check if it exists
+                if tarmor_element is not None:
+                    # go through all segments splitting at '~'
+                    for morpheme in re.split('~', tarmor_element.text):
+                        # create a <m> under the <mor> element
+                        etree.SubElement(mword, 'm')
+                        n_segments += 1
+
                 # go through morpheme elements
-                for tier in tiers:
-                    # position of a morpheme within word
-                    morpheme_index = 0
+                for tier in temp.getchildren():
                     # split into morphemes at '~'
                     morphemes = re.split('~', tier.text)
-                    # go through all morphemes
-                    for m in morphemes:
-                        # create as many <m> elements as there are morphemes
-                        # (taking the morpheme tier with most morphemes)
-                        if morpheme_index >= len(mword):
-                            # create the <m> under the <mor> element
-                            # TODO: rename this variable to 'm_element'
-                            mor = etree.SubElement(mword, 'm')
-                        else:
-                            # get the <m> element
-                            mor = mword[morpheme_index]
 
-                        # get morpheme tier name and look up the standard name
-                        # in the ini and add this name and the morpheme value
-                        # as an attribute of the <m> element
-                        mor.attrib[self.cfg['correspondences'][tier.tag]] = m
-                        morpheme_index += 1
+                    # check for m/m misalignments
+                    mm_misaligned = False
+                    if len(morphemes) != n_segments:
+                        mm_misaligned = True
+                        self.creadd(
+                            wd.attrib, 'warnings',
+                            'broken alignment of m-words')
+
+                    # misaligned morpheme tiers except for the segment tier
+                    # are nulled
+                    # TODO: try out if this condition is necessary
+                    if (tier.tag != 'tarmor'
+                            and (wm_misaligned or mm_misaligned)):
+                        # go through all <m> elements
+                        for m_element in mword.iter('m'):
+                            # get standard tier name
+                            tier_name = self.cfg['correspondences'][tier.tag]
+                            # add as an empty attribute to the <m> element
+                            m_element.attrib[tier_name] = ''
+                    else:
+                        # go through all morphemes
+                        for index, m in enumerate(morphemes):
+                            # get the <m> element
+                            m_element = mword[index]
+                            # get standard tier name
+                            tier_name = self.cfg['correspondences'][tier.tag]
+                            # add as an attribute with the morheme value
+                            m_element.attrib[tier_name] = m
 
                 # remove the <tmor> element
                 wd.remove(temp)
