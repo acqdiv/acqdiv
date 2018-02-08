@@ -77,6 +77,9 @@ class CreeCleaner(XMLCleaner):
         # number of segment words
         n_tarmor_words = 0
 
+        # morpheme tiers that are misaligned on word level with segment tier
+        self.misaligned_mtiers = set()
+
         # Go through all morpheme tiers
         # do not change order as number of tarmor words is computed first!
         for morph_tier in ('tarmor', 'actmor', 'mormea', 'mortyp'):
@@ -121,10 +124,14 @@ class CreeCleaner(XMLCleaner):
                 wlen = len(full_words)
 
                 # check for w/m misalignments
-                if len(words) != n_tarmor_words or wlen != n_tarmor_words:
+                if wlen != n_tarmor_words:
                     self.creadd(
                         u.attrib, 'warnings',
                         'broken alignment of w-words and m-words')
+
+                # check for morpheme tier misalignments on word-level
+                if len(words) != n_tarmor_words:
+                    self.misaligned_mtiers.add(morph_tier)
 
                 # current position of w-word
                 word_index = -1
@@ -153,12 +160,6 @@ class CreeCleaner(XMLCleaner):
                 u.remove(tier)
 
     def _morphology_inference(self, u):
-        # check for m/w misalignments
-        wm_misaligned = False
-        if 'warnings' in u.attrib:
-            if u.attrib['warnings'].startswith('broken alignment'):
-                wm_misaligned = True
-
         # get all <w> elements
         full_words = u.findall('.//w')
         # position of word in utterance
@@ -202,7 +203,8 @@ class CreeCleaner(XMLCleaner):
                     # are nulled
                     # TODO: try out if this condition is necessary
                     if (tier.tag != 'tarmor'
-                            and (wm_misaligned or mm_misaligned)):
+                            and (tier.tag in self.misaligned_mtiers
+                                    or mm_misaligned)):
                         # go through all <m> elements
                         for m_element in mword.iter('m'):
                             # get standard tier name
