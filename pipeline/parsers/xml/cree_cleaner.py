@@ -74,18 +74,22 @@ class CreeCleaner(XMLCleaner):
         """
         # segment tier is (unlike other corpora) principal tier
         # as it is often the only tier that is filled
-        # number of segment words
-        n_tarmor_words = 0
-
-        # morpheme tiers that are misaligned on word level with segment tier
+        default_mtier = 'tarmor'
+        # number of (segment) words
+        n_mwords = 0
+        # morpheme tiers that are misaligned on word level (with segment tier)
         self.misaligned_mtiers = set()
 
         # Go through all morpheme tiers
-        # do not change order as number of tarmor words is computed first!
+        # do not change order as number of certain morphemes is pre-computed!
         for morph_tier in ('tarmor', 'actmor', 'mormea', 'mortyp'):
 
             # Get the element of this morpheme tier
             tier = u.find("a[@type='extension'][@flavor='" + morph_tier + "']")
+
+            # if segment tier does not exist, try using the gloss tier
+            if morph_tier == 'tarmor' and tier is None:
+                default_mtier = 'mormea'
 
             if tier is not None:
 
@@ -115,8 +119,8 @@ class CreeCleaner(XMLCleaner):
                 words = re.split('\\s+', tier.text)
 
                 # set number of segment words
-                if morph_tier == 'tarmor':
-                    n_tarmor_words = len(words)
+                if morph_tier == default_mtier:
+                    n_mwords = len(words)
 
                 # get w-words
                 full_words = u.findall('.//w')
@@ -124,13 +128,13 @@ class CreeCleaner(XMLCleaner):
                 wlen = len(full_words)
 
                 # check for w/m misalignments
-                if wlen != n_tarmor_words:
+                if wlen != n_mwords:
                     self.creadd(
                         u.attrib, 'warnings',
                         'broken alignment of w-words and m-words')
 
                 # check for morpheme tier misalignments on word-level
-                if len(words) != n_tarmor_words:
+                if len(words) != n_mwords:
                     self.misaligned_mtiers.add(morph_tier)
 
                 # current position of w-word
@@ -175,16 +179,19 @@ class CreeCleaner(XMLCleaner):
 
                 # segment tier is (unlike other corpora) principal tier
                 # as it is often the only tier that is filled
-                tarmor_element = temp.find('tarmor')
-                # number of segments
-                n_segments = 0
-                # check if it exists
-                if tarmor_element is not None:
-                    # go through all segments splitting at '~'
-                    for morpheme in re.split('~', tarmor_element.text):
+                m_element = temp.find('tarmor')
+                # if tarmor tier does not exist, try using mormea tier
+                if m_element is None:
+                    m_element = temp.find('mormea')
+
+                # number of morphemes (segments)
+                n_morphemes = 0
+                if m_element is not None:
+                    # go through all morphemes splitting at '~'
+                    for morpheme in re.split('~', m_element.text):
                         # create a <m> under the <mor> element
                         etree.SubElement(mword, 'm')
-                        n_segments += 1
+                        n_morphemes += 1
 
                 # go through morpheme elements
                 for tier in temp.getchildren():
@@ -193,7 +200,7 @@ class CreeCleaner(XMLCleaner):
 
                     # check for m/m misalignments
                     mm_misaligned = False
-                    if len(morphemes) != n_segments:
+                    if len(morphemes) != n_morphemes:
                         mm_misaligned = True
                         self.creadd(
                             wd.attrib, 'warnings',
