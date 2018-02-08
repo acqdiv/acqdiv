@@ -199,19 +199,10 @@ class CreeCleaner(XMLCleaner):
                             wd.attrib, 'warnings',
                             'broken alignment of m-words')
 
-                    # misaligned morpheme tiers except for the segment tier
-                    # are nulled
-                    # TODO: try out if this condition is necessary
-                    if (tier.tag != 'tarmor'
-                            and (tier.tag in self.misaligned_mtiers
-                                    or mm_misaligned)):
-                        # go through all <m> elements
-                        for m_element in mword.iter('m'):
-                            # get standard tier name
-                            tier_name = self.cfg['correspondences'][tier.tag]
-                            # add as an empty attribute to the <m> element
-                            m_element.attrib[tier_name] = ''
-                    else:
+                    # add content of morpheme tiers if not misaligned
+                    # with segment tier
+                    if (tier.tag not in self.misaligned_mtiers
+                            and not mm_misaligned):
                         # go through all morphemes
                         for index, m in enumerate(morphemes):
                             # get the <m> element
