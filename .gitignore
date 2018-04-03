@@ -1,25 +1,15 @@
+/pipeline/corpora
+
 .input
 .output
 
-# corpora
-/pipeline/corpora
-
-# sqlite3 files
+*.csv
 *.sqlite3
-
-# logs
 *.log
-
-# Docs
-.pdf
-
+*.pdf
 *.py[cod]
-
-# Backup files
 *~
 *.bkup
-
-# C extensions
 *.so
 
 # Packages
@@ -55,5 +45,6 @@ nosetests.xml
 .idea
 
 # R files
-.RDS
-.Rdata
+*.RDS
+*.Rdata
+*.rda
