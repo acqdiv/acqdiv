@@ -118,13 +118,10 @@ class XMLParser(object):
         #        attrib = elem.attrib
         #    except TypeError:
         #        pass
-
         for u in xmldoc.getiterator('u'):
-
             udict = XMLParser.udict.copy()
             words = deque()
             mwords = deque()
-
             try:
 
                 udict['corpus'] = self.cfg['corpus']['corpus']
@@ -147,15 +144,7 @@ class XMLParser(object):
                 if fws is None:
                     continue
                 for w in fws:
-
                     wdict = {}
-                    #wdict['corpus'] = udict['corpus']
-                    #wdict['language'] = udict['language']
-
-                    #wdict['word_actual'] = w.find('actual').text
-                    #wdict['word_target'] = w.find('target').text
-                    #wdict['word'] = wdict[self.cfg['xml_mappings']['word']]
-
                     wdict['warning'] = w.attrib.get('warning')
 
                     if ((udict['warning'] is not None
@@ -179,9 +168,9 @@ class XMLParser(object):
                             wdict['word_language'] = wl.text
                         else:
                             wdict['word_language'] = udict['language']
-
                         wdict['word_actual'] = w.find('actual').text
                         wdict['word_target'] = w.find('target').text
+                        # insert code here???
                         wdict['word'] = wdict[self.cfg['xml_mappings']['word']]
                     else:
                         wdict = None
@@ -189,8 +178,11 @@ class XMLParser(object):
                     words.append(wdict)
                     mwords.append(morphemes)
 
+
+
                 udict = self._clean_utterance(udict)
                 words = self._clean_words(words)
+                words = self._correct_actual_target(words)
                 mwords = self._clean_morphemes(mwords)
 
                 udict['pos_raw'] = self._concat_mor_tier('pos_raw', mwords)
@@ -208,6 +200,25 @@ class XMLParser(object):
                                          "utterance: {}. "
                                          "Skipping...".format(repr(e)),
                                          exc_info=sys.exc_info())
+
+    def _correct_actual_target(self, words):
+        """
+        if corpus is marked as not consistently concerning the actual-target-distinction 
+        and actual and target have the same value, both are nullified
+        Params:
+            words: list of dictionaries
+        """
+        is_consistent = self.cfg['metadata']['consistent_actual_target']
+
+        for word in words:
+            if is_consistent == 'no':
+                # filter NoneType words and empty dicts
+                if isinstance(word, dict) and len(word) > 0:
+                    if word['word_actual'] == word['word_target']:
+                        word['word_target'] = None
+                        word['word_actual'] = None
+
+        return words
 
     def _clean_words(self, words):
         """
@@ -300,6 +311,7 @@ class XMLParser(object):
             else:
                 pass
         return utterance
+
 
     def _concat_mor_tier(self, tier, morphlist):
         """
