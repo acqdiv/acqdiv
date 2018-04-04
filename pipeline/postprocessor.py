@@ -20,6 +20,7 @@ conn = None
 cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 age_pattern = re.compile(".*;.*\..*")
 pos_index = {}
+pos_raw_index = {}
 
 
 def setup(args):
@@ -612,8 +613,8 @@ def process_morphemes_table():
     print("_morphemes_unify_label")
     _morphemes_unify_label()
 
-    print("_morphemes_get_pos_index")
-    _morphemes_get_pos_index()
+    print("_morphemes_get_pos_indexes")
+    _morphemes_get_pos_indexes()
 
     print("_morphemes_unify_unknowns")
     _morphemes_unify_unknowns()
@@ -712,9 +713,9 @@ def _morphemes_unify_label():
     _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
 
-def _morphemes_get_pos_index():
-    """ Infer the word's part-of-speech from the morphemes table as index for word pos assignment. """
-    s = sa.select([db.Morpheme.id, db.Morpheme.pos, db.Morpheme.word_id_fk])
+def _morphemes_get_pos_indexes():
+    """ Infer the word's part-of-speech (raw and processed) from the morphemes table as index for word pos assignment. """
+    s = sa.select([db.Morpheme.id, db.Morpheme.pos, db.Morpheme.pos_raw, db.Morpheme.word_id_fk])
     rows = conn.execute(s)
     for row in rows:
         if not row.pos in ["sfx", "pfx"]:
@@ -723,8 +724,11 @@ def _morphemes_get_pos_index():
                 pos_index[int(row.word_id_fk)] = row.pos
             except TypeError:
                 pass
+            try:
+                pos_raw_index[int(row.word_id_fk)] = row.pos_raw
+            except TypeError:
+                pass
     rows.close()
-
 
 def _morphemes_unify_unknowns():
     """Unify unknown values for morphemes."""
@@ -837,15 +841,29 @@ def _words_unify_unknowns():
 
 
 def _words_add_pos_labels():
-    """Add POS labels."""
-    s = sa.select([db.Word.id])
-    rows = conn.execute(s)
-    results = []
-    for row in rows:
-        if row.id in pos_index:
-            results.append({'word_id': row.id, 'pos': pos_index[row.id]})
-    rows.close()
-    _update_rows(db.Word.__table__, 'word_id', results)
+    """ Add POS labels (processed and UD). """    
+
+    s = sa.select([db.Word.id, db.Word.corpus])
+    query = conn.execute(s)
+    results_pos = []
+    results_pos_ud = []
+    
+    for corpus, rows in groupby(query, lambda r: r[1]):
+        config = get_config(corpus)
+        poses_ud = config['pos_ud']
+        
+        for row in rows:
+            if row.id in pos_index:
+                results_pos.append({'word_id': row.id, 'pos': pos_index[row.id]})
+            if row.id in pos_raw_index:
+                # tag in index is pos_raw, so first get UD equivalent
+                pos_raw = pos_raw_index[row.id]
+                pos_ud = None if pos_raw not in poses_ud else poses_ud[pos_raw]
+                # now add
+                results_pos_ud.append({'word_id': row.id, 'pos_ud': pos_ud})
+    query.close()
+    _update_rows(db.Word.__table__, 'word_id', results_pos)
+    _update_rows(db.Word.__table__, 'word_id', results_pos_ud)
 
 
 ### Util functions ###

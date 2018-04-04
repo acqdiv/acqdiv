@@ -159,6 +159,7 @@ class Word(Base):
     word_language = Column(Text, nullable=True, unique=False)
     word = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     pos = Column(Text, nullable=True, unique=False)
+    pos_ud = Column(Text, nullable=True, unique=False)
     word_actual = Column(Text, nullable=True, unique=False)
     word_target = Column(Text, nullable=True, unique=False)
     warning = Column(Text, nullable=True, unique=False)

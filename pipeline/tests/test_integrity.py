@@ -90,6 +90,12 @@ class ValidationTest(object):
                "PREP", "PRODEM", "PTCL", "QUANT", "sfx", "stem", "V", "???"]
         self._in_whitelist(query, pos)
 
+    def test_pos_ud(self):
+        """ Check UD pos (on word level) in database vs whitelist. """
+        query = "select pos_ud from words group by pos_ud"
+        pos_ud = [None, "ADJ", "ADP", "ADV", "AUX", "CCONJ", "DET", "INTJ", "NOUN", "NUM", "PART", "PRON", "PROPN", "PUNCT", "SCONJ", "SYM", "VERB", "X"]
+        self._in_whitelist(query, pos_ud)        
+
     def test_role(self):
         """ Check roles in database vs whitelist. """
         query = "select role from speakers group by role"
