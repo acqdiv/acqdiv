@@ -1,29 +1,46 @@
 from setuptools import setup, find_packages
+from codecs import open
+from os import path
 
+here = path.abspath(path.dirname(__file__))
 
-requires = [
-    # list required third-party packages here
-    'sqlalchemy',
-]
+# Get the long description from the README file
+with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+    long_description = f.read()
+
 
 setup(
     name='acqdiv',
-    version='0.0',
-    description='python package for the acqdiv project',
-    long_description='',
+    version='1.0',
+    description='Pipeline for ACQDIV project',
+    long_description=long_description,
+    url='https://github.com/uzling/acqdiv',
+    author='ACQDIV developer team',
+    author_email='steven.moran@uzh.ch',
     classifiers=[
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Developers',
+        'Topic :: Text Processing :: Linguistic',
+        'License :: Free For Educational Use',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6'
     ],
-    author='',
-    author_email='',
-    url='',
     keywords='data linguistics',
     packages=find_packages(),
-    include_package_data=True,
-    zip_safe=False,
-    install_requires=requires,
-    tests_require=[],
-    test_suite="acqdiv"
+    install_requires=[
+        'sqlalchemy',
+        'lxml',
+        'numpy',
+        'pandas',
+        'nose'
+    ],
+    # TODO: not sure if we need this: package_data, data_files
+    entry_points={
+        'console_scripts': ['acqdiv=acqdiv.__main__:main'],
+    },
+    project_urls={
+        'Bug Reports': 'https://github.com/uzling/acqdiv/issues',
+        'Source': 'https://github.com/uzling/acqdiv',
+    }
 )
