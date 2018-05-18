@@ -1,3 +1,8 @@
+import contextlib
+import mmap
+import re
+
+
 class SessionParser:
     """Parser for a session."""
 
@@ -30,7 +35,46 @@ class CHATRecordParser(RecordParser):
                 dependent_tier_name2
                 <further dependent tiers>
         """
-        pass
+        # store the data of a record here
+        rec_dict = {}
+
+        with open(self.session_path, 'rb') as f:
+            # use memory-mapping of files
+            with contextlib.closing(
+                    mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as text:
+
+                # create a record generator
+                rec_generator = re.finditer(br'\*[A-Z]{3}:\t', text)
+
+                # get start of first record
+                rec_start_pos = next(rec_generator).start()
+
+                # iter all records
+                for rec in rec_generator:
+
+                    # get start of next record
+                    next_rec_start_pos = rec.start()
+
+                    # get the stringified record
+                    rec_str = text[rec_start_pos:next_rec_start_pos]
+
+                    # add data to record dict
+                    self.add_main_line(rec_dict, rec_str)
+                    self.add_dependent_tiers(rec_dict, rec_str)
+
+                    yield rec_dict
+
+                    # clear record dict
+                    rec_dict.clear()
+
+                    # set new start of record
+                    rec_start_pos = next_rec_start_pos
+
+                # handle last record
+                rec_str = text[rec_start_pos:]
+                self.add_main_line(rec_dict, rec_str)
+                self.add_dependent_tiers(rec_dict, rec_str)
+                yield rec_dict
 
     def add_main_line(self, record_dict, record_str):
         """Add the data from the main line.
