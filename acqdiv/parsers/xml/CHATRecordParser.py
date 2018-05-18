@@ -57,6 +57,8 @@ class CHATRecordParser(RecordParser):
 
                     # get the stringified record
                     rec_str = text[rec_start_pos:next_rec_start_pos].decode()
+                    # some cleaning
+                    rec_str = self.remove_line_breaks(rec_str)
 
                     # add data to record dict
                     self.add_main_line(rec_dict, rec_str)
@@ -72,9 +74,22 @@ class CHATRecordParser(RecordParser):
 
                 # handle last record
                 rec_str = text[rec_start_pos:].decode()
+                rec_str = self.remove_line_breaks(rec_str)
                 self.add_main_line(rec_dict, rec_str)
                 self.add_dependent_tiers(rec_dict, rec_str)
                 yield rec_dict
+
+    def remove_line_breaks(self, rec_str):
+        """Remove line breaks within main line or dependent tiers.
+
+        CHAT inserts line breaks when the text of a main line or dependent
+        tier becomes too long.
+
+        Args:
+            rec_str (str): The stringified record.
+
+        """
+        return rec_str.replace('\n\t', ' ')
 
     def add_main_line(self, record_dict, record_str):
         """Add the data from the main line.
@@ -162,7 +177,7 @@ class CHATRecordParser(RecordParser):
             record_str (str): The stringified record.
 
         """
-        dependent_tiers_regex = re.compile(r'\%.*')
+        dependent_tiers_regex = re.compile(r'\%[a-z]+:\t.*')
         for match in dependent_tiers_regex.finditer(record_str):
             dependent_tier = match.group()
             self.add_dependent_tier(record_dict, dependent_tier)
@@ -179,3 +194,26 @@ class CHATRecordParser(RecordParser):
         tier_name = match.group(1)
         tier_content = match.group(2)
         record_dict[tier_name] = tier_content
+
+
+if __name__ == '__main__':
+    import glob
+    import acqdiv
+    import os
+    import time
+
+    start_time = time.time()
+
+    acqdiv_path = os.path.dirname(acqdiv.__file__)
+    corpora_path = os.path.join(acqdiv_path, 'corpora/*/cha/*.cha')
+
+    rec_parser = CHATRecordParser('blabla')
+
+    for p in glob.iglob(corpora_path):
+
+        rec_parser.session_path = p
+
+        for rec in rec_parser.iter_records():
+            pass
+
+    print('--- %s seconds ---' % (time.time() - start_time))
