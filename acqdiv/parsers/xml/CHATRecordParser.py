@@ -88,6 +88,9 @@ class CHATRecordParser(RecordParser):
         Args:
             rec_str (str): The stringified record.
 
+        Returns:
+            str: record without break lines within main line or dependent tiers
+
         """
         return rec_str.replace('\n\t', ' ')
 
@@ -101,60 +104,77 @@ class CHATRecordParser(RecordParser):
             record_str (str): The stringified record.
 
         """
-        main_line_regex = re.compile(r'\*[A-Z]{3}:\t.*')
-        main_line = main_line_regex.search(record_str).group()
-        self.add_speaker_label(record_dict, main_line)
-        self.add_utterance(record_dict, main_line)
-        self.add_start(record_dict, main_line)
-        self.add_end(record_dict, main_line)
+        main_line = self.get_main_line(record_str)
+        record_dict['speaker_label'] = self.get_speaker_label(main_line)
+        record_dict['utterance'] = self.get_utterance(main_line)
+        record_dict['start'] = self.get_start(main_line)
+        record_dict['end'] = self.get_end(main_line)
 
-    def add_speaker_label(self, record_dict, main_line):
-        """Add the speaker label from the main line.
+    def get_main_line(self, record_str):
+        """Get main line from the record.
 
         Args:
-            record_dict (dict): Where the speaker label is added.
+            record_str (str): The stringified record.
+
+        Returns:
+            str: The main line.
+
+        """
+        main_line_regex = re.compile(r'\*[A-Z]{3}:\t.*')
+        return main_line_regex.search(record_str).group()
+
+    def get_speaker_label(self, main_line):
+        """Get speaker label from the main line.
+
+        Args:
             main_line (str): The stringified main line.
+
+        Returns:
+            str: The speaker label.
 
         """
         speaker_label_regex = re.compile(r'(?<=^\*)[A-Z]{3}')
-        speaker_label = speaker_label_regex.search(main_line).group()
-        record_dict['speaker_label'] = speaker_label
+        return speaker_label_regex.search(main_line).group()
 
-    def add_utterance(self, record_dict, main_line):
-        """Add the utterance from the main line.
+    def get_utterance(self, main_line):
+        """Get utterance from the main line.
 
         Args:
-            record_dict (dict): Where the utterance is added.
             main_line (str): The stringified main line.
+
+        Returns:
+            str: The utterance.
 
         """
         utterance_regex = re.compile(r'(?<=:\t).*[.!?]')
-        utterance = utterance_regex.search(main_line).group()
-        record_dict['utterance'] = utterance
+        return utterance_regex.search(main_line).group()
 
-    def add_start(self, record_dict, main_line):
-        """Add the start time from the main line.
+    def get_start(self, main_line):
+        """Get start time from the main line.
 
         Args:
-            record_dict (dict): Where the start time is added.
             main_line (str): The stringified main line.
+
+        Returns:
+            str: The start time.
 
         """
         start_regex = re.compile(r'\d+(?=_\d+)')
         match = start_regex.search(main_line)
         # start time might be missing
         if match is None:
-            start = None
+            return None
         else:
-            start = match.group()
-        record_dict['start'] = start
+            return match.group()
 
-    def add_end(self, record_dict, main_line):
-        """Add the end time from the main line.
+    def get_end(self, main_line):
+        """Get end time from the main line.
 
         Args:
-            record_dict (dict): Where the end time is added.
             main_line (str): The stringified main line.
+
+        Returns:
+            str: The end time.
 
         """
         # look-behind does not work here, therefore we use a capturing group
@@ -162,10 +182,9 @@ class CHATRecordParser(RecordParser):
         match = end_regex.search(main_line)
         # end time might be missing
         if match is None:
-            end = None
+            return None
         else:
-            end = match.group(2)
-        record_dict['end'] = end
+            return match.group(2)
 
     def add_dependent_tiers(self, record_dict, record_str):
         """Add all dependent tiers.
@@ -180,20 +199,24 @@ class CHATRecordParser(RecordParser):
         dependent_tiers_regex = re.compile(r'\%[a-z]+:\t.*')
         for match in dependent_tiers_regex.finditer(record_str):
             dependent_tier = match.group()
-            self.add_dependent_tier(record_dict, dependent_tier)
+            name, content = self.get_dependent_tier(dependent_tier)
+            record_dict[name] = content
 
-    def add_dependent_tier(self, record_dict, dependent_tier):
-        """Add the dependent tier.
+    def get_dependent_tier(self, dependent_tier):
+        """Get the name and content of the dependent tier.
 
         Args:
-            record_dict (dict): Where the dependent tier is added.
             dependent_tier (str): The stringified dependent tier.
+
+        Returns:
+            tuple: The name and content of the dependent tier.
+
         """
         dependent_tier_regex = re.compile(r'\%([a-z]+):\t(.*)')
         match = dependent_tier_regex.search(dependent_tier)
         tier_name = match.group(1)
         tier_content = match.group(2)
-        record_dict[tier_name] = tier_content
+        return tier_name, tier_content
 
 
 if __name__ == '__main__':
