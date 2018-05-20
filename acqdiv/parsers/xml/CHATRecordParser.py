@@ -26,18 +26,8 @@ class CHATRecordParser(RecordParser):
 
         Yields:
             dict: The next record in the CHAT file.
-                Dictionary has the following keys:
-                utterance
-                speaker_label
-                start
-                end
-                dependent_tier_name1
-                dependent_tier_name2
-                <further dependent tiers>
-        """
-        # store the data of a record here
-        rec_dict = {}
 
+        """
         with open(self.session_path, 'rb') as f:
             # use memory-mapping of files
             with contextlib.closing(
@@ -57,27 +47,43 @@ class CHATRecordParser(RecordParser):
 
                     # get the stringified record
                     rec_str = text[rec_start_pos:next_rec_start_pos].decode()
-                    # some cleaning
-                    rec_str = self.remove_line_breaks(rec_str)
 
-                    # add data to record dict
-                    self.add_main_line(rec_dict, rec_str)
-                    self.add_dependent_tiers(rec_dict, rec_str)
-
-                    yield rec_dict
-
-                    # clear record dict
-                    rec_dict.clear()
+                    yield self.get_rec_dict(rec_str)
 
                     # set new start of record
                     rec_start_pos = next_rec_start_pos
 
                 # handle last record
                 rec_str = text[rec_start_pos:].decode()
-                rec_str = self.remove_line_breaks(rec_str)
-                self.add_main_line(rec_dict, rec_str)
-                self.add_dependent_tiers(rec_dict, rec_str)
-                yield rec_dict
+                yield self.get_rec_dict(rec_str)
+
+    def get_rec_dict(self, rec_str):
+        """Get a record dictionary from the stringified record.
+
+        The dictionary has the following keys:
+            utterance
+            speaker_label
+            start
+            end
+            dependent_tier_name1
+            dependent_tier_name2
+            <further dependent tiers>
+
+        Args:
+            rec_str (str): The stringified record.
+
+        Returns:
+            dict: The record dictionary.
+
+        """
+        rec_dict = {}
+        rec_str = self.remove_line_breaks(rec_str)
+        main_line_dict = self.get_main_line_dict(rec_str)
+        dependent_tiers_dict = self.get_dependent_tiers(rec_str)
+        rec_dict.update(main_line_dict)
+        rec_dict.update(dependent_tiers_dict)
+        return rec_dict
+
 
     def remove_line_breaks(self, rec_str):
         """Remove line breaks within main line or dependent tiers.
@@ -94,30 +100,39 @@ class CHATRecordParser(RecordParser):
         """
         return rec_str.replace('\n\t', ' ')
 
-    def add_main_line(self, record_dict, record_str):
-        """Add the data from the main line.
+    def get_main_line_dict(self, record_str):
+        """Get the main line dictionary from the record.
 
-        Sets the following keys: utterance, speaker_label, start, end
-
-        Args:
-            record_dict (dict): Where the data from the main line is added.
-            record_str (str): The stringified record.
-
-        """
-        main_line = self.get_main_line(record_str)
-        record_dict['speaker_label'] = self.get_speaker_label(main_line)
-        record_dict['utterance'] = self.get_utterance(main_line)
-        record_dict['start'] = self.get_start(main_line)
-        record_dict['end'] = self.get_end(main_line)
-
-    def get_main_line(self, record_str):
-        """Get main line from the record.
+        The dictionary has the following keys:
+            utterance
+            speaker_label
+            start
+            end
 
         Args:
             record_str (str): The stringified record.
 
         Returns:
-            str: The main line.
+            dict: The main line dictionary.
+
+        """
+        main_line_dict = {}
+        main_line = self.get_main_line_str(record_str)
+        main_line_dict['speaker_label'] = self.get_speaker_label(main_line)
+        main_line_dict['utterance'] = self.get_utterance(main_line)
+        main_line_dict['start'] = self.get_start(main_line)
+        main_line_dict['end'] = self.get_end(main_line)
+
+        return main_line_dict
+
+    def get_main_line_str(self, record_str):
+        """Get the stringified main line from the record.
+
+        Args:
+            record_str (str): The stringified record.
+
+        Returns:
+            str: The stringified main line.
 
         """
         main_line_regex = re.compile(r'\*[A-Z]{3}:\t.*')
@@ -186,21 +201,25 @@ class CHATRecordParser(RecordParser):
         else:
             return match.group(2)
 
-    def add_dependent_tiers(self, record_dict, record_str):
-        """Add all dependent tiers.
-
-        Dependent tiers start with ``%tier_name:\t``.
+    def get_dependent_tiers(self, record_str):
+        """Get the dependent tiers from the record.
 
         Args:
-            record_dict (dict): Where the dependent tiers are added.
             record_str (str): The stringified record.
 
+        Returns:
+            dict: The dependent tiers with name as key and content as value.
+
         """
-        dependent_tiers_regex = re.compile(r'\%[a-z]+:\t.*')
+        dependent_tiers = {}
+
+        dependent_tiers_regex = re.compile(r'%[a-z]+:\t.*')
         for match in dependent_tiers_regex.finditer(record_str):
             dependent_tier = match.group()
             name, content = self.get_dependent_tier(dependent_tier)
-            record_dict[name] = content
+            dependent_tiers[name] = content
+
+        return dependent_tiers
 
     def get_dependent_tier(self, dependent_tier):
         """Get the name and content of the dependent tier.
@@ -212,7 +231,7 @@ class CHATRecordParser(RecordParser):
             tuple: The name and content of the dependent tier.
 
         """
-        dependent_tier_regex = re.compile(r'\%([a-z]+):\t(.*)')
+        dependent_tier_regex = re.compile(r'%([a-z]+):\t(.*)')
         match = dependent_tier_regex.search(dependent_tier)
         tier_name = match.group(1)
         tier_content = match.group(2)
@@ -230,11 +249,9 @@ if __name__ == '__main__':
     acqdiv_path = os.path.dirname(acqdiv.__file__)
     corpora_path = os.path.join(acqdiv_path, 'corpora/*/cha/*.cha')
 
-    rec_parser = CHATRecordParser('blabla')
+    for path in glob.iglob(corpora_path):
 
-    for p in glob.iglob(corpora_path):
-
-        rec_parser.session_path = p
+        rec_parser = CHATRecordParser(path)
 
         for rec in rec_parser.iter_records():
             pass
