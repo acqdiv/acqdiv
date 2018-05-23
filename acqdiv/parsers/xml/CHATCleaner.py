@@ -166,45 +166,47 @@ class CHATCleaner:
         Coding in CHAT: word ending with @.
         The @ and the part after it are removed.
         """
-        pass
+        form_marker_regex = re.compile(r'(\S+)@\S+')
+        return form_marker_regex.sub(r'\1', utterance)
 
     def remove_linkers(self, utterance):
         """Remove linkers from the utterance.
 
         Coding in CHAT: +["^,+<] (always in the beginning of utterance).
         """
-        pass
+        linker_regex = re.compile(r'^\+["^,+<]')
+        return linker_regex.sub('', utterance).lstrip(' ')
 
     def remove_separators(self, utterance):
         """Remove separators from the utterance.
 
-        Separators are commas, colons or semi-colons.
+        Separators are commas, colons or semi-colons which are surrounded
+        by whitespaces.
         """
-        pass
+        separator_regex = re.compile(r' [,:;]( )')
+        return separator_regex.sub(r'\1', utterance)
 
     def remove_ca(self, utterance):
         """Remove elements from Conversational Analysis.
 
         Note:
-            At the moment only ↓ and ↑ are attested in our corpora.
+            At the moment, only ↓ and ↑ are attested in our corpora.
         """
-        pass
+        ca_regex = re.compile(r'[↓↑]')
+        clean1 = ca_regex.sub('', utterance)
+        clean2 = self._remove_redundant_whitespaces(clean1)
+        return clean2
 
     def remove_disfluency_markers(self, utterance):
         """Remove disfluency markers from the utterance.
 
-        Coding in CHAT:
-            :   lengthened sound
-            ^   blocking (at beginning of word) or pause within word
-            &   fragments
-            &-  fillers
-        """
-        pass
-
-    def remove_pauses(self, utterance):
-        """Remove pauses between words from utterance..
-
-        Coding in CHAT: (.{1,3})    .
+        Note:
+            At the moment, the following markers are attested in our corpora:
+                :           lengthened sound
+                ^           blocking (at beginning of word) or pause within word
+                &           fragments
+                &-          fillers
+                (.{1,3})    pauses between words
         """
         pass
 
@@ -232,4 +234,8 @@ if __name__ == '__main__':
     print(repr(cleaner.get_replacement_target('This us [: is] <srane suff> [: strange stuff]')))
     print(repr(cleaner.get_fragment_actual('This is &at .')))
     print(repr(cleaner.get_fragment_target('This is &at .')))
+    print(repr(cleaner.remove_form_markers('I know the A@l B@l C@l .')))
+    print(repr(cleaner.remove_linkers('+" bir de köpek varmış .')))
+    print(repr(cleaner.remove_separators('that is , that is ; that is : that is .')))
+    print(repr(cleaner.remove_ca('up ↑ and down ↓ .')))
 
