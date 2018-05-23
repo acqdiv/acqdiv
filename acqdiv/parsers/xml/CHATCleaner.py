@@ -59,6 +59,7 @@ class CHATCleaner:
         clean2 = self._remove_redundant_whitespaces(clean1)
         return clean2
 
+    # TODO: does not work correctly for multiple instances
     def handle_repetitions(self, utterance):
         """Write out repeated words in the utterance.
 
@@ -84,13 +85,20 @@ class CHATCleaner:
 
         Coding in CHAT: 0\w+    .
         """
+        omission_regex = re.compile(r'0\w+')
+        clean1 = omission_regex.sub('', utterance)
+        clean2 = self._remove_redundant_whitespaces(clean1)
+        return clean2
 
     def unify_untranscribed(self, utterance):
         """Unify untranscribed material as xxx.
 
         Coding in CHAT: xxx, yyy, www   .
         """
-        pass
+        untranscribed_regex = re.compile(r'yyy|www')
+        clean1 = untranscribed_regex.sub('xxx', utterance)
+        clean2 = self._remove_redundant_whitespaces(clean1)
+        return clean2
 
     def get_shortening_actual(self, utterance):
         """Get the actual form of shortenings.
@@ -98,7 +106,26 @@ class CHATCleaner:
         Coding in CHAT: \w+(\w+)\w+   .
         The part with parentheses is removed.
         """
-        pass
+        shortening_regex = re.compile(r'(\S*)\(\w+\)(\S*)')
+        clean = ''
+        match_end = 0
+        for i, match in enumerate(shortening_regex.finditer(utterance)):
+            match_start = match.start()
+            clean += utterance[match_end:match_start]
+
+            if match.group(1):
+                clean += match.group(1)
+            if match.group(2):
+                clean += match.group(2)
+
+            match_end = match.end()
+        else:
+            clean += utterance[match_end:]
+
+        if clean:
+            return clean
+        else:
+            return utterance
 
     def get_shortening_target(self, utterance):
         """Get the target form of shortenings.
@@ -106,7 +133,10 @@ class CHATCleaner:
         Coding in CHAT: \w+(\w+)\w+ .
         The part in parentheses is kept, parentheses are removed.
         """
-        pass
+        shortening_regex = re.compile(r'(\S*)\((\w+)\)(\S*)')
+        clean1 = shortening_regex.sub(r'\1\2\3', utterance)
+        clean2 = self._remove_redundant_whitespaces(clean1)
+        return clean2
 
     def get_replacement_actual(self, utterance):
         """Get the actual form of replacements.
@@ -202,5 +232,10 @@ if __name__ == '__main__':
     print(repr(cleaner.remove_terminator('doa to: (.) mado to: +... [+ bch]')))
     print(repr(cleaner.null_untranscribed_utterances('xxx')))
     print(repr(cleaner.null_event_utterances('0')))
-    print(repr(cleaner.remove_events('I know &=laugh what that means .')))
-    print(repr(cleaner.handle_repetitions('This <is a> [x 3] sentence .')))
+    print(repr(cleaner.remove_events('I know &=laugh what that &=laugh means .')))
+    print(repr(cleaner.handle_repetitions('This <is a> [x 3] sentence [x 2].')))
+    print(repr(cleaner.remove_omissions('This is 0not 0good .')))
+    print(repr(cleaner.unify_untranscribed('This www I yyy is done .')))
+    print(repr(cleaner.get_shortening_actual('This (i)s a short(e)ned senten(ce)')))
+    print(repr(cleaner.get_shortening_target('This (i)s a short(e)ned senten(ce)')))
+
