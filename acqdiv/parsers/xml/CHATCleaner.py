@@ -187,35 +187,77 @@ class CHATCleaner:
         return separator_regex.sub(r'\1', utterance)
 
     def remove_ca(self, utterance):
-        """Remove elements from Conversational Analysis.
+        """Remove conversation analysis and satellite markers from utterance.
 
         Note:
-            At the moment, only ↓ and ↑ are attested in our corpora.
+            Only four markers (↓↑‡„) are attested in the corpora. Only those
+            will be checked for removal.
         """
-        ca_regex = re.compile(r'[↓↑]')
+        ca_regex = re.compile(r'[↓↑‡„]')
         clean1 = ca_regex.sub('', utterance)
         clean2 = self._remove_redundant_whitespaces(clean1)
         return clean2
 
-    def remove_disfluency_markers(self, utterance):
-        """Remove disfluency markers from the utterance.
+    def remove_fillers(self, utterance):
+        """Remove fillers from the utterance.
 
-        Note:
-            At the moment, the following markers are attested in our corpora:
-                :           lengthened sound
-                ^           blocking (at beginning of word) or pause within word
-                &           fragments
-                &-          fillers
-                (.{1,3})    pauses between words
+        Coding in CHAT: word starts with &-
         """
-        pass
+        filler_regex = re.compile(r'&-(\S+)')
+        return filler_regex.sub(r'\1', utterance)
 
+    def remove_pauses_within_words(self, utterance):
+        """Remove pauses within words from the utterance.
+
+        Coding in CHAT: ^ within word
+        """
+        pause_regex = re.compile(r'(\S+)\^(\S+)')
+        return pause_regex.sub(r'\1\2', utterance)
+
+    def remove_blocking(self, utterance):
+        """Remove blockings in words from the utterance.
+
+        Coding in CHAT: ^ at the beginning of the word
+        """
+        blocking_regex = re.compile(r'\^(\S+)')
+        return blocking_regex.sub(r'\1', utterance)
+
+    def remove_pauses_between_words(self, utterance):
+        """Remove pauses between words from the utterance.
+
+        Coding in CHAT: (.), (..), (...)
+        """
+        pause_regex = re.compile(r'\(\.{1,3}\)')
+        clean1 = pause_regex.sub('', utterance)
+        clean2 = self._remove_redundant_whitespaces(clean1)
+        return clean2
+
+    def remove_drawls(self, utterance):
+        """Remove drawls from the utterance.
+
+        Coding in CHAT: : within or after word
+        """
+        drawl_regex = re.compile(r'(\S+):(\S+)?')
+        return drawl_regex.sub(r'\1\2', utterance)
+
+    # TODO: handle nested scopes
     def remove_scoped_symbols(self, utterance):
         """Remove scoped symbols from utterance.
 
         Coding in CHAT: < > [.*]    .
+
+        Note:
+            Nested scopes are only checked with depth 1.
+            Ex. <<ıspanak bitmediyse de> [/-] yemesin> [<].
         """
-        pass
+        # several scoped words
+        scope_regex1 = re.compile(r'<(.*?)> \[.*?\]')
+        clean1 = scope_regex1.sub(r'\1', utterance)
+        # one scoped word
+        scope_regex2 = re.compile(r'(\S+) \[.*?\]')
+        clean2 = scope_regex2.sub(r'\1', clean1)
+        clean3 = self._remove_redundant_whitespaces(clean2)
+        return clean3
 
 
 if __name__ == '__main__':
@@ -238,4 +280,21 @@ if __name__ == '__main__':
     print(repr(cleaner.remove_linkers('+" bir de köpek varmış .')))
     print(repr(cleaner.remove_separators('that is , that is ; that is : that is .')))
     print(repr(cleaner.remove_ca('up ↑ and down ↓ .')))
-
+    print(repr(cleaner.remove_fillers('&-um what &-um is that &-um .')))
+    print(repr(cleaner.remove_pauses_within_words('Th^is is a com^puter .')))
+    print(repr(cleaner.remove_pauses_between_words('This (.) is (..) a (...) sentence .')))
+    print(repr(cleaner.remove_drawls('Thi:s is tea: .')))
+    print(repr(cleaner.remove_scoped_symbols('ji [=! smiling] '
+                                             '<take your shoes off> [!] '
+                                             '(w)a [!!] '
+                                             'Maks [= the name of CHIs dog] '
+                                             'dur silim [: sileyim] '
+                                             'dici [=? dizi] '
+                                             '<Ekin beni yakalayamaz> [% said with singing] '
+                                             'mami cuando [?] '
+                                             'oturduğun [>1] '
+                                             '<lana lana> [/] lana '
+                                             'qaigu [//] qainngitualuk '
+                                             'sen niye bozdun [///] kim bozdu '
+                                             '<<ıspanak bitmediyse de> [/-] yemesin> [<] '
+                                             'blubla [*]')))
