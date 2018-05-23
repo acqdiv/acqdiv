@@ -52,9 +52,9 @@ class CHATCleaner:
     def remove_events(self, utterance):
         """Remove events from the utterance.
 
-        Coding in CHAT: &=\w+   .
+        Coding in CHAT: word starting with &=.
         """
-        event_regex = re.compile(r'&=\w+')
+        event_regex = re.compile(r'&=\S+')
         clean1 = event_regex.sub('', utterance)
         clean2 = self._remove_redundant_whitespaces(clean1)
         return clean2
@@ -63,7 +63,7 @@ class CHATCleaner:
     def handle_repetitions(self, utterance):
         """Write out repeated words in the utterance.
 
-        Coding in CHAT: [x \d]  .
+        Coding in CHAT: [x <number>]  .
         """
         repetition_regex = re.compile(r'(?:<(.*?)>|(\S)) \[x (\d)\]')
         match = repetition_regex.search(utterance)
@@ -83,9 +83,9 @@ class CHATCleaner:
     def remove_omissions(self, utterance):
         """Remove omissions in the utterance.
 
-        Coding in CHAT: 0\w+    .
+        Coding in CHAT: word starting with 0.
         """
-        omission_regex = re.compile(r'0\w+')
+        omission_regex = re.compile(r'0\S+')
         clean1 = omission_regex.sub('', utterance)
         clean2 = self._remove_redundant_whitespaces(clean1)
         return clean2
@@ -103,10 +103,10 @@ class CHATCleaner:
     def get_shortening_actual(self, utterance):
         """Get the actual form of shortenings.
 
-        Coding in CHAT: \w+(\w+)\w+   .
+        Coding in CHAT: parentheses within word.
         The part with parentheses is removed.
         """
-        shortening_regex = re.compile(r'(\S*)\(\w+\)(\S*)')
+        shortening_regex = re.compile(r'(\S*)\(\S+\)(\S*)')
         return shortening_regex.sub(r'\1\2', utterance)
 
     def get_shortening_target(self, utterance):
@@ -115,7 +115,7 @@ class CHATCleaner:
         Coding in CHAT: \w+(\w+)\w+ .
         The part in parentheses is kept, parentheses are removed.
         """
-        shortening_regex = re.compile(r'(\S*)\((\w+)\)(\S*)')
+        shortening_regex = re.compile(r'(\S*)\((\S+)\)(\S*)')
         return shortening_regex.sub(r'\1\2\3', utterance)
 
     def get_replacement_actual(self, utterance):
@@ -143,19 +143,19 @@ class CHATCleaner:
     def get_fragment_actual(self, utterance):
         """Get the actual form of fragments.
 
-        Coding in CHAT: &\w+    .
+        Coding in CHAT: word starting with &.
         Keeps the fragment, removes the & from the word.
         """
-        fragment_regex = re.compile(r'&(\w+)')
+        fragment_regex = re.compile(r'&(\S+)')
         return fragment_regex.sub(r'\1', utterance)
 
     def get_fragment_target(self, utterance):
         """Get the target form of fragments.
 
-        Coding in CHAT: &\w+    .
+        Coding in CHAT: word starting with &.
         The fragment is marked as untranscribed (xxx).
         """
-        fragment_regex = re.compile(r'&\w+')
+        fragment_regex = re.compile(r'&\S+')
         clean1 = fragment_regex.sub('', utterance)
         clean2 = self._remove_redundant_whitespaces(clean1)
         return clean2
@@ -163,7 +163,7 @@ class CHATCleaner:
     def remove_form_markers(self, utterance):
         """Remove form markers from the utterance.
 
-        Coding in CHAT: \w+@\w+(:*|$n|:xxx) .
+        Coding in CHAT: word ending with @.
         The @ and the part after it are removed.
         """
         pass
