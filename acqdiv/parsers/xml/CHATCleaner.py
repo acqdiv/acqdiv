@@ -1,3 +1,5 @@
+import re
+
 
 class CHATCleaner:
     """Perform cleaning on the tiers of CHAT.
@@ -7,12 +9,24 @@ class CHATCleaner:
         result.
     """
 
+    def _remove_redundant_whitespaces(self, utterance):
+        """Remove redundant whitespaces in utterances.
+
+        This method is routinely called by most of the cleaning methods.
+        """
+        whitespace_regex = re.compile(r'\s+')
+        return whitespace_regex.sub(' ', utterance)
+
     def remove_terminator(self, utterance):
         """Remove the terminator from the utterance.
 
         There are 13 different terminators in CHAT. Coding: [+/.!?"]*[!?.]  .
         """
-        pass
+        # postcodes or nothing may follow terminators
+        terminator_regex = re.compile(r'[+/.!?"]*[!?.](?=( \[\+|$))')
+        clean1 = terminator_regex.sub('', utterance)
+        clean2 = self._remove_redundant_whitespaces(clean1)
+        return clean2
 
     def null_untranscribed_utterances(self, utterance):
         """Null utterances containing only untranscribed material.
@@ -20,28 +34,50 @@ class CHATCleaner:
         Note:
             Nulling means here the utterance is returned as an empty string.
         """
-        pass
+        if utterance == 'xxx':
+            return ''
+        else:
+            return utterance
 
     def null_event_utterances(self, utterance):
         """Null utterances that are events.
 
         CHAT coding: 0
         """
-        pass
+        if utterance == '0':
+            return ''
+        else:
+            return utterance
 
     def remove_events(self, utterance):
         """Remove events from the utterance.
 
         Coding in CHAT: &=\w+   .
         """
-        pass
+        event_regex = re.compile(r'&=\w+')
+        clean1 = event_regex.sub('', utterance)
+        clean2 = self._remove_redundant_whitespaces(clean1)
+        return clean2
 
     def handle_repetitions(self, utterance):
         """Write out repeated words in the utterance.
 
         Coding in CHAT: [x \d]  .
         """
-        pass
+        repetition_regex = re.compile(r'(?:<(.*?)>|(\S)) \[x (\d)\]')
+        match = repetition_regex.search(utterance)
+        if match:
+            if match.group(1):  # several words
+                words = match.group(1)
+            else:
+                words = match.group(2)  # one word
+            repetitions = int(match.group(3))
+            written_out = ' '.join([words]*repetitions)
+            clean1 = repetition_regex.sub(written_out, utterance)
+            clean2 = self._remove_redundant_whitespaces(clean1)
+            return clean2
+        else:
+            return utterance
 
     def remove_omissions(self, utterance):
         """Remove omissions in the utterance.
@@ -158,3 +194,13 @@ class CHATCleaner:
         Coding in CHAT: < > [.*]    .
         """
         pass
+
+
+if __name__ == '__main__':
+    cleaner = CHATCleaner()
+    print(repr(cleaner._remove_redundant_whitespaces('Das   ist zu  viel.')))
+    print(repr(cleaner.remove_terminator('doa to: (.) mado to: +... [+ bch]')))
+    print(repr(cleaner.null_untranscribed_utterances('xxx')))
+    print(repr(cleaner.null_event_utterances('0')))
+    print(repr(cleaner.remove_events('I know &=laugh what that means .')))
+    print(repr(cleaner.handle_repetitions('This <is a> [x 3] sentence .')))
