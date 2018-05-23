@@ -107,25 +107,7 @@ class CHATCleaner:
         The part with parentheses is removed.
         """
         shortening_regex = re.compile(r'(\S*)\(\w+\)(\S*)')
-        clean = ''
-        match_end = 0
-        for i, match in enumerate(shortening_regex.finditer(utterance)):
-            match_start = match.start()
-            clean += utterance[match_end:match_start]
-
-            if match.group(1):
-                clean += match.group(1)
-            if match.group(2):
-                clean += match.group(2)
-
-            match_end = match.end()
-        else:
-            clean += utterance[match_end:]
-
-        if clean:
-            return clean
-        else:
-            return utterance
+        return shortening_regex.sub(r'\1\2', utterance)
 
     def get_shortening_target(self, utterance):
         """Get the target form of shortenings.
@@ -134,9 +116,7 @@ class CHATCleaner:
         The part in parentheses is kept, parentheses are removed.
         """
         shortening_regex = re.compile(r'(\S*)\((\w+)\)(\S*)')
-        clean1 = shortening_regex.sub(r'\1\2\3', utterance)
-        clean2 = self._remove_redundant_whitespaces(clean1)
-        return clean2
+        return shortening_regex.sub(r'\1\2\3', utterance)
 
     def get_replacement_actual(self, utterance):
         """Get the actual form of replacements.
@@ -144,7 +124,12 @@ class CHATCleaner:
         Coding in CHAT: [: <words>] .
         Keeps replaced words, removes replacing words with brackets.
         """
-        pass
+        # several scoped words
+        replacement_regex2 = re.compile(r'<(.*?)> \[: .*?\]')
+        clean1 = replacement_regex2.sub(r'\1', utterance)
+        # one scoped word
+        replacement_regex1 = re.compile(r'(\S+) \[: .*?\]')
+        return replacement_regex1.sub(r'\1', clean1)
 
     def get_replacement_target(self, utterance):
         """Get the target form of replacements.
@@ -152,7 +137,8 @@ class CHATCleaner:
         Coding in CHAT: [: <words>] .
         Removes replaced words, keeps replacing words with brackets.
         """
-        pass
+        replacement_regex = re.compile(r'(?:<.*?>|\S+) \[: (.*?)\]')
+        return replacement_regex.sub(r'\1', utterance)
 
     def get_fragment_actual(self, utterance):
         """Get the actual form of fragments.
@@ -160,7 +146,8 @@ class CHATCleaner:
         Coding in CHAT: &\w+    .
         Keeps the fragment, removes the & from the word.
         """
-        pass
+        fragment_regex = re.compile(r'&(\w+)')
+        return fragment_regex.sub(r'\1', utterance)
 
     def get_fragment_target(self, utterance):
         """Get the target form of fragments.
@@ -168,7 +155,10 @@ class CHATCleaner:
         Coding in CHAT: &\w+    .
         The fragment is marked as untranscribed (xxx).
         """
-        pass
+        fragment_regex = re.compile(r'&\w+')
+        clean1 = fragment_regex.sub('', utterance)
+        clean2 = self._remove_redundant_whitespaces(clean1)
+        return clean2
 
     def remove_form_markers(self, utterance):
         """Remove form markers from the utterance.
@@ -238,4 +228,8 @@ if __name__ == '__main__':
     print(repr(cleaner.unify_untranscribed('This www I yyy is done .')))
     print(repr(cleaner.get_shortening_actual('This (i)s a short(e)ned senten(ce)')))
     print(repr(cleaner.get_shortening_target('This (i)s a short(e)ned senten(ce)')))
+    print(repr(cleaner.get_replacement_actual('This us [: is] <srane suff> [: strange stuff]')))
+    print(repr(cleaner.get_replacement_target('This us [: is] <srane suff> [: strange stuff]')))
+    print(repr(cleaner.get_fragment_actual('This is &at .')))
+    print(repr(cleaner.get_fragment_target('This is &at .')))
 
