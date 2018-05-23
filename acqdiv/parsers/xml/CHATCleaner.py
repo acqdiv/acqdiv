@@ -59,24 +59,37 @@ class CHATCleaner:
         clean2 = self._remove_redundant_whitespaces(clean1)
         return clean2
 
-    # TODO: does not work correctly for multiple instances
     def handle_repetitions(self, utterance):
         """Write out repeated words in the utterance.
 
         Coding in CHAT: [x <number>]  .
         """
-        repetition_regex = re.compile(r'(?:<(.*?)>|(\S)) \[x (\d)\]')
-        match = repetition_regex.search(utterance)
-        if match:
-            if match.group(1):  # several words
+        repetition_regex = re.compile(r'(?:<(.*?)>|(\S+)) \[x (\d)\]')
+        # build cleaned utterance
+        clean = ''
+        match_end = 0
+        for match in repetition_regex.finditer(utterance):
+            # add material preceding match
+            match_start = match.start()
+            clean += utterance[match_end:match_start]
+
+            # check whether it has scope over one or several words
+            if match.group(1):
                 words = match.group(1)
             else:
-                words = match.group(2)  # one word
+                words = match.group(2)
+
+            # repeat the word
             repetitions = int(match.group(3))
-            written_out = ' '.join([words]*repetitions)
-            clean1 = repetition_regex.sub(written_out, utterance)
-            clean2 = self._remove_redundant_whitespaces(clean1)
-            return clean2
+            clean += ' '.join([words]*repetitions)
+
+            match_end = match.end()
+
+        # add material following last match
+        clean += utterance[match_end:]
+
+        if clean:
+            return clean
         else:
             return utterance
 
