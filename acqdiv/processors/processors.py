@@ -90,9 +90,15 @@ class SessionProcessor(object):
 
         self.parser = self.parser_factory(self.file_path)
         session_metadata = self.parser.get_session_metadata()
+        
+        # try:
+        #     duration = session_metadata['duration']
+        # except KeyError:
+        #     duration = None
+
         session_labels = self.config['session_labels']
         # We overwrite a few values in the retrieved session metadata.
-        d = self._extract(session_metadata, session_labels, source_id=self.filename, language=self.language, corpus=self.corpus)
+        d = self._extract(session_metadata, session_labels, source_id=self.filename, language=self.language, corpus=self.corpus) # , duration=duration)
 
         # Populate sessions table.
         s_id, = insert_sess(**d).inserted_primary_key

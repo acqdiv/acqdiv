@@ -57,6 +57,7 @@ class Session(Base):
     language = Column(Text, nullable=False, unique=False)
     date = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     target_child_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
+    duration = Column(Integer, nullable=True, unique=False)
     # SQLAlchemy relationship definitions:
     speakers = relationship('Speaker', backref='Session')
     utterances = relationship('Utterance', backref='Session')

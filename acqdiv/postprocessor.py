@@ -3,6 +3,7 @@
 import re
 import sys
 import time
+import csv
 import argparse
 import logging
 import sqlalchemy as sa
@@ -145,6 +146,9 @@ def postprocess(test=False):
 
         print("Processing words table...")
         process_words_table()
+
+        print("Processing sessions table...")
+        process_sessions_table()
 
     print("%s seconds --- Finished" % (time.time() - start_time))
     print()
@@ -907,12 +911,41 @@ def _words_add_pos_labels():
 
 ### Util functions ###
 def _update_rows(t, binder, rows):
-    """ Update rows for a given table, bindparameter and list of dictionaries contain column-value mappings. """
+    """
+    Update rows for a given table
+
+    Args:
+        t: sql-alchemy-table
+        binder: str, bindparameter, normally the column acting as primary key
+        rows: list of dicts with col-name as key and insert value as value
+    """
     stmt = t.update().where(t.c.id == sa.bindparam(binder)).values()
+    
     try:
         conn.execute(stmt, rows)
     except sa.exc.StatementError:
         pass
+
+
+def _update_rows_where_null(t, binder, rows, colname):
+    """ 
+    like _update_rows, but only null values get updated
+
+    Args:
+        t: sql-alchemy-table
+        binder: str, bindparameter, normally the column acting as primary key
+        rows: list of dicts with col-name as key and insert value as value
+        colname: str, name of the column to be updated
+    """
+    query = sa.select([db.Session.id, db.Session.duration])
+    old_rows = list(conn.execute(query))
+    for i in range(len(old_rows)):
+        if old_rows[i][1] is None:
+            if rows[i][colname] is None:
+                rows[i][colname] = 'NULL'
+            stmt_raw = "UPDATE {} SET {}={} WHERE {}.id = {}; "
+            stmt = stmt_raw.format(t, colname, rows[i][colname], t, rows[i][binder])
+            conn.execute(stmt)
 
 
 def _insert_rows(t, rows):
@@ -993,6 +1026,89 @@ def _get_session_date(session_id):
     s = sa.select([db.Session]).where(db.Session.id == session_id)
     row = conn.execute(s).fetchone()
     return row.date
+
+
+def process_sessions_table():
+    insert_session_duration()
+
+
+
+def insert_session_duration():
+    # _insert_from_timestamps()
+    # _validate_and_insert_from_media()
+    _insert_durations_from_csv()
+
+
+# def _insert_from_timestamps():
+#     """
+#     get last time-stamp from session and insert as duration into table
+#     """
+#     # s = sa.select([db.Utterance.corpus, db.Utterance.session_id_fk, db.Utterance.end])
+#     query = """
+#     SELECT corpus, session_id_fk, max(CAST(end AS INT)) as dur 
+#     FROM utterances 
+#     GROUP BY corpus, session_id_fk;
+#     """
+#     rows = conn.execute(query)
+#     results = []
+#     for r in rows:
+#         results.append({'session_id': r[1], 'duration': r[2]})
+#     rows.close()
+#     _update_rows_where_null(db.Session.__table__, 'session_id', results, 'duration')
+
+
+# def _validate_and_insert_from_media():
+#     """
+#     extract durations from durations.csv
+#     go through sessions: if there is no duration, insert duration, 
+#     if there is one, compare and add warning if difference is greater than 15 seconds
+#     """
+#     session_dict = {}
+#     with open('../durations.csv') as f:
+#         reader = csv.reader(f)
+#         for row in reader:
+#             sname, dur, path = row
+#             session_dict[sname] = (dur, path)
+
+#     query = sa.select([db.Session.id, db.Session.source_id, db.Session.duration])
+#     rows = conn.execute(query)
+
+#     results = []
+#     for row in rows:
+#         id_, source_id, metad_dur = row
+#         try:
+#             media_dur = session_dict[source_id]
+#         except KeyError:
+#             continue
+        
+#         if not metad_dur:
+#             dur = media_dur
+#         elif metad_dur != media_dur:
+#             logger.warning('session duration from metadata does not match session duration from media',
+#                            exc_info=sys.exc_info())
+#             dur = metad_dur
+#         else:
+#             dur = metad_dur
+
+#         results.append({'session_id': id_, 'duration': dur})
+
+#     _update_rows(db.Session.__table__, 'session_id', results)
+
+def _insert_durations_from_csv():
+    '''
+    Read session durations from ini/results.csv and insert them
+    into the sessions table.
+    '''
+    durations = []
+
+    with open('ini/results.csv', 'r', encoding='utf8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            session_id = row['source_id']
+            duration = row['duration']
+            durations.append({'session_id': session_id, 'duration': duration})
+
+    _update_rows(db.Session.__table__, 'session_id', durations)
 
 
 def main():
