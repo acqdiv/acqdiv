@@ -909,6 +909,30 @@ def _words_add_pos_labels():
     _update_rows(db.Word.__table__, 'word_id', results_pos_ud)
 
 
+def process_sessions_table():
+    _insert_durations()
+
+
+def _insert_durations():
+    """Read session durations from ini/durations.csv and insert the matches into the sessions table.
+    """
+    durations = []
+
+    with open('ini/session_durations.csv', 'r', encoding='utf8') as f:
+        reader = csv.DictReader(f)
+
+        for row in reader:
+            # source_id = row['source_id']
+            session_id = row['id']
+            duration = row['duration']
+            # durations.append({'source_id': source_id, 'duration': duration})
+            durations.append({'session_id': session_id, 'duration': duration})
+    for i in durations:
+        print(i)
+
+    _update_rows(db.Session.__table__, 'session_id', durations)
+
+
 ### Util functions ###
 def _update_rows(t, binder, rows):
     """
