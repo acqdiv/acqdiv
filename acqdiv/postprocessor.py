@@ -924,6 +924,8 @@ def _insert_durations():
         for row in reader:
             session_id = row['id']
             duration = row['duration']
+            if duration == '':
+                duration = None
             durations.append({'session_id': session_id, 'duration': duration})
 
     _update_rows(db.Session.__table__, 'session_id', durations)
