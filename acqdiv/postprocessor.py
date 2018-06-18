@@ -922,10 +922,11 @@ def _insert_durations():
         reader = csv.DictReader(f)
 
         for row in reader:
-            session_id = row['id']
             duration = row['duration']
+            # Skip rows with empty durations
             if duration == '':
-                duration = None
+                continue
+            session_id = row['id']
             durations.append({'session_id': session_id, 'duration': duration})
 
     _update_rows(db.Session.__table__, 'session_id', durations)
