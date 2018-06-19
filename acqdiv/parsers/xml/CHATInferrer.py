@@ -1,5 +1,6 @@
 import re
 
+
 class CHATInferrer:
     """Infer data from parts of CHAT record.
 
@@ -117,6 +118,34 @@ class CHATInferrer:
         return mapping[match.group(1)]
 
 
+class InuktitutInferrer(CHATInferrer):
+    """Inferences for Inuktitut."""
+
+    @staticmethod
+    def get_actual_alternative(utterance):
+        """Get the actual form of alternatives.
+
+        Coding in CHAT: [=? <words>]
+        The actual form is the alternative given in brackets.
+        """
+        replacement_regex = re.compile(r'(?:<.*?>|\S+) \[=\? (.*?)\]')
+        return replacement_regex.sub(r'\1', utterance)
+
+    @staticmethod
+    def get_target_alternative(utterance):
+        """Get the target form of alternatives.
+
+        Coding in CHAT: [=? <words>]
+        The target form is the original form.
+        """
+        # several scoped words
+        alternative_regex1 = re.compile(r'<(.*?)> \[=\? .*?\]')
+        clean = alternative_regex1.sub(r'\1', utterance)
+        # one scoped word
+        alternative_regex2 = re.compile(r'(\S+) \[=\? .*?\]')
+        return alternative_regex2.sub(r'\1', clean)
+
+
 if __name__ == '__main__':
     inferrer = CHATInferrer()
     print(repr(inferrer.get_shortening_actual(
@@ -130,3 +159,9 @@ if __name__ == '__main__':
     print(repr(inferrer.get_fragment_actual('This is &at .')))
     print(repr(inferrer.get_fragment_target('This is &at .')))
     print(repr(inferrer.get_sentence_type('This is a sent +!?')))
+
+    inuktitut_inferrer = InuktitutInferrer()
+    print(repr(inuktitut_inferrer.get_actual_alternative(
+        'This is the target [=? actual] form.')))
+    print(repr(inuktitut_inferrer.get_target_alternative(
+        'This is the target [=? actual] form.')))
