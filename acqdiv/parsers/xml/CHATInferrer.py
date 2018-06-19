@@ -192,7 +192,16 @@ class InuktitutInferrer(CHATInferrer):
     @staticmethod
     def get_glosses(xmor):
         """Get the glosses from the xmor tier."""
-        pass
+        gloss_regex = re.compile(r'\^(\S+?)(\+|$)')
+        gloss_list = []
+        # go through every word
+        for word in xmor.split(' '):
+            word_gloss_list = []
+            for gloss_match in gloss_regex.finditer(word):
+                gloss = gloss_match.group(1)
+                word_gloss_list.append(gloss)
+            gloss_list.append(word_gloss_list)
+        return gloss_list
 
 
 if __name__ == '__main__':
@@ -222,3 +231,4 @@ if __name__ == '__main__':
 
     print(repr(inuktitut_inferrer.get_pos(test)))
     print(repr(inuktitut_inferrer.get_segments((test))))
+    print(repr(inuktitut_inferrer.get_glosses(test)))
