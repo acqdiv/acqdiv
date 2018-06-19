@@ -159,18 +159,22 @@ class InuktitutInferrer(CHATInferrer):
         subcategories of POS tags are added by | and replaced by a dot.
 
         Returns:
-            list: list of POS tags.
+            list: list of list of tags (=word).
         """
         pos_regex = re.compile(r'(\w+\|)+')
         pos_list = []
-        # go through all POS tags
-        for pos_match in pos_regex.finditer(xmor):
-            pos = pos_match.group()
-            # strip | at the end
-            pos = pos.rstrip('|')
-            # replace | by . in case of subcategories
-            pos = pos.replace('|', '.')
-            pos_list.append(pos)
+        # go through every word
+        for word in xmor.split(' '):
+            word_pos_list = []
+            # go through all POS tags in the word
+            for pos_match in pos_regex.finditer(word):
+                pos = pos_match.group()
+                # strip | at the end
+                pos = pos.rstrip('|')
+                # replace | by . in case of subcategories
+                pos = pos.replace('|', '.')
+                word_pos_list.append(pos)
+            pos_list.append(word_pos_list)
 
         return pos_list
 
@@ -201,6 +205,8 @@ if __name__ == '__main__':
         'This is the target [=? actual] form.')))
 
     test = 'LR|qa^outside+LI|unnga^ALL+VZ|aq^go_by_way_of+VV|VA|' \
-           'tit^CAUS+VV|lauq^POL+VI|nnga^IMP_2sS_1sO'
+           'tit^CAUS+VV|lauq^POL+VI|nnga^IMP_2sS_1sO VR|' \
+           'nimak^move_around+VV|VA|tit^CAUS+VV|nngit^NEG+VI|' \
+           'lugu^ICM_XxS_3sO? VR|kuvi^pour+NZ|suuq^HAB+NN|AUG|aluk^EMPH?'
 
     print(repr(inuktitut_inferrer.get_pos(test)))
