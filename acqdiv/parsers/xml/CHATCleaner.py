@@ -10,7 +10,8 @@ class CHATCleaner:
         symbols are removed.
     """
 
-    def _remove_redundant_whitespaces(self, utterance):
+    @staticmethod
+    def remove_redundant_whitespaces(utterance):
         """Remove redundant whitespaces in utterances.
 
         This method is routinely called by most of the cleaning methods.
@@ -18,7 +19,8 @@ class CHATCleaner:
         whitespace_regex = re.compile(r'\s+')
         return whitespace_regex.sub(' ', utterance)
 
-    def remove_terminator(self, utterance):
+    @classmethod
+    def remove_terminator(cls, utterance):
         """Remove the terminator from the utterance.
 
         There are 13 different terminators in CHAT. Coding: [+/.!?"]*[!?.]  .
@@ -26,10 +28,11 @@ class CHATCleaner:
         # postcodes or nothing may follow terminators
         terminator_regex = re.compile(r'[+/.!?"]*[!?.](?=( \[\+|$))')
         clean1 = terminator_regex.sub('', utterance)
-        clean2 = self._remove_redundant_whitespaces(clean1)
+        clean2 = cls.remove_redundant_whitespaces(clean1)
         return clean2
 
-    def null_untranscribed_utterances(self, utterance):
+    @staticmethod
+    def null_untranscribed_utterances(utterance):
         """Null utterances containing only untranscribed material.
 
         Note:
@@ -40,7 +43,8 @@ class CHATCleaner:
         else:
             return utterance
 
-    def null_event_utterances(self, utterance):
+    @staticmethod
+    def null_event_utterances(utterance):
         """Null utterances that are events.
 
         CHAT coding: 0
@@ -50,17 +54,19 @@ class CHATCleaner:
         else:
             return utterance
 
-    def remove_events(self, utterance):
+    @classmethod
+    def remove_events(cls, utterance):
         """Remove events from the utterance.
 
         Coding in CHAT: word starting with &=.
         """
         event_regex = re.compile(r'&=\S+')
         clean1 = event_regex.sub('', utterance)
-        clean2 = self._remove_redundant_whitespaces(clean1)
+        clean2 = cls.remove_redundant_whitespaces(clean1)
         return clean2
 
-    def handle_repetitions(self, utterance):
+    @staticmethod
+    def handle_repetitions(utterance):
         """Write out repeated words in the utterance.
 
         Coding in CHAT: [x <number>]  .
@@ -94,17 +100,19 @@ class CHATCleaner:
         else:
             return utterance
 
-    def remove_omissions(self, utterance):
+    @classmethod
+    def remove_omissions(cls, utterance):
         """Remove omissions in the utterance.
 
         Coding in CHAT: word starting with 0.
         """
         omission_regex = re.compile(r'0\S+')
         clean1 = omission_regex.sub('', utterance)
-        clean2 = self._remove_redundant_whitespaces(clean1)
+        clean2 = cls.remove_redundant_whitespaces(clean1)
         return clean2
 
-    def unify_untranscribed(self, utterance):
+    @staticmethod
+    def unify_untranscribed(utterance):
         """Unify untranscribed material as xxx.
 
         Coding in CHAT: xxx, yyy, www   .
@@ -112,7 +120,8 @@ class CHATCleaner:
         untranscribed_regex = re.compile(r'yyy|www')
         return untranscribed_regex.sub('xxx', utterance)
 
-    def get_shortening_actual(self, utterance):
+    @staticmethod
+    def get_shortening_actual(utterance):
         """Get the actual form of shortenings.
 
         Coding in CHAT: parentheses within word.
@@ -121,7 +130,8 @@ class CHATCleaner:
         shortening_regex = re.compile(r'(\S*)\(\S+\)(\S*)')
         return shortening_regex.sub(r'\1\2', utterance)
 
-    def get_shortening_target(self, utterance):
+    @staticmethod
+    def get_shortening_target(utterance):
         """Get the target form of shortenings.
 
         Coding in CHAT: \w+(\w+)\w+ .
@@ -130,7 +140,8 @@ class CHATCleaner:
         shortening_regex = re.compile(r'(\S*)\((\S+)\)(\S*)')
         return shortening_regex.sub(r'\1\2\3', utterance)
 
-    def get_replacement_actual(self, utterance):
+    @staticmethod
+    def get_replacement_actual(utterance):
         """Get the actual form of replacements.
 
         Coding in CHAT: [: <words>] .
@@ -143,7 +154,8 @@ class CHATCleaner:
         replacement_regex1 = re.compile(r'(\S+) \[: .*?\]')
         return replacement_regex1.sub(r'\1', clean1)
 
-    def get_replacement_target(self, utterance):
+    @staticmethod
+    def get_replacement_target(utterance):
         """Get the target form of replacements.
 
         Coding in CHAT: [: <words>] .
@@ -152,7 +164,8 @@ class CHATCleaner:
         replacement_regex = re.compile(r'(?:<.*?>|\S+) \[: (.*?)\]')
         return replacement_regex.sub(r'\1', utterance)
 
-    def get_fragment_actual(self, utterance):
+    @staticmethod
+    def get_fragment_actual(utterance):
         """Get the actual form of fragments.
 
         Coding in CHAT: word starting with &.
@@ -161,7 +174,8 @@ class CHATCleaner:
         fragment_regex = re.compile(r'&(\S+)')
         return fragment_regex.sub(r'\1', utterance)
 
-    def get_fragment_target(self, utterance):
+    @staticmethod
+    def get_fragment_target(utterance):
         """Get the target form of fragments.
 
         Coding in CHAT: word starting with &.
@@ -170,7 +184,8 @@ class CHATCleaner:
         fragment_regex = re.compile(r'&\S+')
         return fragment_regex.sub('xxx', utterance)
 
-    def remove_form_markers(self, utterance):
+    @staticmethod
+    def remove_form_markers(utterance):
         """Remove form markers from the utterance.
 
         Coding in CHAT: word ending with @.
@@ -179,7 +194,8 @@ class CHATCleaner:
         form_marker_regex = re.compile(r'(\S+)@\S+')
         return form_marker_regex.sub(r'\1', utterance)
 
-    def remove_linkers(self, utterance):
+    @staticmethod
+    def remove_linkers(utterance):
         """Remove linkers from the utterance.
 
         Coding in CHAT: +["^,+<] (always in the beginning of utterance).
@@ -187,7 +203,8 @@ class CHATCleaner:
         linker_regex = re.compile(r'^\+["^,+<]')
         return linker_regex.sub('', utterance).lstrip(' ')
 
-    def remove_separators(self, utterance):
+    @staticmethod
+    def remove_separators(utterance):
         """Remove separators from the utterance.
 
         Separators are commas, colons or semi-colons which are surrounded
@@ -196,7 +213,8 @@ class CHATCleaner:
         separator_regex = re.compile(r' [,:;]( )')
         return separator_regex.sub(r'\1', utterance)
 
-    def remove_ca(self, utterance):
+    @classmethod
+    def remove_ca(cls, utterance):
         """Remove conversation analysis and satellite markers from utterance.
 
         Note:
@@ -205,10 +223,11 @@ class CHATCleaner:
         """
         ca_regex = re.compile(r'[↓↑‡„]')
         clean1 = ca_regex.sub('', utterance)
-        clean2 = self._remove_redundant_whitespaces(clean1)
+        clean2 = cls.remove_redundant_whitespaces(clean1)
         return clean2
 
-    def remove_fillers(self, utterance):
+    @staticmethod
+    def remove_fillers(utterance):
         """Remove fillers from the utterance.
 
         Coding in CHAT: word starts with &-
@@ -216,7 +235,8 @@ class CHATCleaner:
         filler_regex = re.compile(r'&-(\S+)')
         return filler_regex.sub(r'\1', utterance)
 
-    def remove_pauses_within_words(self, utterance):
+    @staticmethod
+    def remove_pauses_within_words(utterance):
         """Remove pauses within words from the utterance.
 
         Coding in CHAT: ^ within word
@@ -224,7 +244,8 @@ class CHATCleaner:
         pause_regex = re.compile(r'(\S+)\^(\S+)')
         return pause_regex.sub(r'\1\2', utterance)
 
-    def remove_blocking(self, utterance):
+    @staticmethod
+    def remove_blocking(utterance):
         """Remove blockings in words from the utterance.
 
         Coding in CHAT: ^ at the beginning of the word
@@ -232,17 +253,19 @@ class CHATCleaner:
         blocking_regex = re.compile(r'\^(\S+)')
         return blocking_regex.sub(r'\1', utterance)
 
-    def remove_pauses_between_words(self, utterance):
+    @classmethod
+    def remove_pauses_between_words(cls, utterance):
         """Remove pauses between words from the utterance.
 
         Coding in CHAT: (.), (..), (...)
         """
         pause_regex = re.compile(r'\(\.{1,3}\)')
         clean1 = pause_regex.sub('', utterance)
-        clean2 = self._remove_redundant_whitespaces(clean1)
+        clean2 = cls.remove_redundant_whitespaces(clean1)
         return clean2
 
-    def remove_drawls(self, utterance):
+    @staticmethod
+    def remove_drawls(utterance):
         """Remove drawls from the utterance.
 
         Coding in CHAT: : within or after word
@@ -251,7 +274,8 @@ class CHATCleaner:
         return drawl_regex.sub(r'\1\2', utterance)
 
     # TODO: handle nested scopes
-    def remove_scoped_symbols(self, utterance):
+    @classmethod
+    def remove_scoped_symbols(cls, utterance):
         """Remove scoped symbols from utterance.
 
         Coding in CHAT: < > [.*]    .
@@ -266,13 +290,13 @@ class CHATCleaner:
         # one scoped word
         scope_regex2 = re.compile(r'(\S+) \[.*?\]')
         clean2 = scope_regex2.sub(r'\1', clean1)
-        clean3 = self._remove_redundant_whitespaces(clean2)
+        clean3 = cls.remove_redundant_whitespaces(clean2)
         return clean3
 
 
 if __name__ == '__main__':
     cleaner = CHATCleaner()
-    print(repr(cleaner._remove_redundant_whitespaces('Das   ist zu  viel.')))
+    print(repr(cleaner.remove_redundant_whitespaces('Das   ist zu  viel.')))
     print(repr(cleaner.remove_terminator('doa to: (.) mado to: +... [+ bch]')))
     print(repr(cleaner.null_untranscribed_utterances('xxx')))
     print(repr(cleaner.null_event_utterances('0')))
