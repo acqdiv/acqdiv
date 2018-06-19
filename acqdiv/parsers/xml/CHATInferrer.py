@@ -1,7 +1,7 @@
 import re
 
 class CHATInferrer:
-    """Infer information from CHAT tiers.
+    """Infer data from parts of CHAT record.
 
     Provides the following generic inferences:
         - actual form of utterance

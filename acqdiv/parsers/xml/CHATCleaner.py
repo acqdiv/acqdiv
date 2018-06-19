@@ -2,7 +2,7 @@ import re
 
 
 class CHATCleaner:
-    """Perform cleaning on the utterance tier of a CHAT record.
+    """Clean parts of a CHAT record.
 
     Note:
         The order of calling the cleaning methods has great impact on the final
