@@ -93,6 +93,29 @@ class CHATInferrer:
 
         return utterance
 
+    @staticmethod
+    def get_sentence_type(utterance):
+        """Get the sentence type of an utterance.
+
+        The sentence type is inferred from the utterance terminator.
+        """
+        mapping = {'.': 'declarative',
+                   '?': 'question',
+                   '!': 'exclamation',
+                   '+.': 'broken for coding',
+                   '+..': 'trail off',
+                   '+..?': 'trail off of question',
+                   '+!?': 'question with exclamation',
+                   '+/.': 'interruption',
+                   '+/?': 'interruption of a question',
+                   '+//.': 'self-interruption',
+                   '+//?': 'self-interrupted question',
+                   '+"/.': 'quotation follows',
+                   '+".': 'quotation precedes'}
+        terminator_regex = re.compile(r'([+/.!?"]*[!?.])(?=( \[\+|$))')
+        match = terminator_regex.search(utterance)
+        return mapping[match.group(1)]
+
 
 if __name__ == '__main__':
     inferrer = CHATInferrer()
@@ -106,3 +129,4 @@ if __name__ == '__main__':
         'This us [: is] <srane suff> [: strange stuff]')))
     print(repr(inferrer.get_fragment_actual('This is &at .')))
     print(repr(inferrer.get_fragment_target('This is &at .')))
+    print(repr(inferrer.get_sentence_type('This is a sent +!?')))
