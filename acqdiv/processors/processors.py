@@ -30,7 +30,7 @@ class CorpusProcessor(object):
     def process_corpus(self):
         """ Loops over all raw corpus session input files and processes each and the commits the data to the database.
         """
-        for session_file in glob.glob(self.cfg['paths']['sessions']):
+        for session_file in sorted(glob.glob(self.cfg['paths']['sessions'])):
             print("\t", session_file)
             s = SessionProcessor(self.cfg, session_file,
                     self.parser_factory, self.engine)
