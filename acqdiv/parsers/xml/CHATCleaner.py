@@ -273,7 +273,6 @@ class CHATCleaner:
         drawl_regex = re.compile(r'(\S+):(\S+)?')
         return drawl_regex.sub(r'\1\2', utterance)
 
-    # TODO: handle nested scopes
     @classmethod
     def remove_scoped_symbols(cls, utterance):
         """Remove scoped symbols from utterance.
@@ -281,17 +280,14 @@ class CHATCleaner:
         Coding in CHAT: < > [.*]    .
 
         Note:
-            Nested scopes are only checked with depth 1.
-            Ex. <<ıspanak bitmediyse de> [/-] yemesin> [<].
+            Scoped symbols can be nested:
+                - word [...][...]
+                - <word [...] word> [...]
+                - <<word word> [...] word> [...]
         """
-        # several scoped words
-        scope_regex1 = re.compile(r'<(.*?)> \[.*?\]')
-        clean1 = scope_regex1.sub(r'\1', utterance)
-        # one scoped word
-        scope_regex2 = re.compile(r'(\S+) \[.*?\]')
-        clean2 = scope_regex2.sub(r'\1', clean1)
-        clean3 = cls.remove_redundant_whitespaces(clean2)
-        return clean3
+        scope_regex = re.compile(r'<|>|\[.*?\]')
+        clean = scope_regex.sub('', utterance)
+        return cls.remove_redundant_whitespaces(clean)
 
 
 if __name__ == '__main__':
@@ -331,4 +327,5 @@ if __name__ == '__main__':
                                              'qaigu [//] qainngitualuk '
                                              'sen niye bozdun [///] kim bozdu '
                                              '<<ıspanak bitmediyse de> [/-] yemesin> [<] '
-                                             'blubla [*]')))
+                                             'blubla [*] '
+                                             'blabla [//][: blabla]')))
