@@ -145,6 +145,40 @@ class InuktitutInferrer(CHATInferrer):
         alternative_regex2 = re.compile(r'(\S+) \[=\? .*?\]')
         return alternative_regex2.sub(r'\1', clean)
 
+    @staticmethod
+    def get_segments(xmor):
+        """Get segments from the xmor tier."""
+        pass
+
+    @staticmethod
+    def get_pos(xmor):
+        """Get the POS tags from the xmor tier.
+
+        Coding: POS tags are prefixed to the segment via |. If the segment has
+        several POS tags, the tags to the right are more specific. Such
+        subcategories of POS tags are added by | and replaced by a dot.
+
+        Returns:
+            list: list of POS tags.
+        """
+        pos_regex = re.compile(r'(\w+\|)+')
+        pos_list = []
+        # go through all POS tags
+        for pos_match in pos_regex.finditer(xmor):
+            pos = pos_match.group()
+            # strip | at the end
+            pos = pos.rstrip('|')
+            # replace | by . in case of subcategories
+            pos = pos.replace('|', '.')
+            pos_list.append(pos)
+
+        return pos_list
+
+    @staticmethod
+    def get_glosses(xmor):
+        """Get the glosses from the xmor tier."""
+        pass
+
 
 if __name__ == '__main__':
     inferrer = CHATInferrer()
@@ -165,3 +199,8 @@ if __name__ == '__main__':
         'This is the target [=? actual] form.')))
     print(repr(inuktitut_inferrer.get_target_alternative(
         'This is the target [=? actual] form.')))
+
+    test = 'LR|qa^outside+LI|unnga^ALL+VZ|aq^go_by_way_of+VV|VA|' \
+           'tit^CAUS+VV|lauq^POL+VI|nnga^IMP_2sS_1sO'
+
+    print(repr(inuktitut_inferrer.get_pos(test)))
