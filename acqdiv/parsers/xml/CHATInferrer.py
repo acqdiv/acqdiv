@@ -148,7 +148,18 @@ class InuktitutInferrer(CHATInferrer):
     @staticmethod
     def get_segments(xmor):
         """Get segments from the xmor tier."""
-        pass
+        seg_regex = re.compile(r'\|([^|]+?)\^')
+        seg_list = []
+        # go through every word
+        for word in xmor.split(' '):
+            word_seg_list = []
+            # go through all segments in the word
+            for seg_match in seg_regex.finditer(word):
+                seg = seg_match.group(1)
+                word_seg_list.append(seg)
+            seg_list.append(word_seg_list)
+
+        return seg_list
 
     @staticmethod
     def get_pos(xmor):
@@ -210,3 +221,4 @@ if __name__ == '__main__':
            'lugu^ICM_XxS_3sO? VR|kuvi^pour+NZ|suuq^HAB+NN|AUG|aluk^EMPH?'
 
     print(repr(inuktitut_inferrer.get_pos(test)))
+    print(repr(inuktitut_inferrer.get_segments((test))))
