@@ -6,7 +6,8 @@ class CHATCleaner:
 
     Note:
         The order of calling the cleaning methods has great impact on the final
-        result.
+        result, e.g. handling of repetitions has be done first, before scoped
+        symbols are removed.
     """
 
     def _remove_redundant_whitespaces(self, utterance):
@@ -109,9 +110,7 @@ class CHATCleaner:
         Coding in CHAT: xxx, yyy, www   .
         """
         untranscribed_regex = re.compile(r'yyy|www')
-        clean1 = untranscribed_regex.sub('xxx', utterance)
-        clean2 = self._remove_redundant_whitespaces(clean1)
-        return clean2
+        return untranscribed_regex.sub('xxx', utterance)
 
     def get_shortening_actual(self, utterance):
         """Get the actual form of shortenings.
@@ -169,9 +168,7 @@ class CHATCleaner:
         The fragment is marked as untranscribed (xxx).
         """
         fragment_regex = re.compile(r'&\S+')
-        clean1 = fragment_regex.sub('', utterance)
-        clean2 = self._remove_redundant_whitespaces(clean1)
-        return clean2
+        return fragment_regex.sub('xxx', utterance)
 
     def remove_form_markers(self, utterance):
         """Remove form markers from the utterance.
