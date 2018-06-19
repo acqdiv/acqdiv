@@ -6,8 +6,8 @@ class CHATCleaner:
 
     Note:
         The order of calling the cleaning methods has great impact on the final
-        result, e.g. handling of repetitions has be done first, before scoped
-        symbols are removed.
+        result, e.g. handling of repetitions has to be done first, before
+        scoped symbols are removed.
     """
 
     @staticmethod
@@ -27,9 +27,8 @@ class CHATCleaner:
         """
         # postcodes or nothing may follow terminators
         terminator_regex = re.compile(r'[+/.!?"]*[!?.](?=( \[\+|$))')
-        clean1 = terminator_regex.sub('', utterance)
-        clean2 = cls.remove_redundant_whitespaces(clean1)
-        return clean2
+        clean = terminator_regex.sub('', utterance)
+        return cls.remove_redundant_whitespaces(clean)
 
     @staticmethod
     def null_untranscribed_utterances(utterance):
@@ -61,9 +60,8 @@ class CHATCleaner:
         Coding in CHAT: word starting with &=.
         """
         event_regex = re.compile(r'&=\S+')
-        clean1 = event_regex.sub('', utterance)
-        clean2 = cls.remove_redundant_whitespaces(clean1)
-        return clean2
+        clean = event_regex.sub('', utterance)
+        return cls.remove_redundant_whitespaces(clean)
 
     @staticmethod
     def handle_repetitions(utterance):
@@ -107,9 +105,8 @@ class CHATCleaner:
         Coding in CHAT: word starting with 0.
         """
         omission_regex = re.compile(r'0\S+')
-        clean1 = omission_regex.sub('', utterance)
-        clean2 = cls.remove_redundant_whitespaces(clean1)
-        return clean2
+        clean = omission_regex.sub('', utterance)
+        return cls.remove_redundant_whitespaces(clean)
 
     @staticmethod
     def unify_untranscribed(utterance):
@@ -148,11 +145,11 @@ class CHATCleaner:
         Keeps replaced words, removes replacing words with brackets.
         """
         # several scoped words
-        replacement_regex2 = re.compile(r'<(.*?)> \[: .*?\]')
-        clean1 = replacement_regex2.sub(r'\1', utterance)
+        replacement_regex1 = re.compile(r'<(.*?)> \[: .*?\]')
+        clean = replacement_regex1.sub(r'\1', utterance)
         # one scoped word
-        replacement_regex1 = re.compile(r'(\S+) \[: .*?\]')
-        return replacement_regex1.sub(r'\1', clean1)
+        replacement_regex2 = re.compile(r'(\S+) \[: .*?\]')
+        return replacement_regex2.sub(r'\1', clean)
 
     @staticmethod
     def get_replacement_target(utterance):
@@ -222,9 +219,8 @@ class CHATCleaner:
             will be checked for removal.
         """
         ca_regex = re.compile(r'[↓↑‡„]')
-        clean1 = ca_regex.sub('', utterance)
-        clean2 = cls.remove_redundant_whitespaces(clean1)
-        return clean2
+        clean = ca_regex.sub('', utterance)
+        return cls.remove_redundant_whitespaces(clean)
 
     @staticmethod
     def remove_fillers(utterance):
@@ -260,9 +256,8 @@ class CHATCleaner:
         Coding in CHAT: (.), (..), (...)
         """
         pause_regex = re.compile(r'\(\.{1,3}\)')
-        clean1 = pause_regex.sub('', utterance)
-        clean2 = cls.remove_redundant_whitespaces(clean1)
-        return clean2
+        clean = pause_regex.sub('', utterance)
+        return cls.remove_redundant_whitespaces(clean)
 
     @staticmethod
     def remove_drawls(utterance):
@@ -296,36 +291,45 @@ if __name__ == '__main__':
     print(repr(cleaner.remove_terminator('doa to: (.) mado to: +... [+ bch]')))
     print(repr(cleaner.null_untranscribed_utterances('xxx')))
     print(repr(cleaner.null_event_utterances('0')))
-    print(repr(cleaner.remove_events('I know &=laugh what that &=laugh means .')))
-    print(repr(cleaner.handle_repetitions('This <is a> [x 3] sentence [x 2].')))
+    print(repr(cleaner.remove_events(
+        'I know &=laugh what that &=laugh means .')))
+    print(repr(cleaner.handle_repetitions(
+        'This <is a> [x 3] sentence [x 2].')))
     print(repr(cleaner.remove_omissions('This is 0not 0good .')))
     print(repr(cleaner.unify_untranscribed('This www I yyy is done .')))
-    print(repr(cleaner.get_shortening_actual('This (i)s a short(e)ned senten(ce)')))
-    print(repr(cleaner.get_shortening_target('This (i)s a short(e)ned senten(ce)')))
-    print(repr(cleaner.get_replacement_actual('This us [: is] <srane suff> [: strange stuff]')))
-    print(repr(cleaner.get_replacement_target('This us [: is] <srane suff> [: strange stuff]')))
+    print(repr(cleaner.get_shortening_actual(
+        'This (i)s a short(e)ned senten(ce)')))
+    print(repr(cleaner.get_shortening_target(
+        'This (i)s a short(e)ned senten(ce)')))
+    print(repr(cleaner.get_replacement_actual(
+        'This us [: is] <srane suff> [: strange stuff]')))
+    print(repr(cleaner.get_replacement_target(
+        'This us [: is] <srane suff> [: strange stuff]')))
     print(repr(cleaner.get_fragment_actual('This is &at .')))
     print(repr(cleaner.get_fragment_target('This is &at .')))
     print(repr(cleaner.remove_form_markers('I know the A@l B@l C@l .')))
     print(repr(cleaner.remove_linkers('+" bir de köpek varmış .')))
-    print(repr(cleaner.remove_separators('that is , that is ; that is : that is .')))
+    print(repr(cleaner.remove_separators(
+        'that is , that is ; that is : that is .')))
     print(repr(cleaner.remove_ca('up ↑ and down ↓ .')))
     print(repr(cleaner.remove_fillers('&-um what &-um is that &-um .')))
     print(repr(cleaner.remove_pauses_within_words('Th^is is a com^puter .')))
-    print(repr(cleaner.remove_pauses_between_words('This (.) is (..) a (...) sentence .')))
+    print(repr(cleaner.remove_pauses_between_words(
+        'This (.) is (..) a (...) sentence .')))
     print(repr(cleaner.remove_drawls('Thi:s is tea: .')))
-    print(repr(cleaner.remove_scoped_symbols('ji [=! smiling] '
-                                             '<take your shoes off> [!] '
-                                             '(w)a [!!] '
-                                             'Maks [= the name of CHIs dog] '
-                                             'dur silim [: sileyim] '
-                                             'dici [=? dizi] '
-                                             '<Ekin beni yakalayamaz> [% said with singing] '
-                                             'mami cuando [?] '
-                                             'oturduğun [>1] '
-                                             '<lana lana> [/] lana '
-                                             'qaigu [//] qainngitualuk '
-                                             'sen niye bozdun [///] kim bozdu '
-                                             '<<ıspanak bitmediyse de> [/-] yemesin> [<] '
-                                             'blubla [*] '
-                                             'blabla [//][: blabla]')))
+    print(repr(cleaner.remove_scoped_symbols(
+        'ji [=! smiling] '
+        '<take your shoes off> [!] '
+        '(w)a [!!] '
+        'Maks [= the name of CHIs dog] '
+        'dur silim [: sileyim] '
+        'dici [=? dizi] '
+        '<Ekin beni yakalayamaz> [% said with singing] '
+        'mami cuando [?] '
+        'oturduğun [>1] '
+        '<lana lana> [/] lana '
+        'qaigu [//] qainngitualuk '
+        'sen niye bozdun [///] kim bozdu '
+        '<<ıspanak bitmediyse de> [/-] yemesin> [<] '
+        'blubla [*] '
+        'blabla [//][: blabla]')))
