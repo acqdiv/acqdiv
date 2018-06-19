@@ -2,7 +2,7 @@ import re
 
 
 class CHATCleaner:
-    """Perform cleaning on the tiers of CHAT.
+    """Perform cleaning on the utterance tier of a CHAT record.
 
     Note:
         The order of calling the cleaning methods has great impact on the final
@@ -284,6 +284,50 @@ class CHATCleaner:
         clean = scope_regex.sub('', utterance)
         return cls.remove_redundant_whitespaces(clean)
 
+    @classmethod
+    def get_actual_form(cls, utterance):
+        """Get the actual form of the utterance."""
+        for actual_method in [cls.get_shortening_actual,
+                              cls.get_fragment_actual,
+                              cls.get_replacement_actual]:
+            utterance = actual_method(utterance)
+
+        return utterance
+
+    @classmethod
+    def get_target_form(cls, utterance):
+        """Get the target form of the utterance."""
+        for target_method in [cls.get_shortening_target,
+                              cls.get_fragment_target,
+                              cls.get_replacement_target]:
+            utterance = target_method(utterance)
+
+        return utterance
+
+    @classmethod
+    def clean(cls, utterance):
+        """Return the cleaned utterance."""
+        for cleaning_method in [cls.null_event_utterances,
+                                cls.unify_untranscribed,
+                                cls.handle_repetitions,
+                                cls.remove_terminator,
+                                cls.remove_events,
+                                cls.remove_omissions,
+                                cls.remove_form_markers,
+                                cls.remove_linkers,
+                                cls.remove_separators,
+                                cls.remove_ca,
+                                cls.remove_fillers,
+                                cls.remove_pauses_within_words,
+                                cls.remove_pauses_between_words,
+                                cls.remove_blocking,
+                                cls.remove_drawls,
+                                cls.remove_scoped_symbols,
+                                cls.null_untranscribed_utterances]:
+            utterance = cleaning_method(utterance)
+
+        return utterance
+
 
 if __name__ == '__main__':
     cleaner = CHATCleaner()
@@ -333,3 +377,8 @@ if __name__ == '__main__':
         '<<ıspanak bitmediyse de> [/-] yemesin> [<] '
         'blubla [*] '
         'blabla [//][: blabla]')))
+
+    print(repr(cleaner.clean('<<ıspanak bitmediyse de> [/-] yemesin> [<] '
+                             'mami cuando [?] '
+                             'I know ↑ the A@l B@l C@l www blabla yyy '
+                             'bla:bla 0not 0good &=laugh ! [+ bla]')))
