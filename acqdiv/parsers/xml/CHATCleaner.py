@@ -118,70 +118,6 @@ class CHATCleaner:
         return untranscribed_regex.sub('xxx', utterance)
 
     @staticmethod
-    def get_shortening_actual(utterance):
-        """Get the actual form of shortenings.
-
-        Coding in CHAT: parentheses within word.
-        The part with parentheses is removed.
-        """
-        shortening_regex = re.compile(r'(\S*)\(\S+\)(\S*)')
-        return shortening_regex.sub(r'\1\2', utterance)
-
-    @staticmethod
-    def get_shortening_target(utterance):
-        """Get the target form of shortenings.
-
-        Coding in CHAT: \w+(\w+)\w+ .
-        The part in parentheses is kept, parentheses are removed.
-        """
-        shortening_regex = re.compile(r'(\S*)\((\S+)\)(\S*)')
-        return shortening_regex.sub(r'\1\2\3', utterance)
-
-    @staticmethod
-    def get_replacement_actual(utterance):
-        """Get the actual form of replacements.
-
-        Coding in CHAT: [: <words>] .
-        Keeps replaced words, removes replacing words with brackets.
-        """
-        # several scoped words
-        replacement_regex1 = re.compile(r'<(.*?)> \[: .*?\]')
-        clean = replacement_regex1.sub(r'\1', utterance)
-        # one scoped word
-        replacement_regex2 = re.compile(r'(\S+) \[: .*?\]')
-        return replacement_regex2.sub(r'\1', clean)
-
-    @staticmethod
-    def get_replacement_target(utterance):
-        """Get the target form of replacements.
-
-        Coding in CHAT: [: <words>] .
-        Removes replaced words, keeps replacing words with brackets.
-        """
-        replacement_regex = re.compile(r'(?:<.*?>|\S+) \[: (.*?)\]')
-        return replacement_regex.sub(r'\1', utterance)
-
-    @staticmethod
-    def get_fragment_actual(utterance):
-        """Get the actual form of fragments.
-
-        Coding in CHAT: word starting with &.
-        Keeps the fragment, removes the & from the word.
-        """
-        fragment_regex = re.compile(r'&(\S+)')
-        return fragment_regex.sub(r'\1', utterance)
-
-    @staticmethod
-    def get_fragment_target(utterance):
-        """Get the target form of fragments.
-
-        Coding in CHAT: word starting with &.
-        The fragment is marked as untranscribed (xxx).
-        """
-        fragment_regex = re.compile(r'&\S+')
-        return fragment_regex.sub('xxx', utterance)
-
-    @staticmethod
     def remove_form_markers(utterance):
         """Remove form markers from the utterance.
 
@@ -285,26 +221,6 @@ class CHATCleaner:
         return cls.remove_redundant_whitespaces(clean)
 
     @classmethod
-    def get_actual_form(cls, utterance):
-        """Get the actual form of the utterance."""
-        for actual_method in [cls.get_shortening_actual,
-                              cls.get_fragment_actual,
-                              cls.get_replacement_actual]:
-            utterance = actual_method(utterance)
-
-        return utterance
-
-    @classmethod
-    def get_target_form(cls, utterance):
-        """Get the target form of the utterance."""
-        for target_method in [cls.get_shortening_target,
-                              cls.get_fragment_target,
-                              cls.get_replacement_target]:
-            utterance = target_method(utterance)
-
-        return utterance
-
-    @classmethod
     def clean(cls, utterance):
         """Return the cleaned utterance."""
         for cleaning_method in [cls.null_event_utterances,
@@ -341,16 +257,6 @@ if __name__ == '__main__':
         'This <is a> [x 3] sentence [x 2].')))
     print(repr(cleaner.remove_omissions('This is 0not 0good .')))
     print(repr(cleaner.unify_untranscribed('This www I yyy is done .')))
-    print(repr(cleaner.get_shortening_actual(
-        'This (i)s a short(e)ned senten(ce)')))
-    print(repr(cleaner.get_shortening_target(
-        'This (i)s a short(e)ned senten(ce)')))
-    print(repr(cleaner.get_replacement_actual(
-        'This us [: is] <srane suff> [: strange stuff]')))
-    print(repr(cleaner.get_replacement_target(
-        'This us [: is] <srane suff> [: strange stuff]')))
-    print(repr(cleaner.get_fragment_actual('This is &at .')))
-    print(repr(cleaner.get_fragment_target('This is &at .')))
     print(repr(cleaner.remove_form_markers('I know the A@l B@l C@l .')))
     print(repr(cleaner.remove_linkers('+" bir de köpek varmış .')))
     print(repr(cleaner.remove_separators(
