@@ -255,31 +255,34 @@ class InuktitutCleaner(CHATCleaner):
         POS tags to the right are subcategories of the POS tags to the left.
         The separator is replaced by a dot.
         """
-        pass
+        pos_separator_regex = re.compile(r'\|([0A-Z]+)')
+        return pos_separator_regex.sub(r'.\1', xmor)
+
 
     @staticmethod
     def replace_stem_grammatical_gloss_connector(xmor):
         """Replace the stem and grammatical gloss connector.
 
-        A stem gloss is connected with a grammatical gloss by '&amp;'.
+        A stem gloss is connected with a grammatical gloss by an ampersand.
         The connector is replaced by a dot.
         """
-        pass
+        return xmor.replace('&', '.')
 
     @staticmethod
-    def remove_english_words(xmor):
-        """Remove english words.
+    def remove_english_word_marker(xmor):
+        """Remove the marker for english words.
 
         English words are marked with the form marker '@e'.
         """
-        pass
+        english_marker_regex = re.compile(r'(\S+)@e(\S+)?')
+        return english_marker_regex.sub(r'\1\2', xmor)
 
     @classmethod
     def clean_xmor(cls, xmor):
         """Clean the morphology tier."""
         for cleaning_method in [cls.replace_pos_separator,
                                 cls.replace_stem_grammatical_gloss_connector,
-                                cls.remove_english_words,
+                                cls.remove_english_word_marker,
                                 cls.null_event_utterances,
                                 cls.unify_untranscribed,
                                 cls.remove_terminator,
@@ -333,6 +336,14 @@ if __name__ == '__main__':
         'blabla [//][: blabla]')))
 
     print(repr(cleaner.clean('<<ıspanak bitmediyse de> [/-] yemesin> [<] '
-                             'mami cuando [?] '
+                             'mami cuando [?] ^test test^test '
                              'I know ↑ the A@l B@l C@l www blabla yyy '
                              'bla:bla 0not 0good &=laugh ! [+ bla]')))
+
+    test = '<DR|u^here&SG_ST+DI|na^ABS_SG> [*] <VR|ukkuaq^close_door+VV|' \
+           'ADV|tsiaq^well+VV|nngit^NEG+NZ|juq^that_which+NN|AUG|' \
+           'aluk^EMPH+VI|gavit^CSV_2sS.> [*] NR|anaana^mother IACT|' \
+           'no@e^no IACT|no@e^no. [+ EX]'
+
+    inuktitut_cleaner = InuktitutCleaner()
+    print(repr(inuktitut_cleaner.clean_xmor(test)))
