@@ -245,6 +245,36 @@ class CHATCleaner:
         return utterance
 
 
+class InuktitutCleaner:
+
+    @staticmethod
+    def replace_pos_separator():
+        """Replace the POS tag separator.
+
+        A morpheme may have several POS tags separated by a pipe.
+        POS tags to the right are subcategories of the POS tags to the left.
+        The separator is replaced by a dot.
+        """
+        pass
+
+    @staticmethod
+    def replace_stem_grammatical_gloss_connector():
+        """Replace the stem and grammatical gloss connector.
+
+        A stem gloss is connected with a grammatical gloss by '&amp;'.
+        The connector is replaced by a dot.
+        """
+        pass
+
+    @staticmethod
+    def remove_english_words():
+        """Remove english words.
+
+        English words are marked with the form marker '@e'.
+        """
+        pass
+
+
 if __name__ == '__main__':
     cleaner = CHATCleaner()
     print(repr(cleaner.remove_redundant_whitespaces('Das   ist zu  viel.')))
