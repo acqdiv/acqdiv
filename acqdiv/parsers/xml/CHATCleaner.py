@@ -14,10 +14,12 @@ class CHATCleaner:
     def remove_redundant_whitespaces(utterance):
         """Remove redundant whitespaces in utterances.
 
-        This method is routinely called by most of the cleaning methods.
+        Strips multiple whitespaces as well as leading and trailing
+        whitespaces. This method is routinely called by various
+        cleaning methods.
         """
         whitespace_regex = re.compile(r'\s+')
-        return whitespace_regex.sub(' ', utterance)
+        return whitespace_regex.sub(' ', utterance).strip(' ')
 
     @classmethod
     def remove_terminator(cls, utterance):
