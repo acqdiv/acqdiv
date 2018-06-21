@@ -182,8 +182,8 @@ class CHATCleaner:
 
         Coding in CHAT: ^ at the beginning of the word
         """
-        blocking_regex = re.compile(r'\^(\S+)')
-        return blocking_regex.sub(r'\1', utterance)
+        blocking_regex = re.compile(r'(^| )\^(\S+)')
+        return blocking_regex.sub(r'\1\2', utterance)
 
     @classmethod
     def remove_pauses_between_words(cls, utterance):
@@ -289,6 +289,8 @@ if __name__ == '__main__':
     print(repr(cleaner.unify_untranscribed('This www I yyy is done .')))
     print(repr(cleaner.remove_form_markers('I know the A@l B@l C@l .')))
     print(repr(cleaner.remove_linkers('+" bir de köpek varmış .')))
+    print(repr(cleaner.remove_blocking('te^st')))
+    print(repr(cleaner.remove_blocking('^test ^test')))
     print(repr(cleaner.remove_separators(
         'that is , that is ; that is : that is .')))
     print(repr(cleaner.remove_ca('up ↑ and down ↓ .')))
