@@ -245,10 +245,10 @@ class CHATCleaner:
         return utterance
 
 
-class InuktitutCleaner:
+class InuktitutCleaner(CHATCleaner):
 
     @staticmethod
-    def replace_pos_separator():
+    def replace_pos_separator(xmor):
         """Replace the POS tag separator.
 
         A morpheme may have several POS tags separated by a pipe.
@@ -258,7 +258,7 @@ class InuktitutCleaner:
         pass
 
     @staticmethod
-    def replace_stem_grammatical_gloss_connector():
+    def replace_stem_grammatical_gloss_connector(xmor):
         """Replace the stem and grammatical gloss connector.
 
         A stem gloss is connected with a grammatical gloss by '&amp;'.
@@ -267,12 +267,28 @@ class InuktitutCleaner:
         pass
 
     @staticmethod
-    def remove_english_words():
+    def remove_english_words(xmor):
         """Remove english words.
 
         English words are marked with the form marker '@e'.
         """
         pass
+
+    @classmethod
+    def clean_xmor(cls, xmor):
+        """Clean the morphology tier."""
+        for cleaning_method in [cls.replace_pos_separator,
+                                cls.replace_stem_grammatical_gloss_connector,
+                                cls.remove_english_words,
+                                cls.null_event_utterances,
+                                cls.unify_untranscribed,
+                                cls.remove_terminator,
+                                cls.remove_separators,
+                                cls.remove_scoped_symbols,
+                                cls.null_untranscribed_utterances]:
+            xmor = cleaning_method(xmor)
+
+        return xmor
 
 
 if __name__ == '__main__':
