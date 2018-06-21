@@ -250,42 +250,37 @@ class CHATCleaner:
 class InuktitutCleaner(CHATCleaner):
 
     @staticmethod
-    def replace_pos_separator(xmor):
+    def replace_pos_separator(pos):
         """Replace the POS tag separator.
 
         A morpheme may have several POS tags separated by a pipe.
         POS tags to the right are subcategories of the POS tags to the left.
         The separator is replaced by a dot.
         """
-        pos_separator_regex = re.compile(r'\|([0A-Z]+)')
-        return pos_separator_regex.sub(r'.\1', xmor)
-
+        return pos.replace('|', '.')
 
     @staticmethod
-    def replace_stem_grammatical_gloss_connector(xmor):
+    def replace_stem_grammatical_gloss_connector(gloss):
         """Replace the stem and grammatical gloss connector.
 
         A stem gloss is connected with a grammatical gloss by an ampersand.
         The connector is replaced by a dot.
         """
-        return xmor.replace('&', '.')
+        return gloss.replace('&', '.')
 
     @staticmethod
-    def remove_english_word_marker(xmor):
+    def remove_english_word_marker(word):
         """Remove the marker for english words.
 
         English words are marked with the form marker '@e'.
         """
         english_marker_regex = re.compile(r'(\S+)@e(\S+)?')
-        return english_marker_regex.sub(r'\1\2', xmor)
+        return english_marker_regex.sub(r'\1\2', word)
 
     @classmethod
     def clean_xmor(cls, xmor):
         """Clean the morphology tier."""
-        for cleaning_method in [cls.replace_pos_separator,
-                                cls.replace_stem_grammatical_gloss_connector,
-                                cls.remove_english_word_marker,
-                                cls.null_event_utterances,
+        for cleaning_method in [cls.null_event_utterances,
                                 cls.unify_untranscribed,
                                 cls.remove_terminator,
                                 cls.remove_separators,

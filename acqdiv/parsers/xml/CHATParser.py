@@ -142,6 +142,12 @@ class CHATParser:
     # ---------- utterance processing ----------
 
     @staticmethod
+    def iter_words(utterance):
+        """Iter the words of an utterance."""
+        for word in utterance.split(' '):
+            yield word
+
+    @staticmethod
     def get_shortening_actual(utterance):
         """Get the actual form of shortenings.
 
@@ -284,6 +290,7 @@ class CHATParser:
 
 ###############################################################################
 
+
 class InuktitutParser(CHATParser):
     """Inferences for Inuktitut."""
 
@@ -329,42 +336,46 @@ class InuktitutParser(CHATParser):
         utterance = super().get_target_form(utterance)
         return cls.get_target_alternative(utterance)
 
-    @classmethod
-    def iter_words(cls, tier):
-        for word in tier.split(' '):
-            yield word
+    @staticmethod
+    def iter_morphemes(word):
+        """Iter POS tags, segments and glosses of a word.
 
-    @classmethod
-    def iter_morphemes(cls, word):
-        morpheme_regex = re.compile(r'(\w+|)+')
+        Args:
+            word (str): A word.
+
+        Yields:
+            tuple: The next POS tag, segment and gloss in the word.
+        """
+        morpheme_regex = re.compile(r'(.*)\|(.*?)\^(.*)')
         for morpheme in word.split('+'):
-            pass
+            match = morpheme_regex.search(morpheme)
+            yield match.group(1), match.group(2), match.group(3)
 
 
-if __name__ == '__main__':
+def main():
     import glob
     import acqdiv
     import os
     import time
 
-    start_time = time.time()
-
-    acqdiv_path = os.path.dirname(acqdiv.__file__)
-    corpora_path = os.path.join(acqdiv_path, 'corpora/*/cha/*.cha')
-
-    for path in glob.iglob(corpora_path):
-
-        chat_parser = CHATParser()
-
-        for rec in chat_parser.iter_records(path):
-            main_line = chat_parser.get_main_line(rec)
-            speaker_label = chat_parser.get_speaker_label(main_line)
-            utterance = chat_parser.get_utterance(main_line)
-            rec_time = chat_parser.get_time(main_line)
-            start = chat_parser.get_start(rec_time)
-            end = chat_parser.get_end(rec_time)
-
-    print('--- %s seconds ---' % (time.time() - start_time))
+    # start_time = time.time()
+    #
+    # acqdiv_path = os.path.dirname(acqdiv.__file__)
+    # corpora_path = os.path.join(acqdiv_path, 'corpora/*/cha/*.cha')
+    #
+    # for path in glob.iglob(corpora_path):
+    #
+    #     chat_parser = CHATParser()
+    #
+    #     for rec in chat_parser.iter_records(path):
+    #         main_line = chat_parser.get_main_line(rec)
+    #         speaker_label = chat_parser.get_speaker_label(main_line)
+    #         utterance = chat_parser.get_utterance(main_line)
+    #         rec_time = chat_parser.get_time(main_line)
+    #         start = chat_parser.get_start(rec_time)
+    #         end = chat_parser.get_end(rec_time)
+    #
+    # print('--- %s seconds ---' % (time.time() - start_time))
 
     parser = CHATParser()
     print(repr(parser.get_shortening_actual(
@@ -389,3 +400,11 @@ if __name__ == '__main__':
            'tit^CAUS+VV|lauq^POL+VI|nnga^IMP_2sS_1sO VR|' \
            'nimak^move_around+VV|VA|tit^CAUS+VV|nngit^NEG+VI|' \
            'lugu^ICM_XxS_3sO? VR|kuvi^pour+NZ|suuq^HAB+NN|AUG|aluk^EMPH?'
+
+    for word in inuktitut_parser.iter_words(test):
+        for morpheme in inuktitut_parser.iter_morphemes(word):
+            print(repr(morpheme))
+
+
+if __name__ == '__main__':
+    main()
