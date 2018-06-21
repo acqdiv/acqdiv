@@ -145,6 +145,24 @@ class InuktitutInferrer(CHATInferrer):
         alternative_regex2 = re.compile(r'(\S+) \[=\? .*?\]')
         return alternative_regex2.sub(r'\1', clean)
 
+    @classmethod
+    def get_actual_form(cls, utterance):
+        """Get the actual form of the utterance.
+
+        Considers alternatives as well.
+        """
+        utterance = super().get_actual_form(utterance)
+        return cls.get_actual_alternative(utterance)
+
+    @classmethod
+    def get_target_form(cls, utterance):
+        """Get the target form of the utterance.
+
+        Considers alternatives as well.
+        """
+        utterance = super().get_target_form(utterance)
+        return cls.get_target_alternative(utterance)
+
     @staticmethod
     def get_segments(xmor):
         """Get segments from the xmor tier."""
@@ -230,5 +248,5 @@ if __name__ == '__main__':
            'lugu^ICM_XxS_3sO? VR|kuvi^pour+NZ|suuq^HAB+NN|AUG|aluk^EMPH?'
 
     print(repr(inuktitut_inferrer.get_pos(test)))
-    print(repr(inuktitut_inferrer.get_segments((test))))
+    print(repr(inuktitut_inferrer.get_segments(test)))
     print(repr(inuktitut_inferrer.get_glosses(test)))
