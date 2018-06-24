@@ -19,6 +19,7 @@ class CHATParser:
 
         Returns:
             str: The utterance ID consisting of 'u' + the ID counter.
+            None: If method 'iter_records' has not been called yet.
         """
         if cls.uid is not None:
             return 'u' + cls.uid
@@ -110,13 +111,32 @@ class CHATParser:
 
         Returns:
             str: The content of the dependent tier.
+            None: If there is no dependent tier called 'name' in the record.
         """
         dependent_tier_regex = re.compile(r'%{}:\t(.*)'.format(name))
         match = dependent_tier_regex.search(rec)
-        if match is None:
-            return None
-        else:
+        if match is not None:
             return match.group(1)
+
+    @classmethod
+    def get_addressee(cls, rec):
+        """Get the addressee of the record.
+
+        Returns:
+            str: The content of the 'add' dependent tier.
+            None: If there is no dependent tier called 'add' in the record.
+        """
+        return cls.get_dependent_tier(rec, 'add')
+
+    @classmethod
+    def get_translation(cls, rec):
+        """Get the translation of the record.
+
+        Returns:
+            str: The content of the 'eng' dependent tier.
+            None: If there is no depenent tier called 'eng' in the record.
+        """
+        return cls.get_dependent_tier(rec, 'eng')
 
     # ---------- main line processing ----------
 
