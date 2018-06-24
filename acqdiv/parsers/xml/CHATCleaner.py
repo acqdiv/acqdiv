@@ -246,6 +246,18 @@ class CHATCleaner:
 
         return utterance
 
+    @staticmethod
+    def clean_mor_tiers(mor_tiers):
+        """Clean the morphology tiers.
+
+        Args:
+            mor_tiers (tuple): The content of all morphology tiers.
+
+        Returns:
+            tuple: The cleaned morphology tiers.
+        """
+        return mor_tiers
+
 
 class InuktitutCleaner(CHATCleaner):
 
@@ -278,8 +290,17 @@ class InuktitutCleaner(CHATCleaner):
         return english_marker_regex.sub(r'\1\2', word)
 
     @classmethod
-    def clean_xmor(cls, xmor):
-        """Clean the morphology tier."""
+    def clean_mor_tiers(cls, mor_tiers):
+        """Clean the morphology tier 'xmor'.
+
+        Args:
+            mor_tiers (tuple): Morphology tiers with the 'xmor' tier.
+
+        Returns:
+            tuple: The morphology tiers with the cleaned 'xmor' tier.
+        """
+        xmor = mor_tiers[0]
+
         for cleaning_method in [cls.null_event_utterances,
                                 cls.unify_untranscribed,
                                 cls.remove_terminator,
@@ -288,7 +309,7 @@ class InuktitutCleaner(CHATCleaner):
                                 cls.null_untranscribed_utterances]:
             xmor = cleaning_method(xmor)
 
-        return xmor
+        return xmor,
 
 
 if __name__ == '__main__':
@@ -343,4 +364,4 @@ if __name__ == '__main__':
            'no@e^no IACT|no@e^no. [+ EX]'
 
     inuktitut_cleaner = InuktitutCleaner()
-    print(repr(inuktitut_cleaner.clean_xmor(test)))
+    print(repr(inuktitut_cleaner.clean_mor_tiers((test,))))
