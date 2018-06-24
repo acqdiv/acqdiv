@@ -193,6 +193,11 @@ class CHATParser:
             yield word
 
     @staticmethod
+    def iter_mwords(utterance):
+        """Iter the morpheme words of an utterance."""
+        raise NotImplementedError
+
+    @staticmethod
     def get_shortening_actual(utterance):
         """Get the actual form of shortenings.
 
@@ -298,6 +303,23 @@ class CHATParser:
         terminator_regex = re.compile(r'([+/.!?"]*[!?.])(?=( \[\+|$))')
         match = terminator_regex.search(utterance)
         return mapping[match.group(1)]
+
+    # ---------- word processing ----------
+
+    @staticmethod
+    def iter_segments(word):
+        """Iter the segments of a word."""
+        raise NotImplementedError
+
+    @staticmethod
+    def iter_glosses(word):
+        """Iter the glosses of a word."""
+        raise NotImplementedError
+
+    @staticmethod
+    def iter_pos(self):
+        """Iter the POS tags of a word."""
+        raise NotImplementedError
 
     # ---------- time processing ----------
 
