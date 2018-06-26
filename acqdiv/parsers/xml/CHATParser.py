@@ -134,9 +134,19 @@ class CHATParser:
 
         Returns:
             str: The content of the 'eng' dependent tier.
-            None: If there is no depenent tier called 'eng' in the record.
+            None: If there is no dependent tier called 'eng' in the record.
         """
         return cls.get_dependent_tier(rec, 'eng')
+
+    @classmethod
+    def get_comments(cls, rec):
+        """Get the comments of a record.
+
+        Returns:
+            str: The content of the 'com' dependent tier.
+            None: If there is no dependent tier called 'com' in the record.
+        """
+        return cls.get_dependent_tier(rec, 'com')
 
     @staticmethod
     def get_seg_tier(rec):
