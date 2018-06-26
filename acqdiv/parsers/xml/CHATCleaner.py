@@ -223,7 +223,7 @@ class CHATCleaner:
         return cls.remove_redundant_whitespaces(clean)
 
     @classmethod
-    def clean(cls, utterance):
+    def clean_utterance(cls, utterance):
         """Return the cleaned utterance."""
         for cleaning_method in [cls.null_event_utterances,
                                 cls.unify_untranscribed,
@@ -247,16 +247,34 @@ class CHATCleaner:
         return utterance
 
     @staticmethod
-    def clean_mor_tiers(mor_tiers):
-        """Clean the morphology tiers.
+    def clean_seg_tier(seg_tier):
+        """Clean the segment tier."""
+        pass
 
-        Args:
-            mor_tiers (tuple): The content of all morphology tiers.
+    @staticmethod
+    def clean_gloss_tier(gloss_tier):
+        """Clean the gloss tier."""
+        pass
 
-        Returns:
-            tuple: The cleaned morphology tiers.
-        """
-        return mor_tiers
+    @staticmethod
+    def clean_pos_tier(pos_tier):
+        """Clean the POS tag tier."""
+        pass
+
+    @staticmethod
+    def clean_segment(segment):
+        """Clean the segment."""
+        pass
+
+    @staticmethod
+    def clean_gloss(gloss):
+        """Clean the gloss."""
+        pass
+
+    @staticmethod
+    def clean_pos(pos):
+        """Clean the POS tag."""
+        pass
 
 
 class InuktitutCleaner(CHATCleaner):
@@ -268,39 +286,48 @@ class InuktitutCleaner(CHATCleaner):
         A morpheme may have several POS tags separated by a pipe.
         POS tags to the right are subcategories of the POS tags to the left.
         The separator is replaced by a dot.
+
+        Args:
+            pos (str): The POS tag.
+
+        Returns:
+            str: POS tag separator replaced by a dot.
         """
         return pos.replace('|', '.')
 
     @staticmethod
-    def replace_stem_grammatical_gloss_connector(gloss):
+    def replace_stem_gram_gloss_connector(gloss):
         """Replace the stem and grammatical gloss connector.
 
         A stem gloss is connected with a grammatical gloss by an ampersand.
         The connector is replaced by a dot.
+
+        Args:
+            gloss (str): The gloss.
+
+        Returns:
+            str: The stem and grammatical connector replaced by a dot.
         """
         return gloss.replace('&', '.')
 
     @staticmethod
-    def remove_english_word_marker(word):
+    def remove_english_marker(seg):
         """Remove the marker for english words.
 
-        English words are marked with the form marker '@e'.
-        """
-        english_marker_regex = re.compile(r'(\S+)@e(\S+)?')
-        return english_marker_regex.sub(r'\1\2', word)
-
-    @classmethod
-    def clean_mor_tiers(cls, mor_tiers):
-        """Clean the morphology tier 'xmor'.
+        English segments are marked with the form marker '@e'.
 
         Args:
-            mor_tiers (tuple): Morphology tiers with the 'xmor' tier.
+            seg (str): The segment.
 
         Returns:
-            tuple: The morphology tiers with the cleaned 'xmor' tier.
+            str: The segment without '@e'.
         """
-        xmor = mor_tiers[0]
+        english_marker_regex = re.compile(r'(\S+)@e')
+        return english_marker_regex.sub(r'\1', seg)
 
+    @classmethod
+    def clean_xmor(cls, xmor):
+        """Clean the morphology tier 'xmor'."""
         for cleaning_method in [cls.null_event_utterances,
                                 cls.unify_untranscribed,
                                 cls.remove_terminator,
@@ -309,7 +336,37 @@ class InuktitutCleaner(CHATCleaner):
                                 cls.null_untranscribed_utterances]:
             xmor = cleaning_method(xmor)
 
-        return xmor,
+        return xmor
+
+    @classmethod
+    def clean_seg_tier(cls, seg_tier):
+        """Clean the xmor tier."""
+        return cls.clean_xmor(seg_tier)
+
+    @classmethod
+    def clean_gloss_tier(cls, gloss_tier):
+        """Clean the xmor tier."""
+        return cls.clean_xmor(gloss_tier)
+
+    @classmethod
+    def clean_pos_tier(cls, pos_tier):
+        """Clean the xmor tier."""
+        return cls.clean_xmor(pos_tier)
+
+    @classmethod
+    def clean_segment(cls, seg):
+        """Remove english markers from the segment."""
+        return cls.remove_english_marker(seg)
+
+    @classmethod
+    def clean_gloss(cls, gloss):
+        """Replace the stem and grammatical gloss connector."""
+        return cls.replace_stem_gram_gloss_connector(gloss)
+
+    @classmethod
+    def clean_pos(cls, pos):
+        """Replace the POS tag separator."""
+        return cls.replace_pos_separator(pos)
 
 
 if __name__ == '__main__':
@@ -353,7 +410,7 @@ if __name__ == '__main__':
         'blubla [*] '
         'blabla [//][: blabla]')))
 
-    print(repr(cleaner.clean('<<ıspanak bitmediyse de> [/-] yemesin> [<] '
+    print(repr(cleaner.clean_utterance('<<ıspanak bitmediyse de> [/-] yemesin> [<] '
                              'mami cuando [?] ^test test^test '
                              'I know ↑ the A@l B@l C@l www blabla yyy '
                              'bla:bla 0not 0good &=laugh ! [+ bla]')))

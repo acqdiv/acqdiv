@@ -138,6 +138,21 @@ class CHATParser:
         """
         return cls.get_dependent_tier(rec, 'eng')
 
+    @staticmethod
+    def get_seg_tier(rec):
+        """Get the tier containing segments."""
+        raise NotImplementedError
+
+    @staticmethod
+    def get_gloss_tier(rec):
+        """Get the tier containing glosses."""
+        raise NotImplementedError
+
+    @staticmethod
+    def get_pos_tier(rec):
+        """Get the tier containing POS tags."""
+        raise NotImplementedError
+
     # ---------- main line processing ----------
 
     @staticmethod
@@ -187,15 +202,13 @@ class CHATParser:
     # ---------- utterance processing ----------
 
     @staticmethod
-    def iter_words(utterance):
-        """Iter the words of an utterance."""
-        for word in utterance.split(' '):
-            yield word
+    def get_words(utterance):
+        """Get the words of an utterance.
 
-    @staticmethod
-    def iter_mwords(utterance):
-        """Iter the morpheme words of an utterance."""
-        raise NotImplementedError
+        Returns:
+            list: The words of an utterance.
+        """
+        return [word for word in utterance.split(' ')]
 
     @staticmethod
     def get_shortening_actual(utterance):
@@ -304,23 +317,6 @@ class CHATParser:
         match = terminator_regex.search(utterance)
         return mapping[match.group(1)]
 
-    # ---------- word processing ----------
-
-    @staticmethod
-    def iter_segments(word):
-        """Iter the segments of a word."""
-        raise NotImplementedError
-
-    @staticmethod
-    def iter_glosses(word):
-        """Iter the glosses of a word."""
-        raise NotImplementedError
-
-    @staticmethod
-    def iter_pos(self):
-        """Iter the POS tags of a word."""
-        raise NotImplementedError
-
     # ---------- time processing ----------
 
     @staticmethod
@@ -354,6 +350,38 @@ class CHATParser:
         else:
             end_regex = re.compile(r'_(\d+)')
             return end_regex.search(rec_time).group(1)
+
+    # ---------- morphology processing ----------
+
+    @classmethod
+    def get_seg_words(cls, seg_tier):
+        """Get the words from the segment tier."""
+        return cls.get_words(seg_tier)
+
+    @classmethod
+    def get_gloss_words(cls, gloss_tier):
+        """Get the words from the gloss tier."""
+        return cls.get_words(gloss_tier)
+
+    @classmethod
+    def get_pos_words(cls, pos_tier):
+        """Get the words from the POS tag tier."""
+        return cls.get_words(pos_tier)
+
+    @staticmethod
+    def get_segments(seg_word):
+        """Get the segments from the segment word."""
+        raise NotImplementedError
+
+    @staticmethod
+    def get_glosses(gloss_word):
+        """Get the glosses from the gloss word."""
+        raise NotImplementedError
+
+    @staticmethod
+    def get_pos(pos_word):
+        """Get the POS tags from the POS word."""
+        raise NotImplementedError
 
 ###############################################################################
 
@@ -403,12 +431,24 @@ class InuktitutParser(CHATParser):
         utterance = super().get_target_form(utterance)
         return cls.get_target_alternative(utterance)
 
+    @classmethod
+    def get_seg_tier(cls, rec):
+        return cls.get_dependent_tier(rec, 'xmor')
+
+    @classmethod
+    def get_gloss_tier(cls, rec):
+        return cls.get_dependent_tier(rec, 'xmor')
+
+    @classmethod
+    def get_pos_tier(cls, rec):
+        return cls.get_dependent_tier(rec, 'xmor')
+
     @staticmethod
     def iter_morphemes(word):
         """Iter POS tags, segments and glosses of a word.
 
         Args:
-            word (str): A word.
+            word (str): A morpheme word.
 
         Yields:
             tuple: The next POS tag, segment and gloss in the word.
@@ -417,6 +457,18 @@ class InuktitutParser(CHATParser):
         for morpheme in word.split('+'):
             match = morpheme_regex.search(morpheme)
             yield match.group(1), match.group(2), match.group(3)
+
+    @classmethod
+    def get_segments(cls, seg_word):
+        return [seg for _, seg, _ in cls.iter_morphemes(seg_word)]
+
+    @classmethod
+    def get_glosses(cls, gloss_word):
+        return [gloss for _, _, gloss in cls.iter_morphemes(gloss_word)]
+
+    @classmethod
+    def get_pos(cls, pos_word):
+        return [pos for pos, _, _ in cls.iter_morphemes(pos_word)]
 
 
 def main():
@@ -468,7 +520,7 @@ def main():
            'nimak^move_around+VV|VA|tit^CAUS+VV|nngit^NEG+VI|' \
            'lugu^ICM_XxS_3sO? VR|kuvi^pour+NZ|suuq^HAB+NN|AUG|aluk^EMPH?'
 
-    for word in inuktitut_parser.iter_words(test):
+    for word in inuktitut_parser.get_words(test):
         for morpheme in inuktitut_parser.iter_morphemes(word):
             print(repr(morpheme))
 
