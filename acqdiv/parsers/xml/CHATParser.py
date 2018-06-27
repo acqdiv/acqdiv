@@ -481,6 +481,21 @@ class InuktitutParser(CHATParser):
         return [pos for pos, _, _ in cls.iter_morphemes(pos_word)]
 
 
+class CreeParser(CHATParser):
+
+    @classmethod
+    def get_seg_tier(cls, rec):
+        return cls.get_dependent_tier(rec, 'xactmor')
+
+    @classmethod
+    def get_gloss_tier(cls, rec):
+        return cls.get_dependent_tier(rec, 'xmormea')
+
+    @classmethod
+    def get_pos_tier(cls, rec):
+        return cls.get_dependent_tier(rec, 'xmortyp')
+
+
 def main():
     import glob
     import acqdiv
