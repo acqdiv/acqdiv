@@ -225,23 +225,16 @@ class CHATCleaner:
     @classmethod
     def clean_utterance(cls, utterance):
         """Return the cleaned utterance."""
-        for cleaning_method in [cls.null_event_utterances,
-                                cls.unify_untranscribed,
-                                cls.handle_repetitions,
-                                cls.remove_terminator,
-                                cls.remove_events,
-                                cls.remove_omissions,
-                                cls.remove_form_markers,
-                                cls.remove_linkers,
-                                cls.remove_separators,
-                                cls.remove_ca,
-                                cls.remove_fillers,
-                                cls.remove_pauses_within_words,
-                                cls.remove_pauses_between_words,
-                                cls.remove_blocking,
-                                cls.remove_drawls,
-                                cls.remove_scoped_symbols,
-                                cls.null_untranscribed_utterances]:
+        for cleaning_method in [
+                cls.null_event_utterances, cls.unify_untranscribed,
+                cls.handle_repetitions, cls.remove_terminator,
+                cls.remove_events, cls.remove_omissions,
+                cls.remove_form_markers, cls.remove_linkers,
+                cls.remove_separators, cls.remove_ca,
+                cls.remove_fillers, cls.remove_pauses_within_words,
+                cls.remove_pauses_between_words, cls.remove_blocking,
+                cls.remove_drawls, cls.remove_scoped_symbols,
+                cls.null_untranscribed_utterances]:
             utterance = cleaning_method(utterance)
 
         return utterance
