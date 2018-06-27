@@ -389,7 +389,7 @@ class CHATParser:
         raise NotImplementedError
 
     @staticmethod
-    def get_pos(pos_word):
+    def get_poses(pos_word):
         """Get the POS tags from the POS word."""
         raise NotImplementedError
 
@@ -477,7 +477,7 @@ class InuktitutParser(CHATParser):
         return [gloss for _, _, gloss in cls.iter_morphemes(gloss_word)]
 
     @classmethod
-    def get_pos(cls, pos_word):
+    def get_poses(cls, pos_word):
         return [pos for pos, _, _ in cls.iter_morphemes(pos_word)]
 
 
