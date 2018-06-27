@@ -362,6 +362,86 @@ class InuktitutCleaner(CHATCleaner):
         return cls.replace_pos_separator(pos)
 
 
+class CreeCleaner(CHATCleaner):
+
+    # ---------- utterance cleaning ----------
+
+    @staticmethod
+    def remove_morph_separators(utterance):
+        """Remove morpheme separators in the utterance.
+
+        Words may contain an underscore as a morpheme separator, e.g.
+        'giddy_up', in the utterance.
+        """
+        morph_sep_regex = re.compile(r'(\S+)_(\S+)')
+        return morph_sep_regex.sub(r'\1\2')
+
+    @classmethod
+    def clean_utterance(cls, utterance):
+        utterance = super().clean_utterance(utterance)
+        return cls.remove_morph_separators(utterance)
+
+    # ---------- morphology cleaning ----------
+
+    @staticmethod
+    def remove_square_brackets(morph_tier):
+        """Remove redundant square brackets around morphology tiers.
+
+        Morphology tiers have square brackets at their edges which can be
+        removed. It is unclear what their purpose is.
+        """
+        return morph_tier.lstrip('[').rstrip(']')
+
+    @staticmethod
+    def replace_percentages(word):
+        """Replace words consisting of percentages.
+
+        '%%%' stand for untranscribed words. They are replaced by '???'.
+        """
+        if word == '%%%':
+            return '???'
+        else:
+            return word
+
+    @staticmethod
+    def replace_hashtag(morph_element):
+        """Replace words and morphemes consisting of a hashtag.
+
+        '#' stands for unglossed words and morphemes. It is replaced by
+        '???'
+        """
+        if morph_element == '#':
+            return '???'
+        else:
+            return morph_element
+
+    @staticmethod
+    def handle_question_mark(morph_element):
+        """Handle question marks in words and morphemes.
+
+        '?' stands for unclear meanings of a morpheme and word. If it only
+        consists of '?', it is replaced by '???'. If there is a form followed
+        by '?', it is removed.
+        """
+        if morph_element == '?':
+            return '???'
+
+        return morph_element.repalce('?', '')
+
+    @classmethod
+    def replace_stars(cls, morph_element):
+        """Replace words or morphemes consisting of a star.
+
+        The star marks an element that does not correspond to an element on
+        another morphology tier. It is replaced by a '???'.
+        """
+        if morph_element == '*':
+            return '???'
+        else:
+            return None
+
+
+
 if __name__ == '__main__':
     cleaner = CHATCleaner()
     print(repr(cleaner.remove_redundant_whitespaces('Das   ist zu  viel.')))
