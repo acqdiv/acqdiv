@@ -374,12 +374,33 @@ class CreeCleaner(CHATCleaner):
         'giddy_up', in the utterance.
         """
         morph_sep_regex = re.compile(r'(\S+)_(\S+)')
-        return morph_sep_regex.sub(r'\1\2')
+        return morph_sep_regex.sub(r'\1\2', utterance)
+
+    @staticmethod
+    def replace_zero(utterance):
+        """Replace zéro morphemes in the utterance.
+
+        'zéro' stands for zero morphemes is replaced by 'Ø'.
+        """
+        return utterance.replace('zéro', 'Ø')
+
+    @staticmethod
+    def replace_morpheme_separator(utterance):
+        """Replace morpheme separators in the utterance.
+
+        Morphemes are separated by a tilde.
+        """
+        return utterance.replace('~', '')
 
     @classmethod
     def clean_utterance(cls, utterance):
         utterance = super().clean_utterance(utterance)
-        return cls.remove_morph_separators(utterance)
+        for cleaning_method in [
+                cls.remove_morph_separators, cls.replace_zero,
+                cls.replace_morpheme_separator]:
+            utterance = cleaning_method(utterance)
+
+        return utterance
 
     # ---------- morphology cleaning ----------
 
@@ -440,6 +461,53 @@ class CreeCleaner(CHATCleaner):
         else:
             return None
 
+    @staticmethod
+    def replace_gloss_connector(gloss):
+        """Replace the gloss connectors.
+
+        There are three different gloss connectors: '.', '+', ','
+        ',' adds an additional specification to a gloss, e.g.
+        'p,quest” (question particle)'. '+' and ',' are replaced by a dot.
+        """
+        return gloss.replace(',', '.').replace('+', '.')
+
+    @staticmethod
+    def replace_eng(gloss_tier, actual_tier):
+        """Replace the 'Eng' glosses by the actual words in the gloss tier.
+
+        Returns:
+            str: The gloss tier with all its 'Eng' glosses replaced.
+        """
+        gloss_words = gloss_tier.split(' ')
+        actual_words = actual_tier.split(' ')
+
+        # check if the words are correctly aligned
+        if len(gloss_words) != len(actual_words):
+            return gloss_tier
+        else:
+            new_gloss_words = []
+            for gloss_word, actual_word in zip(gloss_words, actual_words):
+                if 'Eng' in gloss_word:
+                    new_gloss_words.append(actual_word)
+                else:
+                    new_gloss_words.append(gloss_word)
+            return ' '.join(new_gloss_words)
+
+    @staticmethod
+    def uppercase_pos_in_parentheses(pos):
+        """Uppercase POS tags in parentheses.
+
+        Parentheses indicate covert grammatical categories.
+        """
+        pos_in_parentheses_regex = re.compile(r'(\()(\S+)(\))')
+        # extract POS in parentheses
+        match = pos_in_parentheses_regex.search(pos)
+        if not match:
+            return pos
+        else:
+            # replace by uppercased version
+            up_pos = match.group(2).upper()
+            return pos_in_parentheses_regex.sub(r'\1{}\3'.format(up_pos), pos)
 
 
 if __name__ == '__main__':
@@ -483,10 +551,11 @@ if __name__ == '__main__':
         'blubla [*] '
         'blabla [//][: blabla]')))
 
-    print(repr(cleaner.clean_utterance('<<ıspanak bitmediyse de> [/-] yemesin> [<] '
-                             'mami cuando [?] ^test test^test '
-                             'I know ↑ the A@l B@l C@l www blabla yyy '
-                             'bla:bla 0not 0good &=laugh ! [+ bla]')))
+    print(repr(cleaner.clean_utterance(
+        '<<ıspanak bitmediyse de> [/-] yemesin> [<] '
+        'mami cuando [?] ^test test^test '
+        'I know ↑ the A@l B@l C@l www blabla yyy '
+        'bla:bla 0not 0good &=laugh ! [+ bla]')))
 
     test = '<DR|u^here&SG_ST+DI|na^ABS_SG> [*] <VR|ukkuaq^close_door+VV|' \
            'ADV|tsiaq^well+VV|nngit^NEG+NZ|juq^that_which+NN|AUG|' \
@@ -494,4 +563,3 @@ if __name__ == '__main__':
            'no@e^no IACT|no@e^no. [+ EX]'
 
     inuktitut_cleaner = InuktitutCleaner()
-    print(repr(inuktitut_cleaner.clean_mor_tiers((test,))))
