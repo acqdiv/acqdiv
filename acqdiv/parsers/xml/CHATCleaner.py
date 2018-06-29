@@ -242,32 +242,52 @@ class CHATCleaner:
     @staticmethod
     def clean_seg_tier(seg_tier):
         """Clean the segment tier."""
-        pass
+        return seg_tier
 
     @staticmethod
     def clean_gloss_tier(gloss_tier):
         """Clean the gloss tier."""
-        pass
+        return gloss_tier
 
     @staticmethod
     def clean_pos_tier(pos_tier):
         """Clean the POS tag tier."""
-        pass
+        return pos_tier
+
+    @staticmethod
+    def cross_clean(utterance, seg_tier, gloss_tier, pos_tier):
+        """Clean across different tiers."""
+        return utterance, seg_tier, gloss_tier, pos_tier
+
+    @staticmethod
+    def clean_seg_word(seg_word):
+        """Clean the segment word."""
+        return seg_word
+
+    @staticmethod
+    def clean_gloss_word(gloss_word):
+        """Clean the gloss word."""
+        return gloss_word
+
+    @staticmethod
+    def clean_pos_word(pos_word):
+        """Clean the POS tag word."""
+        return pos_word
 
     @staticmethod
     def clean_segment(segment):
         """Clean the segment."""
-        pass
+        return segment
 
     @staticmethod
     def clean_gloss(gloss):
         """Clean the gloss."""
-        pass
+        return gloss
 
     @staticmethod
     def clean_pos(pos):
         """Clean the POS tag."""
-        pass
+        return pos
 
 
 class InuktitutCleaner(CHATCleaner):
