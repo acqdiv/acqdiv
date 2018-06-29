@@ -543,6 +543,24 @@ class CreeCleaner(CHATCleaner):
             up_pos = match.group(2).upper()
             return pos_in_parentheses_regex.sub(r'\1{}\3'.format(up_pos), pos)
 
+    @classmethod
+    def clean_morpheme_word(cls, morpheme_word):
+        for cleaning_method in [
+                cls.replace_percentages, cls.replace_hashtag,
+                cls.handle_question_mark, cls.replace_star]:
+            morpheme_word = cleaning_method(morpheme_word)
+
+        return morpheme_word
+
+    @classmethod
+    def clean_morpheme(cls, morpheme):
+        for cleaning_method in [
+                cls.replace_hashtag, cls.handle_question_mark,
+                cls.replace_star]:
+            morpheme = cleaning_method(morpheme)
+
+        return morpheme
+
     # **********************************************************
     # ********** Processor interface cleaning methods **********
     # **********************************************************
@@ -583,15 +601,6 @@ class CreeCleaner(CHATCleaner):
     # ---------- morpheme word cleaning ----------
 
     @classmethod
-    def clean_morpheme_word(cls, morpheme_word):
-        for cleaning_method in [
-                cls.replace_percentages, cls.replace_hashtag,
-                cls.handle_question_mark, cls.replace_star]:
-            morpheme_word = cleaning_method(morpheme_word)
-
-        return morpheme_word
-
-    @classmethod
     def clean_seg_word(cls, seg_word):
         return cls.clean_morpheme_word(seg_word)
 
@@ -606,11 +615,17 @@ class CreeCleaner(CHATCleaner):
     # ---------- morpheme cleaning ----------
 
     @classmethod
+    def clean_segment(cls, segment):
+        return cls.clean_morpheme(segment)
+
+    @classmethod
     def clean_gloss(cls, gloss):
+        gloss = cls.clean_morpheme(gloss)
         return cls.replace_gloss_connector(gloss)
 
     @classmethod
     def clean_pos(cls, pos):
+        pos = cls.clean_morpheme(pos)
         return cls.uppercase_pos_in_parentheses(pos)
 
 
