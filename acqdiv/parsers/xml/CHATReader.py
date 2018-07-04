@@ -180,7 +180,7 @@ class CHATReader:
         return speaker_label_regex.search(main_line).group()
 
     @staticmethod
-    def get_utterance(main_line):
+    def get_utterance_raw(main_line):
         """Get the utterance from the main line.
 
         Args:
@@ -285,7 +285,7 @@ class CHATReader:
         return fragment_regex.sub('xxx', utterance)
 
     @classmethod
-    def get_actual_form(cls, utterance):
+    def get_actual_utterance(cls, utterance):
         """Get the actual form of the utterance."""
         for actual_method in [cls.get_shortening_actual,
                               cls.get_fragment_actual,
@@ -295,7 +295,7 @@ class CHATReader:
         return utterance
 
     @classmethod
-    def get_target_form(cls, utterance):
+    def get_target_utterance(cls, utterance):
         """Get the target form of the utterance."""
         for target_method in [cls.get_shortening_target,
                               cls.get_fragment_target,
@@ -303,6 +303,14 @@ class CHATReader:
             utterance = target_method(utterance)
 
         return utterance
+
+    @classmethod
+    def get_utterance(cls, utterance):
+        """Return the standard form of the utterance.
+
+        The standard form is the actual form per default.
+        """
+        return cls.get_actual_utterance(utterance)
 
     @staticmethod
     def get_sentence_type(utterance):
@@ -424,21 +432,21 @@ class InuktitutReader(CHATReader):
         return alternative_regex2.sub(r'\1', clean)
 
     @classmethod
-    def get_actual_form(cls, utterance):
+    def get_actual_utterance(cls, utterance):
         """Get the actual form of the utterance.
 
         Considers alternatives as well.
         """
-        utterance = super().get_actual_form(utterance)
+        utterance = super().get_actual_utterance(utterance)
         return cls.get_actual_alternative(utterance)
 
     @classmethod
-    def get_target_form(cls, utterance):
+    def get_target_utterance(cls, utterance):
         """Get the target form of the utterance.
 
         Considers alternatives as well.
         """
-        utterance = super().get_target_form(utterance)
+        utterance = super().get_target_utterance(utterance)
         return cls.get_target_alternative(utterance)
 
     @classmethod
