@@ -150,17 +150,29 @@ class CHATReader:
 
     @staticmethod
     def get_seg_tier(rec):
-        """Get the tier containing segments."""
+        """Get the tier containing segments.
+
+        Returns:
+            str: The content of the tier containing segments.
+        """
         raise NotImplementedError
 
     @staticmethod
     def get_gloss_tier(rec):
-        """Get the tier containing glosses."""
+        """Get the tier containing glosses.
+
+        Returns:
+            str: The content of the tier containing glosses.
+        """
         raise NotImplementedError
 
     @staticmethod
     def get_pos_tier(rec):
-        """Get the tier containing POS tags."""
+        """Get the tier containing POS tags.
+
+        Returns:
+            str: The content of the tier containing POS tags.
+        """
         raise NotImplementedError
 
     # ---------- main line processing ----------
@@ -174,20 +186,19 @@ class CHATReader:
 
         Returns:
             str: The speaker label.
-
         """
         speaker_label_regex = re.compile(r'(?<=^\*)[A-Z]{3}')
         return speaker_label_regex.search(main_line).group()
 
     @staticmethod
     def get_utterance_raw(main_line):
-        """Get the utterance from the main line.
+        """Get the raw utterance from the main line.
 
         Args:
             main_line (str): The main line.
 
         Returns:
-            str: The utterance.
+            str: The raw utterance.
         """
         utterance_regex = re.compile(r'(?<=:\t).*[.!?]')
         return utterance_regex.search(main_line).group()
@@ -214,6 +225,8 @@ class CHATReader:
     @staticmethod
     def get_words(utterance):
         """Get the words of an utterance.
+
+        Per default, a whitespace separating the words is assumed.
 
         Returns:
             list: The words of an utterance.
@@ -373,32 +386,56 @@ class CHATReader:
 
     @classmethod
     def get_seg_words(cls, seg_tier):
-        """Get the words from the segment tier."""
+        """Get the words from the segment tier.
+
+        Returns:
+            list: Words containing segments.
+        """
         return cls.get_words(seg_tier)
 
     @classmethod
     def get_gloss_words(cls, gloss_tier):
-        """Get the words from the gloss tier."""
+        """Get the words from the gloss tier.
+
+        Returns:
+            list: Words containing glosses.
+        """
         return cls.get_words(gloss_tier)
 
     @classmethod
     def get_pos_words(cls, pos_tier):
-        """Get the words from the POS tag tier."""
+        """Get the words from the POS tag tier.
+
+        Returns:
+            list: Words containing POS tags.
+        """
         return cls.get_words(pos_tier)
 
     @staticmethod
     def get_segments(seg_word):
-        """Get the segments from the segment word."""
+        """Get the segments from the segment word.
+
+        Returns:
+            list: Segments in the word.
+        """
         raise NotImplementedError
 
     @staticmethod
     def get_glosses(gloss_word):
-        """Get the glosses from the gloss word."""
+        """Get the glosses from the gloss word.
+
+        Returns:
+            list: Glosses in the word.
+        """
         raise NotImplementedError
 
     @staticmethod
     def get_poses(pos_word):
-        """Get the POS tags from the POS word."""
+        """Get the POS tags from the POS word.
+
+        Returns:
+            list: POS tags in the word.
+        """
         raise NotImplementedError
 
 ###############################################################################
