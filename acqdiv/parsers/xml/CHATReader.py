@@ -337,7 +337,7 @@ class CHATReader:
                    '?': 'question',
                    '!': 'exclamation',
                    '+.': 'broken for coding',
-                   '+..': 'trail off',
+                   '+...': 'trail off',
                    '+..?': 'trail off of question',
                    '+!?': 'question with exclamation',
                    '+/.': 'interruption',

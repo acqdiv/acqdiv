@@ -161,19 +161,23 @@ def main():
     import os
     import time
 
-    # Cree parsing
+    acqdiv_path = os.path.dirname(acqdiv.__file__)
+
     start_time = time.time()
 
-    acqdiv_path = os.path.dirname(acqdiv.__file__)
-    corpus_path = os.path.join(acqdiv_path, 'corpora/Cree/cha/*.cha')
+    for corpus, parser in [
+            ('Cree', CreeParser), ('Inuktitut', InuktitutParser)]:
 
-    for path in glob.iglob(corpus_path):
-        parser = CreeParser(path)
+        corpus_path = os.path.join(
+            acqdiv_path, 'corpora/{}/cha/*.cha'.format(corpus))
 
-        print(path)
+        for path in glob.iglob(corpus_path):
+            parser = CreeParser(path)
 
-        for utterance, words, morphemes in parser.next_utterance():
-            pass
+            print(path)
+
+            for _ in parser.next_utterance():
+                pass
 
     print('--- %s seconds ---' % (time.time() - start_time))
 
