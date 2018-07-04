@@ -530,7 +530,7 @@ class CreeReader(CHATReader):
 
     @classmethod
     def get_seg_tier(cls, rec):
-        return cls.get_dependent_tier(rec, 'xactmor')
+        return cls.get_dependent_tier(rec, 'xtarmor')
 
     @classmethod
     def get_gloss_tier(cls, rec):
@@ -539,6 +539,22 @@ class CreeReader(CHATReader):
     @classmethod
     def get_pos_tier(cls, rec):
         return cls.get_dependent_tier(rec, 'xmortyp')
+
+    @classmethod
+    def get_morphemes(cls, word):
+        return word.split('~')
+
+    @classmethod
+    def get_segments(cls, seg_word):
+        return cls.get_morphemes(seg_word)
+
+    @classmethod
+    def get_glosses(cls, gloss_word):
+        return cls.get_morphemes(gloss_word)
+
+    @classmethod
+    def get_poses(cls, pos_word):
+        return cls.get_morphemes(pos_word)
 
 
 def main():
