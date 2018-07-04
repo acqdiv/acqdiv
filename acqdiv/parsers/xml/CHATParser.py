@@ -45,16 +45,14 @@ class CHATParser:
             start_raw = self.reader.get_start(rec_time)
             end_raw = self.reader.get_end(rec_time)
 
-            # get actual, target and standard utterance and clean them
+            # get fields from raw utterance
+            sentence_type = self.reader.get_sentence_type(utterance_raw)
             actual_utterance = self.cleaner.clean_utterance(
                 self.reader.get_actual_utterance(utterance_raw))
             target_utterance = self.cleaner.clean_utterance(
                 self.reader.get_target_utterance(utterance_raw))
             utterance = self.cleaner.clean_utterance(
                 self.reader.get_utterance(utterance_raw))
-
-            # get sentence type from utterance
-            sentence_type = self.reader.get_sentence_type(utterance)
 
             # get morphology tiers and clean them
             seg_tier = self.cleaner.clean_seg_tier(
@@ -90,7 +88,7 @@ class CHATParser:
             for word_actual, word_target in zip(actual_words, target_words):
 
                 word_dict = {
-                    'word_language': 'Inuktitut',
+                    'word_language': None,
                     'word': word_actual,
                     'word_actual': word_actual,
                     'word_target': word_target,
@@ -155,3 +153,30 @@ class InuktitutParser(CHATParser):
     @staticmethod
     def get_cleaner():
         return CHATCleaner.InuktitutCleaner()
+
+
+def main():
+    import glob
+    import acqdiv
+    import os
+    import time
+
+    # Cree parsing
+    start_time = time.time()
+
+    acqdiv_path = os.path.dirname(acqdiv.__file__)
+    corpus_path = os.path.join(acqdiv_path, 'corpora/Cree/cha/*.cha')
+
+    for path in glob.iglob(corpus_path):
+        parser = CreeParser(path)
+
+        print(path)
+
+        for utterance, words, morphemes in parser.next_utterance():
+            pass
+
+    print('--- %s seconds ---' % (time.time() - start_time))
+
+
+if __name__ == '__main__':
+    main()

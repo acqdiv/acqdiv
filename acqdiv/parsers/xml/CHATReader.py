@@ -22,7 +22,7 @@ class CHATReader:
             None: If method 'iter_records' has not been called yet.
         """
         if cls.uid is not None:
-            return 'u' + cls.uid
+            return 'u' + str(cls.uid)
 
     # ---------- session processing ----------
 
@@ -110,12 +110,14 @@ class CHATReader:
             name (str): The name of the dependent tier.
 
         Returns:
-            str: The content of the dependent tier.
-            None: If there is no dependent tier called 'name' in the record.
+            str: The content of the dependent tier. If there is no dependent
+                tier called 'name' in the record, the empty string.
         """
         dependent_tier_regex = re.compile(r'%{}:\t(.*)'.format(name))
         match = dependent_tier_regex.search(rec)
-        if match is not None:
+        if match is None:
+            return ''
+        else:
             return match.group(1)
 
     @classmethod
@@ -123,8 +125,8 @@ class CHATReader:
         """Get the addressee of the record.
 
         Returns:
-            str: The content of the 'add' dependent tier.
-            None: If there is no dependent tier called 'add' in the record.
+            str: The content of the 'add' dependent tier. If there is no
+                dependent tier called 'add' in the record, the empty string.
         """
         return cls.get_dependent_tier(rec, 'add')
 
@@ -133,8 +135,8 @@ class CHATReader:
         """Get the translation of the record.
 
         Returns:
-            str: The content of the 'eng' dependent tier.
-            None: If there is no dependent tier called 'eng' in the record.
+            str: The content of the 'eng' dependent tier. If there is no
+             dependent tier called 'eng' in the record, the empty string.
         """
         return cls.get_dependent_tier(rec, 'eng')
 
@@ -143,8 +145,8 @@ class CHATReader:
         """Get the comments of a record.
 
         Returns:
-            str: The content of the 'com' dependent tier.
-            None: If there is no dependent tier called 'com' in the record.
+            str: The content of the 'com' dependent tier. If there is no
+                dependent tier called 'com' in the record, the empty string.
         """
         return cls.get_dependent_tier(rec, 'com')
 
@@ -558,30 +560,6 @@ class CreeReader(CHATReader):
 
 
 def main():
-    import glob
-    import acqdiv
-    import os
-    import time
-
-    # start_time = time.time()
-    #
-    # acqdiv_path = os.path.dirname(acqdiv.__file__)
-    # corpora_path = os.path.join(acqdiv_path, 'corpora/*/cha/*.cha')
-    #
-    # for path in glob.iglob(corpora_path):
-    #
-    #     chat_parser = CHATParser()
-    #
-    #     for rec in chat_parser.iter_records(path):
-    #         main_line = chat_parser.get_main_line(rec)
-    #         speaker_label = chat_parser.get_speaker_label(main_line)
-    #         utterance = chat_parser.get_utterance(main_line)
-    #         rec_time = chat_parser.get_time(main_line)
-    #         start = chat_parser.get_start(rec_time)
-    #         end = chat_parser.get_end(rec_time)
-    #
-    # print('--- %s seconds ---' % (time.time() - start_time))
-
     parser = CHATReader()
     print(repr(parser.get_shortening_actual(
         'This (i)s a short(e)ned senten(ce)')))
