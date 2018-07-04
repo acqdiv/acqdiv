@@ -89,7 +89,7 @@ class ValidationTest(object):
     def test_pos(self):
         """ Check pos in database vs whitelist. """
         query = "select pos from morphemes group by pos"
-        pos = [None, "ADJ", "ADV", "ART", "AUX", "CLF", "CONJ", "IDEOPH", "INTJ", "N", "NUM", "pfx", "POST",
+        pos = [None, "ADJ", "ADV", "ART", "AUX", "CLF", "CONJ", "IDEOPH", "INTJ", "N", "NUM", "PVB", "pfx", "POST",
                "PREP", "PRODEM", "PTCL", "QUANT", "sfx", "stem", "V", "???"]
         self._in_whitelist(query, pos)
 

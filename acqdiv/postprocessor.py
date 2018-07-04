@@ -3,6 +3,7 @@
 import re
 import sys
 import time
+import csv
 import argparse
 import logging
 import sqlalchemy as sa
@@ -145,6 +146,9 @@ def postprocess(test=False):
 
         print("Processing words table...")
         process_words_table()
+
+        print("Processing sessions table...")
+        process_sessions_table()
 
     print("%s seconds --- Finished" % (time.time() - start_time))
     print()
@@ -905,10 +909,41 @@ def _words_add_pos_labels():
     _update_rows(db.Word.__table__, 'word_id', results_pos_ud)
 
 
+def process_sessions_table():
+    _insert_durations()
+
+
+def _insert_durations():
+    """Read session durations from ini/durations.csv and insert the matches into the sessions table.
+    """
+    durations = []
+
+    with open('ini/session_durations.csv', 'r', encoding='utf8') as f:
+        reader = csv.DictReader(f)
+
+        for row in reader:
+            duration = row['duration']
+            # Skip rows with empty durations
+            if duration == '':
+                continue
+            session_id = row['id']
+            durations.append({'session_id': session_id, 'duration': duration})
+
+    _update_rows(db.Session.__table__, 'session_id', durations)
+
+
 ### Util functions ###
 def _update_rows(t, binder, rows):
-    """ Update rows for a given table, bindparameter and list of dictionaries contain column-value mappings. """
+    """
+    Update rows for a given table
+
+    Args:
+        t: sql-alchemy-table
+        binder: str, bindparameter, normally the column acting as primary key
+        rows: list of dicts with col-name as key and insert value as value
+    """
     stmt = t.update().where(t.c.id == sa.bindparam(binder)).values()
+    
     try:
         conn.execute(stmt, rows)
     except sa.exc.StatementError:
