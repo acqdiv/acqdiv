@@ -222,6 +222,12 @@ class CHATCleaner:
         clean = scope_regex.sub('', utterance)
         return cls.remove_redundant_whitespaces(clean)
 
+    # **********************************************************
+    # ********** Processor interface cleaning methods **********
+    # **********************************************************
+
+    # ---------- utterance cleaning ----------
+
     @classmethod
     def clean_utterance(cls, utterance):
         """Return the cleaned utterance."""
@@ -239,35 +245,66 @@ class CHATCleaner:
 
         return utterance
 
+    # ---------- morphology tier cleaning ----------
+
     @staticmethod
     def clean_seg_tier(seg_tier):
         """Clean the segment tier."""
-        pass
+        return seg_tier
 
     @staticmethod
     def clean_gloss_tier(gloss_tier):
         """Clean the gloss tier."""
-        pass
+        return gloss_tier
 
     @staticmethod
     def clean_pos_tier(pos_tier):
         """Clean the POS tag tier."""
-        pass
+        return pos_tier
+
+    # ---------- tier cross cleaning ----------
+
+    @staticmethod
+    def cross_clean(utterance, seg_tier, gloss_tier, pos_tier):
+        """Clean across different tiers."""
+        return utterance, seg_tier, gloss_tier, pos_tier
+
+    # ---------- morpheme word cleaning ----------
+
+    @staticmethod
+    def clean_seg_word(seg_word):
+        """Clean the segment word."""
+        return seg_word
+
+    @staticmethod
+    def clean_gloss_word(gloss_word):
+        """Clean the gloss word."""
+        return gloss_word
+
+    @staticmethod
+    def clean_pos_word(pos_word):
+        """Clean the POS tag word."""
+        return pos_word
+
+    # ---------- morpheme cleaning ----------
 
     @staticmethod
     def clean_segment(segment):
         """Clean the segment."""
-        pass
+        return segment
 
     @staticmethod
     def clean_gloss(gloss):
         """Clean the gloss."""
-        pass
+        return gloss
 
     @staticmethod
     def clean_pos(pos):
         """Clean the POS tag."""
-        pass
+        return pos
+
+
+###############################################################################
 
 
 class InuktitutCleaner(CHATCleaner):
@@ -331,6 +368,12 @@ class InuktitutCleaner(CHATCleaner):
 
         return xmor
 
+    # **********************************************************
+    # ********** Processor interface cleaning methods **********
+    # **********************************************************
+
+    # ---------- morphology tier cleaning ----------
+
     @classmethod
     def clean_seg_tier(cls, seg_tier):
         """Clean the xmor tier."""
@@ -345,6 +388,8 @@ class InuktitutCleaner(CHATCleaner):
     def clean_pos_tier(cls, pos_tier):
         """Clean the xmor tier."""
         return cls.clean_xmor(pos_tier)
+
+    # ---------- morpheme cleaning ----------
 
     @classmethod
     def clean_segment(cls, seg):
@@ -362,9 +407,10 @@ class InuktitutCleaner(CHATCleaner):
         return cls.replace_pos_separator(pos)
 
 
-class CreeCleaner(CHATCleaner):
+###############################################################################
 
-    # ---------- utterance cleaning ----------
+
+class CreeCleaner(CHATCleaner):
 
     @staticmethod
     def remove_morph_separators(utterance):
@@ -374,14 +420,23 @@ class CreeCleaner(CHATCleaner):
         'giddy_up', in the utterance.
         """
         morph_sep_regex = re.compile(r'(\S+)_(\S+)')
-        return morph_sep_regex.sub(r'\1\2')
+        return morph_sep_regex.sub(r'\1\2', utterance)
 
-    @classmethod
-    def clean_utterance(cls, utterance):
-        utterance = super().clean_utterance(utterance)
-        return cls.remove_morph_separators(utterance)
+    @staticmethod
+    def replace_zero(utterance):
+        """Replace zéro morphemes in the utterance.
 
-    # ---------- morphology cleaning ----------
+        'zéro' stands for zero morphemes is replaced by 'Ø'.
+        """
+        return utterance.replace('zéro', 'Ø')
+
+    @staticmethod
+    def replace_morpheme_separator(utterance):
+        """Replace morpheme separators in the utterance.
+
+        Morphemes are separated by a tilde.
+        """
+        return utterance.replace('~', '')
 
     @staticmethod
     def remove_square_brackets(morph_tier):
@@ -391,6 +446,28 @@ class CreeCleaner(CHATCleaner):
         removed. It is unclear what their purpose is.
         """
         return morph_tier.lstrip('[').rstrip(']')
+
+    @staticmethod
+    def replace_eng(gloss_tier, utterance):
+        """Replace the 'Eng' glosses by the actual words in the gloss tier.
+
+        Returns:
+            str: The gloss tier with all its 'Eng' glosses replaced.
+        """
+        gloss_words = gloss_tier.split(' ')
+        utterance_words = utterance.split(' ')
+
+        # check if the words are correctly aligned
+        if len(gloss_words) != len(utterance_words):
+            return gloss_tier
+        else:
+            new_gloss_words = []
+            for gloss_word, actual_word in zip(gloss_words, utterance_words):
+                if 'Eng' in gloss_word:
+                    new_gloss_words.append(actual_word)
+                else:
+                    new_gloss_words.append(gloss_word)
+            return ' '.join(new_gloss_words)
 
     @staticmethod
     def replace_percentages(word):
@@ -429,7 +506,7 @@ class CreeCleaner(CHATCleaner):
         return morph_element.repalce('?', '')
 
     @classmethod
-    def replace_stars(cls, morph_element):
+    def replace_star(cls, morph_element):
         """Replace words or morphemes consisting of a star.
 
         The star marks an element that does not correspond to an element on
@@ -439,6 +516,117 @@ class CreeCleaner(CHATCleaner):
             return '???'
         else:
             return None
+
+    @staticmethod
+    def replace_gloss_connector(gloss):
+        """Replace the gloss connectors.
+
+        There are three different gloss connectors: '.', '+', ','
+        ',' adds an additional specification to a gloss, e.g.
+        'p,quest” (question particle)'. '+' and ',' are replaced by a dot.
+        """
+        return gloss.replace(',', '.').replace('+', '.')
+
+    @staticmethod
+    def uppercase_pos_in_parentheses(pos):
+        """Uppercase POS tags in parentheses.
+
+        Parentheses indicate covert grammatical categories.
+        """
+        pos_in_parentheses_regex = re.compile(r'(\()(\S+)(\))')
+        # extract POS in parentheses
+        match = pos_in_parentheses_regex.search(pos)
+        if not match:
+            return pos
+        else:
+            # replace by uppercased version
+            up_pos = match.group(2).upper()
+            return pos_in_parentheses_regex.sub(r'\1{}\3'.format(up_pos), pos)
+
+    @classmethod
+    def clean_morpheme_word(cls, morpheme_word):
+        for cleaning_method in [
+                cls.replace_percentages, cls.replace_hashtag,
+                cls.handle_question_mark, cls.replace_star]:
+            morpheme_word = cleaning_method(morpheme_word)
+
+        return morpheme_word
+
+    @classmethod
+    def clean_morpheme(cls, morpheme):
+        for cleaning_method in [
+                cls.replace_hashtag, cls.handle_question_mark,
+                cls.replace_star]:
+            morpheme = cleaning_method(morpheme)
+
+        return morpheme
+
+    # **********************************************************
+    # ********** Processor interface cleaning methods **********
+    # **********************************************************
+
+    # ---------- utterance cleaning ----------
+
+    @classmethod
+    def clean_utterance(cls, utterance):
+        utterance = super().clean_utterance(utterance)
+        for cleaning_method in [
+                cls.remove_morph_separators, cls.replace_zero,
+                cls.replace_morpheme_separator]:
+            utterance = cleaning_method(utterance)
+
+        return utterance
+
+    # ---------- morphology tier cleaning ----------
+
+    @classmethod
+    def clean_seg_tier(cls, seg_tier):
+        return cls.remove_square_brackets(seg_tier)
+
+    @classmethod
+    def clean_gloss_tier(cls, gloss_tier):
+        return cls.remove_square_brackets(gloss_tier)
+
+    @classmethod
+    def clean_pos_tier(cls, pos_tier):
+        return cls.remove_square_brackets(pos_tier)
+
+    # ---------- tier cross cleaning ----------
+
+    @classmethod
+    def cross_clean(cls, utterance, seg_tier, gloss_tier, pos_tier):
+        gloss_tier = cls.replace_eng(gloss_tier, utterance)
+        return utterance, seg_tier, gloss_tier, pos_tier
+
+    # ---------- morpheme word cleaning ----------
+
+    @classmethod
+    def clean_seg_word(cls, seg_word):
+        return cls.clean_morpheme_word(seg_word)
+
+    @classmethod
+    def clean_gloss_word(cls, gloss_word):
+        return cls.clean_morpheme_word(gloss_word)
+
+    @classmethod
+    def clean_pos_word(cls, pos_word):
+        return cls.clean_morpheme_word(pos_word)
+
+    # ---------- morpheme cleaning ----------
+
+    @classmethod
+    def clean_segment(cls, segment):
+        return cls.clean_morpheme(segment)
+
+    @classmethod
+    def clean_gloss(cls, gloss):
+        gloss = cls.clean_morpheme(gloss)
+        return cls.replace_gloss_connector(gloss)
+
+    @classmethod
+    def clean_pos(cls, pos):
+        pos = cls.clean_morpheme(pos)
+        return cls.uppercase_pos_in_parentheses(pos)
 
 
 
@@ -483,10 +671,11 @@ if __name__ == '__main__':
         'blubla [*] '
         'blabla [//][: blabla]')))
 
-    print(repr(cleaner.clean_utterance('<<ıspanak bitmediyse de> [/-] yemesin> [<] '
-                             'mami cuando [?] ^test test^test '
-                             'I know ↑ the A@l B@l C@l www blabla yyy '
-                             'bla:bla 0not 0good &=laugh ! [+ bla]')))
+    print(repr(cleaner.clean_utterance(
+        '<<ıspanak bitmediyse de> [/-] yemesin> [<] '
+        'mami cuando [?] ^test test^test '
+        'I know ↑ the A@l B@l C@l www blabla yyy '
+        'bla:bla 0not 0good &=laugh ! [+ bla]')))
 
     test = '<DR|u^here&SG_ST+DI|na^ABS_SG> [*] <VR|ukkuaq^close_door+VV|' \
            'ADV|tsiaq^well+VV|nngit^NEG+NZ|juq^that_which+NN|AUG|' \
@@ -494,4 +683,3 @@ if __name__ == '__main__':
            'no@e^no IACT|no@e^no. [+ EX]'
 
     inuktitut_cleaner = InuktitutCleaner()
-    print(repr(inuktitut_cleaner.clean_mor_tiers((test,))))
