@@ -39,7 +39,7 @@ class CHATReader:
         with open(session_path, 'rb') as f:
             mm = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
             metadata_start = re.search(br'@.*?:\t', mm).start()
-            metadata_end = re.search(br'\*[A-Za-z0-9]{3}:\t', mm).start()
+            metadata_end = re.search(br'\*[A-Za-z0-9]{2,3}:\t', mm).start()
             return mm[metadata_start:metadata_end].decode()
 
     @staticmethod
@@ -271,7 +271,7 @@ class CHATReader:
                     mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as text:
 
                 # create a record generator
-                rec_generator = re.finditer(br'\*[A-Za-z0-9]{3}:\t', text)
+                rec_generator = re.finditer(br'\*[A-Za-z0-9]{2,3}:\t', text)
 
                 # get start of first record
                 rec_start_pos = next(rec_generator).start()
@@ -319,7 +319,7 @@ class CHATReader:
     def get_main_line(cls, rec):
         """Get the main line of the record."""
         rec = cls.remove_line_breaks(rec)
-        main_line_regex = re.compile(r'\*[A-Za-z0-9]{3}:\t.*')
+        main_line_regex = re.compile(r'\*[A-Za-z0-9]{2,3}:\t.*')
         return main_line_regex.search(rec).group()
 
     @staticmethod
@@ -404,7 +404,7 @@ class CHATReader:
     def get_record_speaker_label(main_line):
         """Get the speaker label from the main line.
 
-        The speaker label consists of three alphanumeric characters.
+        The speaker label consists of two or three alphanumeric characters.
 
         Args:
             main_line (str): The main line.
@@ -412,7 +412,7 @@ class CHATReader:
         Returns:
             str: The speaker label.
         """
-        speaker_label_regex = re.compile(r'(?<=^\*)[A-Za-z0-9]{3}')
+        speaker_label_regex = re.compile(r'(?<=^\*)[A-Za-z0-9]{2,3}')
         return speaker_label_regex.search(main_line).group()
 
     @staticmethod
