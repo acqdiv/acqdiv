@@ -8,6 +8,10 @@ class CHATCleaner:
         The order of calling the cleaning methods has great impact on the final
         result, e.g. handling of repetitions has to be done first, before
         scoped symbols are removed.
+
+        If the docstring of a cleaning method does not explicitly contain
+        information, the method will only accept strings as arguments
+        and return a cleaned version of the string.
     """
 
     @staticmethod
@@ -249,36 +253,54 @@ class CHATCleaner:
 
     @staticmethod
     def clean_seg_tier(seg_tier):
-        """Clean the segment tier."""
+        """Clean the segment tier.
+
+        No cleaning by default.
+        """
         return seg_tier
 
     @staticmethod
     def clean_gloss_tier(gloss_tier):
-        """Clean the gloss tier."""
+        """Clean the gloss tier.
+
+        No cleaning by default.
+        """
         return gloss_tier
 
     @staticmethod
     def clean_pos_tier(pos_tier):
-        """Clean the POS tag tier."""
+        """Clean the POS tag tier.
+
+        No cleaning by default.
+        """
         return pos_tier
 
     # ---------- tier cross cleaning ----------
 
     @staticmethod
     def cross_clean(utterance, seg_tier, gloss_tier, pos_tier):
-        """Clean across different tiers."""
+        """Clean across different tiers.
+
+        No cleaning by default.
+        """
         return utterance, seg_tier, gloss_tier, pos_tier
 
     # ---------- morpheme word cleaning ----------
 
     @staticmethod
     def clean_seg_word(seg_word):
-        """Clean the segment word."""
+        """Clean the segment word.
+
+        No cleaning by default.
+        """
         return seg_word
 
     @staticmethod
     def clean_gloss_word(gloss_word):
-        """Clean the gloss word."""
+        """Clean the gloss word.
+
+        No cleaning by default.
+        """
         return gloss_word
 
     @staticmethod
@@ -439,6 +461,17 @@ class CreeCleaner(CHATCleaner):
         return utterance.replace('~', '')
 
     @staticmethod
+    def remove_angle_brackets(utterance):
+        """Remove the small angle brackets.
+
+        The angle brackets are smaller than the standard angle brackets: ‹›
+        (vs. <>). They occur around the utterance, but the closing bracket
+        occurs before the utterance terminator. In CHAT, they are used for
+        marking special alignment with the %pho tier.
+        """
+        return utterance.replace('‹', '').replace('›', '')
+
+    @staticmethod
     def remove_square_brackets(morph_tier):
         """Remove redundant square brackets around morphology tiers.
 
@@ -503,7 +536,7 @@ class CreeCleaner(CHATCleaner):
         if morph_element == '?':
             return '???'
 
-        return morph_element.repalce('?', '')
+        return morph_element.replace('?', '')
 
     @classmethod
     def replace_star(cls, morph_element):
@@ -515,7 +548,7 @@ class CreeCleaner(CHATCleaner):
         if morph_element == '*':
             return '???'
         else:
-            return None
+            return morph_element
 
     @staticmethod
     def replace_gloss_connector(gloss):
@@ -572,7 +605,7 @@ class CreeCleaner(CHATCleaner):
         utterance = super().clean_utterance(utterance)
         for cleaning_method in [
                 cls.remove_morph_separators, cls.replace_zero,
-                cls.replace_morpheme_separator]:
+                cls.replace_morpheme_separator, cls.remove_angle_brackets]:
             utterance = cleaning_method(utterance)
 
         return utterance
@@ -627,7 +660,6 @@ class CreeCleaner(CHATCleaner):
     def clean_pos(cls, pos):
         pos = cls.clean_morpheme(pos)
         return cls.uppercase_pos_in_parentheses(pos)
-
 
 
 if __name__ == '__main__':
