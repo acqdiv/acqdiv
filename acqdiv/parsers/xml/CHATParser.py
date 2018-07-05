@@ -216,6 +216,11 @@ def main():
             for _ in parser.next_utterance():
                 pass
 
+            session_metadata = parser.get_session_metadata()
+
+            for _ in parser.next_speaker():
+                pass
+
     print('--- %s seconds ---' % (time.time() - start_time))
 
 
