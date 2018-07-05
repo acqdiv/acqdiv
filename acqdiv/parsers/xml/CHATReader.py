@@ -28,7 +28,92 @@ class CHATReader:
 
     @staticmethod
     def get_metadata(session_path):
-        """Get the metadata of a session."""
+        """Get the metadata of a session.
+
+        Lines containing metadata start with @ followed by the field name, a
+        colon and a tab. All metadata is at the top of a session file.
+
+        Returns:
+            str: The metadata.
+        """
+        with open(session_path, 'rb') as f:
+            mm = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+            metadata_start = re.search(br'@.*?:\t', mm).start()
+            metadata_end = re.search(br'\*[A-Z]{3}:\t', mm).start()
+            return mm[metadata_start:metadata_end].decode()
+
+    @staticmethod
+    def get_metadata_field(metadata, name):
+        """Get the content of a metadata field.
+
+        If a metadata field occurs multiple times (as is the case for 'ID'),
+        they are merged, separated by line breaks.
+
+        Args:
+            metadata (str): The metadata section.
+            name (str): The name of the field.
+
+        Returns:
+            str: The content of the metadata field. If the field does not
+                exist, the empty string.
+        """
+        metadata_regex = re.compile(r'@{}:\t(.*)'.format(name))
+        matches = []
+        for match in metadata_regex.finditer(metadata):
+            matches.append(match.group(1))
+
+        if matches:
+            return '\n'.join(matches)
+        else:
+            return ''
+
+    @classmethod
+    def get_date(cls, metadata):
+        """Get the date of the session.
+
+        The field is called 'Date' by default.
+
+        Args:
+            metadata (str): The metadata section.
+
+        Returns:
+            str: The date.
+        """
+        return cls.get_metadata_field(metadata, 'Date')
+
+    @classmethod
+    def get_media(cls, metadata):
+        """Get the media data of the session.
+
+        The field is called 'Media' by default and can consist of 3 sub-fields:
+            - filename (without extension)
+            - format (e.g. video)
+            - comment (e.g. unlinked)
+
+        The comment field is optional.
+
+        Args:
+            metadata (str): The metadata section.
+
+        Returns:
+            str: The media.
+        """
+        return cls.get_metadata_field(metadata, 'Media')
+
+    @classmethod
+    def get_filename(cls, media):
+        """Get the filename from the media data.
+
+        Args:
+            media (str): The media data.
+
+        Returns:
+            str: The filename.
+        """
+        return media.split(',')[0]
+
+    @classmethod
+    def get_participats(cls, metadata):
         pass
 
     @classmethod
@@ -561,6 +646,10 @@ class CreeReader(CHATReader):
 
 def main():
     parser = CHATReader()
+    metadata = parser.get_metadata('/home/anna/Schreibtisch/acqdiv/corpora/'
+                                   'Japanese_MiiPro/cha/als19990618.cha')
+    print(repr(parser.get_metadata_field(metadata, 'ID')))
+
     print(repr(parser.get_shortening_actual(
         'This (i)s a short(e)ned senten(ce)')))
     print(repr(parser.get_shortening_target(
