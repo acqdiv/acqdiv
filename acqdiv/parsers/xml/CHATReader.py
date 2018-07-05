@@ -175,7 +175,7 @@ class CHATReader:
         return participant.split(' ')[-1]
 
     @classmethod
-    def get_participant_id(cls, metadata, speaker_label):
+    def get_id_field(cls, metadata, speaker_label):
         """Get the ID field of a participant.
 
         The field is called 'ID' and consists of the following sub-fields
@@ -199,6 +199,58 @@ class CHATReader:
 
         raise ValueError(
             'No ID information for speaker label {}'.format(speaker_label))
+
+    @staticmethod
+    def get_age(id_field):
+        """Get the age from an ID field.
+
+        Args:
+            id_field (str): The ID field.
+
+        Returns:
+            str: The age.
+        """
+        return id_field.split('|')[3]
+
+    @staticmethod
+    def get_gender(id_field):
+        """Get the gender from an ID field.
+
+        Args:
+            id_field (str): The ID field.
+
+        Returns:
+            str: The gender.
+        """
+        return id_field.split('|')[4]
+
+    @staticmethod
+    def get_language(id_field):
+        """Get the language from an ID field.
+
+        Args:
+            id_field (str): The ID field.
+
+        Returns:
+            str: The language.
+        """
+        return id_field.split('|')[0]
+
+    @classmethod
+    def get_birth_date(cls, metadata, speaker_label):
+        """Get the birth date of a participant.
+
+        The field is called 'Birth of [speaker label]'.
+
+        Args:
+            metadata (str): The metadata section.
+            speaker_label (str): The speaker label.
+
+        Returns:
+            str: The birth date of the participant.
+        """
+        name = 'Birth of {}'.format(speaker_label)
+        return cls.get_metadata_field(metadata, name)
 
     @classmethod
     def iter_records(cls, session_path):
