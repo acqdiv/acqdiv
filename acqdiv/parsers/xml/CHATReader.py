@@ -39,7 +39,7 @@ class CHATReader:
         with open(session_path, 'rb') as f:
             mm = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
             metadata_start = re.search(br'@.*?:\t', mm).start()
-            metadata_end = re.search(br'\*[A-Z]{3}:\t', mm).start()
+            metadata_end = re.search(br'\*[A-Za-z0-9]{2,3}:\t', mm).start()
             return mm[metadata_start:metadata_end].decode()
 
     @staticmethod
@@ -113,8 +113,144 @@ class CHATReader:
         return media.split(',')[0]
 
     @classmethod
-    def get_participats(cls, metadata):
-        pass
+    def iter_participants(cls, metadata):
+        """Iter participants listed in the metadata section.
+
+        The field is called 'Participants'. It contains a comma-separated list
+        of participants consisting of the speaker label, the name and the role
+        of the speaker. The name may be omitted.
+
+        Args:
+            metadata (str): The metadata section.
+
+        Yields:
+            str: The next participant (label, name, role).
+        """
+        participants = cls.get_metadata_field(metadata, 'Participants')
+        for participant in re.split(r' ?, ?', participants):
+            yield participant
+
+    @classmethod
+    def get_speaker_label(cls, participant):
+        """Get the speaker label from the participant.
+
+        Args:
+            participant (str): The participant consisting of a label,
+                an optional name and the role.
+
+        Returns:
+            str: The speaker label.
+        """
+        return participant.split(' ')[0]
+
+    @classmethod
+    def get_name(cls, participant):
+        """Get the name from the participant.
+
+        Args:
+            participant (str): The participant consisting of a label,
+                an optional name and the role.
+
+        Returns:
+            str: The name. If the name is missing, the empty string.
+        """
+        data = participant.split(' ')
+        # if name is missing
+        if len(data) == 2:
+            return ''
+        else:
+            return data[1]
+
+    @classmethod
+    def get_role(cls, participant):
+        """Get the role from the participant.
+
+        Args:
+            participant (str): The participant consisting of a label,
+                an optional name and the role.
+
+        Returns:
+            str: The role.
+        """
+        return participant.split(' ')[-1]
+
+    @classmethod
+    def get_id_field(cls, metadata, speaker_label):
+        """Get the ID field of a participant.
+
+        The field is called 'ID' and consists of the following sub-fields
+        separated by pipes: language, corpus, code, age, sex, group, SES, role,
+        education, custom. The correct ID line is found via the speaker label.
+
+        Args:
+            metadata (str): The metadata section.
+            speaker_label (str): The speaker label.
+
+        Returns:
+            str: The ID field belonging to the participant with this label.
+
+        Raises:
+            ValueError: If there is no ID line for a given speaker label.
+        """
+        ids = cls.get_metadata_field(metadata, 'ID')
+        for ID in ids.split('\n'):
+            if '|' + speaker_label + '|' in ID:
+                return ID
+
+        raise ValueError(
+            'No ID information for speaker label {}'.format(speaker_label))
+
+    @staticmethod
+    def get_age(id_field):
+        """Get the age from an ID field.
+
+        Args:
+            id_field (str): The ID field.
+
+        Returns:
+            str: The age.
+        """
+        return id_field.split('|')[3]
+
+    @staticmethod
+    def get_gender(id_field):
+        """Get the gender from an ID field.
+
+        Args:
+            id_field (str): The ID field.
+
+        Returns:
+            str: The gender.
+        """
+        return id_field.split('|')[4]
+
+    @staticmethod
+    def get_language(id_field):
+        """Get the language from an ID field.
+
+        Args:
+            id_field (str): The ID field.
+
+        Returns:
+            str: The language.
+        """
+        return id_field.split('|')[0]
+
+    @classmethod
+    def get_birth_date(cls, metadata, speaker_label):
+        """Get the birth date of a participant.
+
+        The field is called 'Birth of [speaker label]'.
+
+        Args:
+            metadata (str): The metadata section.
+            speaker_label (str): The speaker label.
+
+        Returns:
+            str: The birth date of the participant.
+        """
+        name = 'Birth of {}'.format(speaker_label)
+        return cls.get_metadata_field(metadata, name)
 
     @classmethod
     def iter_records(cls, session_path):
@@ -135,7 +271,7 @@ class CHATReader:
                     mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as text:
 
                 # create a record generator
-                rec_generator = re.finditer(br'\*[A-Z]{3}:\t', text)
+                rec_generator = re.finditer(br'\*[A-Za-z0-9]{2,3}:\t', text)
 
                 # get start of first record
                 rec_start_pos = next(rec_generator).start()
@@ -183,7 +319,7 @@ class CHATReader:
     def get_main_line(cls, rec):
         """Get the main line of the record."""
         rec = cls.remove_line_breaks(rec)
-        main_line_regex = re.compile(r'\*[A-Z]{3}:\t.*')
+        main_line_regex = re.compile(r'\*[A-Za-z0-9]{2,3}:\t.*')
         return main_line_regex.search(rec).group()
 
     @staticmethod
@@ -265,8 +401,10 @@ class CHATReader:
     # ---------- main line processing ----------
 
     @staticmethod
-    def get_speaker_label(main_line):
+    def get_record_speaker_label(main_line):
         """Get the speaker label from the main line.
+
+        The speaker label consists of two or three alphanumeric characters.
 
         Args:
             main_line (str): The main line.
@@ -274,7 +412,7 @@ class CHATReader:
         Returns:
             str: The speaker label.
         """
-        speaker_label_regex = re.compile(r'(?<=^\*)[A-Z]{3}')
+        speaker_label_regex = re.compile(r'(?<=^\*)[A-Za-z0-9]{2,3}')
         return speaker_label_regex.search(main_line).group()
 
     @staticmethod
@@ -649,6 +787,8 @@ def main():
     metadata = parser.get_metadata('/home/anna/Schreibtisch/acqdiv/corpora/'
                                    'Japanese_MiiPro/cha/als19990618.cha')
     print(repr(parser.get_metadata_field(metadata, 'ID')))
+    for p in parser.iter_participants(metadata):
+        print(p)
 
     print(repr(parser.get_shortening_actual(
         'This (i)s a short(e)ned senten(ce)')))

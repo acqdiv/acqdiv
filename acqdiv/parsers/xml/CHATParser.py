@@ -22,6 +22,43 @@ class CHATParser:
     def get_cleaner():
         return CHATCleaner.CHATCleaner()
 
+    def get_session_metadata(self):
+        """Get the metadata of a session.
+
+        Currently, the only metadata returned are the date and the media
+        filename of the session.
+
+        Returns:
+            dict: The session metadata.
+        """
+        metadata = self.reader.get_metadata(self.session_path)
+        date = self.reader.get_metadata_field(metadata, 'Date')
+        media = self.reader.get_metadata_field(metadata, 'Media')
+        filename = self.reader.get_filename(media)
+        return {'date': date, 'media_filename': filename}
+
+    def next_speaker(self):
+        """Yield the metadata of the next speaker of a session.
+
+        Yields:
+            dict: The label, name, age, birth date, gender, language, role of
+                the speaker.
+        """
+        metadata = self.reader.get_metadata(self.session_path)
+        for participant in self.reader.iter_participants(metadata):
+            speaker_label = self.reader.get_speaker_label(participant)
+            name = self.reader.get_name(participant)
+            role = self.reader.get_role(participant)
+            id_field = self.reader.get_id_field(metadata, speaker_label)
+            age = self.reader.get_age(id_field)
+            gender = self.reader.get_gender(id_field)
+            language = self.reader.get_language(id_field)
+            birth_date = self.reader.get_birth_date(metadata, speaker_label)
+
+            yield {'speaker_label': speaker_label, 'name': name,
+                   'age_raw': age, 'gender_raw': gender, 'role_raw': role,
+                   'languages_spoken': language, 'birthdate': birth_date}
+
     def next_utterance(self):
         """Yields the next utterance of a session."""
         # go through each record in the session
@@ -37,7 +74,7 @@ class CHATParser:
 
             # get fields from main line
             main_line = self.reader.get_main_line(rec)
-            speaker_label = self.reader.get_speaker_label(main_line)
+            speaker_label = self.reader.get_record_speaker_label(main_line)
             utterance_raw = self.reader.get_utterance_raw(main_line)
 
             # get fields from time
@@ -177,6 +214,11 @@ def main():
             print(path)
 
             for _ in parser.next_utterance():
+                pass
+
+            session_metadata = parser.get_session_metadata()
+
+            for _ in parser.next_speaker():
                 pass
 
     print('--- %s seconds ---' % (time.time() - start_time))
