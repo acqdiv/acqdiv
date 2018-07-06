@@ -67,57 +67,57 @@ class TestCHATCleaner(unittest.TestCase):
     def test_trailing_off(self):
         self.assertEqual(CHATCleaner.remove_terminator(
             '*SAR: smells good enough for +...'),
-            '*SAR: smells good enough for ')
+            '*SAR: smells good enough for')
 
     def test_trailing_off_of_question(self):
         self.assertEqual(CHATCleaner.remove_terminator(
             '*SAR: smells good enough for +..?'),
-            '*SAR: smells good enough for ')
+            '*SAR: smells good enough for')
 
     def test_question_with_exclamation(self):
         self.assertEqual(CHATCleaner.remove_terminator(
             '*SAR: smells good enough for this +!?'),
-            '*SAR: smells good enough for this ')
+            '*SAR: smells good enough for this')
 
     def test_interruption(self):
         self.assertEqual(CHATCleaner.remove_terminator(
-            '*MOT:what did you +/.'), '*MOT:what did you ')
+            '*MOT:what did you +/.'), '*MOT:what did you')
 
     def test_interruption_of_a_question(self):
         self.assertEqual(CHATCleaner.remove_terminator(
-            '*MOT:what did you +/?'), '*MOT:what did you ')
+            '*MOT:what did you +/?'), '*MOT:what did you')
 
     def test_self_interruption(self):
         self.assertEqual(CHATCleaner.remove_terminator(
             '*SAR:smells good enough for +//.'),
-            '*SAR:smells good enough for ')
+            '*SAR:smells good enough for')
 
     def test_self_interrupted_question(self):
         self.assertEqual(CHATCleaner.remove_terminator(
-            '*MOT:what did you +//?'), '*MOT:what did you ')
+            '*MOT:what did you +//?'), '*MOT:what did you')
 
     def test_transcription_break(self):
         self.assertEqual(CHATCleaner.remove_terminator(
             '*SAR:smells good enough for me +.'),
-            '*SAR:smells good enough for me ')
+            '*SAR:smells good enough for me')
 
     def test_CA_terminator(self):
         self.assertEqual(CHATCleaner.remove_terminator(
-            '*MOT:what did you ++.'), '*MOT:what did you ')
+            'what did you ++.'), 'what did you')
 
     def test_CA_begin_latch(self):
         self.assertEqual(CHATCleaner.remove_terminator(
-            '*MOT:what did you +=.'), '*MOT:what did you ')
+            'what did you +=.'), 'what did you')
 
     def test_quotation_on_next_line(self):
         self.assertEqual(CHATCleaner.remove_terminator(
             '*CHI:and then the little bear said +”/.'),
-            '*CHI:and then the little bear said ')
+            '*CHI:and then the little bear said')
 
     def test_quotation_precedes(self):
         self.assertEqual(CHATCleaner.remove_terminator(
-            '*CHI:+” please give me all of your honey.'),
-            '*CHI: please give me all of your honey.')
+            '+” please give me all of your honey.'),
+            'please give me all of your honey.')
 
     # Tests for the null_untranscribed_utterances-method.
 
@@ -133,7 +133,7 @@ class TestCHATCleaner(unittest.TestCase):
     def test_null(self):
         self.assertEqual(CHATCleaner.null_event_utterances('0'), '')
 
-    def test_normal_utt_event():
+    def test_normal_utt_event(self):
         self.assertEqual(CHATCleaner.null_event_utterances(
             'Hey there'), 'Hey there')
 
@@ -141,11 +141,11 @@ class TestCHATCleaner(unittest.TestCase):
 
     def test_single_event(self):
         self.assertEqual(CHATCleaner.remove_events(
-            'Hey there &=coughs'), 'Hey there ')
+            'Hey there &=coughs'), 'Hey there')
 
     def test_multiple_events(self):
         self.assertEqual(CHATCleaner.remove_events(
-            '&=gasps I got &=groans cold. &=vocalizes'), ' I got cold. ')
+            '&=gasps I got &=groans cold. &=vocalizes'), ' I got cold.')
 
     # Tests for the handle_repetitions-method.
     # should I test for bad notation like negative numbers?
@@ -175,7 +175,7 @@ class TestCHATCleaner(unittest.TestCase):
     # Tests for the unify_untranscribed-method.
 
     def test_untranscribed_xyz(self):
-        self.assertEqual(CHATCleaner.remove_omissions(
+        self.assertEqual(CHATCleaner.unify_untranscribed(
             'zzz xxx yyy truck?'), 'xxx xxx xxx truck?')
 
     # Tests for the remove_form_markers-method.
@@ -186,7 +186,7 @@ class TestCHATCleaner(unittest.TestCase):
 
     def test_k_marked(self):
         self.assertEqual(CHATCleaner.remove_form_markers(
-            "it's mark@k."), "it's mark")
+            "it's mark@k."), "it's mark.")
 
     # Test for the remove_linkers-method.
 
@@ -240,7 +240,52 @@ class TestCHATCleaner(unittest.TestCase):
 
     # Tests for the remove_fillers-method.
 
-    
+    def test_remove_fillers(self):
+        self.assertEqual(CHATCleaner.remove_fillers('&-uh &-uh the water'),
+                         'uh uh the water')
+
+    # Tests for the remove_pauses_within_words-method.
+
+    def test_one_pause_within_word(self):
+        self.assertEqual(CHATCleaner.remove_pauses_within_words('spa^ghetti'),
+                         'spaghetti')
+
+    def test_multiple_pauses_within_words(self):
+        self.assertEqual(CHATCleaner.remove_pauses_within_words(
+            'spa^ghe^tti bologne^se'),
+            'spaghetti bolognese')
+
+    # Test for the remove_blocking-method. (≠ or ^)
+
+    def test_remove_blocking(self):
+        self.assertEqual(CHATCleaner.remove_blocking(
+            '≠hey ^there'),
+            'hey there')
+
+    # Test for the remove_pauses_between_words-method.
+
+    def test_remove_pauses_betwee_words(self):
+        self.assertEqual(CHATCleaner.remove_pauses_between_words(
+            "I (.) don't (..) know (...) this."),
+            "I don't know this.")
+
+    # Tests for the remove_drawls-method.
+
+    def test_lengthened_syllable(self):
+        self.assertEqual(CHATCleaner.remove_drawls('bana:nas'), 'bana:nas')
+
+    def test_pause_between_syllables(self):
+        self.assertEqual(CHATCleaner.remove_drawls('rhi^noceros'),
+                         'rhi^noceros')
+
+    # Test for the remove_scoped_symbols-method.
+
+    def test_remove_scoped_symbols(self):
+        self.assertEqual(CHATCleaner.remove_scoped_symbols(
+            "<that's mine> [=! cries]"),
+            "that's mine")  # should the 'cries' remain in the string?
+
+
 
 if __name__ == '__main__':
     unittest.main()
