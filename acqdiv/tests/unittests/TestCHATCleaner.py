@@ -1,6 +1,5 @@
 import unittest
 from acqdiv.parsers.xml.CHATCleaner import CHATCleaner
-# from acqdiv.parsers.xml.xml_cleaner import XMLCleaner
 
 
 class TestCHATCleaner(unittest.TestCase):
