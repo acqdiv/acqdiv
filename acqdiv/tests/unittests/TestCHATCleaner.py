@@ -285,6 +285,5 @@ class TestCHATCleaner(unittest.TestCase):
             "that's mine")  # should the 'cries' remain in the string?
 
 
-
 if __name__ == '__main__':
     unittest.main()
