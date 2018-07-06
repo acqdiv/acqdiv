@@ -9,23 +9,11 @@ class TestCHATCleaner(unittest.TestCase):
 
 
     A lot of the test cases are taken from or inspired by
-    https://
-    repository.cmu.edu/cgi/viewcontent.cgi?article=1181&context=psychology
+    https://talkbank.org/manuals/CHAT.pdf
     .
     """
 
-    # def test_remove_redundant_whitespaces(self):
-    #     """ Test the remove_redundant_whitespace-method.
-    #     """
-    #     self._test_leading_trailing_whitespace()
-    #     self._test_multiple_whitespace()
-    #     self._test_leading_trailing_tabs()
-    #     self._test_multiple_tabs()
-    #     self._test_leading_trailing_newlines()
-    #     self._test_multiple_newlines()
-    #     self._test_leading_trailing_creturns()
-    #     self._test_multiple_creturns()
-    #     self._test_combinations()
+    # Tests for the remove_redundant_whitespace-method.
 
     def test_leading_trailing_whitespace(self):
         self.assertEqual(CHATCleaner.remove_redundant_whitespaces(' h '), 'h')
@@ -62,26 +50,7 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(CHATCleaner.remove_redundant_whitespaces(
             '\n\t \r\r h   \nh \t\t\n\r'), 'h h')
 
-    # def test_remove_terminator(self):
-    #     """ Test the remove_terminator-method.
-
-    #     Use all the cases described in 7.3 and 7.7 of the paper linked above.
-    #     """
-    #     self._test_period()
-    #     self._test_question_mark()
-    #     self._test_exclamation_point()
-    #     self._test_trailing_off()
-    #     self._test_trailing_off_of_question()
-    #     self._test_question_with_exclamation()
-    #     self._test_interruption()
-    #     self._test_interruption_of_question()
-    #     self._test_self_interruption()
-    #     self._test_self_interrupted_question()
-    #     self._test_transcription_break()
-    #     self._test_CA_terminator()
-    #     self._test_CA_begin_latch()
-    #     self._test_quotation_on_next_line()
-    #     self._test_quotation_precedes()
+    # Tests for the remove_terminator-method.
 
     def test_period(self):
         self.assertEqual(CHATCleaner.remove_terminator(
@@ -150,12 +119,7 @@ class TestCHATCleaner(unittest.TestCase):
             '*CHI:+” please give me all of your honey.'),
             '*CHI: please give me all of your honey.')
 
-    # def test_null_untranscribed_utterances(self):
-    #     """ Test the null_untranscribed-mehtod.
-    #     """
-
-    #     self._test_xxx()
-    #     self._test_normal_utt()
+    # Tests for the null_untranscribed_utterances-method.
 
     def test_xxx(self):
         self.assertEqual(CHATCleaner.null_untranscribed_utterances('xxx'), '')
@@ -164,21 +128,16 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(CHATCleaner.null_untranscribed_utterances(
             'Hey there'), 'Hey there')
 
-    # def test_null_event_utterances(self):
-    #     """ Test the null_event_utterances-method.
-    #     """
-    #     self._test_null()
-    #     self._test_normal_utt()
-    #     # is it ok to reuse the _test_normal_utt-method?
+    # Tests for the null_event_utterances-method.
 
     def test_null(self):
         self.assertEqual(CHATCleaner.null_event_utterances('0'), '')
 
-    # def test_remove_events(self):
-    #     """ Test the remove_events-method.
-    #     """
-    #     self._test_single_event()
-    #     self._test_multiple_events()
+    def test_normal_utt_event():
+        self.assertEqual(CHATCleaner.null_event_utterances(
+            'Hey there'), 'Hey there')
+
+    # Tests for the test_remove_events-method.
 
     def test_single_event(self):
         self.assertEqual(CHATCleaner.remove_events(
@@ -188,12 +147,8 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(CHATCleaner.remove_events(
             '&=gasps I got &=groans cold. &=vocalizes'), ' I got cold. ')
 
-    # def test_handle_repetitions(self):
-    #     """ Test the handle_repetitions-method.
-    #     """
-    #     self._test_single_repetition()
-    #     self._test_multiple_repetitions()
-    #     # should I test for bad notation like negative numbers?
+    # Tests for the handle_repetitions-method.
+    # should I test for bad notation like negative numbers?
 
     def test_single_repetition(self):
         self.assertEqual(CHATCleaner.handle_repetitions(
@@ -201,15 +156,9 @@ class TestCHATCleaner(unittest.TestCase):
 
     def test_multiple_repetitions(self):
         self.assertEqual(CHATCleaner.handle_repetitions(
-            'Hey [x 2] there [x 3]'), 'Hey hey there there there')
-        # desired to write second 'hey' not with capital-h?
+            'Hey [x 2] there [x 3]'), 'Hey Hey there there there')
 
-    # def test_remove_omissions(self):
-    #     """ Test the remove_omissions-method.
-    #     """
-    #     self._test_single_omission()
-    #     self._test_multiple_omissions()
-    #     self._test_omission_with_marker()  # test for omission with marker?
+    # Tests for the remove_omissions-method.
 
     def test_single_omission(self):
         self.assertEqual(CHATCleaner.remove_omissions(
@@ -223,20 +172,13 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(CHATCleaner.remove_omissions(
             'where 0is [*] my truck?'), 'where my truck?')
 
-    # def test_unify_untranscribed(self):
-    #     """ Test the unify_untranscribed-method.
-    #     """
-    #     self._test_untranscribed_xyz()
+    # Tests for the unify_untranscribed-method.
 
     def test_untranscribed_xyz(self):
         self.assertEqual(CHATCleaner.remove_omissions(
             'zzz xxx yyy truck?'), 'xxx xxx xxx truck?')
 
-    # def test_remove_form_markers(self):
-    #     """ Test the remove-form-markers-method.
-    #     """
-    #     self._test_l_marked()
-    #     self._test_k_marked()
+    # Tests for the remove_form_markers-method.
 
     def test_l_marked(self):
         self.assertEqual(CHATCleaner.remove_form_markers(
@@ -246,11 +188,59 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(CHATCleaner.remove_form_markers(
             "it's mark@k."), "it's mark")
 
-    # def test_remove_linkers(self):
-    #     """ Test the remove_linkers-method.
-    #     """
-    #     # TODO
+    # Test for the remove_linkers-method.
 
+    def test_quoted_utterance_linker_no_slash(self):
+        self.assertEqual(CHATCleaner.remove_linkers('+". where is  my truck?'),
+                         'where my truck?')
+
+    def test_quoted_utterance_linker_with_slash(self):
+        self.assertEqual(CHATCleaner.remove_linkers(
+            '+"/. where is  my truck?'), 'where is  my truck?')
+
+    def test_quick_uptake_linker(self):
+        self.assertEqual(CHATCleaner.remove_linkers('+^ where is  my truck?'),
+                         'where is  my truck?')
+
+    def test_lazy_overlap_marking_linker(self):
+        self.assertEqual(CHATCleaner.remove_linkers(
+            '+< they had to go in here.'), 'they had to go in here.')
+
+    def test_self_completion_linker(self):
+        self.assertEqual(CHATCleaner.remove_linkers('+, I go straight ahead.'),
+                         'I go straight ahead.')
+
+    def test_other_completion_linker(self):
+        self.assertEqual(CHATCleaner.remove_linkers('++ he would have come.'),
+                         'he would have come.')
+
+    # Tests for the remove_separators-method.
+
+    def test_comma_colon_semi(self):
+        self.assertEqual(CHATCleaner.remove_separators(
+            'Hey there , what ; up : no'),
+            'Hey there what up no')
+
+    # Tests for the remove_ca-method.
+
+    def test_falling_rising_mark(self):
+        self.assertEqual(CHATCleaner.remove_separators(
+            'Hey there ↓ what up ↑ no ↓↑'),
+            'Hey there what up no')
+
+    def test_marked_question(self):
+        self.assertEqual(CHATCleaner.remove_separators(
+            'Hey there„ what up no'),
+            'Hey there what up no')
+
+    def test_question_rise_intonation_mark(self):
+        self.assertEqual(CHATCleaner.remove_separators(
+            'Hey there ¿ what up no'),
+            'Hey there what up no')
+
+    # Tests for the remove_fillers-method.
+
+    
 
 if __name__ == '__main__':
     unittest.main()
