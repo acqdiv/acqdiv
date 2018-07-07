@@ -4,14 +4,17 @@ import re
 class CHATCleaner:
     """Clean parts of a CHAT record.
 
-    Note:
-        The order of calling the cleaning methods has great impact on the final
-        result, e.g. handling of repetitions has to be done first, before
-        scoped symbols are removed.
+    This class provides a range of cleaning methods that perform modifications,
+    additions or removals to parts of a CHAT record. Redundant whitespaces that
+    are left by a cleaning operation are always removed, too.
 
-        If the docstring of a cleaning method does not explicitly contain
-        information, the method will only accept strings as arguments
-        and return a cleaned version of the string.
+    The order of calling the cleaning methods has great impact on the final
+    result, e.g. handling of repetitions has to be done first, before
+    scoped symbols are removed.
+
+    If the docstring of a cleaning method does not explicitly contain argument
+    or return information, the method will only accept strings as arguments
+    and return a cleaned version of the string.
     """
 
     @staticmethod
@@ -72,6 +75,8 @@ class CHATCleaner:
     @staticmethod
     def handle_repetitions(utterance):
         """Write out repeated words in the utterance.
+
+        Words are repeated without modification.
 
         Coding in CHAT: [x <number>]  .
         """
@@ -186,9 +191,9 @@ class CHATCleaner:
     def remove_blocking(utterance):
         """Remove blockings in words from the utterance.
 
-        Coding in CHAT: ^ at the beginning of the word
+        Coding in CHAT: ^ or ≠ at the beginning of the word.
         """
-        blocking_regex = re.compile(r'(^| )\^(\S+)')
+        blocking_regex = re.compile(r'(^| )[\^≠](\S+)')
         return blocking_regex.sub(r'\1\2', utterance)
 
     @classmethod
@@ -216,8 +221,11 @@ class CHATCleaner:
 
         Coding in CHAT: < > [.*]    .
 
+        Angle and square brackets as well as the content within the square
+        brackets is removed.
+
         Note:
-            Scoped symbols can be nested:
+            Scoped symbols can be nested to any depth:
                 - word [...][...]
                 - <word [...] word> [...]
                 - <<word word> [...] word> [...]
@@ -234,7 +242,10 @@ class CHATCleaner:
 
     @classmethod
     def clean_utterance(cls, utterance):
-        """Return the cleaned utterance."""
+        """Return the cleaned utterance.
+
+        Calls all cleaning methods defined for the utterance.
+        """
         for cleaning_method in [
                 cls.null_event_utterances, cls.unify_untranscribed,
                 cls.handle_repetitions, cls.remove_terminator,
@@ -305,24 +316,36 @@ class CHATCleaner:
 
     @staticmethod
     def clean_pos_word(pos_word):
-        """Clean the POS tag word."""
+        """Clean the POS tag word.
+
+        No cleaning by default.
+        """
         return pos_word
 
     # ---------- morpheme cleaning ----------
 
     @staticmethod
     def clean_segment(segment):
-        """Clean the segment."""
+        """Clean the segment.
+
+        No cleaning by default.
+        """
         return segment
 
     @staticmethod
     def clean_gloss(gloss):
-        """Clean the gloss."""
+        """Clean the gloss.
+
+        No cleaning by default.
+        """
         return gloss
 
     @staticmethod
     def clean_pos(pos):
-        """Clean the POS tag."""
+        """Clean the POS tag.
+
+        No cleaning by default.
+        """
         return pos
 
 
