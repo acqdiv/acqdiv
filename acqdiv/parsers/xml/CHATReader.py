@@ -734,7 +734,10 @@ class InuktitutReader(CHATReader):
         morpheme_regex = re.compile(r'(.*)\|(.*?)\^(.*)')
         for morpheme in word.split('+'):
             match = morpheme_regex.search(morpheme)
-            yield match.group(1), match.group(2), match.group(3)
+            if match:
+                yield match.group(1), match.group(2), match.group(3)
+            else:
+                yield '', '', ''
 
     @classmethod
     def get_segments(cls, seg_word):
