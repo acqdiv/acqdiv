@@ -1,5 +1,4 @@
 import itertools
-import contextlib
 import mmap
 import re
 
@@ -267,36 +266,35 @@ class CHATReader:
 
         with open(session_path, 'rb') as f:
             # use memory-mapping of files
-            with contextlib.closing(
-                    mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as text:
+            mm = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
 
-                # create a record generator
-                rec_generator = re.finditer(br'\*[A-Za-z0-9]{2,3}:\t', text)
+            # create a record generator
+            rec_generator = re.finditer(br'\*[A-Za-z0-9]{2,3}:\t', mm)
 
-                # get start of first record
-                rec_start_pos = next(rec_generator).start()
+            # get start of first record
+            rec_start_pos = next(rec_generator).start()
 
-                # iter all records
-                for rec in rec_generator:
+            # iter all records
+            for rec in rec_generator:
 
-                    # get start of next record
-                    next_rec_start_pos = rec.start()
+                # get start of next record
+                next_rec_start_pos = rec.start()
 
-                    # get the stringified record
-                    rec_str = text[rec_start_pos:next_rec_start_pos].decode()
+                # get the stringified record
+                rec_str = mm[rec_start_pos:next_rec_start_pos].decode()
 
-                    yield rec_str
-
-                    cls.uid = next(counter)
-
-                    # set new start of record
-                    rec_start_pos = next_rec_start_pos
-
-                # handle last record
-                rec_str = text[rec_start_pos:].decode()
                 yield rec_str
 
-                cls.uid = None
+                cls.uid = next(counter)
+
+                # set new start of record
+                rec_start_pos = next_rec_start_pos
+
+            # handle last record
+            rec_str = mm[rec_start_pos:].decode()
+            yield rec_str
+
+            cls.uid = None
 
     # ---------- record processing ----------
 
