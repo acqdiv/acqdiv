@@ -554,7 +554,7 @@ class CHATReader:
 
         The sentence type is inferred from the utterance terminator.
         """
-        mapping = {'.': 'declarative',
+        mapping = {'.': 'default',
                    '?': 'question',
                    '!': 'exclamation',
                    '+.': 'broken for coding',
