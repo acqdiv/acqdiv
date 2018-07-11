@@ -46,7 +46,7 @@ class CHATCleaner:
         Note:
             Nulling means here the utterance is returned as an empty string.
         """
-        if utterance == 'xxx':
+        if utterance == '???':
             return ''
         else:
             return utterance
@@ -121,12 +121,12 @@ class CHATCleaner:
 
     @staticmethod
     def unify_untranscribed(utterance):
-        """Unify untranscribed material as xxx.
+        """Unify untranscribed material as ???.
 
         Coding in CHAT: xxx, yyy, www   .
         """
-        untranscribed_regex = re.compile(r'yyy|www')
-        return untranscribed_regex.sub('xxx', utterance)
+        untranscribed_regex = re.compile(r'xxx|yyy|www')
+        return untranscribed_regex.sub('???', utterance)
 
     @staticmethod
     def remove_form_markers(utterance):
