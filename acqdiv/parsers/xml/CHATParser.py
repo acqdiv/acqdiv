@@ -32,7 +32,8 @@ class CHATParser:
             dict: The session metadata.
         """
         metadata = self.reader.get_metadata(self.session_path)
-        date = self.reader.get_metadata_field(metadata, 'Date')
+        date = self.cleaner.clean_date(
+                    self.reader.get_metadata_field(metadata, 'Date'))
         media = self.reader.get_metadata_field(metadata, 'Media')
         filename = self.reader.get_filename(media)
         return {'date': date, 'media_filename': filename}
@@ -53,7 +54,8 @@ class CHATParser:
             age = self.reader.get_age(id_field)
             gender = self.reader.get_gender(id_field)
             language = self.reader.get_language(id_field)
-            birth_date = self.reader.get_birth_date(metadata, speaker_label)
+            birth_date = self.cleaner.clean_date(
+                self.reader.get_birth_date(metadata, speaker_label))
 
             yield {'speaker_label': speaker_label, 'name': name,
                    'age_raw': age, 'gender_raw': gender, 'role_raw': role,
