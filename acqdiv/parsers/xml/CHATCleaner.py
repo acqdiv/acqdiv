@@ -238,6 +238,27 @@ class CHATCleaner:
     # ********** Processor interface cleaning methods **********
     # **********************************************************
 
+    # ---------- metadata cleaning ----------
+
+    @staticmethod
+    def clean_date(date):
+        """Clean the date.
+
+        CHAT date format:
+            day-month-year
+            \d\d-\w\w\w-\d\d\d\d
+
+        Is converted to the following format:
+            year-month-day
+            \d\d\d\d-\d\d-\d\d
+        """
+        mapping = {'JAN': '01', 'FEB': '02', 'MAR': '03', 'APR': '04',
+                   'MAY': '05', 'JUN': '06', 'JUL': '07', 'AUG': '08',
+                   'SEP': '09', 'OCT': '10', 'NOV': '11', 'DEC': '12'}
+        day, month, year = date.split('-')
+        month_clean = mapping[month]
+        return '-'.join([year, month_clean, day])
+
     # ---------- utterance cleaning ----------
 
     @classmethod
