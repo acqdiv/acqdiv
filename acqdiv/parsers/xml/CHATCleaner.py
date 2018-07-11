@@ -379,6 +379,12 @@ class CHATCleaner:
 class InuktitutCleaner(CHATCleaner):
 
     @staticmethod
+    def remove_dashes(utterance):
+        """Remove dashes before/after xxx."""
+        dash_regex = re.compile(r'-?(xxx)-?')
+        return dash_regex.sub(r'\1', utterance)
+
+    @staticmethod
     def replace_pos_separator(pos):
         """Replace the POS tag separator.
 
@@ -440,6 +446,13 @@ class InuktitutCleaner(CHATCleaner):
     # **********************************************************
     # ********** Processor interface cleaning methods **********
     # **********************************************************
+
+    # ---------- utterance cleaning ----------
+    @classmethod
+    def clean_utterance(cls, utterance):
+        """Clean the utterance."""
+        utterance = cls.remove_dashes(utterance)
+        return super().clean_utterance(utterance)
 
     # ---------- morphology tier cleaning ----------
 
