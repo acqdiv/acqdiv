@@ -686,6 +686,10 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     def get_poses(self, pos_word):
         raise NotImplementedError
 
+    def get_morpheme_language(self, gloss, pos):
+        """No coding per default."""
+        return ''
+
 
 class InuktitutReader(ACQDIVCHATReader):
     """Inferences for Inuktitut."""
@@ -793,3 +797,9 @@ class CreeReader(ACQDIVCHATReader):
 
     def get_poses(self, pos_word):
         return self.get_morphemes(pos_word)
+
+    def get_morpheme_language(self, gloss, pos):
+        if gloss == 'Eng':
+            return 'English'
+        else:
+            return 'Cree'

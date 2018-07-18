@@ -48,7 +48,7 @@ class CorpusReaderInterface:
         """
         raise NotImplementedError
 
-    def get_speaker_id(self):
+    def get_speaker_label(self):
         """Get the label of the speaker.
 
         Returns: str
@@ -114,7 +114,7 @@ class CorpusReaderInterface:
         """
         raise NotImplementedError
 
-    def get_speaker_label(self):
+    def get_record_speaker_label(self):
         """Get the label of the speaker of the utterance.
 
         Returns: str
@@ -144,7 +144,7 @@ class CorpusReaderInterface:
         """
         raise NotImplementedError
 
-    def get_standard_utterance(self):
+    def get_standard_form(self):
         """Get the standard form of the utterance.
 
         Returns:
@@ -235,5 +235,14 @@ class CorpusReaderInterface:
         """Get the POS tags from the POS word.
 
         Returns: list
+        """
+        raise NotImplementedError
+
+    def get_morpheme_language(self, gloss, pos):
+        """Get language of the morpheme.
+
+        Typically extracted from the gloss or POS tag.
+
+        Returns: str
         """
         raise NotImplementedError
