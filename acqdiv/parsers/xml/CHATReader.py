@@ -334,7 +334,10 @@ class CHATReader:
         Returns:
             list: The words.
         """
-        return utterance.split(' ')
+        if utterance:
+            return utterance.split(' ')
+        else:
+            return []
 
     @staticmethod
     def get_mainline_start_time(main_line_fields):
