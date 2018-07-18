@@ -136,13 +136,16 @@ class CHATParser:
                 # go through morphemes
                 for seg, gloss, pos in zip(segments, glosses, poses):
 
+                    morpheme_language = self.reader.get_morpheme_language(
+                                            gloss, pos)
+
                     # clean the morphemes
                     seg = self.cleaner.clean_segment(seg)
                     gloss = self.cleaner.clean_gloss(gloss)
                     pos = self.cleaner.clean_pos(pos)
 
                     morpheme_dict = {
-                        'morpheme_language': None,
+                        'morpheme_language': morpheme_language,
                         'morpheme': seg,
                         'gloss_raw': gloss,
                         'pos_raw': pos
