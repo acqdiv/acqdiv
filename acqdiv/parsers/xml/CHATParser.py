@@ -1,8 +1,10 @@
 from acqdiv.parsers.xml import CHATReader
 from acqdiv.parsers.xml import CHATCleaner
 
+from acqdiv.parsers.xml.interfaces import CorpusParserInterface
 
-class CHATParser:
+
+class CHATParser(CorpusParserInterface):
     """Gathers all data for the DB for a given CHAT session file.
 
     Uses the CHATReader for reading and inferring data from the CHAT file and
@@ -219,7 +221,7 @@ def main():
             for _ in parser.next_utterance():
                 pass
 
-            session_metadata = parser.get_session_metadata()
+            parser.get_session_metadata()
 
             for _ in parser.next_speaker():
                 pass

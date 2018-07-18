@@ -254,6 +254,7 @@ class CorpusReaderInterface:
 
 
 class CorpusCleanerInterface:
+    """Interface for cleaning the ACQDIV (CHAT) corpora."""
 
     # ---------- metadata cleaning ----------
 
@@ -375,3 +376,20 @@ class CorpusCleanerInterface:
         """
         raise NotImplementedError
 
+
+class CorpusParserInterface:
+    """Interface for parsing the ACQDIV (CHAT) corpora."""
+
+    def get_reader(self):
+        """Get a reader instance.
+
+        Returns: ACQDIVCHATReader
+        """
+        raise NotImplementedError
+
+    def get_cleaner(self):
+        """Get a cleaner instance.
+
+        Returns: CHATCleaner
+        """
+        raise NotImplementedError
