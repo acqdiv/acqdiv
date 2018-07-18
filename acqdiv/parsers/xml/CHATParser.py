@@ -65,15 +65,41 @@ class CHATParser:
             end_raw = self.reader.get_end_time()
             sentence_type = self.reader.get_sentence_type()
 
+            # actual & target distinction
             actual_utterance = self.cleaner.clean_utterance(
                 self.reader.get_actual_utterance())
             target_utterance = self.cleaner.clean_utterance(
                 self.reader.get_target_utterance())
 
-            if self.reader.get_standard_form() == 'actual':
-                standard_utterance = actual_utterance
-            else:
-                standard_utterance = target_utterance
+            actual_words = self.reader.get_utterance_words(actual_utterance)
+            target_words = self.reader.get_utterance_words(target_utterance)
+
+            # collect all words of the utterance
+            words = []
+            for word_actual, word_target in zip(actual_words, target_words):
+
+                if self.reader.get_standard_form() == 'actual':
+                    word = word_actual
+                else:
+                    word = word_target
+
+                word_language = self.reader.get_word_language(word)
+
+                word = self.cleaner.clean_word(word)
+                word_actual = self.cleaner.clean_word(word_actual)
+                word_target = self.cleaner.clean_word(word_target)
+
+                word_dict = {
+                    'word_language': word_language,
+                    'word': word,
+                    'word_actual': word_actual,
+                    'word_target': word_target,
+                    'warning': None
+                }
+                words.append(word_dict)
+
+            # rebuild utterance from cleaned words
+            utterance = ' '.join(w['word'] for w in words)
 
             # get morphology tiers and clean them
             seg_tier = self.cleaner.clean_seg_tier(self.reader.get_seg_tier())
@@ -86,7 +112,7 @@ class CHATParser:
                 'speaker_label': speaker_label,
                 'addressee': addressee,
                 'utterance_raw': utterance_raw,
-                'utterance': standard_utterance,
+                'utterance': utterance,
                 'translation': translation,
                 'morpheme': seg_tier,
                 'gloss_raw': gloss_tier,
@@ -97,23 +123,6 @@ class CHATParser:
                 'comment': comment,
                 'warning': None
             }
-
-            # get actual and target words from the respective utterances
-            actual_words = self.reader.get_utterance_words(actual_utterance)
-            target_words = self.reader.get_utterance_words(target_utterance)
-
-            # collect all words of the utterance
-            words = []
-            for word_actual, word_target in zip(actual_words, target_words):
-
-                word_dict = {
-                    'word_language': None,
-                    'word': word_actual,
-                    'word_actual': word_actual,
-                    'word_target': word_target,
-                    'warning': None
-                }
-                words.append(word_dict)
 
             # get morpheme words from the respective morphology tiers
             wsegs = self.reader.get_seg_words(seg_tier)
@@ -137,7 +146,7 @@ class CHATParser:
                 for seg, gloss, pos in zip(segments, glosses, poses):
 
                     morpheme_language = self.reader.get_morpheme_language(
-                                            gloss, pos)
+                                            seg, gloss, pos)
 
                     # clean the morphemes
                     seg = self.cleaner.clean_segment(seg)
