@@ -295,18 +295,18 @@ class CHATReader:
             tuple: (speaker ID, utterance, start time, end time).
         """
         main_line_regex = re.compile(
-            r'\*([A-Za-z0-9]{2,3}):\t(.*[.!?])(.+?((\d+)_(\d+)?)?)?')
+            r'\*([A-Za-z0-9]{2,3}):\t(.*[.!?])(( \[.*\])?(.*?(\d+)_(\d+))?)?')
         match = main_line_regex.search(main_line)
         label = match.group(1)
         utterance = match.group(2)
 
-        if match.group(5):
-            start = match.group(5)
+        if match.group(6):
+            start = match.group(6)
         else:
             start = ''
 
-        if match.group(6):
-            end = match.group(6)
+        if match.group(7):
+            end = match.group(7)
         else:
             end = ''
 
@@ -356,7 +356,7 @@ class CHATReader:
         Yields:
             str: The next dependent tier.
         """
-        dependent_tier_regex = re.compile(r'^%.*')
+        dependent_tier_regex = re.compile(r'(?<=\n)%.*')
         for dependent_tier in dependent_tier_regex.finditer(rec):
             yield dependent_tier.group()
 
