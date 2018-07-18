@@ -1,5 +1,5 @@
 import unittest
-from acqdiv.parsers.xml.CHATCleaner.py
+from acqdiv.parsers.xml.CHATCleaner import CHATCleaner
 
 
 class TestCHATCleaner(unittest.TestCase):
@@ -136,7 +136,7 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(CHATCleaner.null_event_utterances(
             'Hey there'), 'Hey there')
 
-    # Tests for the test_remove_events-method.
+    # Tests for the remove_events-method.
 
     def test_single_event(self):
         self.assertEqual(CHATCleaner.remove_events(
@@ -144,7 +144,7 @@ class TestCHATCleaner(unittest.TestCase):
 
     def test_multiple_events(self):
         self.assertEqual(CHATCleaner.remove_events(
-            '&=gasps I got &=groans cold. &=vocalizes'), ' I got cold.')
+            '&=gasps I got &=groans cold &=vocalizes.'), 'I got cold.')
 
     # Tests for the handle_repetitions-method.
     # should I test for bad notation like negative numbers?
@@ -271,7 +271,7 @@ class TestCHATCleaner(unittest.TestCase):
     # Tests for the remove_drawls-method.
 
     def test_lengthened_syllable(self):
-        self.assertEqual(CHATCleaner.remove_drawls('bana:nas'), 'bana:nas')
+        self.assertEqual(CHATCleaner.remove_drawls('bana:nas'), 'bananas')
 
     def test_pause_between_syllables(self):
         self.assertEqual(CHATCleaner.remove_drawls('rhi^noceros'),
