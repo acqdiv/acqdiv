@@ -14,7 +14,8 @@ class CHATReader:
     def iter_metadata_fields(session_path):
         """Iter all metadata fields of a session file.
 
-        Metadata fields start with @.
+        Metadata fields start with @ followed by the key, colon, tab and its
+        content.
 
         Args:
             session_path (str): Path to the session file.
@@ -60,7 +61,8 @@ class CHATReader:
             - format (e.g. video)
             - comment (e.g. unlinked)
 
-        The comment is optional.
+        The comment is optional and an empty string will be returned
+        if missing.
 
         Args:
             media (str): @Media content.
@@ -68,7 +70,7 @@ class CHATReader:
         Returns:
             tuple: (filename, format, comment).
         """
-        fields = media.split(',')
+        fields = media.split(', ')
         # if comment is missing
         if len(fields) == 2:
             return fields[0], fields[1], ''
@@ -114,7 +116,7 @@ class CHATReader:
             - name
             - role
 
-        The name is optional.
+        The name is optional and an empty string will be returned if missing.
 
         Args:
             participant (str): A participant as returned by iter_participants.
@@ -157,7 +159,7 @@ class CHATReader:
             tuple: (language, corpus, code, age, sex, group, SES, role,
                     education, custom)
         """
-        return id_field.split('|')
+        return id_field.rstrip('|').split('|')
 
     @staticmethod
     def get_id_language(id_fields):
