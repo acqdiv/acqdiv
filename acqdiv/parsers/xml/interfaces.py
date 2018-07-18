@@ -20,7 +20,11 @@ class CorpusReaderInterface:
     # ---------- speaker ----------
 
     def load_next_speaker(self):
-        """Load the data for the next speaker."""
+        """Load the data for the next speaker.
+
+        Returns:
+            bool: 1 if a new speaker could be loaded, otherwise 0.
+        """
         raise NotImplementedError
 
     def get_speaker_age(self):
@@ -75,7 +79,11 @@ class CorpusReaderInterface:
     # ---------- record ----------
 
     def load_next_record(self):
-        """Load the next record."""
+        """Load the next record.
+
+        Returns:
+            bool: 1 if a new record could be loaded, otherwise 0.
+        """
         raise NotImplementedError
 
     def get_uid(self):

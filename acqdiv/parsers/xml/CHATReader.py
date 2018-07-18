@@ -440,14 +440,19 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     def load_next_speaker(self):
         """Load the next speaker.
 
-        Sets the following variables:
+        Resets the following variables if a new speaker can be loaded:
             - _participant_fields
             - _id_fields
         """
-        participant = next(self._speaker_iterator)
-        self._participant_fields = self.get_participant_fields(participant)
-        participant_id = self.get_participant_id(self._participant_fields)
-        self._id_fields = self._metadata_fields['ID'][participant_id]
+        try:
+            participant = next(self._speaker_iterator)
+        except StopIteration:
+            return 0
+        else:
+            self._participant_fields = self.get_participant_fields(participant)
+            participant_id = self.get_participant_id(self._participant_fields)
+            self._id_fields = self._metadata_fields['ID'][participant_id]
+            return 1
 
     def get_speaker_age(self):
         return self.get_id_age(self._id_fields)
@@ -485,22 +490,26 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     def load_next_record(self):
         """Load the next record.
 
-        Sets the following variables:
+        Resets the following variables if a new record can be loaded:
             - _uid
             - _main_line_fields
             - _dependent_tiers
         """
-        rec = next(self._record_iterator)
+        try:
+            rec = next(self._record_iterator)
+        except StopIteration:
+            return 0
+        else:
+            self._uid += 1
 
-        self._uid += 1
+            main_line = self.get_mainline(rec)
+            self._main_line_fields = self.get_mainline_fields(main_line)
 
-        main_line = self.get_mainline(rec)
-        self._main_line_fields = self.get_mainline_fields(main_line)
-
-        self._dependent_tiers = {}
-        for dependent_tier in self.iter_dependent_tiers(rec):
-            key, content = self.get_dependent_tier(dependent_tier)
-            self._dependent_tiers[key] = content
+            self._dependent_tiers = {}
+            for dependent_tier in self.iter_dependent_tiers(rec):
+                key, content = self.get_dependent_tier(dependent_tier)
+                self._dependent_tiers[key] = content
+            return 1
 
     def get_uid(self):
         return 'u' + str(self._uid)
