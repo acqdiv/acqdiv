@@ -14,28 +14,20 @@ class CHATParser:
         self.reader = self.get_reader()
         self.cleaner = self.get_cleaner()
 
-    @staticmethod
-    def get_reader():
-        return CHATReader.CHATReader()
+    def get_reader(self):
+        return CHATReader.ACQDIVCHATReader(self.session_path)
 
-    @staticmethod
-    def get_cleaner():
+    def get_cleaner(self):
         return CHATCleaner.CHATCleaner()
 
     def get_session_metadata(self):
         """Get the metadata of a session.
 
-        Currently, the only metadata returned are the date and the media
-        filename of the session.
-
         Returns:
-            dict: The session metadata.
+            dict: Date and media file name of session.
         """
-        metadata = self.reader.get_metadata(self.session_path)
-        date = self.cleaner.clean_date(
-                    self.reader.get_metadata_field(metadata, 'Date'))
-        media = self.reader.get_metadata_field(metadata, 'Media')
-        filename = self.reader.get_filename(media)
+        date = self.cleaner.clean_date(self.reader.get_session_date())
+        filename = self.reader.get_session_filename()
         return {'date': date, 'media_filename': filename}
 
     def next_speaker(self):
@@ -45,17 +37,15 @@ class CHATParser:
             dict: The label, name, age, birth date, gender, language, role of
                 the speaker.
         """
-        metadata = self.reader.get_metadata(self.session_path)
-        for participant in self.reader.iter_participants(metadata):
-            speaker_label = self.reader.get_speaker_label(participant)
-            name = self.reader.get_name(participant)
-            role = self.reader.get_role(participant)
-            id_field = self.reader.get_id_field(metadata, speaker_label)
-            age = self.reader.get_age(id_field)
-            gender = self.reader.get_gender(id_field)
-            language = self.reader.get_language(id_field)
+        while self.reader.load_next_speaker():
+            speaker_label = self.reader.get_speaker_label()
+            name = self.reader.get_speaker_name()
+            role = self.reader.get_speaker_role()
+            age = self.reader.get_speaker_age()
+            gender = self.reader.get_speaker_gender()
+            language = self.reader.get_speaker_language()
             birth_date = self.cleaner.clean_date(
-                self.reader.get_birth_date(metadata, speaker_label))
+                                self.reader.get_speaker_birthdate())
 
             yield {'speaker_label': speaker_label, 'name': name,
                    'age_raw': age, 'gender_raw': gender, 'role_raw': role,
@@ -63,50 +53,40 @@ class CHATParser:
 
     def next_utterance(self):
         """Yields the next utterance of a session."""
-        # go through each record in the session
-        for rec in self.reader.iter_records(self.session_path):
+        while self.reader.load_next_record():
 
-            # get source ID
             source_id = self.reader.get_uid()
+            addressee = self.reader.get_addressee()
+            translation = self.reader.get_translation()
+            comment = self.reader.get_comments()
+            speaker_label = self.reader.get_record_speaker_label()
+            utterance_raw = self.reader.get_utterance()
+            start_raw = self.reader.get_start_time()
+            end_raw = self.reader.get_end_time()
+            sentence_type = self.reader.get_sentence_type()
 
-            # get fields from record
-            addressee = self.reader.get_addressee(rec)
-            translation = self.reader.get_translation(rec)
-            comment = self.reader.get_comments(rec)
-
-            # get fields from main line
-            main_line = self.reader.get_main_line(rec)
-            speaker_label = self.reader.get_record_speaker_label(main_line)
-            utterance_raw = self.reader.get_utterance_raw(main_line)
-
-            # get fields from time
-            rec_time = self.reader.get_time(main_line)
-            start_raw = self.reader.get_start(rec_time)
-            end_raw = self.reader.get_end(rec_time)
-
-            # get fields from raw utterance
-            sentence_type = self.reader.get_sentence_type(utterance_raw)
             actual_utterance = self.cleaner.clean_utterance(
-                self.reader.get_actual_utterance(utterance_raw))
+                self.reader.get_actual_utterance())
             target_utterance = self.cleaner.clean_utterance(
-                self.reader.get_target_utterance(utterance_raw))
-            utterance = self.cleaner.clean_utterance(
-                self.reader.get_utterance(utterance_raw))
+                self.reader.get_target_utterance())
+
+            if self.reader.get_standard_form() == 'actual':
+                standard_utterance = actual_utterance
+            else:
+                standard_utterance = target_utterance
 
             # get morphology tiers and clean them
-            seg_tier = self.cleaner.clean_seg_tier(
-                            self.reader.get_seg_tier(rec))
+            seg_tier = self.cleaner.clean_seg_tier(self.reader.get_seg_tier())
             gloss_tier = self.cleaner.clean_gloss_tier(
-                            self.reader.get_gloss_tier(rec))
-            pos_tier = self.cleaner.clean_pos_tier(
-                            self.reader.get_pos_tier(rec))
+                                self.reader.get_gloss_tier())
+            pos_tier = self.cleaner.clean_pos_tier(self.reader.get_pos_tier())
 
             utterance_dict = {
                 'source_id': source_id,
                 'speaker_label': speaker_label,
                 'addressee': addressee,
                 'utterance_raw': utterance_raw,
-                'utterance': utterance,
+                'utterance': standard_utterance,
                 'translation': translation,
                 'morpheme': seg_tier,
                 'gloss_raw': gloss_tier,
@@ -119,8 +99,8 @@ class CHATParser:
             }
 
             # get actual and target words from the respective utterances
-            actual_words = self.reader.get_words(actual_utterance)
-            target_words = self.reader.get_words(target_utterance)
+            actual_words = self.reader.get_utterance_words(actual_utterance)
+            target_words = self.reader.get_utterance_words(target_utterance)
 
             # collect all words of the utterance
             words = []
@@ -175,22 +155,18 @@ class CHATParser:
 
 
 class CreeParser(CHATParser):
-    @staticmethod
-    def get_reader():
-        return CHATReader.CreeReader()
+    def get_reader(self):
+        return CHATReader.CreeReader(self.session_path)
 
-    @staticmethod
-    def get_cleaner():
+    def get_cleaner(self):
         return CHATCleaner.CreeCleaner()
 
 
 class InuktitutParser(CHATParser):
-    @staticmethod
-    def get_reader():
-        return CHATReader.InuktitutReader()
+    def get_reader(self):
+        return CHATReader.InuktitutReader(self.session_path)
 
-    @staticmethod
-    def get_cleaner():
+    def get_cleaner(self):
         return CHATCleaner.InuktitutCleaner()
 
 
