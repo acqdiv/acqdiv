@@ -28,7 +28,12 @@ class CHATParser:
         """
         date = self.cleaner.clean_date(self.reader.get_session_date())
         filename = self.reader.get_session_filename()
-        return {'date': date, 'media_filename': filename}
+
+        session_dict = {
+            'date': date if date else None,
+            'media_filename': filename if filename else None}
+
+        return session_dict
 
     def next_speaker(self):
         """Yield the metadata of the next speaker of a session.
@@ -47,9 +52,16 @@ class CHATParser:
             birth_date = self.cleaner.clean_date(
                                 self.reader.get_speaker_birthdate())
 
-            yield {'speaker_label': speaker_label, 'name': name,
-                   'age_raw': age, 'gender_raw': gender, 'role_raw': role,
-                   'languages_spoken': language, 'birthdate': birth_date}
+            speaker_dict = {
+                'speaker_label': speaker_label,
+                'name': name if name else None,
+                'age_raw': age if age else None,
+                'gender_raw': gender if gender else None,
+                'role_raw': role,
+                'languages_spoken': language if language else None,
+                'birthdate': birth_date if birth_date else None}
+
+            yield speaker_dict
 
     def next_utterance(self):
         """Yields the next utterance of a session."""
@@ -90,7 +102,7 @@ class CHATParser:
                 word_target = self.cleaner.clean_word(word_target)
 
                 word_dict = {
-                    'word_language': word_language,
+                    'word_language': word_language if word_language else None,
                     'word': word,
                     'word_actual': word_actual,
                     'word_target': word_target,
@@ -110,17 +122,17 @@ class CHATParser:
             utterance_dict = {
                 'source_id': source_id,
                 'speaker_label': speaker_label,
-                'addressee': addressee,
+                'addressee': addressee if addressee else None,
                 'utterance_raw': utterance_raw,
-                'utterance': utterance,
-                'translation': translation,
-                'morpheme': seg_tier,
-                'gloss_raw': gloss_tier,
-                'pos_raw': pos_tier,
+                'utterance': utterance if utterance else None,
+                'translation': translation if translation else None,
+                'morpheme': seg_tier if seg_tier else None,
+                'gloss_raw': gloss_tier if gloss_tier else None,
+                'pos_raw': pos_tier if pos_tier else None,
                 'sentence_type': sentence_type,
-                'start_raw': start_raw,
-                'end_raw': end_raw,
-                'comment': comment,
+                'start_raw': start_raw if start_raw else None,
+                'end_raw': end_raw if end_raw else None,
+                'comment': comment if comment else None,
                 'warning': None
             }
 
@@ -154,7 +166,8 @@ class CHATParser:
                     pos = self.cleaner.clean_pos(pos)
 
                     morpheme_dict = {
-                        'morpheme_language': morpheme_language,
+                        'morpheme_language':
+                            morpheme_language if morpheme_language else None,
                         'morpheme': seg,
                         'gloss_raw': gloss,
                         'pos_raw': pos
