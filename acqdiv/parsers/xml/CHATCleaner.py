@@ -18,6 +18,27 @@ class CHATCleaner(CorpusCleanerInterface):
     or return information, the method will only accept strings as arguments
     and return a cleaned version of the string.
     """
+    # ---------- metadata cleaning ----------
+
+    @staticmethod
+    def clean_date(date):
+        """Clean the date.
+
+        CHAT date format:
+            day-month-year
+            \d\d-\w\w\w-\d\d\d\d
+        """
+        mapping = {'JAN': '01', 'FEB': '02', 'MAR': '03', 'APR': '04',
+                   'MAY': '05', 'JUN': '06', 'JUL': '07', 'AUG': '08',
+                   'SEP': '09', 'OCT': '10', 'NOV': '11', 'DEC': '12'}
+        if not date:
+            return ''
+        else:
+            day, month, year = date.split('-')
+            month_clean = mapping[month]
+            return '-'.join([year, month_clean, day])
+
+    # ---------- utterance cleaning ----------
 
     @staticmethod
     def remove_redundant_whitespaces(utterance):
@@ -131,16 +152,6 @@ class CHATCleaner(CorpusCleanerInterface):
         return untranscribed_regex.sub('???', utterance)
 
     @staticmethod
-    def remove_form_markers(utterance):
-        """Remove form markers from the utterance.
-
-        Coding in CHAT: word ending with @.
-        The @ and the part after it are removed.
-        """
-        form_marker_regex = re.compile(r'(\S+)@\S+')
-        return form_marker_regex.sub(r'\1', utterance)
-
-    @staticmethod
     def remove_linkers(utterance):
         """Remove linkers from the utterance.
 
@@ -180,24 +191,6 @@ class CHATCleaner(CorpusCleanerInterface):
         filler_regex = re.compile(r'&-(\S+)')
         return filler_regex.sub(r'\1', utterance)
 
-    @staticmethod
-    def remove_pauses_within_words(utterance):
-        """Remove pauses within words from the utterance.
-
-        Coding in CHAT: ^ within word
-        """
-        pause_regex = re.compile(r'(\S+)\^(\S+)')
-        return pause_regex.sub(r'\1\2', utterance)
-
-    @staticmethod
-    def remove_blocking(utterance):
-        """Remove blockings in words from the utterance.
-
-        Coding in CHAT: ^ or ≠ at the beginning of the word.
-        """
-        blocking_regex = re.compile(r'(^| )[\^≠](\S+)')
-        return blocking_regex.sub(r'\1\2', utterance)
-
     @classmethod
     def remove_pauses_between_words(cls, utterance):
         """Remove pauses between words from the utterance.
@@ -207,15 +200,6 @@ class CHATCleaner(CorpusCleanerInterface):
         pause_regex = re.compile(r'\(\.{1,3}\)')
         clean = pause_regex.sub('', utterance)
         return cls.remove_redundant_whitespaces(clean)
-
-    @staticmethod
-    def remove_drawls(utterance):
-        """Remove drawls from the utterance.
-
-        Coding in CHAT: : within or after word
-        """
-        drawl_regex = re.compile(r'(\S+):(\S+)?')
-        return drawl_regex.sub(r'\1\2', utterance)
 
     @classmethod
     def remove_scoped_symbols(cls, utterance):
@@ -236,49 +220,68 @@ class CHATCleaner(CorpusCleanerInterface):
         clean = scope_regex.sub('', utterance)
         return cls.remove_redundant_whitespaces(clean)
 
-    # ---------- metadata cleaning ----------
-
-    @staticmethod
-    def clean_date(date):
-        """Clean the date.
-
-        CHAT date format:
-            day-month-year
-            \d\d-\w\w\w-\d\d\d\d
-        """
-        mapping = {'JAN': '01', 'FEB': '02', 'MAR': '03', 'APR': '04',
-                   'MAY': '05', 'JUN': '06', 'JUL': '07', 'AUG': '08',
-                   'SEP': '09', 'OCT': '10', 'NOV': '11', 'DEC': '12'}
-        if not date:
-            return ''
-        else:
-            day, month, year = date.split('-')
-            month_clean = mapping[month]
-            return '-'.join([year, month_clean, day])
-
-    # ---------- utterance cleaning ----------
-
     @classmethod
     def clean_utterance(cls, utterance):
         for cleaning_method in [
                 cls.null_event_utterances, cls.unify_untranscribed,
                 cls.handle_repetitions, cls.remove_terminator,
                 cls.remove_events, cls.remove_omissions,
-                cls.remove_form_markers, cls.remove_linkers,
-                cls.remove_separators, cls.remove_ca,
-                cls.remove_fillers, cls.remove_pauses_within_words,
-                cls.remove_pauses_between_words, cls.remove_blocking,
-                cls.remove_drawls, cls.remove_scoped_symbols,
+                cls.remove_linkers, cls.remove_separators, cls.remove_ca,
+                cls.remove_fillers, cls.remove_pauses_between_words,
                 cls.null_untranscribed_utterances]:
             utterance = cleaning_method(utterance)
 
         return utterance
 
-    # ---------- morphology tier cleaning ----------
+    # ---------- word cleaning ----------
 
     @staticmethod
-    def clean_word(word):
-        pass
+    def remove_form_markers(word):
+        """Remove form markers from the word.
+
+        Coding in CHAT: word ending with @.
+        The @ and the part after it are removed.
+        """
+        form_marker_regex = re.compile(r'(\S+)@\S+')
+        return form_marker_regex.sub(r'\1', word)
+
+    @staticmethod
+    def remove_drawls(word):
+        """Remove drawls in the word.
+
+        Coding in CHAT: : within or after word
+        """
+        drawl_regex = re.compile(r'(\S+):(\S+)?')
+        return drawl_regex.sub(r'\1\2', word)
+
+    @staticmethod
+    def remove_pauses_within_words(word):
+        """Remove pauses within the word.
+
+        Coding in CHAT: ^ within word
+        """
+        pause_regex = re.compile(r'(\S+)\^(\S+)')
+        return pause_regex.sub(r'\1\2', word)
+
+    @staticmethod
+    def remove_blocking(word):
+        """Remove blockings in the word.
+
+        Coding in CHAT: ^ or ≠ at the beginning of the word.
+        """
+        blocking_regex = re.compile(r'(^| )[\^≠](\S+)')
+        return blocking_regex.sub(r'\1\2', word)
+
+    @classmethod
+    def clean_word(cls, word):
+        for cleaning_method in [
+                cls.remove_form_markers, cls.remove_drawls,
+                cls.remove_pauses_within_words, cls.remove_blocking]:
+            word = cleaning_method(word)
+
+        return word
+
+    # ---------- morphology tier cleaning ----------
 
     @staticmethod
     def clean_seg_tier(seg_tier):
@@ -342,57 +345,21 @@ class CHATCleaner(CorpusCleanerInterface):
 
 class InuktitutCleaner(CHATCleaner):
 
+    # ---------- word cleaning ----------
+
     @staticmethod
-    def remove_dashes(utterance):
+    def remove_dashes(word):
         """Remove dashes before/after xxx."""
         dash_regex = re.compile(r'-?(xxx)-?')
-        return dash_regex.sub(r'\1', utterance)
+        return dash_regex.sub(r'\1', word)
 
-    @staticmethod
-    def replace_pos_separator(pos):
-        """Replace the POS tag separator.
+    @classmethod
+    def clean_word(cls, word):
+        """Clean the utterance."""
+        word = cls.remove_dashes(word)
+        return super().clean_word(word)
 
-        A morpheme may have several POS tags separated by a pipe.
-        POS tags to the right are subcategories of the POS tags to the left.
-        The separator is replaced by a dot.
-
-        Args:
-            pos (str): The POS tag.
-
-        Returns:
-            str: POS tag separator replaced by a dot.
-        """
-        return pos.replace('|', '.')
-
-    @staticmethod
-    def replace_stem_gram_gloss_connector(gloss):
-        """Replace the stem and grammatical gloss connector.
-
-        A stem gloss is connected with a grammatical gloss by an ampersand.
-        The connector is replaced by a dot.
-
-        Args:
-            gloss (str): The gloss.
-
-        Returns:
-            str: The stem and grammatical connector replaced by a dot.
-        """
-        return gloss.replace('&', '.')
-
-    @staticmethod
-    def remove_english_marker(seg):
-        """Remove the marker for english words.
-
-        English segments are marked with the form marker '@e'.
-
-        Args:
-            seg (str): The segment.
-
-        Returns:
-            str: The segment without '@e'.
-        """
-        english_marker_regex = re.compile(r'(\S+)@e')
-        return english_marker_regex.sub(r'\1', seg)
+    # ---------- morphology tier cleaning ----------
 
     @classmethod
     def clean_xmor(cls, xmor):
@@ -406,20 +373,6 @@ class InuktitutCleaner(CHATCleaner):
             xmor = cleaning_method(xmor)
 
         return xmor
-
-    # ---------- utterance cleaning ----------
-    @classmethod
-    def clean_utterance(cls, utterance):
-        """Clean the utterance."""
-        utterance = cls.remove_dashes(utterance)
-        return super().clean_utterance(utterance)
-
-    # ---------- morphology tier cleaning ----------
-
-    @classmethod
-    def clean_word(cls, word):
-        """Clean the word."""
-        pass
 
     @classmethod
     def clean_seg_tier(cls, seg_tier):
@@ -438,15 +391,61 @@ class InuktitutCleaner(CHATCleaner):
 
     # ---------- morpheme cleaning ----------
 
+    @staticmethod
+    def remove_english_marker(seg):
+        """Remove the marker for english words.
+
+        English segments are marked with the form marker '@e'.
+
+        Args:
+            seg (str): The segment.
+
+        Returns:
+            str: The segment without '@e'.
+        """
+        english_marker_regex = re.compile(r'(\S+)@e')
+        return english_marker_regex.sub(r'\1', seg)
+
     @classmethod
     def clean_segment(cls, seg):
         """Remove english markers from the segment."""
         return cls.remove_english_marker(seg)
 
+    @staticmethod
+    def replace_stem_gram_gloss_connector(gloss):
+        """Replace the stem and grammatical gloss connector.
+
+        A stem gloss is connected with a grammatical gloss by an ampersand.
+        The connector is replaced by a dot.
+
+        Args:
+            gloss (str): The gloss.
+
+        Returns:
+            str: The stem and grammatical connector replaced by a dot.
+        """
+        return gloss.replace('&', '.')
+
     @classmethod
     def clean_gloss(cls, gloss):
         """Replace the stem and grammatical gloss connector."""
         return cls.replace_stem_gram_gloss_connector(gloss)
+
+    @staticmethod
+    def replace_pos_separator(pos):
+        """Replace the POS tag separator.
+
+        A morpheme may have several POS tags separated by a pipe.
+        POS tags to the right are subcategories of the POS tags to the left.
+        The separator is replaced by a dot.
+
+        Args:
+            pos (str): The POS tag.
+
+        Returns:
+            str: POS tag separator replaced by a dot.
+        """
+        return pos.replace('|', '.')
 
     @classmethod
     def clean_pos(cls, pos):
@@ -459,31 +458,7 @@ class InuktitutCleaner(CHATCleaner):
 
 class CreeCleaner(CHATCleaner):
 
-    @staticmethod
-    def remove_morph_separators(utterance):
-        """Remove morpheme separators in the utterance.
-
-        Words may contain an underscore as a morpheme separator, e.g.
-        'giddy_up', in the utterance.
-        """
-        morph_sep_regex = re.compile(r'(\S+)_(\S+)')
-        return morph_sep_regex.sub(r'\1\2', utterance)
-
-    @staticmethod
-    def replace_zero(utterance):
-        """Replace zéro morphemes in the utterance.
-
-        'zéro' stands for zero morphemes is replaced by 'Ø'.
-        """
-        return utterance.replace('zéro', 'Ø')
-
-    @staticmethod
-    def replace_morpheme_separator(utterance):
-        """Replace morpheme separators in the utterance.
-
-        Morphemes are separated by a tilde.
-        """
-        return utterance.replace('~', '')
+    # ---------- utterance cleaning ----------
 
     @staticmethod
     def remove_angle_brackets(utterance):
@@ -496,6 +471,49 @@ class CreeCleaner(CHATCleaner):
         """
         return utterance.replace('‹', '').replace('›', '')
 
+    @classmethod
+    def clean_utterance(cls, utterance):
+        utterance = super().clean_utterance(utterance)
+        return cls.remove_angle_brackets(utterance)
+
+    # ---------- word cleaning ----------
+
+    @staticmethod
+    def remove_morph_separators(word):
+        """Remove morpheme separators in a word.
+
+        An underscore is used as a morpheme separator (e.g. 'giddy_up').
+        """
+        morph_sep_regex = re.compile(r'(\S+)_(\S+)')
+        return morph_sep_regex.sub(r'\1\2', word)
+
+    @staticmethod
+    def replace_zero(word):
+        """Replace zéro morphemes in a word.
+
+        'zéro' stands for zero morphemes and is replaced by 'Ø'.
+        """
+        return word.replace('zéro', 'Ø')
+
+    @staticmethod
+    def replace_morpheme_separator(word):
+        """Replace morpheme separators in a word.
+
+        Morphemes are separated by a tilde.
+        """
+        return word.replace('~', '')
+
+    @classmethod
+    def clean_word(cls, word):
+        word = super().clean_word(word)
+        for cleaning_method in [cls.remove_morph_separators, cls.replace_zero,
+                                cls.replace_morpheme_separator]:
+            word = cleaning_method(word)
+
+        return word
+
+    # ---------- morphology tier cleaning ----------
+
     @staticmethod
     def remove_square_brackets(morph_tier):
         """Remove redundant square brackets around morphology tiers.
@@ -504,6 +522,20 @@ class CreeCleaner(CHATCleaner):
         removed. It is unclear what their purpose is.
         """
         return morph_tier.lstrip('[').rstrip(']')
+
+    @classmethod
+    def clean_seg_tier(cls, seg_tier):
+        return cls.remove_square_brackets(seg_tier)
+
+    @classmethod
+    def clean_gloss_tier(cls, gloss_tier):
+        return cls.remove_square_brackets(gloss_tier)
+
+    @classmethod
+    def clean_pos_tier(cls, pos_tier):
+        return cls.remove_square_brackets(pos_tier)
+
+    # ---------- tier cross cleaning ----------
 
     @staticmethod
     def replace_eng(gloss_tier, utterance):
@@ -526,6 +558,13 @@ class CreeCleaner(CHATCleaner):
                 else:
                     new_gloss_words.append(gloss_word)
             return ' '.join(new_gloss_words)
+
+    @classmethod
+    def cross_clean(cls, utterance, seg_tier, gloss_tier, pos_tier):
+        gloss_tier = cls.replace_eng(gloss_tier, utterance)
+        return utterance, seg_tier, gloss_tier, pos_tier
+
+    # ---------- morpheme word cleaning ----------
 
     @staticmethod
     def replace_percentages(word):
@@ -575,32 +614,6 @@ class CreeCleaner(CHATCleaner):
         else:
             return morph_element
 
-    @staticmethod
-    def replace_gloss_connector(gloss):
-        """Replace the gloss connectors.
-
-        There are three different gloss connectors: '.', '+', ','
-        ',' adds an additional specification to a gloss, e.g.
-        'p,quest” (question particle)'. '+' and ',' are replaced by a dot.
-        """
-        return gloss.replace(',', '.').replace('+', '.')
-
-    @staticmethod
-    def uppercase_pos_in_parentheses(pos):
-        """Uppercase POS tags in parentheses.
-
-        Parentheses indicate covert grammatical categories.
-        """
-        pos_in_parentheses_regex = re.compile(r'(\()(\S+)(\))')
-        # extract POS in parentheses
-        match = pos_in_parentheses_regex.search(pos)
-        if not match:
-            return pos
-        else:
-            # replace by uppercased version
-            up_pos = match.group(2).upper()
-            return pos_in_parentheses_regex.sub(r'\1{}\3'.format(up_pos), pos)
-
     @classmethod
     def clean_morpheme_word(cls, morpheme_word):
         for cleaning_method in [
@@ -609,50 +622,6 @@ class CreeCleaner(CHATCleaner):
             morpheme_word = cleaning_method(morpheme_word)
 
         return morpheme_word
-
-    @classmethod
-    def clean_morpheme(cls, morpheme):
-        for cleaning_method in [
-                cls.replace_hashtag, cls.handle_question_mark,
-                cls.replace_star]:
-            morpheme = cleaning_method(morpheme)
-
-        return morpheme
-
-    # ---------- utterance cleaning ----------
-
-    @classmethod
-    def clean_utterance(cls, utterance):
-        utterance = super().clean_utterance(utterance)
-        for cleaning_method in [
-                cls.remove_morph_separators, cls.replace_zero,
-                cls.replace_morpheme_separator, cls.remove_angle_brackets]:
-            utterance = cleaning_method(utterance)
-
-        return utterance
-
-    # ---------- morphology tier cleaning ----------
-
-    @classmethod
-    def clean_seg_tier(cls, seg_tier):
-        return cls.remove_square_brackets(seg_tier)
-
-    @classmethod
-    def clean_gloss_tier(cls, gloss_tier):
-        return cls.remove_square_brackets(gloss_tier)
-
-    @classmethod
-    def clean_pos_tier(cls, pos_tier):
-        return cls.remove_square_brackets(pos_tier)
-
-    # ---------- tier cross cleaning ----------
-
-    @classmethod
-    def cross_clean(cls, utterance, seg_tier, gloss_tier, pos_tier):
-        gloss_tier = cls.replace_eng(gloss_tier, utterance)
-        return utterance, seg_tier, gloss_tier, pos_tier
-
-    # ---------- morpheme word cleaning ----------
 
     @classmethod
     def clean_seg_word(cls, seg_word):
@@ -669,13 +638,48 @@ class CreeCleaner(CHATCleaner):
     # ---------- morpheme cleaning ----------
 
     @classmethod
+    def clean_morpheme(cls, morpheme):
+        for cleaning_method in [
+                cls.replace_hashtag, cls.handle_question_mark,
+                cls.replace_star]:
+            morpheme = cleaning_method(morpheme)
+
+        return morpheme
+
+    @classmethod
     def clean_segment(cls, segment):
         return cls.clean_morpheme(segment)
+
+    @staticmethod
+    def replace_gloss_connector(gloss):
+        """Replace the gloss connectors.
+
+        There are three different gloss connectors: '.', '+', ','
+        ',' adds an additional specification to a gloss, e.g.
+        'p,quest” (question particle)'. '+' and ',' are replaced by a dot.
+        """
+        return gloss.replace(',', '.').replace('+', '.')
 
     @classmethod
     def clean_gloss(cls, gloss):
         gloss = cls.clean_morpheme(gloss)
         return cls.replace_gloss_connector(gloss)
+
+    @staticmethod
+    def uppercase_pos_in_parentheses(pos):
+        """Uppercase POS tags in parentheses.
+
+        Parentheses indicate covert grammatical categories.
+        """
+        pos_in_parentheses_regex = re.compile(r'(\()(\S+)(\))')
+        # extract POS in parentheses
+        match = pos_in_parentheses_regex.search(pos)
+        if not match:
+            return pos
+        else:
+            # replace by uppercased version
+            up_pos = match.group(2).upper()
+            return pos_in_parentheses_regex.sub(r'\1{}\3'.format(up_pos), pos)
 
     @classmethod
     def clean_pos(cls, pos):
