@@ -242,8 +242,8 @@ class CHATCleaner(CorpusCleanerInterface):
         Coding in CHAT: word ending with @.
         The @ and the part after it are removed.
         """
-        form_marker_regex = re.compile(r'(\S+)@\S+')
-        return form_marker_regex.sub(r'\1', word)
+        form_marker_regex = re.compile(r'@.*')
+        return form_marker_regex.sub(r'', word)
 
     @staticmethod
     def remove_drawls(word):
@@ -251,8 +251,7 @@ class CHATCleaner(CorpusCleanerInterface):
 
         Coding in CHAT: : within or after word
         """
-        drawl_regex = re.compile(r'(\S+):(\S+)?')
-        return drawl_regex.sub(r'\1\2', word)
+        return word.replace(':', '')
 
     @staticmethod
     def remove_pauses_within_words(word):
@@ -269,8 +268,7 @@ class CHATCleaner(CorpusCleanerInterface):
 
         Coding in CHAT: ^ or ≠ at the beginning of the word.
         """
-        blocking_regex = re.compile(r'(^| )[\^≠](\S+)')
-        return blocking_regex.sub(r'\1\2', word)
+        return word.lstrip('^').lstrip('≠')
 
     @classmethod
     def clean_word(cls, word):
