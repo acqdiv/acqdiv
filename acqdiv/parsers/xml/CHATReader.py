@@ -692,7 +692,7 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     def get_poses(self, pos_word):
         raise NotImplementedError
 
-    def get_morpheme_language(self, gloss, pos):
+    def get_morpheme_language(self, seg, gloss, pos):
         """No coding per default."""
         return ''
 
@@ -740,12 +740,6 @@ class InuktitutReader(ACQDIVCHATReader):
         utterance = super().get_target_utterance()
         return self.get_target_alternative(utterance)
 
-    def get_word_language(self, word):
-        if word.endswith('@e'):
-            return 'English'
-        else:
-            return 'Inuktitut'
-
     def get_morph_tier(self):
         return self._dependent_tiers.get('xmor', '')
 
@@ -785,6 +779,12 @@ class InuktitutReader(ACQDIVCHATReader):
     def get_poses(self, pos_word):
         return [pos for pos, _, _ in self.iter_morphemes(pos_word)]
 
+    def get_morpheme_language(self, seg, gloss, pos):
+        if seg.endswith('@e'):
+            return 'English'
+        else:
+            return 'Inuktitut'
+
 
 class CreeReader(ACQDIVCHATReader):
 
@@ -810,7 +810,7 @@ class CreeReader(ACQDIVCHATReader):
     def get_poses(self, pos_word):
         return self.get_morphemes(pos_word)
 
-    def get_morpheme_language(self, gloss, pos):
+    def get_morpheme_language(self, seg, gloss, pos):
         if gloss == 'Eng':
             return 'English'
         else:

@@ -245,10 +245,8 @@ class CorpusReaderInterface:
         """
         raise NotImplementedError
 
-    def get_morpheme_language(self, gloss, pos):
+    def get_morpheme_language(self, seg, gloss, pos):
         """Get language of the morpheme.
-
-        Typically extracted from the gloss or POS tag.
 
         Returns: str
         """
