@@ -1,7 +1,9 @@
 import re
 
+from acqdiv.parsers.xml.interfaces import CorpusCleanerInterface
 
-class CHATCleaner:
+
+class CHATCleaner(CorpusCleanerInterface):
     """Clean parts of a CHAT record.
 
     This class provides a range of cleaning methods that perform modifications,
@@ -234,10 +236,6 @@ class CHATCleaner:
         clean = scope_regex.sub('', utterance)
         return cls.remove_redundant_whitespaces(clean)
 
-    # **********************************************************
-    # ********** Processor interface cleaning methods **********
-    # **********************************************************
-
     # ---------- metadata cleaning ----------
 
     @staticmethod
@@ -247,10 +245,6 @@ class CHATCleaner:
         CHAT date format:
             day-month-year
             \d\d-\w\w\w-\d\d\d\d
-
-        Is converted to the following format:
-            year-month-day
-            \d\d\d\d-\d\d-\d\d
         """
         mapping = {'JAN': '01', 'FEB': '02', 'MAR': '03', 'APR': '04',
                    'MAY': '05', 'JUN': '06', 'JUL': '07', 'AUG': '08',
@@ -266,10 +260,6 @@ class CHATCleaner:
 
     @classmethod
     def clean_utterance(cls, utterance):
-        """Return the cleaned utterance.
-
-        Calls all cleaning methods defined for the utterance.
-        """
         for cleaning_method in [
                 cls.null_event_utterances, cls.unify_untranscribed,
                 cls.handle_repetitions, cls.remove_terminator,
@@ -287,89 +277,63 @@ class CHATCleaner:
     # ---------- morphology tier cleaning ----------
 
     @staticmethod
-    def clean_seg_tier(seg_tier):
-        """Clean the segment tier.
+    def clean_word(word):
+        pass
 
-        No cleaning by default.
-        """
+    @staticmethod
+    def clean_seg_tier(seg_tier):
+        """No cleaning by default."""
         return seg_tier
 
     @staticmethod
     def clean_gloss_tier(gloss_tier):
-        """Clean the gloss tier.
-
-        No cleaning by default.
-        """
+        """No cleaning by default."""
         return gloss_tier
 
     @staticmethod
     def clean_pos_tier(pos_tier):
-        """Clean the POS tag tier.
-
-        No cleaning by default.
-        """
+        """No cleaning by default."""
         return pos_tier
 
     # ---------- tier cross cleaning ----------
 
     @staticmethod
     def cross_clean(utterance, seg_tier, gloss_tier, pos_tier):
-        """Clean across different tiers.
-
-        No cleaning by default.
-        """
+        """No cleaning by default."""
         return utterance, seg_tier, gloss_tier, pos_tier
 
     # ---------- morpheme word cleaning ----------
 
     @staticmethod
     def clean_seg_word(seg_word):
-        """Clean the segment word.
-
-        No cleaning by default.
-        """
+        """No cleaning by default."""
         return seg_word
 
     @staticmethod
     def clean_gloss_word(gloss_word):
-        """Clean the gloss word.
-
-        No cleaning by default.
-        """
+        """No cleaning by default."""
         return gloss_word
 
     @staticmethod
     def clean_pos_word(pos_word):
-        """Clean the POS tag word.
-
-        No cleaning by default.
-        """
+        """No cleaning by default."""
         return pos_word
 
     # ---------- morpheme cleaning ----------
 
     @staticmethod
     def clean_segment(segment):
-        """Clean the segment.
-
-        No cleaning by default.
-        """
+        """No cleaning by default."""
         return segment
 
     @staticmethod
     def clean_gloss(gloss):
-        """Clean the gloss.
-
-        No cleaning by default.
-        """
+        """No cleaning by default."""
         return gloss
 
     @staticmethod
     def clean_pos(pos):
-        """Clean the POS tag.
-
-        No cleaning by default.
-        """
+        """No cleaning by default."""
         return pos
 
 
@@ -443,10 +407,6 @@ class InuktitutCleaner(CHATCleaner):
 
         return xmor
 
-    # **********************************************************
-    # ********** Processor interface cleaning methods **********
-    # **********************************************************
-
     # ---------- utterance cleaning ----------
     @classmethod
     def clean_utterance(cls, utterance):
@@ -455,6 +415,11 @@ class InuktitutCleaner(CHATCleaner):
         return super().clean_utterance(utterance)
 
     # ---------- morphology tier cleaning ----------
+
+    @classmethod
+    def clean_word(cls, word):
+        """Clean the word."""
+        pass
 
     @classmethod
     def clean_seg_tier(cls, seg_tier):
@@ -653,10 +618,6 @@ class CreeCleaner(CHATCleaner):
             morpheme = cleaning_method(morpheme)
 
         return morpheme
-
-    # **********************************************************
-    # ********** Processor interface cleaning methods **********
-    # **********************************************************
 
     # ---------- utterance cleaning ----------
 
