@@ -1,10 +1,10 @@
 import unittest
-from acqdiv.parsers.xml.CHATCleaner import CHATCleaner
+from acqdiv.parsers.xml.CHATCleaner.py
 
 
 class TestCHATCleaner(unittest.TestCase):
     """
-    class to test CHATCleaner
+    Class to test the CHATCleaner.
 
 
     A lot of the test cases are taken from or inspired by
@@ -283,6 +283,13 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(CHATCleaner.remove_scoped_symbols(
             "<that's mine> [=! cries]"),
             "that's mine")  # should the 'cries' remain in the string?
+
+
+class TestInuktutCleaner(unittest.TestCase):
+    """class to test the InuktutCleaner.
+    """
+
+    
 
 
 if __name__ == '__main__':
