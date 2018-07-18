@@ -278,7 +278,7 @@ class CHATReader:
         Returns:
             str: The main line.
         """
-        main_line_regex = re.compile(r'\*.*')
+        main_line_regex = re.compile(r'^\*.*')
         return main_line_regex.search(rec).group()
 
     @staticmethod
@@ -295,9 +295,22 @@ class CHATReader:
             tuple: (speaker ID, utterance, start time, end time).
         """
         main_line_regex = re.compile(
-            r'\*([A-Za-z0-9]{2,3}):\t(.*)((\d+)_(\d+)?)?')
+            r'\*([A-Za-z0-9]{2,3}):\t(.*[.!?])(.+?((\d+)_(\d+)?)?)?')
         match = main_line_regex.search(main_line)
-        return match.group(1), match.group(2), match.group(4), match.group(5)
+        label = match.group(1)
+        utterance = match.group(2)
+
+        if match.group(5):
+            start = match.group(5)
+        else:
+            start = ''
+
+        if match.group(6):
+            end = match.group(6)
+        else:
+            end = ''
+
+        return label, utterance, start, end
 
     @staticmethod
     def get_mainline_speaker_id(main_line_fields):
@@ -343,9 +356,9 @@ class CHATReader:
         Yields:
             str: The next dependent tier.
         """
-        dependent_tier_regex = re.compile(r'%.*')
+        dependent_tier_regex = re.compile(r'^%.*')
         for dependent_tier in dependent_tier_regex.finditer(rec):
-            return dependent_tier
+            yield dependent_tier.group()
 
     @staticmethod
     def get_dependent_tier(dependent_tier):
@@ -460,12 +473,12 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     def get_speaker_birthdate(self):
         speaker_id = self.get_participant_id(self._participant_fields)
         birth_of = 'Birth of ' + speaker_id
-        return self._metadata_fields[birth_of]
+        return self._metadata_fields.get(birth_of, '')
 
     def get_speaker_gender(self):
         return self.get_id_sex(self._id_fields)
 
-    def get_speaker_id(self):
+    def get_speaker_label(self):
         return self.get_participant_id(self._participant_fields)
 
     def get_speaker_language(self):
@@ -523,7 +536,7 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     def get_comments(self):
         return self._dependent_tiers.get('com', '')
 
-    def get_speaker_label(self):
+    def get_record_speaker_label(self):
         return self.get_mainline_speaker_id(self._main_line_fields)
 
     def get_start_time(self):
@@ -641,7 +654,7 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
 
         return utterance
 
-    def get_standard_utterance(self):
+    def get_standard_form(self):
         return 'actual'
 
     # ---------- morphology ----------
