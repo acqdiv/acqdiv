@@ -515,13 +515,13 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         return 'u' + str(self._uid)
 
     def get_addressee(self):
-        return self._dependent_tiers['add']
+        return self._dependent_tiers.get('add', '')
 
     def get_translation(self):
-        return self._dependent_tiers['eng']
+        return self._dependent_tiers.get('eng', '')
 
     def get_comments(self):
-        return self._dependent_tiers['com']
+        return self._dependent_tiers.get('com', '')
 
     def get_speaker_label(self):
         return self.get_mainline_speaker_id(self._main_line_fields)
