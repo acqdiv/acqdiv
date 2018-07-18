@@ -175,6 +175,13 @@ class CorpusReaderInterface:
 
     # ---------- morphology ----------
 
+    def get_word_language(self, word):
+        """Get the language of the word.
+
+        Returns: str
+        """
+        raise NotImplementedError
+
     def get_seg_tier(self):
         """Get the tier containing segments.
 

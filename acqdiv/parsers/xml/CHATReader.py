@@ -659,6 +659,10 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
 
     # ---------- morphology ----------
 
+    def get_word_language(self, word):
+        """No coding per default."""
+        return ''
+
     def get_seg_tier(self):
         raise NotImplementedError
 
@@ -733,6 +737,12 @@ class InuktitutReader(ACQDIVCHATReader):
         """
         utterance = super().get_target_utterance()
         return self.get_target_alternative(utterance)
+
+    def get_word_language(self, word):
+        if word.endswith('@e'):
+            return 'English'
+        else:
+            return 'Inuktitut'
 
     def get_morph_tier(self):
         return self._dependent_tiers.get('xmor', '')
