@@ -152,7 +152,7 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_remove_terminator_quotation_precedes(self):
-        actual_ouutput = CHATCleaner.remove_terminator(
+        actual_output = CHATCleaner.remove_terminator(
             '+” please give me all of your honey.')
         desired_output = 'please give me all of your honey.'
         self.assertEqual(actual_output, desired_output)
