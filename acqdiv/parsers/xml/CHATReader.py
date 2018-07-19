@@ -704,6 +704,47 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         return ''
 
 
+class EnglishManchester1Reader(ACQDIVCHATReader):
+
+    def get_morph_tier(self):
+        return self._dependent_tiers.get('mor', '')
+
+    def get_seg_tier(self):
+        return self.get_morph_tier()
+
+    def get_gloss_tier(self):
+        return self.get_morph_tier()
+
+    def get_pos_tier(self):
+        raise self.get_morph_tier()
+
+    @staticmethod
+    def iter_morphemes(morph_word):
+        """Iter morphemes of a word.
+
+        Returns:
+            tuple: (segment, gloss, pos).
+        """
+        morpheme_regex = re.compile(r'((.+)\|(.+))|([^|]+)')
+        for morpheme in re.split(r'-|~|(?<!\|)\+', morph_word):
+            match = morpheme_regex.fullmatch(morpheme)
+            # stem is given along with its POS tag
+            if match.group(1):
+                yield match.group(3), '', match.group(2)
+            # only grammatical gloss is given
+            else:
+                yield '', match.group(4), ''
+
+    def get_segments(self, seg_word):
+        return [seg for seg, _, _ in self.iter_morphemes(seg_word)]
+
+    def get_glosses(self, gloss_word):
+        return [gloss for _, gloss, _ in self.iter_morphemes(gloss_word)]
+
+    def get_poses(self, pos_word):
+        return [pos for _, _, pos in self.iter_morphemes(pos_word)]
+
+
 class InuktitutReader(ACQDIVCHATReader):
     """Inferences for Inuktitut."""
 
