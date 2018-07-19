@@ -6,7 +6,6 @@ class TestCHATCleaner(unittest.TestCase):
     """
     Class to test the CHATCleaner.
 
-
     A lot of the test cases are taken from or inspired by
     https://talkbank.org/manuals/CHAT.pdf
     .
@@ -62,6 +61,11 @@ class TestCHATCleaner(unittest.TestCase):
         actual_output = CHATCleaner.remove_redundant_whitespaces(
             '\n\t \r\r h   \nh \t\t\n\r')
         desired_output = 'h h'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_redundant_whitespace_empty_string(self):
+        actual_output = CHATCleaner.remove_redundant_whitespaces('')
+        desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
     # Tests for the remove_terminator-method.
@@ -142,24 +146,36 @@ class TestCHATCleaner(unittest.TestCase):
 
     def test_remove_terminator_quotation_on_next_line(self):
         actual_output = CHATCleaner.remove_terminator(
-            '*CHI:and then the little bear said +”/.'
+            '*CHI:and then the little bear said +”/.')
         desired_output = '*CHI:and then the little bear said'
         self.assertEqual(actual_output, desired_output)
 
     def test_remove_terminator_quotation_precedes(self):
-        actual_ouutput = CHATCleaner.remove_terminator(
+        actual_output = CHATCleaner.remove_terminator(
             '+” please give me all of your honey.')
         desired_output = 'please give me all of your honey.'
         self.assertEqual(actual_output, desired_output)
 
+    def test_remove_terminator_period_with_postcode_following(self):
+        actual_output  = CHATCleaner.remove_terminator(
+            'what did you. [+ neg]')
+        desired_output = 'what did you [+ neg]'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_terminator_CA_begin_latch_with_postcode_following(self):
+        actual_output  = CHATCleaner.remove_terminator(
+            'what did you +=. [+ neg]')
+        desired_output = 'what did you [+ neg]'
+        self.assertEqual(actual_output, desired_output)
+
     # Tests for the null_untranscribed_utterances-method.
 
-    def test_untranscribed_utterances_xxx(self):
+    def test_null_untranscribed_utterances_xxx(self):
         actual_output = CHATCleaner.null_untranscribed_utterances('xxx')
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    def test_untranscribed_utterances_normal_utt(self):
+    def test_null_untranscribed_utterances_normal_utt(self):
         actual_output = CHATCleaner.null_untranscribed_utterances(
             'Hey there')
         desired_output = 'Hey there'
@@ -172,7 +188,7 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    def test_null_event_utterances_normal_utt_event(self):
+    def test_null_event_utterances_normal_utt(self):
         actual_output = CHATCleaner.null_event_utterances(
             'Hey there')
         desired_output = 'Hey there'
@@ -216,22 +232,22 @@ class TestCHATCleaner(unittest.TestCase):
 
     def test_remove_omissions_multiple_omissions(self):
         actual_output = CHATCleaner.remove_omissions(
-            'where 0is 0my truck?')
-        desired_output = 'where truck?'
+            'where 0is my 0truck?')
+        desired_output = 'where my?'
         self.assertEqual(actual_output, desired_output)
 
-    def test_remove_omissions_omission_with_marker(self):
+    def test_remove_omissions_omission_with_error_marker(self):
         actual_output = CHATCleaner.remove_omissions(
-            'where 0is [*] my truck?')
-        desired_output = 'where my truck?'
+            'where 0is [*] my 0truck [*] ?')
+        desired_output = 'where my truck [*] ?'
         self.assertEqual(actual_output, desired_output)
 
     # Tests for the unify_untranscribed-method.
 
     def test_unify_untranscribed_untranscribed_xyz(self):
         actual_output = CHATCleaner.unify_untranscribed(
-            'zzz xxx yyy truck?')
-        desired_output = 'xxx xxx xxx truck?'
+            'zzz xxx truck yyy?')
+        desired_output = '??? ??? truck????'
         self.assertEqual(actual_output, desired_output)
 
     # Tests for the remove_form_markers-method.
@@ -286,7 +302,7 @@ class TestCHATCleaner(unittest.TestCase):
 
     def test_remove_separators_comma_colon_semi(self):
         actual_output = CHATCleaner.remove_separators(
-            'Hey there , what ; up : no')
+            'Hey there , what ; up : no ;')
         desired_output = 'Hey there what up no'
         self.assertEqual(actual_output, desired_output)
 
@@ -313,8 +329,8 @@ class TestCHATCleaner(unittest.TestCase):
     # Tests for the remove_fillers-method.
 
     def test_remove_fillers(self):
-        actual_output = CHATCleaner.remove_fillers('&-uh &-uh the water')
-        desired_output = 'uh uh the water'
+        actual_output = CHATCleaner.remove_fillers('&-uh &-uh the water &-uh')
+        desired_output = 'uh uh the water uh'
         self.assertEqual(actual_output, desired_output)
 
     # Tests for the remove_pauses_within_words-method.
@@ -359,19 +375,28 @@ class TestCHATCleaner(unittest.TestCase):
 
     # Test for the remove_scoped_symbols-method.
 
-    def test_remove_scoped_symbols(self):
+    def test_remove_scoped_symbols_not_nested(self):
         actual_output = CHATCleaner.remove_scoped_symbols(
             "<that's mine> [=! cries]")
         desired_output = "that's mine"
         self.assertEqual(actual_output, desired_output)
-        # should the 'cries' remain in the string?
+
+    def test_remove_scoped_symbols_one_tier_nested(self):
+        actual_output = CHATCleaner.remove_scoped_symbols(
+            "<that's mine [=! cries]>")
+        desired_output = "that's mine"
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_scoped_symbols_two_tiers_nested(self):
+        actual_output = CHATCleaner.remove_scoped_symbols(
+            "<that's mine <she said [=! cries]>> [=! slaps leg]")
+        desired_output = "that's mine she said"
+        self.assertEqual(actual_output, desired_output)
 
 
 class TestInuktutCleaner(unittest.TestCase):
-    """class to test the InuktutCleaner.
-    """
+    """class to test the InuktutCleaner."""
     pass
-
     
 
 
