@@ -125,13 +125,9 @@ class TestCHATCleaner(unittest.TestCase):
         """Test replace_line_breaks for the standart case
         of only one line break at a time.
         """
-        input_str = 'n^name ij sm2s-t^p_v^leave-m^s n^name ' \
-                    'sm1-t^p-v^play-m^s pr house(9 , 10/6)/lc ' \
-                    '\nsm1-t^p-v^chat-m^s cj n^name .'
+        input_str = 'n^name ij\nsm2s-t^p_v^leave-m^s.'
         actual_output = self.reader._replace_line_breaks(input_str)
-        desired_output = 'n^name ij sm2s-t^p_v^leave-m^s n^name ' \
-                         'sm1-t^p-v^play-m^s pr house(9 , 10/6)/lc ' \
-                         'sm1-t^p-v^chat-m^s cj n^name .'
+        desired_output = 'n^name ij sm2s-t^p_v^leave-m^s.'
         self.assertEqual(actual_output, desired_output)
 
     def test_replace_line_breaks_multiple(self):
@@ -152,21 +148,22 @@ class TestCHATCleaner(unittest.TestCase):
         multiple records.
         """
         actual_output = list(self.reader.iter_records('./test.cha'))
-        desired_output = ['*KAT:	ke eng ? 0_8551 %gls:	ke eng ?\n%cod:	'
-                       'cp wh ?\n%eng:	What is it ?\n%sit:	Points to tape',
-                       '*CHI:    ke ntencha ncha. 8551_19738\n% gls: ke '
-                       'ntho e - ncha. \n%cod: cp thing(9, 10) 9 - aj. \n% '
-                       'eng: A new thing',
-                       '*KAT:	ke eng ntho ena e?19738_24653\n%gls:	'
-                       'ke eng ntho ena e ?\n%cod:	cp wh thing(9 , 10) d9 ij'
-                       ' ?\n%eng:	What is this thing ?\n%sit:	'
-                       'Points to tape',
-                       '*CHI:	e nte ena . 24300_28048\n%gls:	ke ntho '
-                       'ena .\n%cod:	cp thing(9 , 10) d9 .\n%eng:	'
-                       'It is this thing',
-                       '*MOL:	ke khomba khomba . 28048_31840\n%gls:	'
-                       'kekumbakumba .\n%cod:	cp tape_recorder(9 , 10) .'
-                       '\n%eng:	It is a stereo']
+        desired_output = ['*KAT:\tke eng ? 0_8551\n%gls:\tke eng ?\n%cod:\t'
+                          'cp wh ?\n%eng:\tWhat is it ?\n%sit:\tPoints to '
+                          'tape\n',
+                          '*CHI:\tke ntencha ncha . 8551_19738\n'
+                          '%gls:\tke ntho e-ncha .\n%cod:\tcp thing(9, 10) '
+                          '9-aj .\n%eng:\tA new thing\n',
+                          '*KAT:\tke eng ntho ena e?19738_24653\n%gls:\t'
+                          'ke eng ntho ena e ?\n%cod:\tcp wh thing(9 , 10) '
+                          'd9 ij ?\n%eng:\tWhat is this thing ?\n%sit:\t'
+                          'Points to tape\n',
+                          '*CHI:\te nte ena . 24300_28048\n%gls:\tke ntho '
+                          'ena .\n%cod:\tcp thing(9 , 10) d9 .\n%eng:\t'
+                          'It is this thing\n',
+                          '*MOL:\tke khomba\nkhomba . 28048_31840\n%gls:	'
+                          'kekumbakumba .\n%cod:\tcp tape_recorder(9 , 10) .'
+                          '\n%eng:\tIt is a stereo\n']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_mainline_standart_case(self):
@@ -225,8 +222,7 @@ class TestCHATCleaner(unittest.TestCase):
     def test_iter_dependent_tiers_standart_case(self):
         """Test iter_dependent_tiers for standart input."""
         record = '*CHI:	ke ntencha ncha . 8551_19738\n%gls:	ke ntho ' \
-                 'e-ncha .\n%cod:	cp thing(9 , 10) 9-aj .\n' \
-
+                 'e-ncha .\n%cod:	cp thing(9 , 10) 9-aj .\n'
         actual_output = list(self.reader.iter_dependent_tiers(record))
         desired_output = ['%gls:	ke ntho e-ncha .',
                           '%cod:	cp thing(9 , 10) 9-aj .',
@@ -257,6 +253,7 @@ class TestCHATCleaner(unittest.TestCase):
         """Test get_dependent_tier for input where a
         colon appears in the content of the dependent tier,
         """
+
         dep_tier = '%eng:	A new thi:ng'
         actual_output = self.reader.get_dependent_tier(dep_tier)
         desired_output = ('eng', 'A new thi:ng')
