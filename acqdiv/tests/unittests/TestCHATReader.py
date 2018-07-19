@@ -10,9 +10,8 @@ most of the records are deleted.
 """
 
 
-class TestCHATCleaner(unittest.TestCase):
-    """Class to test the CHATReader.
-    """
+class TestCHATReader(unittest.TestCase):
+    """Class to test the CHATReader."""
 
     reader = CHATReader()
     path = './test.cha'
@@ -44,9 +43,7 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_get_metadata_field_multi_valued_field(self):
-        """Test get_metadata_field for a field with
-        multiple values.
-        """
+        """Test get_metadata_field for a field with multiple values."""
         ptcs_field = '@Participants:\tMEM Mme_Manyili Grandmother , ' \
                      'CHI Hlobohang Target_Child , ' \
                      'KAT Katherine_Demuth Investigator'
@@ -57,25 +54,20 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_get_media_fields_two_fields(self):
-        """Test get_media_fields for the case of only
-        two fields being in the chat metadata.
-        """
+        """Test get_media_fields method for two field input."""
         actual_output = self.reader.get_media_fields('h2ab, audio')
         desired_output = ('h2ab', 'audio', '')
         self.assertEqual(actual_output, desired_output)
 
     def test_get_media_fields_three_fields(self):
-        """Test get_media_fields for the case of three
-        fields being in the chat metadata.
-        """
+        """Test get_media_fields for three field input."""
         input_str = 'h2ab, audio, unknown speaker'
         actual_output = self.reader.get_media_fields(input_str)
         desired_output = ('h2ab', 'audio', 'unknown speaker')
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_participants(self):
-        """Test iter_participants for a normal case.
-        """
+        """Test iter_participants for a normal case."""
         ptcs = 'MEM Mme_Manyili Grandmother , CHI Hlobohang Target_Child , ' \
                'KAT Katherine_Demuth Investigator'
         actual_output = list(self.reader.iter_participants(ptcs))
@@ -86,33 +78,29 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_get_participant_fields_two_fields(self):
-        """Test get_participant_fields for the case of only
-        two fields being specified in the chat metadata.
-        """
+        """Test get_participant_fields for two field input."""
         actual_output = self.reader.get_participant_fields('MEM Grandmother')
         desired_output = ('MEM', '', 'Grandmother')
         self.assertEqual(actual_output, desired_output)
 
     def test_get_participant_fields_three_fields(self):
-        """Test get_participant_fields for the case of three
-        fields being specified in the chat metadata.
-        """
+        """Test get_participant_fields for three field input"""
         ptcs_field = 'CHI Hlobohang Target_Child'
         actual_output = self.reader.get_participant_fields(ptcs_field)
         desired_output = ('CHI', 'Hlobohang', 'Target_Child')
         self.assertEqual(actual_output, desired_output)
 
     def test_get_id_fields_all_empty_fields(self):
-        """Test get_id_fields for the case of all fields
-        being empty.
-        """
+        """Test get_id_fields for the case of all fields being empty."""
         input_str = '||||||||||'
         actual_output = self.reader.get_id_fields(input_str)
         desired_output = ('', '', '', '', '', '', '', '', '', '')
         self.assertEqual(actual_output, desired_output)
 
     def test_get_id_fields_some_empty(self):
-        """Test get_id_fields for the case of some fields
+        """The the get_id_fields-method.
+
+        Test get_id_fields for the case of some fields
         being empty and some fields containing information.
         """
         input_str = 'sme|Sesotho|MEM|||||Grandmother|||'
@@ -122,18 +110,14 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_replace_line_breaks_single(self):
-        """Test replace_line_breaks for the standart case
-        of only one line break at a time.
-        """
+        """Test replace_line_breaks for single line break."""
         input_str = 'n^name ij\nsm2s-t^p_v^leave-m^s.'
         actual_output = self.reader._replace_line_breaks(input_str)
         desired_output = 'n^name ij sm2s-t^p_v^leave-m^s.'
         self.assertEqual(actual_output, desired_output)
 
     def test_replace_line_breaks_multiple(self):
-        """Test replace_line_breaks for the case of
-        two following linebreaks.
-        """
+        """Test replace_line_breaks for two following linebreaks."""
         input_str = 'n^name ij sm2s-t^p_v^leave-m^s n^name\n ' \
                     'sm1-t^p-v^play-m^s pr house(9 , 10/6)/lc ' \
                     'sm1-t^p-v^chat-m^s\n\n cj n^name .'
@@ -144,9 +128,7 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_records(self):
-        """Test iter_records for the standart case of
-        multiple records.
-        """
+        """Test iter_records for multiple records. (standart case)"""
         actual_output = list(self.reader.iter_records('./test.cha'))
         desired_output = ['*KAT:\tke eng ? 0_8551\n%gls:\tke eng ?\n%cod:\t'
                           'cp wh ?\n%eng:\tWhat is it ?\n%sit:\tPoints to '
@@ -175,9 +157,7 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_get_mainline_star_in_mainline(self):
-        """Test get_mainline for a record which contains a
-        star somewhere in the mainline.
-        """
+        """Test get_mainline with a star in the mainline."""
         record = '*KAT:	ke *eng ? 0_8551%gls:	ke eng ?%cod:	cp wh ?' \
                  '%eng:	What is it ?%sit:	Points to tape'
         actual_output = self.reader.get_mainline(record)
@@ -185,9 +165,7 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_get_mainline_star_in_dependent_tier(self):
-        """Test get_mainline for a record which contains a
-        star in a dependent tier.
-        """
+        """Test get_mainline with a star in the dependent tier."""
         record = '*KAT:	ke eng ? 0_8551%gls:	ke eng ?%cod:	cp wh ?' \
                  '%eng:	What *is it ?%sit:	Points to tape'
         actual_output = self.reader.get_mainline(record)
@@ -195,18 +173,14 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_get_mainline_fields_with_time(self):
-        """Test get_mainline_fields for the case
-        of there being a timestamp.
-        """
+        """Test get_mainline_fields for mainline with timestamp."""
         mainline = '*KAT:	ke eng ? 0_8551'
         actual_output = self.reader.get_mainline_fields(mainline)
         desired_output = ('KAT', 'ke eng ?', '0', '8551')
         self.assertEqual(actual_output, desired_output)
 
     def test_get_mainline_fields_without_time(self):
-        """Test get mainline fields for the case of
-        no timestamp being there.
-        """
+        """Test get mainline fields for mainline without timestamp"""
         mainline = '*KAT:	ke eng ntho ena e?'
         actual_output = self.reader.get_mainline_fields(mainline)
         desired_output = ('KAT', 'ke eng ntho ena e?', '', '')
@@ -230,7 +204,9 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_dependent_tiers_with_additional_percent_signs(self):
-        """Test iter_dependent_tiers for the case of there being
+        """Test iter_dependent_tiers with addional percent sign.
+
+        Test iter_dependent_tiers for the case of there being
         an additional percent sign a dependent tier.
         """
         record = '*CHI:	ke ntencha ncha . 8551_19738\n%gls:	ke ntho ' \
@@ -250,7 +226,9 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_get_dependent_tier_additional_colon(self):
-        """Test get_dependent_tier for input where a
+        """Test get_dependent_tier with colon.
+
+        Test get_dependent_tier for input where a
         colon appears in the content of the dependent tier,
         """
 
@@ -260,8 +238,10 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_get_dependent_tier_additional_percent(self):
-        """Test get_dependent_tier for the case of there
-        being a percent sign in the dependent tier.
+        """Test get_dependent_tier with percent sign.
+
+        Test get_dependent_tier for the case of there
+        being a percent sign in the dependent tier."
         """
         dep_tier = '%eng:	A new thing%'
         actual_output = self.reader.get_dependent_tier(dep_tier)
