@@ -296,6 +296,7 @@ class CHATReader:
         Returns:
             tuple: (speaker ID, utterance, start time, end time).
         """
+        # TODO: break this complicated regex up
         main_line_regex = re.compile(
             r'\*([A-Za-z0-9]{2,3}):\t(.*[.!?])(( \[.*\])?(.*?(\d+)_(\d+))?)?')
         match = main_line_regex.search(main_line)
@@ -437,10 +438,10 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         return metadata_fields
 
     def get_session_date(self):
-        return self._metadata_fields['Date']
+        return self._metadata_fields.get('Date', '')
 
     def get_session_filename(self):
-        media_field = self._metadata_fields['Media']
+        media_field = self._metadata_fields.get('Media', '')
         media_fields = self.get_media_fields(media_field)
         return self.get_media_filename(media_fields)
 
@@ -716,7 +717,7 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
         return self.get_morph_tier()
 
     def get_pos_tier(self):
-        raise self.get_morph_tier()
+        return self.get_morph_tier()
 
     @staticmethod
     def iter_morphemes(morph_word):

@@ -272,7 +272,9 @@ def main():
     start_time = time.time()
 
     for corpus, parser_cls in [
-            ('Cree', CreeParser), ('Inuktitut', InuktitutParser)]:
+            ('English_Manchester1', EnglishManchester1Parser),
+            ('Cree', CreeParser),
+            ('Inuktitut', InuktitutParser)]:
 
         corpus_path = os.path.join(
             acqdiv_path, 'corpora/{}/cha/*.cha'.format(corpus))

@@ -341,7 +341,22 @@ class CHATCleaner(CorpusCleanerInterface):
 ###############################################################################
 
 class EnglishManchester1Cleaner(CHATCleaner):
-    pass
+
+    @classmethod
+    def clean_morph_tier(cls, morph_tier):
+        return cls.remove_terminator(morph_tier)
+
+    @classmethod
+    def clean_seg_tier(cls, seg_tier):
+        return cls.clean_morph_tier(seg_tier)
+
+    @classmethod
+    def clean_gloss_tier(cls, gloss_tier):
+        return cls.clean_morph_tier(gloss_tier)
+
+    @classmethod
+    def clean_pos_tier(cls, pos_tier):
+        return cls.clean_morph_tier(pos_tier)
 
 
 class InuktitutCleaner(CHATCleaner):
