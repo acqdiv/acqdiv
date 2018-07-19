@@ -159,7 +159,7 @@ class CHATReader:
             tuple: (language, corpus, code, age, sex, group, SES, role,
                     education, custom)
         """
-        return id_field.rstrip('|').split('|')
+        return tuple(id_field[:-1].split('|'))
 
     @staticmethod
     def get_id_language(id_fields):
