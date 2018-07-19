@@ -64,6 +64,11 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = 'h h'
         self.assertEqual(actual_output, desired_output)
 
+    def test_remove_redundant_whitespace_empty_string(self):
+        actual_output = CHATCleaner.remove_redundant_whitespaces('')
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
     # Tests for the remove_terminator-method.
 
     def test_remove_terminator_period(self):
@@ -142,7 +147,7 @@ class TestCHATCleaner(unittest.TestCase):
 
     def test_remove_terminator_quotation_on_next_line(self):
         actual_output = CHATCleaner.remove_terminator(
-            '*CHI:and then the little bear said +”/.'
+            '*CHI:and then the little bear said +”/.')
         desired_output = '*CHI:and then the little bear said'
         self.assertEqual(actual_output, desired_output)
 
