@@ -340,6 +340,9 @@ class CHATCleaner(CorpusCleanerInterface):
 
 ###############################################################################
 
+class EnglishManchester1Cleaner(CHATCleaner):
+    pass
+
 
 class InuktitutCleaner(CHATCleaner):
 

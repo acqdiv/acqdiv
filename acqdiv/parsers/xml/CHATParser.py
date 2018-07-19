@@ -245,6 +245,13 @@ class CreeParser(CHATParser):
     def get_cleaner(self):
         return CHATCleaner.CreeCleaner()
 
+class EnglishManchester1Parser(CHATParser):
+    def get_reader(self):
+        return CHATReader.EnglishManchester1Reader(self.session_path)
+
+    def get_cleaner(self):
+        return CHATCleaner.EnglishManchester1Cleaner()
+
 
 class InuktitutParser(CHATParser):
     def get_reader(self):
