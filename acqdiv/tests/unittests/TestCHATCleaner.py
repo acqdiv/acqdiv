@@ -6,7 +6,6 @@ class TestCHATCleaner(unittest.TestCase):
     """
     Class to test the CHATCleaner.
 
-
     A lot of the test cases are taken from or inspired by
     https://talkbank.org/manuals/CHAT.pdf
     .
@@ -155,6 +154,18 @@ class TestCHATCleaner(unittest.TestCase):
         actual_output = CHATCleaner.remove_terminator(
             '+” please give me all of your honey.')
         desired_output = 'please give me all of your honey.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_terminator_period_with_postcode_following(self):
+        actual_output  = CHATCleaner.remove_terminator(
+            'what did you. [+ neg]')
+        desired_output = 'what did you [+ neg]'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_terminator_CA_begin_latch_with_postcode_following(self):
+        actual_output  = CHATCleaner.remove_terminator(
+            'what did you +=. [+ neg]')
+        desired_output = 'what did you [+ neg]'
         self.assertEqual(actual_output, desired_output)
 
     # Tests for the null_untranscribed_utterances-method.
@@ -373,10 +384,8 @@ class TestCHATCleaner(unittest.TestCase):
 
 
 class TestInuktutCleaner(unittest.TestCase):
-    """class to test the InuktutCleaner.
-    """
+    """class to test the InuktutCleaner."""
     pass
-
     
 
 
