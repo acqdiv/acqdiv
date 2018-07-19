@@ -170,12 +170,12 @@ class TestCHATCleaner(unittest.TestCase):
 
     # Tests for the null_untranscribed_utterances-method.
 
-    def test_untranscribed_utterances_xxx(self):
+    def test_null_untranscribed_utterances_xxx(self):
         actual_output = CHATCleaner.null_untranscribed_utterances('xxx')
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    def test_untranscribed_utterances_normal_utt(self):
+    def test_null_untranscribed_utterances_normal_utt(self):
         actual_output = CHATCleaner.null_untranscribed_utterances(
             'Hey there')
         desired_output = 'Hey there'
@@ -188,7 +188,7 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    def test_null_event_utterances_normal_utt_event(self):
+    def test_null_event_utterances_normal_utt(self):
         actual_output = CHATCleaner.null_event_utterances(
             'Hey there')
         desired_output = 'Hey there'
@@ -232,22 +232,22 @@ class TestCHATCleaner(unittest.TestCase):
 
     def test_remove_omissions_multiple_omissions(self):
         actual_output = CHATCleaner.remove_omissions(
-            'where 0is 0my truck?')
-        desired_output = 'where truck?'
+            'where 0is my 0truck?')
+        desired_output = 'where my?'
         self.assertEqual(actual_output, desired_output)
 
-    def test_remove_omissions_omission_with_marker(self):
+    def test_remove_omissions_omission_with_error_marker(self):
         actual_output = CHATCleaner.remove_omissions(
-            'where 0is [*] my truck?')
-        desired_output = 'where my truck?'
+            'where 0is [*] my 0truck [*] ?')
+        desired_output = 'where my truck [*] ?'
         self.assertEqual(actual_output, desired_output)
 
     # Tests for the unify_untranscribed-method.
 
     def test_unify_untranscribed_untranscribed_xyz(self):
         actual_output = CHATCleaner.unify_untranscribed(
-            'zzz xxx yyy truck?')
-        desired_output = 'xxx xxx xxx truck?'
+            'zzz xxx truck yyy?')
+        desired_output = '??? ??? truck????'
         self.assertEqual(actual_output, desired_output)
 
     # Tests for the remove_form_markers-method.
@@ -302,7 +302,7 @@ class TestCHATCleaner(unittest.TestCase):
 
     def test_remove_separators_comma_colon_semi(self):
         actual_output = CHATCleaner.remove_separators(
-            'Hey there , what ; up : no')
+            'Hey there , what ; up : no ;')
         desired_output = 'Hey there what up no'
         self.assertEqual(actual_output, desired_output)
 
@@ -329,8 +329,8 @@ class TestCHATCleaner(unittest.TestCase):
     # Tests for the remove_fillers-method.
 
     def test_remove_fillers(self):
-        actual_output = CHATCleaner.remove_fillers('&-uh &-uh the water')
-        desired_output = 'uh uh the water'
+        actual_output = CHATCleaner.remove_fillers('&-uh &-uh the water &-uh')
+        desired_output = 'uh uh the water uh'
         self.assertEqual(actual_output, desired_output)
 
     # Tests for the remove_pauses_within_words-method.
@@ -375,12 +375,23 @@ class TestCHATCleaner(unittest.TestCase):
 
     # Test for the remove_scoped_symbols-method.
 
-    def test_remove_scoped_symbols(self):
+    def test_remove_scoped_symbols_not_nested(self):
         actual_output = CHATCleaner.remove_scoped_symbols(
             "<that's mine> [=! cries]")
         desired_output = "that's mine"
         self.assertEqual(actual_output, desired_output)
-        # should the 'cries' remain in the string?
+
+    def test_remove_scoped_symbols_one_tier_nested(self):
+        actual_output = CHATCleaner.remove_scoped_symbols(
+            "<that's mine [=! cries]>")
+        desired_output = "that's mine"
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_scoped_symbols_two_tiers_nested(self):
+        actual_output = CHATCleaner.remove_scoped_symbols(
+            "<that's mine <she said [=! cries]>> [=! slaps leg]")
+        desired_output = "that's mine she said"
+        self.assertEqual(actual_output, desired_output)
 
 
 class TestInuktutCleaner(unittest.TestCase):
