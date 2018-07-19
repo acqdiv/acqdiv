@@ -111,16 +111,16 @@ class TestCHATReader(unittest.TestCase):
 
     def test_replace_line_breaks_single(self):
         """Test replace_line_breaks for single line break."""
-        input_str = 'n^name ij\nsm2s-t^p_v^leave-m^s.'
+        input_str = 'n^name ij\n\tsm2s-t^p_v^leave-m^s.'
         actual_output = self.reader._replace_line_breaks(input_str)
         desired_output = 'n^name ij sm2s-t^p_v^leave-m^s.'
         self.assertEqual(actual_output, desired_output)
 
     def test_replace_line_breaks_multiple(self):
         """Test replace_line_breaks for two following linebreaks."""
-        input_str = 'n^name ij sm2s-t^p_v^leave-m^s n^name\n ' \
+        input_str = 'n^name ij sm2s-t^p_v^leave-m^s n^name\n\t' \
                     'sm1-t^p-v^play-m^s pr house(9 , 10/6)/lc ' \
-                    'sm1-t^p-v^chat-m^s\n\n cj n^name .'
+                    'sm1-t^p-v^chat-m^s\n\tcj n^name .'
         actual_output = self.reader._replace_line_breaks(input_str)
         desired_output = 'n^name ij sm2s-t^p_v^leave-m^s n^name ' \
                          'sm1-t^p-v^play-m^s pr house(9 , 10/6)/lc ' \
@@ -134,9 +134,9 @@ class TestCHATReader(unittest.TestCase):
                           'cp wh ?\n%eng:\tWhat is it ?\n%sit:\tPoints to '
                           'tape\n',
                           '*CHI:\tke ntencha ncha . 8551_19738\n'
-                          '%gls:\tke ntho e-ncha .\n%cod:\tcp thing(9, 10) '
+                          '%gls:\tke ntho e-ncha .\n%cod:\tcp thing(9 , 10) '
                           '9-aj .\n%eng:\tA new thing\n',
-                          '*KAT:\tke eng ntho ena e?19738_24653\n%gls:\t'
+                          '*KAT:\tke eng ntho ena e? 19738_24653\n%gls:\t'
                           'ke eng ntho ena e ?\n%cod:\tcp wh thing(9 , 10) '
                           'd9 ij ?\n%eng:\tWhat is this thing ?\n%sit:\t'
                           'Points to tape\n',
