@@ -808,7 +808,10 @@ class CreeReader(ACQDIVCHATReader):
 
     @staticmethod
     def get_morphemes(word):
-        return word.split('~')
+        if word:
+            return word.split('~')
+        else:
+            return []
 
     def get_segments(self, seg_word):
         return self.get_morphemes(seg_word)
