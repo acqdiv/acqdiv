@@ -115,11 +115,10 @@ class CHATParser(CorpusParserInterface):
             # rebuild utterance from cleaned words
             utterance = ' '.join(w['word'] for w in words)
 
-            # get morphology tiers and clean them
-            seg_tier = self.cleaner.clean_seg_tier(self.reader.get_seg_tier())
-            gloss_tier = self.cleaner.clean_gloss_tier(
-                                self.reader.get_gloss_tier())
-            pos_tier = self.cleaner.clean_pos_tier(self.reader.get_pos_tier())
+            # get morphology tiers
+            seg_tier = self.reader.get_seg_tier()
+            gloss_tier = self.reader.get_gloss_tier()
+            pos_tier = self.reader.get_pos_tier()
 
             utterance_dict = {
                 'source_id': source_id,
@@ -137,6 +136,11 @@ class CHATParser(CorpusParserInterface):
                 'comment': comment if comment else None,
                 'warning': None
             }
+
+            # clean the morphology tiers
+            seg_tier = self.cleaner.clean_seg_tier(seg_tier)
+            gloss_tier = self.cleaner.clean_gloss_tier(gloss_tier)
+            pos_tier = self.cleaner.clean_pos_tier(pos_tier)
 
             # get morpheme words from the respective morphology tiers
             wsegs = self.reader.get_seg_words(seg_tier)
@@ -174,6 +178,10 @@ class CHATParser(CorpusParserInterface):
             # go through all morpheme words
             for wseg, wgloss, wpos in zip(wsegs, wglosses, wposes):
 
+                wseg = self.cleaner.clean_seg_word(wseg)
+                wgloss = self.cleaner.clean_gloss_word(wgloss)
+                wpos = self.cleaner.clean_pos_word(wpos)
+
                 # collect morpheme data of a word
                 wmorphemes = []
 
@@ -194,7 +202,7 @@ class CHATParser(CorpusParserInterface):
 
                 # if both segment and gloss do not exists, take the pos
                 if not mlen:
-                    mlen = len(pos)
+                    mlen = len(poses)
 
                 # check for mm-misalignments between morphology tiers
                 # if misaligned, replace by a list of empty strings
