@@ -668,6 +668,10 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         """No coding per default."""
         return ''
 
+    def get_main_morph_tier(self):
+        """Per default the gloss tier."""
+        return 'gloss'
+
     def get_seg_tier(self):
         raise NotImplementedError
 
@@ -790,6 +794,8 @@ class InuktitutReader(ACQDIVCHATReader):
 
 
 class CreeReader(ACQDIVCHATReader):
+    def get_main_morph_tier(self):
+        return 'segment'
 
     def get_seg_tier(self):
         return self._dependent_tiers.get('xtarmor', '')
