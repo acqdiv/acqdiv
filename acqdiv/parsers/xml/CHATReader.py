@@ -707,6 +707,9 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
 
 class EnglishManchester1Reader(ACQDIVCHATReader):
 
+    def get_translation(self):
+        return self.get_utterance()
+
     def get_morph_tier(self):
         return self._dependent_tiers.get('mor', '')
 
