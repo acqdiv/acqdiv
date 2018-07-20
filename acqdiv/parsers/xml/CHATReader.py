@@ -737,7 +737,7 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
                 yield match.group(3), '', match.group(2)
             # only grammatical gloss is given
             else:
-                yield '', match.group(4), ''
+                yield '', match.group(4), 'sfx'
 
     def get_segments(self, seg_word):
         return [seg for seg, _, _ in self.iter_morphemes(seg_word)]
