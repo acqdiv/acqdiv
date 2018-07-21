@@ -128,7 +128,7 @@ class TestCHATReader(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_records(self):
-        """Test iter_records for multiple records. (standart case)"""
+        """Test iter_records for multiple records. (standard case)"""
         actual_output = list(self.reader.iter_records('./test.cha'))
         desired_output = ['*KAT:\tke eng ? 0_8551\n%gls:\tke eng ?\n%cod:\t'
                           'cp wh ?\n%eng:\tWhat is it ?\n%sit:\tPoints to '
@@ -148,8 +148,8 @@ class TestCHATReader(unittest.TestCase):
                           '\n%eng:\tIt is a stereo\n']
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_mainline_standart_case(self):
-        """Test get_mainline for a standart record."""
+    def test_get_mainline_standard_case(self):
+        """Test get_mainline for a standard record."""
         record = '*KAT:	ke eng ? 0_8551\n%gls:	ke eng ?\n%cod:	cp wh ?' \
                  '\n%eng:	What is it ?\n%sit:	Points to tape'
         actual_output = self.reader.get_mainline(record)
@@ -187,14 +187,14 @@ class TestCHATReader(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_get_utterance_words(self):
-        """Test get_utterance_words for standart input."""
+        """Test get_utterance_words for standard input."""
         utterance = 'ke eng ntho ena e?'
         actual_output = self.reader.get_utterance_words(utterance)
         desired_output = ['ke', 'eng', 'ntho', 'ena', 'e?']
         self.assertEqual(actual_output, desired_output)
 
-    def test_iter_dependent_tiers_standart_case(self):
-        """Test iter_dependent_tiers for standart input."""
+    def test_iter_dependent_tiers_standard_case(self):
+        """Test iter_dependent_tiers for standard input."""
         record = '*CHI:	ke ntencha ncha . 8551_19738\n%gls:	ke ntho ' \
                  'e-ncha .\n%cod:	cp thing(9 , 10) 9-aj .\n' \
                  '%eng:	A new thing'
@@ -219,8 +219,8 @@ class TestCHATReader(unittest.TestCase):
                           '%eng:	A new% thing']
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_dependent_tier_standart_case(self):
-        """Test get_dependent_tier for standart input."""
+    def test_get_dependent_tier_standard_case(self):
+        """Test get_dependent_tier for standard input."""
         dep_tier = '%eng:	A new thing'
         actual_output = self.reader.get_dependent_tier(dep_tier)
         desired_output = ('eng', 'A new thing')
