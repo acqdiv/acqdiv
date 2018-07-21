@@ -570,7 +570,7 @@ class TestInuktutCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    # Tests for the clean_xmor-method.
+    # Tests for the remove_english_marker-method.
 
     def test_remove_english_marker_single_marker(self):
         str_input = 'NR|bag@e^bag NR|killak^hole+NN|lik^item_having .'
@@ -589,6 +589,8 @@ class TestInuktutCleaner(unittest.TestCase):
         actual_output = InuktitutCleaner.remove_english_marker(str_input)
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
+
+    # Tests for the replace_stem_gram_gloss_connector-method.
 
     def test_replace_stem_gram_gloss_connector_single_connector(self):
         input_str = 'FIL|am^um DR|u^here&SG_ST+DI|minga^MOD_SG [*] ?'
@@ -609,6 +611,8 @@ class TestInuktutCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
+    # Tests for the replace_pos_separator-method.
+
     def test_replace_pos_separator_single_separator(self):
         input_str = 'EXCL|ai^ACT ?'
         actual_output = InuktitutCleaner.replace_pos_separator(
@@ -627,6 +631,11 @@ class TestInuktutCleaner(unittest.TestCase):
         actual_output = InuktitutCleaner.replace_pos_separator('')
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
+
+
+class TestCreeCleaner(unittest.TestCase):
+    """Class to test the Cree cleaner"""
+    pass
 
 
 if __name__ == '__main__':
