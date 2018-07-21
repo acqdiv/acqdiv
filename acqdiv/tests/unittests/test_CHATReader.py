@@ -145,7 +145,7 @@ class TestCHATReader(unittest.TestCase):
                           'It is this thing\n',
                           '*MOL:\tke khomba\nkhomba . 28048_31840\n%gls:	'
                           'kekumbakumba .\n%cod:\tcp tape_recorder(9 , 10) .'
-                          '\n%eng:\tIt is a stereo\n']
+                          '\n%eng:\tIt is a stereo']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_mainline_standard_case(self):

@@ -262,8 +262,8 @@ class CHATReader:
                 # set new start of record
                 rec_start_pos = next_rec_start_pos
 
-            # handle last record
-            rec_str = mm[rec_start_pos:].decode()
+            # handle last record and strip the @End marker
+            rec_str = mm[rec_start_pos:].decode().rstrip('@End\n')
             yield rec_str
 
             cls._uid = None
@@ -327,7 +327,7 @@ class CHATReader:
     def get_utterance_words(utterance):
         """Get the words of an utterance.
 
-        Words are separated by a blank space.
+        Words are defined as units separated by a blank space.
 
         Args:
             utterance (str): The utterance.
