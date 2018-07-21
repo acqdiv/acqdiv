@@ -179,6 +179,34 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ('KAT', 'ke eng ?', '0', '8551')
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_mainline_fields_with_single_postcode(self):
+        """Test get_mainline_fields for mainline with postcode."""
+        mainline = '*KAT:	ke eng ? [+ neg]'
+        actual_output = self.reader.get_mainline_fields(mainline)
+        desired_output = ('KAT', 'ke eng ?', '', '')
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_mainline_fields_with_multiple_postcodes(self):
+        """Test get_mainline_fields for mainline with postcodes."""
+        mainline = '*KAT:	ke eng ? [+ neg] [+ req]'
+        actual_output = self.reader.get_mainline_fields(mainline)
+        desired_output = ('KAT', 'ke eng ?', '', '')
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_mainline_fields_with_multiple_postcodes_and_time(self):
+        """Test get_mainline_fields for mainline with postcodes."""
+        mainline = '*KAT:	ke eng ? [+ neg] [+ req] 0_8551'
+        actual_output = self.reader.get_mainline_fields(mainline)
+        desired_output = ('KAT', 'ke eng ?', '0', '8551')
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_mainline_fields_with_time_and_multiple_postcodes(self):
+        """Test get_mainline_fields for mainline with postcodes."""
+        mainline = '*KAT:	ke eng ? 0_8551 [+ neg] [+ req]'
+        actual_output = self.reader.get_mainline_fields(mainline)
+        desired_output = ('KAT', 'ke eng ?', '0', '8551')
+        self.assertEqual(actual_output, desired_output)
+
     def test_get_mainline_fields_without_time(self):
         """Test get mainline fields for mainline without timestamp"""
         mainline = '*KAT:	ke eng ntho ena e?'
