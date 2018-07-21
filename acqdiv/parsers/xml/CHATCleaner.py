@@ -371,7 +371,6 @@ class InuktitutCleaner(CHATCleaner):
 
     @classmethod
     def clean_word(cls, word):
-        """Clean the utterance."""
         word = cls.remove_dashes(word)
         return super().clean_word(word)
 
