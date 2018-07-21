@@ -150,24 +150,24 @@ class TestCHATReader(unittest.TestCase):
 
     def test_get_mainline_standart_case(self):
         """Test get_mainline for a standart record."""
-        record = '*KAT:	ke eng ? 0_8551%gls:	ke eng ?%cod:	cp wh ?' \
-                 '%eng:	What is it ?%sit:	Points to tape'
+        record = '*KAT:	ke eng ? 0_8551\n%gls:	ke eng ?\n%cod:	cp wh ?' \
+                 '\n%eng:	What is it ?\n%sit:	Points to tape'
         actual_output = self.reader.get_mainline(record)
         desired_output = '*KAT:	ke eng ? 0_8551'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_mainline_star_in_mainline(self):
         """Test get_mainline with a star in the mainline."""
-        record = '*KAT:	ke *eng ? 0_8551%gls:	ke eng ?%cod:	cp wh ?' \
-                 '%eng:	What is it ?%sit:	Points to tape'
+        record = '*KAT:	ke *eng ? 0_8551\n%gls:	ke eng ?\n%cod:	cp wh ?' \
+                 '\n%eng:	What is it ?\n%sit:	Points to tape'
         actual_output = self.reader.get_mainline(record)
         desired_output = '*KAT:	ke *eng ? 0_8551'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_mainline_star_in_dependent_tier(self):
         """Test get_mainline with a star in the dependent tier."""
-        record = '*KAT:	ke eng ? 0_8551%gls:	ke eng ?%cod:	cp wh ?' \
-                 '%eng:	What *is it ?%sit:	Points to tape'
+        record = '*KAT:	ke eng ? 0_8551\n%gls:	ke eng ?\n%cod:	cp wh ?' \
+                 '\n%eng:	What *is it ?\n%sit:	Points to tape'
         actual_output = self.reader.get_mainline(record)
         desired_output = '*KAT:	ke eng ? 0_8551'
         self.assertEqual(actual_output, desired_output)
@@ -190,13 +190,14 @@ class TestCHATReader(unittest.TestCase):
         """Test get_utterance_words for standart input."""
         utterance = 'ke eng ntho ena e?'
         actual_output = self.reader.get_utterance_words(utterance)
-        desired_output = ['ke', 'eng', 'ntho', 'ena', 'e']
+        desired_output = ['ke', 'eng', 'ntho', 'ena', 'e?']
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_dependent_tiers_standart_case(self):
         """Test iter_dependent_tiers for standart input."""
         record = '*CHI:	ke ntencha ncha . 8551_19738\n%gls:	ke ntho ' \
-                 'e-ncha .\n%cod:	cp thing(9 , 10) 9-aj .\n'
+                 'e-ncha .\n%cod:	cp thing(9 , 10) 9-aj .\n' \
+                 '%eng:	A new thing'
         actual_output = list(self.reader.iter_dependent_tiers(record))
         desired_output = ['%gls:	ke ntho e-ncha .',
                           '%cod:	cp thing(9 , 10) 9-aj .',
@@ -204,10 +205,10 @@ class TestCHATReader(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_dependent_tiers_with_additional_percent_signs(self):
-        """Test iter_dependent_tiers with addional percent sign.
+        """Test iter_dependent_tiers with an additional percent sign.
 
         Test iter_dependent_tiers for the case of there being
-        an additional percent sign a dependent tier.
+        an additional percent sign in a dependent tier.
         """
         record = '*CHI:	ke ntencha ncha . 8551_19738\n%gls:	ke ntho ' \
                  'e-ncha .\n%cod%:	cp thing(9 , 10) 9-aj .\n' \
