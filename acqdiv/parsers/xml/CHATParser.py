@@ -149,7 +149,7 @@ class CHATParser(CorpusParserInterface):
 
             # determine number of words to be considered based on
             # main morphology tier and existence of this morphology tier
-            if self.reader.get_main_morph_tier() == 'segment':
+            if self.reader.get_main_morpheme() == 'segment':
                 wlen = len(wsegs)
                 # segment tier does not exist
                 if not wlen:
@@ -191,7 +191,7 @@ class CHATParser(CorpusParserInterface):
                 poses = self.reader.get_poses(wpos)
 
                 # determine number of morphemes to be considered
-                if self.reader.get_main_morph_tier() == 'segment':
+                if self.reader.get_main_morpheme() == 'segment':
                     mlen = len(segments)
                     if not mlen:
                         mlen = len(glosses)

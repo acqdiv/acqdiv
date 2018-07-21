@@ -182,13 +182,13 @@ class CorpusReaderInterface:
         """
         raise NotImplementedError
 
-    def get_main_morph_tier(self):
-        """Get the main morphology tier.
+    def get_main_morpheme(self):
+        """Get the main morpheme.
 
-        The main morphology tier is the one used for linking its words to those
-        of the utterance. In case of misalignments between the morphology
-        tiers, only the morphemes of the main morphology tier are kepts, while
-        those of the other morphology tier is nulled.
+        The main morpheme is the one used for linking the words of the
+        respective morphology tier to those of the utterance. In case of
+        misalignments between the morphology tiers, only the main morphemes
+        are kept, while those of the other morphology tier are nulled.
 
         Returns:
             str: 'segment' or 'gloss'.

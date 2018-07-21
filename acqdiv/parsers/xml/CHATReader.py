@@ -669,18 +669,28 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         """No coding per default."""
         return ''
 
-    def get_main_morph_tier(self):
+    def get_main_morpheme(self):
         """Per default the gloss tier."""
         return 'gloss'
 
+    def get_morph_tier(self):
+        """Get the morphology tier.
+
+        Per default, this is the 'mor'-tier.
+
+        Returns:
+            str: The content of the morphology tier.
+        """
+        return self._dependent_tiers.get('mor', '')
+
     def get_seg_tier(self):
-        raise NotImplementedError
+        return self.get_morph_tier()
 
     def get_gloss_tier(self):
-        raise NotImplementedError
+        return self.get_morph_tier()
 
     def get_pos_tier(self):
-        raise NotImplementedError
+        return self.get_morph_tier()
 
     def get_seg_words(self, seg_tier):
         return self.get_utterance_words(seg_tier)
@@ -704,23 +714,13 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         """No coding per default."""
         return ''
 
+###############################################################################
+
 
 class EnglishManchester1Reader(ACQDIVCHATReader):
 
     def get_translation(self):
         return self.get_utterance()
-
-    def get_morph_tier(self):
-        return self._dependent_tiers.get('mor', '')
-
-    def get_seg_tier(self):
-        return self.get_morph_tier()
-
-    def get_gloss_tier(self):
-        return self.get_morph_tier()
-
-    def get_pos_tier(self):
-        return self.get_morph_tier()
 
     @staticmethod
     def iter_morphemes(morph_word):
@@ -747,6 +747,8 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
 
     def get_poses(self, pos_word):
         return [pos for _, _, pos in self.iter_morphemes(pos_word)]
+
+###############################################################################
 
 
 class InuktitutReader(ACQDIVCHATReader):
@@ -795,15 +797,6 @@ class InuktitutReader(ACQDIVCHATReader):
     def get_morph_tier(self):
         return self._dependent_tiers.get('xmor', '')
 
-    def get_seg_tier(self):
-        return self.get_morph_tier()
-
-    def get_gloss_tier(self):
-        return self.get_morph_tier()
-
-    def get_pos_tier(self):
-        return self.get_morph_tier()
-
     @staticmethod
     def iter_morphemes(word):
         """Iter POS tags, segments and glosses of a word.
@@ -837,9 +830,12 @@ class InuktitutReader(ACQDIVCHATReader):
         else:
             return 'Inuktitut'
 
+###############################################################################
+
 
 class CreeReader(ACQDIVCHATReader):
-    def get_main_morph_tier(self):
+
+    def get_main_morpheme(self):
         return 'segment'
 
     def get_seg_tier(self):
