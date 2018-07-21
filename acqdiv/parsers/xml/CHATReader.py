@@ -296,6 +296,7 @@ class CHATReader:
         Returns:
             tuple: (speaker ID, utterance, start time, end time).
         """
+        # TODO: break this complicated regex up
         main_line_regex = re.compile(
             r'\*([A-Za-z0-9]{2,3}):\t(.*[.!?])(( \[.*\])?(.*?(\d+)_(\d+))?)?')
         match = main_line_regex.search(main_line)
@@ -437,10 +438,10 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         return metadata_fields
 
     def get_session_date(self):
-        return self._metadata_fields['Date']
+        return self._metadata_fields.get('Date', '')
 
     def get_session_filename(self):
-        media_field = self._metadata_fields['Media']
+        media_field = self._metadata_fields.get('Media', '')
         media_fields = self.get_media_fields(media_field)
         return self.get_media_filename(media_fields)
 
@@ -668,6 +669,10 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         """No coding per default."""
         return ''
 
+    def get_main_morph_tier(self):
+        """Per default the gloss tier."""
+        return 'gloss'
+
     def get_seg_tier(self):
         raise NotImplementedError
 
@@ -698,6 +703,50 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     def get_morpheme_language(self, seg, gloss, pos):
         """No coding per default."""
         return ''
+
+
+class EnglishManchester1Reader(ACQDIVCHATReader):
+
+    def get_translation(self):
+        return self.get_utterance()
+
+    def get_morph_tier(self):
+        return self._dependent_tiers.get('mor', '')
+
+    def get_seg_tier(self):
+        return self.get_morph_tier()
+
+    def get_gloss_tier(self):
+        return self.get_morph_tier()
+
+    def get_pos_tier(self):
+        return self.get_morph_tier()
+
+    @staticmethod
+    def iter_morphemes(morph_word):
+        """Iter morphemes of a word.
+
+        Returns:
+            tuple: (segment, gloss, pos).
+        """
+        morpheme_regex = re.compile(r'((.+)\|(.+))|([^|]+)')
+        for morpheme in re.split(r'-|~|(?<!\|)\+', morph_word):
+            match = morpheme_regex.fullmatch(morpheme)
+            # stem is given along with its POS tag
+            if match.group(1):
+                yield match.group(3), '', match.group(2)
+            # only grammatical gloss is given
+            else:
+                yield '', match.group(4), 'sfx'
+
+    def get_segments(self, seg_word):
+        return [seg for seg, _, _ in self.iter_morphemes(seg_word)]
+
+    def get_glosses(self, gloss_word):
+        return [gloss for _, gloss, _ in self.iter_morphemes(gloss_word)]
+
+    def get_poses(self, pos_word):
+        return [pos for _, _, pos in self.iter_morphemes(pos_word)]
 
 
 class InuktitutReader(ACQDIVCHATReader):
@@ -790,6 +839,8 @@ class InuktitutReader(ACQDIVCHATReader):
 
 
 class CreeReader(ACQDIVCHATReader):
+    def get_main_morph_tier(self):
+        return 'segment'
 
     def get_seg_tier(self):
         return self._dependent_tiers.get('xtarmor', '')
@@ -802,7 +853,10 @@ class CreeReader(ACQDIVCHATReader):
 
     @staticmethod
     def get_morphemes(word):
-        return word.split('~')
+        if word:
+            return word.split('~')
+        else:
+            return []
 
     def get_segments(self, seg_word):
         return self.get_morphemes(seg_word)

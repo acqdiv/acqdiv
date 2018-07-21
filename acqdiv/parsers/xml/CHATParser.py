@@ -115,11 +115,10 @@ class CHATParser(CorpusParserInterface):
             # rebuild utterance from cleaned words
             utterance = ' '.join(w['word'] for w in words)
 
-            # get morphology tiers and clean them
-            seg_tier = self.cleaner.clean_seg_tier(self.reader.get_seg_tier())
-            gloss_tier = self.cleaner.clean_gloss_tier(
-                                self.reader.get_gloss_tier())
-            pos_tier = self.cleaner.clean_pos_tier(self.reader.get_pos_tier())
+            # get morphology tiers
+            seg_tier = self.reader.get_seg_tier()
+            gloss_tier = self.reader.get_gloss_tier()
+            pos_tier = self.reader.get_pos_tier()
 
             utterance_dict = {
                 'source_id': source_id,
@@ -138,15 +137,50 @@ class CHATParser(CorpusParserInterface):
                 'warning': None
             }
 
+            # clean the morphology tiers
+            seg_tier = self.cleaner.clean_seg_tier(seg_tier)
+            gloss_tier = self.cleaner.clean_gloss_tier(gloss_tier)
+            pos_tier = self.cleaner.clean_pos_tier(pos_tier)
+
             # get morpheme words from the respective morphology tiers
             wsegs = self.reader.get_seg_words(seg_tier)
             wglosses = self.reader.get_gloss_words(gloss_tier)
             wposes = self.reader.get_pos_words(pos_tier)
 
+            # determine number of words to be considered based on
+            # main morphology tier and existence of this morphology tier
+            if self.reader.get_main_morph_tier() == 'segment':
+                wlen = len(wsegs)
+                # segment tier does not exist
+                if not wlen:
+                    wlen = len(wglosses)
+            else:
+                wlen = len(wglosses)
+                # gloss tier does not exist
+                if not wlen:
+                    wlen = len(wsegs)
+
+            # if both segment and gloss tier do not exists, take the pos tier
+            if not wlen:
+                wlen = len(wposes)
+
+            # check for wm-misalignments between morphology tiers
+            # if misaligned, replace by a list of empty strings
+            if wlen != len(wsegs):
+                wsegs = wlen*['']
+            if wlen != len(wglosses):
+                wglosses = wlen*['']
+            if wlen != len(wposes):
+                wposes = wlen*['']
+
             # collect morpheme data of an utterance
             morphemes = []
             # go through all morpheme words
             for wseg, wgloss, wpos in zip(wsegs, wglosses, wposes):
+
+                wseg = self.cleaner.clean_seg_word(wseg)
+                wgloss = self.cleaner.clean_gloss_word(wgloss)
+                wpos = self.cleaner.clean_pos_word(wpos)
 
                 # collect morpheme data of a word
                 wmorphemes = []
@@ -155,6 +189,29 @@ class CHATParser(CorpusParserInterface):
                 segments = self.reader.get_segments(wseg)
                 glosses = self.reader.get_glosses(wgloss)
                 poses = self.reader.get_poses(wpos)
+
+                # determine number of morphemes to be considered
+                if self.reader.get_main_morph_tier() == 'segment':
+                    mlen = len(segments)
+                    if not mlen:
+                        mlen = len(glosses)
+                else:
+                    mlen = len(glosses)
+                    if not mlen:
+                        mlen = len(segments)
+
+                # if both segment and gloss do not exists, take the pos
+                if not mlen:
+                    mlen = len(poses)
+
+                # check for mm-misalignments between morphology tiers
+                # if misaligned, replace by a list of empty strings
+                if mlen != len(segments):
+                    segments = mlen*['']
+                if mlen != len(glosses):
+                    glosses = mlen*['']
+                if mlen != len(poses):
+                    poses = mlen*['']
 
                 # go through morphemes
                 for seg, gloss, pos in zip(segments, glosses, poses):
@@ -170,9 +227,9 @@ class CHATParser(CorpusParserInterface):
                     morpheme_dict = {
                         'morpheme_language':
                             morpheme_language if morpheme_language else None,
-                        'morpheme': seg,
-                        'gloss_raw': gloss,
-                        'pos_raw': pos
+                        'morpheme': seg if seg else None,
+                        'gloss_raw': gloss if gloss else None,
+                        'pos_raw': pos if pos else None
                     }
                     wmorphemes.append(morpheme_dict)
 
@@ -187,6 +244,13 @@ class CreeParser(CHATParser):
 
     def get_cleaner(self):
         return CHATCleaner.CreeCleaner()
+
+class EnglishManchester1Parser(CHATParser):
+    def get_reader(self):
+        return CHATReader.EnglishManchester1Reader(self.session_path)
+
+    def get_cleaner(self):
+        return CHATCleaner.EnglishManchester1Cleaner()
 
 
 class InuktitutParser(CHATParser):
@@ -208,7 +272,9 @@ def main():
     start_time = time.time()
 
     for corpus, parser_cls in [
-            ('Cree', CreeParser), ('Inuktitut', InuktitutParser)]:
+            ('English_Manchester1', EnglishManchester1Parser),
+            ('Cree', CreeParser),
+            ('Inuktitut', InuktitutParser)]:
 
         corpus_path = os.path.join(
             acqdiv_path, 'corpora/{}/cha/*.cha'.format(corpus))
