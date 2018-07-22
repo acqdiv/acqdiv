@@ -760,12 +760,14 @@ class TestCreeCleaner(unittest.TestCase):
     # Tests for the remove_angle_brackets-method.
 
     def test_remove_angle_brackets_standard_case(self):
+        """Test remove_angle_brackets with standard angle brack case."""
         input_str = '‹kâ ihtut-h› .'
         actual_output = CreeCleaner.remove_angle_brackets(input_str)
         desired_output = 'kâ ihtut-h .'
         self.assertEqual(actual_output, desired_output)
 
     def test_remove_angle_brackets_empty_string(self):
+        """Test remove_angle_brackets with an empty string."""
         actual_output = CreeCleaner.remove_angle_brackets('')
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
@@ -773,18 +775,21 @@ class TestCreeCleaner(unittest.TestCase):
     # Test for the remove_morph_separators-method.
 
     def test_remove_morph_separators_single_separator(self):
+        """Test remove_morph_separators with 1 separator (_)."""
         input_str = 'bye_bye'
         actual_output = CreeCleaner.remove_morph_separators(input_str)
         desired_output = 'byebye'
         self.assertEqual(actual_output, desired_output)
 
     def test_remove_morph_separators_multiple_separators(self):
+        """Test remove_morph_separators with 2 separators (_)."""
         input_str = 'choo_choo_train'
         actual_output = CreeCleaner.remove_morph_separators(input_str)
         desired_output = 'choochootrain'
         self.assertEqual(actual_output, desired_output)
 
     def test_remove_morph_separators_empty_string(self):
+        """Test remove_morph_separators with an empty string."""
         actual_output = CreeCleaner.remove_morph_separators('')
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
@@ -792,18 +797,21 @@ class TestCreeCleaner(unittest.TestCase):
     # Test for the replace_zero-method.
 
     def test_replace_zero_single_zero(self):
+        """Test replace_zero with 1 zero (zéro)."""
         input_str = 'pihchi~shin~zéro'
         actual_output = CreeCleaner.replace_zero(input_str)
         desired_output = 'pihchi~shin~Ø'
         self.assertEqual(actual_output, desired_output)
 
     def test_replace_zero_multiple_zeros(self):
+        """Test replace_zero with 3 zeros (zéro)."""
         input_str = 'zéro~ʤʊ~zéro~zéro'
         actual_output = CreeCleaner.replace_zero(input_str)
         desired_output = 'Ø~ʤʊ~Ø~Ø'
         self.assertEqual(actual_output, desired_output)
 
     def test_replace_zero_empty_string(self):
+        """Test replace_zero with an empty string."""
         actual_output = CreeCleaner.replace_zero('')
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
@@ -811,18 +819,21 @@ class TestCreeCleaner(unittest.TestCase):
     # Tests for the replace_morpheme_separator-method.
 
     def test_replace_morpheme_separator_single_separator(self):
+        """Test replace_morpheme_separator with 1 separator."""
         input_str = 'pihchi~shin'
         actual_output = CreeCleaner.replace_morpheme_separator(input_str)
         desired_output = 'pihchishin'
         self.assertEqual(actual_output, desired_output)
 
     def test_replace_morpheme_separator_multiple_separators(self):
+        """Test replace_morpheme_separator with 2 separators."""
         input_str = 'pihchi~shin~zéro'
         actual_output = CreeCleaner.replace_morpheme_separator(input_str)
         desired_output = 'pihchishinzéro'
         self.assertEqual(actual_output, desired_output)
 
     def test_replace_morpheme_separator_empty_string(self):
+        """Test replace_morpheme_separator with an empty string."""
         actual_output = CreeCleaner.replace_morpheme_separator('')
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
@@ -832,12 +843,14 @@ class TestCreeCleaner(unittest.TestCase):
     # are not present in the corpus and thus not tested for.
 
     def test_remove_square_brackets_standard_case(self):
+        """Test remove_square_brackets with normal case ([...])."""
         input_str = '[ɡoɡo mɛɹi nine nəbɑ]'
         actual_output = CreeCleaner.remove_square_brackets(input_str)
         desired_output = 'ɡoɡo mɛɹi nine nəbɑ'
         self.assertEqual(actual_output, desired_output)
 
     def test_remove_square_brackets_empty_string(self):
+        """Test remove_square_brackets with empty string."""
         actual_output = CreeCleaner.remove_square_brackets('')
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
@@ -845,11 +858,13 @@ class TestCreeCleaner(unittest.TestCase):
     # Tests for the null_untranscribed_morph_tier-method.
 
     def test_null_untranscribed_morph_tier_method_standard_case(self):
+        """Test null_untranscribed_morph_tier with standard case (*)."""
         actual_output = CreeCleaner.null_untranscribed_morph_tier('*')
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
     def test_null_untranscribed_morph_tier_method_empty_string(self):
+        """Test null_untranscribed_morph_tier with empty string."""
         actual_output = CreeCleaner.null_untranscribed_morph_tier('')
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
