@@ -24,9 +24,8 @@ class TestCHATReader(unittest.TestCase):
         """Test iter_metadata_fields with normal intput."""
         actual_output = list(self.reader.iter_metadata_fields('./test.cha'))
         desired_output = ['@Languages:\tsme',
-                          '@Participants:\tMEM Mme_Manyili Grandmother , '
-                          'CHI Hlobohang Target_Child , '
-                          'KAT Katherine_Demuth Investigator',
+                          ('@Participants:\tMEM Mme_Manyili Grandmother , '
+                            'CHI Hlobohang Target_Child'),
                           '@ID:\tsme|Sesotho|MEM|||||Grandmother|||',
                           '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||',
                           '@Birth of CHI:\t14-JAN-2006',
@@ -296,21 +295,17 @@ class TestACQDIVCHATReader(unittest.TestCase):
 
     def test_get_metadata_fields(self):
         """Test get_metadata_fields with the test.cha-file."""
-        # self.maxDiff = None
-        # session_file_path = './test.cha'
-        # reader = ACQDIVCHATReader(session_file_path)
         actual_output = self.reader.get_metadata_fields()
         desired_output = {
             'Languages': 'sme',
             'Participants': ('MEM Mme_Manyili Grandmother , '
-                            'CHI Hlobohang Target_Child , '
-                            'KAT Katherine_Demuth Investigator'),
-                            'ID': {
-                                'MEM': ('sme', 'Sesotho', 'MEM', '', '',
-                                        '', '', 'Grandmother', '', ''),
-                                'CHI': ('sme', 'Sesotho', 'CHI', '2;2.',
-                                        '', '', '', 'Target_Child', '', '')
-                            },
+                             'CHI Hlobohang Target_Child'),
+            'ID': {
+                    'MEM': ('sme', 'Sesotho', 'MEM', '', '',
+                            '', '', 'Grandmother', '', ''),
+                    'CHI': ('sme', 'Sesotho', 'CHI', '2;2.',
+                            '', '', '', 'Target_Child', '', '')
+                },
             'Birth of CHI': '14-JAN-2006',
             'Birth of ADU': '11-OCT-1974',
             'Media': 'h2ab, audio',
@@ -326,9 +321,6 @@ class TestACQDIVCHATReader(unittest.TestCase):
 
     def test_get_session_filename(self):
         """Test get_session_filename for sessions name of 'test.cha'."""
-        # self.maxDiff = None
-        # session_file_path = './test.cha'
-        # reader = ACQDIVCHATReader(session_file_path)
         actual_output = self.reader.get_session_filename()
         desired_output = 'h2ab'
         self.assertEqual(actual_output, desired_output)
@@ -337,11 +329,35 @@ class TestACQDIVCHATReader(unittest.TestCase):
         """Test get_speaker_iterator for the speakers in 'test.cha'."""
         pass
 
+    def test_load_next_speaker(self):
+        """Test load_next_speaker for the speakers in 'test.cha'"""
+        actual_output = []
+        while self.reader.load_next_speaker() != 0:
+            pf = self.reader._participant_fields
+            idf = self.reader._id_fields
+            actual_output.append((pf, idf))
+        desired_output = [
+            (('MEM', 'Mme_Manyili', 'Grandmother'),
+             ('sme', 'Sesotho', 'MEM', '', '', '', '', 'Grandmother', '', '')),
+            (('CHI', 'Hlobohang', 'Target_Child'),
+             ('sme', 'Sesotho', 'CHI', '2;2.', '',
+              '', '', 'Target_Child', '', ''))
+        ]
+        self.assertEqual(actual_output, desired_output)
 
+    def test_load_next_record(self):
+        """Test load_next_record for the records in 'test.cha'
 
-
-
-
+        At the moment the method throws an Error because of a problem
+        of the regex on line 302-303 in the CHATReader."""
+        actual_output = []
+        while self.reader.load_next_record() != 0:
+            uid = self.reader._uid
+            main_line_fields = self.reader._main_line_fields
+            dep_tiers = self.reader._dependent_tiers
+            actual_output.append((uid, main_line_fields, dep_tiers))
+        desired_output = [] # TODO: create desired output
+        self.assertEqual(actual_output, desired_output)
 
 
 if __name__ == '__main__':
