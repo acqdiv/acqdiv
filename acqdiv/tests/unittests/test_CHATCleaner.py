@@ -529,16 +529,16 @@ class TestCHATCleaner(unittest.TestCase):
 
     # Tests for the remove_drawls-method.
 
-    def test_remove_drawls_lengthened_syllable(self):
+    def test_remove_drawls_single_lengthened_syllable(self):
         """Test remove_drawls with 1 lengthened syllable (:)."""
         actual_output = CHATCleaner.remove_drawls('bana:nas')
         desired_output = 'bananas'
         self.assertEqual(actual_output, desired_output)
 
-    def test_remove_drawls_pause_between_syllables(self):
-        """Test remove_drawls with 1 pause between syllables (^)."""
-        actual_output = CHATCleaner.remove_drawls('rhi^noceros')
-        desired_output = 'rhi^noceros'
+    def test_remove_drawls_multiple_lengthened_syllables(self):
+        """Test remove_drawls with 2 lengthened syllables (:)."""
+        actual_output = CHATCleaner.remove_drawls('ba:na:nas')
+        desired_output = 'bananas'
         self.assertEqual(actual_output, desired_output)
 
     def test_remove_drawls_empty_string(self):
