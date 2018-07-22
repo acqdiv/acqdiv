@@ -1,5 +1,6 @@
 import unittest
 from acqdiv.parsers.xml.CHATReader import CHATReader
+from acqdiv.parsers.xml.CHATReader import ACQDIVCHATReader
 
 """The metadata is a combination of hiia.cha (Sesotho), aki20803.ch 
 (Japanese Miyata) and made up data to cover more cases. 
@@ -13,9 +14,11 @@ most of the records are deleted.
 class TestCHATReader(unittest.TestCase):
     """Class to test the CHATReader."""
 
-    reader = CHATReader()
-    path = './test.cha'
-    maxDiff = None
+    @classmethod
+    def setUpClass(cls):
+        cls.session_file_path = './test.cha'
+        cls.reader = CHATReader()
+        cls.maxDiff = None
 
     def test_iter_metadata_fields(self):
         """Test iter_metadata_fields with normal intput."""
@@ -276,6 +279,69 @@ class TestCHATReader(unittest.TestCase):
         actual_output = self.reader.get_dependent_tier(dep_tier)
         desired_output = ('eng', 'A new thing%')
         self.assertEqual(actual_output, desired_output)
+
+
+###############################################################################
+
+class TestACQDIVCHATReader(unittest.TestCase):
+    """Class to test the ACQDIVCHATReader."""
+
+    @classmethod
+    def setUpClass(cls):
+        session_file_path = './test.cha'
+        cls.reader = ACQDIVCHATReader(session_file_path)
+        cls.maxDiff = None
+
+    # Tests the get_metadata_fields-method.
+
+    def test_get_metadata_fields(self):
+        """Test get_metadata_fields with the test.cha-file."""
+        # self.maxDiff = None
+        # session_file_path = './test.cha'
+        # reader = ACQDIVCHATReader(session_file_path)
+        actual_output = self.reader.get_metadata_fields()
+        desired_output = {
+            'Languages': 'sme',
+            'Participants': ('MEM Mme_Manyili Grandmother , '
+                            'CHI Hlobohang Target_Child , '
+                            'KAT Katherine_Demuth Investigator'),
+                            'ID': {
+                                'MEM': ('sme', 'Sesotho', 'MEM', '', '',
+                                        '', '', 'Grandmother', '', ''),
+                                'CHI': ('sme', 'Sesotho', 'CHI', '2;2.',
+                                        '', '', '', 'Target_Child', '', '')
+                            },
+            'Birth of CHI': '14-JAN-2006',
+            'Birth of ADU': '11-OCT-1974',
+            'Media': 'h2ab, audio',
+            'Comment': ('all snd kana jmor cha ok Wakachi2002; '
+                        'uses desu and V-masu'),
+            # The behaviour for two comments in one session
+            # has to be defined!
+            'Warning': 'recorded time: 1:00:00',
+            'Situation': ('Aki and AMO preparing to look at book , '
+                          '"Miichan no otsukai"')
+            }
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_session_filename(self):
+        """Test get_session_filename for sessions name of 'test.cha'."""
+        # self.maxDiff = None
+        # session_file_path = './test.cha'
+        # reader = ACQDIVCHATReader(session_file_path)
+        actual_output = self.reader.get_session_filename()
+        desired_output = 'h2ab'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_iterator(self):
+        """Test get_speaker_iterator for the speakers in 'test.cha'."""
+        pass
+
+
+
+
+
+
 
 
 if __name__ == '__main__':
