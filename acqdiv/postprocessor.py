@@ -155,10 +155,9 @@ def postprocess(test=False):
     print('Next, run tests:')
 
     if test:
-        print('python3 -m "nose" -s -w tests test_regression.py')
-        print('python3 -m "nose" -s -w tests test_integrity.py:ValidationTest_DevDB')
+        print('acqdiv test')
     else:
-        print('python3 -m "nose" -s -w tests test_integrity.py:ValidationTest_ProductionDB')
+        print('acqdiv test -f')
     print()
 
 
