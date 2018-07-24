@@ -98,9 +98,9 @@ def load(test=True):
     print("Next, call:")
 
     if test:
-        print("python3 postprocessor.py -t")
+        print("acqdiv postprocess")
     else:
-        print("python3 postprocessor.py")
+        print("acqdiv postprocess -f")
     print()
 
 
