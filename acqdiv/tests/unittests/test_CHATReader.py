@@ -349,14 +349,49 @@ class TestACQDIVCHATReader(unittest.TestCase):
         """Test load_next_record for the records in 'test.cha'
 
         At the moment the method throws an Error because of a problem
-        of the regex on line 302-303 in the CHATReader."""
+        of the regex on line 302-303 in the CHATReader.
+        -> regex on line 301 assumes, that all mainlines have a
+        terminator this is not true and can be tested with:
+        grep -P '^\*\w{2,3}?:\t((?![.!?]).)*$' */cha/*.cha
+        """
         actual_output = []
         while self.reader.load_next_record() != 0:
             uid = self.reader._uid
             main_line_fields = self.reader._main_line_fields
             dep_tiers = self.reader._dependent_tiers
             actual_output.append((uid, main_line_fields, dep_tiers))
-        desired_output = [] # TODO: create desired output
+        desired_output = [
+            (0, ('KAT', 'ke eng ?', '0', '8551'),
+             {
+                 'gls': 'ke eng ?', 'cod': 'cp wh ?',
+                 'eng': 'What is it ?', 'sit':
+                 'Points to tape'
+             }),
+            (1, ('CHI', 'ke ntencha ncha .', '8551', '19738'),
+             {
+                 'gls': 'ke eng ?', 'cod': 'cp wh ?',
+                 'eng': 'What is it ?',
+                 'sit': 'Points to tape'
+              }),
+            (2, ('KAT', 'ke eng ntho ena e?', '19738', '24653'),
+             {
+                 'gls': 'ke ntho e-ncha .',
+                 'cod': 'cp thing(9 , 10) 9-aj .',
+                 'eng': 'A new thing'
+              }),
+            (3, ('CHI', 'e nte ena .', '24300', '28048'),
+             {
+                 'gls': 'ke eng ntho ena e ?',
+                 'cod': 'cp wh thing(9 , 10) d9 ij ?',
+                 'eng': 'What is this thing ?', 'sit': 'Points to tape'
+             }),
+            (4, ('*MOL', 'ke khomba', '', ''),
+             {
+                'gls': 'kekumbakumba .',
+                'cod': 'cp tape_recorder(9 , 10) .',
+                'eng': 'It is a stereo'
+             })
+        ]
         self.assertEqual(actual_output, desired_output)
 
 
