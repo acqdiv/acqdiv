@@ -24,12 +24,13 @@ class TestCHATReader(unittest.TestCase):
         """Test iter_metadata_fields with normal intput."""
         actual_output = list(self.reader.iter_metadata_fields('./test.cha'))
         desired_output = ['@Languages:\tsme',
+                          '@Date:\t12-SEP-1997',
                           ('@Participants:\tMEM Mme_Manyili Grandmother , '
-                            'CHI Hlobohang Target_Child'),
-                          '@ID:\tsme|Sesotho|MEM|||||Grandmother|||',
+                           'CHI Hlobohang Target_Child'),
+                          '@ID:\tsme|Sesotho|MEM||female|||Grandmother|||',
                           '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||',
                           '@Birth of CHI:\t14-JAN-2006',
-                          '@Birth of ADU:\t11-OCT-1974',
+                          '@Birth of MEM:\t11-OCT-1974',
                           '@Media:\th2ab, audio',
                           '@Comment:\tall snd kana jmor cha ok Wakachi2002;',
                           '@Warning:\trecorded time: 1:00:00',
@@ -105,9 +106,9 @@ class TestCHATReader(unittest.TestCase):
         Test get_id_fields for the case of some fields
         being empty and some fields containing information.
         """
-        input_str = 'sme|Sesotho|MEM|||||Grandmother|||'
+        input_str = 'sme|Sesotho|MEM||female|||Grandmother|||'
         actual_output = self.reader.get_id_fields(input_str)
-        desired_output = ('sme', 'Sesotho', 'MEM', '', '', '',
+        desired_output = ('sme', 'Sesotho', 'MEM', '', 'female', '',
                           '', 'Grandmother', '', '')
         self.assertEqual(actual_output, desired_output)
 
@@ -132,20 +133,20 @@ class TestCHATReader(unittest.TestCase):
     def test_iter_records(self):
         """Test iter_records for multiple records. (standard case)"""
         actual_output = list(self.reader.iter_records('./test.cha'))
-        desired_output = ['*KAT:\tke eng ? 0_8551\n%gls:\tke eng ?\n%cod:\t'
+        desired_output = ['*MEM:\tke eng ? 0_8551\n%gls:\tke eng ?\n%cod:\t'
                           'cp wh ?\n%eng:\tWhat is it ?\n%sit:\tPoints to '
-                          'tape\n',
+                          'tape\n%add:\tCHI\n',
                           '*CHI:\tke ntencha ncha . 8551_19738\n'
                           '%gls:\tke ntho e-ncha .\n%cod:\tcp thing(9 , 10) '
-                          '9-aj .\n%eng:\tA new thing\n',
-                          '*KAT:\tke eng ntho ena e? 19738_24653\n%gls:\t'
+                          '9-aj .\n%eng:\tA new thing\n%com:\ttest comment\n',
+                          '*MEM:\tke eng ntho ena e? 19738_24653\n%gls:\t'
                           'ke eng ntho ena e ?\n%cod:\tcp wh thing(9 , 10) '
                           'd9 ij ?\n%eng:\tWhat is this thing ?\n%sit:\t'
                           'Points to tape\n',
                           '*CHI:\te nte ena . 24300_28048\n%gls:\tke ntho '
                           'ena .\n%cod:\tcp thing(9 , 10) d9 .\n%eng:\t'
                           'It is this thing\n',
-                          '*MOL:\tke khomba\nkhomba . 28048_31840\n%gls:	'
+                          '*MEM:\tke khomba\nkhomba . 28048_31840\n%gls:	'
                           'kekumbakumba .\n%cod:\tcp tape_recorder(9 , 10) .'
                           '\n%eng:\tIt is a stereo']
         self.assertEqual(actual_output, desired_output)
@@ -285,38 +286,44 @@ class TestCHATReader(unittest.TestCase):
 class TestACQDIVCHATReader(unittest.TestCase):
     """Class to test the ACQDIVCHATReader."""
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         session_file_path = './test.cha'
-        cls.reader = ACQDIVCHATReader(session_file_path)
-        cls.maxDiff = None
-
-    # Tests the get_metadata_fields-method.
+        self.reader = ACQDIVCHATReader(session_file_path)
+        self.maxDiff = None
 
     def test_get_metadata_fields(self):
         """Test get_metadata_fields with the test.cha-file."""
         actual_output = self.reader.get_metadata_fields()
         desired_output = {
             'Languages': 'sme',
+            'Date': '12-SEP-1997',
             'Participants': ('MEM Mme_Manyili Grandmother , '
                              'CHI Hlobohang Target_Child'),
             'ID': {
-                    'MEM': ('sme', 'Sesotho', 'MEM', '', '',
-                            '', '', 'Grandmother', '', ''),
-                    'CHI': ('sme', 'Sesotho', 'CHI', '2;2.',
-                            '', '', '', 'Target_Child', '', '')
-                },
+                'MEM': ('sme', 'Sesotho', 'MEM', '', 'female',
+                        '', '', 'Grandmother', '', ''),
+                'CHI': ('sme', 'Sesotho', 'CHI', '2;2.',
+                        '', '', '', 'Target_Child', '', '')
+            },
             'Birth of CHI': '14-JAN-2006',
-            'Birth of ADU': '11-OCT-1974',
+            'Birth of MEM': '11-OCT-1974',
             'Media': 'h2ab, audio',
-            'Comment': ('all snd kana jmor cha ok Wakachi2002; '
-                        'uses desu and V-masu'),
-            # The behaviour for two comments in one session
-            # has to be defined!
+            'Comment': (  # 'all snd kana jmor cha ok Wakachi2002; '
+                # Since the AQDIVCHATReader in its current state
+                # does not need to capture comments, the line
+                # above, which tests the case of two comments
+                # in the same session metadata is commented out.
+                'uses desu and V-masu'),
             'Warning': 'recorded time: 1:00:00',
             'Situation': ('Aki and AMO preparing to look at book , '
                           '"Miichan no otsukai"')
-            }
+        }
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_session_date(self):
+        """Test get_session_date with test.cha. """
+        actual_output = self.reader.get_session_date()
+        desired_output = '12-SEP-1997'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_session_filename(self):
@@ -327,7 +334,10 @@ class TestACQDIVCHATReader(unittest.TestCase):
 
     def test_get_speaker_iterator(self):
         """Test get_speaker_iterator for the speakers in 'test.cha'."""
-        pass
+        actual_output = list(self.reader.get_speaker_iterator())
+        desired_output = ['MEM Mme_Manyili Grandmother',
+                          'CHI Hlobohang Target_Child']
+        self.assertEqual(actual_output, desired_output)
 
     def test_load_next_speaker(self):
         """Test load_next_speaker for the speakers in 'test.cha'"""
@@ -338,10 +348,86 @@ class TestACQDIVCHATReader(unittest.TestCase):
             actual_output.append((pf, idf))
         desired_output = [
             (('MEM', 'Mme_Manyili', 'Grandmother'),
-             ('sme', 'Sesotho', 'MEM', '', '', '', '', 'Grandmother', '', '')),
+             ('sme', 'Sesotho', 'MEM', '', 'female',
+              '', '', 'Grandmother', '', '')),
             (('CHI', 'Hlobohang', 'Target_Child'),
              ('sme', 'Sesotho', 'CHI', '2;2.', '',
               '', '', 'Target_Child', '', ''))
+        ]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_age(self):
+        actual_output = []
+        while self.reader.load_next_speaker() != 0:
+            actual_output.append(self.reader.get_speaker_age())
+        desired_output = ['', '2;2.']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_birthdate(self):
+        """Test get_speaker_birthdate with test.cha."""
+        actual_output = []
+        while self.reader.load_next_speaker() != 0:
+            speaker_birthdate = self.reader.get_speaker_birthdate()
+            actual_output.append(speaker_birthdate)
+        desired_output = ['11-OCT-1974', '14-JAN-2006']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_gender(self):
+        """Test get_speaker_gender with test.cha."""
+        actual_output = []
+        while self.reader.load_next_speaker() != 0:
+            actual_output.append(self.reader.get_speaker_gender())
+        desired_output = ['female', '']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_label(self):
+        """Test get_speaker_label with test.cha."""
+        actual_output = []
+        while self.reader.load_next_speaker() != 0:
+            actual_output.append(self.reader.get_speaker_label())
+        desired_output = ['MEM', 'CHI']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_language(self):
+        """Test get_speaker_language with test.cha."""
+        actual_output = []
+        while self.reader.load_next_speaker() != 0:
+            actual_output.append(self.reader.get_speaker_language())
+        desired_output = ['sme', 'sme']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_name(self):
+        """Test get_speaker_name with test.cha."""
+        actual_output = []
+        while self.reader.load_next_speaker() != 0:
+            actual_output.append(self.reader.get_speaker_name())
+        desired_output = ['Mme_Manyili', 'Hlobohang']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_role(self):
+        """Test get_speaker_role with test.cha."""
+        actual_output = []
+        while self.reader.load_next_speaker() != 0:
+            actual_output.append(self.reader.get_speaker_role())
+        desired_output = ['Grandmother', 'Target_Child']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_record_iterator(self):
+        """Test get_record_iterator with test.cha."""
+        actual_output = list(self.reader.get_record_iterator())
+        desired_output = [
+            '*MEM:\tke eng ? 0_8551\n%gls:\tke eng ?\n%cod:\tcp '
+            'wh ?\n%eng:\tWhat is it ?\n%sit:\tPoints to tape\n%add:\tCHI\n',
+            '*CHI:\tke ntencha ncha . 8551_19738\n%gls:\tke ntho '
+            'e-ncha .\n%cod:\tcp thing(9 , 10) 9-aj .\n%eng:\tA new thing\n'
+            '%com:\ttest comment\n',
+            '*MEM:	ke eng ntho ena e? 19738_24653\n%gls:\tke eng ntho ena '
+            'e ?\n%cod:\tcp wh thing(9 , 10) d9 ij ?\n%eng:\tWhat is this '
+            'thing ?\n%sit:\tPoints to tape\n',
+            '*CHI:\te nte ena . 24300_28048\n%gls:\tke ntho ena .\n%cod:'
+            '\tcp thing(9 , 10) d9 .\n%eng:\tIt is this thing\n',
+            '*MEM:\tke khomba\nkhomba . 28048_31840\n%gls:\tkekumbakumba .'
+            '\n%cod:\tcp tape_recorder(9 , 10) .\n%eng:\tIt is a stereo'
         ]
         self.assertEqual(actual_output, desired_output)
 
@@ -361,7 +447,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
             dep_tiers = self.reader._dependent_tiers
             actual_output.append((uid, main_line_fields, dep_tiers))
         desired_output = [
-            (0, ('KAT', 'ke eng ?', '0', '8551'),
+            (0, ('MEM', 'ke eng ?', '0', '8551'),
              {
                  'gls': 'ke eng ?', 'cod': 'cp wh ?',
                  'eng': 'What is it ?', 'sit':
@@ -372,27 +458,393 @@ class TestACQDIVCHATReader(unittest.TestCase):
                  'gls': 'ke eng ?', 'cod': 'cp wh ?',
                  'eng': 'What is it ?',
                  'sit': 'Points to tape'
-              }),
-            (2, ('KAT', 'ke eng ntho ena e?', '19738', '24653'),
+             }),
+            (2, ('MEM', 'ke eng ntho ena e?', '19738', '24653'),
              {
                  'gls': 'ke ntho e-ncha .',
                  'cod': 'cp thing(9 , 10) 9-aj .',
-                 'eng': 'A new thing'
-              }),
+                 'eng': 'A new thing',
+                 'com': 'test comment'
+             }),
             (3, ('CHI', 'e nte ena .', '24300', '28048'),
              {
                  'gls': 'ke eng ntho ena e ?',
                  'cod': 'cp wh thing(9 , 10) d9 ij ?',
                  'eng': 'What is this thing ?', 'sit': 'Points to tape'
              }),
-            (4, ('*MOL', 'ke khomba', '', ''),
+            (4, ('*MEM', 'ke khomba', '', ''),
              {
-                'gls': 'kekumbakumba .',
-                'cod': 'cp tape_recorder(9 , 10) .',
-                'eng': 'It is a stereo'
+                 'gls': 'kekumbakumba .',
+                 'cod': 'cp tape_recorder(9 , 10) .',
+                 'eng': 'It is a stereo'
              })
         ]
         self.assertEqual(actual_output, desired_output)
+
+    def test_get_uid(self):
+        """Test get_uid with test.cha."""
+        actual_output = []
+        while self.reader.load_next_record() != 0:
+            actual_output.append(self.reader.get_uid())
+        desired_output = ['u0', 'u1', 'u2', 'u3', 'u4']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_addressee(self):
+        """Test get_addressee with test.cha."""
+        actual_output = []
+        while self.reader.load_next_record() != 0:
+            actual_output.append(self.reader.get_addressee())
+        desired_output = ['CHI', '', '', '', '']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_translation(self):
+        """Test get_translation with test.cha."""
+        actual_output = ['What is it ?', 'A new thing',
+                         'What is this thing ?', 'It is this thing',
+                         'It is a stereo']
+        while self.reader.load_next_record() != 0:
+            actual_output.append(self.reader.get_translation())
+        desired_output = ['CHI', '', '', '', '']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_comments(self):
+        """Test get_comments with test.cha."""
+        actual_output = []
+        while self.reader.load_next_record() != 0:
+            actual_output.append(self.reader.get_translation())
+        desired_output = ['', 'test comment', '', '', '']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_record_speaker_label(self):
+        """Test get_record_speaker_label with test.cha."""
+        actual_output = []
+        while self.reader.load_next_record() != 0:
+            actual_output.append(self.reader.get_record_speaker_label())
+        desired_output = ['MEM', 'CHI', 'MEM', 'CHI', 'MEM']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_start_time(self):
+        """Test get_start_time with test.cha."""
+        actual_output = []
+        while self.reader.load_next_record() != 0:
+            actual_output.append(self.reader.get_start_time())
+        desired_output = ['0', '8551', '19738', '24300', '28048']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_end_time(self):
+        """Test get_end_time with test.cha."""
+        actual_output = []
+        while self.reader.load_next_record() != 0:
+            actual_output.append(self.reader.get_end_time())
+        desired_output = ['8551', '19738', '24653', '28048', '31840']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance(self):
+        """Test get_utterance with test.cha."""
+        actual_output = []
+        while self.reader.load_next_record() != 0:
+            actual_output.append(self.reader.get_utterance())
+        desired_output = ['ke eng ?', 'ke ntencha ncha .',
+                          'ke eng ntho ena e?', 'e nte ena .',
+                          'ke khomba']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_sentence_type_test_dot_cha_utts(self):
+        """Test get_sentence_type with test.cha.
+
+        The default type has a period as utterance terminator.
+        """
+        actual_output = []
+        while self.reader.load_next_record() != 0:
+            actual_output.append(self.reader.get_sentence_type())
+        desired_output = ['question', 'default', 'question',
+                          'default', 'unknown']
+        # The last utterance has no terminator. This desired_output
+        # assumes, that such cases get the sentence type 'unknown'.
+        self.assertEqual(actual_output, desired_output)
+
+    # TODO: more test cases for get_sentence type?
+
+    # Test for the get_shortening_actual-method.
+    # All examples are modified versions of real utterances.
+
+    def test_get_shortening_actual_standard_case(self):
+        """Test get_shortening_actual with 1 shortening occurence."""
+        utterance = 'na:(ra)da <dükäm lan> [?] [>] ?'
+        actual_output = self.reader.get_shortening_actual(utterance)
+        desired_output = 'na:da <dükäm lan> [?] [>] ?'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_shortening_actual_multiple_shortenings(self):
+        """Test get_shortening_actual with 3 shortening occurence."""
+        utterance = '(o)na:(ra)da dükäm lan(da) [?] [>] ?'
+        actual_output = self.reader.get_shortening_actual(utterance)
+        desired_output = 'na:da dükäm lan [?] [>] ?'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_shortening_actual_non_shortening_parentheses(self):
+        """Test get_shortening_actual with non shortening parentheses."""
+        utterance = 'mo:(ra)da (.) mu ?'
+        actual_output = self.reader.get_shortening_actual(utterance)
+        desired_output = 'mo:da (.) mu ?'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_shortening_actual_special_characters(self):
+        """Test get_shortening_actual with special chars in parentheses."""
+        utterance = 'Tu:(ğ)çe .'
+        actual_output = self.reader.get_shortening_actual(utterance)
+        desired_output = 'Tu:çe .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_shortening_actual_no_shortening(self):
+        """Test get_shortening_actual using utt without shortening."""
+        utterance = 'Tu:çe .'
+        actual_output = self.reader.get_shortening_actual(utterance)
+        desired_output = 'Tu:çe .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_shortening_actual_empty_string(self):
+        """Test get_shortening_actual with an empty string."""
+        utterance = 'Tu:çe .'
+        actual_output = self.reader.get_shortening_actual(utterance)
+        desired_output = 'Tu:çe .'
+        self.assertEqual(actual_output, desired_output)
+
+    # Test for the get_shortening_target-method.
+
+    def test_get_shortening_target_standard_case(self):
+        """Test get_shortening_target with 1 shortening occurence."""
+        utterance = 'na:(ra)da <dükäm lan> [?] [>] ?'
+        actual_output = self.reader.get_shortening_target(utterance)
+        desired_output = 'na:rada <dükäm lan> [?] [>] ?'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_shortening_target_multiple_shortenings(self):
+        """Test get_shortening_target with 3 shortening occurence."""
+        utterance = '(o)na:(ra)da dükäm lan(da) [?] [>] ?'
+        actual_output = self.reader.get_shortening_target(utterance)
+        desired_output = 'ona:rada dükäm landa [?] [>] ?'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_shortening_target_non_shortening_parentheses(self):
+        """Test get_shortening_target with non shortening parentheses."""
+        utterance = 'mo:(ra)da (.) mu ?'
+        actual_output = self.reader.get_shortening_target(utterance)
+        desired_output = 'mo:rada (.) mu ?'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_shortening_target_special_characters(self):
+        """Test get_shortening_target with special chars in parentheses."""
+        utterance = 'Mu:(ğ)ça .'
+        actual_output = self.reader.get_shortening_target(utterance)
+        desired_output = 'Mu:ğça .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_shortening_target_no_shortening(self):
+        """Test get_shortening_target using utt without a shortening."""
+        utterance = 'Mu:ça .'
+        actual_output = self.reader.get_shortening_target(utterance)
+        desired_output = 'Mu:ça .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_shortening_target_empty_string(self):
+        """Test get_shortening_target with an empty string."""
+        utterance = ''
+        actual_output = self.reader.get_shortening_target(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the get_replacement_actual-method.
+
+    def test_get_replacement_actual_one_replacement(self):
+        """Test get_replacement_actual with 1 replacement."""
+        utterance = 'yarasam [: yorosom] .'
+        actual_output = self.reader.get_replacement_actual(utterance)
+        desired_output = 'yarasam .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_replacement_actual_multiple_replacements(self):
+        """Test get_replacement_actual with 3 replacements."""
+        utterance = 'yarasam [: yorosom] yarasam [: yorosom] ' \
+                    'yarasam [: yorosom] .'
+        actual_output = self.reader.get_replacement_actual(utterance)
+        desired_output = 'yarasam yarasam yarasam .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_replacement_actual_no_replacement(self):
+        """Test get_replacement_actual with no replacement."""
+        utterance = 'yarasam .'
+        actual_output = self.reader.get_replacement_actual(utterance)
+        desired_output = 'yarasam .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_replacement_actual_empty_string(self):
+        """Test get_replacement_actual with an empty string."""
+        utterance = ''
+        actual_output = self.reader.get_replacement_actual(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the get_replacement_target-method.
+
+    def test_get_replacement_target_one_replacement(self):
+        """Test get_replacement_target with 1 replacement."""
+        utterance = 'yarasam [: yorosom] .'
+        actual_output = self.reader.get_replacement_target(utterance)
+        desired_output = 'yorosom .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_replacement_target_multiple_replacements(self):
+        """Test get_replacement_target with 3 replacements."""
+        utterance = 'yarasam [: yorosom] yarasam [: yorosom] ' \
+                    'yarasam [: yorosom] .'
+        actual_output = self.reader.get_replacement_target(utterance)
+        desired_output = 'yorosom yorosom yorosom .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_replacement_target_no_replacement(self):
+        """Test get_replacement_target with no replacement."""
+        utterance = 'yarasam .'
+        actual_output = self.reader.get_replacement_target(utterance)
+        desired_output = 'yarasam .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_replacement_target_empty_string(self):
+        """Test get_replacement_target with an empty string."""
+        utterance = ''
+        actual_output = self.reader.get_replacement_target(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the get_fragment_actual-method.
+
+    def test_get_fragment_actual_one_fragment(self):
+        """Test get_fragment_actual with 1 fragment."""
+        utterance = '&ab .'
+        actual_output = self.reader.get_fragment_actual(utterance)
+        desired_output = 'ab .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_actual_multiple_fragments(self):
+        """Test get_fragment_actual with 3 fragments."""
+        utterance = '&ab a &ab b &ab .'
+        actual_output = self.reader.get_fragment_actual(utterance)
+        desired_output = 'ab a ab b ab .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_actual_no_fragments(self):
+        """Test get_fragment_actual using an utt without fragments."""
+        utterance = 'a b .'
+        actual_output = self.reader.get_fragment_actual(utterance)
+        desired_output = 'a b .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_actual_empty_string(self):
+        """Test get_fragment_actual with an empty string."""
+        utterance = ''
+        actual_output = self.reader.get_fragment_actual(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the get_fragment_target-method.
+
+    def test_get_fragment_target_one_fragment(self):
+        """Test get_fragment_target with 1 fragment."""
+        utterance = '&ab .'
+        actual_output = self.reader.get_fragment_target(utterance)
+        desired_output = 'ab .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_target_multiple_fragments(self):
+        """Test get_fragment_target with 3 fragments."""
+        utterance = '&ab a &ab b &ab .'
+        actual_output = self.reader.get_fragment_target(utterance)
+        desired_output = 'ab a ab b ab .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_target_no_fragments(self):
+        """Test get_fragment_target using an utt without fragments."""
+        utterance = 'a b .'
+        actual_output = self.reader.get_fragment_target(utterance)
+        desired_output = 'a b .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_target_empty_string(self):
+        """Test get_fragment_target with an empty string."""
+        utterance = ''
+        actual_output = self.reader.get_fragment_actual(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the get_actual_utterance method.
+
+    def test_get_actual_utterance_test_dot_cha(self):
+        """Test get_actual_utterance with test.cha."""
+        actual_output = []
+        while self.reader.load_next_record() != 0:
+            actual_output.append(self.reader.get_actual_utterance())
+        desired_output = ['ke eng ?', 'ke ntencha ncha .',
+                          'ke eng ntho ena e?', 'e nte ena .',
+                          'ke khomba']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_actual_utterance_one_occurence_of_each(self):
+        """Test with 1 shortening, 1 fragment and 1 replacement."""
+        self.reader._main_line_fields = (
+            'CHI',
+            'Mu:(ğ)ça &ab yarasam [: yorosom]',
+            '',
+            ''
+        )
+        actual_output = self.reader.get_actual_utterance()
+        desired_output = 'Mu:ça ab yarasam'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_actual_utterance_multiple_occurences_of_each(self):
+        """Test with 2 shortenings, 2 fragments and 2 replacements."""
+        pass
+
+    def test_get_actual_utterance_no_occurences(self):
+        """Test get_actual_utterance using an utt without occurences."""
+        pass
+
+    def test_get_actual_utterance_empty_string(self):
+        """Test get_actual_utterance with an empty string."""
+        pass
+
+    # Tests for the get_actual_utterance method.
+
+    def test_get_target_utterance_one_occurence_of_each(self):
+        """Test with 1 shortening, 1 fragment and 1 replacement."""
+        pass
+
+    def test_get_target_utterance_multiple_occurences_of_each(self):
+        """Test with 1 shortening, 1 fragment and 1 replacement."""
+        pass
+
+    def test_get_target_utterance_no_occurences(self):
+        """Test get_actual_utterance using an utt without occurences."""
+        pass
+
+    def test_get_target_utterance_empty_string(self):
+        """Test get_target_utterance with an empty string."""
+        pass
+
+    # ----------------------------
+
+    def test_get_standard_form(self):
+        """Test get_standard_form.
+
+        TODO: What is there to test?
+        """
+        pass
+
+    def test_get_word_languge(self):
+        """Test get_word_language.
+
+        TODO: What is there to test?
+        """
+        pass
 
 
 if __name__ == '__main__':
