@@ -21,6 +21,8 @@ class TestCHATReader(unittest.TestCase):
         cls.reader = CHATReader()
         cls.maxDiff = None
 
+    # ---------- metadata ----------
+
     def test_iter_metadata_fields(self):
         """Test iter_metadata_fields with normal intput."""
         actual_output = list(self.reader.iter_metadata_fields('./test.cha'))
@@ -57,6 +59,8 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ('Participants', ptcs)
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- @Media ----------
+
     def test_get_media_fields_two_fields(self):
         """Test get_media_fields method for two field input."""
         actual_output = self.reader.get_media_fields('h2ab, audio')
@@ -69,6 +73,8 @@ class TestCHATReader(unittest.TestCase):
         actual_output = self.reader.get_media_fields(input_str)
         desired_output = ('h2ab', 'audio', 'unknown speaker')
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- @Participants ----------
 
     def test_iter_participants(self):
         """Test iter_participants for a normal case."""
@@ -94,6 +100,8 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ('CHI', 'Hlobohang', 'Target_Child')
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- @ID ----------
+
     def test_get_id_fields_all_empty_fields(self):
         """Test get_id_fields for the case of all fields being empty."""
         input_str = '||||||||||'
@@ -112,6 +120,8 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ('sme', 'Sesotho', 'MEM', '', 'female', '',
                           '', 'Grandmother', '', '')
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- Record ----------
 
     def test_replace_line_breaks_single(self):
         """Test replace_line_breaks for single line break."""
@@ -151,6 +161,8 @@ class TestCHATReader(unittest.TestCase):
                           'kekumbakumba .\n%cod:\tcp tape_recorder(9 , 10) .'
                           '\n%eng:\tIt is a stereo']
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- Main line ----------
 
     def test_get_mainline_standard_case(self):
         """Test get_mainline for a standard record."""
@@ -225,6 +237,8 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ['ke', 'eng', 'ntho', 'ena', 'e?']
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- dependent tiers ----------
+
     def test_iter_dependent_tiers_standard_case(self):
         """Test iter_dependent_tiers for standard input."""
         record = '*CHI:	ke ntencha ncha . 8551_19738\n%gls:	ke ntho ' \
@@ -292,6 +306,8 @@ class TestACQDIVCHATReader(unittest.TestCase):
         self.reader = ACQDIVCHATReader(session_file_path)
         self.maxDiff = None
 
+    # ---------- metadata ----------
+
     def test_get_metadata_fields(self):
         """Test get_metadata_fields with the test.cha-file."""
         actual_output = self.reader.get_metadata_fields()
@@ -332,6 +348,8 @@ class TestACQDIVCHATReader(unittest.TestCase):
         actual_output = self.reader.get_session_filename()
         desired_output = 'h2ab'
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- speaker ----------
 
     def test_get_speaker_iterator(self):
         """Test get_speaker_iterator for the speakers in 'test.cha'."""
@@ -412,6 +430,8 @@ class TestACQDIVCHATReader(unittest.TestCase):
             actual_output.append(self.reader.get_speaker_role())
         desired_output = ['Grandmother', 'Target_Child']
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- record ----------
 
     def test_get_record_iterator(self):
         """Test get_record_iterator with test.cha."""
@@ -540,6 +560,8 @@ class TestACQDIVCHATReader(unittest.TestCase):
         desired_output = ['8551', '19738', '24653', '28048', '31840']
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- utterance ----------
+
     def test_get_utterance(self):
         """Test get_utterance with test.cha."""
         actual_output = []
@@ -565,6 +587,8 @@ class TestACQDIVCHATReader(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     # TODO: more test cases for get_sentence type?
+
+    # ---------- actual & target ----------
 
     # Test for the get_shortening_actual-method.
     # All examples are modified versions of real utterances.
@@ -898,6 +922,8 @@ class TestACQDIVCHATReader(unittest.TestCase):
         desired_output = 'actual'
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- morphology ----------
+
     def test_get_word_languge(self):
         """Test get_word_language.
 
@@ -982,14 +1008,16 @@ class TestInuktitutReader(unittest.TestCase):
         self.reader = InuktitutReader(session_file_path)
         self.maxDiff = None
 
-    def test_get_actual_alternative(self):
+    # Tests for the get_target_alternative-method.
+
+    def test_get_actual_alternative_single_alternative(self):
         """Test get_actual_alternative with 1 alternative."""
         utterance = 'nuutuinnaq [=? nauk tainna]'
         actual_output = self.reader.get_actual_alternative(utterance)
         desired_output = 'nauk tainna'
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_actual_alternative(self):
+    def test_get_actual_alternative_two_alternatives(self):
         """Test get_actual_alternative with 2 alternatives."""
         utterance = ('nuutuinnaq [=? nauk tainna] hela nuutuinnaq '
                      '[=? nauk tainna] .')
@@ -997,12 +1025,140 @@ class TestInuktitutReader(unittest.TestCase):
         desired_output = 'nauk tainna hela nauk tainna .'
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_target_alternative(self):
+    def test_get_actual_alternative_no_alternatives(self):
+        """Test get_actual_alternative with 2 alternatives."""
+        utterance = 'nuutuinnaq hela nuutuinnaq .'
+        actual_output = self.reader.get_actual_alternative(utterance)
+        desired_output = 'nuutuinnaq hela nuutuinnaq .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_actual_alternative_empty_string(self):
+        """Test get_actual_alternative with 2 alternatives."""
+        utterance = ''
+        actual_output = self.reader.get_actual_alternative(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the get_target_alternative-method.
+
+    def test_get_target_alternative_single_alternative(self):
         """Test get_target_alternative with 1 alternative."""
+        utterance = 'nuutuinnaq [=? nauk tainna]'
+        actual_output = self.reader.get_target_alternative(utterance)
+        desired_output = 'nuutuinnaq'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_target_alternative_two_alternatives(self):
+        """Test get_target_alternative with 2 alternatives."""
+        utterance = ('nuutuinnaq [=? nauk tainna] hela nuutuinnaq '
+                     '[=? nauk tainna] .')
+        actual_output = self.reader.get_target_alternative(utterance)
+        desired_output = 'nuutuinnaq hela nuutuinnaq .'
+        self.assertEqual(actual_output, desired_output)
+
+    # Test for the get_actual_utterance-method.
+
+    def test_get_actual_utterance_one_per_inference_type(self):
+        """Test get_actual_utterance with 1 example per inference type.
+
+        Inference types:
+        - alternatives
+        - fragments
+        - replacement
+        - shortening
+        """
+        self.reader._main_line_fields = (
+            'CHI',
+            'nuutuinnaq [=? nauk tainna] mu:(ğ)ça &ab yarasam [: yorosom] .',
+            '',
+            ''
+        )
+        actual_output = self.reader.get_actual_utterance()
+        desired_output = 'nauk tainna mu:ça ab yarasam .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_actual_utterance_two_per_inference_type(self):
+        """Test get_actual_utterance with 2 examples per inference type.
+
+        Inference types:
+        - alternatives
+        - fragments
+        - replacement
+        - shortening
+        """
+        self.reader._main_line_fields = (
+            'CHI',
+            ('&ab mu:(ğ)ça nuutuinnaq [=? nauk tainna] mu:(ğ)ça &ab yarasam '
+             '[: yorosom] yarasam [: yorosom] nuutuinnaq [=? nauk tainna] .'),
+            '',
+            ''
+        )
+        actual_output = self.reader.get_actual_utterance()
+        desired_output = ('ab mu:ça nauk tainna mu:ça ab '
+                          'yarasam yarasam nauk tainna .')
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_actual_utterance_empty_string(self):
+        """Test get_actual_utterance with an empty string."""
+        self.reader._main_line_fields = ('CHI', '', '', '')
+        actual_output = self.reader.get_actual_utterance()
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the get_target_utterance-method.
+
+    def test_get_target_utterance_one_per_inference_type(self):
+        """Test get_target_utterance with 1 example per inference type.
+
+        Inference types:
+        - alternatives
+        - fragments
+        - replacement
+        - shortening
+        """
+        self.reader._main_line_fields = (
+            'CHI',
+            'nuutuinnaq [=? nauk tainna] mu:(ğ)ça &ab yarasam [: yorosom] .',
+            '',
+            ''
+        )
+        actual_output = self.reader.get_target_utterance()
+        desired_output = 'nuutuinnaq mu:ğça xxx yorosom .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_target_utterance_two_per_inference_type(self):
+        """Test get_target_utterance with 2 examples per inference type.
+
+        Inference types:
+        - alternatives
+        - fragments
+        - replacement
+        - shortening
+        """
+        self.reader._main_line_fields = (
+            'CHI',
+            ('&ab mu:(ğ)ça nuutuinnaq [=? nauk tainna] mu:(ğ)ça &ab yarasam '
+             '[: yorosom] yarasam [: yorosom] nuutuinnaq [=? nauk tainna] .'),
+            '',
+            ''
+        )
+        actual_output = self.reader.get_target_utterance()
+        desired_output = ('xxx mu:ğça nuutuinnaq mu:ğça xxx '
+                          'yorosom yorosom nuutuinnaq .')
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_target_utterance_empty_string(self):
+        """Test get_target_utterance with an empty string."""
+        self.reader._main_line_fields = ('CHI', '', '', '')
+        actual_output = self.reader.get_target_utterance()
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the get_morph_tier-method.
+
+    def test_get_morph_tier(self):
+        """Test get_morph_tier with test.cha."""
         pass
-
-
-
 
 
 if __name__ == '__main__':
