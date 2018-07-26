@@ -1,6 +1,7 @@
 import unittest
 from acqdiv.parsers.xml.CHATReader import CHATReader
 from acqdiv.parsers.xml.CHATReader import ACQDIVCHATReader
+from acqdiv.parsers.xml.CHATReader import InuktitutReader
 
 """The metadata is a combination of hiia.cha (Sesotho), aki20803.ch 
 (Japanese Miyata) and made up data to cover more cases. 
@@ -752,14 +753,14 @@ class TestACQDIVCHATReader(unittest.TestCase):
         """Test get_fragment_target with 1 fragment."""
         utterance = '&ab .'
         actual_output = self.reader.get_fragment_target(utterance)
-        desired_output = 'ab .'
+        desired_output = 'xxx .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_fragment_target_multiple_fragments(self):
         """Test get_fragment_target with 3 fragments."""
         utterance = '&ab a &ab b &ab .'
         actual_output = self.reader.get_fragment_target(utterance)
-        desired_output = 'ab a ab b ab .'
+        desired_output = 'xxx a xxx b xxx .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_fragment_target_no_fragments(self):
@@ -802,49 +803,206 @@ class TestACQDIVCHATReader(unittest.TestCase):
 
     def test_get_actual_utterance_multiple_occurences_of_each(self):
         """Test with 2 shortenings, 2 fragments and 2 replacements."""
-        pass
+        self.reader._main_line_fields = (
+            'CHI',
+            '(A)mu:(ğ)ça yarasam [: yorosom] &ab yarasam [: yorosom] &ac',
+            '',
+            ''
+        )
+        actual_output = self.reader.get_actual_utterance()
+        desired_output = 'mu:ça yarasam ab yarasam ac'
+        self.assertEqual(actual_output, desired_output)
 
     def test_get_actual_utterance_no_occurences(self):
         """Test get_actual_utterance using an utt without occurences."""
-        pass
+        self.reader._main_line_fields = (
+            'CHI',
+            'mu:ça yarasam ab yarasam ac',
+            '',
+            ''
+        )
+        actual_output = self.reader.get_actual_utterance()
+        desired_output = 'mu:ça yarasam ab yarasam ac'
+        self.assertEqual(actual_output, desired_output)
 
     def test_get_actual_utterance_empty_string(self):
         """Test get_actual_utterance with an empty string."""
-        pass
+        self.reader._main_line_fields = (
+            'CHI',
+            '',
+            '',
+            ''
+        )
+        actual_output = self.reader.get_actual_utterance()
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
 
     # Tests for the get_actual_utterance method.
 
     def test_get_target_utterance_one_occurence_of_each(self):
         """Test with 1 shortening, 1 fragment and 1 replacement."""
-        pass
+        self.reader._main_line_fields = (
+            'CHI',
+            'Mu:(ğ)ça &ab yarasam [: yorosom]',
+            '',
+            ''
+        )
+        actual_output = self.reader.get_target_utterance()
+        desired_output = 'Mu:ğça xxx yorosom'
+        self.assertEqual(actual_output, desired_output)
 
     def test_get_target_utterance_multiple_occurences_of_each(self):
-        """Test with 1 shortening, 1 fragment and 1 replacement."""
-        pass
+        """Test with 2 shortenings, 2 fragments and 2 replacements."""
+        self.reader._main_line_fields = (
+            'CHI',
+            'yarasam [: yorosom] &ab (a)mu:(ğ)ça  &ac yarasam [: yorosom]',
+            '',
+            ''
+        )
+        actual_output = self.reader.get_target_utterance()
+        desired_output = 'yorosom xxx amu:ğça  xxx yorosom'
+        self.assertEqual(actual_output, desired_output)
 
     def test_get_target_utterance_no_occurences(self):
-        """Test get_actual_utterance using an utt without occurences."""
-        pass
+        """Test get_target_utterance using an utt without occurences."""
+        self.reader._main_line_fields = (
+            'CHI',
+            'mu:ça yarasam ab yarasam ac',
+            '',
+            ''
+        )
+        actual_output = self.reader.get_target_utterance()
+        desired_output = 'mu:ça yarasam ab yarasam ac'
+        self.assertEqual(actual_output, desired_output)
 
     def test_get_target_utterance_empty_string(self):
         """Test get_target_utterance with an empty string."""
-        pass
+        self.reader._main_line_fields = (
+            'CHI',
+            '',
+            '',
+            ''
+        )
+        actual_output = self.reader.get_target_utterance()
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
 
-    # ----------------------------
+    # ---------- morphology ----------
 
     def test_get_standard_form(self):
         """Test get_standard_form.
 
         TODO: What is there to test?
         """
-        pass
+        actual_output = self.reader.get_standard_form()
+        desired_output = 'actual'
+        self.assertEqual(actual_output, desired_output)
 
     def test_get_word_languge(self):
         """Test get_word_language.
 
         TODO: What is there to test?
         """
+        actual_output = self.reader.get_word_language('dal')
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_main_morpheme(self):
+        """Test get_main_morpheme. Returns 'gloss'
+
+        TODO: Is there more to test? Will the method be updated?
+        """
+        actual_output = self.reader.get_main_morpheme()
+        desired_output = 'gloss'
+        self.assertEqual(actual_output, desired_output)
+
+    # def test_get_morph_tier_test_dot_cha(self):
+    #     """Test get_morph_tier with test.cha."""
+    #     actual_output = []
+    #     while self.reader.load_next_record() != 0:
+    #         actual_output.append(self.reader.get_morph_tier())
+    #     desired_output = '' # TODO: create desired_output
+    #     self.assertEqual(actual_output, desired_output)
+
+    def test_get_morph_tier_multiple_morph_tiers(self):
+        """Test get_morph_tier with multple morphology tiers."""
+        self._dependent_tiers = {}
         pass
+
+    def test_get_seg_tier(self):
+        pass
+
+    def test_get_gloss_tier(self):
+        pass
+
+    def test_get_pos_tier(self):
+        pass
+
+    def test_get_seg_words(self):
+        pass
+
+    def test_get_gloss_words(self):
+        pass
+
+    def test_get_pos_words(self):
+        pass
+
+    def test_get_segments(self):
+        pass
+
+    def test_get_glosses(self):
+        pass
+
+    def test_get_poses(self):
+        pass
+
+    def test_get_morpheme_language(self):
+        """Test get_morpheme_language. Should return an empty string."""
+        seg = 'sm1s-t^f1-om2s-v^beat-m^in n^name .'
+        gloss = 'ruri mo-nyane .'
+        pos = 'VV NN'
+        actual_output = self.reader.get_morpheme_language(seg, gloss, pos)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+###############################################################################
+
+
+class TestEnglishManchester1Reader(unittest.TestCase):
+    pass
+
+###############################################################################
+
+
+class TestInuktitutReader(unittest.TestCase):
+    """Class to test the InuktitutReader."""
+
+    def setUp(self):
+        session_file_path = './test.cha'
+        self.reader = InuktitutReader(session_file_path)
+        self.maxDiff = None
+
+    def test_get_actual_alternative(self):
+        """Test get_actual_alternative with 1 alternative."""
+        utterance = 'nuutuinnaq [=? nauk tainna]'
+        actual_output = self.reader.get_actual_alternative(utterance)
+        desired_output = 'nauk tainna'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_actual_alternative(self):
+        """Test get_actual_alternative with 2 alternatives."""
+        utterance = ('nuutuinnaq [=? nauk tainna] hela nuutuinnaq '
+                     '[=? nauk tainna] .')
+        actual_output = self.reader.get_actual_alternative(utterance)
+        desired_output = 'nauk tainna hela nauk tainna .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_target_alternative(self):
+        """Test get_target_alternative with 1 alternative."""
+        pass
+
+
+
 
 
 if __name__ == '__main__':
