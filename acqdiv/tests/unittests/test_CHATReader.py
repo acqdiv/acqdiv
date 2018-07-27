@@ -951,7 +951,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
     #     self.assertEqual(actual_output, desired_output)
 
     def test_get_morph_tier_multiple_morph_tiers(self):
-        """Test get_morph_tier with multple morphology tiers."""
+        """Test get_morph_tier with multiple morphology tiers."""
         self._dependent_tiers = {}
         pass
 
@@ -1156,9 +1156,87 @@ class TestInuktitutReader(unittest.TestCase):
 
     # Tests for the get_morph_tier-method.
 
-    def test_get_morph_tier(self):
+    def test_get_morph_tier_morph_tier_present(self):
         """Test get_morph_tier with test.cha."""
+        self.reader._dependent_tiers = {'xmor': 'test mor tier'}
+        actual_output = self.reader.get_morph_tier()
+        desired_output = 'test mor tier'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morph_tier_morph_tier_absent(self):
+        """Test get_morph_tier with test.cha."""
+        self.reader._dependent_tiers = {'xmor': ''}
+        actual_output = self.reader.get_morph_tier()
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the iter_morphemes-method.
+
+    def test_iter_morphemes_standard_case(self):
+        """Test iter_morphemes with a morph in the expected format."""
+        morph_word = 'WH|nani^whereat'
+        actual_output = list(self.reader.iter_morphemes(morph_word))
+        desired_output = [('WH', 'nani', 'whereat')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_multiple_morphemes(self):
+        """Test iter_morphemes with 3 morphe-words."""
+        morph_words = 'VR|malik^follow+VV|liq^POL+VI|gitsi^IMP_2pS'
+        actual_output = list(self.reader.iter_morphemes(morph_words))
+        desired_output = [('VR', 'malik', 'follow'),
+                          ('VV', 'liq', 'POL'),
+                          ('VI', 'gitsi', 'IMP_2pS')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_no_match(self):
+        """Test iter_morphemes with a morpheme that yields no match."""
+        morph_word = 'WH|nani|whereat'
+        actual_output = list(self.reader.iter_morphemes(morph_word))
+        desired_output = [('', '', '')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_empty_string(self):
+        """Test iter_morphemes with an empty string."""
+        morph_word = ''
+        actual_output = list(self.reader.iter_morphemes(morph_word))
+        desired_output = [('', '', '')]
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the get_segments-method.
+
+    def test_get_segments(self):
+        """Test get_segments with a standard segment word."""
         pass
+
+    # Tests for the get_glosses-method.
+
+    def test_get_glosses(self):
+        """Test get_glosses with a standard gloss word."""
+        pass
+
+    # Tests for the get_poses-method.
+
+    def test_get_poses(self):
+        """Test get_poses with a standard gloss word."""
+        pass
+
+    # Tests for the get_morpheme_language-method.
+
+    def test_get_morpheme_language_inuktitut(self):
+        """Test get_morpheme_language with a morpheme in Inuktitut."""
+        seg, gloss, pos = 'ba', '1sg', 'V'
+        actual_output = self.reader.get_morpheme_language(seg, gloss, pos)
+        desired_output = 'Inuktitut'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_language_english(self):
+        """Test get_morpheme_language with a morpheme in Inuktitut."""
+        seg, gloss, pos = 'ba@e', '1sg', 'V'
+        actual_output = self.reader.get_morpheme_language(seg, gloss, pos)
+        desired_output = 'English'
+        self.assertEqual(actual_output, desired_output)
+
+###############################################################################
 
 
 if __name__ == '__main__':
