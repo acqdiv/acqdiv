@@ -259,7 +259,7 @@ class CHATCleaner(CorpusCleanerInterface):
 
         Coding in CHAT: ^ within word
         """
-        pause_regex = re.compile(r'(\S+)\^(\S+)')
+        pause_regex = re.compile(r'(\S+?)\^(\S+?)')
         return pause_regex.sub(r'\1\2', word)
 
     @staticmethod
@@ -499,7 +499,7 @@ class CreeCleaner(CHATCleaner):
 
         An underscore is used as a morpheme separator (e.g. 'giddy_up').
         """
-        morph_sep_regex = re.compile(r'(\S+)_(\S+)')
+        morph_sep_regex = re.compile(r'(\S+?)_(\S+?)')
         return morph_sep_regex.sub(r'\1\2', word)
 
     @staticmethod
