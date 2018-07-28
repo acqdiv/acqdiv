@@ -157,7 +157,7 @@ class TestCHATReader(unittest.TestCase):
                           '*CHI:\te nte ena . 24300_28048\n%gls:\tke ntho '
                           'ena .\n%cod:\tcp thing(9 , 10) d9 .\n%eng:\t'
                           'It is this thing\n',
-                          '*MEM:\tke khomba\nkhomba . 28048_31840\n%gls:	'
+                          '*MEM:\tke khomba khomba . 28048_31840\n%gls:	'
                           'kekumbakumba .\n%cod:\tcp tape_recorder(9 , 10) .'
                           '\n%eng:\tIt is a stereo']
         self.assertEqual(actual_output, desired_output)
@@ -199,28 +199,21 @@ class TestCHATReader(unittest.TestCase):
         """Test get_mainline_fields for mainline with postcode."""
         mainline = '*KAT:	ke eng ? [+ neg]'
         actual_output = self.reader.get_mainline_fields(mainline)
-        desired_output = ('KAT', 'ke eng ?', '', '')
+        desired_output = ('KAT', 'ke eng ? [+ neg]', '', '')
         self.assertEqual(actual_output, desired_output)
 
     def test_get_mainline_fields_with_multiple_postcodes(self):
         """Test get_mainline_fields for mainline with postcodes."""
         mainline = '*KAT:	ke eng ? [+ neg] [+ req]'
         actual_output = self.reader.get_mainline_fields(mainline)
-        desired_output = ('KAT', 'ke eng ?', '', '')
+        desired_output = ('KAT', 'ke eng ? [+ neg] [+ req]', '', '')
         self.assertEqual(actual_output, desired_output)
 
     def test_get_mainline_fields_with_multiple_postcodes_and_time(self):
         """Test get_mainline_fields for mainline with postcodes."""
         mainline = '*KAT:	ke eng ? [+ neg] [+ req] 0_8551'
         actual_output = self.reader.get_mainline_fields(mainline)
-        desired_output = ('KAT', 'ke eng ?', '0', '8551')
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_mainline_fields_with_time_and_multiple_postcodes(self):
-        """Test get_mainline_fields for mainline with postcodes."""
-        mainline = '*KAT:	ke eng ? 0_8551 [+ neg] [+ req]'
-        actual_output = self.reader.get_mainline_fields(mainline)
-        desired_output = ('KAT', 'ke eng ?', '0', '8551')
+        desired_output = ('KAT', 'ke eng ? [+ neg] [+ req]', '0', '8551')
         self.assertEqual(actual_output, desired_output)
 
     def test_get_mainline_fields_without_time(self):
@@ -447,7 +440,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
             'thing ?\n%sit:\tPoints to tape\n',
             '*CHI:\te nte ena . 24300_28048\n%gls:\tke ntho ena .\n%cod:'
             '\tcp thing(9 , 10) d9 .\n%eng:\tIt is this thing\n',
-            '*MEM:\tke khomba\nkhomba . 28048_31840\n%gls:\tkekumbakumba .'
+            '*MEM:\tke khomba khomba . 28048_31840\n%gls:\tkekumbakumba .'
             '\n%cod:\tcp tape_recorder(9 , 10) .\n%eng:\tIt is a stereo'
         ]
         self.assertEqual(actual_output, desired_output)
@@ -532,7 +525,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
         """Test get_comments with test.cha."""
         actual_output = []
         while self.reader.load_next_record() != 0:
-            actual_output.append(self.reader.get_translation())
+            actual_output.append(self.reader.get_comments())
         desired_output = ['', 'test comment', '', '', '']
         self.assertEqual(actual_output, desired_output)
 
@@ -569,7 +562,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
             actual_output.append(self.reader.get_utterance())
         desired_output = ['ke eng ?', 'ke ntencha ncha .',
                           'ke eng ntho ena e?', 'e nte ena .',
-                          'ke khomba']
+                          'ke khomba khomba .']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_sentence_type_test_dot_cha_utts(self):
@@ -581,9 +574,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
         while self.reader.load_next_record() != 0:
             actual_output.append(self.reader.get_sentence_type())
         desired_output = ['question', 'default', 'question',
-                          'default', 'unknown']
-        # The last utterance has no terminator. This desired_output
-        # assumes, that such cases get the sentence type 'unknown'.
+                          'default', 'default']
         self.assertEqual(actual_output, desired_output)
 
     # TODO: more test cases for get_sentence type?
@@ -810,7 +801,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
             actual_output.append(self.reader.get_actual_utterance())
         desired_output = ['ke eng ?', 'ke ntencha ncha .',
                           'ke eng ntho ena e?', 'e nte ena .',
-                          'ke khomba']
+                          'ke khomba khomba .']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_actual_utterance_one_occurence_of_each(self):

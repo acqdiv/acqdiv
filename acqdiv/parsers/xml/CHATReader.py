@@ -264,6 +264,8 @@ class CHATReader:
 
             # handle last record and strip the @End marker
             rec_str = mm[rec_start_pos:].decode().rstrip('@End\n')
+            # clean line_breaks
+            rec_str = cls._replace_line_breaks(rec_str)
             yield rec_str
 
             cls._uid = None
@@ -296,20 +298,19 @@ class CHATReader:
         Returns:
             tuple: (speaker ID, utterance, start time, end time).
         """
-        # TODO: break this complicated regex up
         main_line_regex = re.compile(
-            r'\*([A-Za-z0-9]{2,3}):\t(.*[.!?])(( \[.*\])?(.*?(\d+)_(\d+))?)?')
+            r'\*([A-Za-z0-9]{2,3}):\t(.*?)( \D?(\d+)(_(\d+))?\D?$|$)')
         match = main_line_regex.search(main_line)
         label = match.group(1)
         utterance = match.group(2)
 
-        if match.group(6):
-            start = match.group(6)
+        if match.group(4):
+            start = match.group(4)
         else:
             start = ''
 
-        if match.group(7):
-            end = match.group(7)
+        if match.group(6):
+            end = match.group(6)
         else:
             end = ''
 
@@ -585,18 +586,18 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         Coding in CHAT: parentheses within word.
         The part with parentheses is removed.
         """
-        shortening_regex = re.compile(r'(\S*)\(\S+\)(\S*)')
-        return shortening_regex.sub(r'\1\2', utterance)
+        shortening_regex = re.compile(r'(?<=\S)\(\S+?\)|\(\S+?\)(?=\S)')
+        return shortening_regex.sub('', utterance)
 
     @staticmethod
     def get_shortening_target(utterance):
         """Get the target form of shortenings.
 
-        Coding in CHAT: \w+(\w+)\w+ .
+        Coding in CHAT: parentheses within word.
         The part in parentheses is kept, parentheses are removed.
         """
-        shortening_regex = re.compile(r'(\S*)\((\S+)\)(\S*)')
-        return shortening_regex.sub(r'\1\2\3', utterance)
+        shortening_regex = re.compile(r'(?<=\S)\((\S+?)\)|\((\S+?)\)(?=\S)')
+        return shortening_regex.sub(r'\1\2', utterance)
 
     @staticmethod
     def get_replacement_actual(utterance):
@@ -800,6 +801,11 @@ class InuktitutReader(ACQDIVCHATReader):
     @staticmethod
     def iter_morphemes(word):
         """Iter POS tags, segments and glosses of a word.
+
+        Morphemes are separated by a '+'. POS tags are on the left
+        separated by a '|' from the segment. There may be several POS tags
+        all separated by a '|'. The gloss is on the right separated from the
+        segment by a '^'.
 
         Args:
             word (str): A morpheme word.
