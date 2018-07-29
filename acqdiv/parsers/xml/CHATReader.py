@@ -727,18 +727,54 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
     def iter_morphemes(morph_word):
         """Iter morphemes of a word.
 
+        A word may consist of word groups in the case of:
+            - clitics (only postclitic: ~)
+            - compounds (+)
+
+        A word group has the following structure:
+        prefix#part-of-speech|stem&fusionalsuffix-suffix=english
+
+        The '=english'-part is removed.
+
         Returns:
             tuple: (segment, gloss, pos).
         """
-        morpheme_regex = re.compile(r'((.+)\|(.+))|([^|]+)')
-        for morpheme in re.split(r'-|~|(?<!\|)\+', morph_word):
-            match = morpheme_regex.fullmatch(morpheme)
-            # stem is given along with its POS tag
-            if match.group(1):
-                yield match.group(3), '', match.group(2)
-            # only grammatical gloss is given
-            else:
-                yield '', match.group(4), 'sfx'
+        morpheme_regex = re.compile(r'[^#]+#'
+                                    r'|[^\-]+'
+                                    r'|[\-][^\-]+')
+
+        # split into word groups (in case of compound, clitics)
+        word_groups = re.split(r'[+~]', morph_word)
+
+        for word_group in word_groups:
+
+            # skip POS tag of whole compound if existing
+            if word_group.endswith('|'):
+                continue
+
+            # remove =english
+            word_group = re.sub(r'=.*', '', word_group)
+
+            # iter morphemes
+            for match in morpheme_regex.finditer(word_group):
+                morpheme = match.group()
+
+                # prefix
+                if morpheme.endswith('#'):
+                    segment = ''
+                    gloss = morpheme.rstrip('#')
+                    pos = 'pfx'
+                # sfx
+                elif morpheme.startswith('-'):
+                    segment = ''
+                    gloss = morpheme.lstrip('-~')
+                    pos = 'sfx'
+                # stem
+                else:
+                    segment = ''
+                    pos, gloss = morpheme.split('|')
+
+                yield segment, gloss, pos
 
     def get_segments(self, seg_word):
         return [seg for seg, _, _ in self.iter_morphemes(seg_word)]
