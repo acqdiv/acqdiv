@@ -723,6 +723,14 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
     def get_translation(self):
         return self.get_utterance()
 
+    def get_word_language(self, word):
+        if word.endswith('@s:fra'):
+            return 'French'
+        elif word.endswith('@s:ita'):
+            return 'Italian'
+        else:
+            return 'English'
+
     @staticmethod
     def iter_morphemes(morph_word):
         """Iter morphemes of a word.
@@ -784,6 +792,12 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
 
     def get_poses(self, pos_word):
         return [pos for _, _, pos in self.iter_morphemes(pos_word)]
+
+    def get_morpheme_language(self, seg, gloss, pos):
+        if pos == 'L2':
+            return 'L2'
+        else:
+            return 'English'
 
 ###############################################################################
 
