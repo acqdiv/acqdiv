@@ -358,6 +358,18 @@ class EnglishManchester1Cleaner(CHATCleaner):
     def clean_pos_tier(cls, pos_tier):
         return cls.clean_morph_tier(pos_tier)
 
+    @staticmethod
+    def extract_first_pos(pos):
+        """Extract the first POS tag.
+
+        Several POS tags are separated by ':'.
+        """
+        return pos.split(':')[0]
+
+    @classmethod
+    def clean_pos(cls, pos):
+        return cls.extract_first_pos(pos)
+
 
 class InuktitutCleaner(CHATCleaner):
 
