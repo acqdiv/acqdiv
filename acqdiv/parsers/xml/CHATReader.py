@@ -541,7 +541,10 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         return self._dependent_tiers.get('eng', '')
 
     def get_comments(self):
-        return self._dependent_tiers.get('com', '')
+        comments = self._dependent_tiers.get('com', '')
+        situation = self._dependent_tiers.get('sit', '')
+
+        return '; '.join((f for f in [comments, situation] if f))
 
     def get_record_speaker_label(self):
         return self.get_mainline_speaker_id(self._main_line_fields)

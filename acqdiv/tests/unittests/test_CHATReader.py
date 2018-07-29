@@ -521,6 +521,8 @@ class TestACQDIVCHATReader(unittest.TestCase):
         desired_output = ['CHI', '', '', '', '']
         self.assertEqual(actual_output, desired_output)
 
+    # TODO: changed behaviour -> situation field is also added
+
     def test_get_comments(self):
         """Test get_comments with test.cha."""
         actual_output = []
