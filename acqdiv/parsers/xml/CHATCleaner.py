@@ -175,10 +175,10 @@ class CHATCleaner(CorpusCleanerInterface):
         """Remove conversation analysis and satellite markers from utterance.
 
         Note:
-            Only four markers (↓↑‡„) are attested in the corpora. Only those
+            Only four markers (↓↑‡„“”) are attested in the corpora. Only those
             will be checked for removal.
         """
-        ca_regex = re.compile(r'[↓↑‡„]')
+        ca_regex = re.compile(r'[↓↑‡„“”]')
         clean = ca_regex.sub('', utterance)
         return cls.remove_redundant_whitespaces(clean)
 
@@ -343,8 +343,27 @@ class CHATCleaner(CorpusCleanerInterface):
 class EnglishManchester1Cleaner(CHATCleaner):
 
     @classmethod
+    def remove_non_words(cls, morph_tier):
+        """Remove all non-words from the morphology tier.
+
+        Non-words include:
+            end|end („)
+            cm|cm (,)
+            bq|bq (“)
+            eq|eq (”)
+        """
+        non_words_regex = re.compile(r'end\|end'
+                                     r'|cm\|cm'
+                                     r'|bq\|bq'
+                                     r'|eq\|eq')
+
+        morph_tier = non_words_regex.sub('', morph_tier)
+        return cls.remove_redundant_whitespaces(morph_tier)
+
+    @classmethod
     def clean_morph_tier(cls, morph_tier):
-        return cls.remove_terminator(morph_tier)
+        morph_tier = cls.remove_terminator(morph_tier)
+        return cls.remove_non_words(morph_tier)
 
     @classmethod
     def clean_seg_tier(cls, seg_tier):

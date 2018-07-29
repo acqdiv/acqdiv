@@ -428,6 +428,8 @@ class TestCHATCleaner(unittest.TestCase):
 
     # Tests for the remove_ca-method.
 
+    #TODO: test quotations
+
     def test_remove_ca_falling_rising_mark(self):
         """Test remove_ca with 3 rising (↑) and 1 falling (↓) mark."""
         actual_output = CHATCleaner.remove_ca(
