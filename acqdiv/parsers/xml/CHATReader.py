@@ -805,6 +805,12 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
 class InuktitutReader(ACQDIVCHATReader):
     """Inferences for Inuktitut."""
 
+    def get_start_time(self):
+        return self._dependent_tiers.get('tim', '')
+
+    def get_end_time(self):
+        return ''
+
     @staticmethod
     def get_actual_alternative(utterance):
         """Get the actual form of alternatives.
