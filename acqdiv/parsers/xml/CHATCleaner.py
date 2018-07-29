@@ -228,6 +228,7 @@ class CHATCleaner(CorpusCleanerInterface):
                 cls.remove_events, cls.remove_omissions,
                 cls.remove_linkers, cls.remove_separators, cls.remove_ca,
                 cls.remove_fillers, cls.remove_pauses_between_words,
+                cls.remove_scoped_symbols,
                 cls.null_untranscribed_utterances]:
             utterance = cleaning_method(utterance)
 
