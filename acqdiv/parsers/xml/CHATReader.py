@@ -934,3 +934,31 @@ class CreeReader(ACQDIVCHATReader):
             return 'English'
         else:
             return 'Cree'
+
+
+###############################################################################
+
+
+class JapaneseMiiProReader(ACQDIVCHATReader):
+
+    def get_morph_tier(self):
+        return self._dependent_tiers.get('xtrn', '')
+
+    def get_word_language(self, word):
+        if word.endswith('@s:eng'):
+            return 'English'
+        else:
+            return 'Japanese'
+
+    def iter_morphemes(self, word):
+        """Iter POS tags, segments and glosses of a word."""
+        pass
+
+    def get_segments(self, seg_word):
+        return []
+
+    def get_glosses(self, gloss_word):
+        return []
+
+    def get_poses(self, pos_word):
+        return []

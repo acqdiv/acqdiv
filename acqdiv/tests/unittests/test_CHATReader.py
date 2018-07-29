@@ -164,6 +164,9 @@ class TestCHATReader(unittest.TestCase):
 
     # ---------- Main line ----------
 
+    # TODO: no whitespace between terminator & time -> investigate
+    # TODO: e.g. Japanese MiiPro
+
     def test_get_mainline_standard_case(self):
         """Test get_mainline for a standard record."""
         record = '*KAT:	ke eng ? 0_8551\n%gls:	ke eng ?\n%cod:	cp wh ?' \
