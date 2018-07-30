@@ -843,7 +843,7 @@ class TestInuktitutCleaner(unittest.TestCase):
     def test_clean_seg_tier(self):
         """Test clean_seg_tier."""
         seg_tier = ('NR|unatartusaq^soldier+NN|AUG|aluk^EMPH+IACT|'
-                     'ai^greetings . [+ IM]')
+                    'ai^greetings . [+ IM]')
         actual_output = InuktitutCleaner.clean_seg_tier(seg_tier)
         desired_output = ('NR|unatartusaq^soldier+NN|AUG|aluk^EMPH+'
                           'IACT|ai^greetings')
@@ -852,7 +852,7 @@ class TestInuktitutCleaner(unittest.TestCase):
     def test_clean_gloss_tier(self):
         """Test clean_gloss_tier."""
         seg_tier = ('NR|unatartusaq^soldier+NN|AUG|aluk^EMPH+IACT|'
-                     'ai^greetings . [+ IM]')
+                    'ai^greetings . [+ IM]')
         actual_output = InuktitutCleaner.clean_gloss_tier(seg_tier)
         desired_output = ('NR|unatartusaq^soldier+NN|AUG|aluk^EMPH+'
                           'IACT|ai^greetings')
@@ -861,7 +861,7 @@ class TestInuktitutCleaner(unittest.TestCase):
     def test_clean_pos_tier(self):
         """Test clean_pos_tier."""
         seg_tier = ('NR|unatartusaq^soldier+NN|AUG|aluk^EMPH+IACT|'
-                     'ai^greetings . [+ IM]')
+                    'ai^greetings . [+ IM]')
         actual_output = InuktitutCleaner.clean_pos_tier(seg_tier)
         desired_output = ('NR|unatartusaq^soldier+NN|AUG|aluk^EMPH+'
                           'IACT|ai^greetings')
@@ -965,6 +965,8 @@ class TestInuktitutCleaner(unittest.TestCase):
 class TestCreeCleaner(unittest.TestCase):
     """Class to test the Cree cleaner"""
 
+    # ---------- utterance cleaning ----------
+
     # Tests for the remove_angle_brackets-method.
 
     def test_remove_angle_brackets_standard_case(self):
@@ -980,27 +982,55 @@ class TestCreeCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    # Test for the remove_morph_separators-method.
+    def test_clean_utterance_mixed(self):
+        """Test clean_utterance with angle brackets and scoped symbols."""
+        utterance = '‹hey there [=! cries]›'
+        actual_output = CreeCleaner.clean_utterance(utterance)
+        desired_output = 'hey there'
+        self.assertEqual(actual_output, desired_output)
 
-    def test_remove_morph_separators_single_separator(self):
-        """Test remove_morph_separators with 1 separator (_)."""
+    # Test for the remove_morpheme_separators-method.
+
+    def test_remove_morpheme_separators_single_separator(self):
+        """Test remove_morpheme_separators with 1 separator (_)."""
         input_str = 'bye_bye'
         actual_output = CreeCleaner.remove_morph_separators(input_str)
         desired_output = 'byebye'
         self.assertEqual(actual_output, desired_output)
 
-    def test_remove_morph_separators_multiple_separators(self):
-        """Test remove_morph_separators with 2 separators (_)."""
+    def test_remove_morpheme_separators_multiple_separators(self):
+        """Test remove_morpheme_separators with 2 separators (_)."""
         input_str = 'ha_ha_train'
         actual_output = CreeCleaner.remove_morph_separators(input_str)
         desired_output = 'hahatrain'
         self.assertEqual(actual_output, desired_output)
 
-    def test_remove_morph_separators_empty_string(self):
-        """Test remove_morph_separators with an empty string."""
+    def test_remove_morpheme_separators_empty_string(self):
+        """Test remove_morpheme_separators with an empty string."""
         actual_output = CreeCleaner.remove_morph_separators('')
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
+
+    def test_clean_word_already_clean(self):
+        """Test clean word with a already clean word."""
+        actual_output = CreeCleaner.clean_word('ke')
+        desired_output = 'ke'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_word_already_mixed(self):
+        """Test clean_word with Cases Cree-specific and non-Cree-specific.
+
+        Cases:
+        - zero-morpheme
+        - morph-separator
+        - blocking
+        - drawls
+        """
+        actual_output = CreeCleaner.clean_word('^ke_ke:na-zéro')
+        desired_output = 'kekena-Ø'
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- morphology tier cleaning ----------
 
     # Test for the replace_zero-method.
 
@@ -1077,6 +1107,41 @@ class TestCreeCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
+    def test_clean_morph_tier_mixed(self):
+        """Test clean_morph_tier with square brackets and untranscribed."""
+        actual_output = CreeCleaner.clean_morph_tier('[*]')
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_morph_tier_empty_string(self):
+        """Test clean_morph_tier with an empty string."""
+        actual_output = CreeCleaner.clean_morph_tier('')
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_seg_tier(self):
+        """Test clean_seg_tier."""
+        seg_tier = '[1~initial~vta.fin~passive~zzz]'
+        actual_output = CreeCleaner.clean_seg_tier(seg_tier)
+        desired_output = '1~initial~vta.fin~passive~zzz'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_gloss_tier(self):
+        """Test clean_gloss_tier."""
+        gloss_tier = '[1~initial~vta.fin~passive~zzz]'
+        actual_output = CreeCleaner.clean_gloss_tier(gloss_tier)
+        desired_output = '1~initial~vta.fin~passive~zzz'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_pos_tier(self):
+        """Test clean_pos_tier."""
+        pos_tier = '[1~initial~vta.fin~passive~zzz]'
+        actual_output = CreeCleaner.clean_pos_tier(pos_tier)
+        desired_output = '1~initial~vta.fin~passive~zzz'
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- tier cross cleaning ----------
+
     # Tests for the replace_eng-method.
 
     def test_replace_eng_single_eng(self):
@@ -1103,10 +1168,29 @@ class TestCreeCleaner(unittest.TestCase):
         desired_output = 'garbage fin~3.sg garbage'
         self.assertEqual(actual_output, desired_output)
 
+    def test_replace_eng_tiers_misaligned(self):
+        """Test replace_eng with word tier longer than gloss tier."""
+        gloss_tier = 'Eng fin~3.sg'
+        utterance = 'garbage â~u garbage'
+        actual_output = CreeCleaner.replace_eng(gloss_tier, utterance)
+        desired_output = 'Eng fin~3.sg'
+        self.assertEqual(actual_output, desired_output)
+
     def test_replace_eng_emtpy_string(self):
         """Test replace_eng with an empty string."""
         actual_output = CreeCleaner.replace_eng('', '')
         desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_cross_clean(self):
+        """Test cross_clean with several engs."""
+        utterance = 'hi ha be bye'
+        seg_tier = 'ke h_a b_e me'
+        gloss_tier = 'Eng 1sg pl Eng'
+        pos_tier = 'N V N V'
+        actual_output = CreeCleaner.cross_clean(utterance, seg_tier,
+                                                gloss_tier, pos_tier)
+        desired_output = (utterance, seg_tier, 'hi 1sg pl bye', pos_tier)
         self.assertEqual(actual_output, desired_output)
 
     # Tests for the replace_percentages-method.
