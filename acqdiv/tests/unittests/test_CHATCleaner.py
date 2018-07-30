@@ -103,18 +103,6 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = 'sit down'
         self.assertEqual(actual_output, desired_output)
 
-    def test_remove_terminator_colon(self):
-        """Test remove_terminator with colon."""
-        actual_output = CHATCleaner.remove_terminator('I got cold :')
-        desired_output = 'I got cold'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_remove_terminator_semi_colon(self):
-        """Test remove_terminator with semi colon."""
-        actual_output = CHATCleaner.remove_terminator('I got cold ;')
-        desired_output = 'I got cold'
-        self.assertEqual(actual_output, desired_output)
-
     def test_remove_terminator_trailing_off(self):
         """Test remove_terminator with trailing off."""
         actual_output = CHATCleaner.remove_terminator(
