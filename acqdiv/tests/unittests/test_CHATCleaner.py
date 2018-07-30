@@ -289,6 +289,13 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = 'Hey Hey there there there'
         self.assertEqual(actual_output, desired_output)
 
+    def test_handle_repetitions_scope_over_three_words(self):
+        """Test handle_repetitions with a scope of 3 words."""
+        actual_output = CHATCleaner.handle_repetitions(
+            '<how are you> [x 2]')
+        desired_output = 'how are you how are you'
+        self.assertEqual(actual_output, desired_output)
+
     def test_handle_repetitions_empty_string(self):
         """Test handle_repetitions with an empty string."""
         actual_output = CHATCleaner.handle_repetitions('')
@@ -404,7 +411,12 @@ class TestCHATCleaner(unittest.TestCase):
 
     # Tests for the remove_ca-method.
 
-    # TODO: test quotations
+    def test_remove_ca_quotations(self):
+        """Test remove_ca with opening and closing quotations."""
+        actual_output = CHATCleaner.remove_ca(
+            '“Hey there what up no”')
+        desired_output = 'Hey there what up no'
+        self.assertEqual(actual_output, desired_output)
 
     def test_remove_ca_falling_rising_mark(self):
         """Test remove_ca with 3 rising (↑) and 1 falling (↓) mark."""
@@ -645,21 +657,21 @@ class TestCHATCleaner(unittest.TestCase):
     def test_clean_seg_tier(self):
         """Test clean_seg_tier for same input as output."""
         seg_tier = 'ha be'
-        actual_output = CHATCleaner.clean_word(seg_tier)
+        actual_output = CHATCleaner.clean_seg_tier(seg_tier)
         desired_output = seg_tier
         self.assertEqual(actual_output, desired_output)
 
     def test_clean_gloss_tier(self):
         """Test clean_gloss_tier for same input as output."""
         gloss_tier = 'ha be'
-        actual_output = CHATCleaner.clean_word(gloss_tier)
+        actual_output = CHATCleaner.clean_gloss_tier(gloss_tier)
         desired_output = gloss_tier
         self.assertEqual(actual_output, desired_output)
 
     def test_clean_pos_tier(self):
         """Test clean_pos_tier for same input as output."""
         pos_tier = 'ha be'
-        actual_output = CHATCleaner.clean_word(pos_tier)
+        actual_output = CHATCleaner.clean_pos_tier(pos_tier)
         desired_output = pos_tier
         self.assertEqual(actual_output, desired_output)
 
