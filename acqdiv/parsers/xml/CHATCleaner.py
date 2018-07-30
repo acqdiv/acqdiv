@@ -520,8 +520,8 @@ class CreeCleaner(CHATCleaner):
 
     @classmethod
     def clean_utterance(cls, utterance):
-        utterance = super().clean_utterance(utterance)
-        return cls.remove_angle_brackets(utterance)
+        utterance = cls.remove_angle_brackets(utterance)
+        return super().clean_utterance(utterance)
 
     # ---------- word cleaning ----------
 
