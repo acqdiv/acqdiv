@@ -176,10 +176,10 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = 'what did you'
         self.assertEqual(actual_output, desired_output)
 
-    def test_remove_terminator_quotation_on_next_line(self):
-        """Test remove_terminator with CA-Terminator (++.)."""
+    def test_remove_terminator_quotation_follows(self):
+        """Test remove_terminator with (+"/.)."""
         actual_output = CHATCleaner.remove_terminator(
-            '*CHI:and then the little bear said +”/.')
+            '*CHI:and then the little bear said +"/.')
         desired_output = '*CHI:and then the little bear said'
         self.assertEqual(actual_output, desired_output)
 
@@ -250,7 +250,7 @@ class TestCHATCleaner(unittest.TestCase):
     def test_remove_events_multiple_events_with_space_before_terminator(self):
         """Test remove_events with an utt containing 3 events."""
         actual_output = CHATCleaner.remove_events(
-            '&=gasps I got &=groans cold &=vocalizes.')
+            '&=gasps I got &=groans cold &=vocalizes .')
         desired_output = 'I got cold .'
         self.assertEqual(actual_output, desired_output)
 
@@ -325,10 +325,10 @@ class TestCHATCleaner(unittest.TestCase):
 
     # Tests for the unify_untranscribed-method.
 
-    def test_unify_untranscribed_xyz(self):
-        """Test unify_untranscribed with 'xxx', 'yyy' and 'zzz'."""
+    def test_unify_untranscribed_xyw(self):
+        """Test unify_untranscribed with 'xxx', 'yyy' and 'www'."""
         actual_output = CHATCleaner.unify_untranscribed(
-            'zzz xxx truck yyy ?')
+            'www xxx truck yyy ?')
         desired_output = '??? ??? truck ??? ?'
         self.assertEqual(actual_output, desired_output)
 
@@ -427,6 +427,8 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     # Tests for the remove_ca-method.
+
+    #TODO: test quotations
 
     def test_remove_ca_falling_rising_mark(self):
         """Test remove_ca with 3 rising (↑) and 1 falling (↓) mark."""

@@ -175,10 +175,10 @@ class CHATCleaner(CorpusCleanerInterface):
         """Remove conversation analysis and satellite markers from utterance.
 
         Note:
-            Only four markers (↓↑‡„) are attested in the corpora. Only those
+            Only four markers (↓↑‡„“”) are attested in the corpora. Only those
             will be checked for removal.
         """
-        ca_regex = re.compile(r'[↓↑‡„]')
+        ca_regex = re.compile(r'[↓↑‡„“”]')
         clean = ca_regex.sub('', utterance)
         return cls.remove_redundant_whitespaces(clean)
 
@@ -228,6 +228,7 @@ class CHATCleaner(CorpusCleanerInterface):
                 cls.remove_events, cls.remove_omissions,
                 cls.remove_linkers, cls.remove_separators, cls.remove_ca,
                 cls.remove_fillers, cls.remove_pauses_between_words,
+                cls.remove_scoped_symbols,
                 cls.null_untranscribed_utterances]:
             utterance = cleaning_method(utterance)
 
@@ -259,7 +260,7 @@ class CHATCleaner(CorpusCleanerInterface):
 
         Coding in CHAT: ^ within word
         """
-        pause_regex = re.compile(r'(\S+)\^(\S+)')
+        pause_regex = re.compile(r'(\S+?)\^(\S+?)')
         return pause_regex.sub(r'\1\2', word)
 
     @staticmethod
@@ -343,8 +344,27 @@ class CHATCleaner(CorpusCleanerInterface):
 class EnglishManchester1Cleaner(CHATCleaner):
 
     @classmethod
+    def remove_non_words(cls, morph_tier):
+        """Remove all non-words from the morphology tier.
+
+        Non-words include:
+            end|end („)
+            cm|cm (,)
+            bq|bq (“)
+            eq|eq (”)
+        """
+        non_words_regex = re.compile(r'end\|end'
+                                     r'|cm\|cm'
+                                     r'|bq\|bq'
+                                     r'|eq\|eq')
+
+        morph_tier = non_words_regex.sub('', morph_tier)
+        return cls.remove_redundant_whitespaces(morph_tier)
+
+    @classmethod
     def clean_morph_tier(cls, morph_tier):
-        return cls.remove_terminator(morph_tier)
+        morph_tier = cls.remove_terminator(morph_tier)
+        return cls.remove_non_words(morph_tier)
 
     @classmethod
     def clean_seg_tier(cls, seg_tier):
@@ -357,6 +377,18 @@ class EnglishManchester1Cleaner(CHATCleaner):
     @classmethod
     def clean_pos_tier(cls, pos_tier):
         return cls.clean_morph_tier(pos_tier)
+
+    @staticmethod
+    def extract_first_pos(pos):
+        """Extract the first POS tag.
+
+        Several POS tags are separated by ':'.
+        """
+        return pos.split(':')[0]
+
+    @classmethod
+    def clean_pos(cls, pos):
+        return cls.extract_first_pos(pos)
 
 
 class InuktitutCleaner(CHATCleaner):
@@ -499,7 +531,7 @@ class CreeCleaner(CHATCleaner):
 
         An underscore is used as a morpheme separator (e.g. 'giddy_up').
         """
-        morph_sep_regex = re.compile(r'(\S+)_(\S+)')
+        morph_sep_regex = re.compile(r'(\S+?)_(\S+?)')
         return morph_sep_regex.sub(r'\1\2', word)
 
     @staticmethod

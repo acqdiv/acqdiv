@@ -264,6 +264,8 @@ class CHATReader:
 
             # handle last record and strip the @End marker
             rec_str = mm[rec_start_pos:].decode().rstrip('@End\n')
+            # clean line_breaks
+            rec_str = cls._replace_line_breaks(rec_str)
             yield rec_str
 
             cls._uid = None
@@ -296,20 +298,19 @@ class CHATReader:
         Returns:
             tuple: (speaker ID, utterance, start time, end time).
         """
-        # TODO: break this complicated regex up
         main_line_regex = re.compile(
-            r'\*([A-Za-z0-9]{2,3}):\t(.*[.!?])(( \[.*\])?(.*?(\d+)_(\d+))?)?')
+            r'\*([A-Za-z0-9]{2,3}):\t(.*?)( \D?(\d+)(_(\d+))?\D?$|$)')
         match = main_line_regex.search(main_line)
         label = match.group(1)
         utterance = match.group(2)
 
-        if match.group(6):
-            start = match.group(6)
+        if match.group(4):
+            start = match.group(4)
         else:
             start = ''
 
-        if match.group(7):
-            end = match.group(7)
+        if match.group(6):
+            end = match.group(6)
         else:
             end = ''
 
@@ -540,7 +541,11 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         return self._dependent_tiers.get('eng', '')
 
     def get_comments(self):
-        return self._dependent_tiers.get('com', '')
+        comments = self._dependent_tiers.get('com', '')
+        situation = self._dependent_tiers.get('sit', '')
+        action = self._dependent_tiers.get('act', '')
+
+        return '; '.join((f for f in [comments, situation, action] if f))
 
     def get_record_speaker_label(self):
         return self.get_mainline_speaker_id(self._main_line_fields)
@@ -585,18 +590,18 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         Coding in CHAT: parentheses within word.
         The part with parentheses is removed.
         """
-        shortening_regex = re.compile(r'(\S*)\(\S+\)(\S*)')
-        return shortening_regex.sub(r'\1\2', utterance)
+        shortening_regex = re.compile(r'(?<=\S)\(\S+?\)|\(\S+?\)(?=\S)')
+        return shortening_regex.sub('', utterance)
 
     @staticmethod
     def get_shortening_target(utterance):
         """Get the target form of shortenings.
 
-        Coding in CHAT: \w+(\w+)\w+ .
+        Coding in CHAT: parentheses within word.
         The part in parentheses is kept, parentheses are removed.
         """
-        shortening_regex = re.compile(r'(\S*)\((\S+)\)(\S*)')
-        return shortening_regex.sub(r'\1\2\3', utterance)
+        shortening_regex = re.compile(r'(?<=\S)\((\S+?)\)|\((\S+?)\)(?=\S)')
+        return shortening_regex.sub(r'\1\2', utterance)
 
     @staticmethod
     def get_replacement_actual(utterance):
@@ -722,22 +727,66 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
     def get_translation(self):
         return self.get_utterance()
 
+    def get_word_language(self, word):
+        if word.endswith('@s:fra'):
+            return 'French'
+        elif word.endswith('@s:ita'):
+            return 'Italian'
+        else:
+            return 'English'
+
     @staticmethod
     def iter_morphemes(morph_word):
         """Iter morphemes of a word.
 
+        A word may consist of word groups in the case of:
+            - clitics (only postclitic: ~)
+            - compounds (+)
+
+        A word group has the following structure:
+        prefix#part-of-speech|stem&fusionalsuffix-suffix=english
+
+        The '=english'-part is removed.
+
         Returns:
             tuple: (segment, gloss, pos).
         """
-        morpheme_regex = re.compile(r'((.+)\|(.+))|([^|]+)')
-        for morpheme in re.split(r'-|~|(?<!\|)\+', morph_word):
-            match = morpheme_regex.fullmatch(morpheme)
-            # stem is given along with its POS tag
-            if match.group(1):
-                yield match.group(3), '', match.group(2)
-            # only grammatical gloss is given
-            else:
-                yield '', match.group(4), 'sfx'
+        morpheme_regex = re.compile(r'[^#]+#'
+                                    r'|[^\-]+'
+                                    r'|[\-][^\-]+')
+
+        # split into word groups (in case of compound, clitics)
+        word_groups = re.split(r'[+~]', morph_word)
+
+        for word_group in word_groups:
+
+            # skip POS tag of whole compound if existing
+            if word_group.endswith('|'):
+                continue
+
+            # remove =english
+            word_group = re.sub(r'=.*', '', word_group)
+
+            # iter morphemes
+            for match in morpheme_regex.finditer(word_group):
+                morpheme = match.group()
+
+                # prefix
+                if morpheme.endswith('#'):
+                    segment = ''
+                    gloss = morpheme.rstrip('#')
+                    pos = 'pfx'
+                # sfx
+                elif morpheme.startswith('-'):
+                    segment = ''
+                    gloss = morpheme.lstrip('-~')
+                    pos = 'sfx'
+                # stem
+                else:
+                    segment = ''
+                    pos, gloss = morpheme.split('|')
+
+                yield segment, gloss, pos
 
     def get_segments(self, seg_word):
         return [seg for seg, _, _ in self.iter_morphemes(seg_word)]
@@ -748,11 +797,23 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
     def get_poses(self, pos_word):
         return [pos for _, _, pos in self.iter_morphemes(pos_word)]
 
+    def get_morpheme_language(self, seg, gloss, pos):
+        if pos == 'L2':
+            return 'L2'
+        else:
+            return 'English'
+
 ###############################################################################
 
 
 class InuktitutReader(ACQDIVCHATReader):
     """Inferences for Inuktitut."""
+
+    def get_start_time(self):
+        return self._dependent_tiers.get('tim', '')
+
+    def get_end_time(self):
+        return ''
 
     @staticmethod
     def get_actual_alternative(utterance):
@@ -800,6 +861,11 @@ class InuktitutReader(ACQDIVCHATReader):
     @staticmethod
     def iter_morphemes(word):
         """Iter POS tags, segments and glosses of a word.
+
+        Morphemes are separated by a '+'. POS tags are on the left
+        separated by a '|' from the segment. There may be several POS tags
+        all separated by a '|'. The gloss is on the right separated from the
+        segment by a '^'.
 
         Args:
             word (str): A morpheme word.
@@ -868,3 +934,31 @@ class CreeReader(ACQDIVCHATReader):
             return 'English'
         else:
             return 'Cree'
+
+
+###############################################################################
+
+
+class JapaneseMiiProReader(ACQDIVCHATReader):
+
+    def get_morph_tier(self):
+        return self._dependent_tiers.get('xtrn', '')
+
+    def get_word_language(self, word):
+        if word.endswith('@s:eng'):
+            return 'English'
+        else:
+            return 'Japanese'
+
+    def iter_morphemes(self, word):
+        """Iter POS tags, segments and glosses of a word."""
+        pass
+
+    def get_segments(self, seg_word):
+        return []
+
+    def get_glosses(self, gloss_word):
+        return []
+
+    def get_poses(self, pos_word):
+        return []
