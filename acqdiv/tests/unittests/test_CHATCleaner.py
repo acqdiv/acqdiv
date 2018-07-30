@@ -868,7 +868,7 @@ class TestCreeCleaner(unittest.TestCase):
 
     def test_replace_eng_single_eng(self):
         """Test replace_eng with 1 Eng to be replaced."""
-        gloss_tier = 'Eng'  # brackets are already cleaned
+        gloss_tier = 'Eng'
         utterance = 'floor'
         actual_output = CreeCleaner.replace_eng(gloss_tier, utterance)
         desired_output = 'floor'
@@ -877,7 +877,7 @@ class TestCreeCleaner(unittest.TestCase):
     def test_replace_eng_multiple_engs(self):
         """Test replace_eng with 4 Engs to be replaced."""
         gloss_tier = 'remove~by. emph Eng Eng Eng Eng'
-        utterance = 'min~in~ikiniu~h wâsh u~hî these are taken off'
+        utterance = 'min~in~ikiniu~h wâsh these are taken off'
         actual_output = CreeCleaner.replace_eng(gloss_tier, utterance)
         desired_output = 'remove~by. emph these are taken off'
         self.assertEqual(actual_output, desired_output)
