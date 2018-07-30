@@ -7,7 +7,7 @@ class TestCHATParser(unittest.TestCase):
     """Class to test the CHATParser."""
 
     def setUp(self):
-        self.session_file_path = './test.cha'
+        self.session_file_path = './test_CHATParser.cha'
         self.parser = CHATParser(self.session_file_path)
         self.maxDiff = None
 
@@ -66,17 +66,17 @@ class TestCHATParser(unittest.TestCase):
         utt0_utt_dict = {
             'source_id': 'u0',
             'speaker_label': 'MEM',
-            'addressee': '',
+            'addressee': 'CHI',
             'utterance_raw': 'ke eng ?',
             'utterance': 'ke eng',
             'translation': 'What is it ?',
-            'morpheme': 'ke eng',
-            'gloss_raw': 'cp wh',
+            'morpheme': None,
+            'gloss_raw': None,
             'pos_raw': None,
             'sentence_type': 'question',
             'start_raw': '0',
             'end_raw': '8551',
-            'comment': None,
+            'comment': 'Points to tape',
             'warning': None
         }
         utt0_word_list = [
@@ -96,18 +96,18 @@ class TestCHATParser(unittest.TestCase):
             }
         ]
         utt0_morpheme_list = [
-            {
-                'morpheme_language': None,
-                'morpheme': 'ke',
-                'gloss_raw': 'cp',
-                'pos_raw': None
-            },
-            {
-                'morpheme_language': None,
-                'morpheme': 'eng',
-                'gloss_raw': 'wh',
-                'pos_raw': None
-            }
+            # {
+            #     'morpheme_language': None,
+            #     'morpheme': 'ke',
+            #     'gloss_raw': 'cp',
+            #     'pos_raw': None
+            # },
+            # {
+            #     'morpheme_language': None,
+            #     'morpheme': 'eng',
+            #     'gloss_raw': 'wh',
+            #     'pos_raw': None
+            # }
         ]
         desired_output = (utt0_utt_dict, utt0_word_list, utt0_morpheme_list)
         self.assertEqual(actual_output, desired_output)
@@ -120,24 +120,24 @@ class TestCHATParser(unittest.TestCase):
 
         TODO: what should be the number of None-morphemes?
         """
-        actual_output = list(self.parser.next_utterance())[4]
-        utt4_utt_dict = {
-            'source_id': 'u0',
+        actual_output = list(self.parser.next_utterance())[-1]
+        utt6_utt_dict = {
+            'source_id': 'u6',
             'speaker_label': 'MEM',
-            'addressee': '',
-            'utterance_raw': 'ke eng ?',
-            'utterance': 'ke eng',
-            'translation': 'What is it ?',
-            'morpheme': 'ke eng',
-            'gloss_raw': 'cp wh',
+            'addressee': None,
+            'utterance_raw': 'ke khomba khomba .',
+            'utterance': 'ke khomba khomba',
+            'translation': 'It is a stereo',
+            'morpheme': None,
+            'gloss_raw': None,
             'pos_raw': None,
-            'sentence_type': 'question',
-            'start_raw': '0',
-            'end_raw': '8551',
+            'sentence_type': 'default',
+            'start_raw': '28048',
+            'end_raw': '31840',
             'comment': None,
             'warning': None
         }
-        utt4_word_list = [
+        utt6_word_list = [
             {
                 'word_language': None,
                 'word': 'ke',
@@ -160,35 +160,30 @@ class TestCHATParser(unittest.TestCase):
                 'warning': None
             }
         ]
-        utt4_morpheme_list = [
-            {
-                'morpheme_language': None,
-                'morpheme': None,
-                'gloss_raw': None,
-                'pos_raw': None
-            },
-            {
-                'morpheme_language': None,
-                'morpheme': None,
-                'gloss_raw': None,
-                'pos_raw': None
-            }
+        utt6_morpheme_list = [
+            # {
+            #     'morpheme_language': None,
+            #     'morpheme': None,
+            #     'gloss_raw': None,
+            #     'pos_raw': None
+            # },
+            # {
+            #     'morpheme_language': None,
+            #     'morpheme': None,
+            #     'gloss_raw': None,
+            #     'pos_raw': None
+            # }
         ]
-        desired_output = (utt4_utt_dict, utt4_word_list, utt4_morpheme_list)
+        desired_output = (utt6_utt_dict, utt6_word_list, utt6_morpheme_list)
         self.assertEqual(actual_output, desired_output)
 
     def test_next_utterance_misalignment_words_tier(self):
         """Test next_utterance with a words vs morph misalignment.
 
-        There are two words in the utterance, but 3 segment-, gloss-
-        and pos-words.
+        There is 1 word in the utterance, but only one word on each
+        morphology tier.
         """
-        self.parser.reader._main_line_fields = ('CHI', 'Iden nüd', '', '')
-        self._dependent_tiers = {
-            'xgls': 'Iden nüd ga',
-            'xcod': 'n^name pra^1sg'
-        }
-
+        pass
     def test_next_utterance_misalignment_gloss_tier(self):
         """Test next_utterance with a gloss vs other tiers misalignment.
 
@@ -209,7 +204,6 @@ class TestCHATParser(unittest.TestCase):
         There is one pos-word but two words on all other tiers.
         """
         pass
-
 
 
 if __name__ == '__main__':
