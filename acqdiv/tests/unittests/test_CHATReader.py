@@ -164,8 +164,7 @@ class TestCHATReader(unittest.TestCase):
 
     # ---------- Main line ----------
 
-    # TODO: no whitespace between terminator & time -> investigate
-    # TODO: e.g. Japanese MiiPro
+    # TODO: no whitespace between terminator & time e.g. Japanese MiiPro
 
     def test_get_mainline_standard_case(self):
         """Test get_mainline for a standard record."""
@@ -529,7 +528,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
                           ]
         self.assertEqual(actual_output, desired_output)
 
-    # TODO: changed behaviour -> situation field is also added
+    # TODO: changed behaviour
 
     def test_get_comments(self):
         """Test get_comments with test.cha."""

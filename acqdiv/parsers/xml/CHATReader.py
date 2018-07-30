@@ -299,7 +299,7 @@ class CHATReader:
             tuple: (speaker ID, utterance, start time, end time).
         """
         main_line_regex = re.compile(
-            r'\*([A-Za-z0-9]{2,3}):\t(.*?)( \D?(\d+)(_(\d+))?\D?$|$)')
+            r'\*([A-Za-z0-9]{2,3}):\t(.*?)( ?\D?(\d+)(_(\d+))?\D?$|$)')
         match = main_line_regex.search(main_line)
         label = match.group(1)
         utterance = match.group(2)
