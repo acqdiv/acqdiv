@@ -13,6 +13,20 @@ class TestCHATCleaner(unittest.TestCase):
     .
     """
 
+    # ---------- metadata cleaning ----------
+
+    def test_clean_date_regular_date(self):
+        """Test clean_date with a regular date as input."""
+        actual_output = CHATCleaner.clean_date('12-SEP-1997')
+        desired_output = '1997-09-12'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_date_empty_string(self):
+        """Test clean_date with empty string as input."""
+        actual_output = CHATCleaner.clean_date('')
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- test utterance cleaning ----------
 
     # Tests for the remove_redundant_whitespace-method.
@@ -390,7 +404,7 @@ class TestCHATCleaner(unittest.TestCase):
 
     # Tests for the remove_ca-method.
 
-    #TODO: test quotations
+    # TODO: test quotations
 
     def test_remove_ca_falling_rising_mark(self):
         """Test remove_ca with 3 rising (↑) and 1 falling (↓) mark."""
@@ -433,49 +447,6 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    # Tests for the remove_pauses_within_words-method.
-
-    def test_remove_pauses_within_words_one_pause(self):
-        """Test remove_pauses with 1 pause (^)."""
-        actual_output = CHATCleaner.remove_pauses_within_words('spa^ghetti')
-        desired_output = 'spaghetti'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_remove_pauses_within_words_multiple_pauses(self):
-        """Test remove_pauses with 2 pauses (^)."""
-        actual_output = CHATCleaner.remove_pauses_within_words(
-            'spa^ghe^tti')
-        desired_output = 'spaghetti'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_remove_pauses_within_words_empty_string(self):
-        """Test remove_pauses with an empty string."""
-        actual_output = CHATCleaner.remove_pauses_within_words('')
-        desired_output = ''
-        self.assertEqual(actual_output, desired_output)
-
-    # Test for the remove_blocking-method. (≠ or ^)
-
-    def test_remove_blocking_unequal_sign(self):
-        """Test remove_blocking with an unequal sign as marker (≠)."""
-        actual_output = CHATCleaner.remove_blocking(
-            '≠hey')
-        desired_output = 'hey'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_remove_blocking_circumflex(self):
-        """Test remove_blocking with a circumflex as marker (^)."""
-        actual_output = CHATCleaner.remove_blocking(
-            '^there')
-        desired_output = 'there'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_remove_blocking_empty_string(self):
-        """Test remove_blocking with an empty string."""
-        actual_output = CHATCleaner.remove_blocking('')
-        desired_output = ''
-        self.assertEqual(actual_output, desired_output)
-
     # Test for the remove_pauses_between_words-method.
 
     def test_remove_pauses_between_words_multiple_pauses(self):
@@ -491,6 +462,71 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
+    # Test for the remove_scoped_symbols-method.
+
+    def test_remove_scoped_symbols_not_nested(self):
+        """Test remove_scoped_symbols with 2 not nested symbol pairs."""
+        utterance = "<that's mine> [=! cries]"
+        actual_output = CHATCleaner.remove_scoped_symbols(utterance)
+        desired_output = "that's mine"
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_scoped_symbols_one_level_nested(self):
+        """Test remove_scoped_symbols with 1 level of nestedness."""
+        utterance = "<that's mine [=! cries]>"
+        actual_output = CHATCleaner.remove_scoped_symbols(utterance)
+        desired_output = "that's mine"
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_scoped_symbols_two_levels_nested(self):
+        """Test remove_scoped_symbols with 2 levels of nestedness."""
+        utterance = "<that's mine <she said [=! cries]>> [=! slaps leg]"
+        actual_output = CHATCleaner.remove_scoped_symbols(utterance)
+        desired_output = "that's mine she said"
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_scoped_symbols_empty_string(self):
+        """Test remove_scoped_symbols with an empty string."""
+        actual_output = CHATCleaner.remove_scoped_symbols('')
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the clean_utterance-method.
+
+    def test_clean_utterance_clean_utt(self):
+        """Test remove utterance using with already clean utterance."""
+        utterance = "that's mine she said"
+        actual_output = CHATCleaner.clean_utterance(utterance)
+        desired_output = "that's mine she said"
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_utterance_mixed_things_to_clean(self):
+        """Test all utterance cleaning methods at once.
+
+        The utterance contains:
+        - redundant whitespace
+        - terminator
+        - untranscribed
+        - events
+        - Null-event
+        - repetition
+        - scoped symbols
+        - filler
+        - pause between words
+        """
+        utterance = ("+^ that's [x 2] xxx &-uh (..) mine ↓ &=vocalizes ; <0you"
+                     " pig <she said   [=! cries]>> [=! slaps leg] +/.")
+        actual_output = CHATCleaner.clean_utterance(utterance)
+        desired_output = "that's that's ??? uh mine pig she said"
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_utterance_empty_string(self):
+        """Test clean_utterance with an empty string."""
+        utterance = ''
+        actual_output = CHATCleaner.clean_utterance(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- test word cleaning ----------
 
     # Tests for the remove_form_markers-method.
@@ -499,7 +535,7 @@ class TestCHATCleaner(unittest.TestCase):
         """Test remove_form_markers with marks of one char length."""
         word = 'mark@l'
         actual_output = CHATCleaner.remove_form_markers(
-           word)
+            word)
         desired_output = "mark"
         self.assertEqual(actual_output, desired_output)
 
@@ -542,38 +578,152 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    # Test for the remove_scoped_symbols-method.
+    # Tests for the remove_pauses_within_words-method.
 
-    def test_remove_scoped_symbols_not_nested(self):
-        """Test remove_scoped_symbols with 2 not nested symbol pairs."""
-        actual_output = CHATCleaner.remove_scoped_symbols(
-            "<that's mine> [=! cries]")
-        desired_output = "that's mine"
+    def test_remove_pauses_within_words_one_pause(self):
+        """Test remove_pauses with 1 pause (^)."""
+        actual_output = CHATCleaner.remove_pauses_within_words(
+            'spa^ghetti')
+        desired_output = 'spaghetti'
         self.assertEqual(actual_output, desired_output)
 
-    def test_remove_scoped_symbols_one_level_nested(self):
-        """Test remove_scoped_symbols with 1 level of nestedness."""
-        actual_output = CHATCleaner.remove_scoped_symbols(
-            "<that's mine [=! cries]>")
-        desired_output = "that's mine"
+    def test_remove_pauses_within_words_multiple_pauses(self):
+        """Test remove_pauses with 2 pauses (^)."""
+        actual_output = CHATCleaner.remove_pauses_within_words(
+            'spa^ghe^tti')
+        desired_output = 'spaghetti'
         self.assertEqual(actual_output, desired_output)
 
-    def test_remove_scoped_symbols_two_levels_nested(self):
-        """Test remove_scoped_symbols with 2 levels of nestedness."""
-        actual_output = CHATCleaner.remove_scoped_symbols(
-            "<that's mine <she said [=! cries]>> [=! slaps leg]")
-        desired_output = "that's mine she said"
-        self.assertEqual(actual_output, desired_output)
-
-    def test_remove_scoped_symbols_empty_string(self):
-        """Test remove_scoped_symbols with an empty string."""
-        actual_output = CHATCleaner.remove_scoped_symbols('')
+    def test_remove_pauses_within_words_empty_string(self):
+        """Test remove_pauses with an empty string."""
+        actual_output = CHATCleaner.remove_pauses_within_words('')
         desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Test for the remove_blocking-method. (≠ or ^)
+
+    def test_remove_blocking_unequal_sign(self):
+        """Test remove_blocking with an unequal sign as marker (≠)."""
+        actual_output = CHATCleaner.remove_blocking(
+            '≠hey')
+        desired_output = 'hey'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_blocking_circumflex(self):
+        """Test remove_blocking with a circumflex as marker (^)."""
+        actual_output = CHATCleaner.remove_blocking(
+            '^there')
+        desired_output = 'there'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_blocking_empty_string(self):
+        """Test remove_blocking with an empty string."""
+        actual_output = CHATCleaner.remove_blocking('')
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_word_already_clean(self):
+        """Test clean_word with an already clean word."""
+        actual_output = CHATCleaner.clean_word('ka')
+        desired_output = 'ka'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_word_mixed(self):
+        """Test clean_word with markers, drawls, pauses and blocking."""
+        actual_output = CHATCleaner.clean_word('^ka:l^e@e')
+        desired_output = 'kale'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_word_empty_string(self):
+        """Test clean_word with an empty string."""
+        actual_output = CHATCleaner.clean_word('')
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- test morphology tier cleaning ----------
+
+    def test_clean_seg_tier(self):
+        """Test clean_seg_tier for same input as output."""
+        seg_tier = 'ha be'
+        actual_output = CHATCleaner.clean_word(seg_tier)
+        desired_output = seg_tier
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_gloss_tier(self):
+        """Test clean_gloss_tier for same input as output."""
+        gloss_tier = 'ha be'
+        actual_output = CHATCleaner.clean_word(gloss_tier)
+        desired_output = gloss_tier
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_pos_tier(self):
+        """Test clean_pos_tier for same input as output."""
+        pos_tier = 'ha be'
+        actual_output = CHATCleaner.clean_word(pos_tier)
+        desired_output = pos_tier
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- test tier cross cleaning ---------
+
+    def test_cross_clean(self):
+        """Test cross_clean for same input as output."""
+        utterance = 'ha be'
+        seg_tier = 'h_a b_e'
+        gloss_tier = '1sg pl'
+        pos_tier = 'V N'
+        actual_output = CHATCleaner.cross_clean(utterance, seg_tier,
+                                                gloss_tier, pos_tier)
+        desired_output = (utterance, seg_tier, gloss_tier, pos_tier)
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- morpheme word cleaning ----------
+
+    def test_clean_seg_word(self):
+        """Test clean_seg_word, same input as output."""
+        seg_word = 'ke'
+        actual_output = CHATCleaner.clean_seg_word(seg_word)
+        desired_output = seg_word
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_gloss_word(self):
+        """Test clean_gloss_word, same input as output."""
+        gloss_word = 'wh'
+        actual_output = CHATCleaner.clean_gloss_word(gloss_word)
+        desired_output = gloss_word
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_pos_word(self):
+        """Test clean_pos_word, same input as output."""
+        pos_word = 'V'
+        actual_output = CHATCleaner.clean_pos_word(pos_word)
+        desired_output = pos_word
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- morpheme cleaning ----------
+
+    def test_clean_segment(self):
+        """Test clean_segment, same input as output."""
+        segment = 'he'
+        actual_output = CHATCleaner.clean_segment(segment)
+        desired_output = segment
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_gloss(self):
+        """Test clean_gloss, same input as output."""
+        gloss = 'he'
+        actual_output = CHATCleaner.clean_gloss(gloss)
+        desired_output = gloss
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_pos(self):
+        """Test clean_pos, same input as output."""
+        pos = 'he'
+        actual_output = CHATCleaner.clean_pos(pos)
+        desired_output = pos
         self.assertEqual(actual_output, desired_output)
 
 
 ###############################################################################
-
 
 class TestInuktitutCleaner(unittest.TestCase):
     """class to test the InuktitutCleaner."""
