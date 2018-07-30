@@ -308,7 +308,7 @@ class TestCHATCleaner(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     @unittest.skip(('test_remove_omissions_multiple_omissions_'
-                   'no_space_before_terminator skipping'))
+                    'no_space_before_terminator skipping'))
     def test_remove_omissions_multiple_omissions_no_space_before_terminator(
             self):
         """Test with 3 omissions and no space before terminator."""
@@ -761,9 +761,9 @@ class TestCreeCleaner(unittest.TestCase):
 
     def test_remove_angle_brackets_standard_case(self):
         """Test remove_angle_brackets with standard angle brack case."""
-        input_str = '‹kâ ihtut-h› .'
+        input_str = '‹mâ ehtad-g› .'
         actual_output = CreeCleaner.remove_angle_brackets(input_str)
-        desired_output = 'kâ ihtut-h .'
+        desired_output = 'mâ ehtad-g .'
         self.assertEqual(actual_output, desired_output)
 
     def test_remove_angle_brackets_empty_string(self):
@@ -783,9 +783,9 @@ class TestCreeCleaner(unittest.TestCase):
 
     def test_remove_morph_separators_multiple_separators(self):
         """Test remove_morph_separators with 2 separators (_)."""
-        input_str = 'choo_choo_train'
+        input_str = 'ha_ha_train'
         actual_output = CreeCleaner.remove_morph_separators(input_str)
-        desired_output = 'choochootrain'
+        desired_output = 'hahatrain'
         self.assertEqual(actual_output, desired_output)
 
     def test_remove_morph_separators_empty_string(self):
@@ -798,9 +798,9 @@ class TestCreeCleaner(unittest.TestCase):
 
     def test_replace_zero_single_zero(self):
         """Test replace_zero with 1 zero (zéro)."""
-        input_str = 'pihchi~shin~zéro'
+        input_str = 'puhchu~shum~zéro'
         actual_output = CreeCleaner.replace_zero(input_str)
-        desired_output = 'pihchi~shin~Ø'
+        desired_output = 'puhchu~shum~Ø'
         self.assertEqual(actual_output, desired_output)
 
     def test_replace_zero_multiple_zeros(self):
@@ -820,16 +820,16 @@ class TestCreeCleaner(unittest.TestCase):
 
     def test_replace_morpheme_separator_single_separator(self):
         """Test replace_morpheme_separator with 1 separator."""
-        input_str = 'pihchi~shin'
+        input_str = 'puhchu~shun'
         actual_output = CreeCleaner.replace_morpheme_separator(input_str)
-        desired_output = 'pihchishin'
+        desired_output = 'puhchushun'
         self.assertEqual(actual_output, desired_output)
 
     def test_replace_morpheme_separator_multiple_separators(self):
         """Test replace_morpheme_separator with 2 separators."""
-        input_str = 'pihchi~shin~zéro'
+        input_str = 'puhchu~sum~zéro'
         actual_output = CreeCleaner.replace_morpheme_separator(input_str)
-        desired_output = 'pihchishinzéro'
+        desired_output = 'puhchusumzéro'
         self.assertEqual(actual_output, desired_output)
 
     def test_replace_morpheme_separator_empty_string(self):
@@ -844,9 +844,9 @@ class TestCreeCleaner(unittest.TestCase):
 
     def test_remove_square_brackets_standard_case(self):
         """Test remove_square_brackets with normal case ([...])."""
-        input_str = '[ɡoɡo mɛɹi nine nəbɑ]'
+        input_str = '[ɡaɡa nɛɹa nena mətɑ]'
         actual_output = CreeCleaner.remove_square_brackets(input_str)
-        desired_output = 'ɡoɡo mɛɹi nine nəbɑ'
+        desired_output = 'ɡaɡa nɛɹa nena mətɑ'
         self.assertEqual(actual_output, desired_output)
 
     def test_remove_square_brackets_empty_string(self):
@@ -871,8 +871,145 @@ class TestCreeCleaner(unittest.TestCase):
 
     # Tests for the replace_eng-method.
 
-    def test_replace_eng(self):
-        pass
+    def test_replace_eng_single_eng(self):
+        """Test replace_eng with 1 Eng to be replaced."""
+        gloss_tier = 'Eng'  # brackets are already cleaned
+        utterance = 'floor'
+        actual_output = CreeCleaner.replace_eng(gloss_tier, utterance)
+        desired_output = 'floor'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_replace_eng_multiple_engs(self):
+        """Test replace_eng with 4 Engs to be replaced."""
+        gloss_tier = ('remove~by. emph Eng Eng Eng Eng')
+        utterance = 'min~in~ikiniu~h wâsh u~hî these are taken off'
+        actual_output = CreeCleaner.replace_eng(gloss_tier, utterance)
+        desired_output = 'remove~by. emph these are taken off'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_replace_eng_at_beginning_end(self):
+        """Test replace_eng with Engs at the start/end of the gloss."""
+        gloss_tier = 'Eng fin~3.sg Eng'
+        utterance = 'garbage â~u garbage'
+        actual_output = CreeCleaner.replace_eng(gloss_tier, utterance)
+        desired_output = 'garbage fin~3.sg garbage'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_replace_eng_emtpy_string(self):
+        """Test replace_eng with an empty string."""
+        actual_output = CreeCleaner.replace_eng('', '')
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the replace_percentages-method.
+
+    def test_replace_percentages_untranscribed_word(self):
+        """Test replace_percentages with an untranscribed word (%%%)."""
+        actual_output = CreeCleaner.replace_percentages('%%%')
+        desired_output = '???'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_replace_percentages_normal_word(self):
+        """Test replace_percentages with a normal word."""
+        actual_output = CreeCleaner.replace_percentages('hey')
+        desired_output = 'hey'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_replace_percentages_empty_string(self):
+        """Test replace_percentages with en empty string."""
+        actual_output = CreeCleaner.replace_percentages('')
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the replace_hashtag-method.
+
+    def test_replace_hashtag_unglossed_word(self):
+        """Test replace_hashtag with an unglossed word (%%%)."""
+        actual_output = CreeCleaner.replace_hashtag('#')
+        desired_output = '???'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_replace_hashtag_normal_word(self):
+        """Test replace_hashtag with a normal word."""
+        actual_output = CreeCleaner.replace_hashtag('hey')
+        desired_output = 'hey'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_replace_hashtag_empty_string(self):
+        """Test replace_hashtag with an empty string."""
+        actual_output = CreeCleaner.replace_hashtag('')
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the handle_question_mark-method.
+
+    def test_handle_question_mark_single_question_mark(self):
+        """Test handle_question_mark with single question mark."""
+        actual_output = CreeCleaner.handle_question_mark('?')
+        desired_output = '???'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_handle_question_mark_question_mark_at_the_end(self):
+        """Test handle_question_mark question mark at end of morph."""
+        actual_output = CreeCleaner.handle_question_mark('dok?')
+        desired_output = 'dok'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_handle_question_mark_empty_string(self):
+        """Test handle_question_mark with an empty string."""
+        actual_output = CreeCleaner.handle_question_mark('dok?')
+        desired_output = 'dok'
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the replace_star-method.
+
+    def test_replace_star_case_star(self):
+        """Test handle_question_mark with a star."""
+        actual_output = CreeCleaner.replace_star('*')
+        desired_output = '???'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_replace_star_non_star_morpheme(self):
+        """Test handle_question_mark with a non star morpheme."""
+        actual_output = CreeCleaner.replace_star('muw~du')
+        desired_output = 'muw~du'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_replace_star_empty_string(self):
+        """Test handle_question_mark with an empty string."""
+        actual_output = CreeCleaner.replace_star('')
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for replace_gloss_connector.
+
+    def replace_gloss_connector_multiple_plus_and_comma(self):
+        """Test replace_gloss_connector with 2 commas and 2 pluses."""
+        gloss = 'a,quest sm+gur2 a,quest sm+gur2'
+        actual_output = CreeCleaner.replace_gloss_connector(gloss)
+        desired_output = 'a.quest sm.gur2 a.quest sm.gur2'
+        self.assertEqual(actual_output, desired_output)
+
+    def replace_gloss_connector_empty_string(self):
+        """Test replace_gloss_connector with empty string."""
+        actual_output = CreeCleaner.replace_gloss_connector('')
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Test for the uppercase_pos_in_parentheses-method.
+
+    def test_uppercase_pos_in_parentheses_one_parenth_pair(self):
+        """Test uppercase_pos_in_parentheses with one pair."""
+        pos = 'na eˈp~o~(h)'
+        actual_output = CreeCleaner.uppercase_pos_in_parentheses(pos)
+        desired_output = 'na eˈp~o~(H)'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_uppercase_pos_in_parentheses_empty_string(self):
+        """Test uppercase_pos_in_parentheses with empty string."""
+        actual_output = CreeCleaner.uppercase_pos_in_parentheses('')
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
 
 
 if __name__ == '__main__':
