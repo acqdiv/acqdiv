@@ -467,29 +467,31 @@ class TestACQDIVCHATReader(unittest.TestCase):
             (0, ('MEM', 'ke eng ?', '0', '8551'),
              {
                  'gls': 'ke eng ?', 'cod': 'cp wh ?',
-                 'eng': 'What is it ?', 'sit':
-                 'Points to tape'
+                 'eng': 'What is it ?',
+                 'sit': 'Points to tape',
+                 'add': 'CHI'
              }),
             (1, ('CHI', 'ke ntencha ncha .', '8551', '19738'),
-             {
-                 'gls': 'ke eng ?', 'cod': 'cp wh ?',
-                 'eng': 'What is it ?',
-                 'sit': 'Points to tape'
-             }),
-            (2, ('MEM', 'ke eng ntho ena e?', '19738', '24653'),
              {
                  'gls': 'ke ntho e-ncha .',
                  'cod': 'cp thing(9 , 10) 9-aj .',
                  'eng': 'A new thing',
                  'com': 'test comment'
              }),
-            (3, ('CHI', 'e nte ena .', '24300', '28048'),
+            (2, ('MEM', 'ke eng ntho ena e?', '19738', '24653'),
              {
                  'gls': 'ke eng ntho ena e ?',
                  'cod': 'cp wh thing(9 , 10) d9 ij ?',
-                 'eng': 'What is this thing ?', 'sit': 'Points to tape'
+                 'eng': 'What is this thing ?',
+                 'sit': 'Points to tape'
              }),
-            (4, ('*MEM', 'ke khomba', '', ''),
+            (3, ('CHI', 'e nte ena .', '24300', '28048'),
+             {
+                 'gls': 'ke ntho ena .',
+                 'cod': 'cp thing(9 , 10) d9 .',
+                 'eng': 'It is this thing',
+             }),
+            (4, ('MEM', 'ke khomba khomba .', '28048', '31840'),
              {
                  'gls': 'kekumbakumba .',
                  'cod': 'cp tape_recorder(9 , 10) .',
@@ -516,12 +518,15 @@ class TestACQDIVCHATReader(unittest.TestCase):
 
     def test_get_translation(self):
         """Test get_translation with test.cha."""
-        actual_output = ['What is it ?', 'A new thing',
-                         'What is this thing ?', 'It is this thing',
-                         'It is a stereo']
+        actual_output = []
         while self.reader.load_next_record() != 0:
             actual_output.append(self.reader.get_translation())
-        desired_output = ['CHI', '', '', '', '']
+        desired_output = ['What is it ?',
+                          'A new thing',
+                          'What is this thing ?',
+                          'It is this thing',
+                          'It is a stereo'
+                          ]
         self.assertEqual(actual_output, desired_output)
 
     # TODO: changed behaviour -> situation field is also added
@@ -531,7 +536,8 @@ class TestACQDIVCHATReader(unittest.TestCase):
         actual_output = []
         while self.reader.load_next_record() != 0:
             actual_output.append(self.reader.get_comments())
-        desired_output = ['', 'test comment', '', '', '']
+        desired_output = ['Points to tape', 'test comment',
+                          'Points to tape', '', '']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_record_speaker_label(self):
