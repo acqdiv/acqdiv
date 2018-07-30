@@ -121,7 +121,7 @@ class TestCHATParser(unittest.TestCase):
         TODO: what should be the number of None-morphemes?
         """
         actual_output = list(self.parser.next_utterance())[-1]
-        utt6_utt_dict = {
+        utt_utt_dict = {
             'source_id': 'u6',
             'speaker_label': 'MEM',
             'addressee': None,
@@ -137,7 +137,7 @@ class TestCHATParser(unittest.TestCase):
             'comment': None,
             'warning': None
         }
-        utt6_word_list = [
+        utt_word_list = [
             {
                 'word_language': None,
                 'word': 'ke',
@@ -160,7 +160,7 @@ class TestCHATParser(unittest.TestCase):
                 'warning': None
             }
         ]
-        utt6_morpheme_list = [
+        utt_morpheme_list = [
             # {
             #     'morpheme_language': None,
             #     'morpheme': None,
@@ -174,16 +174,58 @@ class TestCHATParser(unittest.TestCase):
             #     'pos_raw': None
             # }
         ]
-        desired_output = (utt6_utt_dict, utt6_word_list, utt6_morpheme_list)
+        desired_output = (utt_utt_dict, utt_word_list, utt_morpheme_list)
+        self.assertEqual(actual_output, desired_output)
+
+    def test_next_utterance_no_misalignment(self):
+        """Test next_utterance with a record with no misalignments.
+
+        Each tier contains two words.
+        """
+        actual_output = list(self.parser.next_utterance())[1]
+        utt_dict = {
+            'source_id': 'u1',
+            'speaker_label': 'MEM',
+            'addressee': None,
+            'utterance_raw': 'an ke .',
+            'utterance': 'an ke',
+            'translation': None,
+            'morpheme': None,
+            'gloss_raw': None,
+            'pos_raw': None,
+            'sentence_type': 'default',
+            'start_raw': None,
+            'end_raw': None,
+            'comment': 'test case no misalignments',
+            'warning': None
+        }
+        word_list = [
+            {
+                'word_language': None,
+                'word': 'an',
+                'word_actual': 'an',
+                'word_target': 'an',
+                'warning': None
+            },
+            {
+                'word_language': None,
+                'word': 'ke',
+                'word_actual': 'ke',
+                'word_target': 'ke',
+                'warning': None
+            }]
+        morpheme_list = []
+        desired_output = (utt_dict, word_list, morpheme_list)
         self.assertEqual(actual_output, desired_output)
 
     def test_next_utterance_misalignment_words_tier(self):
         """Test next_utterance with a words vs morph misalignment.
 
-        There is 1 word in the utterance, but only one word on each
+        There is 1 word in the utterance, but two words on each
         morphology tier.
         """
         pass
+
     def test_next_utterance_misalignment_gloss_tier(self):
         """Test next_utterance with a gloss vs other tiers misalignment.
 
