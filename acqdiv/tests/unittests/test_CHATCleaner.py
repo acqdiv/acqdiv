@@ -13,6 +13,8 @@ class TestCHATCleaner(unittest.TestCase):
     .
     """
 
+    # ---------- test utterance cleaning ----------
+
     # Tests for the remove_redundant_whitespace-method.
 
     def test_remove_redundant_whitespace_leading_trailing_whitespace(self):
@@ -338,34 +340,6 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    # Tests for the remove_form_markers-method.
-
-    def test_remove_form_markers_l_marked(self):
-        """Test remove_form_markers with 5 '@l' marks."""
-        actual_output = CHATCleaner.remove_form_markers(
-            "h@l ey it's m@l a@l r@l k@l .")
-        desired_output = "h ey it's m a r k ."
-        self.assertEqual(actual_output, desired_output)
-
-    def test_remove_form_markers_k_marked(self):
-        """Test remove_form_markers with 1 '@k' mark."""
-        actual_output = CHATCleaner.remove_form_markers(
-            "it's mark@k .")
-        desired_output = "it's mark ."
-        self.assertEqual(actual_output, desired_output)
-
-    @unittest.skip(('test_remove_form_markers_mixed_'
-                    'no_space_before_terminator skipping'))
-    def test_remove_form_markers_mixed_no_space_before_terminator(self):
-        """Test remove_form_markers with 1 '@k' and one '@l' mark.
-
-        No space between mark and terminator.
-        """
-        actual_output = CHATCleaner.remove_form_markers(
-            "it's@l mark@k.")
-        desired_output = "it's mark."
-        self.assertEqual(actual_output, desired_output)
-
     def test_remove_form_markers_empty_string(self):
         """Test remove_form_markers with empty string."""
         actual_output = CHATCleaner.remove_form_markers('')
@@ -527,6 +501,37 @@ class TestCHATCleaner(unittest.TestCase):
         """Test remove_pauses with an empty string."""
         actual_output = CHATCleaner.remove_pauses_between_words('')
         desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- test word cleaning ----------
+
+    # Tests for the remove_form_markers-method.
+
+    def test_remove_form_markers_l_marked_one_char_length(self):
+        """Test remove_form_markers with marks of one char length."""
+        word = 'mark@l'
+        actual_output = CHATCleaner.remove_form_markers(
+           word)
+        desired_output = "mark"
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_form_markers_si_marked_two_char_length(self):
+        """Test remove_form_markers with mark of two chars length."""
+        actual_output = CHATCleaner.remove_form_markers(
+            'mark@si')
+        desired_output = 'mark'
+        self.assertEqual(actual_output, desired_output)
+
+    @unittest.skip(('test_remove_form_markers_mixed_'
+                    'no_space_before_terminator skipping'))
+    def test_remove_form_markers_mixed_no_space_before_terminator(self):
+        """Test remove_form_markers with 1 '@k' and one '@l' mark.
+
+        No space between mark and terminator.
+        """
+        actual_output = CHATCleaner.remove_form_markers(
+            "mark@k.")
+        desired_output = "mark."
         self.assertEqual(actual_output, desired_output)
 
     # Tests for the remove_drawls-method.
@@ -883,7 +888,7 @@ class TestCreeCleaner(unittest.TestCase):
 
     def test_replace_eng_multiple_engs(self):
         """Test replace_eng with 4 Engs to be replaced."""
-        gloss_tier = ('remove~by. emph Eng Eng Eng Eng')
+        gloss_tier = 'remove~by. emph Eng Eng Eng Eng'
         utterance = 'min~in~ikiniu~h wâsh u~hî these are taken off'
         actual_output = CreeCleaner.replace_eng(gloss_tier, utterance)
         desired_output = 'remove~by. emph these are taken off'
