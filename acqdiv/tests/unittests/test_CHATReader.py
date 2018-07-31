@@ -115,10 +115,90 @@ class TestCHATReader(unittest.TestCase):
         Test get_id_fields for the case of some fields
         being empty and some fields containing information.
         """
-        input_str = 'sme|Sesotho|MEM||female|||Grandmother|||'
-        actual_output = self.reader.get_id_fields(input_str)
+        id_fields = 'sme|Sesotho|MEM||female|||Grandmother|||'
+        actual_output = self.reader.get_id_fields(id_fields)
         desired_output = ('sme', 'Sesotho', 'MEM', '', 'female', '',
                           '', 'Grandmother', '', '')
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_id_language(self):
+        """Test get_id_language with id-fields of MEM of test.cha."""
+        id_fields = ('sme', 'Sesotho', 'MEM', '', 'female', '', '',
+                     'Grandmother', '', '')
+        actual_output = self.reader.get_id_language(id_fields)
+        desired_output = 'sme'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_id_corpus(self):
+        """Test get_id_corpus with id-fields of MEM of test.cha."""
+        id_fields = ('sme', 'Sesotho', 'MEM', '', 'female', '', '',
+                     'Grandmother', '', '')
+        actual_output = self.reader.get_id_corpus(id_fields)
+        desired_output = 'Sesotho'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_id_code(self):
+        """Test get_id_code with id-fields of MEM of test.cha."""
+        id_fields = ('sme', 'Sesotho', 'MEM', '', 'female', '', '',
+                     'Grandmother', '', '')
+        actual_output = self.reader.get_id_code(id_fields)
+        desired_output = 'MEM'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_id_age(self):
+        """Test get_id_age with id-fields of MEM of test.cha."""
+        id_fields = ('sme', 'Sesotho', 'MEM', '', 'female', '', '',
+                     'Grandmother', '', '')
+        actual_output = self.reader.get_id_age(id_fields)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_id_sex(self):
+        """Test get_id_sex with id-fields of MEM of test.cha."""
+        id_fields = ('sme', 'Sesotho', 'MEM', '', 'female', '', '',
+                     'Grandmother', '', '')
+        actual_output = self.reader.get_id_sex(id_fields)
+        desired_output = 'female'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_id_group(self):
+        """Test get_id_group with id-fields of MEM of test.cha."""
+        id_fields = ('sme', 'Sesotho', 'MEM', '', 'female', '', '',
+                     'Grandmother', '', '')
+        actual_output = self.reader.get_id_group(id_fields)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_id_ses(self):
+        """Test get_id_ses with id-fields of MEM of test.cha."""
+        id_fields = ('sme', 'Sesotho', 'MEM', '', 'female', '', '',
+                     'Grandmother', '', '')
+        actual_output = self.reader.get_id_ses(id_fields)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_id_role(self):
+        """Test get_id_role with id-fields of MEM of test.cha."""
+        id_fields = ('sme', 'Sesotho', 'MEM', '', 'female', '', '',
+                     'Grandmother', '', '')
+        actual_output = self.reader.get_id_role(id_fields)
+        desired_output = 'Grandmother'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_id_education(self):
+        """Test get_id_education with id-fields of MEM of test.cha."""
+        id_fields = ('sme', 'Sesotho', 'MEM', '', 'female', '', '',
+                     'Grandmother', '', '')
+        actual_output = self.reader.get_id_education(id_fields)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_id_custom(self):
+        """Test get_id_custom with id-fields of MEM of test.cha."""
+        id_fields = ('sme', 'Sesotho', 'MEM', '', 'female', '', '',
+                     'Grandmother', '', '')
+        actual_output = self.reader.get_id_custom(id_fields)
+        desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
     # ---------- Record ----------
@@ -245,11 +325,18 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ('KAT', 'ke eng ntho ena e?', '', '')
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_utterance_words(self):
+    def test_get_utterance_words_standard_case(self):
         """Test get_utterance_words for standard input."""
         utterance = 'ke eng ntho ena e?'
         actual_output = self.reader.get_utterance_words(utterance)
         desired_output = ['ke', 'eng', 'ntho', 'ena', 'e?']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_words_empty_string(self):
+        """Test get_utterance_words for standard input."""
+        utterance = ''
+        actual_output = self.reader.get_utterance_words(utterance)
+        desired_output = []
         self.assertEqual(actual_output, desired_output)
 
     # ---------- dependent tiers ----------
@@ -549,8 +636,6 @@ class TestACQDIVCHATReader(unittest.TestCase):
                           'It is a stereo'
                           ]
         self.assertEqual(actual_output, desired_output)
-
-    # TODO: changed behaviour
 
     def test_get_comments(self):
         """Test get_comments with test.cha."""
@@ -965,8 +1050,8 @@ class TestACQDIVCHATReader(unittest.TestCase):
         desired_output = 'gloss'
         self.assertEqual(actual_output, desired_output)
 
-    # def test_get_morph_tier_test_dot_cha(self):
-    #     """Test get_morph_tier with test.cha."""
+    # def test_get_morph_tier(self):
+    #     """Test get_morph_tier with standart 'mor'-tier."""
     #     actual_output = []
     #     while self.reader.load_next_record():
     #         actual_output.append(self.reader.get_morph_tier())
@@ -997,13 +1082,22 @@ class TestACQDIVCHATReader(unittest.TestCase):
         pass
 
     def test_get_segments(self):
-        pass
+        """Test get_segments. Should raise a NotImplementedError."""
+        seg_word = 'abc'
+        self.assertRaises(NotImplementedError, self.reader.get_segments,
+                          seg_word)
 
     def test_get_glosses(self):
-        pass
+        """Test get_glosses. Should raise a NotImplementedError."""
+        gloss_word = 'abc'
+        self.assertRaises(NotImplementedError, self.reader.get_glosses,
+                          gloss_word)
 
     def test_get_poses(self):
-        pass
+        """Test get_poses. Should raise a NotImplementedError."""
+        pos_word = 'abc'
+        self.assertRaises(NotImplementedError, self.reader.get_poses,
+                          pos_word)
 
     def test_get_morpheme_language(self):
         """Test get_morpheme_language. Should return an empty string."""
@@ -1030,6 +1124,31 @@ class TestInuktitutReader(unittest.TestCase):
         session_file_path = './test.cha'
         self.reader = InuktitutReader(session_file_path)
         self.maxDiff = None
+
+    def test_get_start_time_start_time_present(self):
+        """Test get_start_time for a case a start time existing."""
+        self.reader._dependent_tiers = {
+            'utt': 'ha be',
+            'tim': '19301'
+        }
+        actual_output = self.reader.get_start_time()
+        desired_output = '19301'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_start_time_start_time_present(self):
+        """Test get_start_time for a case no start time existing."""
+        self.reader._dependent_tiers = {
+            'utt': 'ha be'
+        }
+        actual_output = self.reader.get_start_time()
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_end_time(self):
+        """Test get_end_time. Result should be empty string."""
+        actual_output = self.reader.get_end_time()
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
 
     # Tests for the get_target_alternative-method.
 
