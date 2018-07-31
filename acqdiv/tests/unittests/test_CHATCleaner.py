@@ -1169,7 +1169,11 @@ class TestCreeCleaner(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_replace_eng_tiers_misaligned(self):
-        """Test replace_eng with word tier longer than gloss tier."""
+        """Test replace_eng with word tier longer than gloss tier.
+
+        Since tiers are of unequal length, return the gloss tier
+        unchanged.
+        """
         gloss_tier = 'Eng fin~3.sg'
         utterance = 'garbage â~u garbage'
         actual_output = CreeCleaner.replace_eng(gloss_tier, utterance)
