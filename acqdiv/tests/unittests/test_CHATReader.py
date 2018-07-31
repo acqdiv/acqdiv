@@ -146,7 +146,7 @@ class TestCHATReader(unittest.TestCase):
         actual_output = list(self.reader.iter_records('./test.cha'))
         desired_output = ['*MEM:\tke eng ? 0_8551\n%gls:\tke eng ?\n%cod:\t'
                           'cp wh ?\n%eng:\tWhat is it ?\n%sit:\tPoints to '
-                          'tape\n%add:\tCHI\n',
+                          'tape\n%com:\tis furious\n%add:\tCHI\n',
                           '*CHI:\tke ntencha ncha . 8551_19738\n'
                           '%gls:\tke ntho e-ncha .\n%cod:\tcp thing(9 , 10) '
                           '9-aj .\n%eng:\tA new thing\n%com:\ttest comment\n',
@@ -163,8 +163,6 @@ class TestCHATReader(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     # ---------- Main line ----------
-
-    # TODO: no whitespace between terminator & time e.g. Japanese MiiPro
 
     def test_get_mainline_standard_case(self):
         """Test get_mainline for a standard record."""
@@ -197,6 +195,17 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ('KAT', 'ke eng ?', '0', '8551')
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_mainline_fields_with_no_space_before_time(self):
+        """Test get_mainline_fields for no space before the timestamp.
+
+        There is no space between the terminator and the timestamp. Such
+        examples can be found for example in Japanese_MiiPro.
+        """
+        mainline = '*KAT:	ke eng ?0_8551'
+        actual_output = self.reader.get_mainline_fields(mainline)
+        desired_output = ('KAT', 'ke eng ?', '0', '8551')
+        self.assertEqual(actual_output, desired_output)
+
     def test_get_mainline_fields_with_single_postcode(self):
         """Test get_mainline_fields for mainline with postcode."""
         mainline = '*KAT:	ke eng ? [+ neg]'
@@ -209,6 +218,17 @@ class TestCHATReader(unittest.TestCase):
         mainline = '*KAT:	ke eng ? [+ neg] [+ req]'
         actual_output = self.reader.get_mainline_fields(mainline)
         desired_output = ('KAT', 'ke eng ? [+ neg] [+ req]', '', '')
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_mainline_fields_with_no_space_before_postcode(self):
+        """Test get_mainline_fields for no space before the postcode.
+
+        There is no space between the terminator and the postocode. Such
+        examples can be found for example in Japanese_MiiPro.
+        """
+        mainline = '*KAT:	ke eng ?[+ neg]'
+        actual_output = self.reader.get_mainline_fields(mainline)
+        desired_output = ('KAT', 'ke eng ?[+ neg]', '', '')
         self.assertEqual(actual_output, desired_output)
 
     def test_get_mainline_fields_with_multiple_postcodes_and_time(self):
@@ -356,7 +376,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
     def test_load_next_speaker(self):
         """Test load_next_speaker for the speakers in 'test.cha'"""
         actual_output = []
-        while self.reader.load_next_speaker() != 0:
+        while self.reader.load_next_speaker():
             pf = self.reader._participant_fields
             idf = self.reader._id_fields
             actual_output.append((pf, idf))
@@ -372,7 +392,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
 
     def test_get_speaker_age(self):
         actual_output = []
-        while self.reader.load_next_speaker() != 0:
+        while self.reader.load_next_speaker():
             actual_output.append(self.reader.get_speaker_age())
         desired_output = ['', '2;2.']
         self.assertEqual(actual_output, desired_output)
@@ -380,7 +400,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
     def test_get_speaker_birthdate(self):
         """Test get_speaker_birthdate with test.cha."""
         actual_output = []
-        while self.reader.load_next_speaker() != 0:
+        while self.reader.load_next_speaker():
             speaker_birthdate = self.reader.get_speaker_birthdate()
             actual_output.append(speaker_birthdate)
         desired_output = ['11-OCT-1974', '14-JAN-2006']
@@ -389,7 +409,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
     def test_get_speaker_gender(self):
         """Test get_speaker_gender with test.cha."""
         actual_output = []
-        while self.reader.load_next_speaker() != 0:
+        while self.reader.load_next_speaker():
             actual_output.append(self.reader.get_speaker_gender())
         desired_output = ['female', '']
         self.assertEqual(actual_output, desired_output)
@@ -397,7 +417,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
     def test_get_speaker_label(self):
         """Test get_speaker_label with test.cha."""
         actual_output = []
-        while self.reader.load_next_speaker() != 0:
+        while self.reader.load_next_speaker():
             actual_output.append(self.reader.get_speaker_label())
         desired_output = ['MEM', 'CHI']
         self.assertEqual(actual_output, desired_output)
@@ -405,7 +425,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
     def test_get_speaker_language(self):
         """Test get_speaker_language with test.cha."""
         actual_output = []
-        while self.reader.load_next_speaker() != 0:
+        while self.reader.load_next_speaker():
             actual_output.append(self.reader.get_speaker_language())
         desired_output = ['sme', 'sme']
         self.assertEqual(actual_output, desired_output)
@@ -413,7 +433,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
     def test_get_speaker_name(self):
         """Test get_speaker_name with test.cha."""
         actual_output = []
-        while self.reader.load_next_speaker() != 0:
+        while self.reader.load_next_speaker():
             actual_output.append(self.reader.get_speaker_name())
         desired_output = ['Mme_Manyili', 'Hlobohang']
         self.assertEqual(actual_output, desired_output)
@@ -421,7 +441,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
     def test_get_speaker_role(self):
         """Test get_speaker_role with test.cha."""
         actual_output = []
-        while self.reader.load_next_speaker() != 0:
+        while self.reader.load_next_speaker():
             actual_output.append(self.reader.get_speaker_role())
         desired_output = ['Grandmother', 'Target_Child']
         self.assertEqual(actual_output, desired_output)
@@ -433,7 +453,8 @@ class TestACQDIVCHATReader(unittest.TestCase):
         actual_output = list(self.reader.get_record_iterator())
         desired_output = [
             '*MEM:\tke eng ? 0_8551\n%gls:\tke eng ?\n%cod:\tcp '
-            'wh ?\n%eng:\tWhat is it ?\n%sit:\tPoints to tape\n%add:\tCHI\n',
+            'wh ?\n%eng:\tWhat is it ?\n%sit:\tPoints to tape\n%com:\tis '
+            'furious\n%add:\tCHI\n',
             '*CHI:\tke ntencha ncha . 8551_19738\n%gls:\tke ntho '
             'e-ncha .\n%cod:\tcp thing(9 , 10) 9-aj .\n%eng:\tA new thing\n'
             '%com:\ttest comment\n',
@@ -457,7 +478,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
         grep -P '^\*\w{2,3}?:\t((?![.!?]).)*$' */cha/*.cha
         """
         actual_output = []
-        while self.reader.load_next_record() != 0:
+        while self.reader.load_next_record():
             uid = self.reader._uid
             main_line_fields = self.reader._main_line_fields
             dep_tiers = self.reader._dependent_tiers
@@ -468,6 +489,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
                  'gls': 'ke eng ?', 'cod': 'cp wh ?',
                  'eng': 'What is it ?',
                  'sit': 'Points to tape',
+                 'com': 'is furious',
                  'add': 'CHI'
              }),
             (1, ('CHI', 'ke ntencha ncha .', '8551', '19738'),
@@ -502,7 +524,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
     def test_get_uid(self):
         """Test get_uid with test.cha."""
         actual_output = []
-        while self.reader.load_next_record() != 0:
+        while self.reader.load_next_record():
             actual_output.append(self.reader.get_uid())
         desired_output = ['u0', 'u1', 'u2', 'u3', 'u4']
         self.assertEqual(actual_output, desired_output)
@@ -510,7 +532,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
     def test_get_addressee(self):
         """Test get_addressee with test.cha."""
         actual_output = []
-        while self.reader.load_next_record() != 0:
+        while self.reader.load_next_record():
             actual_output.append(self.reader.get_addressee())
         desired_output = ['CHI', '', '', '', '']
         self.assertEqual(actual_output, desired_output)
@@ -518,7 +540,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
     def test_get_translation(self):
         """Test get_translation with test.cha."""
         actual_output = []
-        while self.reader.load_next_record() != 0:
+        while self.reader.load_next_record():
             actual_output.append(self.reader.get_translation())
         desired_output = ['What is it ?',
                           'A new thing',
@@ -533,16 +555,16 @@ class TestACQDIVCHATReader(unittest.TestCase):
     def test_get_comments(self):
         """Test get_comments with test.cha."""
         actual_output = []
-        while self.reader.load_next_record() != 0:
+        while self.reader.load_next_record():
             actual_output.append(self.reader.get_comments())
-        desired_output = ['Points to tape', 'test comment',
+        desired_output = ['is furious; Points to tape', 'test comment',
                           'Points to tape', '', '']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_record_speaker_label(self):
         """Test get_record_speaker_label with test.cha."""
         actual_output = []
-        while self.reader.load_next_record() != 0:
+        while self.reader.load_next_record():
             actual_output.append(self.reader.get_record_speaker_label())
         desired_output = ['MEM', 'CHI', 'MEM', 'CHI', 'MEM']
         self.assertEqual(actual_output, desired_output)
@@ -550,7 +572,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
     def test_get_start_time(self):
         """Test get_start_time with test.cha."""
         actual_output = []
-        while self.reader.load_next_record() != 0:
+        while self.reader.load_next_record():
             actual_output.append(self.reader.get_start_time())
         desired_output = ['0', '8551', '19738', '24300', '28048']
         self.assertEqual(actual_output, desired_output)
@@ -558,7 +580,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
     def test_get_end_time(self):
         """Test get_end_time with test.cha."""
         actual_output = []
-        while self.reader.load_next_record() != 0:
+        while self.reader.load_next_record():
             actual_output.append(self.reader.get_end_time())
         desired_output = ['8551', '19738', '24653', '28048', '31840']
         self.assertEqual(actual_output, desired_output)
@@ -568,7 +590,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
     def test_get_utterance(self):
         """Test get_utterance with test.cha."""
         actual_output = []
-        while self.reader.load_next_record() != 0:
+        while self.reader.load_next_record():
             actual_output.append(self.reader.get_utterance())
         desired_output = ['ke eng ?', 'ke ntencha ncha .',
                           'ke eng ntho ena e?', 'e nte ena .',
@@ -581,7 +603,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
         The default type has a period as utterance terminator.
         """
         actual_output = []
-        while self.reader.load_next_record() != 0:
+        while self.reader.load_next_record():
             actual_output.append(self.reader.get_sentence_type())
         desired_output = ['question', 'default', 'question',
                           'default', 'default']
@@ -807,7 +829,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
     def test_get_actual_utterance_test_dot_cha(self):
         """Test get_actual_utterance with test.cha."""
         actual_output = []
-        while self.reader.load_next_record() != 0:
+        while self.reader.load_next_record():
             actual_output.append(self.reader.get_actual_utterance())
         desired_output = ['ke eng ?', 'ke ntencha ncha .',
                           'ke eng ntho ena e?', 'e nte ena .',
@@ -946,7 +968,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
     # def test_get_morph_tier_test_dot_cha(self):
     #     """Test get_morph_tier with test.cha."""
     #     actual_output = []
-    #     while self.reader.load_next_record() != 0:
+    #     while self.reader.load_next_record():
     #         actual_output.append(self.reader.get_morph_tier())
     #     desired_output = '' # TODO: create desired_output
     #     self.assertEqual(actual_output, desired_output)
