@@ -1045,10 +1045,10 @@ class JapaneseMiiProReader(ACQDIVCHATReader):
                 yield segment, gloss, pos
 
     def get_segments(self, seg_word):
-        return [seg for _, seg, _ in self.iter_morphemes(seg_word)]
+        return [seg for seg, _, _ in self.iter_morphemes(seg_word)]
 
     def get_glosses(self, gloss_word):
-        return [gloss for _, _, gloss in self.iter_morphemes(gloss_word)]
+        return [gloss for _, gloss, _ in self.iter_morphemes(gloss_word)]
 
     def get_poses(self, pos_word):
-        return [pos for pos, _, _ in self.iter_morphemes(pos_word)]
+        return [pos for pos, _, pos in self.iter_morphemes(pos_word)]
