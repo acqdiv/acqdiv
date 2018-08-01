@@ -970,6 +970,13 @@ class TestACQDIVCHATReader(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_fragment_actual_ampersand_outside(self):
+        """Test get_fragment_actual with ampersand outside fragment."""
+        utterance = '&=laugh &wow &-um'
+        actual_output = self.reader.get_fragment_actual(utterance)
+        desired_output = '&=laugh wow &-um'
+        self.assertEqual(actual_output, desired_output)
+
     # Tests for the get_fragment_target-method.
 
     def test_get_fragment_target_one_fragment(self):
@@ -998,6 +1005,13 @@ class TestACQDIVCHATReader(unittest.TestCase):
         utterance = ''
         actual_output = self.reader.get_fragment_actual(utterance)
         desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_target_ampersand_outside(self):
+        """Test get_fragment_target with ampersand outside fragment."""
+        utterance = '&=laugh &wow &-um'
+        actual_output = self.reader.get_fragment_target(utterance)
+        desired_output = '&=laugh xxx &-um'
         self.assertEqual(actual_output, desired_output)
 
     # Tests for the get_actual_utterance method.
