@@ -103,7 +103,7 @@ class CHATReader:
         Yields:
             str: The next participant.
         """
-        participants_regex = re.compile(r' ?, ?')
+        participants_regex = re.compile(r'\s*,\s*')
         for participant in participants_regex.split(participants):
             yield participant
 

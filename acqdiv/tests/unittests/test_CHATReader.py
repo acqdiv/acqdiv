@@ -88,6 +88,21 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ptcs_list
         self.assertEqual(actual_output, desired_output)
 
+    def test_iter_participants_multiple_spaces(self):
+        """Test iter_participants with multiple spaces.
+
+        Attested in Japanese MiiPro.
+        """
+        ptcs = ('MEM Mme_Manyili Grandmother,  '
+                'CHI Hlobohang Target_Child,  '
+                'KAT Katherine_Demuth Investigator')
+        actual_output = list(self.reader.iter_participants(ptcs))
+        ptcs_list = ['MEM Mme_Manyili Grandmother',
+                     'CHI Hlobohang Target_Child',
+                     'KAT Katherine_Demuth Investigator']
+        desired_output = ptcs_list
+        self.assertEqual(actual_output, desired_output)
+
     # TODO: new test case
 
     def test_get_participant_fields_two_fields(self):
