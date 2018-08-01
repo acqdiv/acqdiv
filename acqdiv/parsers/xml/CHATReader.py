@@ -343,7 +343,7 @@ class CHATReader:
 
     @staticmethod
     def get_utterance_terminator(utterance):
-        terminator_regex = re.compile(r'([+/.!?"]*[!?.])(?=( \[\+|$))')
+        terminator_regex = re.compile(r'([+/.!?"]*[!?.])(?=( ?\[\+|$))')
         match = terminator_regex.search(utterance)
         return match.group(1)
 
