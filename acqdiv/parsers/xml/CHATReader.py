@@ -342,6 +342,12 @@ class CHATReader:
             return []
 
     @staticmethod
+    def get_utterance_terminator(utterance):
+        terminator_regex = re.compile(r'([+/.!?"]*[!?.])(?=( \[\+|$))')
+        match = terminator_regex.search(utterance)
+        return match.group(1)
+
+    @staticmethod
     def get_mainline_start_time(main_line_fields):
         return main_line_fields[2]
 
@@ -576,10 +582,9 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
                    '+"/.': 'quotation follows',
                    '+".': 'quotation precedes'}
 
-        terminator_regex = re.compile(r'([+/.!?"]*[!?.])(?=( \[\+|$))')
         utterance = self.get_mainline_utterance(self._main_line_fields)
-        match = terminator_regex.search(utterance)
-        return mapping[match.group(1)]
+        terminator = self.get_utterance_terminator(utterance)
+        return mapping[terminator]
 
     # ---------- actual & target ----------
 
