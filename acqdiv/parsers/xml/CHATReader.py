@@ -116,7 +116,8 @@ class CHATReader:
             - name
             - role
 
-        The name is optional and an empty string will be returned if missing.
+        Name and role can be missing in which case an empty string is returned.
+        If only one field is missing, it is the name.
 
         Args:
             participant (str): A participant as returned by iter_participants.
@@ -125,7 +126,10 @@ class CHATReader:
             tuple: (label, name, role).
         """
         fields = participant.split(' ')
-        # if name is missing
+        # name and role is missing
+        if len(fields) == 1:
+            return fields[0], '', ''
+        # name is missing
         if len(fields) == 2:
             return fields[0], '', fields[1]
         else:
@@ -299,7 +303,7 @@ class CHATReader:
             tuple: (speaker ID, utterance, start time, end time).
         """
         main_line_regex = re.compile(
-            r'\*([A-Za-z0-9]{2,3}):\t(.*?)( ?\D?(\d+)(_(\d+))?\D?$|$)')
+            r'\*([A-Za-z0-9]{2,3}):\t(.*?)(\s*\D?(\d+)(_(\d+))?\D?$|$)')
         match = main_line_regex.search(main_line)
         label = match.group(1)
         utterance = match.group(2)
@@ -343,7 +347,7 @@ class CHATReader:
 
     @staticmethod
     def get_utterance_terminator(utterance):
-        terminator_regex = re.compile(r'([+/.!?"]*[!?.])(?=( ?\[\+|$))')
+        terminator_regex = re.compile(r'([+/.!?"]*[!?.])(?=(\s*\[\+|$))')
         match = terminator_regex.search(utterance)
         return match.group(1)
 

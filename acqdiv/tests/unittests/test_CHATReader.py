@@ -88,6 +88,8 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ptcs_list
         self.assertEqual(actual_output, desired_output)
 
+    # TODO: new test case
+
     def test_get_participant_fields_two_fields(self):
         """Test get_participant_fields for two field input."""
         actual_output = self.reader.get_participant_fields('MEM Grandmother')
@@ -198,6 +200,20 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ('KAT', 'ke eng ?', '0', '8551')
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_mainline_fields_with_time_no_space(self):
+        """Test get_mainline_fields with timestamp and no space."""
+        mainline = '*KAT:	ke eng ?0_8551'
+        actual_output = self.reader.get_mainline_fields(mainline)
+        desired_output = ('KAT', 'ke eng ?', '0', '8551')
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_mainline_fields_with_time_multiple_spaces(self):
+        """Test get_mainline_fields with timestamp and multiple spaces."""
+        mainline = '*KAT:	ke eng ?  0_8551'
+        actual_output = self.reader.get_mainline_fields(mainline)
+        desired_output = ('KAT', 'ke eng ?', '0', '8551')
+        self.assertEqual(actual_output, desired_output)
+
     def test_get_mainline_fields_with_single_postcode(self):
         """Test get_mainline_fields for mainline with postcode."""
         mainline = '*KAT:	ke eng ? [+ neg]'
@@ -210,6 +226,13 @@ class TestCHATReader(unittest.TestCase):
         mainline = '*KAT:	ke eng ? [+ neg] [+ req]'
         actual_output = self.reader.get_mainline_fields(mainline)
         desired_output = ('KAT', 'ke eng ? [+ neg] [+ req]', '', '')
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_mainline_fields_with_postcode_multiple_spaces(self):
+        """Test get_mainline_fields with postcode and multiple spaces."""
+        mainline = '*KAT:	ke eng ?  [+ neg]'
+        actual_output = self.reader.get_mainline_fields(mainline)
+        desired_output = ('KAT', 'ke eng ?  [+ neg]', '', '')
         self.assertEqual(actual_output, desired_output)
 
     def test_get_mainline_fields_with_multiple_postcodes_and_time(self):
@@ -231,6 +254,50 @@ class TestCHATReader(unittest.TestCase):
         utterance = 'ke eng ntho ena e?'
         actual_output = self.reader.get_utterance_words(utterance)
         desired_output = ['ke', 'eng', 'ntho', 'ena', 'e?']
+        self.assertEqual(actual_output, desired_output)
+
+    # TODO: add more test cases for the other terminators
+
+    def test_get_utterance_terminator_space_before(self):
+        """Test get_utterance_terminator with space before."""
+        utterance = 'Das ist ein Test .'
+        actual_output = self.reader.get_utterance_terminator(utterance)
+        desired_output = '.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_no_space_before(self):
+        """Test get_utterance_terminator with no space before."""
+        utterance = 'Das ist ein Test.'
+        actual_output = self.reader.get_utterance_terminator(utterance)
+        desired_output = '.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_postcode(self):
+        """Test get_utterance_terminator with postcode."""
+        utterance = 'Das ist ein Test . [+ postcode]'
+        actual_output = self.reader.get_utterance_terminator(utterance)
+        desired_output = '.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_postcode_no_space(self):
+        """Test get_utterance_terminator with postcode and no space."""
+        utterance = 'Das ist ein Test .[+ postcode]'
+        actual_output = self.reader.get_utterance_terminator(utterance)
+        desired_output = '.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_postcode_multiple_spaces(self):
+        """Test get_utterance_terminator with postcode and multiple spaces."""
+        utterance = 'Das ist ein Test .  [+ postcode]'
+        actual_output = self.reader.get_utterance_terminator(utterance)
+        desired_output = '.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_non_terminator_dot(self):
+        """Test get_utterance_terminator with a non-terminator dot."""
+        utterance = 'Das ist (.) ein Test ? [+ postcode]'
+        actual_output = self.reader.get_utterance_terminator(utterance)
+        desired_output = '?'
         self.assertEqual(actual_output, desired_output)
 
     # ---------- dependent tiers ----------
