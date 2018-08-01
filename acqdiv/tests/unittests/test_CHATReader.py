@@ -2,6 +2,7 @@ import unittest
 from acqdiv.parsers.xml.CHATReader import CHATReader
 from acqdiv.parsers.xml.CHATReader import ACQDIVCHATReader
 from acqdiv.parsers.xml.CHATReader import InuktitutReader
+from acqdiv.parsers.xml.CHATReader import JapaneseMiiProReader
 
 """The metadata is a combination of hiia.cha (Sesotho), aki20803.ch 
 (Japanese Miyata) and made up data to cover more cases. 
@@ -1238,6 +1239,120 @@ class TestInuktitutReader(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
 ###############################################################################
+
+
+class TestJapaneseMiiProReader(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        session_file_path = './test.cha'
+        cls.reader = JapaneseMiiProReader(session_file_path)
+        cls.maxDiff = None
+
+    # Tests for the iter_morphemes-method.
+
+    def test_iter_morphemes_stem_no_gloss(self):
+        """Test iter_morphemes with stem and no gloss."""
+        morpheme_word = 'stem:POS|stem&FUS'
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('stem&FUS', '', 'stem:POS')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_stem_gloss(self):
+        """Test iter_morphemes with stem and gloss."""
+        morpheme_word = 'stem:POS|stem&FUS=stemgloss'
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('stem&FUS', 'stemgloss', 'stem:POS')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_suffixes_no_stemgloss(self):
+        """Test iter_morphemes with suffixes and no stem gloss."""
+        morpheme_word = 'stem:POS|stem&FUS-SFXONE-SFXTWO'
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('stem&FUS', '', 'stem:POS'),
+                          ('', 'SFXONE', 'sfx'),
+                          ('', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_suffixes_stemgloss(self):
+        """Test iter_morphemes with suffixes and stem gloss."""
+        morpheme_word = 'stem:POS|stem&FUS-SFXONE-SFXTWO=stemgloss'
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('stem&FUS', 'stemgloss', 'stem:POS'),
+                          ('', 'SFXONE', 'sfx'),
+                          ('', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_suffixes_colon(self):
+        """Test iter_morphemes with suffix and colon."""
+        morpheme_word = ('stem:POS|stem&FUS-SFXONE:contr'
+                         '-SFXTWO:SFXTWOseg=stemgloss')
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('stem&FUS', 'stemgloss', 'stem:POS'),
+                          ('', 'SFXONE:contr', 'sfx'),
+                          ('SFXTWOseg', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_prefixes(self):
+        """Test iter_morphemes with prefixes."""
+        morpheme_word = 'pfxone#pfxtwo#stem:POS|stem&FUS=stemgloss'
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('pfxone', '', 'pfx'),
+                          ('pfxtwo', '', 'pfx'),
+                          ('stem&FUS', 'stemgloss', 'stem:POS')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_prefixes_suffixes_stemgloss(self):
+        """Test iter_morphemes with prefixes, suffixes and stem gloss."""
+        morpheme_word = 'pfxone#pfxtwo#stem:POS|stem&FUS-SFXONE-SFXTWO=stemgloss'
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('pfxone', '', 'pfx'),
+                          ('pfxtwo', '', 'pfx'),
+                          ('stem&FUS', 'stemgloss', 'stem:POS'),
+                          ('', 'SFXONE', 'sfx'),
+                          ('', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_compound_no_gloss(self):
+        """Test iter_morphemes with compound and no stem gloss."""
+        morpheme_word = 'CMPPOS|+CMPPOSONE|cmpstemone+CMPPOSTWO|cmpstemtwo'
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('=cmpstemone', '', 'CMPPOSONE'),
+                          ('=cmpstemtwo', '', 'CMPPOSTWO')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_compound_gloss(self):
+        """Test iter_morphemes with compound and stem gloss."""
+        morpheme_word = ('CMPPOS|+CMPPOSONE|cmpstemone'
+                         '+CMPPOSTWO|cmpstemtwo=cmpgloss')
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('=cmpstemone', 'cmpgloss', 'CMPPOSONE'),
+                          ('=cmpstemtwo', 'cmpgloss', 'CMPPOSTWO')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_compound_suffixes(self):
+        """Test iter_morphemes with compound and suffixes."""
+        morpheme_word = ('CMPPOS|+CMPPOSONE|cmpstemone-SFXONE'
+                         '+CMPPOSTWO|cmpstemtwo-SFXTWO=cmpgloss')
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('=cmpstemone', 'cmpgloss', 'CMPPOSONE'),
+                          ('', 'SFXONE', 'sfx'),
+                          ('=cmpstemtwo', 'cmpgloss', 'CMPPOSTWO'),
+                          ('', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_compound_prefix(self):
+        """Test iter_morphemes with compound and prefix."""
+        morpheme_word = ('pfxone#CMPPOS|+CMPPOSONE|cmpstemone-SFXONE'
+                         '+CMPPOSTWO|cmpstemtwo-SFXTWO=cmpgloss')
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('pfxone', '', 'pfx'),
+                          ('=cmpstemone', 'cmpgloss', 'CMPPOSONE'),
+                          ('', 'SFXONE', 'sfx'),
+                          ('=cmpstemtwo', 'cmpgloss', 'CMPPOSTWO'),
+                          ('', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
 
 
 if __name__ == '__main__':
