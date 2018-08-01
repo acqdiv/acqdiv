@@ -43,6 +43,15 @@ class TestCHATReader(unittest.TestCase):
                           'book , "Miichan no otsukai"']
         self.assertEqual(actual_output, desired_output)
 
+    # TODO: implement
+
+    def test_iter_metadata_fields_line_breaks(self):
+        """Test iter_metadata_fields with line breaks.
+
+        Attested in Japanese MiiPro.
+        """
+        pass
+
     def test_get_metadata_field_normal_field(self):
         """Test get_metadata_field for a normal field."""
         actual_output = self.reader.get_metadata_field('@Languages:\tsme')

@@ -8,10 +8,25 @@ from acqdiv.parsers.xml.interfaces import CorpusReaderInterface
 class CHATReader:
     """Generic reader methods for a CHAT file."""
 
+    @staticmethod
+    def _replace_line_breaks(string):
+        """Remove line breaks within record tiers or metadata fields.
+
+        CHAT inserts a line break and a tab when a tier or field becomes too
+        long. The line breaks are replaced by a blank space.
+
+        Args:
+            rec (str): The record.
+
+        Returns:
+            str:  Tier or field without line breaks.
+        """
+        return string.replace('\n\t', ' ')
+
     # ---------- metadata ----------
 
-    @staticmethod
-    def iter_metadata_fields(session_path):
+    @classmethod
+    def iter_metadata_fields(cls, session_path):
         """Iter all metadata fields of a session file.
 
         Metadata fields start with @ followed by the key, colon, tab and its
@@ -25,9 +40,11 @@ class CHATReader:
         """
         metadata_regex = re.compile(r'@.*?:\t')
         with open(session_path, 'r') as f:
-            for line in f:
+            content = cls._replace_line_breaks(f.read())
+            for match in re.finditer(r'[^\n]+', content):
+                line = match.group()
                 if metadata_regex.search(line):
-                    yield line.rstrip('\n')
+                    yield line
 
                 # metadata section ends
                 if line.startswith('*'):
@@ -206,21 +223,6 @@ class CHATReader:
         return id_fields[9]
 
     # ---------- Record ----------
-
-    @staticmethod
-    def _replace_line_breaks(rec):
-        """Remove line breaks within the tiers of a record.
-
-        CHAT inserts line breaks when the text of a main line or dependent
-        tier becomes too long. The line breaks are replaced by a blank space.
-
-        Args:
-            rec (str): The record.
-
-        Returns:
-            str: Record without break lines within the tiers.
-        """
-        return rec.replace('\n\t', ' ')
 
     @classmethod
     def iter_records(cls, session_path):
