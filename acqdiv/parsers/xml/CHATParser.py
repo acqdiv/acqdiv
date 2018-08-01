@@ -266,6 +266,9 @@ class JapaneseMiiProParser(CHATParser):
     def get_reader(self):
         return CHATReader.JapaneseMiiProReader(self.session_path)
 
+    def get_cleaner(self):
+        return CHATCleaner.JapaneseMiiProCleaner()
+
 
 def main():
     import glob

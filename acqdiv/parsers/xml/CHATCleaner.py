@@ -750,3 +750,37 @@ class CreeCleaner(CHATCleaner):
     def clean_pos(cls, pos):
         pos = cls.clean_morpheme(pos)
         return cls.uppercase_pos_in_parentheses(pos)
+
+###############################################################################
+
+
+class JapaneseMiiProCleaner(CHATCleaner):
+
+    @classmethod
+    def remove_non_words(cls, morph_tier):
+        """Remove all non-words from the morphology tier.
+
+        Non-words have the POS tag 'tag'.
+        """
+        non_words_regex = re.compile(r'tag\|\S+')
+        morph_tier = non_words_regex.sub('', morph_tier)
+        return cls.remove_redundant_whitespaces(morph_tier)
+
+    @classmethod
+    def clean_morph_tier(cls, morph_tier):
+        morph_tier = cls.remove_terminator(morph_tier)
+        return cls.remove_non_words(morph_tier)
+
+    @classmethod
+    def clean_seg_tier(cls, seg_tier):
+        return cls.clean_morph_tier(seg_tier)
+
+    @classmethod
+    def clean_gloss_tier(cls, gloss_tier):
+        return cls.clean_morph_tier(gloss_tier)
+
+    @classmethod
+    def clean_pos_tier(cls, pos_tier):
+        return cls.clean_morph_tier(pos_tier)
+
+
