@@ -623,12 +623,11 @@ class TestACQDIVCHATReaderRecord(unittest.TestCase):
     def setUpClass(cls):
         session = ('@UTF8\n'
                    '@Begin\n'
-                   '*MEM:\tThis is the mainline. \x150_1111\x15\n'
+                   '*MEM:\tThis is the utterance. \x150_1111\x15\n'
                    '%add:\tADD\n'
                    '%sit:\tThis is the situation\n'
                    '%act:\tThis is the action\n'
-                   '%gls:\tThis is the gls tier\n'
-                   '%cod:\tThis is the cod tier\n'
+                   '%mor:\tThis is the morphology tier\n'
                    '%eng:\tThis is the translation.\n'
                    '%com:\tThis is the comment\n'
                    '@End')
@@ -637,25 +636,25 @@ class TestACQDIVCHATReaderRecord(unittest.TestCase):
         cls.reader.load_next_record()
 
     def test_get_uid(self):
-        """Test get_uid with test.cha."""
+        """Test get_uid."""
         actual_output = self.reader.get_uid()
         desired_output = 'u0'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_addressee(self):
-        """Test get_addressee with test.cha."""
+        """Test get_addressee."""
         actual_output = self.reader.get_addressee()
         desired_output = 'ADD'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_translation(self):
-        """Test get_translation with test.cha."""
+        """Test get_translation."""
         actual_output = self.reader.get_translation()
         desired_output = 'This is the translation.'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_comments(self):
-        """Test get_comments with test.cha."""
+        """Test get_comments."""
         actual_output = self.reader.get_comments()
         desired_output = ('This is the comment; '
                           'This is the situation; '
@@ -663,21 +662,54 @@ class TestACQDIVCHATReaderRecord(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_get_record_speaker_label(self):
-        """Test get_record_speaker_label with test.cha."""
+        """Test get_record_speaker_label."""
         actual_output = self.reader.get_record_speaker_label()
         desired_output = 'MEM'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_start_time(self):
-        """Test get_start_time with test.cha."""
+        """Test get_start_time."""
         actual_output = self.reader.get_start_time()
         desired_output = '0'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_end_time(self):
-        """Test get_end_time with test.cha."""
+        """Test get_end_time."""
         actual_output = self.reader.get_end_time()
         desired_output = '1111'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance(self):
+        """Test get_utterance."""
+        actual_output = self.reader.get_utterance()
+        desired_output = 'This is the utterance.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_sentence_type(self):
+        """Test get_sentence_type."""
+        actual_output = self.reader.get_sentence_type()
+        desired_output = 'default'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morph_tier(self):
+        """Test get_morph_tier."""
+        actual_output = self.reader.get_morph_tier()
+        desired_output = 'This is the morphology tier'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_seg_tier(self):
+        actual_output = self.reader.get_seg_tier()
+        desired_output = 'This is the morphology tier'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_gloss_tier(self):
+        actual_output = self.reader.get_gloss_tier()
+        desired_output = 'This is the morphology tier'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_pos_tier(self):
+        actual_output = self.reader.get_pos_tier()
+        desired_output = 'This is the morphology tier'
         self.assertEqual(actual_output, desired_output)
 
 
@@ -778,33 +810,6 @@ class TestACQDIVCHATReader(unittest.TestCase):
              })
         ]
         self.assertEqual(actual_output, desired_output)
-
-
-    # ---------- utterance ----------
-
-    def test_get_utterance(self):
-        """Test get_utterance with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_utterance())
-        desired_output = ['ke eng ?', 'ke ntencha ncha .',
-                          'ke eng ntho ena e?', 'e nte ena .',
-                          'ke khomba khomba .']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_sentence_type_test_dot_cha_utts(self):
-        """Test get_sentence_type with test.cha.
-
-        The default type has a period as utterance terminator.
-        """
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_sentence_type())
-        desired_output = ['question', 'default', 'question',
-                          'default', 'default']
-        self.assertEqual(actual_output, desired_output)
-
-    # TODO: more test cases for get_sentence type?
 
     # Tests for the get_actual_utterance method.
 
@@ -915,30 +920,6 @@ class TestACQDIVCHATReader(unittest.TestCase):
         actual_output = self.reader.get_target_utterance()
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
-
-    # ---------- morphology ----------
-
-    # def test_get_morph_tier(self):
-    #     """Test get_morph_tier with standart 'mor'-tier."""
-    #     actual_output = []
-    #     while self.reader.load_next_record():
-    #         actual_output.append(self.reader.get_morph_tier())
-    #     desired_output = '' # TODO: create desired_output
-    #     self.assertEqual(actual_output, desired_output)
-
-    def test_get_morph_tier_multiple_morph_tiers(self):
-        """Test get_morph_tier with multiple morphology tiers."""
-        self._dependent_tiers = {}
-        pass
-
-    def test_get_seg_tier(self):
-        pass
-
-    def test_get_gloss_tier(self):
-        pass
-
-    def test_get_pos_tier(self):
-        pass
 
 ###############################################################################
 
