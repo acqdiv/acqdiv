@@ -1010,6 +1010,7 @@ class TestACQDIVCHATReader(unittest.TestCase):
 
 ###############################################################################
 
+
 class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
     """Class to test all static methods of ACQDIVCHATReader."""
 
@@ -1018,12 +1019,13 @@ class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
     # Test for the get_shortening_actual-method.
     # All examples are modified versions of real utterances.
 
+    @classmethod
     def setUpClass(cls):
-    """Set up the ACQDIVCHATReader for testing."""
-    session_file_path = './test.cha'
-    cls.reader = ACQDIVCHATReader()
-    cls.reader.read(session_file_path)
-    cls.maxDiff = None
+        """Set up the ACQDIVCHATReader for testing."""
+        session_file_path = './test.cha'
+        cls.reader = ACQDIVCHATReader()
+        cls.reader.read(session_file_path)
+        cls.maxDiff = None
 
     def test_get_shortening_actual_standard_case(self):
         """Test get_shortening_actual with 1 shortening occurence."""
@@ -1246,8 +1248,6 @@ class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
         actual_output = self.reader.get_fragment_target(utterance)
         desired_output = '&=laugh xxx &-um'
         self.assertEqual(actual_output, desired_output)
-
-
 
 ###############################################################################
 
@@ -1596,7 +1596,8 @@ class TestJapaneseMiiProReader(unittest.TestCase):
 
     def test_iter_morphemes_prefixes_suffixes_stemgloss(self):
         """Test iter_morphemes with prefixes, suffixes and stem gloss."""
-        morpheme_word = 'pfxone#pfxtwo#stem:POS|stem&FUS-SFXONE-SFXTWO=stemgloss'
+        morpheme_word = ('pfxone#pfxtwo#stem:POS|stem&FUS-SFXONE-SFXTWO=s'
+                         'temgloss')
         actual_output = list(self.reader.iter_morphemes(morpheme_word))
         desired_output = [('pfxone', '', 'pfx'),
                           ('pfxtwo', '', 'pfx'),
@@ -1644,7 +1645,6 @@ class TestJapaneseMiiProReader(unittest.TestCase):
                           ('=cmpstemtwo', 'cmpgloss', 'CMPPOSTWO'),
                           ('', 'SFXTWO', 'sfx')]
         self.assertEqual(actual_output, desired_output)
-
 
 
 if __name__ == '__main__':
