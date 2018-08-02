@@ -380,8 +380,7 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     """
 
     def __init__(self):
-        self.session_file = None
-        self.session = None
+        self.session_file_path = None
 
         # metadata fields
         self._metadata_fields = None
@@ -400,18 +399,19 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     def read(self, session_file_path):
         """Read the session file.
 
-        Sets the following internal variables:
+        Sets the following variables:
             - session_file_path
             - _metadata_fields
             - _speaker_iterator
             - _record_iterator
         """
-        self.session_file = session_file_path
+        self.session_file_path = session_file_path
         with open(session_file_path) as f:
-            self.session = f.read()
-        self._metadata_fields = self.get_metadata_fields(self.session)
-        self._speaker_iterator = self.get_speaker_iterator()
-        self._record_iterator = self.get_record_iterator()
+            session = f.read()
+        self._metadata_fields = self.get_metadata_fields(session)
+        participants = self._metadata_fields['Participants']
+        self._speaker_iterator = self.iter_participants(participants)
+        self._record_iterator = self.iter_records(session)
 
     # ---------- metadata ----------
 
@@ -451,15 +451,6 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         return self.get_media_filename(media_fields)
 
     # ---------- speaker ----------
-
-    def get_speaker_iterator(self):
-        """Get a speaker iterator.
-
-        Returns:
-            iterator(str): The participants from @Participants.
-        """
-        participants = self._metadata_fields['Participants']
-        return self.iter_participants(participants)
 
     def load_next_speaker(self):
         """Load the next speaker.
@@ -502,14 +493,6 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         return self.get_participant_role(self._participant_fields)
 
     # ---------- record ----------
-
-    def get_record_iterator(self):
-        """Get a record iterator.
-
-        Returns:
-            iterator(str): The records.
-        """
-        return self.iter_records(self.session)
 
     def load_next_record(self):
         """Load the next record.

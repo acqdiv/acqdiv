@@ -565,54 +565,6 @@ class TestACQDIVCHATReader(unittest.TestCase):
 
     # ---------- metadata ----------
 
-    def test_get_metadata_fields(self):
-        """Test get_metadata_fields with the test.cha-file."""
-        session = (
-            '@UTF8\n'
-            '@Begin\n'
-            '@Languages:\tsme\n'
-            '@Date:\t12-SEP-1997\n'
-            '@Participants:\tMEM Mme_Manyili Grandmother , '
-            'CHI Hlobohang Target_Child\n'
-            '@ID:\tsme|Sesotho|MEM||female|||Grandmother|||\n'
-            '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||\n'
-            '@Birth of CHI:\t14-JAN-2006\n'
-            '@Birth of MEM:\t11-OCT-1974\n'
-            '@Media:\th2ab, audio\n'
-            '@Comment:\tall snd kana jmor cha ok Wakachi2002;\n'
-            '@Warning:\trecorded time: 1:00:00\n'
-            '@Comment:\tuses desu and V-masu\n'
-            '@Situation:\tAki and AMO preparing to look at book , '
-            '"Miichan no otsukai"\n'
-            '*MEM:\tke eng ? \x150_8551\x15\n%gls:\tke eng ?\n'
-            '@End')
-        actual_output = ACQDIVCHATReader.get_metadata_fields(session)
-        desired_output = {
-            'Languages': 'sme',
-            'Date': '12-SEP-1997',
-            'Participants': ('MEM Mme_Manyili Grandmother , '
-                             'CHI Hlobohang Target_Child'),
-            'ID': {
-                'MEM': ('sme', 'Sesotho', 'MEM', '', 'female',
-                        '', '', 'Grandmother', '', ''),
-                'CHI': ('sme', 'Sesotho', 'CHI', '2;2.',
-                        '', '', '', 'Target_Child', '', '')
-            },
-            'Birth of CHI': '14-JAN-2006',
-            'Birth of MEM': '11-OCT-1974',
-            'Media': 'h2ab, audio',
-            'Comment': (  # 'all snd kana jmor cha ok Wakachi2002; '
-                # Since the AQDIVCHATReader in its current state
-                # does not need to capture comments, the line
-                # above, which tests the case of two comments
-                # in the same session metadata is commented out.
-                'uses desu and V-masu'),
-            'Warning': 'recorded time: 1:00:00',
-            'Situation': ('Aki and AMO preparing to look at book , '
-                          '"Miichan no otsukai"')
-        }
-        self.assertEqual(actual_output, desired_output)
-
     def test_get_session_date(self):
         """Test get_session_date with test.cha. """
         actual_output = self.reader.get_session_date()
@@ -626,13 +578,6 @@ class TestACQDIVCHATReader(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     # ---------- speaker ----------
-
-    def test_get_speaker_iterator(self):
-        """Test get_speaker_iterator for the speakers in 'test.cha'."""
-        actual_output = list(self.reader.get_speaker_iterator())
-        desired_output = ['MEM Mme_Manyili Grandmother',
-                          'CHI Hlobohang Target_Child']
-        self.assertEqual(actual_output, desired_output)
 
     def test_load_next_speaker(self):
         """Test load_next_speaker for the speakers in 'test.cha'"""
@@ -708,26 +653,6 @@ class TestACQDIVCHATReader(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     # ---------- record ----------
-
-    def test_get_record_iterator(self):
-        """Test get_record_iterator with test.cha."""
-        actual_output = list(self.reader.get_record_iterator())
-        desired_output = [
-            '*MEM:\tke eng ? 0_8551\n%gls:\tke eng ?\n%cod:\tcp '
-            'wh ?\n%eng:\tWhat is it ?\n%sit:\tPoints to tape\n%com:\tis '
-            'furious\n%add:\tCHI',
-            '*CHI:\tke ntencha ncha . 8551_19738\n%gls:\tke ntho '
-            'e-ncha .\n%cod:\tcp thing(9 , 10) 9-aj .\n%eng:\tA new thing\n'
-            '%com:\ttest comment',
-            '*MEM:	ke eng ntho ena e? 19738_24653\n%gls:\tke eng ntho ena '
-            'e ?\n%cod:\tcp wh thing(9 , 10) d9 ij ?\n%eng:\tWhat is this '
-            'thing ?\n%sit:\tPoints to tape',
-            '*CHI:\te nte ena . 24300_28048\n%gls:\tke ntho ena .\n%cod:'
-            '\tcp thing(9 , 10) d9 .\n%eng:\tIt is this thing',
-            '*MEM:\tke khomba khomba . 28048_31840\n%gls:\tkekumbakumba .'
-            '\n%cod:\tcp tape_recorder(9 , 10) .\n%eng:\tIt is a stereo'
-        ]
-        self.assertEqual(actual_output, desired_output)
 
     def test_load_next_record(self):
         """Test load_next_record for the records in 'test.cha'
@@ -1073,7 +998,55 @@ class TestACQDIVCHATReader(unittest.TestCase):
 
 
 class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
-    """Class to test all static methods of ACQDIVCHATReader."""
+    """Class to test all static and class methods of ACQDIVCHATReader."""
+
+    def test_get_metadata_fields(self):
+        """Test get_metadata_fields with the test.cha-file."""
+        session = (
+            '@UTF8\n'
+            '@Begin\n'
+            '@Languages:\tsme\n'
+            '@Date:\t12-SEP-1997\n'
+            '@Participants:\tMEM Mme_Manyili Grandmother , '
+            'CHI Hlobohang Target_Child\n'
+            '@ID:\tsme|Sesotho|MEM||female|||Grandmother|||\n'
+            '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||\n'
+            '@Birth of CHI:\t14-JAN-2006\n'
+            '@Birth of MEM:\t11-OCT-1974\n'
+            '@Media:\th2ab, audio\n'
+            '@Comment:\tall snd kana jmor cha ok Wakachi2002;\n'
+            '@Warning:\trecorded time: 1:00:00\n'
+            '@Comment:\tuses desu and V-masu\n'
+            '@Situation:\tAki and AMO preparing to look at book , '
+            '"Miichan no otsukai"\n'
+            '*MEM:\tke eng ? \x150_8551\x15\n%gls:\tke eng ?\n'
+            '@End')
+        actual_output = ACQDIVCHATReader.get_metadata_fields(session)
+        desired_output = {
+            'Languages': 'sme',
+            'Date': '12-SEP-1997',
+            'Participants': ('MEM Mme_Manyili Grandmother , '
+                             'CHI Hlobohang Target_Child'),
+            'ID': {
+                'MEM': ('sme', 'Sesotho', 'MEM', '', 'female',
+                        '', '', 'Grandmother', '', ''),
+                'CHI': ('sme', 'Sesotho', 'CHI', '2;2.',
+                        '', '', '', 'Target_Child', '', '')
+            },
+            'Birth of CHI': '14-JAN-2006',
+            'Birth of MEM': '11-OCT-1974',
+            'Media': 'h2ab, audio',
+            'Comment': (  # 'all snd kana jmor cha ok Wakachi2002; '
+                # Since the AQDIVCHATReader in its current state
+                # does not need to capture comments, the line
+                # above, which tests the case of two comments
+                # in the same session metadata is commented out.
+                'uses desu and V-masu'),
+            'Warning': 'recorded time: 1:00:00',
+            'Situation': ('Aki and AMO preparing to look at book , '
+                          '"Miichan no otsukai"')
+        }
+        self.assertEqual(actual_output, desired_output)
 
     # ---------- actual & target ----------
 
