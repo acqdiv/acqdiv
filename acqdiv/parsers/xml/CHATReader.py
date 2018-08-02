@@ -410,7 +410,7 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         """
         session = session_file.read()
         self._metadata_fields = self.get_metadata_fields(session)
-        participants = self._metadata_fields['Participants']
+        participants = self._metadata_fields.get('Participants', '')
         self._speaker_iterator = self.iter_participants(participants)
         self._record_iterator = self.iter_records(session)
 

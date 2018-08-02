@@ -616,6 +616,71 @@ class TestACQDIVCHATReaderSpeaker(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
 
+class TestACQDIVCHATReaderRecord(unittest.TestCase):
+    """Test record readers of ACQDIVCHATReader."""
+
+    @classmethod
+    def setUpClass(cls):
+        session = ('@UTF8\n'
+                   '@Begin\n'
+                   '*MEM:\tThis is the mainline. \x150_1111\x15\n'
+                   '%add:\tADD\n'
+                   '%sit:\tThis is the situation\n'
+                   '%act:\tThis is the action\n'
+                   '%gls:\tThis is the gls tier\n'
+                   '%cod:\tThis is the cod tier\n'
+                   '%eng:\tThis is the translation.\n'
+                   '%com:\tThis is the comment\n'
+                   '@End')
+        cls.reader = ACQDIVCHATReader()
+        cls.reader.read(io.StringIO(session))
+        cls.reader.load_next_record()
+
+    def test_get_uid(self):
+        """Test get_uid with test.cha."""
+        actual_output = self.reader.get_uid()
+        desired_output = 'u0'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_addressee(self):
+        """Test get_addressee with test.cha."""
+        actual_output = self.reader.get_addressee()
+        desired_output = 'ADD'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_translation(self):
+        """Test get_translation with test.cha."""
+        actual_output = self.reader.get_translation()
+        desired_output = 'This is the translation.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_comments(self):
+        """Test get_comments with test.cha."""
+        actual_output = self.reader.get_comments()
+        desired_output = ('This is the comment; '
+                          'This is the situation; '
+                          'This is the action')
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_record_speaker_label(self):
+        """Test get_record_speaker_label with test.cha."""
+        actual_output = self.reader.get_record_speaker_label()
+        desired_output = 'MEM'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_start_time(self):
+        """Test get_start_time with test.cha."""
+        actual_output = self.reader.get_start_time()
+        desired_output = '0'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_end_time(self):
+        """Test get_end_time with test.cha."""
+        actual_output = self.reader.get_end_time()
+        desired_output = '1111'
+        self.assertEqual(actual_output, desired_output)
+
+
 class TestACQDIVCHATReader(unittest.TestCase):
     """Class to test the ACQDIVCHATReader."""
 
@@ -714,67 +779,6 @@ class TestACQDIVCHATReader(unittest.TestCase):
         ]
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_uid(self):
-        """Test get_uid with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_uid())
-        desired_output = ['u0', 'u1', 'u2', 'u3', 'u4']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_addressee(self):
-        """Test get_addressee with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_addressee())
-        desired_output = ['CHI', '', '', '', '']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_translation(self):
-        """Test get_translation with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_translation())
-        desired_output = ['What is it ?',
-                          'A new thing',
-                          'What is this thing ?',
-                          'It is this thing',
-                          'It is a stereo'
-                          ]
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_comments(self):
-        """Test get_comments with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_comments())
-        desired_output = ['is furious; Points to tape', 'test comment',
-                          'Points to tape', '', '']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_record_speaker_label(self):
-        """Test get_record_speaker_label with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_record_speaker_label())
-        desired_output = ['MEM', 'CHI', 'MEM', 'CHI', 'MEM']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_start_time(self):
-        """Test get_start_time with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_start_time())
-        desired_output = ['0', '8551', '19738', '24300', '28048']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_end_time(self):
-        """Test get_end_time with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_end_time())
-        desired_output = ['8551', '19738', '24653', '28048', '31840']
-        self.assertEqual(actual_output, desired_output)
 
     # ---------- utterance ----------
 
