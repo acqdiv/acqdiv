@@ -1,5 +1,4 @@
 import itertools
-import mmap
 import re
 
 from acqdiv.parsers.xml.interfaces import CorpusReaderInterface
@@ -9,46 +8,45 @@ class CHATReader:
     """Generic reader methods for a CHAT file."""
 
     @staticmethod
-    def _replace_line_breaks(string):
+    def _replace_line_breaks(session):
         """Remove line breaks within record tiers or metadata fields.
 
         CHAT inserts a line break and a tab when a tier or field becomes too
         long. The line breaks are replaced by a blank space.
 
         Args:
-            rec (str): The record.
+            session (str): The session.
 
         Returns:
-            str:  Tier or field without line breaks.
+            str:  The session without line breaks in tiers and fields.
         """
-        return string.replace('\n\t', ' ')
+        return session.replace('\n\t', ' ')
 
     # ---------- metadata ----------
 
     @classmethod
-    def iter_metadata_fields(cls, session_path):
-        """Iter all metadata fields of a session file.
+    def iter_metadata_fields(cls, session):
+        """Iter all metadata fields of a session.
 
         Metadata fields start with @ followed by the key, colon, tab and its
         content.
 
         Args:
-            session_path (str): Path to the session file.
+            session (str): The session.
 
         Yields:
             str: The next metadata field.
         """
         metadata_regex = re.compile(r'@.*?:\t')
-        with open(session_path, 'r') as f:
-            content = cls._replace_line_breaks(f.read())
-            for match in re.finditer(r'[^\n]+', content):
-                line = match.group()
-                if metadata_regex.search(line):
-                    yield line
+        session = cls._replace_line_breaks(session)
+        for match in re.finditer(r'[^\n]+', session):
+            line = match.group()
+            if metadata_regex.search(line):
+                yield line
 
-                # metadata section ends
-                if line.startswith('*'):
-                    break
+            # metadata section ends
+            if line.startswith('*'):
+                break
 
     @staticmethod
     def get_metadata_field(metadata_field):
@@ -225,8 +223,8 @@ class CHATReader:
     # ---------- Record ----------
 
     @classmethod
-    def iter_records(cls, session_path):
-        """Yield a record of the CHAT file.
+    def iter_records(cls, session):
+        """Yield a record of the session.
 
         A record starts with '*speaker_label:\t' in CHAT. Line breaks within
         the main line and dependent tiers are automatically removed and
@@ -239,42 +237,18 @@ class CHATReader:
         counter = itertools.count()
         cls._uid = next(counter)
 
-        with open(session_path, 'rb') as f:
-            # use memory-mapping of files
-            mm = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+        session = cls._replace_line_breaks(session)
 
-            # create a record generator
-            rec_generator = re.finditer(br'\*[A-Za-z0-9]{2,3}:\t', mm)
+        rec_regex = re.compile(r'\*[A-Za-z0-9]{2,3}:\t.*?(?=\n\*|\n@End)',
+                               flags=re.DOTALL)
 
-            # get start of first record
-            rec_start_pos = next(rec_generator).start()
+        # iter all records
+        for match in rec_regex.finditer(session):
+            rec = match.group()
+            yield rec
+            cls._uid = next(counter)
 
-            # iter all records
-            for rec in rec_generator:
-
-                # get start of next record
-                next_rec_start_pos = rec.start()
-
-                # get the stringified record
-                rec_str = mm[rec_start_pos:next_rec_start_pos].decode()
-
-                # clean line_breaks
-                rec_str = cls._replace_line_breaks(rec_str)
-
-                yield rec_str
-
-                cls._uid = next(counter)
-
-                # set new start of record
-                rec_start_pos = next_rec_start_pos
-
-            # handle last record and strip the @End marker
-            rec_str = mm[rec_start_pos:].decode().rstrip('@End\n')
-            # clean line_breaks
-            rec_str = cls._replace_line_breaks(rec_str)
-            yield rec_str
-
-            cls._uid = None
+        cls._uid = None
 
     # ---------- Main line ----------
 
@@ -407,6 +381,7 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
 
     def __init__(self):
         self.session_file = None
+        self.session = None
 
         # metadata fields
         self._metadata_fields = None
@@ -432,6 +407,8 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
             - _record_iterator
         """
         self.session_file = session_file_path
+        with open(session_file_path) as f:
+            self.session = f.read()
         self._metadata_fields = self.get_metadata_fields()
         self._speaker_iterator = self.get_speaker_iterator()
         self._record_iterator = self.get_record_iterator()
@@ -449,7 +426,7 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
             dict: {metadata key: metadata content}
         """
         metadata_fields = {}
-        for metadata_field in self.iter_metadata_fields(self.session_file):
+        for metadata_field in self.iter_metadata_fields(self.session):
             key, content = self.get_metadata_field(metadata_field)
 
             if key == 'ID':
@@ -531,7 +508,7 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         Returns:
             iterator(str): The records.
         """
-        return self.iter_records(self.session_file)
+        return self.iter_records(self.session)
 
     def load_next_record(self):
         """Load the next record.

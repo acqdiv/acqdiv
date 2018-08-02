@@ -19,6 +19,9 @@ class TestCHATReader(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.session_file_path = './test.cha'
+        cls.session = None
+        with open(cls.session_file_path) as f:
+            cls.session = f.read()
         cls.reader = CHATReader()
         cls.maxDiff = None
 
@@ -26,7 +29,7 @@ class TestCHATReader(unittest.TestCase):
 
     def test_iter_metadata_fields(self):
         """Test iter_metadata_fields with normal intput."""
-        actual_output = list(self.reader.iter_metadata_fields('./test.cha'))
+        actual_output = list(self.reader.iter_metadata_fields(self.session))
         desired_output = ['@Languages:\tsme',
                           '@Date:\t12-SEP-1997',
                           ('@Participants:\tMEM Mme_Manyili Grandmother , '
@@ -271,20 +274,20 @@ class TestCHATReader(unittest.TestCase):
 
     def test_iter_records(self):
         """Test iter_records for multiple records. (standard case)"""
-        actual_output = list(self.reader.iter_records('./test.cha'))
+        actual_output = list(self.reader.iter_records(self.session))
         desired_output = ['*MEM:\tke eng ? 0_8551\n%gls:\tke eng ?\n%cod:\t'
                           'cp wh ?\n%eng:\tWhat is it ?\n%sit:\tPoints to '
-                          'tape\n%com:\tis furious\n%add:\tCHI\n',
+                          'tape\n%com:\tis furious\n%add:\tCHI',
                           '*CHI:\tke ntencha ncha . 8551_19738\n'
                           '%gls:\tke ntho e-ncha .\n%cod:\tcp thing(9 , 10) '
-                          '9-aj .\n%eng:\tA new thing\n%com:\ttest comment\n',
+                          '9-aj .\n%eng:\tA new thing\n%com:\ttest comment',
                           '*MEM:\tke eng ntho ena e? 19738_24653\n%gls:\t'
                           'ke eng ntho ena e ?\n%cod:\tcp wh thing(9 , 10) '
                           'd9 ij ?\n%eng:\tWhat is this thing ?\n%sit:\t'
-                          'Points to tape\n',
+                          'Points to tape',
                           '*CHI:\te nte ena . 24300_28048\n%gls:\tke ntho '
                           'ena .\n%cod:\tcp thing(9 , 10) d9 .\n%eng:\t'
-                          'It is this thing\n',
+                          'It is this thing',
                           '*MEM:\tke khomba khomba . 28048_31840\n%gls:	'
                           'kekumbakumba .\n%cod:\tcp tape_recorder(9 , 10) .'
                           '\n%eng:\tIt is a stereo']
@@ -654,15 +657,15 @@ class TestACQDIVCHATReader(unittest.TestCase):
         desired_output = [
             '*MEM:\tke eng ? 0_8551\n%gls:\tke eng ?\n%cod:\tcp '
             'wh ?\n%eng:\tWhat is it ?\n%sit:\tPoints to tape\n%com:\tis '
-            'furious\n%add:\tCHI\n',
+            'furious\n%add:\tCHI',
             '*CHI:\tke ntencha ncha . 8551_19738\n%gls:\tke ntho '
             'e-ncha .\n%cod:\tcp thing(9 , 10) 9-aj .\n%eng:\tA new thing\n'
-            '%com:\ttest comment\n',
+            '%com:\ttest comment',
             '*MEM:	ke eng ntho ena e? 19738_24653\n%gls:\tke eng ntho ena '
             'e ?\n%cod:\tcp wh thing(9 , 10) d9 ij ?\n%eng:\tWhat is this '
-            'thing ?\n%sit:\tPoints to tape\n',
+            'thing ?\n%sit:\tPoints to tape',
             '*CHI:\te nte ena . 24300_28048\n%gls:\tke ntho ena .\n%cod:'
-            '\tcp thing(9 , 10) d9 .\n%eng:\tIt is this thing\n',
+            '\tcp thing(9 , 10) d9 .\n%eng:\tIt is this thing',
             '*MEM:\tke khomba khomba . 28048_31840\n%gls:\tkekumbakumba .'
             '\n%cod:\tcp tape_recorder(9 , 10) .\n%eng:\tIt is a stereo'
         ]
