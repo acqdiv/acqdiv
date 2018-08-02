@@ -549,7 +549,13 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     def get_utterance(self):
         return self.get_mainline_utterance(self._main_line_fields)
 
-    def get_sentence_type(self):
+    @staticmethod
+    def terminator2sentence_type(terminator):
+        """Map utterance terminator to sentence type.
+
+        Returns:
+            str: The sentence type.
+        """
         mapping = {'.': 'default',
                    '?': 'question',
                    '!': 'exclamation',
@@ -564,9 +570,12 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
                    '+"/.': 'quotation follows',
                    '+".': 'quotation precedes'}
 
+        return mapping.get(terminator, '')
+
+    def get_sentence_type(self):
         utterance = self.get_mainline_utterance(self._main_line_fields)
         terminator = self.get_utterance_terminator(utterance)
-        return mapping[terminator]
+        return self.terminator2sentence_type(terminator)
 
     # ---------- actual & target ----------
 
