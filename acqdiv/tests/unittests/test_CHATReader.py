@@ -907,35 +907,6 @@ class TestACQDIVCHATReader(unittest.TestCase):
 
     # ---------- morphology ----------
 
-    def test_get_standard_form(self):
-        """Test get_standard_form.
-
-        TODO: What is there to test?
-        """
-        actual_output = self.reader.get_standard_form()
-        desired_output = 'actual'
-        self.assertEqual(actual_output, desired_output)
-
-    # ---------- morphology ----------
-
-    def test_get_word_languge(self):
-        """Test get_word_language.
-
-        TODO: What is there to test?
-        """
-        actual_output = self.reader.get_word_language('dal')
-        desired_output = ''
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_main_morpheme(self):
-        """Test get_main_morpheme. Returns 'gloss'
-
-        TODO: Is there more to test? Will the method be updated?
-        """
-        actual_output = self.reader.get_main_morpheme()
-        desired_output = 'gloss'
-        self.assertEqual(actual_output, desired_output)
-
     # def test_get_morph_tier(self):
     #     """Test get_morph_tier with standart 'mor'-tier."""
     #     actual_output = []
@@ -957,42 +928,6 @@ class TestACQDIVCHATReader(unittest.TestCase):
 
     def test_get_pos_tier(self):
         pass
-
-    def test_get_seg_words(self):
-        pass
-
-    def test_get_gloss_words(self):
-        pass
-
-    def test_get_pos_words(self):
-        pass
-
-    def test_get_segments(self):
-        """Test get_segments. Should raise a NotImplementedError."""
-        seg_word = 'abc'
-        self.assertRaises(NotImplementedError, self.reader.get_segments,
-                          seg_word)
-
-    def test_get_glosses(self):
-        """Test get_glosses. Should raise a NotImplementedError."""
-        gloss_word = 'abc'
-        self.assertRaises(NotImplementedError, self.reader.get_glosses,
-                          gloss_word)
-
-    def test_get_poses(self):
-        """Test get_poses. Should raise a NotImplementedError."""
-        pos_word = 'abc'
-        self.assertRaises(NotImplementedError, self.reader.get_poses,
-                          pos_word)
-
-    def test_get_morpheme_language(self):
-        """Test get_morpheme_language. Should return an empty string."""
-        seg = 'sm1s-t^f1-om2s-v^beat-m^in n^name .'
-        gloss = 'ruri mo-nyane .'
-        pos = 'VV NN'
-        actual_output = self.reader.get_morpheme_language(seg, gloss, pos)
-        desired_output = ''
-        self.assertEqual(actual_output, desired_output)
 
 ###############################################################################
 
@@ -1274,6 +1209,63 @@ class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
         actual_output = ACQDIVCHATReader.get_fragment_target(utterance)
         desired_output = '&=laugh xxx &-um'
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- morphology ----------
+
+    def test_get_standard_form(self):
+        """Test get_standard_form."""
+        actual_output = ACQDIVCHATReader.get_standard_form()
+        desired_output = 'actual'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_word_language(self):
+        """Test get_word_language."""
+        actual_output = ACQDIVCHATReader.get_word_language('dal')
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # TODO: implement
+    def test_get_seg_words(self):
+        pass
+
+    def test_get_gloss_words(self):
+        pass
+
+    def test_get_pos_words(self):
+        pass
+
+    def test_get_main_morpheme(self):
+        """Test get_main_morpheme."""
+        actual_output = ACQDIVCHATReader.get_main_morpheme()
+        desired_output = 'gloss'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_language(self):
+        """Test get_morpheme_language. Should return an empty string."""
+        seg = 'Hatschi'
+        gloss = 'sneeze'
+        pos = 'N'
+        actual_output = ACQDIVCHATReader.get_morpheme_language(seg, gloss, pos)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_segments(self):
+        """Test get_segments. Should raise a NotImplementedError."""
+        seg_word = 'abc'
+        self.assertRaises(NotImplementedError, ACQDIVCHATReader.get_segments,
+                          seg_word)
+
+    def test_get_glosses(self):
+        """Test get_glosses. Should raise a NotImplementedError."""
+        gloss_word = 'abc'
+        self.assertRaises(NotImplementedError, ACQDIVCHATReader.get_glosses,
+                          gloss_word)
+
+    def test_get_poses(self):
+        """Test get_poses. Should raise a NotImplementedError."""
+        pos_word = 'abc'
+        self.assertRaises(NotImplementedError, ACQDIVCHATReader.get_poses,
+                          pos_word)
 
 ###############################################################################
 

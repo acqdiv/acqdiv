@@ -651,7 +651,8 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
 
         return utterance
 
-    def get_standard_form(self):
+    @staticmethod
+    def get_standard_form():
         return 'actual'
 
     # ---------- morphology ----------

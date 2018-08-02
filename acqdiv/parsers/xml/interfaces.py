@@ -148,7 +148,8 @@ class CorpusReaderInterface:
         """
         raise NotImplementedError
 
-    def get_standard_form(self):
+    @staticmethod
+    def get_standard_form():
         """Get the standard form of the utterance.
 
         Returns:
