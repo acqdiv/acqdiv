@@ -17,10 +17,12 @@ class CHATParser(CorpusParserInterface):
         self.reader.read(session_path)
         self.cleaner = self.get_cleaner()
 
-    def get_reader(self):
+    @staticmethod
+    def get_reader():
         return CHATReader.ACQDIVCHATReader()
 
-    def get_cleaner(self):
+    @staticmethod
+    def get_cleaner():
         return CHATCleaner.CHATCleaner()
 
     def get_session_metadata(self):
@@ -240,34 +242,41 @@ class CHATParser(CorpusParserInterface):
 
 
 class CreeParser(CHATParser):
-    def get_reader(self):
+    @staticmethod
+    def get_reader():
         return CHATReader.CreeReader()
 
-    def get_cleaner(self):
+    @staticmethod
+    def get_cleaner():
         return CHATCleaner.CreeCleaner()
 
 
 class EnglishManchester1Parser(CHATParser):
-    def get_reader(self):
+    @staticmethod
+    def get_reader():
         return CHATReader.EnglishManchester1Reader()
 
-    def get_cleaner(self):
+    @staticmethod
+    def get_cleaner():
         return CHATCleaner.EnglishManchester1Cleaner()
 
 
 class InuktitutParser(CHATParser):
-    def get_reader(self):
+    @staticmethod
+    def get_reader():
         return CHATReader.InuktitutReader()
 
-    def get_cleaner(self):
+    def get_cleaner():
         return CHATCleaner.InuktitutCleaner()
 
 
 class JapaneseMiiProParser(CHATParser):
-    def get_reader(self):
+    @staticmethod
+    def get_reader():
         return CHATReader.JapaneseMiiProReader()
 
-    def get_cleaner(self):
+    @staticmethod
+    def get_cleaner():
         return CHATCleaner.JapaneseMiiProCleaner()
 
 

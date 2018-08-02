@@ -397,14 +397,16 @@ class CorpusCleanerInterface:
 class CorpusParserInterface:
     """Interface for parsing the ACQDIV (CHAT) corpora."""
 
-    def get_reader(self):
+    @staticmethod
+    def get_reader():
         """Get a reader instance.
 
         Returns: ACQDIVCHATReader
         """
         raise NotImplementedError
 
-    def get_cleaner(self):
+    @staticmethod
+    def get_cleaner():
         """Get a cleaner instance.
 
         Returns: CHATCleaner
