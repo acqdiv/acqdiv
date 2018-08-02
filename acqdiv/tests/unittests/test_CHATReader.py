@@ -738,17 +738,53 @@ class TestACQDIVCHATReaderRecord(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
 
-class TestACQDIVCHATReader(unittest.TestCase):
-    """Class to test the ACQDIVCHATReader."""
+class TestACQDIVCHATReaderIterators(unittest.TestCase):
+    """Test iterator methods of ACQDIVCHATReader."""
 
-    def setUp(self):
-        session_file_path = './test.cha'
-        self.reader = ACQDIVCHATReader()
-        with open(session_file_path) as session_file:
-            self.reader.read(session_file)
-        self.maxDiff = None
+    # TODO: use shorter session example
+    # TODO: use english in session example, e.g. '*ABC:\tThis is utterance 1.'
 
-    # ---------- speaker ----------
+    @classmethod
+    def setUpClass(cls):
+        session = ('@UTF8\n'
+                   '@Begin\n'
+                   '@Languages:\tsme\n'
+                   '@Date:\t12-SEP-1997\n'
+                   '@Participants:\tMEM Mme_Manyili Grandmother , '
+                   'CHI Hlobohang Target_Child\n'
+                   '@ID:\tsme|Sesotho|MEM||female|||Grandmother|||\n'
+                   '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||\n'
+                   '@Birth of CHI:\t14-JAN-2006\n@Birth of MEM:\t11-OCT-1974\n'
+                   '@Media:\th2ab, audio\n@Comment:\tall snd kana jmor cha ok Wakachi2002;\n'
+                   '@Warning:\trecorded time: 1:00:00\n@Comment:\tuses desu and V-masu\n'
+                   '@Situation:\tAki and AMO preparing to look at book , '
+                   '"Miichan no otsukai"\n'
+                   '*MEM:\tke eng ? \x150_8551\x15\n'
+                   '%gls:\tke eng ?\n'
+                   '%cod:\tcp wh ?\n'
+                   '%eng:\tWhat is it ?\n'
+                   '%sit:\tPoints to tape\n'
+                   '%com:\tis furious\n'
+                   '%add:\tCHI\n'
+                   '*CHI:\tke ntencha ncha . \x158551_19738\x15\n'
+                   '%gls:\tke ntho e-ncha .\n'
+                   '%cod:\tcp thing(9 , 10) 9-aj .\n'
+                   '%eng:\tA new thing\n'
+                   '%com:\ttest comment\n'
+                   '*MEM:\tke eng ntho ena e? \x1519738_24653\x15\n'
+                   '%gls:\tke eng ntho ena e ?\n'
+                   '%cod:\tcp wh thing(9 , 10) d9 ij ?\n'
+                   '%eng:\tWhat is this thing ?\n'
+                   '%sit:\tPoints to tape\n'
+                   '*CHI:\te nte ena . \x1524300_28048\x15\n'
+                   '%gls:\tke ntho ena .\n%cod:\tcp thing(9 , 10) d9 .\n'
+                   '%eng:\tIt is this thing\n'
+                   '*MEM:\tke khomba\n\tkhomba . \x1528048_31840\x15\n'
+                   '%gls:\tkekumbakumba .\n'
+                   '%cod:\tcp tape_recorder(9 , 10) .\n'
+                   '%eng:\tIt is a stereo\n@End')
+        cls.reader = ACQDIVCHATReader()
+        cls.reader.read(io.StringIO(session))
 
     def test_load_next_speaker(self):
         """Test load_next_speaker for the speakers in 'test.cha'"""
@@ -766,8 +802,6 @@ class TestACQDIVCHATReader(unittest.TestCase):
               '', '', 'Target_Child', '', ''))
         ]
         self.assertEqual(actual_output, desired_output)
-
-    # ---------- record ----------
 
     def test_load_next_record(self):
         """Test load_next_record for the records in 'test.cha'
@@ -821,6 +855,19 @@ class TestACQDIVCHATReader(unittest.TestCase):
              })
         ]
         self.assertEqual(actual_output, desired_output)
+
+
+class TestACQDIVCHATReader(unittest.TestCase):
+    """Class to test the ACQDIVCHATReader."""
+
+    def setUp(self):
+        session_file_path = './test.cha'
+        self.reader = ACQDIVCHATReader()
+        with open(session_file_path) as session_file:
+            self.reader.read(session_file)
+        self.maxDiff = None
+
+    # ---------- record ----------
 
     # Tests for the get_actual_utterance method.
 
@@ -931,8 +978,6 @@ class TestACQDIVCHATReader(unittest.TestCase):
         actual_output = self.reader.get_target_utterance()
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
-
-###############################################################################
 
 
 class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
