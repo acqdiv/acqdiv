@@ -95,20 +95,7 @@ class TestCHATParser(unittest.TestCase):
                 'warning': None
             }
         ]
-        utt0_morpheme_list = [
-            # {
-            #     'morpheme_language': None,
-            #     'morpheme': 'ke',
-            #     'gloss_raw': 'cp',
-            #     'pos_raw': None
-            # },
-            # {
-            #     'morpheme_language': None,
-            #     'morpheme': 'eng',
-            #     'gloss_raw': 'wh',
-            #     'pos_raw': None
-            # }
-        ]
+        utt0_morpheme_list = []
         desired_output = (utt0_utt_dict, utt0_word_list, utt0_morpheme_list)
         self.assertEqual(actual_output, desired_output)
 
@@ -160,20 +147,7 @@ class TestCHATParser(unittest.TestCase):
                 'warning': None
             }
         ]
-        utt_morpheme_list = [
-            # {
-            #     'morpheme_language': None,
-            #     'morpheme': None,
-            #     'gloss_raw': None,
-            #     'pos_raw': None
-            # },
-            # {
-            #     'morpheme_language': None,
-            #     'morpheme': None,
-            #     'gloss_raw': None,
-            #     'pos_raw': None
-            # }
-        ]
+        utt_morpheme_list = []
         desired_output = (utt_utt_dict, utt_word_list, utt_morpheme_list)
         self.assertEqual(actual_output, desired_output)
 
@@ -218,34 +192,179 @@ class TestCHATParser(unittest.TestCase):
         desired_output = (utt_dict, word_list, morpheme_list)
         self.assertEqual(actual_output, desired_output)
 
+    @unittest.skip('Not finished.')
     def test_next_utterance_misalignment_words_tier(self):
         """Test next_utterance with a words vs morph misalignment.
 
         There is 1 word in the utterance, but two words on each
         morphology tier.
         """
-        pass
+        session = ('@Languages:\tsme\n*MEM:\tke ? 0_8551\n%gls:\tke eng ?'
+                   '\n%cod:\tcp wh ?\n%eng:\tWhat is it ?')
+        actual_output = list(self.parser.next_utterance())[0]
+        utt_dict = {
+            'source_id': 'u0',
+            'speaker_label': 'MEM',
+            'addressee': 'CHI',
+            'utterance_raw': 'ke ?',
+            'utterance': 'ke',
+            'translation': 'What is it ?',
+            'morpheme': None,
+            'gloss_raw': None,
+            'pos_raw': None,
+            'sentence_type': 'question',
+            'start_raw': '0',
+            'end_raw': '8551',
+            'comment': 'Points to tape',
+            'warning': None
+        }
+        word_list = [
+            {
+                'word_language': None,
+                'word': 'ke',
+                'word_actual': 'ke',
+                'word_target': 'ke',
+                'warning': None
+            },
+        ]
+        morpheme_list = []
+        desired_output = (utt_dict, word_list, morpheme_list)
+        self.assertEqual(actual_output, desired_output)
 
+    @unittest.skip('Not finished.')
     def test_next_utterance_misalignment_gloss_tier(self):
         """Test next_utterance with a gloss vs other tiers misalignment.
 
         There is one gloss-word but two words on all other tiers.
         """
-        pass
+        session = ('@Languages:\tsme\n*MEM:\tke eng ? 0_8551\n%gls:\tke '
+                   'eng ?\n%cod:\tcp ?\n%eng:\tWhat is it ?')
+        actual_output = list(self.parser.next_utterance())[0]
+        utt_dict = {
+            'source_id': 'u0',
+            'speaker_label': 'MEM',
+            'addressee': 'CHI',
+            'utterance_raw': 'ke eng ?',
+            'utterance': 'ke eng',
+            'translation': 'What is it ?',
+            'morpheme': None,
+            'gloss_raw': None,
+            'pos_raw': None,
+            'sentence_type': 'question',
+            'start_raw': '0',
+            'end_raw': '8551',
+            'comment': 'Points to tape',
+            'warning': None
+        }
+        word_list = [
+            {
+                'word_language': None,
+                'word': 'ke',
+                'word_actual': 'ke',
+                'word_target': 'ke',
+                'warning': None
+            },
+            {
+                'word_language': None,
+                'word': 'eng',
+                'word_actual': 'eng',
+                'word_target': 'eng',
+                'warning': None
+            }
+        ]
+        morpheme_list = []
+        desired_output = (utt_dict, word_list, morpheme_list)
+        self.assertEqual(actual_output, desired_output)
 
+    @unittest.skip('Not finished.')
     def test_next_utterance_misalignments_segments_tier(self):
         """Test next_utterance with segment vs other tiers misalignemnt.
 
         There is one segment word but two words on all other tiers.
         """
-        pass
+        session = ('@Languages:\tsme\n*MEM:\tke eng ? 0_8551\n%gls:\tke '
+                   '?\n%cod:\tcp wh ?\n%eng:\tWhat is it ?')
+        actual_output = list(self.parser.next_utterance())[0]
+        utt_dict = {
+            'source_id': 'u0',
+            'speaker_label': 'MEM',
+            'addressee': 'CHI',
+            'utterance_raw': 'ke eng ?',
+            'utterance': 'ke eng',
+            'translation': 'What is it ?',
+            'morpheme': None,
+            'gloss_raw': None,
+            'pos_raw': None,
+            'sentence_type': 'question',
+            'start_raw': '0',
+            'end_raw': '8551',
+            'comment': 'Points to tape',
+            'warning': None
+        }
+        word_list = [
+            {
+                'word_language': None,
+                'word': 'ke',
+                'word_actual': 'ke',
+                'word_target': 'ke',
+                'warning': None
+            },
+            {
+                'word_language': None,
+                'word': 'eng',
+                'word_actual': 'eng',
+                'word_target': 'eng',
+                'warning': None
+            }
+        ]
+        morpheme_list = []
+        desired_output = (utt_dict, word_list, morpheme_list)
+        self.assertEqual(actual_output, desired_output)
 
+    @unittest.skip('Not finished.')
     def test_next_utterance_misalignment_pos_tier(self):
         """Test next_utterance with pos vs other tiers misalignment.
 
         There is one pos-word but two words on all other tiers.
         """
-        pass
+        session = ('@Languages:\tsme\n*MEM:\tke eng ? 0_8551\n%gls:\tke '
+                   '?\n%cod:\tcp wh ?\n%pos:\tV N\n%eng:\tWhat is it ?')
+        actual_output = list(self.parser.next_utterance())[0]
+        utt_dict = {
+            'source_id': 'u0',
+            'speaker_label': 'MEM',
+            'addressee': 'CHI',
+            'utterance_raw': 'ke eng ?',
+            'utterance': 'ke eng',
+            'translation': 'What is it ?',
+            'morpheme': None,
+            'gloss_raw': None,
+            'pos_raw': None,
+            'sentence_type': 'question',
+            'start_raw': '0',
+            'end_raw': '8551',
+            'comment': 'Points to tape',
+            'warning': None
+        }
+        word_list = [
+            {
+                'word_language': None,
+                'word': 'ke',
+                'word_actual': 'ke',
+                'word_target': 'ke',
+                'warning': None
+            },
+            {
+                'word_language': None,
+                'word': 'eng',
+                'word_actual': 'eng',
+                'word_target': 'eng',
+                'warning': None
+            }
+        ]
+        morpheme_list = []
+        desired_output = (utt_dict, word_list, morpheme_list)
+        self.assertEqual(actual_output, desired_output)
 
 
 if __name__ == '__main__':
