@@ -1051,4 +1051,18 @@ class JapaneseMiiProReader(ACQDIVCHATReader):
         return [gloss for _, gloss, _ in self.iter_morphemes(gloss_word)]
 
     def get_poses(self, pos_word):
-        return [pos for pos, _, pos in self.iter_morphemes(pos_word)]
+        return [pos for _, _, pos in self.iter_morphemes(pos_word)]
+
+
+###############################################################################
+
+
+class JapaneseMiyataReader(ACQDIVCHATReader):
+
+    def get_word_language(self, word):
+        if word.endswith('@s:eng'):
+            return 'English'
+        elif word.endswith('@s:deu'):
+            return 'German'
+        else:
+            return 'Japanese'
