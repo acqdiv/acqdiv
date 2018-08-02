@@ -656,11 +656,13 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
 
     # ---------- morphology ----------
 
-    def get_word_language(self, word):
+    @staticmethod
+    def get_word_language(word):
         """No coding per default."""
         return ''
 
-    def get_main_morpheme(self):
+    @staticmethod
+    def get_main_morpheme():
         """Per default the gloss tier."""
         return 'gloss'
 
@@ -683,25 +685,32 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     def get_pos_tier(self):
         return self.get_morph_tier()
 
-    def get_seg_words(self, seg_tier):
-        return self.get_utterance_words(seg_tier)
+    @classmethod
+    def get_seg_words(cls, seg_tier):
+        return cls.get_utterance_words(seg_tier)
 
-    def get_gloss_words(self, gloss_tier):
-        return self.get_utterance_words(gloss_tier)
+    @classmethod
+    def get_gloss_words(cls, gloss_tier):
+        return cls.get_utterance_words(gloss_tier)
 
-    def get_pos_words(self, pos_tier):
-        return self.get_utterance_words(pos_tier)
+    @classmethod
+    def get_pos_words(cls, pos_tier):
+        return cls.get_utterance_words(pos_tier)
 
-    def get_segments(self, seg_word):
+    @staticmethod
+    def get_segments(seg_word):
         raise NotImplementedError
 
-    def get_glosses(self, gloss_word):
+    @staticmethod
+    def get_glosses(gloss_word):
         raise NotImplementedError
 
-    def get_poses(self, pos_word):
+    @staticmethod
+    def get_poses(pos_word):
         raise NotImplementedError
 
-    def get_morpheme_language(self, seg, gloss, pos):
+    @staticmethod
+    def get_morpheme_language(seg, gloss, pos):
         """No coding per default."""
         return ''
 
@@ -713,7 +722,8 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
     def get_translation(self):
         return self.get_utterance()
 
-    def get_word_language(self, word):
+    @staticmethod
+    def get_word_language(word):
         if word.endswith('@s:fra'):
             return 'French'
         elif word.endswith('@s:ita'):
@@ -774,16 +784,20 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
 
                 yield segment, gloss, pos
 
-    def get_segments(self, seg_word):
-        return [seg for seg, _, _ in self.iter_morphemes(seg_word)]
+    @classmethod
+    def get_segments(cls, seg_word):
+        return [seg for seg, _, _ in cls.iter_morphemes(seg_word)]
 
-    def get_glosses(self, gloss_word):
-        return [gloss for _, gloss, _ in self.iter_morphemes(gloss_word)]
+    @classmethod
+    def get_glosses(cls, gloss_word):
+        return [gloss for _, gloss, _ in cls.iter_morphemes(gloss_word)]
 
-    def get_poses(self, pos_word):
-        return [pos for _, _, pos in self.iter_morphemes(pos_word)]
+    @classmethod
+    def get_poses(cls, pos_word):
+        return [pos for _, _, pos in cls.iter_morphemes(pos_word)]
 
-    def get_morpheme_language(self, seg, gloss, pos):
+    @staticmethod
+    def get_morpheme_language(seg, gloss, pos):
         if pos == 'L2':
             return 'L2'
         else:
@@ -867,16 +881,20 @@ class InuktitutReader(ACQDIVCHATReader):
             else:
                 yield '', '', ''
 
-    def get_segments(self, seg_word):
-        return [seg for _, seg, _ in self.iter_morphemes(seg_word)]
+    @classmethod
+    def get_segments(cls, seg_word):
+        return [seg for _, seg, _ in cls.iter_morphemes(seg_word)]
 
-    def get_glosses(self, gloss_word):
-        return [gloss for _, _, gloss in self.iter_morphemes(gloss_word)]
+    @classmethod
+    def get_glosses(cls, gloss_word):
+        return [gloss for _, _, gloss in cls.iter_morphemes(gloss_word)]
 
-    def get_poses(self, pos_word):
-        return [pos for pos, _, _ in self.iter_morphemes(pos_word)]
+    @classmethod
+    def get_poses(cls, pos_word):
+        return [pos for pos, _, _ in cls.iter_morphemes(pos_word)]
 
-    def get_morpheme_language(self, seg, gloss, pos):
+    @staticmethod
+    def get_morpheme_language(seg, gloss, pos):
         if seg.endswith('@e'):
             return 'English'
         else:
@@ -887,7 +905,8 @@ class InuktitutReader(ACQDIVCHATReader):
 
 class CreeReader(ACQDIVCHATReader):
 
-    def get_main_morpheme(self):
+    @staticmethod
+    def get_main_morpheme():
         return 'segment'
 
     def get_seg_tier(self):
@@ -906,16 +925,20 @@ class CreeReader(ACQDIVCHATReader):
         else:
             return []
 
-    def get_segments(self, seg_word):
-        return self.get_morphemes(seg_word)
+    @classmethod
+    def get_segments(cls, seg_word):
+        return cls.get_morphemes(seg_word)
 
-    def get_glosses(self, gloss_word):
-        return self.get_morphemes(gloss_word)
+    @classmethod
+    def get_glosses(cls, gloss_word):
+        return cls.get_morphemes(gloss_word)
 
-    def get_poses(self, pos_word):
-        return self.get_morphemes(pos_word)
+    @classmethod
+    def get_poses(cls, pos_word):
+        return cls.get_morphemes(pos_word)
 
-    def get_morpheme_language(self, seg, gloss, pos):
+    @staticmethod
+    def get_morpheme_language(seg, gloss, pos):
         if gloss == 'Eng':
             return 'English'
         else:
@@ -930,7 +953,8 @@ class JapaneseMiiProReader(ACQDIVCHATReader):
     def get_morph_tier(self):
         return self._dependent_tiers.get('xtrn', '')
 
-    def get_word_language(self, word):
+    @staticmethod
+    def get_word_language(word):
         if word.endswith('@s:eng'):
             return 'English'
         else:
@@ -1019,14 +1043,17 @@ class JapaneseMiiProReader(ACQDIVCHATReader):
 
                 yield segment, gloss, pos
 
-    def get_segments(self, seg_word):
-        return [seg for seg, _, _ in self.iter_morphemes(seg_word)]
+    @classmethod
+    def get_segments(cls, seg_word):
+        return [seg for seg, _, _ in cls.iter_morphemes(seg_word)]
 
-    def get_glosses(self, gloss_word):
-        return [gloss for _, gloss, _ in self.iter_morphemes(gloss_word)]
+    @classmethod
+    def get_glosses(cls, gloss_word):
+        return [gloss for _, gloss, _ in cls.iter_morphemes(gloss_word)]
 
-    def get_poses(self, pos_word):
-        return [pos for _, _, pos in self.iter_morphemes(pos_word)]
+    @classmethod
+    def get_poses(cls, pos_word):
+        return [pos for _, _, pos in cls.iter_morphemes(pos_word)]
 
 
 ###############################################################################
@@ -1034,7 +1061,8 @@ class JapaneseMiiProReader(ACQDIVCHATReader):
 
 class JapaneseMiyataReader(ACQDIVCHATReader):
 
-    def get_word_language(self, word):
+    @staticmethod
+    def get_word_language(word):
         if word.endswith('@s:eng'):
             return 'English'
         elif word.endswith('@s:deu'):

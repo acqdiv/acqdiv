@@ -179,14 +179,16 @@ class CorpusReaderInterface:
 
     # ---------- morphology ----------
 
-    def get_word_language(self, word):
+    @staticmethod
+    def get_word_language(word):
         """Get the language of the word.
 
         Returns: str
         """
         raise NotImplementedError
 
-    def get_main_morpheme(self):
+    @staticmethod
+    def get_main_morpheme():
         """Get the main morpheme.
 
         The main morpheme is the one used for linking the words of the
@@ -220,49 +222,56 @@ class CorpusReaderInterface:
         """
         raise NotImplementedError
 
-    def get_seg_words(self, seg_tier):
+    @staticmethod
+    def get_seg_words(seg_tier):
         """Get the words from the segment tier.
 
         Returns: list
         """
         raise NotImplementedError
 
-    def get_gloss_words(self, gloss_tier):
+    @staticmethod
+    def get_gloss_words(gloss_tier):
         """Get the words from the gloss tier.
 
         Returns: list
         """
         raise NotImplementedError
 
-    def get_pos_words(self, pos_tier):
+    @staticmethod
+    def get_pos_words(pos_tier):
         """Get the words from the POS tag tier.
 
         Returns: list
         """
         raise NotImplementedError
 
-    def get_segments(self, seg_word):
+    @staticmethod
+    def get_segments(seg_word):
         """Get the segments from the segment word.
 
         Returns: list
         """
         raise NotImplementedError
 
-    def get_glosses(self, gloss_word):
+    @staticmethod
+    def get_glosses(gloss_word):
         """Get the glosses from the gloss word.
 
         Returns: list
         """
         raise NotImplementedError
 
-    def get_poses(self, pos_word):
+    @staticmethod
+    def get_poses(pos_word):
         """Get the POS tags from the POS word.
 
         Returns: list
         """
         raise NotImplementedError
 
-    def get_morpheme_language(self, seg, gloss, pos):
+    @staticmethod
+    def get_morpheme_language(seg, gloss, pos):
         """Get language of the morpheme.
 
         Returns: str
