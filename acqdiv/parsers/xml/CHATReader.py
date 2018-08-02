@@ -409,13 +409,14 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         self.session_file = session_file_path
         with open(session_file_path) as f:
             self.session = f.read()
-        self._metadata_fields = self.get_metadata_fields()
+        self._metadata_fields = self.get_metadata_fields(self.session)
         self._speaker_iterator = self.get_speaker_iterator()
         self._record_iterator = self.get_record_iterator()
 
     # ---------- metadata ----------
 
-    def get_metadata_fields(self):
+    @classmethod
+    def get_metadata_fields(cls, session):
         """Get the metadata fields of a session.
 
         All metadata keys map to a string, except @ID which maps to a
@@ -426,15 +427,15 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
             dict: {metadata key: metadata content}
         """
         metadata_fields = {}
-        for metadata_field in self.iter_metadata_fields(self.session):
-            key, content = self.get_metadata_field(metadata_field)
+        for metadata_field in cls.iter_metadata_fields(session):
+            key, content = cls.get_metadata_field(metadata_field)
 
             if key == 'ID':
                 if key not in metadata_fields:
                     metadata_fields['ID'] = {}
 
-                id_fields = self.get_id_fields(content)
-                speaker_id = self.get_id_code(id_fields)
+                id_fields = cls.get_id_fields(content)
+                speaker_id = cls.get_id_code(id_fields)
                 metadata_fields['ID'][speaker_id] = id_fields
             else:
                 metadata_fields[key] = content

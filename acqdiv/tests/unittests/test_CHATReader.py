@@ -567,7 +567,26 @@ class TestACQDIVCHATReader(unittest.TestCase):
 
     def test_get_metadata_fields(self):
         """Test get_metadata_fields with the test.cha-file."""
-        actual_output = self.reader.get_metadata_fields()
+        session = (
+            '@UTF8\n'
+            '@Begin\n'
+            '@Languages:\tsme\n'
+            '@Date:\t12-SEP-1997\n'
+            '@Participants:\tMEM Mme_Manyili Grandmother , '
+            'CHI Hlobohang Target_Child\n'
+            '@ID:\tsme|Sesotho|MEM||female|||Grandmother|||\n'
+            '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||\n'
+            '@Birth of CHI:\t14-JAN-2006\n'
+            '@Birth of MEM:\t11-OCT-1974\n'
+            '@Media:\th2ab, audio\n'
+            '@Comment:\tall snd kana jmor cha ok Wakachi2002;\n'
+            '@Warning:\trecorded time: 1:00:00\n'
+            '@Comment:\tuses desu and V-masu\n'
+            '@Situation:\tAki and AMO preparing to look at book , '
+            '"Miichan no otsukai"\n'
+            '*MEM:\tke eng ? \x150_8551\x15\n%gls:\tke eng ?\n'
+            '@End')
+        actual_output = ACQDIVCHATReader.get_metadata_fields(session)
         desired_output = {
             'Languages': 'sme',
             'Date': '12-SEP-1997',
@@ -1061,53 +1080,45 @@ class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
     # Test for the get_shortening_actual-method.
     # All examples are modified versions of real utterances.
 
-    @classmethod
-    def setUpClass(cls):
-        """Set up the ACQDIVCHATReader for testing."""
-        session_file_path = './test.cha'
-        cls.reader = ACQDIVCHATReader()
-        cls.reader.read(session_file_path)
-        cls.maxDiff = None
-
     def test_get_shortening_actual_standard_case(self):
         """Test get_shortening_actual with 1 shortening occurence."""
         utterance = 'na:(ra)da <dükäm lan> [?] [>] ?'
-        actual_output = self.reader.get_shortening_actual(utterance)
+        actual_output = ACQDIVCHATReader.get_shortening_actual(utterance)
         desired_output = 'na:da <dükäm lan> [?] [>] ?'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_shortening_actual_multiple_shortenings(self):
         """Test get_shortening_actual with 3 shortening occurence."""
         utterance = '(o)na:(ra)da dükäm lan(da) [?] [>] ?'
-        actual_output = self.reader.get_shortening_actual(utterance)
+        actual_output = ACQDIVCHATReader.get_shortening_actual(utterance)
         desired_output = 'na:da dükäm lan [?] [>] ?'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_shortening_actual_non_shortening_parentheses(self):
         """Test get_shortening_actual with non shortening parentheses."""
         utterance = 'mo:(ra)da (.) mu ?'
-        actual_output = self.reader.get_shortening_actual(utterance)
+        actual_output = ACQDIVCHATReader.get_shortening_actual(utterance)
         desired_output = 'mo:da (.) mu ?'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_shortening_actual_special_characters(self):
         """Test get_shortening_actual with special chars in parentheses."""
         utterance = 'Tu:(ğ)çe .'
-        actual_output = self.reader.get_shortening_actual(utterance)
+        actual_output = ACQDIVCHATReader.get_shortening_actual(utterance)
         desired_output = 'Tu:çe .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_shortening_actual_no_shortening(self):
         """Test get_shortening_actual using utt without shortening."""
         utterance = 'Tu:çe .'
-        actual_output = self.reader.get_shortening_actual(utterance)
+        actual_output = ACQDIVCHATReader.get_shortening_actual(utterance)
         desired_output = 'Tu:çe .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_shortening_actual_empty_string(self):
         """Test get_shortening_actual with an empty string."""
         utterance = 'Tu:çe .'
-        actual_output = self.reader.get_shortening_actual(utterance)
+        actual_output = ACQDIVCHATReader.get_shortening_actual(utterance)
         desired_output = 'Tu:çe .'
         self.assertEqual(actual_output, desired_output)
 
@@ -1116,42 +1127,42 @@ class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
     def test_get_shortening_target_standard_case(self):
         """Test get_shortening_target with 1 shortening occurence."""
         utterance = 'na:(ra)da <dükäm lan> [?] [>] ?'
-        actual_output = self.reader.get_shortening_target(utterance)
+        actual_output = ACQDIVCHATReader.get_shortening_target(utterance)
         desired_output = 'na:rada <dükäm lan> [?] [>] ?'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_shortening_target_multiple_shortenings(self):
         """Test get_shortening_target with 3 shortening occurence."""
         utterance = '(o)na:(ra)da dükäm lan(da) [?] [>] ?'
-        actual_output = self.reader.get_shortening_target(utterance)
+        actual_output = ACQDIVCHATReader.get_shortening_target(utterance)
         desired_output = 'ona:rada dükäm landa [?] [>] ?'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_shortening_target_non_shortening_parentheses(self):
         """Test get_shortening_target with non shortening parentheses."""
         utterance = 'mo:(ra)da (.) mu ?'
-        actual_output = self.reader.get_shortening_target(utterance)
+        actual_output = ACQDIVCHATReader.get_shortening_target(utterance)
         desired_output = 'mo:rada (.) mu ?'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_shortening_target_special_characters(self):
         """Test get_shortening_target with special chars in parentheses."""
         utterance = 'Mu:(ğ)ça .'
-        actual_output = self.reader.get_shortening_target(utterance)
+        actual_output = ACQDIVCHATReader.get_shortening_target(utterance)
         desired_output = 'Mu:ğça .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_shortening_target_no_shortening(self):
         """Test get_shortening_target using utt without a shortening."""
         utterance = 'Mu:ça .'
-        actual_output = self.reader.get_shortening_target(utterance)
+        actual_output = ACQDIVCHATReader.get_shortening_target(utterance)
         desired_output = 'Mu:ça .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_shortening_target_empty_string(self):
         """Test get_shortening_target with an empty string."""
         utterance = ''
-        actual_output = self.reader.get_shortening_target(utterance)
+        actual_output = ACQDIVCHATReader.get_shortening_target(utterance)
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
@@ -1160,7 +1171,7 @@ class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
     def test_get_replacement_actual_one_replacement(self):
         """Test get_replacement_actual with 1 replacement."""
         utterance = 'yarasam [: yorosom] .'
-        actual_output = self.reader.get_replacement_actual(utterance)
+        actual_output = ACQDIVCHATReader.get_replacement_actual(utterance)
         desired_output = 'yarasam .'
         self.assertEqual(actual_output, desired_output)
 
@@ -1168,21 +1179,21 @@ class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
         """Test get_replacement_actual with 3 replacements."""
         utterance = 'yarasam [: yorosom] yarasam [: yorosom] ' \
                     'yarasam [: yorosom] .'
-        actual_output = self.reader.get_replacement_actual(utterance)
+        actual_output = ACQDIVCHATReader.get_replacement_actual(utterance)
         desired_output = 'yarasam yarasam yarasam .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_replacement_actual_no_replacement(self):
         """Test get_replacement_actual with no replacement."""
         utterance = 'yarasam .'
-        actual_output = self.reader.get_replacement_actual(utterance)
+        actual_output = ACQDIVCHATReader.get_replacement_actual(utterance)
         desired_output = 'yarasam .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_replacement_actual_empty_string(self):
         """Test get_replacement_actual with an empty string."""
         utterance = ''
-        actual_output = self.reader.get_replacement_actual(utterance)
+        actual_output = ACQDIVCHATReader.get_replacement_actual(utterance)
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
@@ -1191,7 +1202,7 @@ class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
     def test_get_replacement_target_one_replacement(self):
         """Test get_replacement_target with 1 replacement."""
         utterance = 'yarasam [: yorosom] .'
-        actual_output = self.reader.get_replacement_target(utterance)
+        actual_output = ACQDIVCHATReader.get_replacement_target(utterance)
         desired_output = 'yorosom .'
         self.assertEqual(actual_output, desired_output)
 
@@ -1199,21 +1210,21 @@ class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
         """Test get_replacement_target with 3 replacements."""
         utterance = 'yarasam [: yorosom] yarasam [: yorosom] ' \
                     'yarasam [: yorosom] .'
-        actual_output = self.reader.get_replacement_target(utterance)
+        actual_output = ACQDIVCHATReader.get_replacement_target(utterance)
         desired_output = 'yorosom yorosom yorosom .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_replacement_target_no_replacement(self):
         """Test get_replacement_target with no replacement."""
         utterance = 'yarasam .'
-        actual_output = self.reader.get_replacement_target(utterance)
+        actual_output = ACQDIVCHATReader.get_replacement_target(utterance)
         desired_output = 'yarasam .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_replacement_target_empty_string(self):
         """Test get_replacement_target with an empty string."""
         utterance = ''
-        actual_output = self.reader.get_replacement_target(utterance)
+        actual_output = ACQDIVCHATReader.get_replacement_target(utterance)
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
@@ -1222,35 +1233,35 @@ class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
     def test_get_fragment_actual_one_fragment(self):
         """Test get_fragment_actual with 1 fragment."""
         utterance = '&ab .'
-        actual_output = self.reader.get_fragment_actual(utterance)
+        actual_output = ACQDIVCHATReader.get_fragment_actual(utterance)
         desired_output = 'ab .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_fragment_actual_multiple_fragments(self):
         """Test get_fragment_actual with 3 fragments."""
         utterance = '&ab a &ab b &ab .'
-        actual_output = self.reader.get_fragment_actual(utterance)
+        actual_output = ACQDIVCHATReader.get_fragment_actual(utterance)
         desired_output = 'ab a ab b ab .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_fragment_actual_no_fragments(self):
         """Test get_fragment_actual using an utt without fragments."""
         utterance = 'a b .'
-        actual_output = self.reader.get_fragment_actual(utterance)
+        actual_output = ACQDIVCHATReader.get_fragment_actual(utterance)
         desired_output = 'a b .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_fragment_actual_empty_string(self):
         """Test get_fragment_actual with an empty string."""
         utterance = ''
-        actual_output = self.reader.get_fragment_actual(utterance)
+        actual_output = ACQDIVCHATReader.get_fragment_actual(utterance)
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
     def test_get_fragment_actual_ampersand_outside(self):
         """Test get_fragment_actual with ampersand outside fragment."""
         utterance = '&=laugh &wow &-um'
-        actual_output = self.reader.get_fragment_actual(utterance)
+        actual_output = ACQDIVCHATReader.get_fragment_actual(utterance)
         desired_output = '&=laugh wow &-um'
         self.assertEqual(actual_output, desired_output)
 
@@ -1259,35 +1270,35 @@ class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
     def test_get_fragment_target_one_fragment(self):
         """Test get_fragment_target with 1 fragment."""
         utterance = '&ab .'
-        actual_output = self.reader.get_fragment_target(utterance)
+        actual_output = ACQDIVCHATReader.get_fragment_target(utterance)
         desired_output = 'xxx .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_fragment_target_multiple_fragments(self):
         """Test get_fragment_target with 3 fragments."""
         utterance = '&ab a &ab b &ab .'
-        actual_output = self.reader.get_fragment_target(utterance)
+        actual_output = ACQDIVCHATReader.get_fragment_target(utterance)
         desired_output = 'xxx a xxx b xxx .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_fragment_target_no_fragments(self):
         """Test get_fragment_target using an utt without fragments."""
         utterance = 'a b .'
-        actual_output = self.reader.get_fragment_target(utterance)
+        actual_output = ACQDIVCHATReader.get_fragment_target(utterance)
         desired_output = 'a b .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_fragment_target_empty_string(self):
         """Test get_fragment_target with an empty string."""
         utterance = ''
-        actual_output = self.reader.get_fragment_actual(utterance)
+        actual_output = ACQDIVCHATReader.get_fragment_actual(utterance)
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
     def test_get_fragment_target_ampersand_outside(self):
         """Test get_fragment_target with ampersand outside fragment."""
         utterance = '&=laugh &wow &-um'
-        actual_output = self.reader.get_fragment_target(utterance)
+        actual_output = ACQDIVCHATReader.get_fragment_target(utterance)
         desired_output = '&=laugh xxx &-um'
         self.assertEqual(actual_output, desired_output)
 
