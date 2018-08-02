@@ -266,6 +266,7 @@ class InuktitutParser(CHATParser):
     def get_reader():
         return CHATReader.InuktitutReader()
 
+    @staticmethod
     def get_cleaner():
         return CHATCleaner.InuktitutCleaner()
 
