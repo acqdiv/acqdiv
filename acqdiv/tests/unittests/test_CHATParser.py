@@ -14,7 +14,7 @@ class TestCHATParser(unittest.TestCase):
     def test_get_reader(self):
         """Test get_reader with test.cha."""
         actual_reader = self.parser.get_reader()
-        desired_reader = ACQDIVCHATReader(self.session_file_path)
+        desired_reader = ACQDIVCHATReader()
         actual_output = [type(actual_reader), actual_reader.session_file]
         desired_output = [type(desired_reader), desired_reader.session_file]
         self.assertEqual(actual_output, desired_output)
@@ -22,7 +22,7 @@ class TestCHATParser(unittest.TestCase):
     def test_get_cleaner(self):
         """Test get_cleaner with test.cha."""
         actual_cleaner = self.parser.get_reader()
-        desired_cleaner = ACQDIVCHATReader(self.session_file_path)
+        desired_cleaner = ACQDIVCHATReader()
         actual_output = [type(actual_cleaner), actual_cleaner.session_file]
         desired_output = [type(desired_cleaner), desired_cleaner.session_file]
         self.assertEqual(actual_output, desired_output)

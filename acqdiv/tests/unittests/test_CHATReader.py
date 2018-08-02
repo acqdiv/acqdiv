@@ -517,7 +517,8 @@ class TestACQDIVCHATReader(unittest.TestCase):
 
     def setUp(self):
         session_file_path = './test.cha'
-        self.reader = ACQDIVCHATReader(session_file_path)
+        self.reader = ACQDIVCHATReader()
+        self.reader.read(session_file_path)
         self.maxDiff = None
 
     # ---------- metadata ----------
@@ -1248,7 +1249,8 @@ class TestInuktitutReader(unittest.TestCase):
 
     def setUp(self):
         session_file_path = './test.cha'
-        self.reader = InuktitutReader(session_file_path)
+        self.reader = InuktitutReader()
+        self.reader.read(session_file_path)
         self.maxDiff = None
 
     def test_get_start_time_start_time_present(self):
@@ -1521,7 +1523,8 @@ class TestJapaneseMiiProReader(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         session_file_path = './test.cha'
-        cls.reader = JapaneseMiiProReader(session_file_path)
+        cls.reader = JapaneseMiiProReader()
+        cls.reader.read(session_file_path)
         cls.maxDiff = None
 
     # Tests for the iter_morphemes-method.

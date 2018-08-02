@@ -405,22 +405,36 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     Implements the CorpusReaderInterface.
     """
 
-    def __init__(self, session_file_path):
-        self.session_file = session_file_path
+    def __init__(self):
+        self.session_file = None
 
         # metadata fields
-        self._metadata_fields = self.get_metadata_fields()
+        self._metadata_fields = None
 
         # speaker fields
-        self._speaker_iterator = self.get_speaker_iterator()
+        self._speaker_iterator = None
         self._participant_fields = None
         self._id_fields = None
 
         # record fields
-        self._record_iterator = self.get_record_iterator()
+        self._record_iterator = None
         self._uid = -1
         self._main_line_fields = None
         self._dependent_tiers = None
+
+    def read(self, session_file_path):
+        """Read the session file.
+
+        Sets the following internal variables:
+            - session_file_path
+            - _metadata_fields
+            - _speaker_iterator
+            - _record_iterator
+        """
+        self.session_file = session_file_path
+        self._metadata_fields = self.get_metadata_fields()
+        self._speaker_iterator = self.get_speaker_iterator()
+        self._record_iterator = self.get_record_iterator()
 
     # ---------- metadata ----------
 

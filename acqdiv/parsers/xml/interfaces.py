@@ -1,6 +1,10 @@
 class CorpusReaderInterface:
     """Interface for reading the ACQDIV (CHAT) corpora."""
 
+    def read(self, session_file):
+        """Read the session file."""
+        raise NotImplementedError
+
     # ---------- metadata ----------
 
     def get_session_date(self):
