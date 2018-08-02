@@ -84,6 +84,27 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ('h2ab', 'audio', 'unknown speaker')
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_media_filename(self):
+        """Test get_media_filename with standard case of 3 fields."""
+        media_fields = ['h2ab', 'video', 'unlinked']
+        actual_output = self.reader.get_media_filename(media_fields)
+        desired_output = 'h2ab'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_media_format(self):
+        """Test get_media_format with standard case of 3 fields."""
+        media_fields = ['h2ab', 'video', 'unlinked']
+        actual_output = self.reader.get_media_format(media_fields)
+        desired_output = 'video'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_media_comment(self):
+        """Test get_media_comment with standard case of 3 fields."""
+        media_fields = ['h2ab', 'video', 'unlinked']
+        actual_output = self.reader.get_media_comment(media_fields)
+        desired_output = 'unlinked'
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- @Participants ----------
 
     def test_iter_participants(self):
@@ -1240,7 +1261,7 @@ class TestInuktitutReader(unittest.TestCase):
         desired_output = '19301'
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_start_time_start_time_present(self):
+    def test_get_start_time_start_time_absent(self):
         """Test get_start_time for a case no start time existing."""
         self.reader._dependent_tiers = {
             'utt': 'ha be'
@@ -1453,19 +1474,28 @@ class TestInuktitutReader(unittest.TestCase):
 
     def test_get_segments(self):
         """Test get_segments with a standard segment word."""
-        pass
+        xmor = 'VN|paaq^remove+VI|got^IMP_2sS'
+        actual_output = self.reader.get_segments(xmor)
+        desired_output = ['paaq', 'got']
+        self.assertEqual(actual_output, desired_output)
 
     # Tests for the get_glosses-method.
 
     def test_get_glosses(self):
         """Test get_glosses with a standard gloss word."""
-        pass
+        xmor = 'VN|paaq^remove+VI|got^IMP_2sS'
+        actual_output = self.reader.get_glosses(xmor)
+        desired_output = ['remove', 'IMP_2sS']
+        self.assertEqual(actual_output, desired_output)
 
     # Tests for the get_poses-method.
 
     def test_get_poses(self):
-        """Test get_poses with a standard gloss word."""
-        pass
+        """Test get_poses with a standard pos word."""
+        xmor = 'VN|paaq^remove+VI|got^IMP_2sS'
+        actual_output = self.reader.get_poses(xmor)
+        desired_output = ['VN', 'VI']
+        self.assertEqual(actual_output, desired_output)
 
     # Tests for the get_morpheme_language-method.
 
