@@ -104,8 +104,6 @@ class TestCHATParser(unittest.TestCase):
 
         The utterance contains three words, but only one gloss word
         and two words in the coding tier.
-
-        TODO: what should be the number of None-morphemes?
         """
         actual_output = list(self.parser.next_utterance())[-1]
         utt_utt_dict = {
