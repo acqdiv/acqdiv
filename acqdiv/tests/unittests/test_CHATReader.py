@@ -1,4 +1,5 @@
 import unittest
+import io
 from acqdiv.parsers.xml.CHATReader import CHATReader
 from acqdiv.parsers.xml.CHATReader import ACQDIVCHATReader
 from acqdiv.parsers.xml.CHATReader import InuktitutReader
@@ -554,13 +555,75 @@ class TestCHATReader(unittest.TestCase):
 
 ###############################################################################
 
+class TestACQDIVCHATReaderSpeaker(unittest.TestCase):
+    """Test speaker readers of ACQDIVCHATReader."""
+
+    @classmethod
+    def setUpClass(cls):
+        session = ('@UTF8\n'
+                   '@Begin\n'
+                   '@Participants:\tCHI Hlobohang Target_Child , '
+                   'MEM Mme_Manyili Grandmother\n'
+                   '@ID:\tsme|Sesotho|MEM||female|||Grandmother|||\n'
+                   '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||\n'
+                   '@Birth of CHI:\t14-JAN-2006\n'
+                   '@Birth of MEM:\t11-OCT-1974\n'
+                   '*MEM:\tke eng ? \x150_8551\x15\n%gls:\tke eng ?\n'
+                   '@End')
+        cls.reader = ACQDIVCHATReader()
+        cls.reader.read(io.StringIO(session))
+        cls.reader.load_next_speaker()
+
+    def test_get_speaker_age(self):
+        actual_output = self.reader.get_speaker_age()
+        desired_output = '2;2.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_birthdate(self):
+        """Test get_speaker_birthdate with test.cha."""
+        actual_output = self.reader.get_speaker_birthdate()
+        desired_output = '14-JAN-2006'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_gender(self):
+        """Test get_speaker_gender with test.cha."""
+        actual_output = self.reader.get_speaker_gender()
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_label(self):
+        """Test get_speaker_label with test.cha."""
+        actual_output = self.reader.get_speaker_label()
+        desired_output = 'CHI'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_language(self):
+        """Test get_speaker_language with test.cha."""
+        actual_output = self.reader.get_speaker_language()
+        desired_output = 'sme'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_name(self):
+        """Test get_speaker_name with test.cha."""
+        actual_output = self.reader.get_speaker_name()
+        desired_output = 'Hlobohang'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_role(self):
+        """Test get_speaker_role with test.cha."""
+        actual_output = self.reader.get_speaker_role()
+        desired_output = 'Target_Child'
+        self.assertEqual(actual_output, desired_output)
+
+
 class TestACQDIVCHATReader(unittest.TestCase):
     """Class to test the ACQDIVCHATReader."""
 
     def setUp(self):
         session_file_path = './test.cha'
         self.reader = ACQDIVCHATReader()
-        self.reader.read(session_file_path)
+        with open(session_file_path) as session_file:
+            self.reader.read(session_file)
         self.maxDiff = None
 
     # ---------- metadata ----------
@@ -594,62 +657,6 @@ class TestACQDIVCHATReader(unittest.TestCase):
              ('sme', 'Sesotho', 'CHI', '2;2.', '',
               '', '', 'Target_Child', '', ''))
         ]
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_speaker_age(self):
-        actual_output = []
-        while self.reader.load_next_speaker():
-            actual_output.append(self.reader.get_speaker_age())
-        desired_output = ['', '2;2.']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_speaker_birthdate(self):
-        """Test get_speaker_birthdate with test.cha."""
-        actual_output = []
-        while self.reader.load_next_speaker():
-            speaker_birthdate = self.reader.get_speaker_birthdate()
-            actual_output.append(speaker_birthdate)
-        desired_output = ['11-OCT-1974', '14-JAN-2006']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_speaker_gender(self):
-        """Test get_speaker_gender with test.cha."""
-        actual_output = []
-        while self.reader.load_next_speaker():
-            actual_output.append(self.reader.get_speaker_gender())
-        desired_output = ['female', '']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_speaker_label(self):
-        """Test get_speaker_label with test.cha."""
-        actual_output = []
-        while self.reader.load_next_speaker():
-            actual_output.append(self.reader.get_speaker_label())
-        desired_output = ['MEM', 'CHI']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_speaker_language(self):
-        """Test get_speaker_language with test.cha."""
-        actual_output = []
-        while self.reader.load_next_speaker():
-            actual_output.append(self.reader.get_speaker_language())
-        desired_output = ['sme', 'sme']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_speaker_name(self):
-        """Test get_speaker_name with test.cha."""
-        actual_output = []
-        while self.reader.load_next_speaker():
-            actual_output.append(self.reader.get_speaker_name())
-        desired_output = ['Mme_Manyili', 'Hlobohang']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_speaker_role(self):
-        """Test get_speaker_role with test.cha."""
-        actual_output = []
-        while self.reader.load_next_speaker():
-            actual_output.append(self.reader.get_speaker_role())
-        desired_output = ['Grandmother', 'Target_Child']
         self.assertEqual(actual_output, desired_output)
 
     # ---------- record ----------
@@ -1282,7 +1289,8 @@ class TestInuktitutReader(unittest.TestCase):
     def setUp(self):
         session_file_path = './test.cha'
         self.reader = InuktitutReader()
-        self.reader.read(session_file_path)
+        with open(session_file_path) as session_file:
+            self.reader.read(session_file)
         self.maxDiff = None
 
     def test_get_start_time_start_time_present(self):
@@ -1556,7 +1564,8 @@ class TestJapaneseMiiProReader(unittest.TestCase):
     def setUpClass(cls):
         session_file_path = './test.cha'
         cls.reader = JapaneseMiiProReader()
-        cls.reader.read(session_file_path)
+        with open(session_file_path) as session_file:
+            cls.reader.read(session_file)
         cls.maxDiff = None
 
     # Tests for the iter_morphemes-method.

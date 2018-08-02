@@ -14,8 +14,10 @@ class CHATParser(CorpusParserInterface):
     def __init__(self, session_path):
         self.session_path = session_path
         self.reader = self.get_reader()
-        self.reader.read(session_path)
         self.cleaner = self.get_cleaner()
+
+        with open(session_path) as session_file:
+            self.reader.read(session_file)
 
     @staticmethod
     def get_reader():

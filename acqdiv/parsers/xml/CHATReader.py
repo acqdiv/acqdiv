@@ -396,7 +396,7 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         self._main_line_fields = None
         self._dependent_tiers = None
 
-    def read(self, session_file_path):
+    def read(self, session_file):
         """Read the session file.
 
         Sets the following variables:
@@ -404,10 +404,11 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
             - _metadata_fields
             - _speaker_iterator
             - _record_iterator
+
+        Args:
+            session_file (file/file-like object): A CHAT file.
         """
-        self.session_file_path = session_file_path
-        with open(session_file_path) as f:
-            session = f.read()
+        session = session_file.read()
         self._metadata_fields = self.get_metadata_fields(session)
         participants = self._metadata_fields['Participants']
         self._speaker_iterator = self.iter_participants(participants)
