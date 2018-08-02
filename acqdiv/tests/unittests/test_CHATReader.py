@@ -555,6 +555,35 @@ class TestCHATReader(unittest.TestCase):
 
 ###############################################################################
 
+class TestACQDIVCHATReaderMetadata(unittest.TestCase):
+    """Test metadata readers of ACQDIVCHATReader.
+
+    Excluding speaker metadata.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        session = ('@UTF8\n'
+                   '@Begin\n'
+                   '@Date:\t12-SEP-1997\n'
+                   '@Media:\tmedia_filename, audio\n'
+                   '@End')
+        cls.reader = ACQDIVCHATReader()
+        cls.reader.read(io.StringIO(session))
+
+    def test_get_session_date(self):
+        """Test get_session_date with test.cha. """
+        actual_output = self.reader.get_session_date()
+        desired_output = '12-SEP-1997'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_session_filename(self):
+        """Test get_session_filename for sessions name of 'test.cha'."""
+        actual_output = self.reader.get_session_filename()
+        desired_output = 'media_filename'
+        self.assertEqual(actual_output, desired_output)
+
+
 class TestACQDIVCHATReaderSpeaker(unittest.TestCase):
     """Test speaker readers of ACQDIVCHATReader."""
 
@@ -562,13 +591,9 @@ class TestACQDIVCHATReaderSpeaker(unittest.TestCase):
     def setUpClass(cls):
         session = ('@UTF8\n'
                    '@Begin\n'
-                   '@Participants:\tCHI Hlobohang Target_Child , '
-                   'MEM Mme_Manyili Grandmother\n'
-                   '@ID:\tsme|Sesotho|MEM||female|||Grandmother|||\n'
+                   '@Participants:\tCHI Hlobohang Target_Child\n'
                    '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||\n'
                    '@Birth of CHI:\t14-JAN-2006\n'
-                   '@Birth of MEM:\t11-OCT-1974\n'
-                   '*MEM:\tke eng ? \x150_8551\x15\n%gls:\tke eng ?\n'
                    '@End')
         cls.reader = ACQDIVCHATReader()
         cls.reader.read(io.StringIO(session))
@@ -722,20 +747,6 @@ class TestACQDIVCHATReader(unittest.TestCase):
         with open(session_file_path) as session_file:
             self.reader.read(session_file)
         self.maxDiff = None
-
-    # ---------- metadata ----------
-
-    def test_get_session_date(self):
-        """Test get_session_date with test.cha. """
-        actual_output = self.reader.get_session_date()
-        desired_output = '12-SEP-1997'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_session_filename(self):
-        """Test get_session_filename for sessions name of 'test.cha'."""
-        actual_output = self.reader.get_session_filename()
-        desired_output = 'h2ab'
-        self.assertEqual(actual_output, desired_output)
 
     # ---------- speaker ----------
 
