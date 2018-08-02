@@ -2,6 +2,7 @@ import unittest
 from acqdiv.parsers.xml.CHATReader import CHATReader
 from acqdiv.parsers.xml.CHATReader import ACQDIVCHATReader
 from acqdiv.parsers.xml.CHATReader import InuktitutReader
+from acqdiv.parsers.xml.CHATReader import JapaneseMiiProReader
 
 """The metadata is a combination of hiia.cha (Sesotho), aki20803.ch 
 (Japanese Miyata) and made up data to cover more cases. 
@@ -41,6 +42,15 @@ class TestCHATReader(unittest.TestCase):
                           '@Situation:\tAki and AMO preparing to look at '
                           'book , "Miichan no otsukai"']
         self.assertEqual(actual_output, desired_output)
+
+    # TODO: implement
+
+    def test_iter_metadata_fields_line_breaks(self):
+        """Test iter_metadata_fields with line breaks.
+
+        Attested in Japanese MiiPro.
+        """
+        pass
 
     def test_get_metadata_field_normal_field(self):
         """Test get_metadata_field for a normal field."""
@@ -107,6 +117,23 @@ class TestCHATReader(unittest.TestCase):
                      'KAT Katherine_Demuth Investigator']
         desired_output = ptcs_list
         self.assertEqual(actual_output, desired_output)
+
+    def test_iter_participants_multiple_spaces(self):
+        """Test iter_participants with multiple spaces.
+
+        Attested in Japanese MiiPro.
+        """
+        ptcs = ('MEM Mme_Manyili Grandmother,  '
+                'CHI Hlobohang Target_Child,  '
+                'KAT Katherine_Demuth Investigator')
+        actual_output = list(self.reader.iter_participants(ptcs))
+        ptcs_list = ['MEM Mme_Manyili Grandmother',
+                     'CHI Hlobohang Target_Child',
+                     'KAT Katherine_Demuth Investigator']
+        desired_output = ptcs_list
+        self.assertEqual(actual_output, desired_output)
+
+    # TODO: new test case
 
     def test_get_participant_fields_two_fields(self):
         """Test get_participant_fields for two field input."""
@@ -296,6 +323,16 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ('KAT', 'ke eng ?', '0', '8551')
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_mainline_fields_with_time_multiple_spaces(self):
+        """Test get_mainline_fields with multiple spaces before timestamp.
+
+        Attested in Japanese MiiPro.
+        """
+        mainline = '*KAT:	ke eng ?  0_8551'
+        actual_output = self.reader.get_mainline_fields(mainline)
+        desired_output = ('KAT', 'ke eng ?', '0', '8551')
+        self.assertEqual(actual_output, desired_output)
+
     def test_get_mainline_fields_with_no_space_before_time(self):
         """Test get_mainline_fields for no space before the timestamp.
 
@@ -321,10 +358,20 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ('KAT', 'ke eng ? [+ neg] [+ req]', '', '')
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_mainline_fields_with_postcode_multiple_spaces(self):
+        """Test get_mainline_fields with multiple spaces before postcode.
+
+        Attested in Japanese MiiPro.
+        """
+        mainline = '*KAT:	ke eng ?  [+ neg]'
+        actual_output = self.reader.get_mainline_fields(mainline)
+        desired_output = ('KAT', 'ke eng ?  [+ neg]', '', '')
+        self.assertEqual(actual_output, desired_output)
+
     def test_get_mainline_fields_with_no_space_before_postcode(self):
         """Test get_mainline_fields for no space before the postcode.
 
-        There is no space between the terminator and the postocode. Such
+        There is no space between the terminator and the postcode. Such
         examples can be found for example in Japanese_MiiPro.
         """
         mainline = '*KAT:	ke eng ?[+ neg]'
@@ -358,6 +405,50 @@ class TestCHATReader(unittest.TestCase):
         utterance = ''
         actual_output = self.reader.get_utterance_words(utterance)
         desired_output = []
+        self.assertEqual(actual_output, desired_output)
+
+    # TODO: add more test cases for the other terminators
+
+    def test_get_utterance_terminator_space_before(self):
+        """Test get_utterance_terminator with space before."""
+        utterance = 'Das ist ein Test .'
+        actual_output = self.reader.get_utterance_terminator(utterance)
+        desired_output = '.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_no_space_before(self):
+        """Test get_utterance_terminator with no space before."""
+        utterance = 'Das ist ein Test.'
+        actual_output = self.reader.get_utterance_terminator(utterance)
+        desired_output = '.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_postcode(self):
+        """Test get_utterance_terminator with postcode."""
+        utterance = 'Das ist ein Test . [+ postcode]'
+        actual_output = self.reader.get_utterance_terminator(utterance)
+        desired_output = '.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_postcode_no_space(self):
+        """Test get_utterance_terminator with postcode and no space."""
+        utterance = 'Das ist ein Test .[+ postcode]'
+        actual_output = self.reader.get_utterance_terminator(utterance)
+        desired_output = '.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_postcode_multiple_spaces(self):
+        """Test get_utterance_terminator with postcode and multiple spaces."""
+        utterance = 'Das ist ein Test .  [+ postcode]'
+        actual_output = self.reader.get_utterance_terminator(utterance)
+        desired_output = '.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_non_terminator_dot(self):
+        """Test get_utterance_terminator with a non-terminator dot."""
+        utterance = 'Das ist (.) ein Test ? [+ postcode]'
+        actual_output = self.reader.get_utterance_terminator(utterance)
+        desired_output = '?'
         self.assertEqual(actual_output, desired_output)
 
     # ---------- dependent tiers ----------
@@ -900,6 +991,13 @@ class TestACQDIVCHATReader(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_fragment_actual_ampersand_outside(self):
+        """Test get_fragment_actual with ampersand outside fragment."""
+        utterance = '&=laugh &wow &-um'
+        actual_output = self.reader.get_fragment_actual(utterance)
+        desired_output = '&=laugh wow &-um'
+        self.assertEqual(actual_output, desired_output)
+
     # Tests for the get_fragment_target-method.
 
     def test_get_fragment_target_one_fragment(self):
@@ -928,6 +1026,13 @@ class TestACQDIVCHATReader(unittest.TestCase):
         utterance = ''
         actual_output = self.reader.get_fragment_actual(utterance)
         desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_target_ampersand_outside(self):
+        """Test get_fragment_target with ampersand outside fragment."""
+        utterance = '&=laugh &wow &-um'
+        actual_output = self.reader.get_fragment_target(utterance)
+        desired_output = '&=laugh xxx &-um'
         self.assertEqual(actual_output, desired_output)
 
     # Tests for the get_actual_utterance method.
@@ -1409,6 +1514,120 @@ class TestInuktitutReader(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
 ###############################################################################
+
+
+class TestJapaneseMiiProReader(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        session_file_path = './test.cha'
+        cls.reader = JapaneseMiiProReader(session_file_path)
+        cls.maxDiff = None
+
+    # Tests for the iter_morphemes-method.
+
+    def test_iter_morphemes_stem_no_gloss(self):
+        """Test iter_morphemes with stem and no gloss."""
+        morpheme_word = 'stem:POS|stem&FUS'
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('stem&FUS', '', 'stem:POS')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_stem_gloss(self):
+        """Test iter_morphemes with stem and gloss."""
+        morpheme_word = 'stem:POS|stem&FUS=stemgloss'
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('stem&FUS', 'stemgloss', 'stem:POS')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_suffixes_no_stemgloss(self):
+        """Test iter_morphemes with suffixes and no stem gloss."""
+        morpheme_word = 'stem:POS|stem&FUS-SFXONE-SFXTWO'
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('stem&FUS', '', 'stem:POS'),
+                          ('', 'SFXONE', 'sfx'),
+                          ('', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_suffixes_stemgloss(self):
+        """Test iter_morphemes with suffixes and stem gloss."""
+        morpheme_word = 'stem:POS|stem&FUS-SFXONE-SFXTWO=stemgloss'
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('stem&FUS', 'stemgloss', 'stem:POS'),
+                          ('', 'SFXONE', 'sfx'),
+                          ('', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_suffixes_colon(self):
+        """Test iter_morphemes with suffix and colon."""
+        morpheme_word = ('stem:POS|stem&FUS-SFXONE:contr'
+                         '-SFXTWO:SFXTWOseg=stemgloss')
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('stem&FUS', 'stemgloss', 'stem:POS'),
+                          ('', 'SFXONE:contr', 'sfx'),
+                          ('SFXTWOseg', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_prefixes(self):
+        """Test iter_morphemes with prefixes."""
+        morpheme_word = 'pfxone#pfxtwo#stem:POS|stem&FUS=stemgloss'
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('pfxone', '', 'pfx'),
+                          ('pfxtwo', '', 'pfx'),
+                          ('stem&FUS', 'stemgloss', 'stem:POS')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_prefixes_suffixes_stemgloss(self):
+        """Test iter_morphemes with prefixes, suffixes and stem gloss."""
+        morpheme_word = 'pfxone#pfxtwo#stem:POS|stem&FUS-SFXONE-SFXTWO=stemgloss'
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('pfxone', '', 'pfx'),
+                          ('pfxtwo', '', 'pfx'),
+                          ('stem&FUS', 'stemgloss', 'stem:POS'),
+                          ('', 'SFXONE', 'sfx'),
+                          ('', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_compound_no_gloss(self):
+        """Test iter_morphemes with compound and no stem gloss."""
+        morpheme_word = 'CMPPOS|+CMPPOSONE|cmpstemone+CMPPOSTWO|cmpstemtwo'
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('=cmpstemone', '', 'CMPPOSONE'),
+                          ('=cmpstemtwo', '', 'CMPPOSTWO')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_compound_gloss(self):
+        """Test iter_morphemes with compound and stem gloss."""
+        morpheme_word = ('CMPPOS|+CMPPOSONE|cmpstemone'
+                         '+CMPPOSTWO|cmpstemtwo=cmpgloss')
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('=cmpstemone', 'cmpgloss', 'CMPPOSONE'),
+                          ('=cmpstemtwo', 'cmpgloss', 'CMPPOSTWO')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_compound_suffixes(self):
+        """Test iter_morphemes with compound and suffixes."""
+        morpheme_word = ('CMPPOS|+CMPPOSONE|cmpstemone-SFXONE'
+                         '+CMPPOSTWO|cmpstemtwo-SFXTWO=cmpgloss')
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('=cmpstemone', 'cmpgloss', 'CMPPOSONE'),
+                          ('', 'SFXONE', 'sfx'),
+                          ('=cmpstemtwo', 'cmpgloss', 'CMPPOSTWO'),
+                          ('', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_compound_prefix(self):
+        """Test iter_morphemes with compound and prefix."""
+        morpheme_word = ('pfxone#CMPPOS|+CMPPOSONE|cmpstemone-SFXONE'
+                         '+CMPPOSTWO|cmpstemtwo-SFXTWO=cmpgloss')
+        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        desired_output = [('pfxone', '', 'pfx'),
+                          ('=cmpstemone', 'cmpgloss', 'CMPPOSONE'),
+                          ('', 'SFXONE', 'sfx'),
+                          ('=cmpstemtwo', 'cmpgloss', 'CMPPOSTWO'),
+                          ('', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
 
 
 if __name__ == '__main__':

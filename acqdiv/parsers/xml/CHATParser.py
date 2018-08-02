@@ -266,6 +266,9 @@ class JapaneseMiiProParser(CHATParser):
     def get_reader(self):
         return CHATReader.JapaneseMiiProReader(self.session_path)
 
+    def get_cleaner(self):
+        return CHATCleaner.JapaneseMiiProCleaner()
+
 
 def main():
     import glob
@@ -278,9 +281,11 @@ def main():
     start_time = time.time()
 
     for corpus, parser_cls in [
+            ('Japanese_MiiPro', JapaneseMiiProParser),
             ('English_Manchester1', EnglishManchester1Parser),
             ('Cree', CreeParser),
-            ('Inuktitut', InuktitutParser)]:
+            ('Inuktitut', InuktitutParser)
+    ]:
 
         corpus_path = os.path.join(
             acqdiv_path, 'corpora/{}/cha/*.cha'.format(corpus))

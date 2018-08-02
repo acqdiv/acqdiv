@@ -8,10 +8,25 @@ from acqdiv.parsers.xml.interfaces import CorpusReaderInterface
 class CHATReader:
     """Generic reader methods for a CHAT file."""
 
+    @staticmethod
+    def _replace_line_breaks(string):
+        """Remove line breaks within record tiers or metadata fields.
+
+        CHAT inserts a line break and a tab when a tier or field becomes too
+        long. The line breaks are replaced by a blank space.
+
+        Args:
+            rec (str): The record.
+
+        Returns:
+            str:  Tier or field without line breaks.
+        """
+        return string.replace('\n\t', ' ')
+
     # ---------- metadata ----------
 
-    @staticmethod
-    def iter_metadata_fields(session_path):
+    @classmethod
+    def iter_metadata_fields(cls, session_path):
         """Iter all metadata fields of a session file.
 
         Metadata fields start with @ followed by the key, colon, tab and its
@@ -25,9 +40,11 @@ class CHATReader:
         """
         metadata_regex = re.compile(r'@.*?:\t')
         with open(session_path, 'r') as f:
-            for line in f:
+            content = cls._replace_line_breaks(f.read())
+            for match in re.finditer(r'[^\n]+', content):
+                line = match.group()
                 if metadata_regex.search(line):
-                    yield line.rstrip('\n')
+                    yield line
 
                 # metadata section ends
                 if line.startswith('*'):
@@ -103,7 +120,7 @@ class CHATReader:
         Yields:
             str: The next participant.
         """
-        participants_regex = re.compile(r' ?, ?')
+        participants_regex = re.compile(r'\s*,\s*')
         for participant in participants_regex.split(participants):
             yield participant
 
@@ -116,7 +133,8 @@ class CHATReader:
             - name
             - role
 
-        The name is optional and an empty string will be returned if missing.
+        Name and role can be missing in which case an empty string is returned.
+        If only one field is missing, it is the name.
 
         Args:
             participant (str): A participant as returned by iter_participants.
@@ -125,7 +143,10 @@ class CHATReader:
             tuple: (label, name, role).
         """
         fields = participant.split(' ')
-        # if name is missing
+        # name and role is missing
+        if len(fields) == 1:
+            return fields[0], '', ''
+        # name is missing
         if len(fields) == 2:
             return fields[0], '', fields[1]
         else:
@@ -202,21 +223,6 @@ class CHATReader:
         return id_fields[9]
 
     # ---------- Record ----------
-
-    @staticmethod
-    def _replace_line_breaks(rec):
-        """Remove line breaks within the tiers of a record.
-
-        CHAT inserts line breaks when the text of a main line or dependent
-        tier becomes too long. The line breaks are replaced by a blank space.
-
-        Args:
-            rec (str): The record.
-
-        Returns:
-            str: Record without break lines within the tiers.
-        """
-        return rec.replace('\n\t', ' ')
 
     @classmethod
     def iter_records(cls, session_path):
@@ -299,7 +305,7 @@ class CHATReader:
             tuple: (speaker ID, utterance, start time, end time).
         """
         main_line_regex = re.compile(
-            r'\*([A-Za-z0-9]{2,3}):\t(.*?)( ?\D?(\d+)(_(\d+))?\D?$|$)')
+            r'\*([A-Za-z0-9]{2,3}):\t(.*?)(\s*\D?(\d+)(_(\d+))?\D?$|$)')
         match = main_line_regex.search(main_line)
         label = match.group(1)
         utterance = match.group(2)
@@ -340,6 +346,12 @@ class CHATReader:
             return utterance.split(' ')
         else:
             return []
+
+    @staticmethod
+    def get_utterance_terminator(utterance):
+        terminator_regex = re.compile(r'([+/.!?"]*[!?.])(?=(\s*\[\+|$))')
+        match = terminator_regex.search(utterance)
+        return match.group(1)
 
     @staticmethod
     def get_mainline_start_time(main_line_fields):
@@ -576,10 +588,9 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
                    '+"/.': 'quotation follows',
                    '+".': 'quotation precedes'}
 
-        terminator_regex = re.compile(r'([+/.!?"]*[!?.])(?=( \[\+|$))')
         utterance = self.get_mainline_utterance(self._main_line_fields)
-        match = terminator_regex.search(utterance)
-        return mapping[match.group(1)]
+        terminator = self.get_utterance_terminator(utterance)
+        return mapping[terminator]
 
     # ---------- actual & target ----------
 
@@ -634,7 +645,7 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         Coding in CHAT: word starting with &.
         Keeps the fragment, removes the & from the word.
         """
-        fragment_regex = re.compile(r'&(\S+)')
+        fragment_regex = re.compile(r'&([^-=]\S+)')
         return fragment_regex.sub(r'\1', utterance)
 
     @staticmethod
@@ -644,7 +655,7 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         Coding in CHAT: word starting with &.
         The fragment is marked as untranscribed (xxx).
         """
-        fragment_regex = re.compile(r'&\S+')
+        fragment_regex = re.compile(r'&[^-=]\S+')
         return fragment_regex.sub('xxx', utterance)
 
     def get_actual_utterance(self):
@@ -950,15 +961,94 @@ class JapaneseMiiProReader(ACQDIVCHATReader):
         else:
             return 'Japanese'
 
-    def iter_morphemes(self, word):
-        """Iter POS tags, segments and glosses of a word."""
-        pass
+    @staticmethod
+    def iter_morphemes(morph_word):
+        """Iter morphemes of a word.
+
+        A word consists of word groups in the case of compounds (marker: +).
+
+        A word group has the following structure:
+        prefix#POS|stem&fusionalsuffix-suffix=gloss
+
+        prefix: segment, no gloss, no POS (-> assign 'pfx')
+        stem: segment, gloss, POS
+        suffix: no segment, with gloss, without POS (-> assign 'sfx')
+
+        For every component of the compound '=' is prepended to the part (e.g.
+        'n|+n|apple+n|tree' -> '=apple', '=tree'). Both parts receive the same
+        gloss. The POS tag of the whole compound is removed. There may be
+        prefixes attached to the whole compound.
+
+        Suffixes with a colon are specially treated: If the part after the
+        colon is not 'contr' (contraction), it denotes the segment of the
+        suffix.
+
+        Returns:
+            tuple: (segment, gloss, pos).
+        """
+        morpheme_regex = re.compile(r'[^#]+#'
+                                    r'|[^\-]+'
+                                    r'|[\-][^\-]+')
+
+        # get stem gloss and remove it from morpheme word
+        match = re.search(r'(.+)=(\S+)$', morph_word)
+        if match:
+            morph_word = match.group(1)
+            stem_gloss = match.group(2)
+        else:
+            stem_gloss = ''
+
+        # split into word groups (i.e. into compound parts) (if applicable)
+        word_groups = morph_word.split('+')
+
+        # check if word is a compound
+        if len(word_groups) > 1:
+            # pop prefixes & the POS tag of the whole compound
+            pfxs_cmppos = word_groups.pop(0)
+
+            # iter prefixes preceding compound
+            for pfx_match in re.finditer(r'[^#]+(?=#)', pfxs_cmppos):
+                yield pfx_match.group(), '', 'pfx'
+
+        for word_group in word_groups:
+
+            # iter morphemes
+            for match in morpheme_regex.finditer(word_group):
+                morpheme = match.group()
+
+                # prefix
+                if morpheme.endswith('#'):
+                    segment = morpheme.rstrip('#')
+                    gloss = ''
+                    pos = 'pfx'
+                # sfx
+                elif morpheme.startswith('-'):
+                    sfx = morpheme.lstrip('-')
+                    pos = 'sfx'
+                    match = re.search(r'([^:]+)(:(.*))?', sfx)
+                    # check for colon case
+                    if match.group(2) and match.group(3) != 'contr':
+                        segment = match.group(3)
+                        gloss = match.group(1)
+                    else:
+                        segment = ''
+                        gloss = sfx
+                # stem
+                else:
+                    pos, segment = morpheme.split('|')
+                    # if it is a compound part
+                    if len(word_groups) > 1:
+                        # prepend '=' to segment
+                        segment = '=' + segment
+                    gloss = stem_gloss
+
+                yield segment, gloss, pos
 
     def get_segments(self, seg_word):
-        return []
+        return [seg for seg, _, _ in self.iter_morphemes(seg_word)]
 
     def get_glosses(self, gloss_word):
-        return []
+        return [gloss for _, gloss, _ in self.iter_morphemes(gloss_word)]
 
     def get_poses(self, pos_word):
-        return []
+        return [pos for pos, _, pos in self.iter_morphemes(pos_word)]
