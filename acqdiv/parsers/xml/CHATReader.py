@@ -754,14 +754,20 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
     def iter_morphemes(morph_word):
         """Iter morphemes of a word.
 
-        A word may consist of word groups in the case of:
-            - clitics (only postclitic: ~)
-            - compounds (+)
+        A word consists of word groups in the case of
+            - compounds (marker: +)
+            - clitics (marker: ~)
 
         A word group has the following structure:
-        prefix#part-of-speech|stem&fusionalsuffix-suffix=english
+        prefix#POS|stem&fusionalsuffix-suffix=gloss
 
-        The '=english'-part is removed.
+        prefix: segment, no gloss (-> assign segment), no POS (-> assign 'pfx')
+        stem: segment, gloss (either from '='-part or segment), POS
+        suffix: no segment, gloss, no POS (-> assign 'sfx')
+
+        For every component of the compound '=' is prepended to the part (e.g.
+        'n|+n|apple+n|tree' -> '=apple', '=tree'). The POS tag of the whole
+        compound is removed.
 
         Returns:
             tuple: (segment, gloss, pos).
@@ -770,17 +776,26 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
                                     r'|[^\-]+'
                                     r'|[\-][^\-]+')
 
-        # split into word groups (in case of compound, clitics)
+        # split into word groups (in case of compound, clitic) (if applicable)
         word_groups = re.split(r'[+~]', morph_word)
+
+        # check if word is a compound
+        if word_groups[0].endswith('|'):
+            # remove POS tag of the whole compound
+            del word_groups[0]
+            is_compound = True
+        else:
+            is_compound = False
 
         for word_group in word_groups:
 
-            # skip POS tag of whole compound if existing
-            if word_group.endswith('|'):
-                continue
-
-            # remove =english
-            word_group = re.sub(r'=.*', '', word_group)
+            # get stem gloss and remove it from morpheme word
+            match = re.search(r'(.+)=(\S+)$', word_group)
+            if match:
+                word_group = match.group(1)
+                stem_gloss = match.group(2)
+            else:
+                stem_gloss = ''
 
             # iter morphemes
             for match in morpheme_regex.finditer(word_group):
@@ -788,18 +803,29 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
 
                 # prefix
                 if morpheme.endswith('#'):
-                    segment = ''
-                    gloss = morpheme.rstrip('#')
+                    pfx = morpheme.rstrip('#')
+                    segment = pfx
+                    gloss = segment
                     pos = 'pfx'
                 # sfx
                 elif morpheme.startswith('-'):
+                    sfx = morpheme.lstrip('-')
                     segment = ''
-                    gloss = morpheme.lstrip('-~')
+                    gloss = sfx
                     pos = 'sfx'
                 # stem
                 else:
-                    segment = ''
-                    pos, gloss = morpheme.split('|')
+                    pos, segment = morpheme.split('|')
+                    # take gloss from '='-part, otherwise the segment
+                    if stem_gloss:
+                        gloss = stem_gloss
+                    else:
+                        gloss = segment
+
+                    # if it is a compound part
+                    if is_compound:
+                        # prepend '=' to segment
+                        segment = '=' + segment
 
                 yield segment, gloss, pos
 
@@ -995,7 +1021,7 @@ class JapaneseMiiProReader(ACQDIVCHATReader):
         For every component of the compound '=' is prepended to the part (e.g.
         'n|+n|apple+n|tree' -> '=apple', '=tree'). Both parts receive the same
         gloss. The POS tag of the whole compound is removed. There may be
-        prefixes attached to the whole compound.
+        prefixes attached to the whole compound. There are no clitics.
 
         Suffixes with a colon are specially treated: If the part after the
         colon is not 'contr' (contraction), it denotes the segment of the

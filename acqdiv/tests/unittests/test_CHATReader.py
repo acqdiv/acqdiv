@@ -4,6 +4,7 @@ from acqdiv.parsers.xml.CHATReader import CHATReader
 from acqdiv.parsers.xml.CHATReader import ACQDIVCHATReader
 from acqdiv.parsers.xml.CHATReader import InuktitutReader
 from acqdiv.parsers.xml.CHATReader import JapaneseMiiProReader
+from acqdiv.parsers.xml.CHATReader import EnglishManchester1Reader
 
 """The metadata is a combination of hiia.cha (Sesotho), aki20803.ch 
 (Japanese Miyata) and made up data to cover more cases. 
@@ -1264,7 +1265,104 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
 
 
 class TestEnglishManchester1Reader(unittest.TestCase):
-    pass
+
+    def test_get_word_language_english(self):
+        word = 'yes'
+        actual_output = EnglishManchester1Reader.get_word_language(word)
+        desired_output = 'English'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_word_language_french(self):
+        word = 'oui@s:fra'
+        actual_output = EnglishManchester1Reader.get_word_language(word)
+        desired_output = 'French'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_word_language_italian(self):
+        word = 'si@s:ita'
+        actual_output = EnglishManchester1Reader.get_word_language(word)
+        desired_output = 'Italian'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_stem_no_gloss(self):
+        """Test iter_morphemes with stem and no gloss."""
+        word = 'stem:POS|stem&FUS'
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('stem&FUS', 'stem&FUS', 'stem:POS')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_stem_gloss(self):
+        """Test iter_morphemes with stem and gloss."""
+        word = 'stem:POS|stem&FUS=stemgloss'
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('stem&FUS', 'stemgloss', 'stem:POS')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_suffixes(self):
+        """Test iter_morphemes with suffixes."""
+        word = 'stem:POS|stem&FUS-SFXONE-SFXTWO'
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('stem&FUS', 'stem&FUS', 'stem:POS'),
+                          ('', 'SFXONE', 'sfx'),
+                          ('', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_prefixes(self):
+        """Test iter_morphemes with prefixes."""
+        word = 'pfxone#pfxtwo#stem:POS|stem&FUS'
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('pfxone', 'pfxone', 'pfx'),
+                          ('pfxtwo', 'pfxtwo', 'pfx'),
+                          ('stem&FUS', 'stem&FUS', 'stem:POS')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_prefixes_suffixes_stemgloss(self):
+        """Test iter_morphemes with prefixes, suffixes and stem gloss."""
+        word = 'pfxone#pfxtwo#stem:POS|stem&FUS-SFXONE-SFXTWO'
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('pfxone', 'pfxone', 'pfx'),
+                          ('pfxtwo', 'pfxtwo', 'pfx'),
+                          ('stem&FUS', 'stem&FUS', 'stem:POS'),
+                          ('', 'SFXONE', 'sfx'),
+                          ('', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_compound(self):
+        """Test iter_morphemes with compound."""
+        word = 'CMPPOS|+CMPPOSONE|cmpstemone+CMPPOSTWO|cmpstemtwo'
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('=cmpstemone', 'cmpstemone', 'CMPPOSONE'),
+                          ('=cmpstemtwo', 'cmpstemtwo', 'CMPPOSTWO')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_compound_suffixes(self):
+        """Test iter_morphemes with compound and suffixes."""
+        word = ('CMPPOS|+CMPPOSONE|cmpstemone-SFXONE'
+                '+CMPPOSTWO|cmpstemtwo-SFXTWO')
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('=cmpstemone', 'cmpstemone', 'CMPPOSONE'),
+                          ('', 'SFXONE', 'sfx'),
+                          ('=cmpstemtwo', 'cmpstemtwo', 'CMPPOSTWO'),
+                          ('', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_clitic(self):
+        """Test iter_morphemes with clitic."""
+        word = 'stem:POSone|stem&FUSone~stem:POStwo|stem&FUStwo'
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('stem&FUSone', 'stem&FUSone', 'stem:POSone'),
+                          ('stem&FUStwo', 'stem&FUStwo', 'stem:POStwo')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_clitic_suffix(self):
+        """Test iter_morphemes with clitic and suffix."""
+        word = 'stem:POSone|stem&FUSone-SFX~stem:POStwo|stem&FUStwo'
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('stem&FUSone', 'stem&FUSone', 'stem:POSone'),
+                          ('', 'SFX', 'sfx'),
+                          ('stem&FUStwo', 'stem&FUStwo', 'stem:POStwo')]
+        self.assertEqual(actual_output, desired_output)
+
 
 ###############################################################################
 
