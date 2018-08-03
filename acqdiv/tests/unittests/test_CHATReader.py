@@ -648,7 +648,7 @@ class TestACQDIVCHATReaderRecord(unittest.TestCase):
     def setUpClass(cls):
         session = ('@UTF8\n'
                    '@Begin\n'
-                   '*MEM:\tThis is the utterance. \x150_1111\x15\n'
+                   '*MEM:\t&foo ma(i)nline [: utterance]. \x150_1111\x15\n'
                    '%add:\tADD\n'
                    '%sit:\tThis is the situation\n'
                    '%act:\tThis is the action\n'
@@ -707,7 +707,18 @@ class TestACQDIVCHATReaderRecord(unittest.TestCase):
     def test_get_utterance(self):
         """Test get_utterance."""
         actual_output = self.reader.get_utterance()
-        desired_output = 'This is the utterance.'
+        desired_output = '&foo ma(i)nline [: utterance].'
+        self.assertEqual(actual_output, desired_output)
+
+    def get_actual_utterance(self):
+        actual_output = self.reader.get_actual_utterance()
+        desired_output = 'foo manline.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_target_utterance(self):
+        """Test get_utterance."""
+        actual_output = self.reader.get_target_utterance()
+        desired_output = 'xxx utterance.'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_sentence_type(self):
@@ -859,130 +870,7 @@ class TestACQDIVCHATReaderIterators(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
 
-class TestACQDIVCHATReader(unittest.TestCase):
-    """Class to test the ACQDIVCHATReader."""
-
-    def setUp(self):
-        session_file_path = './test.cha'
-        self.reader = ACQDIVCHATReader()
-        with open(session_file_path) as session_file:
-            self.reader.read(session_file)
-        self.maxDiff = None
-
-    # ---------- record ----------
-
-    # Tests for the get_actual_utterance method.
-
-    def test_get_actual_utterance_test_dot_cha(self):
-        """Test get_actual_utterance with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_actual_utterance())
-        desired_output = ['ke eng ?', 'ke ntencha ncha .',
-                          'ke eng ntho ena e?', 'e nte ena .',
-                          'ke khomba khomba .']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_actual_utterance_one_occurence_of_each(self):
-        """Test with 1 shortening, 1 fragment and 1 replacement."""
-        self.reader._main_line_fields = (
-            'CHI',
-            'Mu:(ğ)ça &ab yarasam [: yorosom]',
-            '',
-            ''
-        )
-        actual_output = self.reader.get_actual_utterance()
-        desired_output = 'Mu:ça ab yarasam'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_actual_utterance_multiple_occurences_of_each(self):
-        """Test with 2 shortenings, 2 fragments and 2 replacements."""
-        self.reader._main_line_fields = (
-            'CHI',
-            '(A)mu:(ğ)ça yarasam [: yorosom] &ab yarasam [: yorosom] &ac',
-            '',
-            ''
-        )
-        actual_output = self.reader.get_actual_utterance()
-        desired_output = 'mu:ça yarasam ab yarasam ac'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_actual_utterance_no_occurences(self):
-        """Test get_actual_utterance using an utt without occurences."""
-        self.reader._main_line_fields = (
-            'CHI',
-            'mu:ça yarasam ab yarasam ac',
-            '',
-            ''
-        )
-        actual_output = self.reader.get_actual_utterance()
-        desired_output = 'mu:ça yarasam ab yarasam ac'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_actual_utterance_empty_string(self):
-        """Test get_actual_utterance with an empty string."""
-        self.reader._main_line_fields = (
-            'CHI',
-            '',
-            '',
-            ''
-        )
-        actual_output = self.reader.get_actual_utterance()
-        desired_output = ''
-        self.assertEqual(actual_output, desired_output)
-
-    # Tests for the get_actual_utterance method.
-
-    def test_get_target_utterance_one_occurence_of_each(self):
-        """Test with 1 shortening, 1 fragment and 1 replacement."""
-        self.reader._main_line_fields = (
-            'CHI',
-            'Mu:(ğ)ça &ab yarasam [: yorosom]',
-            '',
-            ''
-        )
-        actual_output = self.reader.get_target_utterance()
-        desired_output = 'Mu:ğça xxx yorosom'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_target_utterance_multiple_occurences_of_each(self):
-        """Test with 2 shortenings, 2 fragments and 2 replacements."""
-        self.reader._main_line_fields = (
-            'CHI',
-            'yarasam [: yorosom] &ab (a)mu:(ğ)ça  &ac yarasam [: yorosom]',
-            '',
-            ''
-        )
-        actual_output = self.reader.get_target_utterance()
-        desired_output = 'yorosom xxx amu:ğça  xxx yorosom'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_target_utterance_no_occurences(self):
-        """Test get_target_utterance using an utt without occurences."""
-        self.reader._main_line_fields = (
-            'CHI',
-            'mu:ça yarasam ab yarasam ac',
-            '',
-            ''
-        )
-        actual_output = self.reader.get_target_utterance()
-        desired_output = 'mu:ça yarasam ab yarasam ac'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_target_utterance_empty_string(self):
-        """Test get_target_utterance with an empty string."""
-        self.reader._main_line_fields = (
-            'CHI',
-            '',
-            '',
-            ''
-        )
-        actual_output = self.reader.get_target_utterance()
-        desired_output = ''
-        self.assertEqual(actual_output, desired_output)
-
-
-class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
+class TestACQDIVCHATReaderGeneric(unittest.TestCase):
     """Class to test all static and class methods of ACQDIVCHATReader."""
 
     def test_get_metadata_fields(self):
@@ -1004,7 +892,6 @@ class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
             '@Comment:\tuses desu and V-masu\n'
             '@Situation:\tAki and AMO preparing to look at book , '
             '"Miichan no otsukai"\n'
-            '*MEM:\tke eng ? \x150_8551\x15\n%gls:\tke eng ?\n'
             '@End')
         actual_output = ACQDIVCHATReader.get_metadata_fields(session)
         desired_output = {
@@ -1260,6 +1147,62 @@ class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
         desired_output = '&=laugh xxx &-um'
         self.assertEqual(actual_output, desired_output)
 
+    def test_to_actual_utterance_empty_string(self):
+        utterance = ''
+        actual_output = ACQDIVCHATReader.to_actual_utterance(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_actual_utterance_no_occurrences(self):
+        """Test get_actual_utterance using an utt without occurrences."""
+        utterance = 'mu:ça yarasam ab yarasam ac'
+        actual_output = ACQDIVCHATReader.to_actual_utterance(utterance)
+        desired_output = 'mu:ça yarasam ab yarasam ac'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_actual_utterance_one_occurence_of_each(self):
+        """Test with 1 shortening, 1 fragment and 1 replacement."""
+        utterance = 'Mu:(ğ)ça &ab yarasam [: yorosom]'
+        actual_output = ACQDIVCHATReader.to_actual_utterance(utterance)
+        desired_output = 'Mu:ça ab yarasam'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_actual_utterance_multiple_occurences_of_each(self):
+        """Test with 2 shortenings, 2 fragments and 2 replacements."""
+        utterance = ('(A)mu:(ğ)ça yarasam [: yorosom] '
+                     '&ab yarasam [: yorosom] &ac')
+        actual_output = ACQDIVCHATReader.to_actual_utterance(utterance)
+        desired_output = 'mu:ça yarasam ab yarasam ac'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_to_target_utterance_empty_string(self):
+        utterance = ''
+        actual_output = ACQDIVCHATReader.to_target_utterance(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_to_target_utterance_no_occurrences(self):
+        """Test to_target_utterance using an utterance without occurrences."""
+        utterance = 'mu:ça yarasam ab yarasam ac'
+        actual_output = ACQDIVCHATReader.to_target_utterance(utterance)
+        desired_output = 'mu:ça yarasam ab yarasam ac'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_to_target_utterance_one_occurrence_of_each(self):
+        """Test with 1 shortening, 1 fragment and 1 replacement."""
+        utterance = 'Mu:(ğ)ça &ab yarasam [: yorosom]'
+        actual_output = ACQDIVCHATReader.to_target_utterance(utterance)
+        desired_output = 'Mu:ğça xxx yorosom'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_to_target_utterance_multiple_occurrences_of_each(self):
+        """Test with 2 shortenings, 2 fragments and 2 replacements."""
+        utterance = ('yarasam [: yorosom] '
+                     '&ab (a)mu:(ğ)ça  &ac yarasam [: yorosom]')
+        actual_output = ACQDIVCHATReader.to_target_utterance(utterance)
+        desired_output = 'yorosom xxx amu:ğça  xxx yorosom'
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- morphology ----------
 
     def test_get_standard_form(self):
@@ -1325,6 +1268,7 @@ class TestEnglishManchester1Reader(unittest.TestCase):
 
 ###############################################################################
 
+# TODO: test in the same way as ACQDIVCHATReader
 
 class TestInuktitutReader(unittest.TestCase):
     """Class to test the InuktitutReader."""

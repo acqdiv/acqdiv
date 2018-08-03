@@ -643,23 +643,31 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         fragment_regex = re.compile(r'&[^-=]\S+')
         return fragment_regex.sub('xxx', utterance)
 
+    @classmethod
+    def to_actual_utterance(cls, utterance):
+        for actual_method in [cls.get_shortening_actual,
+                              cls.get_fragment_actual,
+                              cls.get_replacement_actual]:
+            utterance = actual_method(utterance)
+
+        return utterance
+
     def get_actual_utterance(self):
         utterance = self.get_mainline_utterance(self._main_line_fields)
-        for actual_method in [self.get_shortening_actual,
-                              self.get_fragment_actual,
-                              self.get_replacement_actual]:
-            utterance = actual_method(utterance)
+        return self.to_actual_utterance(utterance)
+
+    @classmethod
+    def to_target_utterance(cls, utterance):
+        for target_method in [cls.get_shortening_target,
+                              cls.get_fragment_target,
+                              cls.get_replacement_target]:
+            utterance = target_method(utterance)
 
         return utterance
 
     def get_target_utterance(self):
         utterance = self.get_mainline_utterance(self._main_line_fields)
-        for target_method in [self.get_shortening_target,
-                              self.get_fragment_target,
-                              self.get_replacement_target]:
-            utterance = target_method(utterance)
-
-        return utterance
+        return self.to_target_utterance(utterance)
 
     @staticmethod
     def get_standard_form():
