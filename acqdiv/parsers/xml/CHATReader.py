@@ -1,4 +1,3 @@
-import itertools
 import re
 
 from acqdiv.parsers.xml.interfaces import CorpusReaderInterface
@@ -29,7 +28,8 @@ class CHATReader:
         """Iter all metadata fields of a session.
 
         Metadata fields start with @ followed by the key, colon, tab and its
-        content.
+        content. Line breaks within a field are automatically removed and
+        replaced by a blank space.
 
         Args:
             session (str): The session.
@@ -233,22 +233,13 @@ class CHATReader:
         Yields:
             str: The next record.
         """
-        # for utterance ID generation
-        counter = itertools.count()
-        cls._uid = next(counter)
-
         session = cls._replace_line_breaks(session)
-
         rec_regex = re.compile(r'\*[A-Za-z0-9]{2,3}:\t.*?(?=\n\*|\n@End)',
                                flags=re.DOTALL)
-
         # iter all records
         for match in rec_regex.finditer(session):
             rec = match.group()
             yield rec
-            cls._uid = next(counter)
-
-        cls._uid = None
 
     # ---------- Main line ----------
 
