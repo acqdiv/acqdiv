@@ -376,9 +376,11 @@ class TestInuktitutParser(unittest.TestCase):
         """Test if a correctly initialized reader is returned."""
         actual_reader = self.parser.get_reader()
         desired_reader = InuktitutReader()
-        actual_output = [type(actual_reader), actual_reader.session_file]
-        desired_output = [type(desired_reader), desired_reader.session_file]
+        actual_output = [type(actual_reader), actual_reader.session_file_path]
+        desired_output = [type(desired_reader), desired_reader.session_file_path]
         self.assertEqual(actual_output, desired_output)
+
+
 
 
 if __name__ == '__main__':
