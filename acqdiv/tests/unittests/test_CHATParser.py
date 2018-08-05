@@ -1,5 +1,5 @@
 import unittest
-from acqdiv.parsers.xml.CHATParser import CHATParser
+from acqdiv.parsers.xml.CHATParser import *
 from acqdiv.parsers.xml.CHATReader import *
 
 
@@ -362,6 +362,27 @@ class TestCHATParser(unittest.TestCase):
         ]
         morpheme_list = []
         desired_output = (utt_dict, word_list, morpheme_list)
+        self.assertEqual(actual_output, desired_output)
+
+###############################################################################
+
+
+class TestInuktitutParser(unittest.TestCase):
+    """
+    Class to test InuktitutParser.
+    """
+
+    def setUp(self):
+        self.session_file_path = './test_InuktitutParser.cha'
+        self.parser = InuktitutParser(self.session_file_path)
+        self.maxDiff = None
+
+    def test_get_reader(self):
+        """Test if a correctly initialized reader is returned."""
+        actual_reader = self.parser.get_reader()
+        desired_reader = InuktitutReader()
+        actual_output = [type(actual_reader), actual_reader.session_file]
+        desired_output = [type(desired_reader), desired_reader.session_file]
         self.assertEqual(actual_output, desired_output)
 
 
