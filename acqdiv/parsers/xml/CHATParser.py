@@ -16,8 +16,8 @@ class CHATParser(CorpusParserInterface):
         self.reader = self.get_reader()
         self.cleaner = self.get_cleaner()
 
-        # with open(session_path) as session_file:
-        #     self.reader.read(session_file)
+        with open(session_path) as session_file:
+            self.reader.read(session_file)
 
     @staticmethod
     def get_reader():
