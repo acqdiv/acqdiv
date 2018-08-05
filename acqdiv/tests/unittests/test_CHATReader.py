@@ -1,8 +1,10 @@
 import unittest
+import io
 from acqdiv.parsers.xml.CHATReader import CHATReader
 from acqdiv.parsers.xml.CHATReader import ACQDIVCHATReader
 from acqdiv.parsers.xml.CHATReader import InuktitutReader
 from acqdiv.parsers.xml.CHATReader import JapaneseMiiProReader
+from acqdiv.parsers.xml.CHATReader import EnglishManchester1Reader
 
 """The metadata is a combination of hiia.cha (Sesotho), aki20803.ch 
 (Japanese Miyata) and made up data to cover more cases. 
@@ -554,45 +556,21 @@ class TestCHATReader(unittest.TestCase):
 
 ###############################################################################
 
-class TestACQDIVCHATReader(unittest.TestCase):
-    """Class to test the ACQDIVCHATReader."""
+class TestACQDIVCHATReaderMetadata(unittest.TestCase):
+    """Test metadata readers of ACQDIVCHATReader.
 
-    def setUp(self):
-        session_file_path = './test.cha'
-        self.reader = ACQDIVCHATReader()
-        self.reader.read(session_file_path)
-        self.maxDiff = None
+    Excluding speaker metadata.
+    """
 
-    # ---------- metadata ----------
-
-    def test_get_metadata_fields(self):
-        """Test get_metadata_fields with the test.cha-file."""
-        actual_output = self.reader.get_metadata_fields()
-        desired_output = {
-            'Languages': 'sme',
-            'Date': '12-SEP-1997',
-            'Participants': ('MEM Mme_Manyili Grandmother , '
-                             'CHI Hlobohang Target_Child'),
-            'ID': {
-                'MEM': ('sme', 'Sesotho', 'MEM', '', 'female',
-                        '', '', 'Grandmother', '', ''),
-                'CHI': ('sme', 'Sesotho', 'CHI', '2;2.',
-                        '', '', '', 'Target_Child', '', '')
-            },
-            'Birth of CHI': '14-JAN-2006',
-            'Birth of MEM': '11-OCT-1974',
-            'Media': 'h2ab, audio',
-            'Comment': (  # 'all snd kana jmor cha ok Wakachi2002; '
-                # Since the AQDIVCHATReader in its current state
-                # does not need to capture comments, the line
-                # above, which tests the case of two comments
-                # in the same session metadata is commented out.
-                'uses desu and V-masu'),
-            'Warning': 'recorded time: 1:00:00',
-            'Situation': ('Aki and AMO preparing to look at book , '
-                          '"Miichan no otsukai"')
-        }
-        self.assertEqual(actual_output, desired_output)
+    @classmethod
+    def setUpClass(cls):
+        session = ('@UTF8\n'
+                   '@Begin\n'
+                   '@Date:\t12-SEP-1997\n'
+                   '@Media:\tmedia_filename, audio\n'
+                   '@End')
+        cls.reader = ACQDIVCHATReader()
+        cls.reader.read(io.StringIO(session))
 
     def test_get_session_date(self):
         """Test get_session_date with test.cha. """
@@ -603,17 +581,224 @@ class TestACQDIVCHATReader(unittest.TestCase):
     def test_get_session_filename(self):
         """Test get_session_filename for sessions name of 'test.cha'."""
         actual_output = self.reader.get_session_filename()
-        desired_output = 'h2ab'
+        desired_output = 'media_filename'
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- speaker ----------
 
-    def test_get_speaker_iterator(self):
-        """Test get_speaker_iterator for the speakers in 'test.cha'."""
-        actual_output = list(self.reader.get_speaker_iterator())
-        desired_output = ['MEM Mme_Manyili Grandmother',
-                          'CHI Hlobohang Target_Child']
+class TestACQDIVCHATReaderSpeaker(unittest.TestCase):
+    """Test speaker readers of ACQDIVCHATReader."""
+
+    @classmethod
+    def setUpClass(cls):
+        session = ('@UTF8\n'
+                   '@Begin\n'
+                   '@Participants:\tCHI Hlobohang Target_Child\n'
+                   '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||\n'
+                   '@Birth of CHI:\t14-JAN-2006\n'
+                   '@End')
+        cls.reader = ACQDIVCHATReader()
+        cls.reader.read(io.StringIO(session))
+        cls.reader.load_next_speaker()
+
+    def test_get_speaker_age(self):
+        actual_output = self.reader.get_speaker_age()
+        desired_output = '2;2.'
         self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_birthdate(self):
+        """Test get_speaker_birthdate with test.cha."""
+        actual_output = self.reader.get_speaker_birthdate()
+        desired_output = '14-JAN-2006'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_gender(self):
+        """Test get_speaker_gender with test.cha."""
+        actual_output = self.reader.get_speaker_gender()
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_label(self):
+        """Test get_speaker_label with test.cha."""
+        actual_output = self.reader.get_speaker_label()
+        desired_output = 'CHI'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_language(self):
+        """Test get_speaker_language with test.cha."""
+        actual_output = self.reader.get_speaker_language()
+        desired_output = 'sme'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_name(self):
+        """Test get_speaker_name with test.cha."""
+        actual_output = self.reader.get_speaker_name()
+        desired_output = 'Hlobohang'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_speaker_role(self):
+        """Test get_speaker_role with test.cha."""
+        actual_output = self.reader.get_speaker_role()
+        desired_output = 'Target_Child'
+        self.assertEqual(actual_output, desired_output)
+
+
+class TestACQDIVCHATReaderRecord(unittest.TestCase):
+    """Test record readers of ACQDIVCHATReader."""
+
+    @classmethod
+    def setUpClass(cls):
+        session = ('@UTF8\n'
+                   '@Begin\n'
+                   '*MEM:\t&foo ma(i)nline [: utterance]. \x150_1111\x15\n'
+                   '%add:\tADD\n'
+                   '%sit:\tThis is the situation\n'
+                   '%act:\tThis is the action\n'
+                   '%mor:\tThis is the morphology tier\n'
+                   '%eng:\tThis is the translation.\n'
+                   '%com:\tThis is the comment\n'
+                   '@End')
+        cls.reader = ACQDIVCHATReader()
+        cls.reader.read(io.StringIO(session))
+        cls.reader.load_next_record()
+
+    def test_get_uid(self):
+        """Test get_uid."""
+        actual_output = self.reader.get_uid()
+        desired_output = 'u0'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_addressee(self):
+        """Test get_addressee."""
+        actual_output = self.reader.get_addressee()
+        desired_output = 'ADD'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_translation(self):
+        """Test get_translation."""
+        actual_output = self.reader.get_translation()
+        desired_output = 'This is the translation.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_comments(self):
+        """Test get_comments."""
+        actual_output = self.reader.get_comments()
+        desired_output = ('This is the comment; '
+                          'This is the situation; '
+                          'This is the action')
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_record_speaker_label(self):
+        """Test get_record_speaker_label."""
+        actual_output = self.reader.get_record_speaker_label()
+        desired_output = 'MEM'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_start_time(self):
+        """Test get_start_time."""
+        actual_output = self.reader.get_start_time()
+        desired_output = '0'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_end_time(self):
+        """Test get_end_time."""
+        actual_output = self.reader.get_end_time()
+        desired_output = '1111'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance(self):
+        """Test get_utterance."""
+        actual_output = self.reader.get_utterance()
+        desired_output = '&foo ma(i)nline [: utterance].'
+        self.assertEqual(actual_output, desired_output)
+
+    def get_actual_utterance(self):
+        actual_output = self.reader.get_actual_utterance()
+        desired_output = 'foo manline.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_target_utterance(self):
+        """Test get_utterance."""
+        actual_output = self.reader.get_target_utterance()
+        desired_output = 'xxx utterance.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_sentence_type(self):
+        """Test get_sentence_type."""
+        actual_output = self.reader.get_sentence_type()
+        desired_output = 'default'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morph_tier(self):
+        """Test get_morph_tier."""
+        actual_output = self.reader.get_morph_tier()
+        desired_output = 'This is the morphology tier'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_seg_tier(self):
+        actual_output = self.reader.get_seg_tier()
+        desired_output = 'This is the morphology tier'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_gloss_tier(self):
+        actual_output = self.reader.get_gloss_tier()
+        desired_output = 'This is the morphology tier'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_pos_tier(self):
+        actual_output = self.reader.get_pos_tier()
+        desired_output = 'This is the morphology tier'
+        self.assertEqual(actual_output, desired_output)
+
+
+class TestACQDIVCHATReaderIterators(unittest.TestCase):
+    """Test iterator methods of ACQDIVCHATReader."""
+
+    # TODO: use shorter session example
+    # TODO: use english in session example, e.g. '*ABC:\tThis is utterance 1.'
+
+    @classmethod
+    def setUpClass(cls):
+        session = ('@UTF8\n'
+                   '@Begin\n'
+                   '@Languages:\tsme\n'
+                   '@Date:\t12-SEP-1997\n'
+                   '@Participants:\tMEM Mme_Manyili Grandmother , '
+                   'CHI Hlobohang Target_Child\n'
+                   '@ID:\tsme|Sesotho|MEM||female|||Grandmother|||\n'
+                   '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||\n'
+                   '@Birth of CHI:\t14-JAN-2006\n@Birth of MEM:\t11-OCT-1974\n'
+                   '@Media:\th2ab, audio\n'
+                   '@Comment:\tall snd kana jmor cha ok Wakachi2002;\n'
+                   '@Warning:\trecorded time: 1:00:00\n'
+                   '@Comment:\tuses desu and V-masu\n'
+                   '@Situation:\tAki and AMO preparing to look at book , '
+                   '"Miichan no otsukai"\n'
+                   '*MEM:\tke eng ? \x150_8551\x15\n'
+                   '%gls:\tke eng ?\n'
+                   '%cod:\tcp wh ?\n'
+                   '%eng:\tWhat is it ?\n'
+                   '%sit:\tPoints to tape\n'
+                   '%com:\tis furious\n'
+                   '%add:\tCHI\n'
+                   '*CHI:\tke ntencha ncha . \x158551_19738\x15\n'
+                   '%gls:\tke ntho e-ncha .\n'
+                   '%cod:\tcp thing(9 , 10) 9-aj .\n'
+                   '%eng:\tA new thing\n'
+                   '%com:\ttest comment\n'
+                   '*MEM:\tke eng ntho ena e? \x1519738_24653\x15\n'
+                   '%gls:\tke eng ntho ena e ?\n'
+                   '%cod:\tcp wh thing(9 , 10) d9 ij ?\n'
+                   '%eng:\tWhat is this thing ?\n'
+                   '%sit:\tPoints to tape\n'
+                   '*CHI:\te nte ena . \x1524300_28048\x15\n'
+                   '%gls:\tke ntho ena .\n%cod:\tcp thing(9 , 10) d9 .\n'
+                   '%eng:\tIt is this thing\n'
+                   '*MEM:\tke khomba\n\tkhomba . \x1528048_31840\x15\n'
+                   '%gls:\tkekumbakumba .\n'
+                   '%cod:\tcp tape_recorder(9 , 10) .\n'
+                   '%eng:\tIt is a stereo\n@End')
+        cls.reader = ACQDIVCHATReader()
+        cls.reader.read(io.StringIO(session))
 
     def test_load_next_speaker(self):
         """Test load_next_speaker for the speakers in 'test.cha'"""
@@ -629,84 +814,6 @@ class TestACQDIVCHATReader(unittest.TestCase):
             (('CHI', 'Hlobohang', 'Target_Child'),
              ('sme', 'Sesotho', 'CHI', '2;2.', '',
               '', '', 'Target_Child', '', ''))
-        ]
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_speaker_age(self):
-        actual_output = []
-        while self.reader.load_next_speaker():
-            actual_output.append(self.reader.get_speaker_age())
-        desired_output = ['', '2;2.']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_speaker_birthdate(self):
-        """Test get_speaker_birthdate with test.cha."""
-        actual_output = []
-        while self.reader.load_next_speaker():
-            speaker_birthdate = self.reader.get_speaker_birthdate()
-            actual_output.append(speaker_birthdate)
-        desired_output = ['11-OCT-1974', '14-JAN-2006']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_speaker_gender(self):
-        """Test get_speaker_gender with test.cha."""
-        actual_output = []
-        while self.reader.load_next_speaker():
-            actual_output.append(self.reader.get_speaker_gender())
-        desired_output = ['female', '']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_speaker_label(self):
-        """Test get_speaker_label with test.cha."""
-        actual_output = []
-        while self.reader.load_next_speaker():
-            actual_output.append(self.reader.get_speaker_label())
-        desired_output = ['MEM', 'CHI']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_speaker_language(self):
-        """Test get_speaker_language with test.cha."""
-        actual_output = []
-        while self.reader.load_next_speaker():
-            actual_output.append(self.reader.get_speaker_language())
-        desired_output = ['sme', 'sme']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_speaker_name(self):
-        """Test get_speaker_name with test.cha."""
-        actual_output = []
-        while self.reader.load_next_speaker():
-            actual_output.append(self.reader.get_speaker_name())
-        desired_output = ['Mme_Manyili', 'Hlobohang']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_speaker_role(self):
-        """Test get_speaker_role with test.cha."""
-        actual_output = []
-        while self.reader.load_next_speaker():
-            actual_output.append(self.reader.get_speaker_role())
-        desired_output = ['Grandmother', 'Target_Child']
-        self.assertEqual(actual_output, desired_output)
-
-    # ---------- record ----------
-
-    def test_get_record_iterator(self):
-        """Test get_record_iterator with test.cha."""
-        actual_output = list(self.reader.get_record_iterator())
-        desired_output = [
-            '*MEM:\tke eng ? 0_8551\n%gls:\tke eng ?\n%cod:\tcp '
-            'wh ?\n%eng:\tWhat is it ?\n%sit:\tPoints to tape\n%com:\tis '
-            'furious\n%add:\tCHI',
-            '*CHI:\tke ntencha ncha . 8551_19738\n%gls:\tke ntho '
-            'e-ncha .\n%cod:\tcp thing(9 , 10) 9-aj .\n%eng:\tA new thing\n'
-            '%com:\ttest comment',
-            '*MEM:	ke eng ntho ena e? 19738_24653\n%gls:\tke eng ntho ena '
-            'e ?\n%cod:\tcp wh thing(9 , 10) d9 ij ?\n%eng:\tWhat is this '
-            'thing ?\n%sit:\tPoints to tape',
-            '*CHI:\te nte ena . 24300_28048\n%gls:\tke ntho ena .\n%cod:'
-            '\tcp thing(9 , 10) d9 .\n%eng:\tIt is this thing',
-            '*MEM:\tke khomba khomba . 28048_31840\n%gls:\tkekumbakumba .'
-            '\n%cod:\tcp tape_recorder(9 , 10) .\n%eng:\tIt is a stereo'
         ]
         self.assertEqual(actual_output, desired_output)
 
@@ -763,257 +870,355 @@ class TestACQDIVCHATReader(unittest.TestCase):
         ]
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_uid(self):
-        """Test get_uid with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_uid())
-        desired_output = ['u0', 'u1', 'u2', 'u3', 'u4']
+
+class TestACQDIVCHATReaderGeneric(unittest.TestCase):
+    """Class to test all static and class methods of ACQDIVCHATReader."""
+
+    def test_get_metadata_fields(self):
+        """Test get_metadata_fields with the test.cha-file."""
+        session = (
+            '@UTF8\n'
+            '@Begin\n'
+            '@Languages:\tsme\n'
+            '@Date:\t12-SEP-1997\n'
+            '@Participants:\tMEM Mme_Manyili Grandmother , '
+            'CHI Hlobohang Target_Child\n'
+            '@ID:\tsme|Sesotho|MEM||female|||Grandmother|||\n'
+            '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||\n'
+            '@Birth of CHI:\t14-JAN-2006\n'
+            '@Birth of MEM:\t11-OCT-1974\n'
+            '@Media:\th2ab, audio\n'
+            '@Comment:\tall snd kana jmor cha ok Wakachi2002;\n'
+            '@Warning:\trecorded time: 1:00:00\n'
+            '@Comment:\tuses desu and V-masu\n'
+            '@Situation:\tAki and AMO preparing to look at book , '
+            '"Miichan no otsukai"\n'
+            '@End')
+        actual_output = ACQDIVCHATReader.get_metadata_fields(session)
+        desired_output = {
+            'Languages': 'sme',
+            'Date': '12-SEP-1997',
+            'Participants': ('MEM Mme_Manyili Grandmother , '
+                             'CHI Hlobohang Target_Child'),
+            'ID': {
+                'MEM': ('sme', 'Sesotho', 'MEM', '', 'female',
+                        '', '', 'Grandmother', '', ''),
+                'CHI': ('sme', 'Sesotho', 'CHI', '2;2.',
+                        '', '', '', 'Target_Child', '', '')
+            },
+            'Birth of CHI': '14-JAN-2006',
+            'Birth of MEM': '11-OCT-1974',
+            'Media': 'h2ab, audio',
+            'Comment': (  # 'all snd kana jmor cha ok Wakachi2002; '
+                # Since the AQDIVCHATReader in its current state
+                # does not need to capture comments, the line
+                # above, which tests the case of two comments
+                # in the same session metadata is commented out.
+                'uses desu and V-masu'),
+            'Warning': 'recorded time: 1:00:00',
+            'Situation': ('Aki and AMO preparing to look at book , '
+                          '"Miichan no otsukai"')
+        }
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_addressee(self):
-        """Test get_addressee with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_addressee())
-        desired_output = ['CHI', '', '', '', '']
+    # ---------- actual & target ----------
+
+    # Test for the get_shortening_actual-method.
+    # All examples are modified versions of real utterances.
+
+    def test_get_shortening_actual_standard_case(self):
+        """Test get_shortening_actual with 1 shortening occurence."""
+        utterance = 'na:(ra)da <dükäm lan> [?] [>] ?'
+        actual_output = ACQDIVCHATReader.get_shortening_actual(utterance)
+        desired_output = 'na:da <dükäm lan> [?] [>] ?'
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_translation(self):
-        """Test get_translation with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_translation())
-        desired_output = ['What is it ?',
-                          'A new thing',
-                          'What is this thing ?',
-                          'It is this thing',
-                          'It is a stereo'
-                          ]
+    def test_get_shortening_actual_multiple_shortenings(self):
+        """Test get_shortening_actual with 3 shortening occurence."""
+        utterance = '(o)na:(ra)da dükäm lan(da) [?] [>] ?'
+        actual_output = ACQDIVCHATReader.get_shortening_actual(utterance)
+        desired_output = 'na:da dükäm lan [?] [>] ?'
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_comments(self):
-        """Test get_comments with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_comments())
-        desired_output = ['is furious; Points to tape', 'test comment',
-                          'Points to tape', '', '']
+    def test_get_shortening_actual_non_shortening_parentheses(self):
+        """Test get_shortening_actual with non shortening parentheses."""
+        utterance = 'mo:(ra)da (.) mu ?'
+        actual_output = ACQDIVCHATReader.get_shortening_actual(utterance)
+        desired_output = 'mo:da (.) mu ?'
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_record_speaker_label(self):
-        """Test get_record_speaker_label with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_record_speaker_label())
-        desired_output = ['MEM', 'CHI', 'MEM', 'CHI', 'MEM']
+    def test_get_shortening_actual_special_characters(self):
+        """Test get_shortening_actual with special chars in parentheses."""
+        utterance = 'Tu:(ğ)çe .'
+        actual_output = ACQDIVCHATReader.get_shortening_actual(utterance)
+        desired_output = 'Tu:çe .'
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_start_time(self):
-        """Test get_start_time with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_start_time())
-        desired_output = ['0', '8551', '19738', '24300', '28048']
+    def test_get_shortening_actual_no_shortening(self):
+        """Test get_shortening_actual using utt without shortening."""
+        utterance = 'Tu:çe .'
+        actual_output = ACQDIVCHATReader.get_shortening_actual(utterance)
+        desired_output = 'Tu:çe .'
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_end_time(self):
-        """Test get_end_time with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_end_time())
-        desired_output = ['8551', '19738', '24653', '28048', '31840']
+    def test_get_shortening_actual_empty_string(self):
+        """Test get_shortening_actual with an empty string."""
+        utterance = 'Tu:çe .'
+        actual_output = ACQDIVCHATReader.get_shortening_actual(utterance)
+        desired_output = 'Tu:çe .'
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- utterance ----------
+    # Test for the get_shortening_target-method.
 
-    def test_get_utterance(self):
-        """Test get_utterance with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_utterance())
-        desired_output = ['ke eng ?', 'ke ntencha ncha .',
-                          'ke eng ntho ena e?', 'e nte ena .',
-                          'ke khomba khomba .']
+    def test_get_shortening_target_standard_case(self):
+        """Test get_shortening_target with 1 shortening occurence."""
+        utterance = 'na:(ra)da <dükäm lan> [?] [>] ?'
+        actual_output = ACQDIVCHATReader.get_shortening_target(utterance)
+        desired_output = 'na:rada <dükäm lan> [?] [>] ?'
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_sentence_type_test_dot_cha_utts(self):
-        """Test get_sentence_type with test.cha.
-
-        The default type has a period as utterance terminator.
-        """
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_sentence_type())
-        desired_output = ['question', 'default', 'question',
-                          'default', 'default']
+    def test_get_shortening_target_multiple_shortenings(self):
+        """Test get_shortening_target with 3 shortening occurence."""
+        utterance = '(o)na:(ra)da dükäm lan(da) [?] [>] ?'
+        actual_output = ACQDIVCHATReader.get_shortening_target(utterance)
+        desired_output = 'ona:rada dükäm landa [?] [>] ?'
         self.assertEqual(actual_output, desired_output)
 
-    # TODO: more test cases for get_sentence type?
+    def test_get_shortening_target_non_shortening_parentheses(self):
+        """Test get_shortening_target with non shortening parentheses."""
+        utterance = 'mo:(ra)da (.) mu ?'
+        actual_output = ACQDIVCHATReader.get_shortening_target(utterance)
+        desired_output = 'mo:rada (.) mu ?'
+        self.assertEqual(actual_output, desired_output)
 
-    # Tests for the get_actual_utterance method.
+    def test_get_shortening_target_special_characters(self):
+        """Test get_shortening_target with special chars in parentheses."""
+        utterance = 'Mu:(ğ)ça .'
+        actual_output = ACQDIVCHATReader.get_shortening_target(utterance)
+        desired_output = 'Mu:ğça .'
+        self.assertEqual(actual_output, desired_output)
 
-    def test_get_actual_utterance_test_dot_cha(self):
-        """Test get_actual_utterance with test.cha."""
-        actual_output = []
-        while self.reader.load_next_record():
-            actual_output.append(self.reader.get_actual_utterance())
-        desired_output = ['ke eng ?', 'ke ntencha ncha .',
-                          'ke eng ntho ena e?', 'e nte ena .',
-                          'ke khomba khomba .']
+    def test_get_shortening_target_no_shortening(self):
+        """Test get_shortening_target using utt without a shortening."""
+        utterance = 'Mu:ça .'
+        actual_output = ACQDIVCHATReader.get_shortening_target(utterance)
+        desired_output = 'Mu:ça .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_shortening_target_empty_string(self):
+        """Test get_shortening_target with an empty string."""
+        utterance = ''
+        actual_output = ACQDIVCHATReader.get_shortening_target(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the get_replacement_actual-method.
+
+    def test_get_replacement_actual_one_replacement(self):
+        """Test get_replacement_actual with 1 replacement."""
+        utterance = 'yarasam [: yorosom] .'
+        actual_output = ACQDIVCHATReader.get_replacement_actual(utterance)
+        desired_output = 'yarasam .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_replacement_actual_multiple_replacements(self):
+        """Test get_replacement_actual with 3 replacements."""
+        utterance = 'yarasam [: yorosom] yarasam [: yorosom] ' \
+                    'yarasam [: yorosom] .'
+        actual_output = ACQDIVCHATReader.get_replacement_actual(utterance)
+        desired_output = 'yarasam yarasam yarasam .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_replacement_actual_no_replacement(self):
+        """Test get_replacement_actual with no replacement."""
+        utterance = 'yarasam .'
+        actual_output = ACQDIVCHATReader.get_replacement_actual(utterance)
+        desired_output = 'yarasam .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_replacement_actual_empty_string(self):
+        """Test get_replacement_actual with an empty string."""
+        utterance = ''
+        actual_output = ACQDIVCHATReader.get_replacement_actual(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the get_replacement_target-method.
+
+    def test_get_replacement_target_one_replacement(self):
+        """Test get_replacement_target with 1 replacement."""
+        utterance = 'yarasam [: yorosom] .'
+        actual_output = ACQDIVCHATReader.get_replacement_target(utterance)
+        desired_output = 'yorosom .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_replacement_target_multiple_replacements(self):
+        """Test get_replacement_target with 3 replacements."""
+        utterance = 'yarasam [: yorosom] yarasam [: yorosom] ' \
+                    'yarasam [: yorosom] .'
+        actual_output = ACQDIVCHATReader.get_replacement_target(utterance)
+        desired_output = 'yorosom yorosom yorosom .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_replacement_target_no_replacement(self):
+        """Test get_replacement_target with no replacement."""
+        utterance = 'yarasam .'
+        actual_output = ACQDIVCHATReader.get_replacement_target(utterance)
+        desired_output = 'yarasam .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_replacement_target_empty_string(self):
+        """Test get_replacement_target with an empty string."""
+        utterance = ''
+        actual_output = ACQDIVCHATReader.get_replacement_target(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the get_fragment_actual-method.
+
+    def test_get_fragment_actual_one_fragment(self):
+        """Test get_fragment_actual with 1 fragment."""
+        utterance = '&ab .'
+        actual_output = ACQDIVCHATReader.get_fragment_actual(utterance)
+        desired_output = 'ab .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_actual_multiple_fragments(self):
+        """Test get_fragment_actual with 3 fragments."""
+        utterance = '&ab a &ab b &ab .'
+        actual_output = ACQDIVCHATReader.get_fragment_actual(utterance)
+        desired_output = 'ab a ab b ab .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_actual_no_fragments(self):
+        """Test get_fragment_actual using an utt without fragments."""
+        utterance = 'a b .'
+        actual_output = ACQDIVCHATReader.get_fragment_actual(utterance)
+        desired_output = 'a b .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_actual_empty_string(self):
+        """Test get_fragment_actual with an empty string."""
+        utterance = ''
+        actual_output = ACQDIVCHATReader.get_fragment_actual(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_actual_ampersand_outside(self):
+        """Test get_fragment_actual with ampersand outside fragment."""
+        utterance = '&=laugh &wow &-um'
+        actual_output = ACQDIVCHATReader.get_fragment_actual(utterance)
+        desired_output = '&=laugh wow &-um'
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the get_fragment_target-method.
+
+    def test_get_fragment_target_one_fragment(self):
+        """Test get_fragment_target with 1 fragment."""
+        utterance = '&ab .'
+        actual_output = ACQDIVCHATReader.get_fragment_target(utterance)
+        desired_output = 'xxx .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_target_multiple_fragments(self):
+        """Test get_fragment_target with 3 fragments."""
+        utterance = '&ab a &ab b &ab .'
+        actual_output = ACQDIVCHATReader.get_fragment_target(utterance)
+        desired_output = 'xxx a xxx b xxx .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_target_no_fragments(self):
+        """Test get_fragment_target using an utt without fragments."""
+        utterance = 'a b .'
+        actual_output = ACQDIVCHATReader.get_fragment_target(utterance)
+        desired_output = 'a b .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_target_empty_string(self):
+        """Test get_fragment_target with an empty string."""
+        utterance = ''
+        actual_output = ACQDIVCHATReader.get_fragment_actual(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_target_ampersand_outside(self):
+        """Test get_fragment_target with ampersand outside fragment."""
+        utterance = '&=laugh &wow &-um'
+        actual_output = ACQDIVCHATReader.get_fragment_target(utterance)
+        desired_output = '&=laugh xxx &-um'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_to_actual_utterance_empty_string(self):
+        utterance = ''
+        actual_output = ACQDIVCHATReader.to_actual_utterance(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_actual_utterance_no_occurrences(self):
+        """Test get_actual_utterance using an utt without occurrences."""
+        utterance = 'mu:ça yarasam ab yarasam ac'
+        actual_output = ACQDIVCHATReader.to_actual_utterance(utterance)
+        desired_output = 'mu:ça yarasam ab yarasam ac'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_actual_utterance_one_occurence_of_each(self):
         """Test with 1 shortening, 1 fragment and 1 replacement."""
-        self.reader._main_line_fields = (
-            'CHI',
-            'Mu:(ğ)ça &ab yarasam [: yorosom]',
-            '',
-            ''
-        )
-        actual_output = self.reader.get_actual_utterance()
+        utterance = 'Mu:(ğ)ça &ab yarasam [: yorosom]'
+        actual_output = ACQDIVCHATReader.to_actual_utterance(utterance)
         desired_output = 'Mu:ça ab yarasam'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_actual_utterance_multiple_occurences_of_each(self):
         """Test with 2 shortenings, 2 fragments and 2 replacements."""
-        self.reader._main_line_fields = (
-            'CHI',
-            '(A)mu:(ğ)ça yarasam [: yorosom] &ab yarasam [: yorosom] &ac',
-            '',
-            ''
-        )
-        actual_output = self.reader.get_actual_utterance()
+        utterance = ('(A)mu:(ğ)ça yarasam [: yorosom] '
+                     '&ab yarasam [: yorosom] &ac')
+        actual_output = ACQDIVCHATReader.to_actual_utterance(utterance)
         desired_output = 'mu:ça yarasam ab yarasam ac'
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_actual_utterance_no_occurences(self):
-        """Test get_actual_utterance using an utt without occurences."""
-        self.reader._main_line_fields = (
-            'CHI',
-            'mu:ça yarasam ab yarasam ac',
-            '',
-            ''
-        )
-        actual_output = self.reader.get_actual_utterance()
-        desired_output = 'mu:ça yarasam ab yarasam ac'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_actual_utterance_empty_string(self):
-        """Test get_actual_utterance with an empty string."""
-        self.reader._main_line_fields = (
-            'CHI',
-            '',
-            '',
-            ''
-        )
-        actual_output = self.reader.get_actual_utterance()
+    def test_to_target_utterance_empty_string(self):
+        utterance = ''
+        actual_output = ACQDIVCHATReader.to_target_utterance(utterance)
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    # Tests for the get_actual_utterance method.
+    def test_to_target_utterance_no_occurrences(self):
+        """Test to_target_utterance using an utterance without occurrences."""
+        utterance = 'mu:ça yarasam ab yarasam ac'
+        actual_output = ACQDIVCHATReader.to_target_utterance(utterance)
+        desired_output = 'mu:ça yarasam ab yarasam ac'
+        self.assertEqual(actual_output, desired_output)
 
-    def test_get_target_utterance_one_occurence_of_each(self):
+    def test_to_target_utterance_one_occurrence_of_each(self):
         """Test with 1 shortening, 1 fragment and 1 replacement."""
-        self.reader._main_line_fields = (
-            'CHI',
-            'Mu:(ğ)ça &ab yarasam [: yorosom]',
-            '',
-            ''
-        )
-        actual_output = self.reader.get_target_utterance()
+        utterance = 'Mu:(ğ)ça &ab yarasam [: yorosom]'
+        actual_output = ACQDIVCHATReader.to_target_utterance(utterance)
         desired_output = 'Mu:ğça xxx yorosom'
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_target_utterance_multiple_occurences_of_each(self):
+    def test_to_target_utterance_multiple_occurrences_of_each(self):
         """Test with 2 shortenings, 2 fragments and 2 replacements."""
-        self.reader._main_line_fields = (
-            'CHI',
-            'yarasam [: yorosom] &ab (a)mu:(ğ)ça  &ac yarasam [: yorosom]',
-            '',
-            ''
-        )
-        actual_output = self.reader.get_target_utterance()
+        utterance = ('yarasam [: yorosom] '
+                     '&ab (a)mu:(ğ)ça  &ac yarasam [: yorosom]')
+        actual_output = ACQDIVCHATReader.to_target_utterance(utterance)
         desired_output = 'yorosom xxx amu:ğça  xxx yorosom'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_target_utterance_no_occurences(self):
-        """Test get_target_utterance using an utt without occurences."""
-        self.reader._main_line_fields = (
-            'CHI',
-            'mu:ça yarasam ab yarasam ac',
-            '',
-            ''
-        )
-        actual_output = self.reader.get_target_utterance()
-        desired_output = 'mu:ça yarasam ab yarasam ac'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_target_utterance_empty_string(self):
-        """Test get_target_utterance with an empty string."""
-        self.reader._main_line_fields = (
-            'CHI',
-            '',
-            '',
-            ''
-        )
-        actual_output = self.reader.get_target_utterance()
-        desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
     # ---------- morphology ----------
 
     def test_get_standard_form(self):
-        """Test get_standard_form.
-
-        TODO: What is there to test?
-        """
-        actual_output = self.reader.get_standard_form()
+        """Test get_standard_form."""
+        actual_output = ACQDIVCHATReader.get_standard_form()
         desired_output = 'actual'
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- morphology ----------
-
-    def test_get_word_languge(self):
-        """Test get_word_language.
-
-        TODO: What is there to test?
-        """
-        actual_output = self.reader.get_word_language('dal')
+    def test_get_word_language(self):
+        """Test get_word_language."""
+        actual_output = ACQDIVCHATReader.get_word_language('dal')
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_main_morpheme(self):
-        """Test get_main_morpheme. Returns 'gloss'
-
-        TODO: Is there more to test? Will the method be updated?
-        """
-        actual_output = self.reader.get_main_morpheme()
-        desired_output = 'gloss'
-        self.assertEqual(actual_output, desired_output)
-
-    # def test_get_morph_tier(self):
-    #     """Test get_morph_tier with standart 'mor'-tier."""
-    #     actual_output = []
-    #     while self.reader.load_next_record():
-    #         actual_output.append(self.reader.get_morph_tier())
-    #     desired_output = '' # TODO: create desired_output
-    #     self.assertEqual(actual_output, desired_output)
-
-    def test_get_morph_tier_multiple_morph_tiers(self):
-        """Test get_morph_tier with multiple morphology tiers."""
-        self._dependent_tiers = {}
-        pass
-
-    def test_get_seg_tier(self):
-        pass
-
-    def test_get_gloss_tier(self):
-        pass
-
-    def test_get_pos_tier(self):
-        pass
-
+    # TODO: implement
     def test_get_seg_words(self):
         pass
 
@@ -1023,282 +1228,145 @@ class TestACQDIVCHATReader(unittest.TestCase):
     def test_get_pos_words(self):
         pass
 
+    def test_get_main_morpheme(self):
+        """Test get_main_morpheme."""
+        actual_output = ACQDIVCHATReader.get_main_morpheme()
+        desired_output = 'gloss'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_language(self):
+        """Test get_morpheme_language. Should return an empty string."""
+        seg = 'Hatschi'
+        gloss = 'sneeze'
+        pos = 'N'
+        actual_output = ACQDIVCHATReader.get_morpheme_language(seg, gloss, pos)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
     def test_get_segments(self):
         """Test get_segments. Should raise a NotImplementedError."""
         seg_word = 'abc'
-        self.assertRaises(NotImplementedError, self.reader.get_segments,
+        self.assertRaises(NotImplementedError, ACQDIVCHATReader.get_segments,
                           seg_word)
 
     def test_get_glosses(self):
         """Test get_glosses. Should raise a NotImplementedError."""
         gloss_word = 'abc'
-        self.assertRaises(NotImplementedError, self.reader.get_glosses,
+        self.assertRaises(NotImplementedError, ACQDIVCHATReader.get_glosses,
                           gloss_word)
 
     def test_get_poses(self):
         """Test get_poses. Should raise a NotImplementedError."""
         pos_word = 'abc'
-        self.assertRaises(NotImplementedError, self.reader.get_poses,
+        self.assertRaises(NotImplementedError, ACQDIVCHATReader.get_poses,
                           pos_word)
-
-    def test_get_morpheme_language(self):
-        """Test get_morpheme_language. Should return an empty string."""
-        seg = 'sm1s-t^f1-om2s-v^beat-m^in n^name .'
-        gloss = 'ruri mo-nyane .'
-        pos = 'VV NN'
-        actual_output = self.reader.get_morpheme_language(seg, gloss, pos)
-        desired_output = ''
-        self.assertEqual(actual_output, desired_output)
-
-###############################################################################
-
-
-class TestACQDIVCHATReaderGenericMethods(unittest.TestCase):
-    """Class to test all static methods of ACQDIVCHATReader."""
-
-    # ---------- actual & target ----------
-
-    # Test for the get_shortening_actual-method.
-    # All examples are modified versions of real utterances.
-
-    @classmethod
-    def setUpClass(cls):
-        """Set up the ACQDIVCHATReader for testing."""
-        session_file_path = './test.cha'
-        cls.reader = ACQDIVCHATReader()
-        cls.reader.read(session_file_path)
-        cls.maxDiff = None
-
-    def test_get_shortening_actual_standard_case(self):
-        """Test get_shortening_actual with 1 shortening occurence."""
-        utterance = 'na:(ra)da <dükäm lan> [?] [>] ?'
-        actual_output = self.reader.get_shortening_actual(utterance)
-        desired_output = 'na:da <dükäm lan> [?] [>] ?'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_shortening_actual_multiple_shortenings(self):
-        """Test get_shortening_actual with 3 shortening occurence."""
-        utterance = '(o)na:(ra)da dükäm lan(da) [?] [>] ?'
-        actual_output = self.reader.get_shortening_actual(utterance)
-        desired_output = 'na:da dükäm lan [?] [>] ?'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_shortening_actual_non_shortening_parentheses(self):
-        """Test get_shortening_actual with non shortening parentheses."""
-        utterance = 'mo:(ra)da (.) mu ?'
-        actual_output = self.reader.get_shortening_actual(utterance)
-        desired_output = 'mo:da (.) mu ?'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_shortening_actual_special_characters(self):
-        """Test get_shortening_actual with special chars in parentheses."""
-        utterance = 'Tu:(ğ)çe .'
-        actual_output = self.reader.get_shortening_actual(utterance)
-        desired_output = 'Tu:çe .'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_shortening_actual_no_shortening(self):
-        """Test get_shortening_actual using utt without shortening."""
-        utterance = 'Tu:çe .'
-        actual_output = self.reader.get_shortening_actual(utterance)
-        desired_output = 'Tu:çe .'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_shortening_actual_empty_string(self):
-        """Test get_shortening_actual with an empty string."""
-        utterance = 'Tu:çe .'
-        actual_output = self.reader.get_shortening_actual(utterance)
-        desired_output = 'Tu:çe .'
-        self.assertEqual(actual_output, desired_output)
-
-    # Test for the get_shortening_target-method.
-
-    def test_get_shortening_target_standard_case(self):
-        """Test get_shortening_target with 1 shortening occurence."""
-        utterance = 'na:(ra)da <dükäm lan> [?] [>] ?'
-        actual_output = self.reader.get_shortening_target(utterance)
-        desired_output = 'na:rada <dükäm lan> [?] [>] ?'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_shortening_target_multiple_shortenings(self):
-        """Test get_shortening_target with 3 shortening occurence."""
-        utterance = '(o)na:(ra)da dükäm lan(da) [?] [>] ?'
-        actual_output = self.reader.get_shortening_target(utterance)
-        desired_output = 'ona:rada dükäm landa [?] [>] ?'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_shortening_target_non_shortening_parentheses(self):
-        """Test get_shortening_target with non shortening parentheses."""
-        utterance = 'mo:(ra)da (.) mu ?'
-        actual_output = self.reader.get_shortening_target(utterance)
-        desired_output = 'mo:rada (.) mu ?'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_shortening_target_special_characters(self):
-        """Test get_shortening_target with special chars in parentheses."""
-        utterance = 'Mu:(ğ)ça .'
-        actual_output = self.reader.get_shortening_target(utterance)
-        desired_output = 'Mu:ğça .'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_shortening_target_no_shortening(self):
-        """Test get_shortening_target using utt without a shortening."""
-        utterance = 'Mu:ça .'
-        actual_output = self.reader.get_shortening_target(utterance)
-        desired_output = 'Mu:ça .'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_shortening_target_empty_string(self):
-        """Test get_shortening_target with an empty string."""
-        utterance = ''
-        actual_output = self.reader.get_shortening_target(utterance)
-        desired_output = ''
-        self.assertEqual(actual_output, desired_output)
-
-    # Tests for the get_replacement_actual-method.
-
-    def test_get_replacement_actual_one_replacement(self):
-        """Test get_replacement_actual with 1 replacement."""
-        utterance = 'yarasam [: yorosom] .'
-        actual_output = self.reader.get_replacement_actual(utterance)
-        desired_output = 'yarasam .'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_replacement_actual_multiple_replacements(self):
-        """Test get_replacement_actual with 3 replacements."""
-        utterance = 'yarasam [: yorosom] yarasam [: yorosom] ' \
-                    'yarasam [: yorosom] .'
-        actual_output = self.reader.get_replacement_actual(utterance)
-        desired_output = 'yarasam yarasam yarasam .'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_replacement_actual_no_replacement(self):
-        """Test get_replacement_actual with no replacement."""
-        utterance = 'yarasam .'
-        actual_output = self.reader.get_replacement_actual(utterance)
-        desired_output = 'yarasam .'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_replacement_actual_empty_string(self):
-        """Test get_replacement_actual with an empty string."""
-        utterance = ''
-        actual_output = self.reader.get_replacement_actual(utterance)
-        desired_output = ''
-        self.assertEqual(actual_output, desired_output)
-
-    # Tests for the get_replacement_target-method.
-
-    def test_get_replacement_target_one_replacement(self):
-        """Test get_replacement_target with 1 replacement."""
-        utterance = 'yarasam [: yorosom] .'
-        actual_output = self.reader.get_replacement_target(utterance)
-        desired_output = 'yorosom .'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_replacement_target_multiple_replacements(self):
-        """Test get_replacement_target with 3 replacements."""
-        utterance = 'yarasam [: yorosom] yarasam [: yorosom] ' \
-                    'yarasam [: yorosom] .'
-        actual_output = self.reader.get_replacement_target(utterance)
-        desired_output = 'yorosom yorosom yorosom .'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_replacement_target_no_replacement(self):
-        """Test get_replacement_target with no replacement."""
-        utterance = 'yarasam .'
-        actual_output = self.reader.get_replacement_target(utterance)
-        desired_output = 'yarasam .'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_replacement_target_empty_string(self):
-        """Test get_replacement_target with an empty string."""
-        utterance = ''
-        actual_output = self.reader.get_replacement_target(utterance)
-        desired_output = ''
-        self.assertEqual(actual_output, desired_output)
-
-    # Tests for the get_fragment_actual-method.
-
-    def test_get_fragment_actual_one_fragment(self):
-        """Test get_fragment_actual with 1 fragment."""
-        utterance = '&ab .'
-        actual_output = self.reader.get_fragment_actual(utterance)
-        desired_output = 'ab .'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_fragment_actual_multiple_fragments(self):
-        """Test get_fragment_actual with 3 fragments."""
-        utterance = '&ab a &ab b &ab .'
-        actual_output = self.reader.get_fragment_actual(utterance)
-        desired_output = 'ab a ab b ab .'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_fragment_actual_no_fragments(self):
-        """Test get_fragment_actual using an utt without fragments."""
-        utterance = 'a b .'
-        actual_output = self.reader.get_fragment_actual(utterance)
-        desired_output = 'a b .'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_fragment_actual_empty_string(self):
-        """Test get_fragment_actual with an empty string."""
-        utterance = ''
-        actual_output = self.reader.get_fragment_actual(utterance)
-        desired_output = ''
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_fragment_actual_ampersand_outside(self):
-        """Test get_fragment_actual with ampersand outside fragment."""
-        utterance = '&=laugh &wow &-um'
-        actual_output = self.reader.get_fragment_actual(utterance)
-        desired_output = '&=laugh wow &-um'
-        self.assertEqual(actual_output, desired_output)
-
-    # Tests for the get_fragment_target-method.
-
-    def test_get_fragment_target_one_fragment(self):
-        """Test get_fragment_target with 1 fragment."""
-        utterance = '&ab .'
-        actual_output = self.reader.get_fragment_target(utterance)
-        desired_output = 'xxx .'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_fragment_target_multiple_fragments(self):
-        """Test get_fragment_target with 3 fragments."""
-        utterance = '&ab a &ab b &ab .'
-        actual_output = self.reader.get_fragment_target(utterance)
-        desired_output = 'xxx a xxx b xxx .'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_fragment_target_no_fragments(self):
-        """Test get_fragment_target using an utt without fragments."""
-        utterance = 'a b .'
-        actual_output = self.reader.get_fragment_target(utterance)
-        desired_output = 'a b .'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_fragment_target_empty_string(self):
-        """Test get_fragment_target with an empty string."""
-        utterance = ''
-        actual_output = self.reader.get_fragment_actual(utterance)
-        desired_output = ''
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_fragment_target_ampersand_outside(self):
-        """Test get_fragment_target with ampersand outside fragment."""
-        utterance = '&=laugh &wow &-um'
-        actual_output = self.reader.get_fragment_target(utterance)
-        desired_output = '&=laugh xxx &-um'
-        self.assertEqual(actual_output, desired_output)
 
 ###############################################################################
 
 
 class TestEnglishManchester1Reader(unittest.TestCase):
-    pass
+
+    def test_get_word_language_english(self):
+        word = 'yes'
+        actual_output = EnglishManchester1Reader.get_word_language(word)
+        desired_output = 'English'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_word_language_french(self):
+        word = 'oui@s:fra'
+        actual_output = EnglishManchester1Reader.get_word_language(word)
+        desired_output = 'French'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_word_language_italian(self):
+        word = 'si@s:ita'
+        actual_output = EnglishManchester1Reader.get_word_language(word)
+        desired_output = 'Italian'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_stem_no_gloss(self):
+        """Test iter_morphemes with stem and no gloss."""
+        word = 'stem:POS|stem&FUS'
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('stem&FUS', 'stem&FUS', 'stem:POS')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_stem_gloss(self):
+        """Test iter_morphemes with stem and gloss."""
+        word = 'stem:POS|stem&FUS=stemgloss'
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('stem&FUS', 'stemgloss', 'stem:POS')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_suffixes(self):
+        """Test iter_morphemes with suffixes."""
+        word = 'stem:POS|stem&FUS-SFXONE-SFXTWO'
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('stem&FUS', 'stem&FUS', 'stem:POS'),
+                          ('', 'SFXONE', 'sfx'),
+                          ('', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_prefixes(self):
+        """Test iter_morphemes with prefixes."""
+        word = 'pfxone#pfxtwo#stem:POS|stem&FUS'
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('pfxone', 'pfxone', 'pfx'),
+                          ('pfxtwo', 'pfxtwo', 'pfx'),
+                          ('stem&FUS', 'stem&FUS', 'stem:POS')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_prefixes_suffixes_stemgloss(self):
+        """Test iter_morphemes with prefixes, suffixes and stem gloss."""
+        word = 'pfxone#pfxtwo#stem:POS|stem&FUS-SFXONE-SFXTWO'
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('pfxone', 'pfxone', 'pfx'),
+                          ('pfxtwo', 'pfxtwo', 'pfx'),
+                          ('stem&FUS', 'stem&FUS', 'stem:POS'),
+                          ('', 'SFXONE', 'sfx'),
+                          ('', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_compound(self):
+        """Test iter_morphemes with compound."""
+        word = 'CMPPOS|+CMPPOSONE|cmpstemone+CMPPOSTWO|cmpstemtwo'
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('=cmpstemone', 'cmpstemone', 'CMPPOSONE'),
+                          ('=cmpstemtwo', 'cmpstemtwo', 'CMPPOSTWO')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_compound_suffixes(self):
+        """Test iter_morphemes with compound and suffixes."""
+        word = ('CMPPOS|+CMPPOSONE|cmpstemone-SFXONE'
+                '+CMPPOSTWO|cmpstemtwo-SFXTWO')
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('=cmpstemone', 'cmpstemone', 'CMPPOSONE'),
+                          ('', 'SFXONE', 'sfx'),
+                          ('=cmpstemtwo', 'cmpstemtwo', 'CMPPOSTWO'),
+                          ('', 'SFXTWO', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_clitic(self):
+        """Test iter_morphemes with clitic."""
+        word = 'stem:POSone|stem&FUSone~stem:POStwo|stem&FUStwo'
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('stem&FUSone', 'stem&FUSone', 'stem:POSone'),
+                          ('stem&FUStwo', 'stem&FUStwo', 'stem:POStwo')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_clitic_suffix(self):
+        """Test iter_morphemes with clitic and suffix."""
+        word = 'stem:POSone|stem&FUSone-SFX~stem:POStwo|stem&FUStwo'
+        actual_output = list(EnglishManchester1Reader.iter_morphemes(word))
+        desired_output = [('stem&FUSone', 'stem&FUSone', 'stem:POSone'),
+                          ('', 'SFX', 'sfx'),
+                          ('stem&FUStwo', 'stem&FUStwo', 'stem:POStwo')]
+        self.assertEqual(actual_output, desired_output)
+
 
 ###############################################################################
 
+# TODO: test in the same way as ACQDIVCHATReader
 
 class TestInuktitutReader(unittest.TestCase):
     """Class to test the InuktitutReader."""
@@ -1306,7 +1374,8 @@ class TestInuktitutReader(unittest.TestCase):
     def setUp(self):
         session_file_path = './test.cha'
         self.reader = InuktitutReader()
-        self.reader.read(session_file_path)
+        with open(session_file_path) as session_file:
+            self.reader.read(session_file)
         self.maxDiff = None
 
     def test_get_start_time_start_time_present(self):
@@ -1576,33 +1645,26 @@ class TestInuktitutReader(unittest.TestCase):
 
 class TestJapaneseMiiProReader(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        session_file_path = './test.cha'
-        cls.reader = JapaneseMiiProReader()
-        cls.reader.read(session_file_path)
-        cls.maxDiff = None
-
     # Tests for the iter_morphemes-method.
 
     def test_iter_morphemes_stem_no_gloss(self):
         """Test iter_morphemes with stem and no gloss."""
-        morpheme_word = 'stem:POS|stem&FUS'
-        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        word = 'stem:POS|stem&FUS'
+        actual_output = list(JapaneseMiiProReader.iter_morphemes(word))
         desired_output = [('stem&FUS', '', 'stem:POS')]
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_morphemes_stem_gloss(self):
         """Test iter_morphemes with stem and gloss."""
-        morpheme_word = 'stem:POS|stem&FUS=stemgloss'
-        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        word = 'stem:POS|stem&FUS=stemgloss'
+        actual_output = list(JapaneseMiiProReader.iter_morphemes(word))
         desired_output = [('stem&FUS', 'stemgloss', 'stem:POS')]
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_morphemes_suffixes_no_stemgloss(self):
         """Test iter_morphemes with suffixes and no stem gloss."""
-        morpheme_word = 'stem:POS|stem&FUS-SFXONE-SFXTWO'
-        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        word = 'stem:POS|stem&FUS-SFXONE-SFXTWO'
+        actual_output = list(JapaneseMiiProReader.iter_morphemes(word))
         desired_output = [('stem&FUS', '', 'stem:POS'),
                           ('', 'SFXONE', 'sfx'),
                           ('', 'SFXTWO', 'sfx')]
@@ -1610,8 +1672,8 @@ class TestJapaneseMiiProReader(unittest.TestCase):
 
     def test_iter_morphemes_suffixes_stemgloss(self):
         """Test iter_morphemes with suffixes and stem gloss."""
-        morpheme_word = 'stem:POS|stem&FUS-SFXONE-SFXTWO=stemgloss'
-        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        word = 'stem:POS|stem&FUS-SFXONE-SFXTWO=stemgloss'
+        actual_output = list(JapaneseMiiProReader.iter_morphemes(word))
         desired_output = [('stem&FUS', 'stemgloss', 'stem:POS'),
                           ('', 'SFXONE', 'sfx'),
                           ('', 'SFXTWO', 'sfx')]
@@ -1619,9 +1681,8 @@ class TestJapaneseMiiProReader(unittest.TestCase):
 
     def test_iter_morphemes_suffixes_colon(self):
         """Test iter_morphemes with suffix and colon."""
-        morpheme_word = ('stem:POS|stem&FUS-SFXONE:contr'
-                         '-SFXTWO:SFXTWOseg=stemgloss')
-        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        word = 'stem:POS|stem&FUS-SFXONE:contr-SFXTWO:SFXTWOseg=stemgloss'
+        actual_output = list(JapaneseMiiProReader.iter_morphemes(word))
         desired_output = [('stem&FUS', 'stemgloss', 'stem:POS'),
                           ('', 'SFXONE:contr', 'sfx'),
                           ('SFXTWOseg', 'SFXTWO', 'sfx')]
@@ -1629,8 +1690,8 @@ class TestJapaneseMiiProReader(unittest.TestCase):
 
     def test_iter_morphemes_prefixes(self):
         """Test iter_morphemes with prefixes."""
-        morpheme_word = 'pfxone#pfxtwo#stem:POS|stem&FUS=stemgloss'
-        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        word = 'pfxone#pfxtwo#stem:POS|stem&FUS=stemgloss'
+        actual_output = list(JapaneseMiiProReader.iter_morphemes(word))
         desired_output = [('pfxone', '', 'pfx'),
                           ('pfxtwo', '', 'pfx'),
                           ('stem&FUS', 'stemgloss', 'stem:POS')]
@@ -1638,9 +1699,8 @@ class TestJapaneseMiiProReader(unittest.TestCase):
 
     def test_iter_morphemes_prefixes_suffixes_stemgloss(self):
         """Test iter_morphemes with prefixes, suffixes and stem gloss."""
-        morpheme_word = ('pfxone#pfxtwo#stem:POS|stem&FUS-SFXONE-SFXTWO=s'
-                         'temgloss')
-        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        word = 'pfxone#pfxtwo#stem:POS|stem&FUS-SFXONE-SFXTWO=stemgloss'
+        actual_output = list(JapaneseMiiProReader.iter_morphemes(word))
         desired_output = [('pfxone', '', 'pfx'),
                           ('pfxtwo', '', 'pfx'),
                           ('stem&FUS', 'stemgloss', 'stem:POS'),
@@ -1650,26 +1710,25 @@ class TestJapaneseMiiProReader(unittest.TestCase):
 
     def test_iter_morphemes_compound_no_gloss(self):
         """Test iter_morphemes with compound and no stem gloss."""
-        morpheme_word = 'CMPPOS|+CMPPOSONE|cmpstemone+CMPPOSTWO|cmpstemtwo'
-        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        word = 'CMPPOS|+CMPPOSONE|cmpstemone+CMPPOSTWO|cmpstemtwo'
+        actual_output = list(JapaneseMiiProReader.iter_morphemes(word))
         desired_output = [('=cmpstemone', '', 'CMPPOSONE'),
                           ('=cmpstemtwo', '', 'CMPPOSTWO')]
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_morphemes_compound_gloss(self):
         """Test iter_morphemes with compound and stem gloss."""
-        morpheme_word = ('CMPPOS|+CMPPOSONE|cmpstemone'
-                         '+CMPPOSTWO|cmpstemtwo=cmpgloss')
-        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        word = 'CMPPOS|+CMPPOSONE|cmpstemone+CMPPOSTWO|cmpstemtwo=cmpgloss'
+        actual_output = list(JapaneseMiiProReader.iter_morphemes(word))
         desired_output = [('=cmpstemone', 'cmpgloss', 'CMPPOSONE'),
                           ('=cmpstemtwo', 'cmpgloss', 'CMPPOSTWO')]
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_morphemes_compound_suffixes(self):
         """Test iter_morphemes with compound and suffixes."""
-        morpheme_word = ('CMPPOS|+CMPPOSONE|cmpstemone-SFXONE'
-                         '+CMPPOSTWO|cmpstemtwo-SFXTWO=cmpgloss')
-        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        word = ('CMPPOS|+CMPPOSONE|cmpstemone-SFXONE'
+                '+CMPPOSTWO|cmpstemtwo-SFXTWO=cmpgloss')
+        actual_output = list(JapaneseMiiProReader.iter_morphemes(word))
         desired_output = [('=cmpstemone', 'cmpgloss', 'CMPPOSONE'),
                           ('', 'SFXONE', 'sfx'),
                           ('=cmpstemtwo', 'cmpgloss', 'CMPPOSTWO'),
@@ -1678,9 +1737,9 @@ class TestJapaneseMiiProReader(unittest.TestCase):
 
     def test_iter_morphemes_compound_prefix(self):
         """Test iter_morphemes with compound and prefix."""
-        morpheme_word = ('pfxone#CMPPOS|+CMPPOSONE|cmpstemone-SFXONE'
-                         '+CMPPOSTWO|cmpstemtwo-SFXTWO=cmpgloss')
-        actual_output = list(self.reader.iter_morphemes(morpheme_word))
+        word = ('pfxone#CMPPOS|+CMPPOSONE|cmpstemone-SFXONE'
+                '+CMPPOSTWO|cmpstemtwo-SFXTWO=cmpgloss')
+        actual_output = list(JapaneseMiiProReader.iter_morphemes(word))
         desired_output = [('pfxone', '', 'pfx'),
                           ('=cmpstemone', 'cmpgloss', 'CMPPOSONE'),
                           ('', 'SFXONE', 'sfx'),

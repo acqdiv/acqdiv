@@ -1,4 +1,3 @@
-import itertools
 import re
 
 from acqdiv.parsers.xml.interfaces import CorpusReaderInterface
@@ -29,7 +28,8 @@ class CHATReader:
         """Iter all metadata fields of a session.
 
         Metadata fields start with @ followed by the key, colon, tab and its
-        content.
+        content. Line breaks within a field are automatically removed and
+        replaced by a blank space.
 
         Args:
             session (str): The session.
@@ -233,22 +233,13 @@ class CHATReader:
         Yields:
             str: The next record.
         """
-        # for utterance ID generation
-        counter = itertools.count()
-        cls._uid = next(counter)
-
         session = cls._replace_line_breaks(session)
-
         rec_regex = re.compile(r'\*[A-Za-z0-9]{2,3}:\t.*?(?=\n\*|\n@End)',
                                flags=re.DOTALL)
-
         # iter all records
         for match in rec_regex.finditer(session):
             rec = match.group()
             yield rec
-            cls._uid = next(counter)
-
-        cls._uid = None
 
     # ---------- Main line ----------
 
@@ -380,8 +371,7 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     """
 
     def __init__(self):
-        self.session_file = None
-        self.session = None
+        self.session_file_path = None
 
         # metadata fields
         self._metadata_fields = None
@@ -397,25 +387,28 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         self._main_line_fields = None
         self._dependent_tiers = None
 
-    def read(self, session_file_path):
+    def read(self, session_file):
         """Read the session file.
 
-        Sets the following internal variables:
+        Sets the following variables:
             - session_file_path
             - _metadata_fields
             - _speaker_iterator
             - _record_iterator
+
+        Args:
+            session_file (file/file-like object): A CHAT file.
         """
-        self.session_file = session_file_path
-        with open(session_file_path) as f:
-            self.session = f.read()
-        self._metadata_fields = self.get_metadata_fields()
-        self._speaker_iterator = self.get_speaker_iterator()
-        self._record_iterator = self.get_record_iterator()
+        session = session_file.read()
+        self._metadata_fields = self.get_metadata_fields(session)
+        participants = self._metadata_fields.get('Participants', '')
+        self._speaker_iterator = self.iter_participants(participants)
+        self._record_iterator = self.iter_records(session)
 
     # ---------- metadata ----------
 
-    def get_metadata_fields(self):
+    @classmethod
+    def get_metadata_fields(cls, session):
         """Get the metadata fields of a session.
 
         All metadata keys map to a string, except @ID which maps to a
@@ -426,15 +419,15 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
             dict: {metadata key: metadata content}
         """
         metadata_fields = {}
-        for metadata_field in self.iter_metadata_fields(self.session):
-            key, content = self.get_metadata_field(metadata_field)
+        for metadata_field in cls.iter_metadata_fields(session):
+            key, content = cls.get_metadata_field(metadata_field)
 
             if key == 'ID':
                 if key not in metadata_fields:
                     metadata_fields['ID'] = {}
 
-                id_fields = self.get_id_fields(content)
-                speaker_id = self.get_id_code(id_fields)
+                id_fields = cls.get_id_fields(content)
+                speaker_id = cls.get_id_code(id_fields)
                 metadata_fields['ID'][speaker_id] = id_fields
             else:
                 metadata_fields[key] = content
@@ -450,15 +443,6 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         return self.get_media_filename(media_fields)
 
     # ---------- speaker ----------
-
-    def get_speaker_iterator(self):
-        """Get a speaker iterator.
-
-        Returns:
-            iterator(str): The participants from @Participants.
-        """
-        participants = self._metadata_fields['Participants']
-        return self.iter_participants(participants)
 
     def load_next_speaker(self):
         """Load the next speaker.
@@ -501,14 +485,6 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         return self.get_participant_role(self._participant_fields)
 
     # ---------- record ----------
-
-    def get_record_iterator(self):
-        """Get a record iterator.
-
-        Returns:
-            iterator(str): The records.
-        """
-        return self.iter_records(self.session)
 
     def load_next_record(self):
         """Load the next record.
@@ -564,7 +540,13 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     def get_utterance(self):
         return self.get_mainline_utterance(self._main_line_fields)
 
-    def get_sentence_type(self):
+    @staticmethod
+    def terminator2sentence_type(terminator):
+        """Map utterance terminator to sentence type.
+
+        Returns:
+            str: The sentence type.
+        """
         mapping = {'.': 'default',
                    '?': 'question',
                    '!': 'exclamation',
@@ -579,9 +561,12 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
                    '+"/.': 'quotation follows',
                    '+".': 'quotation precedes'}
 
+        return mapping.get(terminator, '')
+
+    def get_sentence_type(self):
         utterance = self.get_mainline_utterance(self._main_line_fields)
         terminator = self.get_utterance_terminator(utterance)
-        return mapping[terminator]
+        return self.terminator2sentence_type(terminator)
 
     # ---------- actual & target ----------
 
@@ -649,34 +634,45 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         fragment_regex = re.compile(r'&[^-=]\S+')
         return fragment_regex.sub('xxx', utterance)
 
+    @classmethod
+    def to_actual_utterance(cls, utterance):
+        for actual_method in [cls.get_shortening_actual,
+                              cls.get_fragment_actual,
+                              cls.get_replacement_actual]:
+            utterance = actual_method(utterance)
+
+        return utterance
+
     def get_actual_utterance(self):
         utterance = self.get_mainline_utterance(self._main_line_fields)
-        for actual_method in [self.get_shortening_actual,
-                              self.get_fragment_actual,
-                              self.get_replacement_actual]:
-            utterance = actual_method(utterance)
+        return self.to_actual_utterance(utterance)
+
+    @classmethod
+    def to_target_utterance(cls, utterance):
+        for target_method in [cls.get_shortening_target,
+                              cls.get_fragment_target,
+                              cls.get_replacement_target]:
+            utterance = target_method(utterance)
 
         return utterance
 
     def get_target_utterance(self):
         utterance = self.get_mainline_utterance(self._main_line_fields)
-        for target_method in [self.get_shortening_target,
-                              self.get_fragment_target,
-                              self.get_replacement_target]:
-            utterance = target_method(utterance)
+        return self.to_target_utterance(utterance)
 
-        return utterance
-
-    def get_standard_form(self):
+    @staticmethod
+    def get_standard_form():
         return 'actual'
 
     # ---------- morphology ----------
 
-    def get_word_language(self, word):
+    @staticmethod
+    def get_word_language(word):
         """No coding per default."""
         return ''
 
-    def get_main_morpheme(self):
+    @staticmethod
+    def get_main_morpheme():
         """Per default the gloss tier."""
         return 'gloss'
 
@@ -699,25 +695,32 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     def get_pos_tier(self):
         return self.get_morph_tier()
 
-    def get_seg_words(self, seg_tier):
-        return self.get_utterance_words(seg_tier)
+    @classmethod
+    def get_seg_words(cls, seg_tier):
+        return cls.get_utterance_words(seg_tier)
 
-    def get_gloss_words(self, gloss_tier):
-        return self.get_utterance_words(gloss_tier)
+    @classmethod
+    def get_gloss_words(cls, gloss_tier):
+        return cls.get_utterance_words(gloss_tier)
 
-    def get_pos_words(self, pos_tier):
-        return self.get_utterance_words(pos_tier)
+    @classmethod
+    def get_pos_words(cls, pos_tier):
+        return cls.get_utterance_words(pos_tier)
 
-    def get_segments(self, seg_word):
+    @staticmethod
+    def get_segments(seg_word):
         raise NotImplementedError
 
-    def get_glosses(self, gloss_word):
+    @staticmethod
+    def get_glosses(gloss_word):
         raise NotImplementedError
 
-    def get_poses(self, pos_word):
+    @staticmethod
+    def get_poses(pos_word):
         raise NotImplementedError
 
-    def get_morpheme_language(self, seg, gloss, pos):
+    @staticmethod
+    def get_morpheme_language(seg, gloss, pos):
         """No coding per default."""
         return ''
 
@@ -729,7 +732,8 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
     def get_translation(self):
         return self.get_utterance()
 
-    def get_word_language(self, word):
+    @staticmethod
+    def get_word_language(word):
         if word.endswith('@s:fra'):
             return 'French'
         elif word.endswith('@s:ita'):
@@ -741,14 +745,20 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
     def iter_morphemes(morph_word):
         """Iter morphemes of a word.
 
-        A word may consist of word groups in the case of:
-            - clitics (only postclitic: ~)
-            - compounds (+)
+        A word consists of word groups in the case of
+            - compounds (marker: +)
+            - clitics (marker: ~)
 
         A word group has the following structure:
-        prefix#part-of-speech|stem&fusionalsuffix-suffix=english
+        prefix#POS|stem&fusionalsuffix-suffix=gloss
 
-        The '=english'-part is removed.
+        prefix: segment, no gloss (-> assign segment), no POS (-> assign 'pfx')
+        stem: segment, gloss (either from '='-part or segment), POS
+        suffix: no segment, gloss, no POS (-> assign 'sfx')
+
+        For every component of the compound '=' is prepended to the part (e.g.
+        'n|+n|apple+n|tree' -> '=apple', '=tree'). The POS tag of the whole
+        compound is removed.
 
         Returns:
             tuple: (segment, gloss, pos).
@@ -757,17 +767,26 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
                                     r'|[^\-]+'
                                     r'|[\-][^\-]+')
 
-        # split into word groups (in case of compound, clitics)
+        # split into word groups (in case of compound, clitic) (if applicable)
         word_groups = re.split(r'[+~]', morph_word)
+
+        # check if word is a compound
+        if word_groups[0].endswith('|'):
+            # remove POS tag of the whole compound
+            del word_groups[0]
+            is_compound = True
+        else:
+            is_compound = False
 
         for word_group in word_groups:
 
-            # skip POS tag of whole compound if existing
-            if word_group.endswith('|'):
-                continue
-
-            # remove =english
-            word_group = re.sub(r'=.*', '', word_group)
+            # get stem gloss and remove it from morpheme word
+            match = re.search(r'(.+)=(\S+)$', word_group)
+            if match:
+                word_group = match.group(1)
+                stem_gloss = match.group(2)
+            else:
+                stem_gloss = ''
 
             # iter morphemes
             for match in morpheme_regex.finditer(word_group):
@@ -775,31 +794,46 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
 
                 # prefix
                 if morpheme.endswith('#'):
-                    segment = ''
-                    gloss = morpheme.rstrip('#')
+                    pfx = morpheme.rstrip('#')
+                    segment = pfx
+                    gloss = segment
                     pos = 'pfx'
                 # sfx
                 elif morpheme.startswith('-'):
+                    sfx = morpheme.lstrip('-')
                     segment = ''
-                    gloss = morpheme.lstrip('-~')
+                    gloss = sfx
                     pos = 'sfx'
                 # stem
                 else:
-                    segment = ''
-                    pos, gloss = morpheme.split('|')
+                    pos, segment = morpheme.split('|')
+                    # take gloss from '='-part, otherwise the segment
+                    if stem_gloss:
+                        gloss = stem_gloss
+                    else:
+                        gloss = segment
+
+                    # if it is a compound part
+                    if is_compound:
+                        # prepend '=' to segment
+                        segment = '=' + segment
 
                 yield segment, gloss, pos
 
-    def get_segments(self, seg_word):
-        return [seg for seg, _, _ in self.iter_morphemes(seg_word)]
+    @classmethod
+    def get_segments(cls, seg_word):
+        return [seg for seg, _, _ in cls.iter_morphemes(seg_word)]
 
-    def get_glosses(self, gloss_word):
-        return [gloss for _, gloss, _ in self.iter_morphemes(gloss_word)]
+    @classmethod
+    def get_glosses(cls, gloss_word):
+        return [gloss for _, gloss, _ in cls.iter_morphemes(gloss_word)]
 
-    def get_poses(self, pos_word):
-        return [pos for _, _, pos in self.iter_morphemes(pos_word)]
+    @classmethod
+    def get_poses(cls, pos_word):
+        return [pos for _, _, pos in cls.iter_morphemes(pos_word)]
 
-    def get_morpheme_language(self, seg, gloss, pos):
+    @staticmethod
+    def get_morpheme_language(seg, gloss, pos):
         if pos == 'L2':
             return 'L2'
         else:
@@ -883,16 +917,20 @@ class InuktitutReader(ACQDIVCHATReader):
             else:
                 yield '', '', ''
 
-    def get_segments(self, seg_word):
-        return [seg for _, seg, _ in self.iter_morphemes(seg_word)]
+    @classmethod
+    def get_segments(cls, seg_word):
+        return [seg for _, seg, _ in cls.iter_morphemes(seg_word)]
 
-    def get_glosses(self, gloss_word):
-        return [gloss for _, _, gloss in self.iter_morphemes(gloss_word)]
+    @classmethod
+    def get_glosses(cls, gloss_word):
+        return [gloss for _, _, gloss in cls.iter_morphemes(gloss_word)]
 
-    def get_poses(self, pos_word):
-        return [pos for pos, _, _ in self.iter_morphemes(pos_word)]
+    @classmethod
+    def get_poses(cls, pos_word):
+        return [pos for pos, _, _ in cls.iter_morphemes(pos_word)]
 
-    def get_morpheme_language(self, seg, gloss, pos):
+    @staticmethod
+    def get_morpheme_language(seg, gloss, pos):
         if seg.endswith('@e'):
             return 'English'
         else:
@@ -903,7 +941,8 @@ class InuktitutReader(ACQDIVCHATReader):
 
 class CreeReader(ACQDIVCHATReader):
 
-    def get_main_morpheme(self):
+    @staticmethod
+    def get_main_morpheme():
         return 'segment'
 
     def get_seg_tier(self):
@@ -922,16 +961,20 @@ class CreeReader(ACQDIVCHATReader):
         else:
             return []
 
-    def get_segments(self, seg_word):
-        return self.get_morphemes(seg_word)
+    @classmethod
+    def get_segments(cls, seg_word):
+        return cls.get_morphemes(seg_word)
 
-    def get_glosses(self, gloss_word):
-        return self.get_morphemes(gloss_word)
+    @classmethod
+    def get_glosses(cls, gloss_word):
+        return cls.get_morphemes(gloss_word)
 
-    def get_poses(self, pos_word):
-        return self.get_morphemes(pos_word)
+    @classmethod
+    def get_poses(cls, pos_word):
+        return cls.get_morphemes(pos_word)
 
-    def get_morpheme_language(self, seg, gloss, pos):
+    @staticmethod
+    def get_morpheme_language(seg, gloss, pos):
         if gloss == 'Eng':
             return 'English'
         else:
@@ -946,7 +989,8 @@ class JapaneseMiiProReader(ACQDIVCHATReader):
     def get_morph_tier(self):
         return self._dependent_tiers.get('xtrn', '')
 
-    def get_word_language(self, word):
+    @staticmethod
+    def get_word_language(word):
         if word.endswith('@s:eng'):
             return 'English'
         else:
@@ -968,7 +1012,7 @@ class JapaneseMiiProReader(ACQDIVCHATReader):
         For every component of the compound '=' is prepended to the part (e.g.
         'n|+n|apple+n|tree' -> '=apple', '=tree'). Both parts receive the same
         gloss. The POS tag of the whole compound is removed. There may be
-        prefixes attached to the whole compound.
+        prefixes attached to the whole compound. There are no clitics.
 
         Suffixes with a colon are specially treated: If the part after the
         colon is not 'contr' (contraction), it denotes the segment of the
@@ -1035,14 +1079,17 @@ class JapaneseMiiProReader(ACQDIVCHATReader):
 
                 yield segment, gloss, pos
 
-    def get_segments(self, seg_word):
-        return [seg for seg, _, _ in self.iter_morphemes(seg_word)]
+    @classmethod
+    def get_segments(cls, seg_word):
+        return [seg for seg, _, _ in cls.iter_morphemes(seg_word)]
 
-    def get_glosses(self, gloss_word):
-        return [gloss for _, gloss, _ in self.iter_morphemes(gloss_word)]
+    @classmethod
+    def get_glosses(cls, gloss_word):
+        return [gloss for _, gloss, _ in cls.iter_morphemes(gloss_word)]
 
-    def get_poses(self, pos_word):
-        return [pos for _, _, pos in self.iter_morphemes(pos_word)]
+    @classmethod
+    def get_poses(cls, pos_word):
+        return [pos for _, _, pos in cls.iter_morphemes(pos_word)]
 
 
 ###############################################################################
@@ -1050,7 +1097,8 @@ class JapaneseMiiProReader(ACQDIVCHATReader):
 
 class JapaneseMiyataReader(ACQDIVCHATReader):
 
-    def get_word_language(self, word):
+    @staticmethod
+    def get_word_language(word):
         if word.endswith('@s:eng'):
             return 'English'
         elif word.endswith('@s:deu'):

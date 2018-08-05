@@ -1,6 +1,7 @@
 import unittest
 from acqdiv.parsers.xml.CHATParser import *
 from acqdiv.parsers.xml.CHATReader import *
+from acqdiv.parsers.xml.CHATCleaner import *
 
 
 class TestCHATParser(unittest.TestCase):
@@ -12,20 +13,14 @@ class TestCHATParser(unittest.TestCase):
         self.maxDiff = None
 
     def test_get_reader(self):
-        """Test get_reader with test.cha."""
-        actual_reader = self.parser.get_reader()
-        desired_reader = ACQDIVCHATReader()
-        actual_output = [type(actual_reader), actual_reader.session_file]
-        desired_output = [type(desired_reader), desired_reader.session_file]
-        self.assertEqual(actual_output, desired_output)
+        """Test get_reader."""
+        actual_reader = CHATParser.get_reader()
+        self.assertTrue(isinstance(actual_reader, ACQDIVCHATReader))
 
     def test_get_cleaner(self):
-        """Test get_cleaner with test.cha."""
-        actual_cleaner = self.parser.get_reader()
-        desired_cleaner = ACQDIVCHATReader()
-        actual_output = [type(actual_cleaner), actual_cleaner.session_file]
-        desired_output = [type(desired_cleaner), desired_cleaner.session_file]
-        self.assertEqual(actual_output, desired_output)
+        """Test get_cleaner."""
+        actual_cleaner = CHATParser.get_cleaner()
+        self.assertTrue(isinstance(actual_cleaner, CHATCleaner))
 
     def test_get_session_metadata(self):
         """Test get_session_metadata with test.cha."""
