@@ -432,12 +432,9 @@ class TestInuktitutParser(unittest.TestCase):
         self.maxDiff = None
 
     def test_get_reader(self):
-        """Test if correctly initialized InuktitutReader is returned."""
+        """Test if InuktitutReader is returned."""
         actual_reader = self.parser.get_reader()
-        desired_reader = InuktitutReader()
-        actual_output = [type(actual_reader), actual_reader.session_file_path]
-        desired_output = [type(desired_reader), desired_reader.session_file_path]
-        self.assertEqual(actual_output, desired_output)
+        self.assertTrue(isinstance(actual_reader, InuktitutReader))
 
     def test_next_utterance_no_misalignments_one_word(self):
         """Test next_utterance with one word and one morpheme. (Inuktitut)"""
