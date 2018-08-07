@@ -849,5 +849,31 @@ class TestInuktitutParser(unittest.TestCase):
         desired_output = (utt_dict, words_list, morpheme_list)
         self.assertEqual(actual_output, desired_output)
 
+###############################################################################
+
+
+class TestJapaneseMiiProParser(unittest.TestCase):
+    """Class to test the JapaneseMiiProParser."""
+
+    def setUp(self):
+        self.session_file_path = './test_CHATParser.cha'
+        self.parser = JapaneseMiiProParser(self.session_file_path)
+        self.maxDiff = None
+
+    def test_get_reader(self):
+        """Test if JapaneseMiiProReader is returned."""
+        actual_reader = self.parser.get_reader()
+        self.assertTrue(isinstance(actual_reader, JapaneseMiiProReader))
+
+    def test_get_cleaner(self):
+        """Test if JapaneseMiiProCleaner is returned."""
+        actual_cleaner = self.parser.get_cleaner()
+        self.assertTrue(isinstance(actual_cleaner, JapaneseMiiProCleaner))
+
+    def test_next_utterance_no_misalignments(self):
+        """Test next_utterance with utt containing no misalignemnts."""
+        session_str = ('*MOT:\tnani ? 107252_107995\n%xtrn:\tn:deic:wh|nani'
+                       ' ?\n%ort:\t何 ?')
+
 if __name__ == '__main__':
     unittest.main()
