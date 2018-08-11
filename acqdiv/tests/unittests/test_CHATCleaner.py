@@ -1408,5 +1408,6 @@ class TestJapaneseMiiProCleaner(unittest.TestCase):
         desired_output = 'n:prop|Ikun'
         self.assertEqual(actual_output, desired_output)
 
+
 if __name__ == '__main__':
     unittest.main()
