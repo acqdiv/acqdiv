@@ -2,6 +2,7 @@ import unittest
 from acqdiv.parsers.xml.CHATCleaner import CHATCleaner
 from acqdiv.parsers.xml.CHATCleaner import InuktitutCleaner
 from acqdiv.parsers.xml.CHATCleaner import CreeCleaner
+from acqdiv.parsers.xml.CHATCleaner import JapaneseMiiProCleaner
 
 
 class TestCHATCleaner(unittest.TestCase):
@@ -1307,6 +1308,105 @@ class TestCreeCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
+
+###############################################################################
+
+class TestJapaneseMiiProCleaner(unittest.TestCase):
+    """Class to test the JapaneseMiiProCleaner."""
+
+    cleaner = JapaneseMiiProCleaner()
+
+    def test_remove_non_words_single(self):
+        """Test remove_non_words with 1 non-word on the morphtier."""
+        morph_tier = 'n:prop|Ikun tag|‡ .'
+        actual_output = self.cleaner.remove_non_words(morph_tier)
+        desired_output = 'n:prop|Ikun .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_non_words_multiple(self):
+        """Test remove_non_words with 3 non-words on the morphtier."""
+        morph_tier = 'tag|V n:prop|Ikun tag|do tag|‡ .'
+        actual_output = self.cleaner.remove_non_words(morph_tier)
+        desired_output = 'n:prop|Ikun .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_non_words_no_non_words(self):
+        """Test remove_non_words with no non-words on the morphtier."""
+        morph_tier = 'n:prop|Ikun .'
+        actual_output = self.cleaner.remove_non_words(morph_tier)
+        desired_output = 'n:prop|Ikun .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_non_words_empty_string(self):
+        """Test remove_non_words with an empty string."""
+        morph_tier = ''
+        actual_output = self.cleaner.remove_non_words(morph_tier)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_morph_tier_single(self):
+        """Test clean_morph_tier with 1 non-word and period."""
+        morph_tier = 'n:prop|Ikun tag|‡ .'
+        actual_output = self.cleaner.clean_morph_tier(morph_tier)
+        desired_output = 'n:prop|Ikun'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_morph_tier_multiple(self):
+        """Test clean_morph_tier with 3 non-words and question mark."""
+        morph_tier = 'tag|da tag|do n:prop|Ikun tag|‡ ?'
+        actual_output = self.cleaner.clean_morph_tier(morph_tier)
+        desired_output = 'n:prop|Ikun'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_morph_tier_no_non_words(self):
+        """Test clean_morph_tier with no non-words and excl mark."""
+        morph_tier = 'n:prop|Ikun !'
+        actual_output = self.cleaner.clean_morph_tier(morph_tier)
+        desired_output = 'n:prop|Ikun'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_morph_tier_empty_string(self):
+        """Test clean_morph_tier with no non-words and excl mark."""
+        morph_tier = ''
+        actual_output = self.cleaner.clean_morph_tier(morph_tier)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_seg_tier(self):
+        """Test clean_seg_tier with 1 non-word.
+
+        Since clean_seg_tier only calls clean_morph_tier and this method
+        is already tested above, only one test to test the general
+        functionality is used.
+        """
+        seg_tier = 'n:prop|Ikun tag|‡ .'
+        actual_output = self.cleaner.clean_seg_tier(seg_tier)
+        desired_output = 'n:prop|Ikun'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_gloss_tier(self):
+        """Test clean_gloss_tier with 1 non-word.
+
+        Since clean_gloss_tier only calls clean_morph_tier and this
+        method is already tested above, only one test to test the
+        general functionality is used.
+        """
+        gloss_tier = 'n:prop|Ikun tag|‡ .'
+        actual_output = self.cleaner.clean_gloss_tier(gloss_tier)
+        desired_output = 'n:prop|Ikun'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_pos_tier(self):
+        """Test clean_pos_tier with 1 non-word.
+
+        Since clean_pos_tier only calls clean_morph_tier and this
+        method is already tested above, only one test to test the
+        general functionality is used.
+        """
+        pos_tier = 'n:prop|Ikun tag|‡ .'
+        actual_output = self.cleaner.clean_pos_tier(pos_tier)
+        desired_output = 'n:prop|Ikun'
+        self.assertEqual(actual_output, desired_output)
 
 if __name__ == '__main__':
     unittest.main()
