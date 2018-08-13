@@ -230,6 +230,9 @@ def _speakers_update_age():
         results = []
         if config["metadata"]["type"] == "imdi":
             results = _update_imdi_age(rows)
+        elif config["metadata"]["type"] == "cha":
+            results = _update_cha_age(rows)
+        # TODO: remove once all CHAT parsers are written
         else:
             results = _update_xml_age(rows)
         _update_rows(db.Speaker.__table__, "speaker_id", results)
@@ -1099,6 +1102,19 @@ def _update_imdi_age(rows):
                     logger.warning(
                         'Couldn\'t transform age of speaker {}'.format(row.id),
                         exc_info=sys.exc_info())
+    return results
+
+
+def _update_cha_age(rows):
+    """Process speaker ages in CHAT corpora."""
+    results = []
+    for row in rows:
+        if row.age_raw:
+            new_age = age.format_cha_age(row.age_raw)
+            if new_age:
+                aid = age.calculate_xml_days(new_age)
+                results.append(
+                    {'speaker_id': row.id, 'age': new_age, 'age_in_days': aid})
     return results
 
 
