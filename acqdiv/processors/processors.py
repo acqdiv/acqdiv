@@ -30,7 +30,7 @@ class CorpusProcessor(object):
     def process_corpus(self):
         """ Loops over all raw corpus session input files and processes each and the commits the data to the database.
         """
-        for session_file in glob.glob(self.cfg['paths']['sessions']):
+        for session_file in sorted(glob.glob(self.cfg['paths']['sessions'])):
             print("\t", session_file)
             s = SessionProcessor(self.cfg, session_file,
                     self.parser_factory, self.engine)
@@ -90,9 +90,15 @@ class SessionProcessor(object):
 
         self.parser = self.parser_factory(self.file_path)
         session_metadata = self.parser.get_session_metadata()
+        
+        # try:
+        #     duration = session_metadata['duration']
+        # except KeyError:
+        #     duration = None
+
         session_labels = self.config['session_labels']
         # We overwrite a few values in the retrieved session metadata.
-        d = self._extract(session_metadata, session_labels, source_id=self.filename, language=self.language, corpus=self.corpus)
+        d = self._extract(session_metadata, session_labels, source_id=self.filename, language=self.language, corpus=self.corpus) # , duration=duration)
 
         # Populate sessions table.
         s_id, = insert_sess(**d).inserted_primary_key

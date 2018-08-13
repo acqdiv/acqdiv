@@ -177,6 +177,7 @@ class Imdi(Parser):
         session['genre'] = self.root.Session.MDGroup.Content.Genre.text
         session['location'] = self.get_location(self.root)
         session['situation'] = self.root.Session.Description.text
+        # session['duration'] = self.get_session_duration(self.root)
         map(lambda x: x.lower(), session)
         return session
 
@@ -268,6 +269,37 @@ class Imdi(Parser):
             t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "")
             mediafile[t.lower()] = str(e.text)
         return mediafile
+
+
+    # def get_session_duration(self, r):
+    #     """
+    #     get the duration of a session
+
+    #     Args:
+    #         r: root node of imdi file
+    #     Returns:
+    #         the session duration as an integer
+    #     """
+    #     try:
+    #         duration = r.Session.Resources.Source.Keys.Key.text
+    #         return self._format_to_seconds(duration)
+    #     except AttributeError:
+    #         # print("Error! No Duration extracted.")
+    #         return None
+
+
+    # def _format_to_seconds(self, duration):
+    #     """
+    #     format a string, representing session duration to seconds
+    #     Args:
+    #         duration: str, 'hh:mm:ss'
+    #     Return:
+    #         int
+    #     """
+    #     dur = duration
+    #     h, m, s = dur.split(':')
+    #     seconds = 3600*int(h)+60*int(m)+float(s)
+    #     return seconds
 
 
 class Chat(Parser):
