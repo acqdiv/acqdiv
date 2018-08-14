@@ -1149,6 +1149,39 @@ class JapaneseMiyataReader(ACQDIVCHATReader):
 
 ###############################################################################
 
+class TurkishReader(ACQDIVCHATReader):
+
+    def get_start_time(self):
+        """Get the start time.
+
+        It is located on the %tim tier.
+        """
+        time = self._dependent_tiers.get('tim', '')
+        if not time:
+            return ''
+        else:
+            time_regex = re.compile(r'([\d:]+)')
+            return time_regex.search(time).group()
+
+    def get_end_time(self):
+        """Get the end time.
+
+        It is located on the %tim tier and might be missing.
+        """
+        time = self._dependent_tiers.get('tim', '')
+        if not time:
+            return ''
+        else:
+            time_regex = re.compile(r'-([\d:]+)')
+            match = time_regex.search(time)
+            if match:
+                return match.group(1)
+            else:
+                return ''
+
+
+###############################################################################
+
 
 class YucatecReader(ACQDIVCHATReader):
 
