@@ -679,6 +679,7 @@ class TestACQDIVCHATReaderRecord(unittest.TestCase):
         desired_output = 'This is the translation.'
         self.assertEqual(actual_output, desired_output)
 
+    # TODO: test with explanation tier
     def test_get_comments(self):
         """Test get_comments."""
         actual_output = self.reader.get_comments()

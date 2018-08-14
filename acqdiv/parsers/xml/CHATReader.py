@@ -523,8 +523,10 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         comments = self._dependent_tiers.get('com', '')
         situation = self._dependent_tiers.get('sit', '')
         action = self._dependent_tiers.get('act', '')
+        explanation = self._dependent_tiers.get('exp', '')
+        fields = [comments, situation, action, explanation]
 
-        return '; '.join((f for f in [comments, situation, action] if f))
+        return '; '.join((f for f in fields if f))
 
     def get_record_speaker_label(self):
         return self.get_mainline_speaker_id(self._main_line_fields)
@@ -1133,3 +1135,7 @@ class JapaneseMiyataReader(ACQDIVCHATReader):
             return 'German'
         else:
             return 'Japanese'
+
+
+class YucatecReader(ACQDIVCHATReader):
+    pass
