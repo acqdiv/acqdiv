@@ -821,7 +821,7 @@ class TestInuktitutCleaner(unittest.TestCase):
         Cases: untranscribed material, terminator and scoped symbols
         """
         str_input = 'xxx ! [+ UI]'
-        actual_output = InuktitutCleaner.clean_xmor(str_input)
+        actual_output = InuktitutCleaner.clean_morph_tier(str_input)
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
@@ -829,7 +829,7 @@ class TestInuktitutCleaner(unittest.TestCase):
         """Test clean_xmor with scoped symbols and terminator."""
         str_input = ('NR|unatartusaq^soldier+NN|AUG|aluk^EMPH+IACT|'
                      'ai^greetings . [+ IM]')
-        actual_output = InuktitutCleaner.clean_xmor(str_input)
+        actual_output = InuktitutCleaner.clean_morph_tier(str_input)
         desired_output = ('NR|unatartusaq^soldier+NN|AUG|aluk^EMPH+'
                           'IACT|ai^greetings')
         self.assertEqual(actual_output, desired_output)
@@ -837,7 +837,7 @@ class TestInuktitutCleaner(unittest.TestCase):
     def test_clean_xmor_empty_string(self):
         """Test clean_xmor with an empty string."""
         str_input = ''
-        actual_output = InuktitutCleaner.clean_xmor(str_input)
+        actual_output = InuktitutCleaner.clean_morph_tier(str_input)
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
