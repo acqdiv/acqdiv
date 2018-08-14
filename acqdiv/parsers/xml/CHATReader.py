@@ -1179,6 +1179,20 @@ class TurkishReader(ACQDIVCHATReader):
             else:
                 return ''
 
+    def get_morph_tier(self):
+        return self._dependent_tiers.get('xmor', '')
+
+    @staticmethod
+    def get_word_language(word):
+        if word.endswith('@s:eng'):
+            return 'English'
+        elif word.endswith('@s:deu'):
+            return 'German'
+        elif word.endswith('@s:rus'):
+            return 'Russian'
+        else:
+            return 'Turkish'
+
 
 ###############################################################################
 
