@@ -14,17 +14,17 @@ class TestCHATParser(unittest.TestCase):
         self.maxDiff = None
 
     def test_get_reader(self):
-        """Test get_reader."""
+        """Test get_reader. (CHATParser)"""
         actual_reader = CHATParser.get_reader()
         self.assertTrue(isinstance(actual_reader, ACQDIVCHATReader))
 
     def test_get_cleaner(self):
-        """Test get_cleaner."""
+        """Test get_cleaner. (CHATParser)"""
         actual_cleaner = CHATParser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, CHATCleaner))
 
     def test_get_session_metadata(self):
-        """Test get_session_metadata with test.cha."""
+        """Test get_session_metadata with test.cha. (CHATParser)"""
         session_str = (
             '@UTF8\n'
             '@Begin\n'
@@ -53,7 +53,7 @@ class TestCHATParser(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_next_speaker(self):
-        """Test next_speaker with test.cha."""
+        """Test next_speaker with test.cha. (CHATParser)"""
         session_str = (
             '@UTF8\n'
             '@Begin\n'
@@ -96,328 +96,6 @@ class TestCHATParser(unittest.TestCase):
         desired_output = [mem_dict, chi_dict]
         self.assertEqual(actual_output, desired_output)
 
-    def test_next_utterance_test_first_utterance(self):
-        """Test next utterance with the first utterance of test.cha."""
-        utt_str = (
-            '@Begin\n*MEM:\tke eng ? 0_8551\n%gls:\tke eng ?\n%cod:\tcp wh ?'
-            '\n%eng:\tWhat is it ?\n%sit:\tPoints to tape\n%com:\tis furious\n'
-            '%add:\tCHI\n@End'
-        )
-        self.parser.reader.read(io.StringIO(utt_str))
-        actual_output = list(self.parser.next_utterance())[0]
-        utt0_utt_dict = {
-            'source_id': 'u0',
-            'speaker_label': 'MEM',
-            'addressee': 'CHI',
-            'utterance_raw': 'ke eng ?',
-            'utterance': 'ke eng',
-            'translation': 'What is it ?',
-            'morpheme': None,
-            'gloss_raw': None,
-            'pos_raw': None,
-            'sentence_type': 'question',
-            'start_raw': '0',
-            'end_raw': '8551',
-            'comment': 'is furious; Points to tape',
-            'warning': None
-        }
-        utt0_word_list = [
-            {
-                'word_language': None,
-                'word': 'ke',
-                'word_actual': 'ke',
-                'word_target': 'ke',
-                'warning': None
-            },
-            {
-                'word_language': None,
-                'word': 'eng',
-                'word_actual': 'eng',
-                'word_target': 'eng',
-                'warning': None
-            }
-        ]
-        utt0_morpheme_list = []
-        desired_output = (utt0_utt_dict, utt0_word_list, utt0_morpheme_list)
-        self.assertEqual(actual_output, desired_output)
-
-    def test_next_utterance_last_utterance_all_tiers_misaligned(self):
-        """Test next_utterance with the last utterance of test.cha.
-
-        The utterance contains three words, but only one gloss word
-        and two words in the coding tier.
-        """
-        session_str = (
-            '*MEM:\tke khomba\nkhomba . 28048_31840\n%gls:\tkekumbakumba .\n'
-            '%cod:\tcp tape_recorder(9 , 10) .\n%eng:\tIt is a stereo\n@End'
-        )
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
-        utt_utt_dict = {
-            'source_id': 'u0',
-            'speaker_label': 'MEM',
-            'addressee': None,
-            'utterance_raw': 'ke khomba khomba .',
-            'utterance': 'ke khomba khomba',
-            'translation': 'It is a stereo',
-            'morpheme': None,
-            'gloss_raw': None,
-            'pos_raw': None,
-            'sentence_type': 'default',
-            'start_raw': '28048',
-            'end_raw': '31840',
-            'comment': None,
-            'warning': None
-        }
-        utt_word_list = [
-            {
-                'word_language': None,
-                'word': 'ke',
-                'word_actual': 'ke',
-                'word_target': 'ke',
-                'warning': None
-            },
-            {
-                'word_language': None,
-                'word': 'khomba',
-                'word_actual': 'khomba',
-                'word_target': 'khomba',
-                'warning': None
-            },
-            {
-                'word_language': None,
-                'word': 'khomba',
-                'word_actual': 'khomba',
-                'word_target': 'khomba',
-                'warning': None
-            }
-        ]
-        utt_morpheme_list = []
-        desired_output = (utt_utt_dict, utt_word_list, utt_morpheme_list)
-        self.assertEqual(actual_output, desired_output)
-
-    # TODO: Decide if test is necessary, if yes, fix test
-    # def test_next_utterance_no_misalignment(self):
-    #     """Test next_utterance with a record with no misalignments.
-    #
-    #     Each tier contains two words.
-    #     """
-    #     session_str = (
-    #         '*CHI:\tke ntencha ncha .8551_19738\n% gls:\tke ntho e-ncha .\n% '
-    #         'cod:\tcp thing(9, 10) 9 - aj .\n% eng:\tA new thing\n% com:\ttest '
-    #         'comment\n@End'
-    #     )
-    #     self.parser.reader.read(io.StringIO(session_str))
-    #     actual_output = list(self.parser.next_utterance())[0]
-    #     utt_dict = {
-    #         'source_id': 'u0',
-    #         'speaker_label': 'MEM',
-    #         'addressee': None,
-    #         'utterance_raw': 'ke ntencha ncha .',
-    #         'utterance': 'ke ntencha ncha',
-    #         'translation': None,
-    #         'morpheme': None,
-    #         'gloss_raw': None,
-    #         'pos_raw': None,
-    #         'sentence_type': 'default',
-    #         'start_raw': None,
-    #         'end_raw': '19738',
-    #         'comment': 'test comment',
-    #         'warning': None
-    #     }
-    #     word_list = [
-    #         {
-    #             'word_language': None,
-    #             'word': 'an',
-    #             'word_actual': 'an',
-    #             'word_target': 'an',
-    #             'warning': None
-    #         },
-    #         {
-    #             'word_language': None,
-    #             'word': 'ke',
-    #             'word_actual': 'ke',
-    #             'word_target': 'ke',
-    #             'warning': None
-    #         }]
-    #     morpheme_list = []
-    #     desired_output = (utt_dict, word_list, morpheme_list)
-    #     self.assertEqual(actual_output, desired_output)
-
-    @unittest.skip('Not finished.')
-    def test_next_utterance_misalignment_words_tier(self):
-        """Test next_utterance with a words vs morph misalignment.
-
-        There is 1 word in the utterance, but two words on each
-        morphology tier.
-        """
-        session = ('@Languages:\tsme\n*MEM:\tke ? 0_8551\n%gls:\tke eng ?'
-                   '\n%cod:\tcp wh ?\n%eng:\tWhat is it ?')
-        actual_output = list(self.parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'u0',
-            'speaker_label': 'MEM',
-            'addressee': 'CHI',
-            'utterance_raw': 'ke ?',
-            'utterance': 'ke',
-            'translation': 'What is it ?',
-            'morpheme': None,
-            'gloss_raw': None,
-            'pos_raw': None,
-            'sentence_type': 'question',
-            'start_raw': '0',
-            'end_raw': '8551',
-            'comment': 'Points to tape',
-            'warning': None
-        }
-        word_list = [
-            {
-                'word_language': None,
-                'word': 'ke',
-                'word_actual': 'ke',
-                'word_target': 'ke',
-                'warning': None
-            },
-        ]
-        morpheme_list = []
-        desired_output = (utt_dict, word_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
-
-    @unittest.skip('Not finished.')
-    def test_next_utterance_misalignment_gloss_tier(self):
-        """Test next_utterance with a gloss vs other tiers misalignment.
-
-        There is one gloss-word but two words on all other tiers.
-        """
-        session = ('@Languages:\tsme\n*MEM:\tke eng ? 0_8551\n%gls:\tke '
-                   'eng ?\n%cod:\tcp ?\n%eng:\tWhat is it ?')
-        actual_output = list(self.parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'u0',
-            'speaker_label': 'MEM',
-            'addressee': 'CHI',
-            'utterance_raw': 'ke eng ?',
-            'utterance': 'ke eng',
-            'translation': 'What is it ?',
-            'morpheme': None,
-            'gloss_raw': None,
-            'pos_raw': None,
-            'sentence_type': 'question',
-            'start_raw': '0',
-            'end_raw': '8551',
-            'comment': 'Points to tape',
-            'warning': None
-        }
-        word_list = [
-            {
-                'word_language': None,
-                'word': 'ke',
-                'word_actual': 'ke',
-                'word_target': 'ke',
-                'warning': None
-            },
-            {
-                'word_language': None,
-                'word': 'eng',
-                'word_actual': 'eng',
-                'word_target': 'eng',
-                'warning': None
-            }
-        ]
-        morpheme_list = []
-        desired_output = (utt_dict, word_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
-
-    @unittest.skip('Not finished.')
-    def test_next_utterance_misalignments_segments_tier(self):
-        """Test next_utterance with segment vs other tiers misalignemnt.
-
-        There is one segment word but two words on all other tiers.
-        """
-        session = ('@Languages:\tsme\n*MEM:\tke eng ? 0_8551\n%gls:\tke '
-                   '?\n%cod:\tcp wh ?\n%eng:\tWhat is it ?')
-        actual_output = list(self.parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'u0',
-            'speaker_label': 'MEM',
-            'addressee': 'CHI',
-            'utterance_raw': 'ke eng ?',
-            'utterance': 'ke eng',
-            'translation': 'What is it ?',
-            'morpheme': None,
-            'gloss_raw': None,
-            'pos_raw': None,
-            'sentence_type': 'question',
-            'start_raw': '0',
-            'end_raw': '8551',
-            'comment': 'Points to tape',
-            'warning': None
-        }
-        word_list = [
-            {
-                'word_language': None,
-                'word': 'ke',
-                'word_actual': 'ke',
-                'word_target': 'ke',
-                'warning': None
-            },
-            {
-                'word_language': None,
-                'word': 'eng',
-                'word_actual': 'eng',
-                'word_target': 'eng',
-                'warning': None
-            }
-        ]
-        morpheme_list = []
-        desired_output = (utt_dict, word_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
-
-    @unittest.skip('Not finished.')
-    def test_next_utterance_misalignment_pos_tier(self):
-        """Test next_utterance with pos vs other tiers misalignment.
-
-        There is one pos-word but two words on all other tiers.
-        """
-        session = ('@Languages:\tsme\n*MEM:\tke eng ? 0_8551\n%gls:\tke '
-                   '?\n%cod:\tcp wh ?\n%pos:\tV N\n%eng:\tWhat is it ?')
-        actual_output = list(self.parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'u0',
-            'speaker_label': 'MEM',
-            'addressee': 'CHI',
-            'utterance_raw': 'ke eng ?',
-            'utterance': 'ke eng',
-            'translation': 'What is it ?',
-            'morpheme': None,
-            'gloss_raw': None,
-            'pos_raw': None,
-            'sentence_type': 'question',
-            'start_raw': '0',
-            'end_raw': '8551',
-            'comment': 'Points to tape',
-            'warning': None
-        }
-        word_list = [
-            {
-                'word_language': None,
-                'word': 'ke',
-                'word_actual': 'ke',
-                'word_target': 'ke',
-                'warning': None
-            },
-            {
-                'word_language': None,
-                'word': 'eng',
-                'word_actual': 'eng',
-                'word_target': 'eng',
-                'warning': None
-            }
-        ]
-        morpheme_list = []
-        desired_output = (utt_dict, word_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
-
 ###############################################################################
 
 
@@ -432,12 +110,12 @@ class TestInuktitutParser(unittest.TestCase):
         self.maxDiff = None
 
     def test_get_reader(self):
-        """Test if InuktitutReader is returned."""
+        """Test get_reader for Inuktitutparser."""
         actual_reader = self.parser.get_reader()
         self.assertTrue(isinstance(actual_reader, InuktitutReader))
 
     def test_get_cleaner(self):
-        """Test get_cleaner."""
+        """Test get_cleaner for Inuktitutparser."""
         actual_cleaner = self.parser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, InuktitutCleaner))
 
@@ -866,17 +544,17 @@ class TestJapaneseMiiProParser(unittest.TestCase):
         self.maxDiff = None
 
     def test_get_reader(self):
-        """Test if JapaneseMiiProReader is returned."""
+        """Test get_reader for JapaneseMiiProParser."""
         actual_reader = self.parser.get_reader()
         self.assertTrue(isinstance(actual_reader, JapaneseMiiProReader))
 
     def test_get_cleaner(self):
-        """Test if JapaneseMiiProCleaner is returned."""
+        """Test get_cleaner for JapaneseMiiProParser."""
         actual_cleaner = self.parser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, JapaneseMiiProCleaner))
 
     def test_next_utterance_no_misalignments_single_word(self):
-        """Test next_utterance with utt containing no misalignemnts."""
+        """Test next_utterance with no misalignemnts. (JapaneseMiiPro)"""
         session_str = ('*MOT:\tnani ? 107252_107995\n%xtrn:\tn:deic:wh|nani'
                        ' ?\n%ort:\t何 ?\n@End')
         self.parser.reader.read(io.StringIO(session_str))
@@ -920,7 +598,7 @@ class TestJapaneseMiiProParser(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_next_utterance_no_misalignments_multiple_words(self):
-        """Test next_utterance with utt containing no misalignemnts."""
+        """Test next_utterance with no misalignemnts. (JapaneseMiiPro)"""
         session_str = ('tom20010724.cha:*MOT:\tHonochan doozo . '
                        '4087868_4089193\n%xtrn:\tn:prop|Hono-chan co:g|doozo'
                        ' .\n%ort:\tホノちゃんどうぞ。\n@End')
@@ -1188,17 +866,17 @@ class TestCreeParser(unittest.TestCase):
         self.maxDiff = None
 
     def test_get_reader(self):
-        """Test get_reader."""
+        """Test get_reader. (Cree)"""
         actual_reader = self.parser.get_reader()
         self.assertTrue(isinstance(actual_reader, CreeReader))
 
     def test_get_cleaner(self):
-        """Test get_cleaner."""
+        """Test get_cleaner. (Cree)"""
         actual_cleaner = self.parser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, CreeCleaner))
 
     def test_next_utterance_no_misalignments_single_word(self):
-        """Test next_utterance with utt containing no misalignemnts."""
+        """Test next_utterance with utt containing no misalignemnts. (Cree)"""
         session_str = ('*CHI:\tchair . 2883660_2884622\n%pho:\t*\n%mod:\t*\n'
                        '%eng:\tohhhhhh\n@End')
         self.parser.reader.read(io.StringIO(session_str))
@@ -1233,7 +911,7 @@ class TestCreeParser(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_next_utterance_no_misalignments_multiple_words(self):
-        """Test next_utterance with utt containing no misalignemnts."""
+        """Test next_utterance with utt containing no misalignemnts. (Cree)"""
 
         session_str = ('*CHI:\t‹wâu nîyi› . 1198552_1209903\n%pho:\t‹wo ni›'
                        '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
@@ -1293,6 +971,253 @@ class TestCreeParser(unittest.TestCase):
         ]
         desired_output = (utt_dict, words_list, morpheme_list)
         self.assertEqual(actual_output, desired_output)
+
+    def test_next_utterance_words_misaligned(self):
+        """Test next_utterance with too few words. (Cree)"""
+
+        session_str = ('*CHI:\t‹wâu› . 1198552_1209903\n%pho:\t‹wo ni›'
+                       '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
+                       '%xmortyp:\t[ni pro]\n%xtarmor:\t[wo *]\n%xmormea:\t'
+                       '[egg 1]\n@End')
+        self.parser.reader.read(io.StringIO(session_str))
+        actual_output = list(self.parser.next_utterance())[0]
+        utt_dict = {
+            'source_id': 'u0',
+            'speaker_label': 'CHI',
+            'addressee': None,
+            'utterance_raw': '‹wâu› .',
+            'utterance': 'wâu',
+            'translation': 'egg me',
+            'morpheme': '[wo *]',
+            'gloss_raw': '[egg 1]',
+            'pos_raw': '[ni pro]',
+            'sentence_type': 'default',
+            'start_raw': '1198552',
+            'end_raw': '1209903',
+            'comment': None,
+            'warning': None
+        }
+        words_list = [
+            {
+                'word_language': None,
+                'word': 'wâu',
+                'word_actual': 'wâu',
+                'word_target': 'wâu',
+                'warning': None
+            }
+        ]
+        morpheme_list = [
+            [
+                {
+                    'gloss_raw': 'egg',
+                    'morpheme': 'wo',
+                    'morpheme_language': 'Cree',
+                    'pos_raw': 'ni'
+                },
+            ],
+            [
+                {
+                    'gloss_raw': '1',
+                    'morpheme': None,
+                    'morpheme_language': 'Cree',
+                    'pos_raw': 'pro'
+                }
+            ]
+        ]
+        desired_output = (utt_dict, words_list, morpheme_list)
+        self.assertEqual(actual_output, desired_output)
+
+    def test_next_utterance_segments_misaligned(self):
+        """Test next_utterance with too few segments. (Cree)
+
+        In Cree the segment tier is the main morphology tier (not the
+        gloss tier). This means that in the desired output, there are
+        only as many morpheme words as there are segment words. The
+        surplus words of the other tiers thus get removed.
+        """
+
+        session_str = ('*CHI:\t‹wâu nîyi› . 1198552_1209903\n%pho:\t‹wo ni›'
+                       '\n%mod:\t‹ˈwo›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
+                       '%xmortyp:\t[ni pro]\n%xtarmor:\t[wo]\n%xmormea:\t'
+                       '[egg 1]\n@End')
+        self.parser.reader.read(io.StringIO(session_str))
+        actual_output = list(self.parser.next_utterance())[0]
+        utt_dict = {
+            'source_id': 'u0',
+            'speaker_label': 'CHI',
+            'addressee': None,
+            'utterance_raw': '‹wâu nîyi› .',
+            'utterance': 'wâu nîyi',
+            'translation': 'egg me',
+            'morpheme': '[wo]',
+            'gloss_raw': '[egg 1]',
+            'pos_raw': '[ni pro]',
+            'sentence_type': 'default',
+            'start_raw': '1198552',
+            'end_raw': '1209903',
+            'comment': None,
+            'warning': None
+        }
+        words_list = [
+            {
+                'word_language': None,
+                'word': 'wâu',
+                'word_actual': 'wâu',
+                'word_target': 'wâu',
+                'warning': None
+            },
+            {
+                'word_language': None,
+                'word': 'nîyi',
+                'word_actual': 'nîyi',
+                'word_target': 'nîyi',
+                'warning': None
+            }
+        ]
+        morpheme_list = [
+            [
+                {
+                    'gloss_raw': None,
+                    'morpheme': 'wo',
+                    'morpheme_language': 'Cree',
+                    'pos_raw': None
+                }
+            ]
+        ]
+        desired_output = (utt_dict, words_list, morpheme_list)
+        self.assertEqual(actual_output, desired_output)
+
+    def test_next_utterance_glosses_misaligned(self):
+        """Test next_utterance with too few glosses. (Cree)
+
+        In Cree the segment tier is the main morphology tier (not the
+        gloss tier). This means that in the desired output, the number
+        of morpheme words is not dependent on the glosses but on the
+        segments. The desired output of this test case thus contains two
+        morpheme words even though there is only one gloss word.
+        """
+
+        session_str = ('*CHI:\t‹wâu nîyi› . 1198552_1209903\n%pho:\t‹wo ni›'
+                       '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
+                       '%xmortyp:\t[ni pro]\n%xtarmor:\t[wo *]\n%xmormea:\t'
+                       '[egg]\n@End')
+        self.parser.reader.read(io.StringIO(session_str))
+        actual_output = list(self.parser.next_utterance())[0]
+        utt_dict = {
+            'source_id': 'u0',
+            'speaker_label': 'CHI',
+            'addressee': None,
+            'utterance_raw': '‹wâu nîyi› .',
+            'utterance': 'wâu nîyi',
+            'translation': 'egg me',
+            'morpheme': '[wo *]',
+            'gloss_raw': '[egg]',
+            'pos_raw': '[ni pro]',
+            'sentence_type': 'default',
+            'start_raw': '1198552',
+            'end_raw': '1209903',
+            'comment': None,
+            'warning': None
+        }
+        words_list = [
+            {
+                'word_language': None,
+                'word': 'wâu',
+                'word_actual': 'wâu',
+                'word_target': 'wâu',
+                'warning': None
+            },
+            {
+                'word_language': None,
+                'word': 'nîyi',
+                'word_actual': 'nîyi',
+                'word_target': 'nîyi',
+                'warning': None
+            }
+        ]
+        morpheme_list = [
+            [
+                {
+                    'gloss_raw': None,
+                    'morpheme': 'wo',
+                    'morpheme_language': 'Cree',
+                    'pos_raw': 'ni'
+                },
+            ],
+            [
+                {
+                    'gloss_raw': None,
+                    'morpheme': None,
+                    'morpheme_language': 'Cree',
+                    'pos_raw': 'pro'
+                }
+            ]
+        ]
+        desired_output = (utt_dict, words_list, morpheme_list)
+        self.assertEqual(actual_output, desired_output)
+
+    def test_next_utterance_poses_misaligned(self):
+        """Test next_utterance with too few poses. (Cree)"""
+
+        session_str = ('*CHI:\t‹wâu nîyi› . 1198552_1209903\n%pho:\t‹wo ni›'
+                       '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
+                       '%xmortyp:\t[pro]\n%xtarmor:\t[wo *]\n%xmormea:\t'
+                       '[egg 1]\n@End')
+        self.parser.reader.read(io.StringIO(session_str))
+        actual_output = list(self.parser.next_utterance())[0]
+        utt_dict = {
+            'source_id': 'u0',
+            'speaker_label': 'CHI',
+            'addressee': None,
+            'utterance_raw': '‹wâu nîyi› .',
+            'utterance': 'wâu nîyi',
+            'translation': 'egg me',
+            'morpheme': '[wo *]',
+            'gloss_raw': '[egg 1]',
+            'pos_raw': '[pro]',
+            'sentence_type': 'default',
+            'start_raw': '1198552',
+            'end_raw': '1209903',
+            'comment': None,
+            'warning': None
+        }
+        words_list = [
+            {
+                'word_language': None,
+                'word': 'wâu',
+                'word_actual': 'wâu',
+                'word_target': 'wâu',
+                'warning': None
+            },
+            {
+                'word_language': None,
+                'word': 'nîyi',
+                'word_actual': 'nîyi',
+                'word_target': 'nîyi',
+                'warning': None
+            }
+        ]
+        morpheme_list = [
+            [
+                {
+                    'gloss_raw': 'egg',
+                    'morpheme': 'wo',
+                    'morpheme_language': 'Cree',
+                    'pos_raw': None
+                },
+            ],
+            [
+                {
+                    'gloss_raw': '1',
+                    'morpheme': None,
+                    'morpheme_language': 'Cree',
+                    'pos_raw': None
+                }
+            ]
+        ]
+        desired_output = (utt_dict, words_list, morpheme_list)
+        self.assertEqual(actual_output, desired_output)
+
 
 if __name__ == '__main__':
     unittest.main()
