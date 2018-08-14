@@ -706,6 +706,8 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         """Per default the gloss tier."""
         return 'gloss'
 
+    # ---------- morphology tiers ----------
+
     def get_morph_tier(self):
         """Get the morphology tier.
 
@@ -725,17 +727,25 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     def get_pos_tier(self):
         return self.get_morph_tier()
 
+    # ---------- morpheme words ----------
+
+    @classmethod
+    def get_morpheme_words(cls, morph_tier):
+        return cls.get_utterance_words(morph_tier)
+
     @classmethod
     def get_seg_words(cls, seg_tier):
-        return cls.get_utterance_words(seg_tier)
+        return cls.get_morpheme_words(seg_tier)
 
     @classmethod
     def get_gloss_words(cls, gloss_tier):
-        return cls.get_utterance_words(gloss_tier)
+        return cls.get_morpheme_words(gloss_tier)
 
     @classmethod
     def get_pos_words(cls, pos_tier):
-        return cls.get_utterance_words(pos_tier)
+        return cls.get_morpheme_words(pos_tier)
+
+    # ---------- morphemes ----------
 
     @staticmethod
     def get_segments(seg_word):
@@ -1137,5 +1147,28 @@ class JapaneseMiyataReader(ACQDIVCHATReader):
             return 'Japanese'
 
 
+###############################################################################
+
+
 class YucatecReader(ACQDIVCHATReader):
-    pass
+
+    def get_morph_tier(self):
+        return self._dependent_tiers.get('xmor', '')
+
+    @classmethod
+    def get_morpheme_words(cls, morph_tier):
+        """Get morpheme words.
+
+        Words are separated by blank spaces as well as & and + in the case of
+        clitics.
+        """
+        pass
+
+    @staticmethod
+    def iter_morphemes(morph_word):
+        """Iter morphemes of a word.
+
+        Prefixes are separated by #
+        Suffixes are separated by :
+        """
+        pass
