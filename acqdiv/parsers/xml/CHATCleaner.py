@@ -281,21 +281,22 @@ class CHATCleaner(CorpusCleanerInterface):
         return word
 
     # ---------- morphology tier cleaning ----------
-
     @staticmethod
-    def clean_seg_tier(seg_tier):
+    def clean_morph_tier(morph_tier):
         """No cleaning by default."""
-        return seg_tier
+        return morph_tier
 
-    @staticmethod
-    def clean_gloss_tier(gloss_tier):
-        """No cleaning by default."""
-        return gloss_tier
+    @classmethod
+    def clean_seg_tier(cls, seg_tier):
+        return cls.clean_morph_tier(seg_tier)
 
-    @staticmethod
-    def clean_pos_tier(pos_tier):
-        """No cleaning by default."""
-        return pos_tier
+    @classmethod
+    def clean_gloss_tier(cls, gloss_tier):
+        return cls.clean_morph_tier(gloss_tier)
+
+    @classmethod
+    def clean_pos_tier(cls, pos_tier):
+        return cls.clean_morph_tier(pos_tier)
 
     # ---------- tier cross cleaning ----------
 
@@ -328,19 +329,21 @@ class CHATCleaner(CorpusCleanerInterface):
     # ---------- morpheme cleaning ----------
 
     @staticmethod
-    def clean_segment(segment):
+    def clean_morpheme(morpheme):
         """No cleaning by default."""
-        return segment
+        return morpheme
 
-    @staticmethod
-    def clean_gloss(gloss):
-        """No cleaning by default."""
-        return gloss
+    @classmethod
+    def clean_segment(cls, segment):
+        return cls.clean_morpheme(segment)
 
-    @staticmethod
-    def clean_pos(pos):
-        """No cleaning by default."""
-        return pos
+    @classmethod
+    def clean_gloss(cls, gloss):
+        return cls.clean_morpheme(gloss)
+
+    @classmethod
+    def clean_pos(cls, pos):
+        return cls.clean_morpheme(pos)
 
 
 ###############################################################################
@@ -369,18 +372,6 @@ class EnglishManchester1Cleaner(CHATCleaner):
     def clean_morph_tier(cls, morph_tier):
         morph_tier = cls.remove_terminator(morph_tier)
         return cls.remove_non_words(morph_tier)
-
-    @classmethod
-    def clean_seg_tier(cls, seg_tier):
-        return cls.clean_morph_tier(seg_tier)
-
-    @classmethod
-    def clean_gloss_tier(cls, gloss_tier):
-        return cls.clean_morph_tier(gloss_tier)
-
-    @classmethod
-    def clean_pos_tier(cls, pos_tier):
-        return cls.clean_morph_tier(pos_tier)
 
     @staticmethod
     def extract_first_pos(pos):
@@ -413,7 +404,7 @@ class InuktitutCleaner(CHATCleaner):
     # ---------- morphology tier cleaning ----------
 
     @classmethod
-    def clean_xmor(cls, xmor):
+    def clean_morph_tier(cls, xmor):
         """Clean the morphology tier 'xmor'."""
         for cleaning_method in [cls.null_event_utterances,
                                 cls.unify_untranscribed,
@@ -424,21 +415,6 @@ class InuktitutCleaner(CHATCleaner):
             xmor = cleaning_method(xmor)
 
         return xmor
-
-    @classmethod
-    def clean_seg_tier(cls, seg_tier):
-        """Clean the xmor tier."""
-        return cls.clean_xmor(seg_tier)
-
-    @classmethod
-    def clean_gloss_tier(cls, gloss_tier):
-        """Clean the xmor tier."""
-        return cls.clean_xmor(gloss_tier)
-
-    @classmethod
-    def clean_pos_tier(cls, pos_tier):
-        """Clean the xmor tier."""
-        return cls.clean_xmor(pos_tier)
 
     # ---------- morpheme word cleaning ----------
 
@@ -598,18 +574,6 @@ class CreeCleaner(CHATCleaner):
         morph_tier = cls.null_untranscribed_morph_tier(morph_tier)
         return morph_tier
 
-    @classmethod
-    def clean_seg_tier(cls, seg_tier):
-        return cls.clean_morph_tier(seg_tier)
-
-    @classmethod
-    def clean_gloss_tier(cls, gloss_tier):
-        return cls.clean_morph_tier(gloss_tier)
-
-    @classmethod
-    def clean_pos_tier(cls, pos_tier):
-        return cls.clean_morph_tier(pos_tier)
-
     # ---------- tier cross cleaning ----------
 
     @staticmethod
@@ -698,18 +662,6 @@ class CreeCleaner(CHATCleaner):
 
         return morpheme_word
 
-    @classmethod
-    def clean_seg_word(cls, seg_word):
-        return cls.clean_morpheme_word(seg_word)
-
-    @classmethod
-    def clean_gloss_word(cls, gloss_word):
-        return cls.clean_morpheme_word(gloss_word)
-
-    @classmethod
-    def clean_pos_word(cls, pos_word):
-        return cls.clean_morpheme_word(pos_word)
-
     # ---------- morpheme cleaning ----------
 
     @classmethod
@@ -720,10 +672,6 @@ class CreeCleaner(CHATCleaner):
             morpheme = cleaning_method(morpheme)
 
         return morpheme
-
-    @classmethod
-    def clean_segment(cls, segment):
-        return cls.clean_morpheme(segment)
 
     @staticmethod
     def replace_gloss_connector(gloss):
@@ -780,17 +728,3 @@ class JapaneseMiiProCleaner(CHATCleaner):
     def clean_morph_tier(cls, morph_tier):
         morph_tier = cls.remove_terminator(morph_tier)
         return cls.remove_non_words(morph_tier)
-
-    @classmethod
-    def clean_seg_tier(cls, seg_tier):
-        return cls.clean_morph_tier(seg_tier)
-
-    @classmethod
-    def clean_gloss_tier(cls, gloss_tier):
-        return cls.clean_morph_tier(gloss_tier)
-
-    @classmethod
-    def clean_pos_tier(cls, pos_tier):
-        return cls.clean_morph_tier(pos_tier)
-
-
