@@ -305,21 +305,25 @@ class CHATCleaner(CorpusCleanerInterface):
         return utterance, seg_tier, gloss_tier, pos_tier
 
     # ---------- morpheme word cleaning ----------
-
     @staticmethod
-    def clean_seg_word(seg_word):
+    def clean_morpheme_word(morpheme_word):
         """No cleaning by default."""
-        return seg_word
+        return morpheme_word
 
-    @staticmethod
-    def clean_gloss_word(gloss_word):
+    @classmethod
+    def clean_seg_word(cls, seg_word):
         """No cleaning by default."""
-        return gloss_word
+        return cls.clean_morpheme_word(seg_word)
 
-    @staticmethod
-    def clean_pos_word(pos_word):
+    @classmethod
+    def clean_gloss_word(cls, gloss_word):
         """No cleaning by default."""
-        return pos_word
+        return cls.clean_morpheme_word(gloss_word)
+
+    @classmethod
+    def clean_pos_word(cls, pos_word):
+        """No cleaning by default."""
+        return cls.clean_morpheme_word(pos_word)
 
     # ---------- morpheme cleaning ----------
 
@@ -435,6 +439,12 @@ class InuktitutCleaner(CHATCleaner):
     def clean_pos_tier(cls, pos_tier):
         """Clean the xmor tier."""
         return cls.clean_xmor(pos_tier)
+
+    # ---------- morpheme word cleaning ----------
+
+    @classmethod
+    def clean_morpheme_word(cls, morpheme_word):
+        return cls.remove_terminator(morpheme_word)
 
     # ---------- morpheme cleaning ----------
 

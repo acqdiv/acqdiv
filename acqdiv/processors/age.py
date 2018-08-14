@@ -174,6 +174,27 @@ def clean_incomplete_ages(age):
         return (clean_years, days)
 
 
+def format_cha_age(age):
+    """Reformat age in CHAT corpora.
+
+    CHAT ages are usually given in the format YY;MM.DD. When only the year is
+    given, it is given in the format YY; which will be converted to
+    YY;0.0.
+
+    Args:
+        age (str): The raw age.
+
+    Returns:
+        str: The reformatted age.
+    """
+    if age:
+        # if only year is given
+        if age.endswith(';'):
+            age += '0.0'
+
+    return age
+
+
 def format_xml_age(age_str):
     """Reformats ages in XML corpora.
 

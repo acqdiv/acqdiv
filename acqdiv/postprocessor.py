@@ -64,7 +64,7 @@ def setup(test=False):
 
     # Load the role mapping.ini for unifying roles.
     global roles
-    roles = ConfigParser(delimiters=('='))
+    roles = ConfigParser(delimiters='=')
     roles.optionxform = str
     roles.read("ini/role_mapping.ini")
 
@@ -129,7 +129,7 @@ def get_config(corpus_name):
 
 
 def postprocess(test=False):
-    """ Global setup and then call post-processes. """
+    """Global setup and then call post-processes."""
     start_time = time.time()
 
     setup(test=test)
@@ -160,15 +160,14 @@ def postprocess(test=False):
     print('Next, run tests:')
 
     if test:
-        print('python3 -m "nose" -s -w tests test_regression.py')
-        print('python3 -m "nose" -s -w tests test_integrity.py:ValidationTest_DevDB')
+        print('acqdiv test')
     else:
-        print('python3 -m "nose" -s -w tests test_integrity.py:ValidationTest_ProductionDB')
+        print('acqdiv test -f')
     print()
 
 
 def process_speakers_table():
-    """ Post-process speakers table. """
+    """Post-process speakers table."""
     _speakers_unify_unknowns()
     _speakers_indonesian_experimenters()
     _speakers_update_age()
@@ -218,14 +217,22 @@ def _speakers_unify_unknowns():
 
 
 def _speakers_update_age():
-    """ Age standardization. Group by corpus and call age function depending on corpus input format (IMDI of CHAT XML). """
-    s = sa.select([db.Speaker.id, db.Speaker.session_id_fk, db.Speaker.corpus, db.Speaker.age_raw, db.Speaker.birthdate])
+    """Age standardization.
+
+    Group by corpus and call age function depending on corpus
+    input format (IMDI of CHAT XML).
+    """
+    s = sa.select([db.Speaker.id, db.Speaker.session_id_fk, db.Speaker.corpus,
+                   db.Speaker.age_raw, db.Speaker.birthdate])
     query = conn.execute(s)
     for corpus, rows in groupby(query, lambda r: r[2]):
         config = get_config(corpus)
         results = []
         if config["metadata"]["type"] == "imdi":
             results = _update_imdi_age(rows)
+        elif config["metadata"]["type"] == "cha":
+            results = _update_cha_age(rows)
+        # TODO: remove once all CHAT parsers are written
         else:
             results = _update_xml_age(rows)
         _update_rows(db.Speaker.__table__, "speaker_id", results)
@@ -233,20 +240,26 @@ def _speakers_update_age():
 
 
 def _speakers_indonesian_experimenters():
-    """ Configuration replacements for Indonesian experimenter speaker labels. Updates the speakers table.  """
+    """Configuration replacements for Indonesian experimenter speaker labels.
+
+    Updates the speakers table.
+    """
     cfg = get_config('Indonesian')
-    s = sa.select([db.Speaker.id, db.Speaker.speaker_label, db.Speaker.name]).where(db.Speaker.corpus == 'Indonesian')
+    s = sa.select(
+        [db.Speaker.id, db.Speaker.speaker_label, db.Speaker.name]).where(
+        db.Speaker.corpus == 'Indonesian')
     rows = conn.execute(s)
     results = []
     for row in rows:
         if row.speaker_label == 'EXP':
-            results.append({'speaker_id': row.id, 'speaker_label': cfg['exp_labels'][row.name]})
+            results.append({'speaker_id': row.id,
+                            'speaker_label': cfg['exp_labels'][row.name]})
     rows.close()
     _update_rows(db.Speaker.__table__, 'speaker_id', results)
 
 
 def _speakers_standardize_gender_labels():
-    """ Standardize gender labels in the speakers table. """
+    """Standardize gender labels in the speakers table."""
     s = sa.select([db.Speaker.id, db.Speaker.gender_raw])
     rows = conn.execute(s)
     results = []
@@ -265,18 +278,19 @@ def _speakers_standardize_gender_labels():
 
 
 def _speakers_standardize_roles():
-    """ Unify speaker roles and draw inferences to related values.
+    """Unify speaker roles and draw inferences to related values.
 
     Each corpus has its own set of speaker roles. This function uses
     "role_mapping.ini" to assign a unified role to each speaker according
-    to the mappings in role_mapping.ini. The mapping is either based on the original
-    role or the speaker_label (depending on how the corpora handles role encoding).
+    to the mappings in role_mapping.ini.
+    The mapping is either based on the original role or the speaker_label
+    (depending on how the corpora handles role encoding).
     The role column in the speaker table contains the unified roles.
     """
     s = sa.select([
-            db.Speaker.id, db.Speaker.role_raw, db.Speaker.role,
-            db.Speaker.gender_raw, db.Speaker.gender, db.Speaker.macrorole,
-            db.Speaker.corpus])
+        db.Speaker.id, db.Speaker.role_raw, db.Speaker.role,
+        db.Speaker.gender_raw, db.Speaker.gender, db.Speaker.macrorole,
+        db.Speaker.corpus])
     rows = conn.execute(s)
     results = []
     not_found = set()
@@ -306,8 +320,10 @@ def _speakers_standardize_roles():
             macrorole = None
 
         for item in not_found:
-            logger.warning('\'{}\' from {} not found in role_mapping.ini'.format(item[0], item[1]),
-                           exc_info=sys.exc_info())
+            logger.warning(
+                '\'{}\' from {} not found in role_mapping.ini'.format(item[0],
+                                                                      item[1]),
+                exc_info=sys.exc_info())
 
         results.append({'speaker_id': row.id, 'role': role, 'gender': gender,
                         'macrorole': macrorole})
@@ -317,7 +333,7 @@ def _speakers_standardize_roles():
 
 
 def _speakers_standardize_macroroles():
-    """ Define macrorole (= Adult, Child, Target_Child, Unknown)
+    """Define macrorole (= Adult, Child, Target_Child, Unknown)
 
     This function assigns an age category to each speaker. If there is
     no information on age available it uses "role_mappings.ini" to define
@@ -325,13 +341,14 @@ def _speakers_standardize_macroroles():
     the speaker's original role or speaker_label (depending on how the corpora
     handles role encoding).
     """
-    # TODO: this method is completely dependent on ages -- no warnings are given if the age input is wrong!
+    # TODO: this method is completely dependent on ages
+    # TODO: no warnings are given if the age input is wrong!
     # overwrite role mapping (except target child) if speaker is under 12
     # (e.g. if child is an aunt which is mapped to 'Adult' per default)
 
     s = sa.select([
-            db.Speaker.id, db.Speaker.corpus, db.Speaker.speaker_label,
-            db.Speaker.age_in_days, db.Speaker.macrorole, db.Speaker.role])
+        db.Speaker.id, db.Speaker.corpus, db.Speaker.speaker_label,
+        db.Speaker.age_in_days, db.Speaker.macrorole, db.Speaker.role])
     rows = conn.execute(s)
     results = []
 
@@ -358,9 +375,12 @@ def _speakers_standardize_macroroles():
 
 
 def _speakers_get_unique_speakers():
-    """ Populate the the unique speakers table. Also populate uniquespeaker_id_fk in the speakers table.
+    """Populate the the unique speakers table.
 
-    Uniqueness is determined by a combination of corpus, name, speaker label, and birthdate.
+    Also populate uniquespeaker_id_fk in the speakers table.
+
+    Uniqueness is determined by a combination of corpus, name, speaker label
+    and birthdate.
     """
     s = sa.select([db.Speaker])
     rows = conn.execute(s)
@@ -389,7 +409,10 @@ def _speakers_get_unique_speakers():
 
 
 def _speakers_get_target_children():
-    """ Set target children for sessions. Also adapt roles and macroroles if there are multiple target children per session.
+    """Set target children for sessions.
+
+    Also adapt roles and macroroles if there are multiple target children
+    per session.
     """
     s = sa.select([db.Speaker]).where(db.Speaker.role == "Target_Child")
     rows = conn.execute(s)
@@ -397,14 +420,14 @@ def _speakers_get_target_children():
     tc_id_results = []
     non_targets_results = []
 
-    # First store target children per session.
+    # Store target children per session.
     for row in rows:
         if row.session_id_fk in targets_per_session:
             targets_per_session[row.session_id_fk].add(row.uniquespeaker_id_fk)
         else:
             targets_per_session[row.session_id_fk] = {row.uniquespeaker_id_fk}
 
-    # Second go through all session ids and get the target children for this session.
+    # Go through all session ids and get the target children for this session.
     for session_id in targets_per_session:
         targets = targets_per_session[session_id]
         # Get session row.
@@ -415,9 +438,10 @@ def _speakers_get_target_children():
         if len(targets) == 1:
             # Just set target child for the session.
             target_child_fk = targets.pop()
-            tc_id_results.append({'session_id': session_id, 'target_child_fk': target_child_fk})
+            tc_id_results.append(
+                {'session_id': session_id, 'target_child_fk': target_child_fk})
 
-        # If there are several target children infer target child from source id.
+        # If several target children infer target child from source id.
         else:
             if rec.corpus == "Chintang":
                 # Get target child label and get right target child id.
@@ -449,11 +473,13 @@ def _speakers_get_target_children():
 
             else:
                 logger.warning(
-                    "Multiple target children for session {} in {}".format(session_id, rec.corpus))
+                    "Multiple target children for session {} in {}".format(
+                        session_id, rec.corpus))
                 continue
 
             # Set this target child for the session.
-            tc_id_results.append({'session_id': session_id, 'target_child_fk': tc_id})
+            tc_id_results.append(
+                {'session_id': session_id, 'target_child_fk': tc_id})
 
             # Adapt role and macrorole of children that are not target anymore.
             non_targets_query = sa.select([db.Speaker]).where(sa.and_(
@@ -463,14 +489,16 @@ def _speakers_get_target_children():
             non_targets = conn.execute(non_targets_query)
 
             for row in non_targets:
-                non_targets_results.append({'speaker_id': row.id, 'role': "Child", 'macrorole': "Child"})
+                non_targets_results.append(
+                    {'speaker_id': row.id, 'role': "Child",
+                     'macrorole': "Child"})
     rows.close()
     _update_rows(db.Session.__table__, 'session_id', tc_id_results)
     _update_rows(db.Speaker.__table__, 'speaker_id', non_targets_results)
 
 
 def process_utterances_table():
-    """ Post-process utterances table. """
+    """Post-process utterances table."""
     print("_utterances_standardize_timestamps")
     _utterances_standardize_timestamps()
 
@@ -488,38 +516,44 @@ def process_utterances_table():
 
 
 def _utterances_standardize_timestamps():
-    """ Unify the time stamps. """
-    s = sa.select([db.Utterance.id, db.Utterance.start_raw, db.Utterance.end_raw])
+    """Unify the time stamps."""
+    s = sa.select(
+        [db.Utterance.id, db.Utterance.start_raw, db.Utterance.end_raw])
     rows = conn.execute(s)
     results = []
     for row in rows:
-        if row.start_raw: #.isnot(None):
+        if row.start_raw:  # .isnot(None):
             try:
                 start = age.unify_timestamps(row.start_raw)
                 end = age.unify_timestamps(row.end_raw)
-                results.append({'utterance_id': row.id, 'start': start, 'end': end})
+                results.append(
+                    {'utterance_id': row.id, 'start': start, 'end': end})
             except Exception as e:
-                logger.warning('Error unifying timestamps: {}'.format(row, e), exc_info=sys.exc_info())
+                logger.warning('Error unifying timestamps: {}'.format(row, e),
+                               exc_info=sys.exc_info())
     rows.close()
     _update_rows(db.Utterance.__table__, 'utterance_id', results)
 
 
 def _utterances_change_indonesian_speaker_labels():
-    s = sa.select([db.Utterance.id, db.Utterance.speaker_label]).where(db.Utterance.corpus == "Indonesian")
+    s = sa.select([db.Utterance.id, db.Utterance.speaker_label]).where(
+        db.Utterance.corpus == "Indonesian")
     rows = conn.execute(s)
     results = []
     for row in rows:
         if row.speaker_label:
             if not 'EXP' in row.speaker_label:
-                results.append({'utterance_id': row.id, 'speaker_label': row.speaker_label[0:3]})
+                results.append({'utterance_id': row.id,
+                                'speaker_label': row.speaker_label[0:3]})
             else:
-                results.append({'utterance_id': row.id, 'speaker_label': row.speaker_label[3:]})
+                results.append({'utterance_id': row.id,
+                                'speaker_label': row.speaker_label[3:]})
     rows.close()
     _update_rows(db.Utterance.__table__, 'utterance_id', results)
 
 
 def _utterances_get_uniquespeaker_ids():
-    """ Add speaker ids and unique speaker ids to utterances table. """
+    """Add speaker ids and unique speaker ids to utterances table."""
 
     rows = engine.execute('''
     select u.id, u.speaker_label, u.session_id_fk, u.corpus, s.id as speaker_id, s.uniquespeaker_id_fk
@@ -532,15 +566,19 @@ def _utterances_get_uniquespeaker_ids():
     results = []
     for row in rows:
         if row.speaker_label:
-            results.append({'utterance_id': row.id, 'uniquespeaker_id_fk': row.uniquespeaker_id_fk, 'speaker_id_fk': row.speaker_id})
+            results.append({'utterance_id': row.id,
+                            'uniquespeaker_id_fk': row.uniquespeaker_id_fk,
+                            'speaker_id_fk': row.speaker_id})
     rows.close()
     _update_rows(db.Utterance.__table__, 'utterance_id', results)
 
 
 def _utterances_get_directedness():
-    """ Infer child directedness for each utterance. Skips Chintang. If the utterance is or is not child directed, we denote
-        this with 1 or 0. We use None (NULL) if the corpus is not annotated for child directedness. """
+    """Infer child directedness for each utterance. Skips Chintang.
 
+    If the utterance is or is not child directed, we denote this with 1 or 0.
+    We use None (NULL) if the corpus is not annotated for child directedness.
+    """
     rows = engine.execute('''
         select u.id, u.corpus, u.addressee, u.speaker_label, s.macrorole
         from utterances u
@@ -552,7 +590,8 @@ def _utterances_get_directedness():
     results = []
     for row in rows:
         if row.addressee:
-            if row.macrorole == 'Target_Child' and row.speaker_label != row.addressee:
+            if (row.macrorole == 'Target_Child'
+                    and row.speaker_label != row.addressee):
                 results.append({'utterance_id': row.id, 'childdirected': 1})
             else:
                 results.append({'utterance_id': row.id, 'childdirected': 0})
@@ -565,10 +604,10 @@ def _utterances_get_directedness():
 def _utterances_unify_unknowns():
     """Unify unknown values for utterances."""
     s = sa.select([
-            db.Utterance.id, db.Utterance.addressee,
-            db.Utterance.utterance_raw, db.Utterance.utterance,
-            db.Utterance.translation, db.Utterance.morpheme,
-            db.Utterance.gloss_raw, db.Utterance.pos_raw])
+        db.Utterance.id, db.Utterance.addressee,
+        db.Utterance.utterance_raw, db.Utterance.utterance,
+        db.Utterance.translation, db.Utterance.morpheme,
+        db.Utterance.gloss_raw, db.Utterance.pos_raw])
     rows = conn.execute(s)
     results = []
     for row in rows:
@@ -644,8 +683,7 @@ def _utterances_unify_unknowns():
 
 
 def process_morphemes_table():
-    """ Post-process the morphemes table.
-    """
+    """Post-process the morphemes table."""
     print("_morphemes_infer_pos_chintang")
     _morphemes_infer_pos_chintang()
 
@@ -669,8 +707,13 @@ def process_morphemes_table():
 
 
 def _morphemes_infer_pos_chintang():
-    """ Chintang part-of-speech inference. Also removes hyphens from raw input data. """
-    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.pos_raw]).where(db.Morpheme.corpus == "Chintang")
+    """Chintang part-of-speech inference.
+
+    Also removes hyphens from raw input data.
+    """
+    s = sa.select(
+        [db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.pos_raw]).where(
+        db.Morpheme.corpus == "Chintang")
     rows = conn.execute(s)
     results = []
     for row in rows:
@@ -684,8 +727,13 @@ def _morphemes_infer_pos_chintang():
 
 
 def _morphemes_infer_pos_indonesian():
-    """ Indonesian part-of-speech inference. Clean up affix markers "-"; assign sfx, pfx, stem. """
-    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw, db.Morpheme.pos_raw]).where(db.Morpheme.corpus == "Indonesian")
+    """Indonesian part-of-speech inference.
+
+    Clean up affix markers "-"; assign sfx, pfx, stem.
+    """
+    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw,
+                   db.Morpheme.pos_raw]).where(
+        db.Morpheme.corpus == "Indonesian")
     rows = conn.execute(s)
     results = []
     for row in rows:
@@ -704,25 +752,37 @@ def _morphemes_infer_pos_indonesian():
 
 
 def _morphemes_infer_pos():
-    """ Part-of-speech inference. Clean up affix markers "-"; assign sfx, pfx, stem.
+    """Part-of-speech inference.
+
+    Clean up affix markers "-"; assign sfx, pfx, stem.
     """
-    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.morpheme, db.Morpheme.gloss_raw, db.Morpheme.pos_raw]).where(sa.or_(
+    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.morpheme,
+                   db.Morpheme.gloss_raw, db.Morpheme.pos_raw]).where(sa.or_(
         db.Morpheme.corpus == "Indonesian",
         db.Morpheme.corpus == "Chintang"))
     rows = conn.execute(s)
     results = []
     for row in rows:
-        morpheme = None if row.morpheme is None else row.morpheme.replace('-', '')
-        gloss_raw = None if row.gloss_raw is None else row.gloss_raw.replace('-', '')
+        morpheme = None if row.morpheme is None else row.morpheme.replace('-',
+                                                                          '')
+        gloss_raw = None if row.gloss_raw is None else row.gloss_raw.replace(
+            '-', '')
         pos_raw = None if row.pos_raw is None else row.pos_raw.replace('-', '')
-        results.append({'morpheme_id': row.id, 'pos_raw': pos_raw, 'gloss_raw': gloss_raw, 'morpheme': morpheme})
+        results.append(
+            {'morpheme_id': row.id, 'pos_raw': pos_raw, 'gloss_raw': gloss_raw,
+             'morpheme': morpheme})
     rows.close()
     _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
 
 def _morphemes_infer_labels():
-    """ Indonesian, Japanese_MiiPro, Japanese_Miyata, Sesotho, Turkish have morpheme or pos substitutions in their config files. """
-    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw, db.Morpheme.pos, db.Morpheme.morpheme])
+    """Perform morpheme and POS tag substitutions given the config file.
+
+    Indonesian, Japanese_MiiPro, Japanese_Miyata, Sesotho and Turkish have
+    substitutions defined in their config files.
+    """
+    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw,
+                   db.Morpheme.pos, db.Morpheme.morpheme])
     query = conn.execute(s)
     results = []
     for corpus, rows in groupby(query, lambda r: r[1]):
@@ -731,22 +791,30 @@ def _morphemes_infer_labels():
             target_tier = config['morphemes']['target_tier']
             substitutions = config['substitutions']
             for row in rows:
-                result = None if row.gloss_raw not in substitutions else substitutions[row.gloss_raw]
+                result = None if row.gloss_raw not in substitutions else \
+                substitutions[row.gloss_raw]
                 if result:
                     if target_tier == "morpheme":
-                        results.append({'morpheme_id': row.id, 'morpheme': result, 'pos': row.pos})
+                        results.append(
+                            {'morpheme_id': row.id, 'morpheme': result,
+                             'pos': row.pos})
                     if target_tier == "pos":
-                        results.append({'morpheme_id': row.id, 'morpheme': row.morpheme, 'pos': result})
+                        results.append(
+                            {'morpheme_id': row.id, 'morpheme': row.morpheme,
+                             'pos': result})
     query.close()
     _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
 
 def _morphemes_unify_label():
-    """ Key-value substitutions for morphological glosses and parts-of-speech in the database. If no key is
-        defined in the corpus ini file, then None (NULL) is written to the database.
+    """Key-value substitutions for morphological glosses and parts-of-speech.
+
+    If no key is defined in the corpus ini file, then None (NULL) is written
+    to the database.
     """
     # TODO: Insert some debugging here if the labels are missing?
-    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw, db.Morpheme.pos_raw])
+    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw,
+                   db.Morpheme.pos_raw])
     query = conn.execute(s)
     results = []
     for corpus, rows in groupby(query, lambda r: r[1]):
@@ -754,7 +822,8 @@ def _morphemes_unify_label():
         glosses = config['gloss']
         poses = config['pos']
         for row in rows:
-            gloss = None if row.gloss_raw not in glosses else glosses[row.gloss_raw]
+            gloss = None if row.gloss_raw not in glosses else glosses[
+                row.gloss_raw]
             pos = None if row.pos_raw not in poses else poses[row.pos_raw]
             results.append({'morpheme_id': row.id, 'gloss': gloss, 'pos': pos})
     query.close()
@@ -762,12 +831,17 @@ def _morphemes_unify_label():
 
 
 def _morphemes_get_pos_indexes():
-    """ Infer the word's part-of-speech (raw and processed) from the morphemes table as index for word pos assignment. """
-    s = sa.select([db.Morpheme.id, db.Morpheme.pos, db.Morpheme.pos_raw, db.Morpheme.word_id_fk])
+    """Infer the word's part-of-speech (raw and processed).
+
+    Infer from the morphemes table as index for word pos assignment.
+    """
+    s = sa.select([db.Morpheme.id, db.Morpheme.pos, db.Morpheme.pos_raw,
+                   db.Morpheme.word_id_fk])
     rows = conn.execute(s)
     for row in rows:
-        if not row.pos in ["sfx", "pfx"]:
-            # row.id will be int type in other tables when look up occurs; type it int here for convenience
+        if row.pos not in ["sfx", "pfx"]:
+            # row.id will be int type in other tables when look up occurs
+            # type it int here for convenience
             try:
                 pos_index[int(row.word_id_fk)] = row.pos
             except TypeError:
@@ -778,11 +852,12 @@ def _morphemes_get_pos_indexes():
                 pass
     rows.close()
 
+
 def _morphemes_unify_unknowns():
     """Unify unknown values for morphemes."""
     s = sa.select([
-            db.Morpheme.id, db.Morpheme.morpheme, db.Morpheme.gloss_raw,
-            db.Morpheme.gloss, db.Morpheme.pos, db.Morpheme.pos_raw])
+        db.Morpheme.id, db.Morpheme.morpheme, db.Morpheme.gloss_raw,
+        db.Morpheme.gloss, db.Morpheme.pos, db.Morpheme.pos_raw])
     rows = conn.execute(s)
     results = []
     null_values = {'???', '?', '', 'ww', 'xxx', '***'}
@@ -831,7 +906,7 @@ def _morphemes_unify_unknowns():
 
 
 def process_words_table():
-    """ Add POS labels to the word table. """
+    """Add POS labels to the word table."""
     print("_words_add_pos_labels")
     _words_add_pos_labels()
 
@@ -842,8 +917,8 @@ def process_words_table():
 def _words_unify_unknowns():
     """Unify unknown values for words."""
     s = sa.select([
-            db.Word.id, db.Word.word, db.Word.word_actual,
-            db.Word.word_target, db.Word.pos])
+        db.Word.id, db.Word.word, db.Word.word_actual,
+        db.Word.word_target, db.Word.pos])
     rows = conn.execute(s)
     results = []
     null_values = {"", "xx", "ww", "???", "?", "0"}
@@ -889,20 +964,21 @@ def _words_unify_unknowns():
 
 
 def _words_add_pos_labels():
-    """ Add POS labels (processed and UD). """    
+    """Add POS labels (processed and UD)."""
 
     s = sa.select([db.Word.id, db.Word.corpus])
     query = conn.execute(s)
     results_pos = []
     results_pos_ud = []
-    
+
     for corpus, rows in groupby(query, lambda r: r[1]):
         config = get_config(corpus)
         poses_ud = config['pos_ud']
-        
+
         for row in rows:
             if row.id in pos_index:
-                results_pos.append({'word_id': row.id, 'pos': pos_index[row.id]})
+                results_pos.append(
+                    {'word_id': row.id, 'pos': pos_index[row.id]})
             if row.id in pos_raw_index:
                 # tag in index is pos_raw, so first get UD equivalent
                 pos_raw = pos_raw_index[row.id]
@@ -939,8 +1015,7 @@ def _insert_durations():
 
 ### Util functions ###
 def _update_rows(t, binder, rows):
-    """
-    Update rows for a given table
+    """Update rows for a given table.
 
     Args:
         t: sql-alchemy-table
@@ -956,7 +1031,10 @@ def _update_rows(t, binder, rows):
 
 
 def _insert_rows(t, rows):
-    """ Insert rows for a given table, bindparameter and list of dictionaries contain column-value mappings. """
+    """Insert rows for a given table.
+
+    Bind parameter and list of dictionaries contain column-value mappings.
+    """
     stmt = t.insert().values()
     try:
         conn.execute(stmt, rows)
@@ -965,17 +1043,19 @@ def _insert_rows(t, rows):
 
 
 def _update_imdi_age(rows):
-    """ Process speaker ages in IMDI corpora.
+    """Process speaker ages in IMDI corpora.
 
-    Finds all the recording sessions in the corpus in the config, then, for each speaker
-    in the session:
+    Finds all the recording sessions in the corpus in the config. Then,
+    for each speaker in the session:
 
-    First attempts to calculate ages from the speaker's birth date and the session's
-    recording date. For speakers where this fails, looks for speakers that already
-    have a properly formatted age, transfers this age from the age_raw column to the
-    age column and calculates age_in_days from it.
+    First attempts to calculate ages from the speaker's birth date and
+    the session's recording date. For speakers where this fails, looks for
+    speakers that already have a properly formatted age, transfers this age
+    from the age_raw column to the age column and calculates
+    age_in_days from it.
 
-    Finally, it looks for speakers that only have an age in years and does the same.
+    Finally, it looks for speakers that only have an age in years
+     and does the same.
     """
     results = []
     for row in rows:
@@ -987,36 +1067,62 @@ def _update_imdi_age(rows):
                 ages = age.format_imdi_age(birth_date, recording_date)
                 formatted_age = ages[0]
                 age_in_days = ages[1]
-                results.append({'speaker_id': row.id, 'age': formatted_age, 'age_in_days': age_in_days})
-            except age.BirthdateError as e:
-                logger.warning('Couldn\'t calculate age of speaker {} from birth and recording dates: '
-                               'Invalid birthdate.'.format(row.id), exc_info=sys.exc_info())
-            except age.SessionDateError as e:
-                logger.warning('Couldn\'t calculate age of speaker {} from birth and recording dates: '
-                               'Invalid recording date.'.format(row.id), exc_info=sys.exc_info())
+                results.append({'speaker_id': row.id, 'age': formatted_age,
+                                'age_in_days': age_in_days})
+            except age.BirthdateError:
+                logger.warning(
+                    'Couldn\'t calculate age of speaker {} from birth and '
+                    'recording dates: '
+                    'Invalid birthdate.'.format(row.id),
+                    exc_info=sys.exc_info())
+            except age.SessionDateError:
+                logger.warning(
+                    'Couldn\'t calculate age of speaker {} from birth and '
+                    'recording dates: '
+                    'Invalid recording date.'.format(row.id),
+                    exc_info=sys.exc_info())
 
         if re.fullmatch(age_pattern, row.age_raw):
             formatted_age = row.age_raw
             age_in_days = age.calculate_xml_days(row.age_raw)
-            results.append({'speaker_id': row.id, 'age': formatted_age, 'age_in_days': age_in_days})
+            results.append({'speaker_id': row.id, 'age': formatted_age,
+                            'age_in_days': age_in_days})
 
-        if "None" not in row.age_raw or "Un" not in row.age_raw or row.age is None:
+        if ("None" not in row.age_raw
+                or "Un" not in row.age_raw
+                or row.age is None):
             if not cleaned_age.fullmatch(row.age_raw):
                 try:
                     ages = age.clean_incomplete_ages(row.age_raw)
                     formatted_age = ages[0]
                     age_in_days = ages[1]
-                    results.append({'speaker_id': row.id, 'age': formatted_age, 'age_in_days': age_in_days})
-                except ValueError as e:
-                    logger.warning('Couldn\'t transform age of speaker {}'.format(row.id), exc_info=sys.exc_info())
+                    results.append({'speaker_id': row.id, 'age': formatted_age,
+                                    'age_in_days': age_in_days})
+                except ValueError:
+                    logger.warning(
+                        'Couldn\'t transform age of speaker {}'.format(row.id),
+                        exc_info=sys.exc_info())
+    return results
+
+
+def _update_cha_age(rows):
+    """Process speaker ages in CHAT corpora."""
+    results = []
+    for row in rows:
+        if row.age_raw:
+            new_age = age.format_cha_age(row.age_raw)
+            if new_age:
+                aid = age.calculate_xml_days(new_age)
+                results.append(
+                    {'speaker_id': row.id, 'age': new_age, 'age_in_days': aid})
     return results
 
 
 def _update_xml_age(rows):
-    """ Process speaker ages in Chat XML corpora.
+    """Process speaker ages in Chat XML corpora.
 
-    Finds all speakers from the corpus in the config and calls methods from age.py to
-    fill in the age and age_in_days columns.
+    Finds all speakers from the corpus in the config and
+    calls methods from age.py to fill in the age and age_in_days columns.
     """
     results = []
     for row in rows:
@@ -1024,12 +1130,13 @@ def _update_xml_age(rows):
             new_age = age.format_xml_age(row.age_raw)
             if new_age:
                 aid = age.calculate_xml_days(new_age)
-                results.append({'speaker_id': row.id, 'age': new_age, 'age_in_days': aid})
+                results.append(
+                    {'speaker_id': row.id, 'age': new_age, 'age_in_days': aid})
     return results
 
 
 def _get_session_date(session_id):
-    """ Return the session date from the session table. """
+    """Return the session date from the session table. """
     s = sa.select([db.Session]).where(db.Session.id == session_id)
     row = conn.execute(s).fetchone()
     return row.date
