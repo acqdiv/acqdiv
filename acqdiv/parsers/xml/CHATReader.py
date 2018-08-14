@@ -634,6 +634,34 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         fragment_regex = re.compile(r'&[^-=]\S+')
         return fragment_regex.sub('xxx', utterance)
 
+    @staticmethod
+    def get_retracing_actual(utterance):
+        """Get the actual form of retracings.
+
+        Coding in CHAT: [/], [//], [///], [/-]
+
+        Removal of retracing markers.
+        """
+        # several scoped words
+        retracing_regex1 = re.compile(r'<(.*?)> \[/{1,3}|/-\]')
+        clean = retracing_regex1.sub(r'\1', utterance)
+        # one scoped word
+        retracing_regex2 = re.compile(r'(\S+) \[/{1,3}|/-\]')
+        return retracing_regex2.sub(r'\1', clean)
+
+    # TODO: implement
+    @staticmethod
+    def get_retracing_target(utterance):
+        """Get the target form of retracings.
+
+        Coding in CHAT: [/], [//], [///], [/-]
+
+        Removal of retracing markers. For retracings with correction ([//]),
+        Both the retraced and retracing part receive the retracing value, e.g.
+        < hui do > [//] hoi du -> hoi du hoi du
+        """
+        pass
+
     @classmethod
     def to_actual_utterance(cls, utterance):
         for actual_method in [cls.get_shortening_actual,
