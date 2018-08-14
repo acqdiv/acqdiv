@@ -436,6 +436,11 @@ class TestInuktitutParser(unittest.TestCase):
         actual_reader = self.parser.get_reader()
         self.assertTrue(isinstance(actual_reader, InuktitutReader))
 
+    def test_get_cleaner(self):
+        """Test get_cleaner."""
+        actual_cleaner = self.parser.get_cleaner()
+        self.assertTrue(isinstance(actual_cleaner, InuktitutCleaner))
+
     def test_next_utterance_no_misalignments_one_word(self):
         """Test next_utterance with one word and one morpheme. (Inuktitut)"""
         session_str = (
@@ -1176,7 +1181,118 @@ class TestJapaneseMiiProParser(unittest.TestCase):
 
 class TestCreeParser(unittest.TestCase):
     """Class to test the CreeParser."""
-    pass
+
+    def setUp(self):
+        self.session_file_path = './test_CHATParser.cha'
+        self.parser = CreeParser(self.session_file_path)
+        self.maxDiff = None
+
+    def test_get_reader(self):
+        """Test get_reader."""
+        actual_reader = self.parser.get_reader()
+        self.assertTrue(isinstance(actual_reader, CreeReader))
+
+    def test_get_cleaner(self):
+        """Test get_cleaner."""
+        actual_cleaner = self.parser.get_cleaner()
+        self.assertTrue(isinstance(actual_cleaner, CreeCleaner))
+
+    def test_next_utterance_no_misalignments_single_word(self):
+        """Test next_utterance with utt containing no misalignemnts."""
+        session_str = ('*CHI:\tchair . 2883660_2884622\n%pho:\t*\n%mod:\t*\n'
+                       '%eng:\tohhhhhh\n@End')
+        self.parser.reader.read(io.StringIO(session_str))
+        actual_output = list(self.parser.next_utterance())[0]
+        utt_dict = {
+            'source_id': 'u0',
+            'speaker_label': 'CHI',
+            'addressee': None,
+            'utterance_raw': 'chair .',
+            'utterance': 'chair',
+            'translation': 'ohhhhhh',
+            'morpheme': None,
+            'gloss_raw': None,
+            'pos_raw': None,
+            'sentence_type': 'default',
+            'start_raw': '2883660',
+            'end_raw': '2884622',
+            'comment': None,
+            'warning': None
+        }
+        words_list = [
+            {
+                'word_language': None,
+                'word': 'chair',
+                'word_actual': 'chair',
+                'word_target': 'chair',
+                'warning': None
+            }
+        ]
+        morpheme_list = []
+        desired_output = (utt_dict, words_list, morpheme_list)
+        self.assertEqual(actual_output, desired_output)
+
+    def test_next_utterance_no_misalignments_multiple_words(self):
+        """Test next_utterance with utt containing no misalignemnts."""
+
+        session_str = ('*CHI:\t‹wâu nîyi› . 1198552_1209903\n%pho:\t‹wo ni›'
+                       '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
+                       '%xmortyp:\t[ni pro]\n%xtarmor:\t[wo *]\n%xmormea:\t'
+                       '[egg 1]\n@End')
+        self.parser.reader.read(io.StringIO(session_str))
+        actual_output = list(self.parser.next_utterance())[0]
+        utt_dict = {
+            'source_id': 'u0',
+            'speaker_label': 'CHI',
+            'addressee': None,
+            'utterance_raw': '‹wâu nîyi› .',
+            'utterance': 'wâu nîyi',
+            'translation': 'egg me',
+            'morpheme': '[wo *]',
+            'gloss_raw': '[egg 1]',
+            'pos_raw': '[ni pro]',
+            'sentence_type': 'default',
+            'start_raw': '1198552',
+            'end_raw': '1209903',
+            'comment': None,
+            'warning': None
+        }
+        words_list = [
+            {
+                'word_language': None,
+                'word': 'wâu',
+                'word_actual': 'wâu',
+                'word_target': 'wâu',
+                'warning': None
+            },
+            {
+                'word_language': None,
+                'word': 'nîyi',
+                'word_actual': 'nîyi',
+                'word_target': 'nîyi',
+                'warning': None
+            }
+        ]
+        morpheme_list = [
+            [
+                {
+                    'gloss_raw': 'egg',
+                    'morpheme': 'wo',
+                    'morpheme_language': 'Cree',
+                    'pos_raw': 'ni'
+                },
+            ],
+            [
+                {
+                    'gloss_raw': '1',
+                    'morpheme': None,
+                    'morpheme_language': 'Cree',
+                    'pos_raw': 'pro'
+                }
+            ]
+        ]
+        desired_output = (utt_dict, words_list, morpheme_list)
+        self.assertEqual(actual_output, desired_output)
 
 if __name__ == '__main__':
     unittest.main()
