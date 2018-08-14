@@ -4,9 +4,6 @@ from acqdiv.parsers.xml.CHATParser import *
 from acqdiv.parsers.xml.CHATReader import *
 from acqdiv.parsers.xml.CHATCleaner import *
 
-# TODO: Mark all methods in regard to which
-# parser they belong in the docstring
-
 
 class TestCHATParser(unittest.TestCase):
     """Class to test the CHATParser."""
@@ -17,17 +14,17 @@ class TestCHATParser(unittest.TestCase):
         self.maxDiff = None
 
     def test_get_reader(self):
-        """Test get_reader."""
+        """Test get_reader. (CHATParser)"""
         actual_reader = CHATParser.get_reader()
         self.assertTrue(isinstance(actual_reader, ACQDIVCHATReader))
 
     def test_get_cleaner(self):
-        """Test get_cleaner."""
+        """Test get_cleaner. (CHATParser)"""
         actual_cleaner = CHATParser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, CHATCleaner))
 
     def test_get_session_metadata(self):
-        """Test get_session_metadata with test.cha."""
+        """Test get_session_metadata with test.cha. (CHATParser)"""
         session_str = (
             '@UTF8\n'
             '@Begin\n'
@@ -56,7 +53,7 @@ class TestCHATParser(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_next_speaker(self):
-        """Test next_speaker with test.cha."""
+        """Test next_speaker with test.cha. (CHATParser)"""
         session_str = (
             '@UTF8\n'
             '@Begin\n'
@@ -435,12 +432,12 @@ class TestInuktitutParser(unittest.TestCase):
         self.maxDiff = None
 
     def test_get_reader(self):
-        """Test if InuktitutReader is returned."""
+        """Test get_reader for Inuktitutparser."""
         actual_reader = self.parser.get_reader()
         self.assertTrue(isinstance(actual_reader, InuktitutReader))
 
     def test_get_cleaner(self):
-        """Test get_cleaner."""
+        """Test get_cleaner for Inuktitutparser."""
         actual_cleaner = self.parser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, InuktitutCleaner))
 
@@ -869,17 +866,17 @@ class TestJapaneseMiiProParser(unittest.TestCase):
         self.maxDiff = None
 
     def test_get_reader(self):
-        """Test if JapaneseMiiProReader is returned."""
+        """Test get_reader for JapaneseMiiProParser."""
         actual_reader = self.parser.get_reader()
         self.assertTrue(isinstance(actual_reader, JapaneseMiiProReader))
 
     def test_get_cleaner(self):
-        """Test if JapaneseMiiProCleaner is returned."""
+        """Test get_cleaner for JapaneseMiiProParser."""
         actual_cleaner = self.parser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, JapaneseMiiProCleaner))
 
     def test_next_utterance_no_misalignments_single_word(self):
-        """Test next_utterance with utt containing no misalignemnts."""
+        """Test next_utterance with no misalignemnts. (JapaneseMiiPro)"""
         session_str = ('*MOT:\tnani ? 107252_107995\n%xtrn:\tn:deic:wh|nani'
                        ' ?\n%ort:\t何 ?\n@End')
         self.parser.reader.read(io.StringIO(session_str))
@@ -923,7 +920,7 @@ class TestJapaneseMiiProParser(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_next_utterance_no_misalignments_multiple_words(self):
-        """Test next_utterance with utt containing no misalignemnts."""
+        """Test next_utterance with no misalignemnts. (JapaneseMiiPro)"""
         session_str = ('tom20010724.cha:*MOT:\tHonochan doozo . '
                        '4087868_4089193\n%xtrn:\tn:prop|Hono-chan co:g|doozo'
                        ' .\n%ort:\tホノちゃんどうぞ。\n@End')
