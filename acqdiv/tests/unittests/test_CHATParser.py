@@ -1171,5 +1171,12 @@ class TestJapaneseMiiProParser(unittest.TestCase):
         desired_output = (utt_dict, words_list, morpheme_list)
         self.assertEqual(actual_output, desired_output)
 
+###############################################################################
+
+
+class TestCreeParser(unittest.TestCase):
+    """Class to test the CreeParser."""
+    pass
+
 if __name__ == '__main__':
     unittest.main()
