@@ -182,15 +182,6 @@ class CHATCleaner(CorpusCleanerInterface):
         clean = ca_regex.sub('', utterance)
         return cls.remove_redundant_whitespaces(clean)
 
-    @staticmethod
-    def remove_fillers(utterance):
-        """Remove fillers from the utterance.
-
-        Coding in CHAT: word starts with & or &-
-        """
-        filler_regex = re.compile(r'&[^=](\S+)')
-        return filler_regex.sub(r'\1', utterance)
-
     @classmethod
     def remove_pauses_between_words(cls, utterance):
         """Remove pauses between words from the utterance.
@@ -227,8 +218,7 @@ class CHATCleaner(CorpusCleanerInterface):
                 cls.handle_repetitions, cls.remove_terminator,
                 cls.remove_events, cls.remove_omissions,
                 cls.remove_linkers, cls.remove_separators, cls.remove_ca,
-                cls.remove_fillers, cls.remove_pauses_between_words,
-                cls.remove_scoped_symbols,
+                cls.remove_pauses_between_words, cls.remove_scoped_symbols,
                 cls.null_untranscribed_utterances]:
             utterance = cleaning_method(utterance)
 
@@ -271,11 +261,21 @@ class CHATCleaner(CorpusCleanerInterface):
         """
         return word.lstrip('^').lstrip('≠')
 
+    @staticmethod
+    def remove_filler(word):
+        """Remove filler marker from the word.
+
+        Coding in CHAT: word starts with & or &-
+        """
+        filler_regex = re.compile(r'&-|&(?!=)(\S+)')
+        return filler_regex.sub(r'\1', word)
+
     @classmethod
     def clean_word(cls, word):
         for cleaning_method in [
                 cls.remove_form_markers, cls.remove_drawls,
-                cls.remove_pauses_within_words, cls.remove_blocking]:
+                cls.remove_pauses_within_words, cls.remove_blocking,
+                cls.remove_filler]:
             word = cleaning_method(word)
 
         return word

@@ -446,22 +446,6 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    # Tests for the remove_fillers-method.
-
-    # TODO: new test case with only & (not &-)
-
-    def test_remove_fillers_mutiple_fillers(self):
-        """Test remove_fillers with 3 fillers (&-uh)."""
-        actual_output = CHATCleaner.remove_fillers('&-uh &-uh the water &-uh')
-        desired_output = 'uh uh the water uh'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_remove_fillers_empty_string(self):
-        """Test remove_fillers with 3 fillers (&-uh)."""
-        actual_output = CHATCleaner.remove_fillers('')
-        desired_output = ''
-        self.assertEqual(actual_output, desired_output)
-
     # Test for the remove_pauses_between_words-method.
 
     def test_remove_pauses_between_words_multiple_pauses(self):
@@ -526,13 +510,12 @@ class TestCHATCleaner(unittest.TestCase):
         - Null-event
         - repetition
         - scoped symbols
-        - filler
         - pause between words
         """
-        utterance = ("+^ that's [x 2] xxx &-uh (..) mine ↓ &=vocalizes ; <0you"
+        utterance = ("+^ that's [x 2] xxx (..) mine ↓ &=vocalizes ; <0you"
                      " pig <she said   [=! cries]>> [=! slaps leg] +/.")
         actual_output = CHATCleaner.clean_utterance(utterance)
-        desired_output = "that's that's ??? uh mine pig she said"
+        desired_output = "that's that's ??? mine pig she said"
         self.assertEqual(actual_output, desired_output)
 
     def test_clean_utterance_empty_string(self):
@@ -635,6 +618,36 @@ class TestCHATCleaner(unittest.TestCase):
         """Test remove_blocking with an empty string."""
         actual_output = CHATCleaner.remove_blocking('')
         desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # Tests for the remove_fillers-method.
+
+    def test_remove_filler_without_dash(self):
+        """Test remove_filler without dash."""
+        word = '&hu'
+        actual_output = CHATCleaner.remove_filler(word)
+        desired_output = 'hu'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_filler_with_dash(self):
+        """Test remove_fillers with dash."""
+        word = '&-hu'
+        actual_output = CHATCleaner.remove_filler(word)
+        desired_output = 'hu'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_filler_empty_string(self):
+        """Test remove_fillers with 3 fillers (&-uh)."""
+        word = ''
+        actual_output = CHATCleaner.remove_filler(word)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_filler_ampersand_with_equal_sign(self):
+        """Test remove_fillers with ampersand and equal sign."""
+        word = '&=hu'
+        actual_output = CHATCleaner.remove_filler(word)
+        desired_output = '&=hu'
         self.assertEqual(actual_output, desired_output)
 
     def test_clean_word_already_clean(self):
