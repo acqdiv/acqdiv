@@ -370,8 +370,39 @@ class EnglishManchester1Cleaner(CHATCleaner):
 
     @classmethod
     def clean_morph_tier(cls, morph_tier):
-        morph_tier = cls.remove_terminator(morph_tier)
-        return cls.remove_non_words(morph_tier)
+        for cleaning_method in [
+                cls.remove_terminator, cls.remove_non_words,
+                cls.remove_omissions]:
+            morph_tier = cleaning_method(morph_tier)
+
+        return morph_tier
+
+    # ---------- morpheme cleaning ----------
+
+    # ---------- gloss cleaning ----------
+
+    @classmethod
+    def replace_ampersand(cls, gloss):
+        """Replace the ampersand in glosses by a dot.
+
+        Fusional suffixes are suffixed to the stem by an ampersand.
+        Example: be&3S -> be.3S
+        """
+        return gloss.replace('&', '.')
+
+    @classmethod
+    def replace_zero(cls, gloss):
+        """Replace ZERO in glosses by ∅."""
+        return gloss.replace('ZERO', '∅')
+
+    @classmethod
+    def clean_gloss(cls, gloss):
+        for cleaning_method in [cls.replace_ampersand, cls.replace_zero]:
+            gloss = cleaning_method(gloss)
+
+        return gloss
+
+    # ---------- POS cleaning ----------
 
     @staticmethod
     def extract_first_pos(pos):
