@@ -283,6 +283,16 @@ class JapaneseMiiProParser(CHATParser):
         return CHATCleaner.JapaneseMiiProCleaner()
 
 
+class SesothoParser(CHATParser):
+    @staticmethod
+    def get_reader():
+        return CHATReader.SesothoReader()
+
+    @staticmethod
+    def get_cleaner():
+        return CHATCleaner.SesothoCleaner()
+
+
 def main():
     import glob
     import acqdiv
