@@ -362,7 +362,8 @@ def _speakers_standardize_macroroles():
 
         # Inference by speaker label on a per-corpus base
         elif row.macrorole is None:
-            if row.speaker_label in roles[row.corpus]:
+            if (roles.has_section(row.corpus)
+                    and row.speaker_label in roles[row.corpus]):
                 macrorole = roles[row.corpus][row.speaker_label]
 
                 # ignore all unknown's in the ini file
