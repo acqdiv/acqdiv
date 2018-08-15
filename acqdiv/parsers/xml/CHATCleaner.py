@@ -137,8 +137,10 @@ class CHATCleaner(CorpusCleanerInterface):
         """Remove omissions in the utterance.
 
         Coding in CHAT: word starting with 0.
+
+        Those occurring in square brackets are ignored.
         """
-        omission_regex = re.compile(r'0\S+')
+        omission_regex = re.compile(r'0\S+[^\]](?=\s|$)')
         clean = omission_regex.sub('', utterance)
         return cls.remove_redundant_whitespaces(clean)
 

@@ -319,6 +319,13 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = 'where my ?'
         self.assertEqual(actual_output, desired_output)
 
+    def test_remove_omissions_omission_in_brackets(self):
+        """Test remove_omissions with omission in square brackets."""
+        utterance = 'This [* 0is] what ?'
+        actual_output = CHATCleaner.remove_omissions(utterance)
+        desired_output = 'This [* 0is] what ?'
+        self.assertEqual(actual_output, desired_output)
+
     @unittest.skip(('test_remove_omissions_multiple_omissions_'
                     'no_space_before_terminator skipping'))
     def test_remove_omissions_multiple_omissions_no_space_before_terminator(
