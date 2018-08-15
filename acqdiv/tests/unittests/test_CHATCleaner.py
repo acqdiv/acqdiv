@@ -448,6 +448,8 @@ class TestCHATCleaner(unittest.TestCase):
 
     # Tests for the remove_fillers-method.
 
+    # TODO: new test case with only & (not &-)
+
     def test_remove_fillers_mutiple_fillers(self):
         """Test remove_fillers with 3 fillers (&-uh)."""
         actual_output = CHATCleaner.remove_fillers('&-uh &-uh the water &-uh')

@@ -186,9 +186,9 @@ class CHATCleaner(CorpusCleanerInterface):
     def remove_fillers(utterance):
         """Remove fillers from the utterance.
 
-        Coding in CHAT: word starts with &-
+        Coding in CHAT: word starts with & or &-
         """
-        filler_regex = re.compile(r'&-(\S+)')
+        filler_regex = re.compile(r'&[^=](\S+)')
         return filler_regex.sub(r'\1', utterance)
 
     @classmethod
