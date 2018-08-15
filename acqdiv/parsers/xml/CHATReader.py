@@ -1105,3 +1105,117 @@ class JapaneseMiyataReader(ACQDIVCHATReader):
             return 'German'
         else:
             return 'Japanese'
+
+
+###############################################################################
+
+class SesothoReader(ACQDIVCHATReader):
+
+    def get_seg_tier(self):
+        return self._dependent_tiers.get('gls', '')
+
+    def get_gloss_tier(self):
+        return self._dependent_tiers.get('cod', '')
+
+    def get_pos_tier(self):
+        return self._dependent_tiers.get('cod', '')
+
+    def iter_morphemes(morph_word):
+        """Iter morphemes of a word.
+
+        Segment words are separated by spaces, morphemes (stems and
+        affixes) are separated by hyphens.
+
+        Glosses and poses are on the same tier, separated by spaces and
+        hyphens.
+        Nouns: have parentheses with two numbers (indicating noun classes).
+        Proper nouns: start with 'n^' with 'name', 'place', 'game' or
+        'song'.
+
+        split morph_word into morphemes
+        for each morpheme:
+            check pos conditions -> find pos
+            check gloss conditions -> find gloss
+
+        Returns:
+            tuple: (segment, gloss, pos).
+        """
+        if not morph_word:
+            yield ('', '', '')
+
+        morphemes = morph_word.split('-')
+        passed_stem = False
+
+        for mor in morphemes:
+            # get the pos-tag
+            # check for prefixes and suffixes
+            if len(morphemes) == 1 or (re.search('(v|id)\^|\(\d', mor)
+                                     or re.match('(aj$|nm$|ps\d+)', mor)):
+                passed_stem = True
+            elif passed_stem == False:
+                pos = 'pfx'
+            elif passed_stem == True:
+                pos = 'sfx'
+            # check for verbs: verbs have v^, one typo as s^
+            elif re.search('[vs]\^', mor):
+                pos = 'v'
+            # check for nouns:
+            # nouns contains "(\d)" (default) or "ps/" (suppletive
+            # possession); remove these after setting POS
+            elif re.search('\(\d+', mor) or re.search('^ps\/', mor):
+                pos = 'n'
+            # words with nominal concord
+            elif re.search('^(d|lr|obr|or|pn|ps|sr)\d+', mor):
+                pos_match = re.search('^(d|lr|obr|or|pn|ps|sr)\d+', mor)
+                pos = pos_match.group(1)
+                # gloss = re.sub(pos, '', mor)
+            # check for various particles: mostly without a precise gloss
+            elif re.search(
+                '^(aj|av|cd|cj|cm|ht|ij|loc|lr|ng|nm|obr|or|pr|q|sr|wh)$',
+                mor):
+                pos = mor
+            # free person markers (rare)
+            elif re.search('^sm\d+[sp]?$', mor):
+                pos = 'afx.detached'
+            # copula
+            elif re.search('^cp|cp$', mor):
+                pos = 'cop'
+            # ideophones
+            elif re.search('id\^', mor):
+                pos = 'ideoph'
+            # punctuation marks
+            elif re.search('^[.!\?]$', mor):
+                pos = 'punct'
+            # meaningless and unclear words. Note that "xxx" in the
+            # Sesotho coding tier is not the same as CHAT "xxx" in the
+            # transcription tier - it does not stand for words that
+            # could not be transcribed but for words with unclear
+            # meaning.
+            elif mor == 'word' or mor == 'xxx':
+                pos = 'none'
+                # gloss = '???'
+            else:
+                pos = '???'
+
+            # get the gloss
+
+            # regex to get gloss without poses
+            pattern = re.compile(r'')
+            # TODO: finish method and clean up code
+
+            yield ('', '', pos)
+
+    def get_segments(seg_word):
+        return seg_word.split('-')
+
+    def get_glosses(gloss_word):
+        pass
+
+    def get_poses(pos_word):
+        pass
+
+    def get_morpheme_language(seg, gloss, pos):
+        pass
+
+    def get_word_language(word):
+        pass
