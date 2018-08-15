@@ -523,8 +523,10 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         comments = self._dependent_tiers.get('com', '')
         situation = self._dependent_tiers.get('sit', '')
         action = self._dependent_tiers.get('act', '')
+        explanation = self._dependent_tiers.get('exp', '')
+        fields = [comments, situation, action, explanation]
 
-        return '; '.join((f for f in [comments, situation, action] if f))
+        return '; '.join((f for f in fields if f))
 
     def get_record_speaker_label(self):
         return self.get_mainline_speaker_id(self._main_line_fields)
@@ -634,6 +636,34 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         fragment_regex = re.compile(r'&[^-=]\S+')
         return fragment_regex.sub('xxx', utterance)
 
+    @staticmethod
+    def get_retracing_actual(utterance):
+        """Get the actual form of retracings.
+
+        Coding in CHAT: [/], [//], [///], [/-]
+
+        Removal of retracing markers.
+        """
+        # several scoped words
+        retracing_regex1 = re.compile(r'<(.*?)> \[/{1,3}|/-\]')
+        clean = retracing_regex1.sub(r'\1', utterance)
+        # one scoped word
+        retracing_regex2 = re.compile(r'(\S+) \[/{1,3}|/-\]')
+        return retracing_regex2.sub(r'\1', clean)
+
+    # TODO: implement
+    @staticmethod
+    def get_retracing_target(utterance):
+        """Get the target form of retracings.
+
+        Coding in CHAT: [/], [//], [///], [/-]
+
+        Removal of retracing markers. For retracings with correction ([//]),
+        Both the retraced and retracing part receive the retracing value, e.g.
+        < hui do > [//] hoi du -> hoi du hoi du
+        """
+        pass
+
     @classmethod
     def to_actual_utterance(cls, utterance):
         for actual_method in [cls.get_shortening_actual,
@@ -676,6 +706,8 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         """Per default the gloss tier."""
         return 'gloss'
 
+    # ---------- morphology tiers ----------
+
     def get_morph_tier(self):
         """Get the morphology tier.
 
@@ -695,17 +727,25 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     def get_pos_tier(self):
         return self.get_morph_tier()
 
+    # ---------- morpheme words ----------
+
+    @classmethod
+    def get_morpheme_words(cls, morph_tier):
+        return cls.get_utterance_words(morph_tier)
+
     @classmethod
     def get_seg_words(cls, seg_tier):
-        return cls.get_utterance_words(seg_tier)
+        return cls.get_morpheme_words(seg_tier)
 
     @classmethod
     def get_gloss_words(cls, gloss_tier):
-        return cls.get_utterance_words(gloss_tier)
+        return cls.get_morpheme_words(gloss_tier)
 
     @classmethod
     def get_pos_words(cls, pos_tier):
-        return cls.get_utterance_words(pos_tier)
+        return cls.get_morpheme_words(pos_tier)
+
+    # ---------- morphemes ----------
 
     @staticmethod
     def get_segments(seg_word):
@@ -1105,6 +1145,79 @@ class JapaneseMiyataReader(ACQDIVCHATReader):
             return 'German'
         else:
             return 'Japanese'
+
+
+###############################################################################
+
+class TurkishReader(ACQDIVCHATReader):
+
+    def get_start_time(self):
+        """Get the start time.
+
+        It is located on the %tim tier.
+        """
+        time = self._dependent_tiers.get('tim', '')
+        if not time:
+            return ''
+        else:
+            time_regex = re.compile(r'([\d:]+)')
+            return time_regex.search(time).group()
+
+    def get_end_time(self):
+        """Get the end time.
+
+        It is located on the %tim tier and might be missing.
+        """
+        time = self._dependent_tiers.get('tim', '')
+        if not time:
+            return ''
+        else:
+            time_regex = re.compile(r'-([\d:]+)')
+            match = time_regex.search(time)
+            if match:
+                return match.group(1)
+            else:
+                return ''
+
+    def get_morph_tier(self):
+        return self._dependent_tiers.get('xmor', '')
+
+    @staticmethod
+    def get_word_language(word):
+        if word.endswith('@s:eng'):
+            return 'English'
+        elif word.endswith('@s:deu'):
+            return 'German'
+        elif word.endswith('@s:rus'):
+            return 'Russian'
+        else:
+            return 'Turkish'
+
+
+###############################################################################
+
+class YucatecReader(ACQDIVCHATReader):
+
+    def get_morph_tier(self):
+        return self._dependent_tiers.get('xmor', '')
+
+    @classmethod
+    def get_morpheme_words(cls, morph_tier):
+        """Get morpheme words.
+
+        Words are separated by blank spaces as well as & and + in the case of
+        clitics.
+        """
+        pass
+
+    @staticmethod
+    def iter_morphemes(morph_word):
+        """Iter morphemes of a word.
+
+        Prefixes are separated by #
+        Suffixes are separated by :
+        """
+        pass
 
 
 ###############################################################################
