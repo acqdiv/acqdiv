@@ -780,6 +780,50 @@ class TurkishCleaner(CHATCleaner):
     def clean_morph_tier(cls, morph_tier):
         return cls.remove_terminator(morph_tier)
 
+    # ---------- cross tier cleaning ----------
+
+    @staticmethod
+    def single_morph_word(utterance, morph_tier):
+        """Handle complex consisting of a single morphological word.
+
+        A complex consists of several stems that are either joined by + or _.
+
+        A complex is a single morphological word, if it has a single POS tag.
+        The orthographic word will be joined by an underscore. Example:
+        POS|stem1_stem2-SFX
+        word:
+            seg = stem1_stem2   gloss = ??? pos = POS
+            seg = ???           gloss = SFX pos = ???
+        """
+        return utterance, morph_tier
+
+    @staticmethod
+    def separate_morph_word(utterance, morph_tier):
+        """Handle complex consisting of separate morphological words.
+
+        A complex consists of several stems that are either joined by + or _.
+
+        A complex consists of two morphological words, if it has separate
+        POS tags and suffixes. The orthographic word is split in this case.
+        POS tag of whole complex is discarded. Example:
+        wholePOS|stem1POS|stem1-STEM1SFX_stem2POS|stem2-STEM2SFX
+        word1:
+            seg = stem1 gloss = ???         pos = stem1POS
+            seg = ???   gloss = STEM1SFX    pos = sfx
+        word2:
+            seg = stem2 gloss = ???         pos = stem2POS
+            seg = ???   gloss = STEM2SFX    pos = sfx
+        """
+        return utterance, morph_tier
+
+    @classmethod
+    def cross_clean(cls, utterance, seg_tier, gloss_tier, pos_tier):
+        # which morphology tier does not matter, they are all the same
+        morph_tier = seg_tier
+        utterance, morph_tier = cls.single_morph_word(utterance, morph_tier)
+        utterance, morph_tier = cls.separate_morph_word(utterance, morph_tier)
+        return utterance, morph_tier, morph_tier, morph_tier
+
     # ---------- morpheme cleaning ----------
 
     # ---------- segment cleaning ----------
@@ -792,25 +836,3 @@ class TurkishCleaner(CHATCleaner):
     @classmethod
     def clean_segment(cls, segment):
         return cls.replace_plus(segment)
-
-    # ---------- gloss cleaning ----------
-
-    @staticmethod
-    def replace_ampersand(gloss):
-        """Replace ampersand by a dot in the gloss."""
-        return gloss.replace('&', '.')
-
-    @classmethod
-    def clean_gloss(cls, gloss):
-        return cls.replace_ampersand(gloss)
-
-    # ---------- POS cleaning ----------
-
-    @staticmethod
-    def replace_pipe(pos):
-        """Replace pipe by a slash in the POS tag."""
-        return pos.replace('|', '/')
-
-    @classmethod
-    def clean_pos(cls, pos):
-        return cls.replace_pipe(pos)
