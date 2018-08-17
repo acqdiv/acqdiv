@@ -768,3 +768,49 @@ class JapaneseMiiProCleaner(CHATCleaner):
 
 class SesothoCleaner(CHATCleaner):
     pass
+
+###############################################################################
+
+
+class TurkishCleaner(CHATCleaner):
+
+    # ---------- morphology tier cleaning ----------
+
+    @classmethod
+    def clean_morph_tier(cls, morph_tier):
+        return cls.remove_terminator(morph_tier)
+
+    # ---------- morpheme cleaning ----------
+
+    # ---------- segment cleaning ----------
+
+    @staticmethod
+    def replace_plus(segment):
+        """Replace plus by an underscore in the segment."""
+        return segment.replace('+', '_')
+
+    @classmethod
+    def clean_segment(cls, segment):
+        return cls.replace_plus(segment)
+
+    # ---------- gloss cleaning ----------
+
+    @staticmethod
+    def replace_ampersand(gloss):
+        """Replace ampersand by a dot in the gloss."""
+        return gloss.replace('&', '.')
+
+    @classmethod
+    def clean_gloss(cls, gloss):
+        return cls.replace_ampersand(gloss)
+
+    # ---------- POS cleaning ----------
+
+    @staticmethod
+    def replace_pipe(pos):
+        """Replace pipe by a slash in the POS tag."""
+        return pos.replace('|', '/')
+
+    @classmethod
+    def clean_pos(cls, pos):
+        return cls.replace_pipe(pos)
