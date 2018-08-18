@@ -768,7 +768,84 @@ class JapaneseMiiProCleaner(CHATCleaner):
 
 
 class SesothoCleaner(CHATCleaner):
-    pass
+
+    @classmethod
+    def cross_clean(
+            cls, actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
+        """Clean seg_tier, gloss_tier and pos_tier from contractions."""
+        seg_tier, gloss_tier, pos_tier = cls.remove_contractions(
+            seg_tier, gloss_tier, pos_tier)
+        return actual_utt, target_utt, seg_tier, gloss_tier, pos_tier
+
+    @classmethod
+    def remove_contractions(cls, seg_tier, gloss_tier, pos_tier):
+        """Remove contractions
+
+        Remove words on the morpheme tiers, that are fully surrounded
+        by parentheses. These parentheses can be used in Sesotho to mark
+        contractions of the verb go.
+
+        Since such contractions are only marked on the segment tier and
+        misalignments should be avoided, the pos-words and gloss-words
+        at the same index are also deleted.
+        """
+        gloss_tier = re.sub(r'\s+,\s+', ',', gloss_tier)
+        seg_words = seg_tier.split(' ')
+        gloss_words = gloss_tier.split(' ')
+        pos_words = pos_tier.split(' ')
+        seg_words_clean = []
+        gloss_words_clean = []
+        pos_words_clean = []
+
+        for i in range(len(seg_words)):
+            if not re.search('^\(.*\)$', seg_words[i]):
+                seg_words_clean.append(seg_words[i])
+                gloss_words_clean.append(gloss_words[i])
+                pos_words_clean.append(pos_words[i])
+
+        seg_tier = ' '.join(seg_words_clean)
+        gloss_tier = ' '.join(gloss_words_clean)
+        pos_tier = ' '.join(pos_words_clean)
+
+        return seg_tier, gloss_tier, pos_tier
+
+
+    @classmethod
+    def clean_seg_tier(cls, seg_tier):
+        seg_tier = cls.remove_terminator(seg_tier)
+        return cls.clean_morph_tier(seg_tier)
+
+    @classmethod
+    def clean_gloss_tier(cls, gloss_tier):
+        """Clean the gloss tier.
+
+        - Remove terminator.
+        - Remove spaces in noun class brackets.
+        - Replace '/' as noun class separator by '|' so it can't be
+            confused with '/' as a morpheme separator.
+        - Remove parentheses around morphemes, which do not surround the
+            entire morpheme word.
+
+        Args:
+            gloss_tier: string
+
+        Return:
+            string
+        """
+        gloss_tier = cls.remove_terminator(gloss_tier)
+        gloss_tier = re.sub(r'\s+,\s+', ',', gloss_tier)
+        gloss_tier = re.sub('(\d+a?)\\/(\d+a?)', '\\1|\\2', gloss_tier)
+        return cls.clean_morph_tier(gloss_tier)
+
+    @classmethod
+    def clean_pos_tier(cls, pos_tier):
+        return cls.clean_gloss_tier(pos_tier)
+
+    @classmethod
+    def clean_seg_word(cls, seg_word):
+        """No cleaning by default."""
+        seg_word = re.sub('\(([a-zA-Z]\\S+)\)', '\\1', seg_word)
+        return cls.clean_morpheme_word(seg_word)
 
 ###############################################################################
 
