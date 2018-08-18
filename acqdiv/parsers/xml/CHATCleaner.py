@@ -834,25 +834,35 @@ class TurkishCleaner(CHATCleaner):
         """
         wwords = utterance.split(' ')
         mwords = morph_tier.split(' ')
+        wwords_count = len(wwords)
+        mwords_count = len(mwords)
 
-        new_wwords = []
-        new_mwords = []
-
-        for wword, mword in zip(wwords, mwords):
+        i = 0
+        while i < wwords_count and i < mwords_count:
             # check for double POS tag
-            match = re.search(r'\S+?\|(\S+\|.*)', mword)
+            match = re.search(r'\S+?\|(\S+\|.*)', mwords[i])
             if match:
                 # discard POS tag of whole complex
                 mword = match.group(1)
-                for wm in re.split(r'[+_]', mword):
-                    new_mwords.append(wm)
-                for ww in re.split(r'[+_]', wword):
-                    new_wwords.append(ww)
-            else:
-                new_mwords.append(mword)
-                new_wwords.append(wword)
+                # remove old word
+                del mwords[i]
+                mwords_count -= 1
+                # add new words
+                for j, w in enumerate(re.split(r'[+_]', mword)):
+                    mwords.insert(i+j, w)
 
-        return ' '.join(new_wwords), ' '.join(new_mwords)
+                # check if utterance word is also joined
+                if '_' in wwords[i] or '+' in wwords[i]:
+                    # same procedure
+                    wword = wwords[i]
+                    del wwords[i]
+                    wwords_count -= 1
+                    for j, w in enumerate(re.split(r'[+_]', wword)):
+                        wwords.insert(i + j, w)
+                        wwords_count += 1
+            i += 1
+
+        return ' '.join(wwords), ' '.join(mwords)
 
     @classmethod
     def cross_clean(cls, actual_utt, target_utt, seg_tier, gloss_tier,
