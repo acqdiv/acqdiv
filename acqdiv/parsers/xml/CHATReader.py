@@ -1260,6 +1260,11 @@ class YucatecReader(ACQDIVCHATReader):
 class SesothoReader(ACQDIVCHATReader):
 
     def get_seg_tier(self):
+        """Extract the segments tier and do cross-cleaning.
+
+        Cross-cleaning has to be done from here for access to different
+        tiers at the same time.
+        """
         return self._dependent_tiers.get('gls', '')
 
     def get_gloss_tier(self):
@@ -1280,13 +1285,11 @@ class SesothoReader(ACQDIVCHATReader):
         Proper nouns: start with 'n^' with 'name', 'place', 'game' or
         'song'.
 
-        split morph_word into morphemes
-        for each morpheme:
-            check pos conditions -> find pos
-            check gloss conditions -> find gloss
+        Segment words are not on the same tier as gloss_words and are
+        thus not returned by this method.
 
         Returns:
-            tuple: (segment, gloss, pos).
+            tuple: (<empty_string>, gloss, pos).
         """
         if not morph_word:
             yield ('', '', '')
@@ -1299,12 +1302,12 @@ class SesothoReader(ACQDIVCHATReader):
             if len(morphemes) == 1 or (re.search('(v|id)\^|\(\d', mor)
                                      or re.match('(aj$|nm$|ps\d+)', mor)):
                 passed_stem = True
-            elif passed_stem == False:
+            if passed_stem == False:
                 pos = 'pfx'
             elif passed_stem == True:
                 pos = 'sfx'
             # Check for verbs: verbs have v^, one typo as s^.
-            elif re.search('[vs]\^', mor):
+            if re.search('[vs]\^', mor):
                 pos = 'v'
             # Check for nouns: nouns contains "(\d)" (default) or "ps/"
             # (suppletive possession).
@@ -1342,25 +1345,40 @@ class SesothoReader(ACQDIVCHATReader):
             else:
                 pos = '???'
 
-            # get the gloss
+        # get the gloss
+        for mor in morphemes:
+            print('mor:', mor)
+            if '^' in mor and not mor.startswith('m'):
+                match = re.search(r'^[nv]\^([a-zA-Z0-9]+)\b', mor)
+                if match:
+                    gloss = match.groups()[0]
+                else:
+                    gloss = 'no match'
+            else:
+                gloss = mor
 
             # regex to get gloss without poses
             pattern = re.compile(r'')
             # TODO: finish method and clean up code
 
-            yield ('', '', pos)
+            yield ('', gloss, pos)
 
-    def get_segments(seg_word):
+    @classmethod
+    def get_segments(cls, seg_word):
         return seg_word.split('-')
 
-    def get_glosses(gloss_word):
-        pass
+    @classmethod
+    def get_glosses(cls, gloss_word):
+        return [gloss for _, gloss, _ in cls.iter_morphemes(gloss_word)]
 
-    def get_poses(pos_word):
-        pass
+    @classmethod
+    def get_poses(cls, pos_word):
+        return [pos for _, _, pos in cls.iter_morphemes(pos_word)]
 
+    @staticmethod
     def get_morpheme_language(seg, gloss, pos):
-        pass
+        return 'Sesotho'
 
+    @staticmethod
     def get_word_language(word):
         pass
