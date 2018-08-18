@@ -1522,6 +1522,14 @@ class TestTurkishCleaner(unittest.TestCase):
         desired_output = utterance, morph_tier
         self.assertEqual(actual_output, desired_output)
 
+    def test_single_morph_unsimilar(self):
+        """Test single_morph_word with unsimilar wword and mword."""
+        utterance = 'I got to test'
+        morph_tier = 'PRON|I V|have+to V|test'
+        actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
+        desired_output = utterance, morph_tier
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- separate_morph_word ----------
 
     def test_separate_morph_word_underscore(self):
