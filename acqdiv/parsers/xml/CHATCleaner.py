@@ -784,7 +784,7 @@ class TurkishCleaner(CHATCleaner):
 
     @staticmethod
     def single_morph_word(utterance, morph_tier):
-        """Handle complex consisting of a single morphological word.
+        """Handle complexes consisting of a single morphological word.
 
         A complex consists of several stems that are either joined by + or _.
 
@@ -812,13 +812,14 @@ class TurkishCleaner(CHATCleaner):
 
     @staticmethod
     def separate_morph_word(utterance, morph_tier):
-        """Handle complex consisting of separate morphological words.
+        """Handle complexes consisting of separate morphological words.
 
         A complex consists of several stems that are either joined by + or _.
 
         A complex consists of two morphological words, if it has separate
-        POS tags and suffixes. The orthographic word is split in this case.
-        POS tag of whole complex is discarded. Example:
+        POS tags and suffixes. The orthographic word as well as the
+        morphological word is split in this case. The POS tag of the whole
+        complex is discarded. Example:
         wholePOS|stem1POS|stem1-STEM1SFX_stem2POS|stem2-STEM2SFX
         word1:
             seg = stem1 gloss = ???         pos = stem1POS
@@ -827,7 +828,27 @@ class TurkishCleaner(CHATCleaner):
             seg = stem2 gloss = ???         pos = stem2POS
             seg = ???   gloss = STEM2SFX    pos = sfx
         """
-        return utterance, morph_tier
+        wwords = utterance.split(' ')
+        mwords = morph_tier.split(' ')
+
+        new_wwords = []
+        new_mwords = []
+
+        for wword, mword in zip(wwords, mwords):
+            # check for double POS tag
+            match = re.search(r'\w+\|(\w+\|.*)', mword)
+            if match:
+                # discard POS tag of whole complex
+                mword = match.group(1)
+                for wm in re.split(r'[+_]', mword):
+                    new_mwords.append(wm)
+                for ww in re.split(r'[+_]', wword):
+                    new_wwords.append(ww)
+            else:
+                new_mwords.append(mword)
+                new_wwords.append(wword)
+
+        return ' '.join(new_wwords), ' '.join(new_mwords)
 
     @classmethod
     def cross_clean(cls, utterance, seg_tier, gloss_tier, pos_tier):
