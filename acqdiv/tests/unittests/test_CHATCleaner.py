@@ -703,13 +703,15 @@ class TestCHATCleaner(unittest.TestCase):
 
     def test_cross_clean(self):
         """Test cross_clean for same input as output."""
-        utterance = 'ha be'
+        actual_utt = 'ha be'
+        target_utt = 'ha be'
         seg_tier = 'h_a b_e'
         gloss_tier = '1sg pl'
         pos_tier = 'V N'
-        actual_output = CHATCleaner.cross_clean(utterance, seg_tier,
-                                                gloss_tier, pos_tier)
-        desired_output = (utterance, seg_tier, gloss_tier, pos_tier)
+        actual_output = CHATCleaner.cross_clean(
+            actual_utt, target_utt, seg_tier, gloss_tier, pos_tier)
+        desired_output = (actual_utt, target_utt, seg_tier, gloss_tier,
+                          pos_tier)
         self.assertEqual(actual_output, desired_output)
 
     # ---------- morpheme word cleaning ----------
@@ -1212,13 +1214,15 @@ class TestCreeCleaner(unittest.TestCase):
 
     def test_cross_clean(self):
         """Test cross_clean with several engs."""
-        utterance = 'hi ha be bye'
+        actual_utt = 'hi ha be bye'
+        target_utt = 'hi ha be bye'
         seg_tier = 'ke h_a b_e me'
         gloss_tier = 'Eng 1sg pl Eng'
         pos_tier = 'N V N V'
-        actual_output = CreeCleaner.cross_clean(utterance, seg_tier,
-                                                gloss_tier, pos_tier)
-        desired_output = (utterance, seg_tier, 'hi 1sg pl bye', pos_tier)
+        actual_output = CreeCleaner.cross_clean(
+            actual_utt, target_utt, seg_tier, gloss_tier, pos_tier)
+        desired_output = (actual_utt, target_utt, seg_tier, 'hi 1sg pl bye',
+                          pos_tier)
         self.assertEqual(actual_output, desired_output)
 
     # Tests for the replace_percentages-method.
