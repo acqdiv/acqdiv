@@ -770,11 +770,12 @@ class JapaneseMiiProCleaner(CHATCleaner):
 class SesothoCleaner(CHATCleaner):
 
     @classmethod
-    def cross_clean(cls, utterance, seg_tier, gloss_tier, pos_tier):
+    def cross_clean(
+            cls, actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
         """Clean seg_tier, gloss_tier and pos_tier from contractions."""
         seg_tier, gloss_tier, pos_tier = cls.remove_contractions(
             seg_tier, gloss_tier, pos_tier)
-        return utterance, seg_tier, gloss_tier, pos_tier
+        return actual_utt, target_utt, seg_tier, gloss_tier, pos_tier
 
     @classmethod
     def remove_contractions(cls, seg_tier, gloss_tier, pos_tier):
