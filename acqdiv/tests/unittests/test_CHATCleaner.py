@@ -3,6 +3,7 @@ from acqdiv.parsers.xml.CHATCleaner import CHATCleaner
 from acqdiv.parsers.xml.CHATCleaner import InuktitutCleaner
 from acqdiv.parsers.xml.CHATCleaner import CreeCleaner
 from acqdiv.parsers.xml.CHATCleaner import JapaneseMiiProCleaner
+from acqdiv.parsers.xml.CHATCleaner import TurkishCleaner
 
 
 class TestCHATCleaner(unittest.TestCase):
@@ -1429,6 +1430,43 @@ class TestJapaneseMiiProCleaner(unittest.TestCase):
         actual_output = self.cleaner.clean_pos_tier(pos_tier)
         desired_output = 'n:prop|Ikun'
         self.assertEqual(actual_output, desired_output)
+
+###############################################################################
+
+
+class TestTurkishCleaner(unittest.TestCase):
+
+    def test_single_morph_word_underscore(self):
+        """Test single_morph_word."""
+        utterance = 'I have to test'
+        morph_tier = 'PRON|I V|have_to V|test'
+        actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
+        desired_ouput = 'I have_to test', morph_tier
+        self.assertEqual(actual_output, desired_ouput)
+
+    def test_single_morph_word_plus(self):
+        """Test single_morph_word."""
+        utterance = 'I have to test'
+        morph_tier = 'PRON|I V|have+to V|test'
+        actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
+        desired_ouput = 'I have_to test', morph_tier
+        self.assertEqual(actual_output, desired_ouput)
+
+    def test_single_morph_word_no_complex(self):
+        """Test single_morph_word."""
+        utterance = 'I test'
+        morph_tier = 'PRON|I V|test'
+        actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
+        desired_ouput = utterance, morph_tier
+        self.assertEqual(actual_output, desired_ouput)
+
+    def test_single_morph_word_no_complex_misalignment(self):
+        """Test single_morph_word."""
+        utterance = 'I test it'
+        morph_tier = 'PRON|I V|test'
+        actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
+        desired_ouput = utterance, morph_tier
+        self.assertEqual(actual_output, desired_ouput)
 
 
 if __name__ == '__main__':

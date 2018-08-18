@@ -795,7 +795,20 @@ class TurkishCleaner(CHATCleaner):
             seg = stem1_stem2   gloss = ??? pos = POS
             seg = ???           gloss = SFX pos = ???
         """
-        return utterance, morph_tier
+        wwords = utterance.split(' ')
+        mwords = morph_tier.split(' ')
+
+        if len(mwords) == len(wwords) - 1:
+            i = 0
+            while i < len(mwords):
+                if '_' in mwords[i] or '+' in mwords[i]:
+                    next_word = wwords.pop(i+1)
+                    wwords[i] += '_' + next_word
+                i += 1
+
+            return ' '.join(wwords), morph_tier
+        else:
+            return utterance, morph_tier
 
     @staticmethod
     def separate_morph_word(utterance, morph_tier):
