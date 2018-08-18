@@ -316,7 +316,10 @@ class CHATReader:
     def get_utterance_terminator(utterance):
         terminator_regex = re.compile(r'([+/.!?"]*[!?.])(?=(\s*\[\+|$))')
         match = terminator_regex.search(utterance)
-        return match.group(1)
+        if match:
+            return match.group(1)
+        else:
+            return ''
 
     @staticmethod
     def get_mainline_start_time(main_line_fields):
