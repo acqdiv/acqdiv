@@ -1506,6 +1506,22 @@ class TestTurkishCleaner(unittest.TestCase):
         desired_output = utterance, morph_tier
         self.assertEqual(actual_output, desired_output)
 
+    def test_single_morph_word_empty_mor(self):
+        """Test single_morph_word with empty morphology tier."""
+        utterance = 'I have_to test'
+        morph_tier = ''
+        actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
+        desired_output = utterance, morph_tier
+        self.assertEqual(actual_output, desired_output)
+
+    def test_single_morph_word_empty_utterance(self):
+        """Test single_morph_word with empty utterance."""
+        utterance = ''
+        morph_tier = 'PRON|I V|have+to V|test'
+        actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
+        desired_output = utterance, morph_tier
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- separate_morph_word ----------
 
     def test_separate_morph_word_underscore(self):
@@ -1552,6 +1568,22 @@ class TestTurkishCleaner(unittest.TestCase):
         """Test separate_morph_word with no complex but with misalignment."""
         utterance = 'I test'
         mor_tier = 'PRON|I V|test PRON|it'
+        actual_output = TurkishCleaner.separate_morph_word(utterance, mor_tier)
+        desired_output = utterance, mor_tier
+        self.assertEqual(actual_output, desired_output)
+
+    def test_separate_morph_word_empty_mor(self):
+        """Test separate_morph_word with empty morphology tier."""
+        utterance = 'I have_to test'
+        mor_tier = ''
+        actual_output = TurkishCleaner.separate_morph_word(utterance, mor_tier)
+        desired_output = utterance, mor_tier
+        self.assertEqual(actual_output, desired_output)
+
+    def test_separate_morph_word_empty_utterance(self):
+        """Test separate_morph_word with empty utterance."""
+        utterance = ''
+        mor_tier = 'N|bla V|N|tu_V|ta N|bla'
         actual_output = TurkishCleaner.separate_morph_word(utterance, mor_tier)
         desired_output = utterance, mor_tier
         self.assertEqual(actual_output, desired_output)
