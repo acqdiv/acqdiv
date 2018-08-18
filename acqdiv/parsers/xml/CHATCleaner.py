@@ -303,9 +303,9 @@ class CHATCleaner(CorpusCleanerInterface):
     # ---------- tier cross cleaning ----------
 
     @staticmethod
-    def cross_clean(utterance, seg_tier, gloss_tier, pos_tier):
+    def cross_clean(actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
         """No cleaning by default."""
-        return utterance, seg_tier, gloss_tier, pos_tier
+        return actual_utt, target_utt, seg_tier, gloss_tier, pos_tier
 
     # ---------- morpheme word cleaning ----------
     @staticmethod
@@ -632,9 +632,10 @@ class CreeCleaner(CHATCleaner):
             return ' '.join(new_gloss_words)
 
     @classmethod
-    def cross_clean(cls, utterance, seg_tier, gloss_tier, pos_tier):
-        gloss_tier = cls.replace_eng(gloss_tier, utterance)
-        return utterance, seg_tier, gloss_tier, pos_tier
+    def cross_clean(cls, actual_utt, target_utt, seg_tier, gloss_tier,
+                    pos_tier):
+        gloss_tier = cls.replace_eng(gloss_tier, actual_utt)
+        return actual_utt, target_utt, seg_tier, gloss_tier, pos_tier
 
     # ---------- morpheme word cleaning ----------
 
@@ -851,12 +852,16 @@ class TurkishCleaner(CHATCleaner):
         return ' '.join(new_wwords), ' '.join(new_mwords)
 
     @classmethod
-    def cross_clean(cls, utterance, seg_tier, gloss_tier, pos_tier):
+    def cross_clean(cls, actual_utt, target_utt, seg_tier, gloss_tier,
+                    pos_tier):
         # which morphology tier does not matter, they are all the same
-        morph_tier = seg_tier
-        utterance, morph_tier = cls.single_morph_word(utterance, morph_tier)
-        utterance, morph_tier = cls.separate_morph_word(utterance, morph_tier)
-        return utterance, morph_tier, morph_tier, morph_tier
+        mor_tier = seg_tier
+        actual_utt, mor_tier = cls.single_morph_word(actual_utt, mor_tier)
+        actual_utt, mor_tier = cls.separate_morph_word(actual_utt, mor_tier)
+        target_utt, mor_tier = cls.single_morph_word(target_utt, mor_tier)
+        target_utt, mor_tier = cls.separate_morph_word(target_utt, mor_tier)
+
+        return actual_utt, target_utt, mor_tier, mor_tier, mor_tier
 
     # ---------- word cleaning ----------
 

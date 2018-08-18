@@ -85,13 +85,23 @@ class CHATParser(CorpusParserInterface):
             sentence_type = self.reader.get_sentence_type()
 
             # actual & target distinction
-            actual_utterance = self.cleaner.clean_utterance(
+            actual_utt = self.cleaner.clean_utterance(
                 self.reader.get_actual_utterance())
-            target_utterance = self.cleaner.clean_utterance(
+            target_utt = self.cleaner.clean_utterance(
                 self.reader.get_target_utterance())
 
-            actual_words = self.reader.get_utterance_words(actual_utterance)
-            target_words = self.reader.get_utterance_words(target_utterance)
+            # get morphology tiers
+            seg_tier = self.reader.get_seg_tier()
+            gloss_tier = self.reader.get_gloss_tier()
+            pos_tier = self.reader.get_pos_tier()
+
+            # cross cleaning
+            actual_utt, target_utt, seg_tier, gloss_tier, pos_tier = \
+                self.cleaner.cross_clean(
+                    actual_utt, target_utt, seg_tier, gloss_tier, pos_tier)
+
+            actual_words = self.reader.get_utterance_words(actual_utt)
+            target_words = self.reader.get_utterance_words(target_utt)
 
             # collect all words of the utterance
             words = []
@@ -119,11 +129,6 @@ class CHATParser(CorpusParserInterface):
 
             # rebuild utterance from cleaned words
             utterance = ' '.join(w['word'] for w in words)
-
-            # get morphology tiers
-            seg_tier = self.reader.get_seg_tier()
-            gloss_tier = self.reader.get_gloss_tier()
-            pos_tier = self.reader.get_pos_tier()
 
             utterance_dict = {
                 'source_id': source_id,

@@ -336,8 +336,10 @@ class CorpusCleanerInterface:
     # ---------- tier cross cleaning ----------
 
     @staticmethod
-    def cross_clean(utterance, seg_tier, gloss_tier, pos_tier):
+    def cross_clean(actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
         """Clean across tiers.
+
+        The tiers are assumed to be cleaned.
 
         Returns: str
         """
