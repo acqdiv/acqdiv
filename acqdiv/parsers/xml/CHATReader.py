@@ -1209,7 +1209,14 @@ class TurkishReader(ACQDIVCHATReader):
 
         # first morpheme is always stem
         stem = morphemes.pop(0)
-        stem_pos, stem_seg = stem.split('|')
+
+        # some morpheme words are malformed, null them
+        if '|' not in stem:
+            stem_seg = '???'
+            stem_pos = '???'
+        else:
+            stem_pos, stem_seg = stem.split('|')
+
         yield stem_seg, '', stem_pos
 
         # iter suffixes
