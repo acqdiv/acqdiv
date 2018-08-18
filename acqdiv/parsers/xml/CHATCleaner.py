@@ -803,13 +803,17 @@ class TurkishCleaner(CHATCleaner):
 
         i = 0
         while i < wwords_count and i < mwords_count:
-            if '_' in mwords[i] or '+' in mwords[i]:
-                if '_' not in wwords[i] and '+' not in wwords[i]:
-                    # check if there is a next word (-> missing join separator)
-                    if i + 1 < wwords_count:
-                        next_word = wwords.pop(i+1)
-                        wwords[i] += '_' + next_word
-                        wwords_count -= 1
+            mword = mwords[i]
+            wword = wwords[i]
+            if '_' in mword or '+' in mword:
+                if '_' not in wword and '+' not in wword:
+                    # check if wword and mword are similar (-> misalignment)
+                    if wword[:2] in mword:
+                        # check if there is a next word (-> missing join sep)
+                        if i + 1 < wwords_count:
+                            next_word = wwords.pop(i+1)
+                            wwords[i] += '_' + next_word
+                            wwords_count -= 1
             i += 1
 
         return ' '.join(wwords), morph_tier
