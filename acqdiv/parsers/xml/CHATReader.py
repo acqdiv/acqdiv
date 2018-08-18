@@ -1295,8 +1295,7 @@ class SesothoReader(ACQDIVCHATReader):
         passed_stem = False
 
         for mor in morphemes:
-            # get the pos-tag
-            # check for prefixes and suffixes
+            # Check for prefixes and suffixes.
             if len(morphemes) == 1 or (re.search('(v|id)\^|\(\d', mor)
                                      or re.match('(aj$|nm$|ps\d+)', mor)):
                 passed_stem = True
@@ -1304,40 +1303,38 @@ class SesothoReader(ACQDIVCHATReader):
                 pos = 'pfx'
             elif passed_stem == True:
                 pos = 'sfx'
-            # check for verbs: verbs have v^, one typo as s^
+            # Check for verbs: verbs have v^, one typo as s^.
             elif re.search('[vs]\^', mor):
                 pos = 'v'
-            # check for nouns:
-            # nouns contains "(\d)" (default) or "ps/" (suppletive
-            # possession); remove these after setting POS
+            # Check for nouns: nouns contains "(\d)" (default) or "ps/"
+            # (suppletive possession).
             elif re.search('\(\d+', mor) or re.search('^ps\/', mor):
                 pos = 'n'
-            # words with nominal concord
+            # Check for words with nominal concord.
             elif re.search('^(d|lr|obr|or|pn|ps|sr)\d+', mor):
                 pos_match = re.search('^(d|lr|obr|or|pn|ps|sr)\d+', mor)
                 pos = pos_match.group(1)
                 # gloss = re.sub(pos, '', mor)
-            # check for various particles: mostly without a precise gloss
+            # Check for particles: mostly without a precise gloss.
             elif re.search(
-                '^(aj|av|cd|cj|cm|ht|ij|loc|lr|ng|nm|obr|or|pr|q|sr|wh)$',
-                mor):
+                '^(aj|av|cd|cj|cm|ht|ij|loc|lr|ng|nm|obr|or|pr|q|sr|wh)$',mor):
                 pos = mor
-            # free person markers (rare)
+            # Check for free person markers.
             elif re.search('^sm\d+[sp]?$', mor):
                 pos = 'afx.detached'
-            # copula
+            # Check for copulas.
             elif re.search('^cp|cp$', mor):
                 pos = 'cop'
-            # ideophones
+            # Check for ideophones.
             elif re.search('id\^', mor):
                 pos = 'ideoph'
-            # punctuation marks
+            # Check for punctuation marks.
             elif re.search('^[.!\?]$', mor):
                 pos = 'punct'
-            # meaningless and unclear words. Note that "xxx" in the
-            # Sesotho coding tier is not the same as CHAT "xxx" in the
-            # transcription tier - it does not stand for words that
-            # could not be transcribed but for words with unclear
+            # Check for meaningless and unclear words. Note that "xxx"
+            # in the Sesotho coding tier is not the same as CHAT "xxx"
+            # in the transcription tier - it does not stand for words
+            # that could not be transcribed but for words with unclear
             # meaning.
             elif mor == 'word' or mor == 'xxx':
                 pos = 'none'
