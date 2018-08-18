@@ -858,14 +858,25 @@ class TurkishCleaner(CHATCleaner):
         utterance, morph_tier = cls.separate_morph_word(utterance, morph_tier)
         return utterance, morph_tier, morph_tier, morph_tier
 
+    # ---------- word cleaning ----------
+
+    @staticmethod
+    def replace_plus(unit):
+        """Replace plus by an underscore.
+
+        Args:
+            unit (str): utterance word or segment
+        """
+        return unit.replace('+', '_')
+
+    @classmethod
+    def clean_word(cls, word):
+        word = super().clean_word(word)
+        return cls.replace_plus(word)
+
     # ---------- morpheme cleaning ----------
 
     # ---------- segment cleaning ----------
-
-    @staticmethod
-    def replace_plus(segment):
-        """Replace plus by an underscore in the segment."""
-        return segment.replace('+', '_')
 
     @classmethod
     def clean_segment(cls, segment):
