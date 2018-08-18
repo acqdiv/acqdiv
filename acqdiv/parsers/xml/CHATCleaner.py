@@ -811,9 +811,12 @@ class TurkishCleaner(CHATCleaner):
                     if wword[:2] in mword:
                         # check if there is a next word (-> missing join sep)
                         if i + 1 < wwords_count:
-                            next_word = wwords.pop(i+1)
-                            wwords[i] += '_' + next_word
-                            wwords_count -= 1
+                            next_word = wwords[i+1]
+                            # check if wword and mword are similar
+                            if next_word[:2] in mword:
+                                del wwords[i+1]
+                                wwords[i] += '_' + next_word
+                                wwords_count -= 1
             i += 1
 
         return ' '.join(wwords), morph_tier
@@ -854,6 +857,7 @@ class TurkishCleaner(CHATCleaner):
                 # add new words
                 for j, w in enumerate(re.split(r'[+_]', mword)):
                     mwords.insert(i+j, w)
+                    mwords_count += 1
 
                 # check if utterance word is also joined
                 if '_' in wwords[i] or '+' in wwords[i]:
