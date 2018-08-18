@@ -1193,7 +1193,8 @@ class TurkishReader(ACQDIVCHATReader):
         else:
             return 'Turkish'
 
-    def iter_morphemes(self, word):
+    @staticmethod
+    def iter_morphemes(word):
         """Iter morphemes of a word.
 
         Morphemes are separated by dashes.
@@ -1201,10 +1202,32 @@ class TurkishReader(ACQDIVCHATReader):
         Structure: stemPOS:substemPOS|stem-suffixgloss&subsuffixgloss
 
         Stem: segment, no gloss, POS tag
-        Suffix: no segment, gloss, no POS tag (-> assign 'pfx')
-        No prefixes.
+        Suffix: no segment, gloss, no POS tag (-> assign 'sfx')
+        No prefixes, the first morpheme is always the stem.
         """
-        pass
+        morphemes = word.split('-')
+
+        # first morpheme is always stem
+        stem = morphemes.pop(0)
+        stem_pos, stem_seg = stem.split('|')
+        yield stem_seg, '', stem_pos
+
+        # iter suffixes
+        for suffix in morphemes:
+            yield '', suffix, 'sfx'
+
+    @classmethod
+    def get_segments(cls, seg_word):
+        return [seg for seg, _, _ in cls.iter_morphemes(seg_word)]
+
+    @classmethod
+    def get_glosses(cls, gloss_word):
+        return [gloss for _, gloss, _ in cls.iter_morphemes(gloss_word)]
+
+    @classmethod
+    def get_poses(cls, pos_word):
+        return [pos for _, _, pos in cls.iter_morphemes(pos_word)]
+
 
 ###############################################################################
 
