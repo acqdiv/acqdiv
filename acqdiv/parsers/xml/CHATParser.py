@@ -85,13 +85,28 @@ class CHATParser(CorpusParserInterface):
             sentence_type = self.reader.get_sentence_type()
 
             # actual & target distinction
-            actual_utterance = self.cleaner.clean_utterance(
+            actual_utt = self.cleaner.clean_utterance(
                 self.reader.get_actual_utterance())
-            target_utterance = self.cleaner.clean_utterance(
+            target_utt = self.cleaner.clean_utterance(
                 self.reader.get_target_utterance())
 
-            actual_words = self.reader.get_utterance_words(actual_utterance)
-            target_words = self.reader.get_utterance_words(target_utterance)
+            # get morphology tiers
+            seg_tier_raw = self.reader.get_seg_tier()
+            gloss_tier_raw = self.reader.get_gloss_tier()
+            pos_tier_raw = self.reader.get_pos_tier()
+
+            # clean the morphology tiers
+            seg_tier = self.cleaner.clean_seg_tier(seg_tier_raw)
+            gloss_tier = self.cleaner.clean_gloss_tier(gloss_tier_raw)
+            pos_tier = self.cleaner.clean_pos_tier(pos_tier_raw)
+
+            # cross cleaning
+            actual_utt, target_utt, seg_tier, gloss_tier, pos_tier = \
+                self.cleaner.cross_clean(
+                    actual_utt, target_utt, seg_tier, gloss_tier, pos_tier)
+
+            actual_words = self.reader.get_utterance_words(actual_utt)
+            target_words = self.reader.get_utterance_words(target_utt)
 
             # collect all words of the utterance
             words = []
@@ -120,11 +135,6 @@ class CHATParser(CorpusParserInterface):
             # rebuild utterance from cleaned words
             utterance = ' '.join(w['word'] for w in words)
 
-            # get morphology tiers
-            seg_tier = self.reader.get_seg_tier()
-            gloss_tier = self.reader.get_gloss_tier()
-            pos_tier = self.reader.get_pos_tier()
-
             utterance_dict = {
                 'source_id': source_id,
                 'speaker_label': speaker_label,
@@ -132,9 +142,9 @@ class CHATParser(CorpusParserInterface):
                 'utterance_raw': utterance_raw,
                 'utterance': utterance if utterance else None,
                 'translation': translation if translation else None,
-                'morpheme': seg_tier if seg_tier else None,
-                'gloss_raw': gloss_tier if gloss_tier else None,
-                'pos_raw': pos_tier if pos_tier else None,
+                'morpheme': seg_tier_raw if seg_tier_raw else None,
+                'gloss_raw': gloss_tier_raw if gloss_tier_raw else None,
+                'pos_raw': pos_tier_raw if pos_tier_raw else None,
                 'sentence_type': sentence_type,
                 'start_raw': start_raw if start_raw else None,
                 'end_raw': end_raw if end_raw else None,
@@ -146,6 +156,7 @@ class CHATParser(CorpusParserInterface):
             seg_tier = self.cleaner.clean_seg_tier(seg_tier)
             gloss_tier = self.cleaner.clean_gloss_tier(gloss_tier)
             pos_tier = self.cleaner.clean_pos_tier(pos_tier)
+
             # get morpheme words from the respective morphology tiers
             wsegs = self.reader.get_seg_words(seg_tier)
             wglosses = self.reader.get_gloss_words(gloss_tier)
@@ -292,6 +303,16 @@ class SesothoParser(CHATParser):
         return CHATCleaner.SesothoCleaner()
 
 
+class TurkishParser(CHATParser):
+    @staticmethod
+    def get_reader():
+        return CHATReader.TurkishReader()
+
+    @staticmethod
+    def get_cleaner():
+        return CHATCleaner.TurkishCleaner()
+
+
 def main():
     import glob
     import acqdiv
@@ -303,6 +324,7 @@ def main():
     start_time = time.time()
 
     for corpus, parser_cls in [
+            ('Turkish', TurkishParser),
             ('Japanese_MiiPro', JapaneseMiiProParser),
             ('English_Manchester1', EnglishManchester1Parser),
             ('Cree', CreeParser),

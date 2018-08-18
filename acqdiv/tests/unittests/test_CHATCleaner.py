@@ -703,13 +703,15 @@ class TestCHATCleaner(unittest.TestCase):
 
     def test_cross_clean(self):
         """Test cross_clean for same input as output."""
-        utterance = 'ha be'
+        actual_utt = 'ha be'
+        target_utt = 'ha be'
         seg_tier = 'h_a b_e'
         gloss_tier = '1sg pl'
         pos_tier = 'V N'
-        actual_output = CHATCleaner.cross_clean(utterance, seg_tier,
-                                                gloss_tier, pos_tier)
-        desired_output = (utterance, seg_tier, gloss_tier, pos_tier)
+        actual_output = CHATCleaner.cross_clean(
+            actual_utt, target_utt, seg_tier, gloss_tier, pos_tier)
+        desired_output = (actual_utt, target_utt, seg_tier, gloss_tier,
+                          pos_tier)
         self.assertEqual(actual_output, desired_output)
 
     # ---------- morpheme word cleaning ----------
@@ -1212,13 +1214,15 @@ class TestCreeCleaner(unittest.TestCase):
 
     def test_cross_clean(self):
         """Test cross_clean with several engs."""
-        utterance = 'hi ha be bye'
+        actual_utt = 'hi ha be bye'
+        target_utt = 'hi ha be bye'
         seg_tier = 'ke h_a b_e me'
         gloss_tier = 'Eng 1sg pl Eng'
         pos_tier = 'N V N V'
-        actual_output = CreeCleaner.cross_clean(utterance, seg_tier,
-                                                gloss_tier, pos_tier)
-        desired_output = (utterance, seg_tier, 'hi 1sg pl bye', pos_tier)
+        actual_output = CreeCleaner.cross_clean(
+            actual_utt, target_utt, seg_tier, gloss_tier, pos_tier)
+        desired_output = (actual_utt, target_utt, seg_tier, 'hi 1sg pl bye',
+                          pos_tier)
         self.assertEqual(actual_output, desired_output)
 
     # Tests for the replace_percentages-method.
@@ -1436,37 +1440,153 @@ class TestJapaneseMiiProCleaner(unittest.TestCase):
 
 class TestTurkishCleaner(unittest.TestCase):
 
+    # ---------- single_morph_word ----------
+
     def test_single_morph_word_underscore(self):
-        """Test single_morph_word."""
+        """Test single_morph_word with an underscore."""
         utterance = 'I have to test'
         morph_tier = 'PRON|I V|have_to V|test'
         actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
-        desired_ouput = 'I have_to test', morph_tier
-        self.assertEqual(actual_output, desired_ouput)
+        desired_output = 'I have_to test', morph_tier
+        self.assertEqual(actual_output, desired_output)
 
     def test_single_morph_word_plus(self):
-        """Test single_morph_word."""
+        """Test single_morph_word with a plus."""
         utterance = 'I have to test'
         morph_tier = 'PRON|I V|have+to V|test'
         actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
-        desired_ouput = 'I have_to test', morph_tier
-        self.assertEqual(actual_output, desired_ouput)
+        desired_output = 'I have_to test', morph_tier
+        self.assertEqual(actual_output, desired_output)
+
+    def test_single_morph_word_multiple_complexes(self):
+        """Test single_morph_word with multiple complexes."""
+        utterance = 'I have to test and I have to test'
+        morph_tier = 'PRON|I V|have+to V|test CORD|and PRON|I V|have+to V|test'
+        actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
+        desired_output = 'I have_to test and I have_to test', morph_tier
+        self.assertEqual(actual_output, desired_output)
+
+    def test_single_morph_word_no_join_sep_at_end(self):
+        """Test single_morph_word with no join separator at the end."""
+        utterance = 'I haveto'
+        morph_tier = 'PRON|I V|have+to'
+        actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
+        desired_output = utterance, morph_tier
+        self.assertEqual(actual_output, desired_output)
 
     def test_single_morph_word_no_complex(self):
-        """Test single_morph_word."""
+        """Test single_morph_word with no complex."""
         utterance = 'I test'
         morph_tier = 'PRON|I V|test'
         actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
-        desired_ouput = utterance, morph_tier
-        self.assertEqual(actual_output, desired_ouput)
+        desired_output = utterance, morph_tier
+        self.assertEqual(actual_output, desired_output)
 
-    def test_single_morph_word_no_complex_misalignment(self):
-        """Test single_morph_word."""
+    def test_single_morph_word_no_complex_misalignment1(self):
+        """Test single_morph_word with no complex but with misalignment."""
         utterance = 'I test it'
         morph_tier = 'PRON|I V|test'
         actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
-        desired_ouput = utterance, morph_tier
-        self.assertEqual(actual_output, desired_ouput)
+        desired_output = utterance, morph_tier
+        self.assertEqual(actual_output, desired_output)
+
+    def test_single_morph_word_no_complex_misalignment2(self):
+        """Test single_morph_word with no complex but with misalignment."""
+        utterance = 'I test'
+        morph_tier = 'PRON|I V|test PRON|it'
+        actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
+        desired_output = utterance, morph_tier
+        self.assertEqual(actual_output, desired_output)
+
+    def test_single_morph_word_already_joined(self):
+        """Test single_morph_word with already joined complex."""
+        utterance = 'I have_to test'
+        morph_tier = 'PRON|I V|have+to V|test'
+        actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
+        desired_output = utterance, morph_tier
+        self.assertEqual(actual_output, desired_output)
+
+    def test_single_morph_word_empty_mor(self):
+        """Test single_morph_word with empty morphology tier."""
+        utterance = 'I have_to test'
+        morph_tier = ''
+        actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
+        desired_output = utterance, morph_tier
+        self.assertEqual(actual_output, desired_output)
+
+    def test_single_morph_word_empty_utterance(self):
+        """Test single_morph_word with empty utterance."""
+        utterance = ''
+        morph_tier = 'PRON|I V|have+to V|test'
+        actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
+        desired_output = utterance, morph_tier
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- separate_morph_word ----------
+
+    def test_separate_morph_word_underscore(self):
+        """Test separate_morph_word with underscore."""
+        utterance = 'bla tu_ta bla'
+        mor_tier = 'N|bla V|N|tu_V|ta N|bla'
+        actual_output = TurkishCleaner.separate_morph_word(utterance, mor_tier)
+        desired_output = 'bla tu ta bla', 'N|bla N|tu V|ta N|bla'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_separate_morph_word_plus(self):
+        """Test separate_morph_word with plus."""
+        utterance = 'bla tu+ta bla'
+        mor_tier = 'N|bla V|N|tu+V|ta N|bla'
+        actual_output = TurkishCleaner.separate_morph_word(utterance, mor_tier)
+        desired_output = 'bla tu ta bla', 'N|bla N|tu V|ta N|bla'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_separate_morph_word_with_suffixes(self):
+        """Test separate_morph_word with suffixes."""
+        utterance = 'bla tuu_taa bla'
+        mor_tier = 'N|bla V|N|tu-U_V|ta-A N|bla'
+        actual_output = TurkishCleaner.separate_morph_word(utterance, mor_tier)
+        desired_output = 'bla tuu taa bla', 'N|bla N|tu-U V|ta-A N|bla'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_separate_morph_word_no_complex(self):
+        """Test separate_morph_word with no complex."""
+        utterance = 'I test'
+        mor_tier = 'PRON|I V|test'
+        actual_output = TurkishCleaner.separate_morph_word(utterance, mor_tier)
+        desired_output = utterance, mor_tier
+        self.assertEqual(actual_output, desired_output)
+
+    def test_separate_morph_word_no_complex_misalignment1(self):
+        """Test separate_morph_word with no complex but with misalignment."""
+        utterance = 'I test it'
+        mor_tier = 'PRON|I V|test'
+        actual_output = TurkishCleaner.separate_morph_word(utterance, mor_tier)
+        desired_output = utterance, mor_tier
+        self.assertEqual(actual_output, desired_output)
+
+    def test_separate_morph_word_no_complex_misalignment2(self):
+        """Test separate_morph_word with no complex but with misalignment."""
+        utterance = 'I test'
+        mor_tier = 'PRON|I V|test PRON|it'
+        actual_output = TurkishCleaner.separate_morph_word(utterance, mor_tier)
+        desired_output = utterance, mor_tier
+        self.assertEqual(actual_output, desired_output)
+
+    def test_separate_morph_word_empty_mor(self):
+        """Test separate_morph_word with empty morphology tier."""
+        utterance = 'I have_to test'
+        mor_tier = ''
+        actual_output = TurkishCleaner.separate_morph_word(utterance, mor_tier)
+        desired_output = utterance, mor_tier
+        self.assertEqual(actual_output, desired_output)
+
+    def test_separate_morph_word_empty_utterance(self):
+        """Test separate_morph_word with empty utterance."""
+        utterance = ''
+        mor_tier = 'N|bla V|N|tu_V|ta N|bla'
+        actual_output = TurkishCleaner.separate_morph_word(utterance, mor_tier)
+        desired_output = utterance, mor_tier
+        self.assertEqual(actual_output, desired_output)
 
 
 if __name__ == '__main__':

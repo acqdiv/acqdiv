@@ -303,9 +303,9 @@ class CHATCleaner(CorpusCleanerInterface):
     # ---------- tier cross cleaning ----------
 
     @staticmethod
-    def cross_clean(utterance, seg_tier, gloss_tier, pos_tier):
+    def cross_clean(actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
         """No cleaning by default."""
-        return utterance, seg_tier, gloss_tier, pos_tier
+        return actual_utt, target_utt, seg_tier, gloss_tier, pos_tier
 
     # ---------- morpheme word cleaning ----------
     @staticmethod
@@ -632,9 +632,10 @@ class CreeCleaner(CHATCleaner):
             return ' '.join(new_gloss_words)
 
     @classmethod
-    def cross_clean(cls, utterance, seg_tier, gloss_tier, pos_tier):
-        gloss_tier = cls.replace_eng(gloss_tier, utterance)
-        return utterance, seg_tier, gloss_tier, pos_tier
+    def cross_clean(cls, actual_utt, target_utt, seg_tier, gloss_tier,
+                    pos_tier):
+        gloss_tier = cls.replace_eng(gloss_tier, actual_utt)
+        return actual_utt, target_utt, seg_tier, gloss_tier, pos_tier
 
     # ---------- morpheme word cleaning ----------
 
@@ -860,7 +861,7 @@ class TurkishCleaner(CHATCleaner):
 
     @staticmethod
     def single_morph_word(utterance, morph_tier):
-        """Handle complex consisting of a single morphological word.
+        """Handle complexes consisting of a single morphological word.
 
         A complex consists of several stems that are either joined by + or _.
 
@@ -873,28 +874,32 @@ class TurkishCleaner(CHATCleaner):
         """
         wwords = utterance.split(' ')
         mwords = morph_tier.split(' ')
+        wwords_count = len(wwords)
+        mwords_count = len(mwords)
 
-        if len(mwords) == len(wwords) - 1:
-            i = 0
-            while i < len(mwords):
-                if '_' in mwords[i] or '+' in mwords[i]:
-                    next_word = wwords.pop(i+1)
-                    wwords[i] += '_' + next_word
-                i += 1
+        i = 0
+        while i < wwords_count and i < mwords_count:
+            if '_' in mwords[i] or '+' in mwords[i]:
+                if '_' not in wwords[i] and '+' not in wwords[i]:
+                    # check if there is a next word (-> missing join separator)
+                    if i + 1 < wwords_count:
+                        next_word = wwords.pop(i+1)
+                        wwords[i] += '_' + next_word
+                        wwords_count -= 1
+            i += 1
 
-            return ' '.join(wwords), morph_tier
-        else:
-            return utterance, morph_tier
+        return ' '.join(wwords), morph_tier
 
     @staticmethod
     def separate_morph_word(utterance, morph_tier):
-        """Handle complex consisting of separate morphological words.
+        """Handle complexes consisting of separate morphological words.
 
         A complex consists of several stems that are either joined by + or _.
 
         A complex consists of two morphological words, if it has separate
-        POS tags and suffixes. The orthographic word is split in this case.
-        POS tag of whole complex is discarded. Example:
+        POS tags and suffixes. The orthographic word as well as the
+        morphological word is split in this case. The POS tag of the whole
+        complex is discarded. Example:
         wholePOS|stem1POS|stem1-STEM1SFX_stem2POS|stem2-STEM2SFX
         word1:
             seg = stem1 gloss = ???         pos = stem1POS
@@ -903,24 +908,59 @@ class TurkishCleaner(CHATCleaner):
             seg = stem2 gloss = ???         pos = stem2POS
             seg = ???   gloss = STEM2SFX    pos = sfx
         """
-        return utterance, morph_tier
+        wwords = utterance.split(' ')
+        mwords = morph_tier.split(' ')
+
+        new_wwords = []
+        new_mwords = []
+
+        for wword, mword in zip(wwords, mwords):
+            # check for double POS tag
+            match = re.search(r'\S+?\|(\S+\|.*)', mword)
+            if match:
+                # discard POS tag of whole complex
+                mword = match.group(1)
+                for wm in re.split(r'[+_]', mword):
+                    new_mwords.append(wm)
+                for ww in re.split(r'[+_]', wword):
+                    new_wwords.append(ww)
+            else:
+                new_mwords.append(mword)
+                new_wwords.append(wword)
+
+        return ' '.join(new_wwords), ' '.join(new_mwords)
 
     @classmethod
-    def cross_clean(cls, utterance, seg_tier, gloss_tier, pos_tier):
+    def cross_clean(cls, actual_utt, target_utt, seg_tier, gloss_tier,
+                    pos_tier):
         # which morphology tier does not matter, they are all the same
-        morph_tier = seg_tier
-        utterance, morph_tier = cls.single_morph_word(utterance, morph_tier)
-        utterance, morph_tier = cls.separate_morph_word(utterance, morph_tier)
-        return utterance, morph_tier, morph_tier, morph_tier
+        mor_tier = seg_tier
+        actual_utt, mor_tier = cls.single_morph_word(actual_utt, mor_tier)
+        actual_utt, mor_tier = cls.separate_morph_word(actual_utt, mor_tier)
+        target_utt, mor_tier = cls.single_morph_word(target_utt, mor_tier)
+        target_utt, mor_tier = cls.separate_morph_word(target_utt, mor_tier)
+
+        return actual_utt, target_utt, mor_tier, mor_tier, mor_tier
+
+    # ---------- word cleaning ----------
+
+    @staticmethod
+    def replace_plus(unit):
+        """Replace plus by an underscore.
+
+        Args:
+            unit (str): utterance word or segment
+        """
+        return unit.replace('+', '_')
+
+    @classmethod
+    def clean_word(cls, word):
+        word = super().clean_word(word)
+        return cls.replace_plus(word)
 
     # ---------- morpheme cleaning ----------
 
     # ---------- segment cleaning ----------
-
-    @staticmethod
-    def replace_plus(segment):
-        """Replace plus by an underscore in the segment."""
-        return segment.replace('+', '_')
 
     @classmethod
     def clean_segment(cls, segment):

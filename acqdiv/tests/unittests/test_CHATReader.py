@@ -497,6 +497,20 @@ class TestCHATReader(unittest.TestCase):
         desired_output = '?'
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_utterance_terminator_no_terminator(self):
+        """Test get_utterance_terminator with no terminator."""
+        utterance = 'Das ist ein Test'
+        actual_output = CHATReader.get_utterance_terminator(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_empty_string(self):
+        """Test get_utterance_terminator with empty string."""
+        utterance = ''
+        actual_output = CHATReader.get_utterance_terminator(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- dependent tiers ----------
 
     def test_iter_dependent_tiers_standard_case(self):
