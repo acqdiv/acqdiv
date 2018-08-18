@@ -1347,7 +1347,6 @@ class SesothoReader(ACQDIVCHATReader):
 
         # get the gloss
         for mor in morphemes:
-            print('mor:', mor)
             if '^' in mor and not mor.startswith('m'):
                 match = re.search(r'^[nv]\^([a-zA-Z0-9]+)\b', mor)
                 if match:

@@ -146,7 +146,6 @@ class CHATParser(CorpusParserInterface):
             seg_tier = self.cleaner.clean_seg_tier(seg_tier)
             gloss_tier = self.cleaner.clean_gloss_tier(gloss_tier)
             pos_tier = self.cleaner.clean_pos_tier(pos_tier)
-
             # get morpheme words from the respective morphology tiers
             wsegs = self.reader.get_seg_words(seg_tier)
             wglosses = self.reader.get_gloss_words(gloss_tier)
