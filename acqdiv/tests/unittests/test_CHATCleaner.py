@@ -1458,6 +1458,22 @@ class TestTurkishCleaner(unittest.TestCase):
         desired_ouput = 'I have_to test', morph_tier
         self.assertEqual(actual_output, desired_ouput)
 
+    def test_single_morph_word_multiple_complexes(self):
+        """Test single_morph_word with multiple complexes."""
+        utterance = 'I have to test and I have to test'
+        morph_tier = 'PRON|I V|have+to V|test CORD|and PRON|I V|have+to V|test'
+        actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
+        desired_ouput = 'I have_to test and I have_to test', morph_tier
+        self.assertEqual(actual_output, desired_ouput)
+
+    def test_single_morph_word_no_join_sep_at_end(self):
+        """Test single_morph_word with no join separator at the end."""
+        utterance = 'I haveto'
+        morph_tier = 'PRON|I V|have+to'
+        actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
+        desired_ouput = utterance, morph_tier
+        self.assertEqual(actual_output, desired_ouput)
+
     def test_single_morph_word_no_complex(self):
         """Test single_morph_word with no complex."""
         utterance = 'I test'
@@ -1490,7 +1506,7 @@ class TestTurkishCleaner(unittest.TestCase):
         desired_ouput = utterance, morph_tier
         self.assertEqual(actual_output, desired_ouput)
 
-    # ---------- single_morph_word ----------
+    # ---------- separate_morph_word ----------
 
     def test_separate_morph_word_underscore(self):
         """Test separate_morph_word with underscore."""

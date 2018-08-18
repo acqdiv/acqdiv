@@ -798,18 +798,21 @@ class TurkishCleaner(CHATCleaner):
         """
         wwords = utterance.split(' ')
         mwords = morph_tier.split(' ')
+        wwords_count = len(wwords)
+        mwords_count = len(mwords)
 
-        if len(mwords) == len(wwords) - 1:
-            i = 0
-            while i < len(mwords):
-                if '_' in mwords[i] or '+' in mwords[i]:
-                    next_word = wwords.pop(i+1)
-                    wwords[i] += '_' + next_word
-                i += 1
+        i = 0
+        while i < wwords_count and i < mwords_count:
+            if '_' in mwords[i] or '+' in mwords[i]:
+                if '_' not in wwords[i] and '+' not in wwords[i]:
+                    # check if there is a next word (-> missing join separator)
+                    if i + 1 < wwords_count:
+                        next_word = wwords.pop(i+1)
+                        wwords[i] += '_' + next_word
+                        wwords_count -= 1
+            i += 1
 
-            return ' '.join(wwords), morph_tier
-        else:
-            return utterance, morph_tier
+        return ' '.join(wwords), morph_tier
 
     @staticmethod
     def separate_morph_word(utterance, morph_tier):
@@ -837,7 +840,7 @@ class TurkishCleaner(CHATCleaner):
 
         for wword, mword in zip(wwords, mwords):
             # check for double POS tag
-            match = re.search(r'\w+\|(\w+\|.*)', mword)
+            match = re.search(r'\S+?\|(\S+\|.*)', mword)
             if match:
                 # discard POS tag of whole complex
                 mword = match.group(1)
