@@ -1981,6 +1981,34 @@ class TestCreeReader(unittest.TestCase):
 
 class TestYucatecReader(unittest.TestCase):
 
+    def test_get_morpheme_words_no_clitics(self):
+        """Test get_morpheme_words with no clitics."""
+        morph_tier = 'P|ráʔ P|riʔ P|ruʔ'
+        actual_output = YucatecReader.get_morpheme_words(morph_tier)
+        desired_output = ['P|ráʔ', 'P|riʔ', 'P|ruʔ']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_words_empty_string(self):
+        """Test get_morpheme_words with empty string."""
+        morph_tier = ''
+        actual_output = YucatecReader.get_morpheme_words(morph_tier)
+        desired_output = []
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_words_proclitic(self):
+        """Test get_morpheme_words with a proclitic."""
+        morph_tier = 'P|ráʔ P|riʔ P|kiʔ&P|ruʔ'
+        actual_output = YucatecReader.get_morpheme_words(morph_tier)
+        desired_output = ['P|ráʔ', 'P|riʔ', 'P|kiʔ', 'P|ruʔ']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_words_postclitic(self):
+        """Test get_morpheme_words with a postclitic."""
+        morph_tier = 'P|ráʔ P|riʔ P|ruʔ+P|kuʔ'
+        actual_output = YucatecReader.get_morpheme_words(morph_tier)
+        desired_output = ['P|ráʔ', 'P|riʔ', 'P|ruʔ', 'P|kuʔ']
+        self.assertEqual(actual_output, desired_output)
+
     def test_iter_morphemes_stem_only(self):
         """Test iter_morphemes with stem only."""
         word = 'STEMPOS|stem'
