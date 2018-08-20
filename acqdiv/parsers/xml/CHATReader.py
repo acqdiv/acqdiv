@@ -1253,10 +1253,13 @@ class YucatecReader(ACQDIVCHATReader):
         Words are separated by blank spaces as well as & and + in the case of
         clitics.
         """
-        pass
+        if morph_tier:
+            return re.split(r'[\s&+]+', morph_tier)
+        else:
+            return []
 
     @staticmethod
-    def iter_morphemes(morph_word):
+    def iter_morphemes(word):
         """Iter morphemes of a word.
 
         Morphemes are separated by '#' (prefixes), ':' (suffixes) and '-'
