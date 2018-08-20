@@ -869,7 +869,7 @@ class SesothoCleaner(CHATCleaner):
         # Remove markers for words with nominal concord.
         match = re.search('^(d|lr|obr|or|pn|ps|sr)\d+', gloss_word)
         if match:
-            pos = pos_match.group(1)
+            pos = match.group(1)
             gloss_word = re.sub(pos, '', gloss_word)
 
         # Remove parentheses if not surrounding the entire gloss-word.
