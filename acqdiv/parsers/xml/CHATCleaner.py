@@ -984,3 +984,38 @@ class TurkishCleaner(CHATCleaner):
     @classmethod
     def clean_segment(cls, segment):
         return cls.replace_plus(segment)
+
+
+###############################################################################
+
+class YucatecCleaner(CHATCleaner):
+
+    # ---------- morphology tier cleaning ----------
+
+    @classmethod
+    def remove_double_hashes(cls, morph_tier):
+        """Remove ## from the morphology tier."""
+        morph_tier = re.sub(r'(^| )##( |$)', r'\1\2', morph_tier)
+        return cls.remove_redundant_whitespaces(morph_tier)
+
+    @classmethod
+    def clean_morph_tier(cls, morph_tier):
+        for cleaning_method in [
+                cls.remove_terminator, cls.remove_double_hashes]:
+            morph_tier = cleaning_method(morph_tier)
+
+        return morph_tier
+
+    # ---------- morpheme word cleaning ----------
+
+    @staticmethod
+    def correct_hyphens(word):
+        """Replace faulty hyphens by the pipe in the morphology tier.
+
+        It is only attested in suffixes, not in prefixes.
+        """
+        return re.sub(r'(:[A-Z0-9]+)-(?=[a-záéíóúʔ]+)', r'\1|', word)
+
+    @classmethod
+    def clean_morpheme_word(cls, morpheme_word):
+        return cls.correct_hyphens(morpheme_word)

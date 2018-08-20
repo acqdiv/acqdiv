@@ -4,6 +4,7 @@ from acqdiv.parsers.xml.CHATCleaner import InuktitutCleaner
 from acqdiv.parsers.xml.CHATCleaner import CreeCleaner
 from acqdiv.parsers.xml.CHATCleaner import JapaneseMiiProCleaner
 from acqdiv.parsers.xml.CHATCleaner import TurkishCleaner
+from acqdiv.parsers.xml.CHATCleaner import YucatecCleaner
 
 
 class TestCHATCleaner(unittest.TestCase):
@@ -1618,6 +1619,18 @@ class TestTurkishCleaner(unittest.TestCase):
         mor_tier = 'N|bla V|N|tu_V|ta N|bla'
         actual_output = TurkishCleaner.separate_morph_word(utterance, mor_tier)
         desired_output = utterance, 'N|bla N|tu V|ta N|bla'
+        self.assertEqual(actual_output, desired_output)
+
+###############################################################################
+
+
+class TestYucatecCleaner(unittest.TestCase):
+
+    def test_correct_hyphens(self):
+        """Test correct_hyphens."""
+        morph_tier = 'P|ki P|ka:PP-fu P|ku'
+        actual_output = YucatecCleaner.correct_hyphens(morph_tier)
+        desired_output = 'P|ki P|ka:PP|fu P|ku'
         self.assertEqual(actual_output, desired_output)
 
 
