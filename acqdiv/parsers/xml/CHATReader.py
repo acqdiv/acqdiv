@@ -1288,6 +1288,42 @@ class YucatecReader(ACQDIVCHATReader):
 ###############################################################################
 
 class SesothoReader(ACQDIVCHATReader):
+    """Class to implement Sesotho Reading methods.
+
+    Normally the methods get_utterance(), get_actual_utterance() and
+    get_target_utterance() extract the utterance from the mainline.
+    In Sesotho there are many misalignments between the
+    mainline-utterance and the morpheme-tiers. So instead the
+    utterance (for all three methods) is created by joining morphemes to
+    words and those to the utterance.
+    """
+
+    def _join_morph_to_utt(self):
+        """Create the utterance by joining the morphemes to words.
+
+        Morphemes are separated by hyphens. The hyphens are removed.
+        """
+        seg_tier = self.get_seg_tier()
+        seg_words = seg_tier.split(' ')
+        utt_words = []
+
+        for w in seg_words:
+            w = ''.join(w.split('-'))
+            utt_words.append(w)
+
+        return ' '.join(utt_words)
+
+    def get_utterance(self):
+        """Get the utterance, created by joined morphemes."""
+        return self._join_morph_to_utt()
+
+    def get_actual_utterance(self):
+        """Get the actual utterance, created by joined morphemes."""
+        return self._join_morph_to_utt()
+
+    def get_target_utterance(self):
+        """Get the target utterance, created by joined morphemes."""
+        return self._join_morph_to_utt()
 
     def get_seg_tier(self):
         """Extract the segments tier and do cross-cleaning.
@@ -1398,4 +1434,4 @@ class SesothoReader(ACQDIVCHATReader):
 
     @staticmethod
     def get_word_language(word):
-        pass
+        return 'Sesotho'
