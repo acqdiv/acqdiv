@@ -809,7 +809,6 @@ class SesothoCleaner(CHATCleaner):
 
         return seg_tier, gloss_tier, pos_tier
 
-
     @classmethod
     def clean_seg_tier(cls, seg_tier):
         seg_tier = cls.remove_terminator(seg_tier)
@@ -832,7 +831,7 @@ class SesothoCleaner(CHATCleaner):
         """
         gloss_tier = cls.remove_terminator(gloss_tier)
         gloss_tier = re.sub(r'\s+,\s+', ',', gloss_tier)
-        gloss_tier = re.sub('(\d+a?)\\/(\d+a?)', '\\1|\\2', gloss_tier)
+        gloss_tier = re.sub('(\d+a?)/(\d+a?)', '\\1|\\2', gloss_tier)
         return cls.clean_morph_tier(gloss_tier)
 
     @classmethod
@@ -845,39 +844,39 @@ class SesothoCleaner(CHATCleaner):
         seg_word = re.sub('\(([a-zA-Z]\\S+)\)', '\\1', seg_word)
         return cls.clean_morpheme_word(seg_word)
 
-    @staticmethod
-    def clean_gloss_word(gloss_word):
-        """Clean a gloss word."""
-        # n^ prefixed to all noun class glosses is completely redundant,
-        # so delete
+    @classmethod
+    def clean_gloss_word(cls, gloss_word):
+        """Clean a gloss word.
+
+        Remove redundant markers and pos-tag markers, lowercase all
+        labels and standardize untranscribed material.
+        """
+        # Remove noun class markers.
         gloss_word = re.sub('[nN]\^(?=\\d)', '', gloss_word)
-        # n^ prefixed to all proper names: replace by 'a_',
-        # lowercase label
+        # Replace n^ with 'a_' in proper names.
         gloss_word = re.sub('[nN]\^([gG]ame|[nN]ame|[pP]lace|[sS]ong)',
-                       'a_\\1', gloss_word)
+                            'a_\\1', gloss_word)
+        # Lowercase labels.
         if re.search('a_(Game|Name|Place|Song)', gloss_word):
             gloss_word = gloss_word.lower()
 
-        # affixes already have their POS, but replace '_' as
-        # concatenator by more standard '.'
+        # Replace '_' as concatenator by  '.'.
         gloss_word = re.sub('_', '.', gloss_word)
 
-        # verbs have v^, one typo as s^
+        # Remove verb markers (generally v^, but one typo as s^).
         gloss_word = re.sub('[vs]\^', '', gloss_word)
 
-        # words with nominal concord
-        pos_match = re.search('^(d|lr|obr|or|pn|ps|sr)\d+', gloss_word)
-        if pos_match:
+        # Remove markers for words with nominal concord.
+        match = re.search('^(d|lr|obr|or|pn|ps|sr)\d+', gloss_word)
+        if match:
             pos = pos_match.group(1)
             gloss_word = re.sub(pos, '', gloss_word)
 
+        # Remove parentheses if not surrounding the entire gloss-word.
         if not re.search('^\(.*\)$', gloss_word):
             gloss_word = re.sub('\(([a-zA-Z]\\S+)\)', '\\1', gloss_word)
 
-        # meaningless and unclear words. Note that "xxx" in the Sesotho
-        # coding tier is not the same as CHAT "xxx" in the transcription
-        # tier - it does not stand for words that could not be
-        # transcribed but for words with unclear meaning.
+        # Unify untranscribed material.
         if gloss_word == 'word' or gloss_word == 'xxx':
             gloss_word = '???'
 
