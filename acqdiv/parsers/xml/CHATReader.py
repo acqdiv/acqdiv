@@ -1259,8 +1259,25 @@ class YucatecReader(ACQDIVCHATReader):
     def iter_morphemes(morph_word):
         """Iter morphemes of a word.
 
-        Prefixes are separated by #
-        Suffixes are separated by :
+        Morphemes are separated by '#' (prefixes), ':' (suffixes) and '-'
+        (unstructured morpheme).
+
+        Structure of a morpheme:
+        PFXGLOSS|prefix#STEMPOS|stem:SFXGLOSS|-suffix
+
+        Stem: stem, no gloss, POS
+        Prefix: stem, gloss, no POS (-> assign pfx)
+        Suffix: stem, gloss, no POS (-> assign sfx)
+
+        Glosses and POS tags may have sub glosses and sub POS tags with ':'
+        as a separator. This use can be distinguished from the
+        morpheme-separating use by checking the strings to the left and right
+        of the ':' – when they consist of nothing but uppercase letters and
+        digits, they are sub glosses or POS tags; otherwise they belong to
+        different morphemes.
+
+        Some morphemes are missing POS tags (stems) or glosses in which case
+        the morpheme separated by a '-'.
         """
         pass
 
