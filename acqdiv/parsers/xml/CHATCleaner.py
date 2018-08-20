@@ -769,6 +769,27 @@ class JapaneseMiiProCleaner(CHATCleaner):
 
 class SesothoCleaner(CHATCleaner):
 
+    def clean_utterance(self, utterance):
+        utterance = self.remove_words_in_parentheses(utterance)
+        utterance = self.remove_parentheses(utterance)
+        return super().clean_utterance(utterance)
+
+    def remove_words_in_parentheses(self, utterance):
+        """Remove words in parentheses.
+
+        In Sesotho, these are only used to mark contractions of the
+        verb 'go' which are conventional in both child and adult
+        speech.
+        """
+        return re.sub('\b(\(.*\)|[\.\?])\b', '', utterance)
+
+    def remove_parentheses(self, utterance):
+        """Remove parentheses, that only surround a part of a word.
+
+        Such parentheses are leftovers from the morpheme joining.
+        """
+        return re.sub('[\(\)]', '', utterance)
+
     @classmethod
     def cross_clean(
             cls, actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
