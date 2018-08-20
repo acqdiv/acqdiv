@@ -1283,20 +1283,16 @@ class SesothoReader(ACQDIVCHATReader):
     def get_pos_tier(self):
         return self._dependent_tiers.get('cod', '')
 
+    @staticmethod
     def iter_morphemes(morph_word):
-        """Iter morphemes of a word.
+        """Iter morphemes of a morph. word (encoding gloss and pos).
 
-        Segment words are separated by spaces, morphemes (stems and
+        This method only returns glosses and poses, but not segments,
+        since segments are on a different tier. They are retrieved
+        directly by get_segments().
+
+        Morphological words are separated by spaces, morphemes (stems and
         affixes) are separated by hyphens.
-
-        Glosses and poses are on the same tier, separated by spaces and
-        hyphens.
-        Nouns: have parentheses with two numbers (indicating noun classes).
-        Proper nouns: start with 'n^' with 'name', 'place', 'game' or
-        'song'.
-
-        Segment words are not on the same tier as gloss_words and are
-        thus not returned by this method.
 
         Returns:
             tuple: (<empty_string>, gloss, pos).
@@ -1308,42 +1304,50 @@ class SesothoReader(ACQDIVCHATReader):
         passed_stem = False
 
         for mor in morphemes:
-            # Check for prefixes and suffixes.
+            gloss = mor  # The gloss is just the cleaned morpheme.
+            pos = ''  # Check for prefixes and suffixes.
             if len(morphemes) == 1 or (re.search('(v|id)\^|\(\d', mor)
-                                     or re.match('(aj$|nm$|ps\d+)', mor)):
+                                     or re.match('(aj$|nm$|ps\d+)',
+                                                 mor)):
                 passed_stem = True
-            if passed_stem == False:
+            elif not passed_stem:
                 pos = 'pfx'
-            elif passed_stem == True:
+            elif passed_stem:
                 pos = 'sfx'
+
+            if pos == 'pfx' or pos == 'sfx':
+                pass
             # Check for verbs: verbs have v^, one typo as s^.
-            if re.search('[vs]\^', mor):
+            elif re.search('[vs]\^', mor):
                 pos = 'v'
+
             # Check for nouns: nouns contains "(\d)" (default) or "ps/"
-            # (suppletive possession).
-            elif re.search('\(\d+', mor) or re.search('^ps\/', mor):
+            elif re.search('\(\d+', mor) or re.search('^ps/', mor):
                 pos = 'n'
+
             # Check for words with nominal concord.
             elif re.search('^(d|lr|obr|or|pn|ps|sr)\d+', mor):
                 pos_match = re.search('^(d|lr|obr|or|pn|ps|sr)\d+', mor)
                 pos = pos_match.group(1)
-                # gloss = re.sub(pos, '', mor)
+
             # Check for particles: mostly without a precise gloss.
             elif re.search(
-                '^(aj|av|cd|cj|cm|ht|ij|loc|lr|ng|nm|obr|or|pr|q|sr|wh)$',mor):
+                    '^(aj|av|cd|cj|cm|ht|ij|loc|lr|ng|nm|obr|or|pr|q|sr|wh)$',
+                    mor):
                 pos = mor
+
             # Check for free person markers.
             elif re.search('^sm\d+[sp]?$', mor):
                 pos = 'afx.detached'
+
             # Check for copulas.
             elif re.search('^cp|cp$', mor):
                 pos = 'cop'
+
             # Check for ideophones.
             elif re.search('id\^', mor):
                 pos = 'ideoph'
-            # Check for punctuation marks.
-            elif re.search('^[.!\?]$', mor):
-                pos = 'punct'
+
             # Check for meaningless and unclear words. Note that "xxx"
             # in the Sesotho coding tier is not the same as CHAT "xxx"
             # in the transcription tier - it does not stand for words
@@ -1351,26 +1355,10 @@ class SesothoReader(ACQDIVCHATReader):
             # meaning.
             elif mor == 'word' or mor == 'xxx':
                 pos = 'none'
-                # gloss = '???'
             else:
                 pos = '???'
 
-        # get the gloss
-        for mor in morphemes:
-            if '^' in mor and not mor.startswith('m'):
-                match = re.search(r'^[nv]\^([a-zA-Z0-9]+)\b', mor)
-                if match:
-                    gloss = match.groups()[0]
-                else:
-                    gloss = 'no match'
-            else:
-                gloss = mor
-
-            # regex to get gloss without poses
-            pattern = re.compile(r'')
-            # TODO: finish method and clean up code
-
-            yield ('', gloss, pos)
+            yield('', gloss, pos)
 
     @classmethod
     def get_segments(cls, seg_word):
