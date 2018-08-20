@@ -454,6 +454,13 @@ class TestCHATReader(unittest.TestCase):
         desired_output = []
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_utterance_words_multiple_blank_spaces(self):
+        """Test get_utterance_words with multiple blank spaces."""
+        utterance = 'ke eng  ntho ena   e?'
+        actual_output = CHATReader.get_utterance_words(utterance)
+        desired_output = ['ke', 'eng', 'ntho', 'ena', 'e?']
+        self.assertEqual(actual_output, desired_output)
+
     # TODO: add more test cases for the other terminators
 
     def test_get_utterance_terminator_space_before(self):
