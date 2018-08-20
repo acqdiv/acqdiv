@@ -918,13 +918,20 @@ class TurkishCleaner(CHATCleaner):
 
         i = 0
         while i < wwords_count and i < mwords_count:
-            if '_' in mwords[i] or '+' in mwords[i]:
-                if '_' not in wwords[i] and '+' not in wwords[i]:
-                    # check if there is a next word (-> missing join separator)
-                    if i + 1 < wwords_count:
-                        next_word = wwords.pop(i+1)
-                        wwords[i] += '_' + next_word
-                        wwords_count -= 1
+            mword = mwords[i]
+            wword = wwords[i]
+            if '_' in mword or '+' in mword:
+                if '_' not in wword and '+' not in wword:
+                    # check if wword and mword are similar (-> misalignment)
+                    if wword[:2] in mword:
+                        # check if there is a next word (-> missing join sep)
+                        if i + 1 < wwords_count:
+                            next_word = wwords[i+1]
+                            # check if wword and mword are similar
+                            if next_word[:2] in mword:
+                                del wwords[i+1]
+                                wwords[i] += '_' + next_word
+                                wwords_count -= 1
             i += 1
 
         return ' '.join(wwords), morph_tier
@@ -949,25 +956,36 @@ class TurkishCleaner(CHATCleaner):
         """
         wwords = utterance.split(' ')
         mwords = morph_tier.split(' ')
+        wwords_count = len(wwords)
+        mwords_count = len(mwords)
 
-        new_wwords = []
-        new_mwords = []
-
-        for wword, mword in zip(wwords, mwords):
+        i = 0
+        while i < wwords_count and i < mwords_count:
             # check for double POS tag
-            match = re.search(r'\S+?\|(\S+\|.*)', mword)
+            match = re.search(r'\S+?\|(\S+\|.*)', mwords[i])
             if match:
                 # discard POS tag of whole complex
                 mword = match.group(1)
-                for wm in re.split(r'[+_]', mword):
-                    new_mwords.append(wm)
-                for ww in re.split(r'[+_]', wword):
-                    new_wwords.append(ww)
-            else:
-                new_mwords.append(mword)
-                new_wwords.append(wword)
+                # remove old word
+                del mwords[i]
+                mwords_count -= 1
+                # add new words
+                for j, w in enumerate(re.split(r'[+_]', mword)):
+                    mwords.insert(i+j, w)
+                    mwords_count += 1
 
-        return ' '.join(new_wwords), ' '.join(new_mwords)
+                # check if utterance word is also joined
+                if '_' in wwords[i] or '+' in wwords[i]:
+                    # same procedure
+                    wword = wwords[i]
+                    del wwords[i]
+                    wwords_count -= 1
+                    for j, w in enumerate(re.split(r'[+_]', wword)):
+                        wwords.insert(i + j, w)
+                        wwords_count += 1
+            i += 1
+
+        return ' '.join(wwords), ' '.join(mwords)
 
     @classmethod
     def cross_clean(cls, actual_utt, target_utt, seg_tier, gloss_tier,
@@ -1004,3 +1022,38 @@ class TurkishCleaner(CHATCleaner):
     @classmethod
     def clean_segment(cls, segment):
         return cls.replace_plus(segment)
+
+
+###############################################################################
+
+class YucatecCleaner(CHATCleaner):
+
+    # ---------- morphology tier cleaning ----------
+
+    @classmethod
+    def remove_double_hashes(cls, morph_tier):
+        """Remove ## from the morphology tier."""
+        morph_tier = re.sub(r'(^| )##( |$)', r'\1\2', morph_tier)
+        return cls.remove_redundant_whitespaces(morph_tier)
+
+    @classmethod
+    def clean_morph_tier(cls, morph_tier):
+        for cleaning_method in [
+                cls.remove_terminator, cls.remove_double_hashes]:
+            morph_tier = cleaning_method(morph_tier)
+
+        return morph_tier
+
+    # ---------- morpheme word cleaning ----------
+
+    @staticmethod
+    def correct_hyphens(word):
+        """Replace faulty hyphens by the pipe in the morphology tier.
+
+        It is only attested in suffixes, not in prefixes.
+        """
+        return re.sub(r'(:[A-Z0-9]+)-(?=[a-záéíóúʔ]+)', r'\1|', word)
+
+    @classmethod
+    def clean_morpheme_word(cls, morpheme_word):
+        return cls.correct_hyphens(morpheme_word)

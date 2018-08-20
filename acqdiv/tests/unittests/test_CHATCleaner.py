@@ -4,6 +4,7 @@ from acqdiv.parsers.xml.CHATCleaner import InuktitutCleaner
 from acqdiv.parsers.xml.CHATCleaner import CreeCleaner
 from acqdiv.parsers.xml.CHATCleaner import JapaneseMiiProCleaner
 from acqdiv.parsers.xml.CHATCleaner import TurkishCleaner
+from acqdiv.parsers.xml.CHATCleaner import YucatecCleaner
 
 
 class TestCHATCleaner(unittest.TestCase):
@@ -1466,6 +1467,14 @@ class TestTurkishCleaner(unittest.TestCase):
         desired_output = 'I have_to test and I have_to test', morph_tier
         self.assertEqual(actual_output, desired_output)
 
+    def test_single_morph_word_no_join_sep(self):
+        """Test single_morph_word with no join separator."""
+        utterance = 'I haveto test'
+        morph_tier = 'PRON|I V|have+to V|test'
+        actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
+        desired_output = utterance, morph_tier
+        self.assertEqual(actual_output, desired_output)
+
     def test_single_morph_word_no_join_sep_at_end(self):
         """Test single_morph_word with no join separator at the end."""
         utterance = 'I haveto'
@@ -1517,6 +1526,14 @@ class TestTurkishCleaner(unittest.TestCase):
     def test_single_morph_word_empty_utterance(self):
         """Test single_morph_word with empty utterance."""
         utterance = ''
+        morph_tier = 'PRON|I V|have+to V|test'
+        actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
+        desired_output = utterance, morph_tier
+        self.assertEqual(actual_output, desired_output)
+
+    def test_single_morph_unsimilar(self):
+        """Test single_morph_word with unsimilar wword and mword."""
+        utterance = 'I got to test'
         morph_tier = 'PRON|I V|have+to V|test'
         actual_output = TurkishCleaner.single_morph_word(utterance, morph_tier)
         desired_output = utterance, morph_tier
@@ -1586,6 +1603,34 @@ class TestTurkishCleaner(unittest.TestCase):
         mor_tier = 'N|bla V|N|tu_V|ta N|bla'
         actual_output = TurkishCleaner.separate_morph_word(utterance, mor_tier)
         desired_output = utterance, mor_tier
+        self.assertEqual(actual_output, desired_output)
+
+    def test_separate_morph_word_multiple_complexes(self):
+        """Test separate_morph_word with multiple complexes."""
+        utterance = 'bla tu+ta tu_ta'
+        mor_tier = 'N|bla V|N|tu_V|ta V|N|tu+V|ta'
+        actual_output = TurkishCleaner.separate_morph_word(utterance, mor_tier)
+        desired_output = 'bla tu ta tu ta', 'N|bla N|tu V|ta N|tu V|ta'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_separate_morph_word_no_join_sep(self):
+        """Test separate_morph_word with no join separator."""
+        utterance = 'bla tuta bla'
+        mor_tier = 'N|bla V|N|tu_V|ta N|bla'
+        actual_output = TurkishCleaner.separate_morph_word(utterance, mor_tier)
+        desired_output = utterance, 'N|bla N|tu V|ta N|bla'
+        self.assertEqual(actual_output, desired_output)
+
+###############################################################################
+
+
+class TestYucatecCleaner(unittest.TestCase):
+
+    def test_correct_hyphens(self):
+        """Test correct_hyphens."""
+        morph_tier = 'P|ki P|ka:PP-fu P|ku'
+        actual_output = YucatecCleaner.correct_hyphens(morph_tier)
+        desired_output = 'P|ki P|ka:PP|fu P|ku'
         self.assertEqual(actual_output, desired_output)
 
 

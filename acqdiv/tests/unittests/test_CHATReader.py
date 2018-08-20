@@ -7,6 +7,7 @@ from acqdiv.parsers.xml.CHATReader import JapaneseMiiProReader
 from acqdiv.parsers.xml.CHATReader import CreeReader
 from acqdiv.parsers.xml.CHATReader import EnglishManchester1Reader
 from acqdiv.parsers.xml.CHATReader import TurkishReader
+from acqdiv.parsers.xml.CHATReader import YucatecReader
 
 """The metadata is a combination of hiia.cha (Sesotho), aki20803.ch 
 (Japanese Miyata) and made up data to cover more cases. 
@@ -451,6 +452,13 @@ class TestCHATReader(unittest.TestCase):
         utterance = ''
         actual_output = CHATReader.get_utterance_words(utterance)
         desired_output = []
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_words_multiple_blank_spaces(self):
+        """Test get_utterance_words with multiple blank spaces."""
+        utterance = 'ke eng  ntho ena   e?'
+        actual_output = CHATReader.get_utterance_words(utterance)
+        desired_output = ['ke', 'eng', 'ntho', 'ena', 'e?']
         self.assertEqual(actual_output, desired_output)
 
     # TODO: add more test cases for the other terminators
@@ -1975,6 +1983,120 @@ class TestCreeReader(unittest.TestCase):
         desired_output = 'English'
         self.assertEqual(actual_output, desired_output)
 
+###############################################################################
+
+
+class TestYucatecReader(unittest.TestCase):
+
+    def test_get_morpheme_words_no_clitics(self):
+        """Test get_morpheme_words with no clitics."""
+        morph_tier = 'P|ráʔ P|riʔ P|ruʔ'
+        actual_output = YucatecReader.get_morpheme_words(morph_tier)
+        desired_output = ['P|ráʔ', 'P|riʔ', 'P|ruʔ']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_words_multiple_spaces(self):
+        """Test get_morpheme_words with multiple spaces."""
+        morph_tier = 'P|ráʔ  P|riʔ   P|ruʔ'
+        actual_output = YucatecReader.get_morpheme_words(morph_tier)
+        desired_output = ['P|ráʔ', 'P|riʔ', 'P|ruʔ']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_words_empty_string(self):
+        """Test get_morpheme_words with empty string."""
+        morph_tier = ''
+        actual_output = YucatecReader.get_morpheme_words(morph_tier)
+        desired_output = []
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_words_proclitic(self):
+        """Test get_morpheme_words with a proclitic."""
+        morph_tier = 'P|ráʔ P|riʔ P|kiʔ&P|ruʔ'
+        actual_output = YucatecReader.get_morpheme_words(morph_tier)
+        desired_output = ['P|ráʔ', 'P|riʔ', 'P|kiʔ', 'P|ruʔ']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_words_postclitic(self):
+        """Test get_morpheme_words with a postclitic."""
+        morph_tier = 'P|ráʔ P|riʔ P|ruʔ+P|kuʔ'
+        actual_output = YucatecReader.get_morpheme_words(morph_tier)
+        desired_output = ['P|ráʔ', 'P|riʔ', 'P|ruʔ', 'P|kuʔ']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_stem_only(self):
+        """Test iter_morphemes with stem only."""
+        word = 'STEMPOS|stem'
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('stem', '', 'STEMPOS')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_suffixes(self):
+        """Test iter_morphemes with suffixes."""
+        word = 'STEMPOS|stem:SFXGLOSS1|-sfx1:SFXGLOSS2|-sfx2'
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('stem', '', 'STEMPOS'),
+                          ('sfx1', 'SFXGLOSS1', 'sfx'),
+                          ('sfx2', 'SFXGLOSS2', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_prefixes(self):
+        """Test iter_morphemes with prefixes."""
+        word = 'PFXGLOSS1|pfx1#PFXGLOSS2|pfx2#STEMPOS|stem'
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('pfx1', 'PFXGLOSS1', 'pfx'),
+                          ('pfx2', 'PFXGLOSS2', 'pfx'),
+                          ('stem', '', 'STEMPOS')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_prefixes_suffixes(self):
+        """Test iter_morphemes with prefixes and suffixes."""
+        word = ('PFXGLOSS1|pfx1#PFXGLOSS2|pfx2#'
+                'STEMPOS|stem'
+                ':SFXGLOSS1|-sfx1:SFXGLOSS2|-sfx2')
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('pfx1', 'PFXGLOSS1', 'pfx'),
+                          ('pfx2', 'PFXGLOSS2', 'pfx'),
+                          ('stem', '', 'STEMPOS'),
+                          ('sfx1', 'SFXGLOSS1', 'sfx'),
+                          ('sfx2', 'SFXGLOSS2', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_subpos_subgloss(self):
+        """Test iter_morphemes with sub POS tag and sub glosses."""
+        word = ('PFXGLOSS:PFXSUBGLOSS|pfx#'
+                'STEMPOS:STEMSUBPOS|stem'
+                ':SFXGLOSS:SFXSUBGLOSS|-sfx')
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('pfx', 'PFXGLOSS:PFXSUBGLOSS', 'pfx'),
+                          ('stem', '', 'STEMSUBPOS'),
+                          ('sfx', 'SFXSUBGLOSS', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_no_pos_no_gloss(self):
+        """Test iter_morphemes with no POS tags and glosses."""
+        word = 'm1-m2-m3'
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('m1', '', ''),
+                          ('m2', '', ''),
+                          ('m3', '', '')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_suffix_no_gloss(self):
+        """Test iter_morphemes with suffix having no gloss."""
+        word = 'STEMPOS|stem-sfx1-sfx2'
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('stem', '', 'STEMPOS'),
+                          ('sfx1', '', ''),
+                          ('sfx2', '', '')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_stem_no_pos(self):
+        """Test iter_morphemes with stem having no POS tag."""
+        word = 'stem-SFXGLOSS|-sfx'
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('stem', '', 'STEMPOS'),
+                          ('sfx', 'SFXGLOSS', '')]
+        self.assertEqual(actual_output, desired_output)
 
 if __name__ == '__main__':
     unittest.main()
