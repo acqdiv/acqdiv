@@ -1363,8 +1363,7 @@ class SesothoReader(ACQDIVCHATReader):
             gloss = mor  # The gloss is just the cleaned morpheme.
             pos = ''  # Check for prefixes and suffixes.
             if len(morphemes) == 1 or (re.search('(v|id)\^|\(\d', mor)
-                                     or re.match('(aj$|nm$|ps\d+)',
-                                                 mor)):
+                                       or re.match('(aj$|nm$|ps\d+)', mor)):
                 passed_stem = True
             elif not passed_stem:
                 pos = 'pfx'
