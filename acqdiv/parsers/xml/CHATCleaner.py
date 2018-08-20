@@ -865,41 +865,67 @@ class SesothoCleaner(CHATCleaner):
         seg_word = re.sub('\(([a-zA-Z]\\S+)\)', '\\1', seg_word)
         return cls.clean_morpheme_word(seg_word)
 
-    @classmethod
-    def clean_gloss_word(cls, gloss_word):
-        """Clean a gloss word.
-
-        Remove redundant markers and pos-tag markers, lowercase all
-        labels and standardize untranscribed material.
-        """
-        # Remove noun class markers.
+    @staticmethod
+    def remove_markers(gloss_word):
+        """Remove noun and verb markers."""
         gloss_word = re.sub('[nN]\^(?=\\d)', '', gloss_word)
-        # Replace n^ with 'a_' in proper names.
+        gloss_word = re.sub('[vs]\^', '', gloss_word)
+        return gloss_word
+
+    @staticmethod
+    def clean_proper_names_gloss_words(gloss_word):
+        """Clean glosses of proper names.
+
+        In proper names substitute 'n^' marker with 'a_'.
+        Lowercase the labels of propernames.
+        """
         gloss_word = re.sub('[nN]\^([gG]ame|[nN]ame|[pP]lace|[sS]ong)',
                             'a_\\1', gloss_word)
-        # Lowercase labels.
         if re.search('a_(Game|Name|Place|Song)', gloss_word):
             gloss_word = gloss_word.lower()
+        return gloss_word
 
-        # Replace '_' as concatenator by  '.'.
-        gloss_word = re.sub('_', '.', gloss_word)
+    @staticmethod
+    def replace_concatenators(gloss_word):
+        return re.sub('_', '.', gloss_word)
 
-        # Remove verb markers (generally v^, but one typo as s^).
-        gloss_word = re.sub('[vs]\^', '', gloss_word)
-
-        # Remove markers for words with nominal concord.
+    @staticmethod
+    def remove_nominal_concord_markers(gloss_word):
         match = re.search('^(d|lr|obr|or|pn|ps|sr)\d+', gloss_word)
         if match:
             pos = match.group(1)
-            gloss_word = re.sub(pos, '', gloss_word)
+            return re.sub(pos, '', gloss_word)
 
-        # Remove parentheses if not surrounding the entire gloss-word.
-        if not re.search('^\(.*\)$', gloss_word):
-            gloss_word = re.sub('\(([a-zA-Z]\\S+)\)', '\\1', gloss_word)
+        return gloss_word
 
-        # Unify untranscribed material.
+    @staticmethod
+    def unify_untranscribed_glosses(gloss_word):
         if gloss_word == 'word' or gloss_word == 'xxx':
-            gloss_word = '???'
+            return '???'
+
+        return gloss_word
+
+    @staticmethod
+    def remove_parentheses_inf(gloss_word):
+        """Remove parentheses from infinitives.
+
+        In Sesotho some infinitives are partially surrounded by
+        parentheses. Remove those parentheses.
+        """
+        if not re.search('^\(.*\)$', gloss_word):
+            return re.sub('\(([a-zA-Z]\\S+)\)', '\\1', gloss_word)
+
+        return gloss_word
+
+    @classmethod
+    def clean_gloss_word(cls, gloss_word):
+        """Clean a Sesotho gloss word."""
+        for method in [cls.remove_markers,
+                       cls.clean_proper_names_gloss_words,
+                       cls.replace_concatenators,
+                       cls.remove_nominal_concord_markers,
+                       cls.remove_parentheses_inf]:
+            gloss_word = method(gloss_word)
 
         return gloss_word
 
