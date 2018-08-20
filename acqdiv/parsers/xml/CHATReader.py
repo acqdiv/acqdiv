@@ -1254,7 +1254,7 @@ class YucatecReader(ACQDIVCHATReader):
         clitics.
         """
         if morph_tier:
-            return re.split(r'[\s&+]+', morph_tier)
+            return re.split(r'\s+|&|\+', morph_tier)
         else:
             return []
 

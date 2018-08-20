@@ -1995,6 +1995,13 @@ class TestYucatecReader(unittest.TestCase):
         desired_output = ['P|ráʔ', 'P|riʔ', 'P|ruʔ']
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_morpheme_words_multiple_spaces(self):
+        """Test get_morpheme_words with multiple spaces."""
+        morph_tier = 'P|ráʔ  P|riʔ   P|ruʔ'
+        actual_output = YucatecReader.get_morpheme_words(morph_tier)
+        desired_output = ['P|ráʔ', 'P|riʔ', 'P|ruʔ']
+        self.assertEqual(actual_output, desired_output)
+
     def test_get_morpheme_words_empty_string(self):
         """Test get_morpheme_words with empty string."""
         morph_tier = ''
