@@ -823,8 +823,6 @@ class SesothoCleaner(CHATCleaner):
         - Remove spaces in noun class brackets.
         - Replace '/' as noun class separator by '|' so it can't be
             confused with '/' as a morpheme separator.
-        - Remove parentheses around morphemes, which do not surround the
-            entire morpheme word.
 
         Args:
             gloss_tier: string
@@ -843,7 +841,7 @@ class SesothoCleaner(CHATCleaner):
 
     @classmethod
     def clean_seg_word(cls, seg_word):
-        """No cleaning by default."""
+        """Remove parentheses."""
         seg_word = re.sub('\(([a-zA-Z]\\S+)\)', '\\1', seg_word)
         return cls.clean_morpheme_word(seg_word)
 
