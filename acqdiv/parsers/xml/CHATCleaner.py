@@ -817,12 +817,20 @@ class SesothoCleaner(CHATCleaner):
         seg_words_clean = []
         gloss_words_clean = []
         pos_words_clean = []
+        slen = len(seg_words)
+        glen = len(gloss_words)
+        plen = len(pos_words)
 
         for i in range(len(seg_words)):
             if not re.search('^\(.*\)$', seg_words[i]):
-                seg_words_clean.append(seg_words[i])
-                gloss_words_clean.append(gloss_words[i])
-                pos_words_clean.append(pos_words[i])
+                # Avoid index errors, that occur if morphology tiers are
+                # misaligned, by first checking if index is in range.
+                if i < slen:
+                    seg_words_clean.append(seg_words[i])
+                if i < glen:
+                    gloss_words_clean.append(gloss_words[i])
+                if i < plen:
+                    pos_words_clean.append(pos_words[i])
 
         seg_tier = ' '.join(seg_words_clean)
         gloss_tier = ' '.join(gloss_words_clean)
