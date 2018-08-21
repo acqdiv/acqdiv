@@ -936,7 +936,7 @@ class SesothoCleaner(CHATCleaner):
 
     @staticmethod
     def remove_nominal_concord_markers(gloss):
-        match = re.search('^(d|lr|obr|or|pn|ps|sr)\d+', gloss)
+        match = re.search('^(d|lr|obr|or|pn|ps)\d+', gloss)
         if match:
             pos = match.group(1)
             return re.sub(pos, '', gloss)
