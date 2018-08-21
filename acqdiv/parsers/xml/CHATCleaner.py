@@ -935,13 +935,13 @@ class SesothoCleaner(CHATCleaner):
         return gloss_word
 
     @staticmethod
-    def remove_nominal_concord_markers(gloss_word):
-        match = re.search('^(d|lr|obr|or|pn|ps|sr)\d+', gloss_word)
+    def remove_nominal_concord_markers(gloss):
+        match = re.search('^(d|lr|obr|or|pn|ps|sr)\d+', gloss)
         if match:
             pos = match.group(1)
-            return re.sub(pos, '', gloss_word)
+            return re.sub(pos, '', gloss)
 
-        return gloss_word
+        return gloss
 
     @staticmethod
     def unify_untranscribed_glosses(gloss):
