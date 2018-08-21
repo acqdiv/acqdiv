@@ -797,6 +797,18 @@ class SesothoCleaner(CHATCleaner):
         return re.sub('[()]', '', utterance)
 
     @classmethod
+    def clean_translation(cls, translation):
+        """Clean the Sesotho translation tier."""
+        translation = cls.remove_timestamps(translation)
+        translation = cls.remove_redundant_whitespaces(translation)
+        return translation
+
+    @staticmethod
+    def remove_timestamps(translation):
+        """Remove timestamps in the Sesotho translation tier."""
+        return re.sub('[0-9]+_[0-9]+', '', translation)
+
+    @classmethod
     def cross_clean(
             cls, actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
         """Clean seg_tier, gloss_tier and pos_tier from contractions."""
@@ -899,9 +911,28 @@ class SesothoCleaner(CHATCleaner):
             gloss_word = gloss_word.lower()
         return gloss_word
 
-    @staticmethod
-    def replace_concatenators(gloss_word):
-        return re.sub('_', '.', gloss_word)
+    @classmethod
+    def replace_concatenators(cls, gloss_word):
+        glosses_raw = gloss_word.split('-')
+        glosses_clean = []
+        pos = ''
+        passed_stem = False
+        len_raw = len(glosses_raw)
+        for gloss in glosses_raw:
+            if len_raw == 1 or (re.search('(v|id)\^|\(\d', gloss)
+                                       or re.match('(aj$|nm$|ps\d+)', gloss)):
+                passed_stem = True
+            elif not passed_stem:
+                pos = 'pfx'
+            elif passed_stem:
+                pos = 'sfx'
+            if pos == 'sfx' or pos == 'pfx'  and not re.search('[vs]\^', gloss):
+                glosses_clean.append(re.sub('_', '.', gloss))
+            else:
+                glosses_clean.append(gloss)
+
+        gloss_word = '-'.join(glosses_clean)
+        return gloss_word
 
     @staticmethod
     def remove_nominal_concord_markers(gloss_word):
@@ -913,11 +944,11 @@ class SesothoCleaner(CHATCleaner):
         return gloss_word
 
     @staticmethod
-    def unify_untranscribed_glosses(gloss_word):
-        if gloss_word == 'word' or gloss_word == 'xxx':
+    def unify_untranscribed_glosses(gloss):
+        if gloss == 'word' or gloss == 'xxx':
             return '???'
 
-        return gloss_word
+        return gloss
 
     @staticmethod
     def remove_parentheses_inf(gloss_word):
@@ -932,16 +963,19 @@ class SesothoCleaner(CHATCleaner):
         return gloss_word
 
     @classmethod
-    def clean_gloss_word(cls, gloss_word):
-        """Clean a Sesotho gloss word."""
+    def clean_gloss(cls, gloss):
+        """Clean a Sesotho gloss."""
         for method in [cls.remove_markers,
                        cls.clean_proper_names_gloss_words,
-                       cls.replace_concatenators,
                        cls.remove_nominal_concord_markers,
-                       cls.remove_parentheses_inf]:
-            gloss_word = method(gloss_word)
+                       cls.unify_untranscribed_glosses]:
+            gloss = method(gloss)
+        return gloss
 
-        return gloss_word
+    def clean_gloss_word(cls, gloss_word):
+        gloss_word = cls.replace_concatenators(gloss_word)
+        gloss_word = cls.remove_parentheses_inf(gloss_word)
+        return super().clean_gloss_word(gloss_word)
 
 ###############################################################################
 
