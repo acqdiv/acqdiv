@@ -796,6 +796,8 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
         - if name = 'Grandfather', change to
             [speaker_role of target_child_name]
         - if name missing
+            if target child = 'Carl' and speaker_label = 'FAT', set
+                name to 'Ian'
             if label = RAC, set name to Rachel
             if label != INV
                 set name to [speaker_role of target_child_name]
@@ -807,6 +809,8 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
         else:
             if label == 'RAC':
                 return 'Rachel'
+            elif target_child_name == 'Carl' and label == 'FAT':
+                return 'Ian'
             elif label != 'INV':
                 return role + ' of ' + target_child_name
             else:
