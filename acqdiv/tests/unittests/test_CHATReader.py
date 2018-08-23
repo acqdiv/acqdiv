@@ -2098,5 +2098,13 @@ class TestYucatecReader(unittest.TestCase):
                           ('sfx', 'SFXGLOSS', '')]
         self.assertEqual(actual_output, desired_output)
 
+    def test_iter_morphemes_untranscribed(self):
+        """Test iter_morphemes with untranscribed morpheme."""
+        word = 'xxx'
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('', '', '')]
+        self.assertEqual(actual_output, desired_output)
+
+
 if __name__ == '__main__':
     unittest.main()
