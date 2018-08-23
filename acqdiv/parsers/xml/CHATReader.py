@@ -793,16 +793,24 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
         Corrections:
         - if name = 'Mother', change to [speaker_role of target_child_name]
         - if name = 'Father', change to [speaker_role of target_child_name]
-        - if name missing and label != INV or RAC,
-            add name [speaker_role of target_child_name]
-
+        - if name = 'Grandfather', change to
+            [speaker_role of target_child_name]
+        - if name missing
+            if label = RAC, set name to Rachel
+            if label != INV
+                set name to [speaker_role of target_child_name]
         """
-        if (name == 'Mother'
-                or name == 'Father'
-                or (not name and label not in ['INV', 'RAC'])):
+        if name in {'Mother', 'Father', 'Grandfather'}:
             return role + ' of ' + target_child_name
-        else:
+        elif name:
             return name
+        else:
+            if label == 'RAC':
+                return 'Rachel'
+            elif label != 'INV':
+                return role + ' of ' + target_child_name
+            else:
+                return name
 
     def get_speaker_name(self):
         """Get speaker name."""
@@ -813,6 +821,26 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
             self._speakers[self._target_child]['participant'])
 
         return self.correct_speaker_name(name, label, role, target_child_name)
+
+    @staticmethod
+    def correct_speaker_label(label):
+        """Correct speaker label.
+
+        Corrections:
+        - if label = DAD, change to 'FAT'
+        """
+        if label == 'DAD':
+            return 'FAT'
+        else:
+            return label
+
+    def get_speaker_label(self):
+        label = super().get_speaker_label()
+        return self.correct_speaker_label(label)
+
+    def get_record_speaker_label(self):
+        label = super().get_record_speaker_label()
+        return self.correct_speaker_label(label)
 
     def get_translation(self):
         return self.get_utterance()
