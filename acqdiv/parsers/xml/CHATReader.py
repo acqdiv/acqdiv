@@ -374,17 +374,30 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     """
 
     def __init__(self):
-        self.session_file_path = None
+        """Set the variables.
 
-        # metadata fields
-        self._metadata_fields = None
+        _target_child (str): label of the target child of the session
+        _metadata (dict): {metadata_name: metadata_content}
+        _speakers (dict): {speaker_id:
+                                {id: (language, corpus, code, age,...),
+                                 'participant: (code, name, role)}}
+        _speaker (str): label of current speaker
+        _speaker_iterator (iterator): yields labels of speakers
+        _record_iterator (iterator): yields records of a session
+        _uid (int) = utterance ID starting at 0
+        _main_line_fields (tuple): speaker ID, utterance, start time, end time
+        _dependent_tiers (dict): {dependent_tier_name: dependent_tier_content}
+        """
+        # general metadata
+        self._target_child = None
+        self._metadata = None
 
-        # speaker fields
+        # speaker
+        self._speakers = None
+        self._speaker = None
         self._speaker_iterator = None
-        self._participant_fields = None
-        self._id_fields = None
 
-        # record fields
+        # record
         self._record_iterator = None
         self._uid = -1
         self._main_line_fields = None
@@ -394,8 +407,9 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         """Read the session file.
 
         Sets the following variables:
-            - session_file_path
-            - _metadata_fields
+            - _target_child
+            - _metadata
+            - _speakers
             - _speaker_iterator
             - _record_iterator
 
@@ -403,45 +417,47 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
             session_file (file/file-like object): A CHAT file.
         """
         session = session_file.read()
-        self._metadata_fields = self.get_metadata_fields(session)
-        participants = self._metadata_fields.get('Participants', '')
-        self._speaker_iterator = self.iter_participants(participants)
+        self._metadata = {}
+        self._speakers = {}
+        speaker_labels = []
+
+        for metadata_field in self.iter_metadata_fields(session):
+            key, content = self.get_metadata_field(metadata_field)
+
+            if key == 'ID':
+                # set speakers - @ID
+                id_fields = self.get_id_fields(content)
+                id_code = self.get_id_code(id_fields)
+                if id_code not in self._speakers:
+                    self._speakers[id_code] = {}
+                self._speakers[id_code]['id'] = id_fields
+            elif key == 'Participants':
+                for participant in self.iter_participants(content):
+                    # set speakers - @Participants
+                    p_fields = self.get_participant_fields(participant)
+                    p_id = self.get_participant_id(p_fields)
+                    if p_id not in self._speakers:
+                        self._speakers[p_id] = {}
+                    self._speakers[p_id]['participant'] = p_fields
+                    speaker_labels.append(p_id)
+
+                    # set target child
+                    p_role = self.get_participant_role(p_fields)
+                    if p_role == 'Target_Child':
+                        self._target_child = p_id
+            else:
+                self._metadata[key] = content
+
+        self._speaker_iterator = iter(speaker_labels)
         self._record_iterator = self.iter_records(session)
 
     # ---------- metadata ----------
 
-    @classmethod
-    def get_metadata_fields(cls, session):
-        """Get the metadata fields of a session.
-
-        All metadata keys map to a string, except @ID which maps to a
-        dictionary of speaker IDs which in turn map to tuple of the @IDs
-        sub-fields.
-
-        Returns:
-            dict: {metadata key: metadata content}
-        """
-        metadata_fields = {}
-        for metadata_field in cls.iter_metadata_fields(session):
-            key, content = cls.get_metadata_field(metadata_field)
-
-            if key == 'ID':
-                if key not in metadata_fields:
-                    metadata_fields['ID'] = {}
-
-                id_fields = cls.get_id_fields(content)
-                speaker_id = cls.get_id_code(id_fields)
-                metadata_fields['ID'][speaker_id] = id_fields
-            else:
-                metadata_fields[key] = content
-
-        return metadata_fields
-
     def get_session_date(self):
-        return self._metadata_fields.get('Date', '')
+        return self._metadata.get('Date', '')
 
     def get_session_filename(self):
-        media_field = self._metadata_fields.get('Media', '')
+        media_field = self._metadata.get('Media', '')
         media_fields = self.get_media_fields(media_field)
         return self.get_media_filename(media_fields)
 
@@ -451,41 +467,39 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         """Load the next speaker.
 
         Resets the following variables if a new speaker can be loaded:
-            - _participant_fields
-            - _id_fields
+            - _speaker_iterator
+            - _speaker
         """
         try:
-            participant = next(self._speaker_iterator)
+            speaker_id = next(self._speaker_iterator)
         except StopIteration:
             return 0
         else:
-            self._participant_fields = self.get_participant_fields(participant)
-            participant_id = self.get_participant_id(self._participant_fields)
-            self._id_fields = self._metadata_fields['ID'][participant_id]
+            self._speaker = self._speakers[speaker_id]
             return 1
 
     def get_speaker_age(self):
-        return self.get_id_age(self._id_fields)
+        return self.get_id_age(self._speaker['id'])
 
     def get_speaker_birthdate(self):
-        speaker_id = self.get_participant_id(self._participant_fields)
+        speaker_id = self.get_participant_id(self._speaker['participant'])
         birth_of = 'Birth of ' + speaker_id
-        return self._metadata_fields.get(birth_of, '')
+        return self._metadata.get(birth_of, '')
 
     def get_speaker_gender(self):
-        return self.get_id_sex(self._id_fields)
+        return self.get_id_sex(self._speaker['id'])
 
     def get_speaker_label(self):
-        return self.get_participant_id(self._participant_fields)
+        return self.get_participant_id(self._speaker['participant'])
 
     def get_speaker_language(self):
-        return self.get_id_language(self._id_fields)
+        return self.get_id_language(self._speaker['id'])
 
     def get_speaker_name(self):
-        return self.get_participant_name(self._participant_fields)
+        return self.get_participant_name(self._speaker['participant'])
 
     def get_speaker_role(self):
-        return self.get_participant_role(self._participant_fields)
+        return self.get_participant_role(self._speaker['participant'])
 
     # ---------- record ----------
 
