@@ -786,6 +786,34 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
 
 class EnglishManchester1Reader(ACQDIVCHATReader):
 
+    @staticmethod
+    def correct_speaker_name(name, label, role, target_child_name):
+        """Correct speaker name.
+
+        Corrections:
+        - if name = 'Mother', change to [speaker_role of target_child_name]
+        - if name = 'Father', change to [speaker_role of target_child_name]
+        - if name missing and label != INV or RAC,
+            add name [speaker_role of target_child_name]
+
+        """
+        if (name == 'Mother'
+                or name == 'Father'
+                or (not name and label not in ['INV', 'RAC'])):
+            return role + ' of ' + target_child_name
+        else:
+            return name
+
+    def get_speaker_name(self):
+        """Get speaker name."""
+        name = super().get_speaker_name()
+        label = self.get_speaker_label()
+        role = self.get_speaker_role()
+        target_child_name = self.get_participant_name(
+            self._speakers[self._target_child]['participant'])
+
+        return self.correct_speaker_name(name, label, role, target_child_name)
+
     def get_translation(self):
         return self.get_utterance()
 
