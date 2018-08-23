@@ -791,26 +791,25 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
         """Correct speaker name.
 
         Corrections:
+        - if target child = 'Carl' and speaker_label = 'FAT', set name to 'Ian'
+        - if label = RAC, set name to Rachel
         - if name = 'Mother', change to [speaker_role of target_child_name]
         - if name = 'Father', change to [speaker_role of target_child_name]
         - if name = 'Grandfather', change to
             [speaker_role of target_child_name]
-        - if name missing
-            if target child = 'Carl' and speaker_label = 'FAT', set
-                name to 'Ian'
-            if label = RAC, set name to Rachel
-            if label != INV
-                set name to [speaker_role of target_child_name]
+        - if name missing and label != INV
+            set name to [speaker_role of target_child_name]
         """
-        if name in {'Mother', 'Father', 'Grandfather'}:
+        # order is important!
+        if target_child_name == 'Carl' and label == 'FAT':
+            return 'Ian'
+        elif name in {'Mother', 'Father', 'Grandfather'}:
             return role + ' of ' + target_child_name
         elif name:
             return name
         else:
             if label == 'RAC':
                 return 'Rachel'
-            elif target_child_name == 'Carl' and label == 'FAT':
-                return 'Ian'
             elif label != 'INV':
                 return role + ' of ' + target_child_name
             else:
