@@ -782,7 +782,7 @@ class SesothoCleaner(CHATCleaner):
         verb 'go' which are conventional in both child and adult
         speech.
         """
-        return re.sub(' (\(.*\)|[.?]) ', ' ', utterance)
+        return re.sub(r' (\(.*\)|[.?]) ', ' ', utterance)
 
     @staticmethod
     def remove_parentheses(utterance):
@@ -794,7 +794,7 @@ class SesothoCleaner(CHATCleaner):
 
         Such parentheses are leftovers from the morpheme joining.
         """
-        return re.sub('[()]', '', utterance)
+        return re.sub(r'[()]', '', utterance)
 
     @classmethod
     def clean_translation(cls, translation):
@@ -806,7 +806,7 @@ class SesothoCleaner(CHATCleaner):
     @staticmethod
     def remove_timestamps(translation):
         """Remove timestamps in the Sesotho translation tier."""
-        return re.sub('[0-9]+_[0-9]+', '', translation)
+        return re.sub(r'[0-9]+_[0-9]+', '', translation)
 
     @classmethod
     def cross_clean(
@@ -840,7 +840,7 @@ class SesothoCleaner(CHATCleaner):
         plen = len(pos_words)
 
         for i in range(len(seg_words)):
-            if not re.search('^\(.*\)$', seg_words[i]):
+            if not re.search(r'^\(.*\)$', seg_words[i]):
                 # Avoid index errors, that occur if morphology tiers are
                 # misaligned, by first checking if index is in range.
                 if i < slen:
@@ -878,7 +878,7 @@ class SesothoCleaner(CHATCleaner):
         """
         gloss_tier = cls.remove_terminator(gloss_tier)
         gloss_tier = re.sub(r'\s+,\s+', ',', gloss_tier)
-        gloss_tier = re.sub('(\d+a?)/(\d+a?)', '\\1|\\2', gloss_tier)
+        gloss_tier = re.sub(r'(\d+a?)/(\d+a?)', r'\\1|\\2', gloss_tier)
         return cls.clean_morph_tier(gloss_tier)
 
     @classmethod
@@ -888,14 +888,14 @@ class SesothoCleaner(CHATCleaner):
     @classmethod
     def clean_seg_word(cls, seg_word):
         """Remove parentheses."""
-        seg_word = re.sub('\(([a-zA-Z]\\S+)\)', '\\1', seg_word)
+        seg_word = re.sub(r'\(([a-zA-Z]\\S+)\)', r'\\1', seg_word)
         return cls.clean_morpheme_word(seg_word)
 
     @staticmethod
     def remove_markers(gloss_word):
         """Remove noun and verb markers."""
-        gloss_word = re.sub('[nN]\^(?=\\d)', '', gloss_word)
-        gloss_word = re.sub('[vs]\^', '', gloss_word)
+        gloss_word = re.sub(r'[nN]\^(?=\\d)', '', gloss_word)
+        gloss_word = re.sub(r'[vs]\^', '', gloss_word)
         return gloss_word
 
     @staticmethod
@@ -905,9 +905,9 @@ class SesothoCleaner(CHATCleaner):
         In proper names substitute 'n^' marker with 'a_'.
         Lowercase the labels of propernames.
         """
-        gloss_word = re.sub('[nN]\^([gG]ame|[nN]ame|[pP]lace|[sS]ong)',
-                            'a_\\1', gloss_word)
-        if re.search('a_(Game|Name|Place|Song)', gloss_word):
+        gloss_word = re.sub(r'[nN]\^([gG]ame|[nN]ame|[pP]lace|[sS]ong)',
+                            r'a_\\1', gloss_word)
+        if re.search(r'a_(Game|Name|Place|Song)', gloss_word):
             gloss_word = gloss_word.lower()
         return gloss_word
 
@@ -919,15 +919,21 @@ class SesothoCleaner(CHATCleaner):
         passed_stem = False
         len_raw = len(glosses_raw)
         for gloss in glosses_raw:
-            if len_raw == 1 or (re.search('(v|id)\^|\(\d', gloss)
-                                       or re.match('(aj$|nm$|ps\d+)', gloss)):
+            if len_raw == 1 or (re.search(r'(v|id)\^|\(\d', gloss)
+                                       or re.match(r'(aj$|nm$|ps\d+)', gloss)):
                 passed_stem = True
             elif not passed_stem:
                 pos = 'pfx'
             elif passed_stem:
                 pos = 'sfx'
-            if pos == 'sfx' or pos == 'pfx'  and not re.search('[vs]\^', gloss):
-                glosses_clean.append(re.sub('_', '.', gloss))
+            if pos == 'sfx' or pos == 'pfx':
+                if not re.search(r'[vs]\^', gloss):
+                    if not re.search(r'\(\d+', gloss):
+                        glosses_clean.append(re.sub(r'_', r'.', gloss))
+                    else:
+                        glosses_clean.append(gloss)
+                else:
+                    glosses_clean.append(gloss)
             else:
                 glosses_clean.append(gloss)
 
@@ -936,7 +942,7 @@ class SesothoCleaner(CHATCleaner):
 
     @staticmethod
     def remove_nominal_concord_markers(gloss):
-        match = re.search('^(d|lr|obr|or|pn|ps)\d+', gloss)
+        match = re.search(r'^(d|lr|obr|or|pn|ps)\d+', gloss)
         if match:
             pos = match.group(1)
             return re.sub(pos, '', gloss)
@@ -957,8 +963,8 @@ class SesothoCleaner(CHATCleaner):
         In Sesotho some infinitives are partially surrounded by
         parentheses. Remove those parentheses.
         """
-        if not re.search('^\(.*\)$', gloss_word):
-            return re.sub('\(([a-zA-Z]\\S+)\)', '\\1', gloss_word)
+        if not re.search(r'^\(.*\)$', gloss_word):
+            return re.sub(r'\(([a-zA-Z]\\S+)\)', r'\\1', gloss_word)
 
         return gloss_word
 
@@ -972,6 +978,7 @@ class SesothoCleaner(CHATCleaner):
             gloss = method(gloss)
         return gloss
 
+    @classmethod
     def clean_gloss_word(cls, gloss_word):
         gloss_word = cls.replace_concatenators(gloss_word)
         gloss_word = cls.remove_parentheses_inf(gloss_word)
