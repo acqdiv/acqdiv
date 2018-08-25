@@ -826,20 +826,17 @@ class TestACQDIVCHATReaderIterators(unittest.TestCase):
         cls.reader.read(io.StringIO(session))
 
     def test_load_next_speaker(self):
-        """Test load_next_speaker for the speakers in 'test.cha'"""
+        """Test load_next_speaker."""
         actual_output = []
         while self.reader.load_next_speaker():
-            pf = self.reader._participant_fields
-            idf = self.reader._id_fields
-            actual_output.append((pf, idf))
+            actual_output.append(self.reader._speaker)
         desired_output = [
-            (('MEM', 'Mme_Manyili', 'Grandmother'),
-             ('sme', 'Sesotho', 'MEM', '', 'female',
-              '', '', 'Grandmother', '', '')),
-            (('CHI', 'Hlobohang', 'Target_Child'),
-             ('sme', 'Sesotho', 'CHI', '2;2.', '',
-              '', '', 'Target_Child', '', ''))
-        ]
+            {'id': ('sme', 'Sesotho', 'MEM', '', 'female', '', '',
+                    'Grandmother', '', ''),
+             'participant': ('MEM', 'Mme_Manyili', 'Grandmother')},
+            {'id': ('sme', 'Sesotho', 'CHI', '2;2.', '', '', '',
+                    'Target_Child', '', ''),
+            'participant': ('CHI', 'Hlobohang', 'Target_Child')}]
         self.assertEqual(actual_output, desired_output)
 
     def test_load_next_record(self):
@@ -896,11 +893,10 @@ class TestACQDIVCHATReaderIterators(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
 
-class TestACQDIVCHATReaderGeneric(unittest.TestCase):
-    """Class to test all static and class methods of ACQDIVCHATReader."""
+class TestACQDIVCHATReaderRead(unittest.TestCase):
 
-    def test_get_metadata_fields(self):
-        """Test get_metadata_fields with the test.cha-file."""
+    @classmethod
+    def setUpClass(cls):
         session = (
             '@UTF8\n'
             '@Begin\n'
@@ -913,38 +909,61 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
             '@Birth of CHI:\t14-JAN-2006\n'
             '@Birth of MEM:\t11-OCT-1974\n'
             '@Media:\th2ab, audio\n'
-            '@Comment:\tall snd kana jmor cha ok Wakachi2002;\n'
             '@Warning:\trecorded time: 1:00:00\n'
             '@Comment:\tuses desu and V-masu\n'
-            '@Situation:\tAki and AMO preparing to look at book , '
-            '"Miichan no otsukai"\n'
+            '@Situation:\tThis is the situation.\n'
             '@End')
-        actual_output = ACQDIVCHATReader.get_metadata_fields(session)
-        desired_output = {
-            'Languages': 'sme',
-            'Date': '12-SEP-1997',
-            'Participants': ('MEM Mme_Manyili Grandmother , '
-                             'CHI Hlobohang Target_Child'),
-            'ID': {
-                'MEM': ('sme', 'Sesotho', 'MEM', '', 'female',
-                        '', '', 'Grandmother', '', ''),
-                'CHI': ('sme', 'Sesotho', 'CHI', '2;2.',
-                        '', '', '', 'Target_Child', '', '')
-            },
-            'Birth of CHI': '14-JAN-2006',
-            'Birth of MEM': '11-OCT-1974',
-            'Media': 'h2ab, audio',
-            'Comment': (  # 'all snd kana jmor cha ok Wakachi2002; '
-                # Since the AQDIVCHATReader in its current state
-                # does not need to capture comments, the line
-                # above, which tests the case of two comments
-                # in the same session metadata is commented out.
-                'uses desu and V-masu'),
-            'Warning': 'recorded time: 1:00:00',
-            'Situation': ('Aki and AMO preparing to look at book , '
-                          '"Miichan no otsukai"')
-        }
+        cls.reader = ACQDIVCHATReader()
+        cls.reader.read(io.StringIO(session))
+
+    def test_target_child_set(self):
+        """Test whether _target_child is set."""
+        actual_output = self.reader._target_child
+        desired_output = 'CHI'
         self.assertEqual(actual_output, desired_output)
+
+    def test_metadata_set(self):
+        """Test whether _metadata is set."""
+        actual_output = self.reader._metadata
+        desired_output = {'Languages': 'sme',
+                          'Date': '12-SEP-1997',
+                          'Birth of CHI': '14-JAN-2006',
+                          'Birth of MEM': '11-OCT-1974',
+                          'Media': 'h2ab, audio',
+                          'Comment': 'uses desu and V-masu',
+                          'Warning': 'recorded time: 1:00:00',
+                          'Situation': 'This is the situation.'}
+        self.assertEqual(actual_output, desired_output)
+
+    def test_speakers_set(self):
+        """Test whether _speakers is set."""
+        actual_output = self.reader._speakers
+        desired_output = {'MEM':
+                              {'id': ('sme', 'Sesotho', 'MEM', '', 'female',
+                                      '', '', 'Grandmother', '', ''),
+                               'participant': ('MEM', 'Mme_Manyili',
+                                               'Grandmother')},
+                          'CHI':
+                              {'id': ('sme', 'Sesotho', 'CHI', '2;2.',
+                                      '', '', '', 'Target_Child', '', ''),
+                               'participant': ('CHI', 'Hlobohang',
+                                               'Target_Child')}}
+        self.assertEqual(actual_output, desired_output)
+
+    def test_speaker_iterator_set(self):
+        """Test whether _speaker_iterator is set."""
+        actual_output = list(self.reader._speaker_iterator)
+        desired_output = ['MEM', 'CHI']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_record_iterator_set(self):
+        actual_output = list(self.reader._record_iterator)
+        desired_output = []
+        self.assertEqual(actual_output, desired_output)
+
+
+class TestACQDIVCHATReaderGeneric(unittest.TestCase):
+    """Class to test all static and class methods of ACQDIVCHATReader."""
 
     # ---------- actual & target ----------
 
@@ -1289,7 +1308,7 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
 ###############################################################################
 
 
-class TestEnglishManchester1Reader(unittest.TestCase):
+class TestEnglishManchester1ReaderGeneric(unittest.TestCase):
 
     def test_get_word_language_english(self):
         word = 'yes'
@@ -1386,6 +1405,27 @@ class TestEnglishManchester1Reader(unittest.TestCase):
         desired_output = [('stem&FUSone', 'stem&FUSone', 'stem:POSone'),
                           ('', 'SFX', 'sfx'),
                           ('stem&FUStwo', 'stem&FUStwo', 'stem:POStwo')]
+        self.assertEqual(actual_output, desired_output)
+
+
+class TestEnglishManchester1ReaderSpeaker(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        session = ('@UTF8\n'
+                   '@Begin\n'
+                   '@Participants:\tMOT Mother , CHI Anna Target_Child\n'
+                   '@ID:\teng|Manchester|MOT||female|||Mother|||\n'
+                   '@ID:\teng|Manchester|CHI|1;10.07||||Target_Child|||\n'
+                   '@End')
+        cls.reader = EnglishManchester1Reader()
+        cls.reader.read(io.StringIO(session))
+        cls.reader.load_next_speaker()
+
+    def test_get_speaker_name(self):
+        """Test get_speaker_name."""
+        actual_output = self.reader.get_speaker_name()
+        desired_output = 'Mother of Anna'
         self.assertEqual(actual_output, desired_output)
 
 
@@ -2097,6 +2137,14 @@ class TestYucatecReader(unittest.TestCase):
         desired_output = [('stem', '', 'STEMPOS'),
                           ('sfx', 'SFXGLOSS', '')]
         self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_untranscribed(self):
+        """Test iter_morphemes with untranscribed morpheme."""
+        word = 'xxx'
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('', '', '')]
+        self.assertEqual(actual_output, desired_output)
+
 
 if __name__ == '__main__':
     unittest.main()
