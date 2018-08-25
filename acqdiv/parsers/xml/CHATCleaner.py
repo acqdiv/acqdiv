@@ -769,6 +769,8 @@ class JapaneseMiiProCleaner(CHATCleaner):
 
 class SesothoCleaner(CHATCleaner):
 
+    # ---------- utterance cleaning ----------
+
     def clean_utterance(self, utterance):
         utterance = self.remove_words_in_parentheses(utterance)
         utterance = self.remove_parentheses(utterance)
@@ -807,6 +809,8 @@ class SesothoCleaner(CHATCleaner):
     def remove_timestamps(translation):
         """Remove timestamps in the Sesotho translation tier."""
         return re.sub(r'[0-9]+_[0-9]+', '', translation)
+
+    # ---------- cross cleaning ----------
 
     @classmethod
     def cross_clean(
@@ -855,6 +859,8 @@ class SesothoCleaner(CHATCleaner):
         pos_tier = ' '.join(pos_words_clean)
 
         return seg_tier, gloss_tier, pos_tier
+
+    # ---------- morpheme cleaning ----------
 
     @classmethod
     def clean_seg_tier(cls, seg_tier):
