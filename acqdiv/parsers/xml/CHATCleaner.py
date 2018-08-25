@@ -866,28 +866,36 @@ class SesothoCleaner(CHATCleaner):
 
     @classmethod
     def clean_seg_tier(cls, seg_tier):
-        seg_tier = cls.remove_terminator(seg_tier)
-        return cls.clean_morph_tier(seg_tier)
+        return cls.remove_terminator(seg_tier)
 
     @classmethod
     def clean_gloss_tier(cls, gloss_tier):
-        """Clean the gloss tier.
+        """Clean the gloss tier."""
+        for method in [cls.remove_terminator,
+                       cls.remove_spaces_noun_class_parentheses,
+                       cls.replace_noun_class_separator]:
+            gloss_tier = method(gloss_tier)
 
-        - Remove terminator.
-        - Remove spaces in noun class brackets.
-        - Replace '/' as noun class separator by '|' so it can't be
-            confused with '/' as a morpheme separator.
+        return gloss_tier
 
-        Args:
-            gloss_tier: string
+    @staticmethod
+    def remove_spaces_noun_class_parentheses(gloss_tier):
+        """Remove spaces in noun class parentheses.
 
-        Return:
-            string
+        Noun classes in Sesotho are indicated as '(x , y)'. The spaces
+        around the comma are removed so that word splitting by space
+        doesn't split noun classes.
         """
-        gloss_tier = cls.remove_terminator(gloss_tier)
-        gloss_tier = re.sub(r'\s+,\s+', ',', gloss_tier)
-        gloss_tier = re.sub(r'(\d+a?)/(\d+a?)', r'\\1|\\2', gloss_tier)
-        return cls.clean_morph_tier(gloss_tier)
+        return re.sub(r'\s+,\s+', ',', gloss_tier)
+
+    @staticmethod
+    def replace_noun_class_separator(gloss_tier):
+        """Replace '/' as noun class separator with '|'.
+
+        This is to ensure that '/' can't be confused with '/' as a
+        morpheme separator.
+        """
+        return re.sub(r'(\d+a?)/(\d+a?)', r'\\1|\\2', gloss_tier)
 
     @classmethod
     def clean_pos_tier(cls, pos_tier):
@@ -896,8 +904,7 @@ class SesothoCleaner(CHATCleaner):
     @classmethod
     def clean_seg_word(cls, seg_word):
         """Remove parentheses."""
-        seg_word = re.sub(r'\(([a-zA-Z]\\S+)\)', r'\\1', seg_word)
-        return cls.clean_morpheme_word(seg_word)
+        return re.sub(r'\(([a-zA-Z]\\S+)\)', r'\\1', seg_word)
 
     @staticmethod
     def remove_markers(gloss_word):
@@ -921,6 +928,10 @@ class SesothoCleaner(CHATCleaner):
 
     @classmethod
     def replace_concatenators(cls, gloss_word):
+        """Replace '_' as concatenator of glosses with '.'.
+
+        But don't replace '_' as concatenator of multi-word-expressions.
+        """
         glosses_raw = gloss_word.split('-')
         glosses_clean = []
         pos = ''
