@@ -1354,7 +1354,8 @@ class YucatecReader(ACQDIVCHATReader):
         - Prefixes:
             - structured: segment is right block, gloss is left block, POS tag
               is 'pfx'
-            - unstructured: segment is unfilled, gloss and POS tag is 'pfx'
+            - unstructured (NOT ATTESTED!): segment is unfilled, morpheme is
+              gloss, POS tag is 'pfx'
         - Stem:
             - structured: segment is right block, left block is POS tag if:
                 '3PRON', 'ADJ', 'ADV', 'AUX', 'CLFR', 'CLFR.INAN', 'CONJ',
@@ -1400,7 +1401,7 @@ class YucatecReader(ACQDIVCHATReader):
                     # unstructured prefixes, tends to be gloss
                     else:
                         seg = ''
-                        gloss = 'pfx'
+                        gloss = pfx
                         pos = 'pfx'
                     yield seg, gloss, pos
 
