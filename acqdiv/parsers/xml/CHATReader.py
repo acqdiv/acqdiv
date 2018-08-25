@@ -1420,8 +1420,7 @@ class SesothoReader(ACQDIVCHATReader):
         since segments are on a different tier. They are retrieved
         directly by get_segments().
 
-        Morphological words are separated by spaces, morphemes (stems and
-        affixes) are separated by hyphens.
+        Morphemes (stems and affixes) are separated by hyphens.
 
         Returns:
             tuple: (<empty_string>, gloss, pos).
@@ -1443,48 +1442,47 @@ class SesothoReader(ACQDIVCHATReader):
             elif passed_stem:
                 pos = 'sfx'
 
-            if pos == 'pfx' or pos == 'sfx':
-                pass
-            # Check for verbs: verbs have v^, one typo as s^.
-            elif re.search('[vs]\^', mor):
-                pos = 'v'
+            if pos != 'pfx' and pos != 'sfx':
+                # Check for verbs: verbs have v^, one typo as s^.
+                if re.search('[vs]\^', mor):
+                    pos = 'v'
 
-            # Check for nouns: nouns contains "(\d)" (default) or "ps/"
-            elif re.search('\(\d+', mor) or re.search('^ps/', mor):
-                pos = 'n'
+                # Check for nouns: nouns contains "(\d)" (default) or "ps/"
+                elif re.search('\(\d+', mor) or re.search('^ps/', mor):
+                    pos = 'n'
 
-            # Check for words with nominal concord.
-            elif re.search('^(d|lr|obr|or|pn|ps|sr)\d+', mor):
-                pos_match = re.search('^(d|lr|obr|or|pn|ps|sr)\d+', mor)
-                pos = pos_match.group(1)
+                # Check for words with nominal concord.
+                elif re.search('^(d|lr|obr|or|pn|ps|sr)\d+', mor):
+                    pos_match = re.search('^(d|lr|obr|or|pn|ps|sr)\d+', mor)
+                    pos = pos_match.group(1)
 
-            # Check for particles: mostly without a precise gloss.
-            elif re.search(
-                    '^(aj|av|cd|cj|cm|ht|ij|loc|lr|ng|nm|obr|or|pr|q|sr|wh)$',
-                    mor):
-                pos = mor
+                # Check for particles: mostly without a precise gloss.
+                elif re.search(
+                        '^(aj|av|cd|cj|cm|ht|ij|loc|lr|ng|nm|obr|or|pr|q|sr|wh)$',
+                        mor):
+                    pos = mor
 
-            # Check for free person markers.
-            elif re.search('^sm\d+[sp]?$', mor):
-                pos = 'afx.detached'
+                # Check for free person markers.
+                elif re.search('^sm\d+[sp]?$', mor):
+                    pos = 'afx.detached'
 
-            # Check for copulas.
-            elif re.search('^cp|cp$', mor):
-                pos = 'cop'
+                # Check for copulas.
+                elif re.search('^cp|cp$', mor):
+                    pos = 'cop'
 
-            # Check for ideophones.
-            elif re.search('id\^', mor):
-                pos = 'ideoph'
+                # Check for ideophones.
+                elif re.search('id\^', mor):
+                    pos = 'ideoph'
 
-            # Check for meaningless and unclear words. Note that "xxx"
-            # in the Sesotho coding tier is not the same as CHAT "xxx"
-            # in the transcription tier - it does not stand for words
-            # that could not be transcribed but for words with unclear
-            # meaning.
-            elif mor == 'word' or mor == 'xxx':
-                pos = 'none'
-            else:
-                pos = '???'
+                # Check for meaningless and unclear words. Note that "xxx"
+                # in the Sesotho coding tier is not the same as CHAT "xxx"
+                # in the transcription tier - it does not stand for words
+                # that could not be transcribed but for words with unclear
+                # meaning.
+                elif mor == 'word' or mor == 'xxx':
+                    pos = 'none'
+                else:
+                    pos = '???'
 
             yield('', gloss, pos)
 
