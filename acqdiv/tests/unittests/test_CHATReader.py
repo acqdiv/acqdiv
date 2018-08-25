@@ -2028,6 +2028,8 @@ class TestCreeReader(unittest.TestCase):
 
 class TestYucatecReader(unittest.TestCase):
 
+    # ---------- get_morpheme_words ----------
+
     def test_get_morpheme_words_no_clitics(self):
         """Test get_morpheme_words with no clitics."""
         morph_tier = 'P|ráʔ P|riʔ P|ruʔ'
@@ -2063,79 +2065,103 @@ class TestYucatecReader(unittest.TestCase):
         desired_output = ['P|ráʔ', 'P|riʔ', 'P|ruʔ', 'P|kuʔ']
         self.assertEqual(actual_output, desired_output)
 
-    def test_iter_morphemes_stem_only(self):
-        """Test iter_morphemes with stem only."""
+    # ---------- iter_morphemes ----------
+
+    def test_iter_morphemes_completely_unstructured(self):
+        """Test iter_morphemes with completely unstructured word."""
+        word = 'mone-mtwo-mthree'
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('mone', '', ''),
+                          ('mtwo', '', ''),
+                          ('mthree', '', '')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_structured_prefixes(self):
+        """Test iter_morphemes with structured prefixes."""
+        word = 'PFXGLOSS1|pfxone#PFXGLOSS2|pfxtwo#N|stem'
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('pfxone', 'PFXGLOSS1', 'pfx'),
+                          ('pfxtwo', 'PFXGLOSS2', 'pfx'),
+                          ('stem', '', 'N')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_structured_stem_with_pos(self):
+        """Test iter_morphemes with structured stem with POS tag."""
+        word = 'N|stem'
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('stem', '', 'N')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_structured_stem_with_gloss(self):
+        """Test iter_morphemes with structured stem only with gloss."""
         word = 'STEMPOS|stem'
         actual_output = list(YucatecReader.iter_morphemes(word))
-        desired_output = [('stem', '', 'STEMPOS')]
+        desired_output = [('stem', 'STEMPOS', '')]
         self.assertEqual(actual_output, desired_output)
 
-    def test_iter_morphemes_suffixes(self):
-        """Test iter_morphemes with suffixes."""
-        word = 'STEMPOS|stem:SFXGLOSS1|-sfx1:SFXGLOSS2|-sfx2'
+    def test_iter_morphemes_unstructured_stem_with_seg(self):
+        """Test iter_morphemes with unstructured stem with segment."""
+        word = 'stem'
         actual_output = list(YucatecReader.iter_morphemes(word))
-        desired_output = [('stem', '', 'STEMPOS'),
-                          ('sfx1', 'SFXGLOSS1', 'sfx'),
-                          ('sfx2', 'SFXGLOSS2', 'sfx')]
+        desired_output = [('stem', '', '')]
         self.assertEqual(actual_output, desired_output)
 
-    def test_iter_morphemes_prefixes(self):
-        """Test iter_morphemes with prefixes."""
-        word = 'PFXGLOSS1|pfx1#PFXGLOSS2|pfx2#STEMPOS|stem'
+    def test_iter_morphemes_unstructured_stem_with_gloss(self):
+        """Test iter_morphemes with unstructured stem with segment."""
+        word = 'STEMGLOSS1'
         actual_output = list(YucatecReader.iter_morphemes(word))
-        desired_output = [('pfx1', 'PFXGLOSS1', 'pfx'),
-                          ('pfx2', 'PFXGLOSS2', 'pfx'),
-                          ('stem', '', 'STEMPOS')]
+        desired_output = [('', 'STEMGLOSS1', '')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_structured_suffixes(self):
+        """Test iter_morphemes with structured suffixes."""
+        word = 'N|stem:SFXGLOSS1|-sfxone:SFXGLOSS2|-sfxtwo'
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('stem', '', 'N'),
+                          ('sfxone', 'SFXGLOSS1', 'sfx'),
+                          ('sfxtwo', 'SFXGLOSS2', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_structured_suffixes_without_dash(self):
+        """Test iter_morphemes with structured suffixes without dash."""
+        word = 'N|stem:SFXGLOSS1|sfxone:SFXGLOSS2|sfxtwo'
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('stem', '', 'N'),
+                          ('sfxone', 'SFXGLOSS1', 'sfx'),
+                          ('sfxtwo', 'SFXGLOSS2', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_unstructured_suffixes(self):
+        """Test iter_morphemes with unstructured suffixes."""
+        word = 'N|stem-SFX1-SFX2'
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('stem', '', 'N'),
+                          ('', 'SFX1', 'sfx'),
+                          ('', 'SFX2', 'sfx')]
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_morphemes_prefixes_suffixes(self):
         """Test iter_morphemes with prefixes and suffixes."""
-        word = ('PFXGLOSS1|pfx1#PFXGLOSS2|pfx2#'
-                'STEMPOS|stem'
-                ':SFXGLOSS1|-sfx1:SFXGLOSS2|-sfx2')
+        word = ('PFXGLOSS1|pfxone#PFXGLOSS2|pfxtwo#'
+                'N|stem'
+                ':SFXGLOSS1|-sfxone:SFXGLOSS2|-sfxtwo')
         actual_output = list(YucatecReader.iter_morphemes(word))
-        desired_output = [('pfx1', 'PFXGLOSS1', 'pfx'),
-                          ('pfx2', 'PFXGLOSS2', 'pfx'),
-                          ('stem', '', 'STEMPOS'),
-                          ('sfx1', 'SFXGLOSS1', 'sfx'),
-                          ('sfx2', 'SFXGLOSS2', 'sfx')]
+        desired_output = [('pfxone', 'PFXGLOSS1', 'pfx'),
+                          ('pfxtwo', 'PFXGLOSS2', 'pfx'),
+                          ('stem', '', 'N'),
+                          ('sfxone', 'SFXGLOSS1', 'sfx'),
+                          ('sfxtwo', 'SFXGLOSS2', 'sfx')]
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_morphemes_subpos_subgloss(self):
         """Test iter_morphemes with sub POS tag and sub glosses."""
         word = ('PFXGLOSS:PFXSUBGLOSS|pfx#'
-                'STEMPOS:STEMSUBPOS|stem'
+                'N:PROP|stem'
                 ':SFXGLOSS:SFXSUBGLOSS|-sfx')
         actual_output = list(YucatecReader.iter_morphemes(word))
         desired_output = [('pfx', 'PFXGLOSS:PFXSUBGLOSS', 'pfx'),
-                          ('stem', '', 'STEMSUBPOS'),
-                          ('sfx', 'SFXSUBGLOSS', 'sfx')]
-        self.assertEqual(actual_output, desired_output)
-
-    def test_iter_morphemes_no_pos_no_gloss(self):
-        """Test iter_morphemes with no POS tags and glosses."""
-        word = 'm1-m2-m3'
-        actual_output = list(YucatecReader.iter_morphemes(word))
-        desired_output = [('m1', '', ''),
-                          ('m2', '', ''),
-                          ('m3', '', '')]
-        self.assertEqual(actual_output, desired_output)
-
-    def test_iter_morphemes_suffix_no_gloss(self):
-        """Test iter_morphemes with suffix having no gloss."""
-        word = 'STEMPOS|stem-sfx1-sfx2'
-        actual_output = list(YucatecReader.iter_morphemes(word))
-        desired_output = [('stem', '', 'STEMPOS'),
-                          ('sfx1', '', ''),
-                          ('sfx2', '', '')]
-        self.assertEqual(actual_output, desired_output)
-
-    def test_iter_morphemes_stem_no_pos(self):
-        """Test iter_morphemes with stem having no POS tag."""
-        word = 'stem-SFXGLOSS|-sfx'
-        actual_output = list(YucatecReader.iter_morphemes(word))
-        desired_output = [('stem', '', 'STEMPOS'),
-                          ('sfx', 'SFXGLOSS', '')]
+                          ('stem', '', 'N:PROP'),
+                          ('sfx', 'SFXGLOSS:SFXSUBGLOSS', 'sfx')]
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_morphemes_untranscribed(self):

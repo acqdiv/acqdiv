@@ -1363,26 +1363,30 @@ class YucatecReader(ACQDIVCHATReader):
                 'N:PROP', 'NUM', 'PREP', 'PTL', 'QUANT', 'S', 'V', 'V.AUX',
                 'V:AUX', 'VI', 'V.INTRANS', 'VT', 'V.TRANS'
               otherwise it is a gloss
-            - unstructured: if morpheme only consists of uppercase letters,
-              digits and colons, it is a gloss, otherwise it is a segment
+            - unstructured: if morpheme only consists of uppercase letters and
+              digits, it is a gloss, otherwise it is a segment
         - Suffixes:
             - structured: segment is right block, gloss is left block, POS tag
               is 'sfx'
             - unstructured: segment is unfilled, morpheme is gloss, POS tag is
               'sfx'
         """
-        # check if word consists only of dash separators
-        if not re.search(r'[:|]', word):
+        # untranscribed word
+        if word == 'xxx':
+            yield '', '', ''
+        # completely unstructured word
+        elif not re.search(r'[:|]', word) and '-' in word:
             for morpheme in word.split('-'):
                 seg = morpheme
                 gloss = ''
                 pos = ''
                 yield seg, gloss, pos
+        # fully or partially structured word
         else:
             morph_regex = re.compile(
-                r'^(?P<prefixes>.*#)?'
-                r'(?P<stemleft>[0-9A-Z:]+\|)?(?P<stemright>[^:\-]+)'
-                r'(?P<suffixes>[:\-].+)')
+                r'(?P<prefixes>.*#)?'
+                r'((?P<stemleft>[0-9A-Z:]+)\|)?(?P<stemright>[^:\-]+)'
+                r'(?P<suffixes>[:\-].+)?')
 
             match = morph_regex.fullmatch(word)
 
@@ -1390,8 +1394,9 @@ class YucatecReader(ACQDIVCHATReader):
 
             # if there are prefixes
             if match.group('prefixes'):
+                prefix_string = match.group('prefixes').rstrip('#')
                 # iter prefixes
-                for pfx in match.group('prefixes').rstrip('#'):
+                for pfx in prefix_string.split('#'):
                     pfx_structured = re.search(r'(.*)\|(.+)', pfx)
                     # structured prefixes
                     if pfx_structured is not None:
@@ -1426,7 +1431,7 @@ class YucatecReader(ACQDIVCHATReader):
             # unstructured stems
             else:
                 stem_right = match.group('stemright')
-                if re.search(r'^[A-Z0-9:]+$', stem_right):
+                if re.fullmatch(r'[A-Z0-9]+', stem_right):
                     seg = ''
                     gloss = stem_right
                     pos = ''
@@ -1443,7 +1448,7 @@ class YucatecReader(ACQDIVCHATReader):
             if match.group('suffixes'):
                 suffix_string = match.group('suffixes').lstrip(':').lstrip('-')
                 # iter suffixes
-                for sfx in re.split(r':|(?<!\|)-', suffix_string):
+                for sfx in re.split(r'(?<![A-Z0-9]):|(?<!\|)-', suffix_string):
                     sfx_structured = re.search(r'(.*)\|-?(.+)', sfx)
                     # structured suffixes
                     if sfx_structured is not None:
