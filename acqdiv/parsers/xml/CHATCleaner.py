@@ -784,31 +784,33 @@ class SesothoCleaner(CHATCleaner):
         verb 'go' which are conventional in both child and adult
         speech.
         """
-        return re.sub(r' (\(.*\)|[.?]) ', ' ', utterance)
+        if utterance.startswith('('):
+            return re.sub(r'\(.*\) ', ' ', utterance)
+
+        return re.sub(r' \(.*\) ', ' ', utterance)
 
     @staticmethod
     def remove_parentheses(utterance):
         """Remove parentheses
 
-        Because words that are entirely surrounded by parenthese are
+        Because words that are entirely surrounded by parentheses are
         already removed, this method should only remove parentheses,
         that only surround a part of a word.
 
         Such parentheses are leftovers from the morpheme joining.
         """
-        return re.sub(r'[()]', '', utterance)
+        return re.sub(r'\)(?! )', '', utterance)
 
     @classmethod
     def clean_translation(cls, translation):
         """Clean the Sesotho translation tier."""
-        translation = cls.remove_timestamps(translation)
-        translation = cls.remove_redundant_whitespaces(translation)
-        return translation
+        return cls.remove_timestamps(translation)
 
-    @staticmethod
-    def remove_timestamps(translation):
+    @classmethod
+    def remove_timestamps(cls, translation):
         """Remove timestamps in the Sesotho translation tier."""
-        return re.sub(r'[0-9]+_[0-9]+', '', translation)
+        translation = re.sub(r'[0-9]+_[0-9]+', '', translation)
+        return cls.remove_redundant_whitespaces(translation)
 
     # ---------- cross cleaning ----------
 
