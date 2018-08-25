@@ -1338,24 +1338,129 @@ class YucatecReader(ACQDIVCHATReader):
         Morphemes are separated by '#' (prefixes), ':' (suffixes) and '-'
         (unstructured morpheme).
 
-        Structure of a morpheme:
-        PFXGLOSS|prefix#STEMPOS|stem:SFXGLOSS|-suffix
+        Glosses and POS tags may have sub glosses and POS tags with are
+        separated from the main gloss/POS tag by ':'. This use can be
+        distinguished from the morpheme-separating use by checking the strings
+        to the left and right of the ':' – when they consist of nothing but
+        uppercase letters and digits, they are sub glosses or POS tags;
+        otherwise they belong to different morphemes.
 
-        Stem: stem, no gloss, POS
-        Prefix: stem, gloss, no POS (-> assign pfx)
-        Suffix: stem, gloss, no POS (-> assign sfx)
-
-        Glosses and POS tags may have sub glosses and sub POS tags with ':'
-        as a separator. This use can be distinguished from the
-        morpheme-separating use by checking the strings to the left and right
-        of the ':' – when they consist of nothing but uppercase letters and
-        digits, they are sub glosses or POS tags; otherwise they belong to
-        different morphemes.
-
-        Some morphemes are missing POS tags (stems) or glosses in which case
-        the morpheme separated by a '-'.
+        Morphemes containing a '|' are structured, whereas those not containing
+        one are unstructured. The part to the left is either the gloss or the
+        POS tag, while the part to the right is the segment. A word can be
+        completely or partially unstructured. The rules are as follows:
+        - Word completely unstructured: The morphemes are separated by dashes.
+          The segment is filled, while the gloss and POS tag remain unfilled.
+        - Prefixes:
+            - structured: segment is right block, gloss is left block, POS tag
+              is 'pfx'
+            - unstructured (NOT ATTESTED!): segment is unfilled, morpheme is
+              gloss, POS tag is 'pfx'
+        - Stem:
+            - structured: segment is right block, left block is POS tag if:
+                '3PRON', 'ADJ', 'ADV', 'AUX', 'CLFR', 'CLFR.INAN', 'CONJ',
+                'DEICT', 'DEM', 'DET', 'INT', 'INTERJ', 'N', 'N.PROP',
+                'N:PROP', 'NUM', 'PREP', 'PTL', 'QUANT', 'S', 'V', 'V.AUX',
+                'V:AUX', 'VI', 'V.INTRANS', 'VT', 'V.TRANS'
+              otherwise it is a gloss
+            - unstructured: if morpheme only consists of uppercase letters and
+              digits, it is a gloss, otherwise it is a segment
+        - Suffixes:
+            - structured: segment is right block, gloss is left block, POS tag
+              is 'sfx'
+            - unstructured: segment is unfilled, morpheme is gloss, POS tag is
+              'sfx'
         """
-        pass
+        # untranscribed word
+        if word == 'xxx':
+            yield '', '', ''
+        # completely unstructured word
+        elif not re.search(r'[:|]', word) and '-' in word:
+            for morpheme in word.split('-'):
+                seg = morpheme
+                gloss = ''
+                pos = ''
+                yield seg, gloss, pos
+        # fully or partially structured word
+        else:
+            morph_regex = re.compile(
+                r'(?P<prefixes>.*#)?'
+                r'((?P<stemleft>[0-9A-Z:]+)\|)?(?P<stemright>[^:\-]+)'
+                r'(?P<suffixes>[:\-].+)?')
+
+            match = morph_regex.fullmatch(word)
+
+            # ----- prefixes -----
+
+            # if there are prefixes
+            if match.group('prefixes'):
+                prefix_string = match.group('prefixes').rstrip('#')
+                # iter prefixes
+                for pfx in prefix_string.split('#'):
+                    pfx_structured = re.search(r'(.*)\|(.+)', pfx)
+                    # structured prefixes
+                    if pfx_structured is not None:
+                        seg = pfx_structured.group(2)
+                        gloss = pfx_structured.group(1)
+                        pos = 'pfx'
+                    # unstructured prefixes, tends to be gloss
+                    else:
+                        seg = ''
+                        gloss = pfx
+                        pos = 'pfx'
+                    yield seg, gloss, pos
+
+            # ----- stem -----
+
+            # structured stems
+            if match.group('stemleft'):
+                seg = match.group('stemright')
+                stem_left = match.group('stemleft')
+                # stems with lexical meaning with the following POS tags
+                stem_poses = {
+                    '3PRON', 'ADJ', 'ADV', 'AUX', 'CLFR', 'CLFR.INAN', 'CONJ',
+                    'DEICT', 'DEM', 'DET', 'INT', 'INTERJ', 'N', 'N.PROP',
+                    'N:PROP', 'NUM', 'PREP', 'PTL', 'QUANT', 'S', 'V', 'V.AUX',
+                    'V:AUX', 'VI', 'V.INTRANS', 'VT', 'V.TRANS'}
+                if stem_left in stem_poses:
+                    gloss = ''
+                    pos = stem_left
+                else:
+                    gloss = stem_left
+                    pos = ''
+            # unstructured stems
+            else:
+                stem_right = match.group('stemright')
+                if re.fullmatch(r'[A-Z0-9]+', stem_right):
+                    seg = ''
+                    gloss = stem_right
+                    pos = ''
+                else:
+                    seg = stem_right
+                    gloss = ''
+                    pos = ''
+
+            yield seg, gloss, pos
+
+            # ----- suffixes -----
+
+            # if there are suffixes
+            if match.group('suffixes'):
+                suffix_string = match.group('suffixes').lstrip(':').lstrip('-')
+                # iter suffixes
+                for sfx in re.split(r'(?<![A-Z0-9]):|(?<!\|)-', suffix_string):
+                    sfx_structured = re.search(r'(.*)\|-?(.+)', sfx)
+                    # structured suffixes
+                    if sfx_structured is not None:
+                        seg = sfx_structured.group(2)
+                        gloss = sfx_structured.group(1)
+                        pos = 'sfx'
+                    # unstructured suffixes: tends to be gloss
+                    else:
+                        seg = ''
+                        gloss = sfx
+                        pos = 'sfx'
+                    yield seg, gloss, pos
 
 
 ###############################################################################
