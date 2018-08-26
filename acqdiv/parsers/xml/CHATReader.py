@@ -1519,7 +1519,7 @@ class SesothoReader(ACQDIVCHATReader):
 
     @staticmethod
     def infer_poses(morph_word):
-        """Infer the part of speech for a morpheme word.
+        """Infer the pos-tags for a morpheme word.
 
         Args:
             morph_word: str, the morphemes of a word
@@ -1608,12 +1608,12 @@ class SesothoReader(ACQDIVCHATReader):
         """
         if not morph_word:
             yield ('', '', '')
+        else:
+            poses = cls.infer_poses(morph_word)
+            morphemes = morph_word.split('-')
 
-        poses = cls.infer_poses(morph_word)
-        morphemes = morph_word.split('-')
-
-        for i in range(len(morphemes)):
-            yield ('', morphemes[i], poses[i])
+            for i in range(len(morphemes)):
+                yield ('', morphemes[i], poses[i])
 
     @classmethod
     def get_segments(cls, seg_word):
