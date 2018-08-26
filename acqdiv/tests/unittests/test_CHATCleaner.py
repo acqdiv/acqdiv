@@ -3,6 +3,7 @@ from acqdiv.parsers.xml.CHATCleaner import CHATCleaner
 from acqdiv.parsers.xml.CHATCleaner import InuktitutCleaner
 from acqdiv.parsers.xml.CHATCleaner import CreeCleaner
 from acqdiv.parsers.xml.CHATCleaner import JapaneseMiiProCleaner
+from acqdiv.parsers.xml.CHATCleaner import SesothoCleaner
 from acqdiv.parsers.xml.CHATCleaner import TurkishCleaner
 from acqdiv.parsers.xml.CHATCleaner import YucatecCleaner
 
@@ -1435,6 +1436,59 @@ class TestJapaneseMiiProCleaner(unittest.TestCase):
         actual_output = self.cleaner.clean_pos_tier(pos_tier)
         desired_output = 'n:prop|Ikun'
         self.assertEqual(actual_output, desired_output)
+
+###############################################################################
+
+class TestSesothoCleaner(unittest.TestCase):
+
+    # ---------- utterance cleaning ----------
+
+    def test_clean_utterance(self):
+        """Test clean_utterance with parenthesized words.
+
+        Two words entirely surrounded by parentheses and two words
+        partly surrounded by parentheses.
+        """
+        utterance = '(ho)dula tsamaya  (ho)dula (uye) ausi (uye) .'
+        actual_output = SesothoCleaner.clean_utterance(utterance)
+        desired_output = 'hodula tsamaya hodula ausi'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_words_in_parentheses_single(self):
+        """Test remove_words_parentheses with 1 word in parentheses."""
+        utterance = '(uye) ausi'
+        actual_output = SesothoCleaner.remove_words_in_parentheses(utterance)
+        desired_output = 'ausi'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_words_in_parentheses_multiple(self):
+        """Test remove_words_parentheses with 3 word in parentheses."""
+        utterance = '(uye) ausi (uye) (uye) .'
+        actual_output = SesothoCleaner.remove_words_in_parentheses(utterance)
+        desired_output = 'ausi .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_parentheses_single(self):
+        """Test remove_parentheses with 1 word partly surrounded."""
+        utterance = '(ho)dula pela ausi Mamello .'
+        actual_output = SesothoCleaner.remove_parentheses(utterance)
+        desired_output = 'hodula pela ausi Mamello .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_parentheses_multiple(self):
+        """Test remove_parentheses with 3 words partly surrounded."""
+        utterance = '(ho)dula pela (ho)dula (ho)dula .'
+        actual_output = SesothoCleaner.remove_parentheses(utterance)
+        desired_output = 'hodula pela hodula hodula .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_translation(self):
+        """Test clean_translation with a timestamp."""
+        translation = 'I ate it 502058_507330'
+        actual_output = SesothoCleaner.clean_translation(translation)
+        desired_output = 'I ate it'
+        self.assertEqual(actual_output, desired_output)
+
 
 ###############################################################################
 
