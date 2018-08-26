@@ -90,6 +90,9 @@ class CHATParser(CorpusParserInterface):
             target_utt = self.cleaner.clean_utterance(
                 self.reader.get_target_utterance())
 
+            # clean translation
+            translation = self.cleaner.clean_translation(translation)
+
             # get morphology tiers
             seg_tier_raw = self.reader.get_seg_tier()
             gloss_tier_raw = self.reader.get_gloss_tier()

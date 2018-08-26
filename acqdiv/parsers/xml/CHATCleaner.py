@@ -226,6 +226,11 @@ class CHATCleaner(CorpusCleanerInterface):
 
         return utterance
 
+    @staticmethod
+    def clean_translation(translation):
+        """No cleaning by default."""
+        return translation
+
     # ---------- word cleaning ----------
 
     @staticmethod
