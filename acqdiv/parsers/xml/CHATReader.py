@@ -1539,8 +1539,8 @@ class SesothoReader(ACQDIVCHATReader):
         for mor in morphemes:
             gloss = mor  # The gloss is just the cleaned morpheme.
             pos = ''  # Check for prefixes and suffixes.
-            if len(morphemes) == 1 or (re.search('(v|id)\^|\(\d', mor)
-                                       or re.match('(aj$|nm$|ps\d+)', mor)):
+            if len(morphemes) == 1 or (re.search(r'(v|id)\^|\(\d', mor)
+                                       or re.match(r'(aj$|nm$|ps\d+)', mor)):
                 passed_stem = True
             elif not passed_stem:
                 pos = 'pfx'
@@ -1549,7 +1549,7 @@ class SesothoReader(ACQDIVCHATReader):
 
             if pos != 'pfx' and pos != 'sfx':
                 # Check for verbs: verbs have v^, one typo as s^.
-                if re.search('[vs]\^', mor):
+                if re.search(r'[vs]\^', mor):
                     pos = 'v'
 
                 # Check for nouns: nouns contains "(\d)" (default) or "ps/"
@@ -1557,26 +1557,26 @@ class SesothoReader(ACQDIVCHATReader):
                     pos = 'n'
 
                 # Check for words with nominal concord.
-                elif re.search('^(d|lr|obr|or|pn|ps|sr)\d+', mor):
+                elif re.search(r'^(d|lr|obr|or|pn|ps|sr)\d+', mor):
                     pos_match = re.search('^(d|lr|obr|or|pn|ps|sr)\d+', mor)
                     pos = pos_match.group(1)
 
                 # Check for particles: mostly without a precise gloss.
                 elif re.search(
-                        '^(aj|av|cd|cj|cm|ht|ij|loc|lr|ng|nm|obr|or|pr|q|sr|wh)$',
+                        r'^(aj|av|cd|cj|cm|ht|ij|loc|lr|ng|nm|obr|or|pr|q|sr|wh)$',
                         mor):
                     pos = mor
 
                 # Check for free person markers.
-                elif re.search('^sm\d+[sp]?$', mor):
+                elif re.search(r'^sm\d+[sp]?$', mor):
                     pos = 'afx.detached'
 
                 # Check for copulas.
-                elif re.search('^cp|cp$', mor):
+                elif re.search(r'^cp|cp$', mor):
                     pos = 'cop'
 
                 # Check for ideophones.
-                elif re.search('id\^', mor):
+                elif re.search(r'id\^', mor):
                     pos = 'ideoph'
 
                 # Check for meaningless and unclear words. Note that "xxx"
