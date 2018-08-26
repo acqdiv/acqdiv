@@ -791,15 +791,15 @@ class SesothoCleaner(CHATCleaner):
 
     @staticmethod
     def remove_parentheses(utterance):
-        """Remove parentheses
+        """Remove parentheses.
 
         Because words that are entirely surrounded by parentheses are
-        already removed, this method should only remove parentheses,
+        already removed, this method should just remove parentheses,
         that only surround a part of a word.
 
         Such parentheses are leftovers from the morpheme joining.
         """
-        return re.sub(r'\)(?! )', '', utterance)
+        return re.sub(r'[()]', '', utterance)
 
     @classmethod
     def clean_translation(cls, translation):
@@ -904,12 +904,12 @@ class SesothoCleaner(CHATCleaner):
     @classmethod
     def clean_seg_word(cls, seg_word):
         """Remove parentheses."""
-        return re.sub(r'\(([a-zA-Z]\\S+)\)', r'\1', seg_word)
+        return re.sub(r'\(([a-zA-Z]\S+)\)', r'\1', seg_word)
 
     @staticmethod
     def remove_markers(gloss_word):
         """Remove noun and verb markers."""
-        gloss_word = re.sub(r'[nN]\^(?=\\d)', '', gloss_word)
+        gloss_word = re.sub(r'[nN]\^(?=\d)', '', gloss_word)
         gloss_word = re.sub(r'[vs]\^', '', gloss_word)
         return gloss_word
 
