@@ -1631,18 +1631,197 @@ class TestSesothoCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    def replace_noun_class_separator_standard_case(self):
+    def test_replace_noun_class_separator_standard_case(self):
         """Test replace_noun_class_separator with one separator."""
         gloss_tier = 'n^10-bucket(9 , 10/6)'
         actual_output = SesothoCleaner.clean_gloss_tier(gloss_tier)
-        desired_output = 'n^10-bucket(9 , 10|6)'
+        desired_output = 'n^10-bucket(9,10|6)'
         self.assertEqual(actual_output, desired_output)
 
-    def replace_noun_class_separator_empty_string(self):
+    def test_replace_noun_class_separator_empty_string(self):
         """Test replace_noun_class_separator with an empty string."""
         gloss_tier = ''
         actual_output = SesothoCleaner.clean_gloss_tier(gloss_tier)
         desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_pos_tier_standart_case(self):
+        """Test clean_pos_tier with a noun class and separator.
+
+        Should behave the same as clean_gloss_tier.
+        """
+        pos_tier = 'n^10-bucket(9 , 10/6) ?'
+        actual_output = SesothoCleaner.clean_pos_tier(pos_tier)
+        desired_output = 'n^10-bucket(9,10|6)'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_pos_tier_empty_string(self):
+        """Test clean_pos_tier with an empty string.
+
+        Should behave the same as clean_gloss_tier.
+        """
+        pos_tier = ''
+        actual_output = SesothoCleaner.clean_pos_tier(pos_tier)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+    
+    def test_clean_seg_word_one_pair_parentheses(self):
+        """Test clean_seg_word with one pair of parentheses."""
+        seg_word = '(ho)nada'
+        actual_output = SesothoCleaner.clean_seg_word(seg_word)
+        desired_output = 'honada'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_seg_word_two_pairs_parentheses(self):
+        """Test clean_seg_word with two pairs of parentheses."""
+        seg_word = '(ho)nad(a)'
+        actual_output = SesothoCleaner.clean_seg_word(seg_word)
+        desired_output = 'honada'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_seg_word_empty_string(self):
+        """Test clean_seg_word with an empty string."""
+        seg_word = ''
+        actual_output = SesothoCleaner.clean_seg_word(seg_word)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_noun_markers_with_marker(self):
+        """Test remove_noun_markers with noun_marker."""
+        gloss_word = 'n^6-field(9 , 6)'
+        actual_output = SesothoCleaner.remove_noun_markers(gloss_word)
+        desired_output = '6-field(9 , 6)'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_noun_markers_empty_string(self):
+        """Test remove_noun_markers with empty string."""
+        gloss_word = ''
+        actual_output = SesothoCleaner.remove_noun_markers(gloss_word)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_verb_markers_with_marker(self):
+        """Test remove_verb_markers with verb_marker."""
+        gloss_word = 'sm2s-t^p_v^do-m^in'
+        actual_output = SesothoCleaner.remove_verb_markers(gloss_word)
+        desired_output = 'sm2s-t^p_do-m^in'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_verb_markers_empty_string(self):
+        """Test remove_verb_markers with empty string."""
+        gloss_word = ''
+        actual_output = SesothoCleaner.remove_verb_markers(gloss_word)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_proper_names_gloss_words_name(self):
+        """Test clean_proper_names_gloss_words with a name."""
+        gloss_word = 'n^Name'
+        actual_output = SesothoCleaner.clean_proper_names_gloss_words(
+            gloss_word)
+        desired_output = 'a_name'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_proper_names_gloss_words_game(self):
+        """Test clean_proper_names_gloss_words with a game."""
+        gloss_word = 'n^Place'
+        actual_output = SesothoCleaner.clean_proper_names_gloss_words(
+            gloss_word)
+        desired_output = 'a_place'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_proper_names_gloss_words_no_proper_name(self):
+        """Test clean_proper_names_gloss_words with not a proper name."""
+        gloss_word = 'sm1s-t^p_v^be_sick-m^x'
+        actual_output = SesothoCleaner.clean_proper_names_gloss_words(
+            gloss_word)
+        desired_output = 'sm1s-t^p_v^be_sick-m^x'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_proper_names_gloss_words_empty_string(self):
+        """Test clean_proper_names_gloss_words with an empty string."""
+        gloss_word = ''
+        actual_output = SesothoCleaner.clean_proper_names_gloss_words(
+            gloss_word)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_replace_concatenators_one_concatenator(self):
+        """Test replace_concatenators with one concatenator."""
+        gloss_word = 'sm2s-t^p_om1s-v^touch-m^in'
+        actual_output = SesothoCleaner.replace_concatenators(gloss_word)
+        desired_output = 'sm2s-t^p.om1s-v^touch-m^in'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_replace_concatenators_multiple_concatenators(self):
+        """Test replace_concatenators with three concatenators.
+
+        But only one of them should be replaced by a dot. The others are
+        verb-multi-word-expressions.
+
+        Note: Not clear if middle '_' should be replaced.
+        """
+        gloss_word = 'sm2s-t^p_om1s-v^touch-m^in_v^go_out'
+        actual_output = SesothoCleaner.replace_concatenators(gloss_word)
+        desired_output = 'sm2s-t^p.om1s-v^touch-m^in_v^go_out'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_replace_concatenators_empty_string(self):
+        """Test replace_concatenators with an empty string."""
+        gloss_word = ''
+        actual_output = SesothoCleaner.replace_concatenators(gloss_word)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_nominal_concord_markers_single(self):
+        """Test remove_nominal_concord_markers with 1 concord marker."""
+        gloss = 'obr17'
+        actual_output = SesothoCleaner.remove_nominal_concord_markers(
+            gloss)
+        desired_output = '17'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_nominal_concord_markers_empty_string(self):
+        """Test remove_nominal_concord_markers with an empty string."""
+        gloss = ''
+        actual_output = SesothoCleaner.remove_nominal_concord_markers(
+            gloss)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_untranscibed_glosses_word(self):
+        """Test unify_untranscibed_glosses with 'word'."""
+        gloss = 'word'
+        actual_output = SesothoCleaner.unify_untranscribed_glosses(gloss)
+        desired_output = '???'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_untranscibed_glosses_xxx(self):
+        """Test unify_untranscibed_glosses with 'xxx'."""
+        gloss = 'xxx'
+        actual_output = SesothoCleaner.unify_untranscribed_glosses(gloss)
+        desired_output = '???'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_untranscibed_glosses_empty_string(self):
+        """Test unify_untranscibed_glosses with empty string."""
+        gloss = ''
+        actual_output = SesothoCleaner.unify_untranscribed_glosses(gloss)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_parentheses_inf_standard_case(self):
+        """Test remove_parentheses_inf with one pair of parentheses."""
+        gloss_word = '(ho)nada'
+        actual_output = SesothoCleaner.remove_parentheses(gloss_word)
+        desired_output = 'honada'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_parentheses_inf_empty_string(self):
+        """Test remove_parentheses_inf with an empty string."""
+        gloss_word = '(ho)nada'
+        actual_output = SesothoCleaner.remove_parentheses(gloss_word)
+        desired_output = 'honada'
         self.assertEqual(actual_output, desired_output)
 
 
