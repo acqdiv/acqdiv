@@ -961,6 +961,7 @@ class SesothoCleaner(CHATCleaner):
 
     @staticmethod
     def remove_nominal_concord_markers(gloss):
+        """Remove markers for nominal concord."""
         match = re.search(r'^(d|lr|obr|or|pn|ps)\d+', gloss)
         if match:
             pos = match.group(1)
@@ -970,6 +971,12 @@ class SesothoCleaner(CHATCleaner):
 
     @staticmethod
     def unify_untranscribed_glosses(gloss):
+        """Unify untranscribed glosses.
+
+        In Sesotho glossing for words which are not understood or
+        couldn't be analyzed are marked by 'word' or by 'xxx'. Turn
+        both into the standart '???'.
+        """
         if gloss == 'word' or gloss == 'xxx':
             return '???'
 

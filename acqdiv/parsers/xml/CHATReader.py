@@ -1576,11 +1576,11 @@ class SesothoReader(ACQDIVCHATReader):
                 elif re.search(r'id\^', mor):
                     pos = 'ideoph'
 
-                # Check for meaningless and unclear words. Note that "xxx"
-                # in the Sesotho coding tier is not the same as CHAT "xxx"
-                # in the transcription tier - it does not stand for words
-                # that could not be transcribed but for words with unclear
-                # meaning.
+                # Check for meaningless and unclear words. Note that
+                # "xxx" in the Sesotho coding tier is not the same as
+                # CHAT "xxx" in the transcription tier - it does not
+                # stand for words that could not be transcribed but for
+                # words with unclear meaning.
                 elif mor == 'word' or mor == 'xxx':
                     pos = 'none'
                 else:
