@@ -810,10 +810,10 @@ class SesothoCleaner(CHATCleaner):
     @classmethod
     def clean_translation(cls, translation):
         """Clean the Sesotho translation tier."""
-        return cls.remove_timestamps(translation)
+        return cls.remove_timestamp(translation)
 
     @classmethod
-    def remove_timestamps(cls, translation):
+    def remove_timestamp(cls, translation):
         """Remove timestamps in the Sesotho translation tier."""
         translation = re.sub(r'[0-9]+_[0-9]+', '', translation)
         return cls.remove_redundant_whitespaces(translation)
@@ -841,6 +841,7 @@ class SesothoCleaner(CHATCleaner):
         at the same index are also deleted.
         """
         gloss_tier = re.sub(r'\s+,\s+', ',', gloss_tier)
+        pos_tier = re.sub(r'\s+,\s+', ',', gloss_tier)
         seg_words = seg_tier.split(' ')
         gloss_words = gloss_tier.split(' ')
         pos_words = pos_tier.split(' ')
