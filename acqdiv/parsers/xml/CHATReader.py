@@ -1518,27 +1518,24 @@ class SesothoReader(ACQDIVCHATReader):
         return self._dependent_tiers.get('cod', '')
 
     @staticmethod
-    def iter_morphemes(morph_word):
-        """Iter morphemes of a morph. word (encoding gloss and pos).
+    def infer_poses(morph_word):
+        """Infer the part of speech for a morpheme word.
 
-        This method only returns glosses and poses, but not segments,
-        since segments are on a different tier. They are retrieved
-        directly by get_segments().
-
-        Morphemes (stems and affixes) are separated by hyphens.
-
-        Returns:
-            tuple: (<empty_string>, gloss, pos).
+        Args:
+            morph_word: str, the morphemes of a word
+        Return:
+            str, the pos-tags
         """
         if not morph_word:
-            yield ('', '', '')
+            return []
 
         morphemes = morph_word.split('-')
         passed_stem = False
+        poses = []
 
         for mor in morphemes:
-            gloss = mor  # The gloss is just the cleaned morpheme.
-            pos = ''  # Check for prefixes and suffixes.
+            pos = ''
+            # Check for prefixes and suffixes.
             if len(morphemes) == 1 or (re.search(r'(v|id)\^|\(\d', mor)
                                        or re.match(r'(aj$|nm$|ps\d+)', mor)):
                 passed_stem = True
@@ -1589,7 +1586,34 @@ class SesothoReader(ACQDIVCHATReader):
                 else:
                     pos = '???'
 
-            yield('', gloss, pos)
+            poses.append(pos)
+
+        return poses
+
+
+    @classmethod
+    def iter_morphemes(cls, morph_word):
+        """Iter morphemes of a morph. word (encoding gloss and pos).
+
+        This method only returns glosses and poses, but not segments,
+        since segments are on a different tier. They are retrieved
+        directly by get_segments().
+
+        Morphemes (stems and affixes) are separated by hyphens.
+
+        Args:
+            morph_word: str, the morphemes of a word
+        Returns:
+            tuple: (<empty_string>, gloss, pos).
+        """
+        if not morph_word:
+            yield ('', '', '')
+
+        poses = cls.infer_poses(morph_word)
+        morphemes = morph_word.split('-')
+
+        for i in range(len(morphemes)):
+            yield ('', morphemes[i], poses[i])
 
     @classmethod
     def get_segments(cls, seg_word):
