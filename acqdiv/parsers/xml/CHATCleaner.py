@@ -1149,3 +1149,24 @@ class YucatecCleaner(CHATCleaner):
     @classmethod
     def clean_morpheme_word(cls, morpheme_word):
         return cls.correct_hyphens(morpheme_word)
+
+    # ---------- morpheme cleaning ----------
+
+    @staticmethod
+    def replace_colon(morpheme):
+        """Replace the colon by a dot.
+
+        Args:
+            morpheme (str): gloss or POS tag
+        """
+        return morpheme.replace(':', '.')
+
+    @classmethod
+    def clean_gloss(cls, gloss):
+        return cls.replace_colon(gloss)
+
+    @classmethod
+    def clean_pos(cls, pos):
+        return cls.replace_colon(pos)
+
+
