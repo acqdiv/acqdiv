@@ -1462,6 +1462,18 @@ class YucatecReader(ACQDIVCHATReader):
                         pos = 'sfx'
                     yield seg, gloss, pos
 
+    @classmethod
+    def get_segments(cls, seg_word):
+        return [seg for seg, _, _ in cls.iter_morphemes(seg_word)]
+
+    @classmethod
+    def get_glosses(cls, gloss_word):
+        return [gloss for _, gloss, _ in cls.iter_morphemes(gloss_word)]
+
+    @classmethod
+    def get_poses(cls, pos_word):
+        return [pos for _, _, pos in cls.iter_morphemes(pos_word)]
+
 
 ###############################################################################
 

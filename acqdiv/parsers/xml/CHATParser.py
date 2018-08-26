@@ -313,6 +313,16 @@ class TurkishParser(CHATParser):
         return CHATCleaner.TurkishCleaner()
 
 
+class YucatecParser(CHATParser):
+    @staticmethod
+    def get_reader():
+        return CHATReader.YucatecReader()
+
+    @staticmethod
+    def get_cleaner():
+        return CHATCleaner.YucatecCleaner()
+
+
 def main():
     import glob
     import acqdiv
@@ -324,12 +334,12 @@ def main():
     start_time = time.time()
 
     for corpus, parser_cls in [
+            ('Yucatec', YucatecParser),
             ('Turkish', TurkishParser),
             ('Japanese_MiiPro', JapaneseMiiProParser),
             ('English_Manchester1', EnglishManchester1Parser),
             ('Cree', CreeParser),
-            ('Inuktitut', InuktitutParser)
-    ]:
+            ('Inuktitut', InuktitutParser)]:
 
         corpus_path = os.path.join(
             acqdiv_path, 'corpora/{}/cha/*.cha'.format(corpus))
