@@ -873,6 +873,7 @@ class SesothoCleaner(CHATCleaner):
 
     @classmethod
     def clean_seg_tier(cls, seg_tier):
+        """Clean the segment tier by removing the terminator."""
         return cls.remove_terminator(seg_tier)
 
     @classmethod
@@ -906,19 +907,30 @@ class SesothoCleaner(CHATCleaner):
 
     @classmethod
     def clean_pos_tier(cls, pos_tier):
+        """Clean pos_tier with same methods as gloss_tier."""
         return cls.clean_gloss_tier(pos_tier)
 
     @classmethod
     def clean_seg_word(cls, seg_word):
         """Remove parentheses."""
-        return re.sub(r'\(([a-zA-Z]\S+)\)', r'\1', seg_word)
+        return re.sub(r'[()]', '', seg_word)
+
+    @classmethod
+    def remove_markers(cls, gloss_word):
+        """Remove noun and verb markers."""
+        gloss_word = cls.remove_noun_markers(gloss_word)
+        gloss_word = remove_verb_markers(gloss_word)
+        return gloss_word
 
     @staticmethod
-    def remove_markers(gloss_word):
-        """Remove noun and verb markers."""
-        gloss_word = re.sub(r'[nN]\^(?=\d)', '', gloss_word)
-        gloss_word = re.sub(r'[vs]\^', '', gloss_word)
-        return gloss_word
+    def remove_noun_markers(gloss_word):
+        """Remove noun markers."""
+        return re.sub(r'[nN]\^(?=\d)', '', gloss_word)
+
+    @staticmethod
+    def remove_verb_markers(gloss_word):
+        """Remove verb markers."""
+        return re.sub(r'[vs]\^', '', gloss_word)
 
     @staticmethod
     def clean_proper_names_gloss_words(gloss_word):
@@ -937,7 +949,8 @@ class SesothoCleaner(CHATCleaner):
     def replace_concatenators(cls, gloss_word):
         """Replace '_' as concatenator of glosses with '.'.
 
-        But don't replace '_' as concatenator of multi-word-expressions.
+        But don't replace '_' as concatenator of
+        verb-multi-word-expressions.
         """
         glosses_raw = gloss_word.split('-')
         glosses_clean = []
@@ -1013,6 +1026,7 @@ class SesothoCleaner(CHATCleaner):
 
     @classmethod
     def clean_gloss_word(cls, gloss_word):
+        """Clean a Sesotho gloss word."""
         gloss_word = cls.replace_concatenators(gloss_word)
         gloss_word = cls.remove_parentheses_inf(gloss_word)
         return super().clean_gloss_word(gloss_word)
