@@ -895,7 +895,7 @@ class SesothoCleaner(CHATCleaner):
         This is to ensure that '/' can't be confused with '/' as a
         morpheme separator.
         """
-        return re.sub(r'(\d+a?)/(\d+a?)', r'\\1|\\2', gloss_tier)
+        return re.sub(r'(\d+a?)/(\d+a?)', r'\1|\2', gloss_tier)
 
     @classmethod
     def clean_pos_tier(cls, pos_tier):
@@ -904,7 +904,7 @@ class SesothoCleaner(CHATCleaner):
     @classmethod
     def clean_seg_word(cls, seg_word):
         """Remove parentheses."""
-        return re.sub(r'\(([a-zA-Z]\\S+)\)', r'\\1', seg_word)
+        return re.sub(r'\(([a-zA-Z]\\S+)\)', r'\1', seg_word)
 
     @staticmethod
     def remove_markers(gloss_word):
@@ -921,7 +921,7 @@ class SesothoCleaner(CHATCleaner):
         Lowercase the labels of propernames.
         """
         gloss_word = re.sub(r'[nN]\^([gG]ame|[nN]ame|[pP]lace|[sS]ong)',
-                            r'a_\\1', gloss_word)
+                            r'a_\1', gloss_word)
         if re.search(r'a_(Game|Name|Place|Song)', gloss_word):
             gloss_word = gloss_word.lower()
         return gloss_word
@@ -983,7 +983,7 @@ class SesothoCleaner(CHATCleaner):
         parentheses. Remove those parentheses.
         """
         if not re.search(r'^\(.*\)$', gloss_word):
-            return re.sub(r'\(([a-zA-Z]\\S+)\)', r'\\1', gloss_word)
+            return re.sub(r'\(([a-zA-Z]\S+)\)', r'\1', gloss_word)
 
         return gloss_word
 
