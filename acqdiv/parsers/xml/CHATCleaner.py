@@ -776,9 +776,10 @@ class SesothoCleaner(CHATCleaner):
 
     # ---------- utterance cleaning ----------
 
-    def clean_utterance(self, utterance):
-        utterance = self.remove_words_in_parentheses(utterance)
-        utterance = self.remove_parentheses(utterance)
+    @classmethod
+    def clean_utterance(cls, utterance):
+        utterance = cls.remove_words_in_parentheses(utterance)
+        utterance = cls.remove_parentheses(utterance)
         return super().clean_utterance(utterance)
 
     @staticmethod
@@ -790,9 +791,9 @@ class SesothoCleaner(CHATCleaner):
         speech.
         """
         if utterance.startswith('('):
-            return re.sub(r'\(.*\) ', ' ', utterance)
+            return re.sub(r'\(\w+\) ', '', utterance)
 
-        return re.sub(r' \(.*\) ', ' ', utterance)
+        return re.sub(r' \(\w+\) ', '', utterance)
 
     @staticmethod
     def remove_parentheses(utterance):
