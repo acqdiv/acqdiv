@@ -28,7 +28,7 @@ sessions <- sessions %>% rename(session_id=id, session_id_source=source_id)
 # create alternative tables without columns that would only create duplicates, including warnings
 utterances_slim <- utterances %>% select(utterance_id, session_id_fk, utterance_id_source, corpus, language, speaker_id_fk, speaker_label, addressee, childdirected, utterance, translation, utterance_morphemes, start, end, comment, warning)
 words_slim <- words %>% select(word_id, utterance_id_fk, word, pos_word_stem, pos_word_ud, word_actual, word_target)
-morphemes_slim <- morphemes %>% select(morpheme_id, word_id_fk, morpheme_type, morpheme, gloss_raw, gloss, pos_raw, pos, morpheme_language)
+morphemes_slim <- morphemes %>% select(morpheme_id, word_id_fk, morpheme_type, morpheme, gloss_raw, gloss, pos_raw, pos, morpheme_language, lemma_id)
 morphemes_slim <- morphemes_slim %>% filter(!is.na(word_id_fk)) # take out NA foreign keys for easier merging
 sessions_slim <- sessions %>% select(session_id, session_id_source, duration, date, target_child_fk)
 speakers_slim <- speakers %>% select(speaker_id, session_id_fk, uniquespeaker_id_fk, name, age_raw, age, age_in_days, gender_raw, gender, role_raw, role, macrorole, languages_spoken, birthdate)
@@ -41,7 +41,7 @@ left_join(sessions_slim, u_w_m, by=c("session_id"="session_id_fk")) -> u_w_m_s
 left_join(u_w_m_s, speakers_slim, by=c("speaker_id_fk"="speaker_id")) -> all_data
 
 # final set of columns
-all_data <- all_data %>% select(corpus, language, session_id, session_id_source, target_child_fk, duration, date, speaker_id_fk, speaker_label, name, birthdate, age_raw, age, age_in_days, gender_raw, gender, role_raw, role, macrorole, addressee, childdirected, utterance_id, utterance_id_source, start, end, utterance, translation, utterance_morphemes, comment, word_id, word, word_actual, word_target, pos_word_stem, pos_word_ud, morpheme_id, morpheme_type, morpheme, gloss_raw, gloss, pos_raw, pos, morpheme_language)
+all_data <- all_data %>% select(corpus, language, session_id, session_id_source, target_child_fk, duration, date, speaker_id_fk, speaker_label, name, birthdate, age_raw, age, age_in_days, gender_raw, gender, role_raw, role, macrorole, addressee, childdirected, utterance_id, utterance_id_source, start, end, utterance, translation, utterance_morphemes, comment, word_id, word, word_actual, word_target, pos_word_stem, pos_word_ud, morpheme_id, morpheme_type, morpheme, gloss_raw, gloss, pos_raw, pos, morpheme_language, lemma_id)
 
 # drop slim tables
 rm(words_slim, morphemes_slim, sessions_slim, speakers_slim)
