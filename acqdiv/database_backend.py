@@ -186,4 +186,5 @@ class Morpheme(Base):
     gloss = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     pos_raw = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     pos = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    lemma_id = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
     warning = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass

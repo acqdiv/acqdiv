@@ -382,6 +382,7 @@ class ToolboxFile(object):
         glosses = []
         warnings = []
         langs = []
+        morphids = []   # morpheme dict ids
 
         # Russian specific morpheme inference
         if self.config['corpus']['corpus'] == "Russian":
@@ -501,6 +502,15 @@ class ToolboxFile(object):
             else:
                 warnings.append('no morpheme tier')
 
+            if 'lemma_id' in utterance.keys():
+                m_ids_boundaries = re.split(self._word_boundary, utterance['lemma_id'])
+                for word in m_ids_boundaries:
+                    word = word.replace(" - ", " ") # remove floating clitic marker
+                    morphids.append(word.split())
+
+            else:
+                warnings.append('lemma_id missing')
+
             if 'gloss_raw' in utterance.keys():
                 # reference word boundaries are in the glosses tier
                 word_boundaries = re.split(self._word_boundary, utterance['gloss_raw'])
@@ -537,7 +547,7 @@ class ToolboxFile(object):
                     langs.append(['Chintang'])
                 warnings.append('language information missing')
 
-            #try aligning glosses and langs
+            # try aligning glosses and langs
             try:
                 langs2 = [[langs[i][j] for j in range(len(glosses[i]))]
                           for i in range(len(glosses))]
@@ -552,7 +562,7 @@ class ToolboxFile(object):
         len_mw = len(glosses)
         #len_align = len([i for gw in glosses for i in gw])
         tiers = []
-        for t in (morphemes, glosses, poses, langs):
+        for t in (morphemes, glosses, poses, langs, morphids):
             if struct_eqv(t, glosses):
                 tiers.append(t)
             else:
@@ -565,7 +575,7 @@ class ToolboxFile(object):
         #gls = [m for m in w for w in
         mwords = zip(*tiers)
         for mw in mwords:
-            alignment = list(zip_longest(mw[0], mw[1], mw[2], mw[3],
+            alignment = list(zip_longest(mw[0], mw[1], mw[2], mw[3], mw[4],
                                          fillvalue=None))
             l = []
             for morpheme in alignment:
@@ -574,12 +584,12 @@ class ToolboxFile(object):
                 d['gloss_raw'] = morpheme[1]
                 d['pos_raw'] = morpheme[2]
                 d['morpheme_language'] = morpheme[3]
+                d['lemma_id'] = morpheme[4]
                 # TODO: move to postprocessing if faster
                 d['type'] = self.config['morphemes']['type'] # what type of morpheme as defined in the corpus .ini
                 d['warning'] = None if len(warnings) == 0 else " ".join(warnings)
                 l.append(d)
             result.append(l)
-
         return result
 
 
