@@ -841,7 +841,7 @@ class SesothoCleaner(CHATCleaner):
         at the same index are also deleted.
         """
         gloss_tier = re.sub(r'\s+,\s+', ',', gloss_tier)
-        pos_tier = re.sub(r'\s+,\s+', ',', gloss_tier)
+        pos_tier = re.sub(r'\s+,\s+', ',', pos_tier)
         seg_words = seg_tier.split(' ')
         gloss_words = gloss_tier.split(' ')
         pos_words = pos_tier.split(' ')
@@ -852,14 +852,21 @@ class SesothoCleaner(CHATCleaner):
         glen = len(gloss_words)
         plen = len(pos_words)
 
-        for i in range(len(seg_words)):
-            if not re.search(r'^\(.*\)$', seg_words[i]):
-                # Avoid index errors, that occur if morphology tiers are
-                # misaligned, by first checking if index is in range.
-                if i < slen:
-                    seg_words_clean.append(seg_words[i])
-                if i < glen:
+        for i in range(glen):
+            # Check if i is in range of seg_words to then check if there
+            # is a contraction.
+            if i < slen:
+                if not re.search(r'^\(.*\)$', seg_words[i]):
+                    # i must be in range for gloss_words and seg_words,
+                    # but check if i is in range for pos_words.
                     gloss_words_clean.append(gloss_words[i])
+                    seg_words_clean.append(seg_words[i])
+                    if i < plen:
+                        pos_words_clean.append(pos_words[i])
+            else:
+                # If i not in range for seg_words, check and append for
+                # the other tiers, since there could be a misalignment.
+                gloss_words_clean.append(gloss_words[i])
                 if i < plen:
                     pos_words_clean.append(pos_words[i])
 
