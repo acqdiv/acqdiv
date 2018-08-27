@@ -1222,7 +1222,14 @@ class TestCreeParser(unittest.TestCase):
 
 
 class TestSesothoParser(unittest.TestCase):
-    """Class to test the SesothoParser."""
+    """Class to test the SesothoParser.
+
+    There are no tests for misalignments between words and the morpheme
+    tiers since the words are replaced by morphemes anyway.
+
+    There are no tests for misaligned poses either, because they are
+    encoded (and thus also tested) in the gloss_tier.
+    """
 
     def setUp(self):
         self.session_file_path = './test_CHATParser.cha'
@@ -1427,6 +1434,124 @@ class TestSesothoParser(unittest.TestCase):
                     'morpheme': 'Mamello',
                     'morpheme_language': None,
                     'pos_raw': '???'
+                }
+            ]
+        ]
+        desired_output = (utt_dict, words_list, morpheme_list)
+        self.assertEqual(actual_output, desired_output)
+
+    def test_next_utterance_morphemes_misaligned(self):
+        """Test next_utterance with too few morphemes. (Sesotho)"""
+
+        session_str = ('*NHL:\te tsamo . 113200_115376\n%gls:\ttsamay-a '
+                       '.\n%cod:\tij v^leave-m^i '
+                       '.\n%eng:\tYes go and\n@End')
+        self.parser.reader.read(io.StringIO(session_str))
+        actual_output = list(self.parser.next_utterance())[0]
+        utt_dict = {
+            'source_id': 'u0',
+            'speaker_label': 'NHL',
+            'addressee': None,
+            'utterance_raw': 'tsamaya .',
+            'utterance': 'tsamaya',
+            'translation': 'Yes go and',
+            'morpheme': 'tsamay-a .',
+            'gloss_raw': 'ij v^leave-m^i .',
+            'pos_raw': 'ij v^leave-m^i .',
+            'sentence_type': 'default',
+            'start_raw': '113200',
+            'end_raw': '115376',
+            'comment': None,
+            'warning': None
+        }
+        words_list = [
+            {
+                'word_language': None,
+                'word': 'tsamaya',
+                'word_actual': 'tsamaya',
+                'word_target': 'tsamaya',
+                'warning': None
+            }
+        ]
+        morpheme_list = [
+            [
+                {
+                    'gloss_raw': 'ij',
+                    'morpheme': None,
+                    'morpheme_language': None,
+                    'pos_raw': 'ij'
+                }
+            ],
+            [
+                {
+                    'gloss_raw': 'leave',
+                    'morpheme': None,
+                    'morpheme_language': None,
+                    'pos_raw': 'v'
+                },
+                {
+                    'gloss_raw': 'm^i',
+                    'morpheme': None,
+                    'morpheme_language': None,
+                    'pos_raw': 'sfx'
+                }
+            ]
+        ]
+        desired_output = (utt_dict, words_list, morpheme_list)
+        self.assertEqual(actual_output, desired_output)
+
+    def test_next_utterance_glosses_misaligned(self):
+        """Test next_utterance with too few glosses. (Sesotho)"""
+
+        session_str = ('*NHM:\te tsamo . 113200_115376\n%gls:\te tsamay-a .'
+                       '\n%cod:\tv^leave-m^i .\n%eng:\tYes go and\n@End')
+        self.parser.reader.read(io.StringIO(session_str))
+        actual_output = list(self.parser.next_utterance())[0]
+        utt_dict = {
+            'source_id': 'u0',
+            'speaker_label': 'NHM',
+            'addressee': None,
+            'utterance_raw': 'e tsamaya .',
+            'utterance': 'e tsamaya',
+            'translation': 'Yes go and',
+            'morpheme': 'e tsamay-a .',
+            'gloss_raw': 'v^leave-m^i .',
+            'pos_raw': 'v^leave-m^i .',
+            'sentence_type': 'default',
+            'start_raw': '113200',
+            'end_raw': '115376',
+            'comment': None,
+            'warning': None
+        }
+        words_list = [
+            {
+                'word_language': None,
+                'word': 'e',
+                'word_actual': 'e',
+                'word_target': 'e',
+                'warning': None
+            },
+            {
+                'word_language': None,
+                'word': 'tsamaya',
+                'word_actual': 'tsamaya',
+                'word_target': 'tsamaya',
+                'warning': None
+            }
+        ]
+        morpheme_list = [
+            [
+                {
+                    'gloss_raw': 'leave',
+                    'morpheme': None,
+                    'morpheme_language': None,
+                    'pos_raw': 'v'
+                },
+                {
+                    'gloss_raw': 'm^i',
+                    'morpheme': None,
+                    'morpheme_language': None,
+                    'pos_raw': 'sfx'
                 }
             ]
         ]
