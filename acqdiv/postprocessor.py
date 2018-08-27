@@ -687,6 +687,9 @@ def process_morphemes_table():
     print("_morphemes_infer_pos")
     _morphemes_infer_pos()
 
+    print("_morphemes_infer_lemma_id_chintang")
+    _morphemes_infer_lemma_id_chintang()
+
     print("_morphemes_infer_labels")
     _morphemes_infer_labels()
 
@@ -765,6 +768,19 @@ def _morphemes_infer_pos():
         results.append(
             {'morpheme_id': row.id, 'pos_raw': pos_raw, 'gloss_raw': gloss_raw,
              'morpheme': morpheme})
+    rows.close()
+    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
+
+
+def _morphemes_infer_lemma_id_chintang():
+    """ Chintang morpheme dict id inference. Clean up affix markers "-". """
+    s = sa.select([db.Morpheme.id, db.Morpheme.lemma_id]).where(db.Morpheme.corpus == "Chintang")
+    rows = conn.execute(s)
+    results = []
+    for row in rows:
+        # TODO: handle IDs containing letters (invalid?) and more than one IDs separated by '|' (added automatically?)
+        lemma_id = None if row.lemma_id is None else row.lemma_id.replace('-', '')
+        results.append({'morpheme_id': row.id, 'lemma_id': lemma_id})
     rows.close()
     _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
@@ -851,7 +867,8 @@ def _morphemes_unify_unknowns():
     """Unify unknown values for morphemes."""
     s = sa.select([
         db.Morpheme.id, db.Morpheme.morpheme, db.Morpheme.gloss_raw,
-        db.Morpheme.gloss, db.Morpheme.pos, db.Morpheme.pos_raw])
+        db.Morpheme.gloss, db.Morpheme.pos, db.Morpheme.pos_raw,
+        db.Morpheme.lemma_id])
     rows = conn.execute(s)
     results = []
     null_values = {'???', '?', '', 'ww', 'xxx', '***'}
@@ -889,11 +906,17 @@ def _morphemes_unify_unknowns():
         else:
             pos = row.pos
 
+        if row.lemma_id in null_values:
+            lemma_id = None
+            has_changed = True
+        else:
+            lemma_id = row.lemma_id
+
         if has_changed:
             results.append({
                 'morpheme_id': row.id, 'morpheme': morpheme,
                 'gloss_raw': gloss_raw, 'gloss': gloss, 'pos_raw': pos_raw,
-                'pos': pos})
+                'pos': pos, 'lemma_id': lemma_id})
 
     rows.close()
     _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
