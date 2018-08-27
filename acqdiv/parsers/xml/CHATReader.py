@@ -1530,80 +1530,102 @@ class SesothoReader(ACQDIVCHATReader):
         return self._dependent_tiers.get('cod', '')
 
     @staticmethod
-    def iter_morphemes(morph_word):
-        """Iter morphemes of a morph. word (encoding gloss and pos).
+    def infer_poses(morph_word):
+        """Infer the pos-tags for a morpheme word.
 
-        This method only returns glosses and poses, but not segments,
-        since segments are on a different tier. They are retrieved
-        directly by get_segments().
-
-        Morphological words are separated by spaces, morphemes (stems and
-        affixes) are separated by hyphens.
-
-        Returns:
-            tuple: (<empty_string>, gloss, pos).
+        Args:
+            morph_word: str, the morphemes of a word
+        Return:
+            str, the pos-tags
         """
         if not morph_word:
-            yield ('', '', '')
+            return []
 
         morphemes = morph_word.split('-')
         passed_stem = False
+        poses = []
 
         for mor in morphemes:
-            gloss = mor  # The gloss is just the cleaned morpheme.
-            pos = ''  # Check for prefixes and suffixes.
-            if len(morphemes) == 1 or (re.search('(v|id)\^|\(\d', mor)
-                                       or re.match('(aj$|nm$|ps\d+)', mor)):
+            pos = ''
+            # Check for prefixes and suffixes.
+            if len(morphemes) == 1 or (re.search(r'(v|id)\^|\(\d', mor)
+                                       or re.match(r'(aj$|nm$|ps\d+)', mor)):
                 passed_stem = True
             elif not passed_stem:
                 pos = 'pfx'
             elif passed_stem:
                 pos = 'sfx'
 
-            if pos == 'pfx' or pos == 'sfx':
-                pass
-            # Check for verbs: verbs have v^, one typo as s^.
-            elif re.search('[vs]\^', mor):
-                pos = 'v'
+            if pos != 'pfx' and pos != 'sfx':
+                # Check for verbs: verbs have v^, one typo as s^.
+                if re.search(r'[vs]\^', mor):
+                    pos = 'v'
 
-            # Check for nouns: nouns contains "(\d)" (default) or "ps/"
-            elif re.search('\(\d+', mor) or re.search('^ps/', mor):
-                pos = 'n'
+                # Check for nouns: nouns contains "(\d)" (default) or "ps/"
+                elif re.search('\(\d+', mor) or re.search('^ps/', mor):
+                    pos = 'n'
 
-            # Check for words with nominal concord.
-            elif re.search('^(d|lr|obr|or|pn|ps|sr)\d+', mor):
-                pos_match = re.search('^(d|lr|obr|or|pn|ps|sr)\d+', mor)
-                pos = pos_match.group(1)
+                # Check for words with nominal concord.
+                elif re.search(r'^(d|lr|obr|or|pn|ps|sr)\d+', mor):
+                    pos_match = re.search('^(d|lr|obr|or|pn|ps|sr)\d+', mor)
+                    pos = pos_match.group(1)
 
-            # Check for particles: mostly without a precise gloss.
-            elif re.search(
-                    '^(aj|av|cd|cj|cm|ht|ij|loc|lr|ng|nm|obr|or|pr|q|sr|wh)$',
-                    mor):
-                pos = mor
+                # Check for particles: mostly without a precise gloss.
+                elif re.search(
+                        (r'^(aj|av|cd|cj|cm|ht|ij|loc|lr|ng|nm|obr|or|pr|q|sr'
+                         r'|wh)$'),
+                        mor):
+                    pos = mor
 
-            # Check for free person markers.
-            elif re.search('^sm\d+[sp]?$', mor):
-                pos = 'afx.detached'
+                # Check for free person markers.
+                elif re.search(r'^sm\d+[sp]?$', mor):
+                    pos = 'afx.detached'
 
-            # Check for copulas.
-            elif re.search('^cp|cp$', mor):
-                pos = 'cop'
+                # Check for copulas.
+                elif re.search(r'^cp|cp$', mor):
+                    pos = 'cop'
 
-            # Check for ideophones.
-            elif re.search('id\^', mor):
-                pos = 'ideoph'
+                # Check for ideophones.
+                elif re.search(r'id\^', mor):
+                    pos = 'ideoph'
 
-            # Check for meaningless and unclear words. Note that "xxx"
-            # in the Sesotho coding tier is not the same as CHAT "xxx"
-            # in the transcription tier - it does not stand for words
-            # that could not be transcribed but for words with unclear
-            # meaning.
-            elif mor == 'word' or mor == 'xxx':
-                pos = 'none'
-            else:
-                pos = '???'
+                # Check for meaningless and unclear words. Note that
+                # "xxx" in the Sesotho coding tier is not the same as
+                # CHAT "xxx" in the transcription tier - it does not
+                # stand for words that could not be transcribed but for
+                # words with unclear meaning.
+                elif mor == 'word' or mor == 'xxx':
+                    pos = 'none'
+                else:
+                    pos = '???'
 
-            yield('', gloss, pos)
+            poses.append(pos)
+
+        return poses
+
+    @classmethod
+    def iter_morphemes(cls, morph_word):
+        """Iter morphemes of a morph. word (encoding gloss and pos).
+
+        This method only returns glosses and poses, but not segments,
+        since segments are on a different tier. They are retrieved
+        directly by get_segments().
+
+        Morphemes (stems and affixes) are separated by hyphens.
+
+        Args:
+            morph_word: str, the morphemes of a word
+        Returns:
+            tuple: (<empty_string>, gloss, pos).
+        """
+        if not morph_word:
+            yield ('', '', '')
+        else:
+            poses = cls.infer_poses(morph_word)
+            morphemes = morph_word.split('-')
+
+            for i in range(len(morphemes)):
+                yield ('', morphemes[i], poses[i])
 
     @classmethod
     def get_segments(cls, seg_word):
@@ -1617,10 +1639,11 @@ class SesothoReader(ACQDIVCHATReader):
     def get_poses(cls, pos_word):
         return [pos for _, _, pos in cls.iter_morphemes(pos_word)]
 
-    @staticmethod
-    def get_morpheme_language(seg, gloss, pos):
-        return 'Sesotho'
-
-    @staticmethod
-    def get_word_language(word):
-        return 'Sesotho'
+    # TODO: decide if remove
+    # @staticmethod
+    # def get_morpheme_language(seg, gloss, pos):
+    #     return 'Sesotho'
+    #
+    # @staticmethod
+    # def get_word_language(word):
+    #     return 'Sesotho'
