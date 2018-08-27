@@ -1560,7 +1560,8 @@ class SesothoReader(ACQDIVCHATReader):
 
                 # Check for particles: mostly without a precise gloss.
                 elif re.search(
-                        r'^(aj|av|cd|cj|cm|ht|ij|loc|lr|ng|nm|obr|or|pr|q|sr|wh)$',
+                        (r'^(aj|av|cd|cj|cm|ht|ij|loc|lr|ng|nm|obr|or|pr|q|sr'
+                         r'|wh)$'),
                         mor):
                     pos = mor
 
@@ -1589,7 +1590,6 @@ class SesothoReader(ACQDIVCHATReader):
             poses.append(pos)
 
         return poses
-
 
     @classmethod
     def iter_morphemes(cls, morph_word):
@@ -1627,10 +1627,11 @@ class SesothoReader(ACQDIVCHATReader):
     def get_poses(cls, pos_word):
         return [pos for _, _, pos in cls.iter_morphemes(pos_word)]
 
-    @staticmethod
-    def get_morpheme_language(seg, gloss, pos):
-        return 'Sesotho'
-
-    @staticmethod
-    def get_word_language(word):
-        return 'Sesotho'
+    # TODO: decide if remove
+    # @staticmethod
+    # def get_morpheme_language(seg, gloss, pos):
+    #     return 'Sesotho'
+    #
+    # @staticmethod
+    # def get_word_language(word):
+    #     return 'Sesotho'

@@ -919,7 +919,7 @@ class SesothoCleaner(CHATCleaner):
     def remove_markers(cls, gloss_word):
         """Remove noun and verb markers."""
         gloss_word = cls.remove_noun_markers(gloss_word)
-        gloss_word = remove_verb_markers(gloss_word)
+        gloss_word = cls.remove_verb_markers(gloss_word)
         return gloss_word
 
     @staticmethod
