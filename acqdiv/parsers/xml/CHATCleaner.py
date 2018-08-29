@@ -1200,16 +1200,41 @@ class YucatecCleaner(CHATCleaner):
     # ---------- morpheme word cleaning ----------
 
     @staticmethod
-    def correct_hyphens(word):
-        """Replace faulty hyphens by the pipe in the morphology tier.
+    def correct_hyphens(morpheme_word):
+        """Replace faulty hyphens by the pipe in the morpheme word.
 
         It is only attested in suffixes, not in prefixes.
         """
-        return re.sub(r'(:[A-Z0-9]+)-(?=[a-záéíóúʔ]+)', r'\1|', word)
+        return re.sub(r'(:[A-Z0-9]+)-(?=[a-záéíóúʔ]+)', r'\1|', morpheme_word)
+
+    @staticmethod
+    def remove_colon(morpheme_word):
+        """Remove leading and trailing colons.
+
+        Note:
+            In some cases, the colons are correct, but a whitespace to the
+            preceding or following morpheme was erroneously inserted. This
+            case is not handled as the inference rules would be quite complex.
+        """
+        return morpheme_word.strip(':')
+
+    @staticmethod
+    def remove_dash(word_morpheme):
+        """Remove leading and trailing dash.
+
+        Note:
+            In some cases, the dashes are correct, but a whitespace to the
+            preceding or following morpheme was erroneously inserted. This
+            case is not handled as the inference rules would be quite complex.
+        """
+        return word_morpheme.strip('-')
 
     @classmethod
     def clean_morpheme_word(cls, morpheme_word):
-        return cls.correct_hyphens(morpheme_word)
+        for cleaning_method in [
+                cls.correct_hyphens, cls.remove_colon, cls.remove_dash]:
+            morpheme_word = cleaning_method(morpheme_word)
+        return morpheme_word
 
     # ---------- morpheme cleaning ----------
 
