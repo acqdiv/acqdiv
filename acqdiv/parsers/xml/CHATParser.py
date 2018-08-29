@@ -196,17 +196,17 @@ class CHATParser(CorpusParserInterface):
             # go through all morpheme words
             for wseg, wgloss, wpos in zip(wsegs, wglosses, wposes):
 
-                wseg = self.cleaner.clean_seg_word(wseg)
-                wgloss = self.cleaner.clean_gloss_word(wgloss)
-                wpos = self.cleaner.clean_pos_word(wpos)
+                cleaned_wseg = self.cleaner.clean_seg_word(wseg)
+                cleaned_wgloss = self.cleaner.clean_gloss_word(wgloss)
+                cleaned_wpos = self.cleaner.clean_pos_word(wpos)
 
                 # collect morpheme data of a word
                 wmorphemes = []
 
                 # get morphemes from the morpheme words
-                segments = self.reader.get_segments(wseg)
-                glosses = self.reader.get_glosses(wgloss)
-                poses = self.reader.get_poses(wpos)
+                segments = self.reader.get_segments(cleaned_wseg)
+                glosses = self.reader.get_glosses(cleaned_wgloss)
+                poses = self.reader.get_poses(cleaned_wpos)
 
                 # determine number of morphemes to be considered
                 if self.reader.get_main_morpheme() == 'segment':
