@@ -2043,16 +2043,25 @@ class TestYucatecCleaner(unittest.TestCase):
     # ---------- remove_dash ----------
 
     def test_remove_dash_trailing(self):
-        """Test remove_colon with leading colon."""
+        """Test remove_dash with leading colon."""
         word = 'STEM|stem-'
         actual_output = YucatecCleaner.remove_dash(word)
         desired_output = 'STEM|stem'
         self.assertEqual(actual_output, desired_output)
 
     def test_remove_dash_leading(self):
-        """Test remove_colon with leading colon."""
+        """Test remove_dash with leading colon."""
         word = 'STEM|stem-'
         actual_output = YucatecCleaner.remove_dash(word)
+        desired_output = 'STEM|stem'
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- remove_colon_dash ----------
+
+    def test_remove_colon_dash(self):
+        """Test remove_colon_dash with leading colon."""
+        word = 'STEM|stem:-'
+        actual_output = YucatecCleaner.remove_colon_dash(word)
         desired_output = 'STEM|stem'
         self.assertEqual(actual_output, desired_output)
 

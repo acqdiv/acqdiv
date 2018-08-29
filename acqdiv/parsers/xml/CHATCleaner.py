@@ -1240,10 +1240,22 @@ class YucatecCleaner(CHATCleaner):
         """
         return word_morpheme.strip('-')
 
+    @staticmethod
+    def remove_colon_dash(word_morpheme):
+        """Remove trailing colon and dash.
+
+        Note:
+            In some cases, they are correct, but a whitespace to the
+            preceding or following morpheme was erroneously inserted. This
+            case is not handled as the inference rules would be quite complex.
+        """
+        return word_morpheme.rstrip('-').rstrip(':')
+
     @classmethod
     def clean_morpheme_word(cls, morpheme_word):
         for cleaning_method in [
-                cls.correct_hyphens, cls.remove_colon, cls.remove_dash]:
+                cls.correct_hyphens, cls.remove_colon, cls.remove_dash,
+                cls.remove_colon_dash]:
             morpheme_word = cleaning_method(morpheme_word)
         return morpheme_word
 
