@@ -1181,6 +1181,17 @@ class TurkishCleaner(CHATCleaner):
 
 class YucatecCleaner(CHATCleaner):
 
+    # ---------- utterance cleaning ----------
+
+    @classmethod
+    def remove_terminator(cls, utterance):
+        """Remove utterance terminator.
+
+        Also removes the colon and the dash.
+        """
+        utterance = super().remove_terminator(utterance)
+        return utterance.rstrip('-').rstrip(':')
+
     # ---------- morphology tier cleaning ----------
 
     @classmethod
