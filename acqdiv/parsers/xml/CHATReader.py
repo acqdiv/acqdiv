@@ -1648,3 +1648,27 @@ class SesothoReader(ACQDIVCHATReader):
     # @staticmethod
     # def get_word_language(word):
     #     return 'Sesotho'
+
+###############################################################################
+
+
+class NungonReader(ACQDIVCHATReader):
+
+    def get_seg_tier(self):
+        """Get the segment tier.
+
+        The name of the segment tier can be either 'xgls' or 'gls'. The former
+        is more common.
+        """
+        for seg_tier_name in ['xgls', 'gls']:
+            if seg_tier_name in self._dependent_tiers:
+                return self._dependent_tiers[seg_tier_name]
+        return ''
+
+    def get_gloss_tier(self):
+        return self._dependent_tiers('xcod', '')
+
+    def get_pos_tier(self):
+        return self._dependent_tiers('xcod', '')
+
+

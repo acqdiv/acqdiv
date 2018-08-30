@@ -2379,6 +2379,12 @@ class TestYucatecReader(unittest.TestCase):
         desired_output = [('', '', '')]
         self.assertEqual(actual_output, desired_output)
 
+###############################################################################
+
+
+class TestNungonReader:
+    pass
+
 
 if __name__ == '__main__':
     unittest.main()
