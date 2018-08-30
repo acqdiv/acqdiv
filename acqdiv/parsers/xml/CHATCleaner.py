@@ -1183,6 +1183,8 @@ class YucatecCleaner(CHATCleaner):
 
     # ---------- utterance cleaning ----------
 
+    # TODO: removing dashes in utterance?
+
     @classmethod
     def remove_terminator(cls, utterance):
         """Remove utterance terminator.

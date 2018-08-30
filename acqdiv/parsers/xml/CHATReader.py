@@ -1417,6 +1417,7 @@ class YucatecReader(ACQDIVCHATReader):
                 seg = match.group('stemright')
                 stem_left = match.group('stemleft')
                 # stems with lexical meaning with the following POS tags
+                # TODO: recheck this list
                 stem_poses = {
                     '3PRON', 'ADJ', 'ADV', 'AUX', 'CLFR', 'CLFR.INAN', 'CONJ',
                     'DEICT', 'DEM', 'DET', 'INT', 'INTERJ', 'N', 'N.PROP',
