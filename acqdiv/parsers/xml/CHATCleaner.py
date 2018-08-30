@@ -1280,4 +1280,30 @@ class YucatecCleaner(CHATCleaner):
     def clean_pos(cls, pos):
         return cls.replace_colon(pos)
 
+###############################################################################
 
+class NungonCleaner(CHATCleaner):
+
+    # ---------- morphology tier cleaning ----------
+
+    @staticmethod
+    def remove_parentheses(seg_tier):
+        """Remove parentheses in the segment tier.
+
+        Only one case.
+        """
+        return seg_tier.replace('(', '').replace(')', '')
+
+    @classmethod
+    def clean_morph_tier(cls, morph_tier):
+        for cleaning_method in [
+                cls.remove_scoped_symbols, cls.remove_events,
+                cls.remove_parentheses, cls.remove_terminator]:
+            morph_tier = cleaning_method(morph_tier)
+
+        return morph_tier
+
+    @classmethod
+    def clean_seg_tier(cls, seg_tier):
+        seg_tier = cls.remove_parentheses(seg_tier)
+        return cls.clean_morph_tier(seg_tier)
