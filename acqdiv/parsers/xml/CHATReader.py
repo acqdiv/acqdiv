@@ -1666,9 +1666,20 @@ class NungonReader(ACQDIVCHATReader):
         return ''
 
     def get_gloss_tier(self):
-        return self._dependent_tiers('xcod', '')
+        return self._dependent_tiers.get('xcod', '')
 
     def get_pos_tier(self):
-        return self._dependent_tiers('xcod', '')
+        return self._dependent_tiers.get('xcod', '')
 
+    @classmethod
+    def get_morpheme_words(cls, morph_tier):
+        """Get the morpheme words of the morphology tier.
 
+        Morpheme words are normally separated by whitespaces. Clitics are
+        separated by '=' and are split off in parsing as they correspond
+        to independent words in the utterance.
+        """
+        if morph_tier:
+            return re.split(r'\s+|=', morph_tier)
+        else:
+            return ''

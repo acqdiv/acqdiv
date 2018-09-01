@@ -9,6 +9,7 @@ from acqdiv.parsers.xml.CHATReader import EnglishManchester1Reader
 from acqdiv.parsers.xml.CHATReader import SesothoReader
 from acqdiv.parsers.xml.CHATReader import TurkishReader
 from acqdiv.parsers.xml.CHATReader import YucatecReader
+from acqdiv.parsers.xml.CHATReader import NungonReader
 
 """The metadata is a combination of hiia.cha (Sesotho), aki20803.ch 
 (Japanese Miyata) and made up data to cover more cases. 
@@ -2382,8 +2383,79 @@ class TestYucatecReader(unittest.TestCase):
 ###############################################################################
 
 
-class TestNungonReader:
-    pass
+class TestNungonReader(unittest.TestCase):
+
+    # ---------- get_morpheme_words ----------
+
+    def test_get_morpheme_words_blank_spaces(self):
+        """Test get_morpheme_words with blank spaces."""
+        morph_tier = 'This is a test'
+        actual_output = list(NungonReader.get_morpheme_words(morph_tier))
+        desired_output = ['This', 'is', 'a', 'test']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_words_multiple_whitespaces(self):
+        """Test get_morpheme_words with multiple whitespaces."""
+        morph_tier = 'This   is  a  test'
+        actual_output = list(NungonReader.get_morpheme_words(morph_tier))
+        desired_output = ['This', 'is', 'a', 'test']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_words_clitics(self):
+        """Test get_morpheme_words with clitics."""
+        morph_tier = 'This=is a=test'
+        actual_output = list(NungonReader.get_morpheme_words(morph_tier))
+        desired_output = ['This', 'is', 'a', 'test']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_words_clitics_empty_string(self):
+        """Test get_morpheme_words with empty string."""
+        morph_tier = ''
+        actual_output = list(NungonReader.get_morpheme_words(morph_tier))
+        desired_output = []
+        self.assertEqual(actual_output, desired_output)
+
+
+class TestNungonReaderRecord(unittest.TestCase):
+    """Test record readers of NungonReader."""
+
+    @classmethod
+    def setUpClass(cls):
+        session = ('@UTF8\n'
+                   '@Begin\n'
+                   '*MEM:\t&foo ma(i)nline [: utterance]. \x150_1111\x15\n'
+                   '%xgls:\tThis is the segment tier\n'
+                   '%xcod:\tThis is the gloss/POS tier\n'
+                   '@End')
+        cls.reader = NungonReader()
+        cls.reader.read(io.StringIO(session))
+        cls.reader.load_next_record()
+
+    def test_get_seg_tier(self):
+        actual_output = self.reader.get_seg_tier()
+        desired_output = 'This is the segment tier'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_gloss_tier(self):
+        actual_output = self.reader.get_gloss_tier()
+        desired_output = 'This is the gloss/POS tier'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_pos_tier(self):
+        actual_output = self.reader.get_pos_tier()
+        desired_output = 'This is the gloss/POS tier'
+        self.assertEqual(actual_output, desired_output)
+
+
+
+
+
+
+
+
+
+
+
 
 
 if __name__ == '__main__':
