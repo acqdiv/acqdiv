@@ -2390,28 +2390,44 @@ class TestNungonReader(unittest.TestCase):
     def test_get_morpheme_words_blank_spaces(self):
         """Test get_morpheme_words with blank spaces."""
         morph_tier = 'This is a test'
-        actual_output = list(NungonReader.get_morpheme_words(morph_tier))
+        actual_output = NungonReader.get_morpheme_words(morph_tier)
         desired_output = ['This', 'is', 'a', 'test']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_morpheme_words_multiple_whitespaces(self):
         """Test get_morpheme_words with multiple whitespaces."""
         morph_tier = 'This   is  a  test'
-        actual_output = list(NungonReader.get_morpheme_words(morph_tier))
+        actual_output = NungonReader.get_morpheme_words(morph_tier)
         desired_output = ['This', 'is', 'a', 'test']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_morpheme_words_clitics(self):
         """Test get_morpheme_words with clitics."""
         morph_tier = 'This=is a=test'
-        actual_output = list(NungonReader.get_morpheme_words(morph_tier))
+        actual_output = NungonReader.get_morpheme_words(morph_tier)
         desired_output = ['This', 'is', 'a', 'test']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_morpheme_words_clitics_empty_string(self):
         """Test get_morpheme_words with empty string."""
         morph_tier = ''
-        actual_output = list(NungonReader.get_morpheme_words(morph_tier))
+        actual_output = NungonReader.get_morpheme_words(morph_tier)
+        desired_output = []
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- get_segments ----------
+
+    def test_get_segments(self):
+        """Test get_segments."""
+        seg_word = 'one-two-three-four'
+        actual_output = NungonReader.get_segments(seg_word)
+        desired_output = ['one', 'two', 'three', 'four']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_segments_empty_string(self):
+        """Test get_segments with empty string."""
+        seg_word = ''
+        actual_output = NungonReader.get_segments(seg_word)
         desired_output = []
         self.assertEqual(actual_output, desired_output)
 
@@ -2445,17 +2461,6 @@ class TestNungonReaderRecord(unittest.TestCase):
         actual_output = self.reader.get_pos_tier()
         desired_output = 'This is the gloss/POS tier'
         self.assertEqual(actual_output, desired_output)
-
-
-
-
-
-
-
-
-
-
-
 
 
 if __name__ == '__main__':

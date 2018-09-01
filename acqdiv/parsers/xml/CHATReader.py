@@ -1654,6 +1654,8 @@ class SesothoReader(ACQDIVCHATReader):
 
 class NungonReader(ACQDIVCHATReader):
 
+    # ---------- morphology tier ----------
+
     def get_seg_tier(self):
         """Get the segment tier.
 
@@ -1671,6 +1673,8 @@ class NungonReader(ACQDIVCHATReader):
     def get_pos_tier(self):
         return self._dependent_tiers.get('xcod', '')
 
+    # ---------- morpheme words ----------
+
     @classmethod
     def get_morpheme_words(cls, morph_tier):
         """Get the morpheme words of the morphology tier.
@@ -1682,4 +1686,15 @@ class NungonReader(ACQDIVCHATReader):
         if morph_tier:
             return re.split(r'\s+|=', morph_tier)
         else:
-            return ''
+            return []
+
+    # ---------- morphemes ----------
+
+    @classmethod
+    def get_segments(cls, seg_word):
+        """Segments are separated by dashes."""
+        if seg_word:
+            return seg_word.split('-')
+        else:
+            return []
+

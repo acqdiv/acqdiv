@@ -2172,9 +2172,16 @@ class TestNungonCleaner(unittest.TestCase):
 
     # ---------- null_ambiguous_gloss_pos_word ----------
 
-    def test_null_ambiguous_gloss_pos_word(self):
-        """Test null_ambiguous_gloss_pos_word."""
+    def test_null_ambiguous_gloss_pos_word_two_variants(self):
+        """Test null_ambiguous_gloss_pos_word with two variants."""
         word = 'N^mor-mor-mor#V^mor'
+        actual_output = NungonCleaner.null_ambiguous_gloss_pos_word(word)
+        desired_output = '???^???-???-???'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_null_ambiguous_gloss_pos_word_three_variants(self):
+        """Test null_ambiguous_gloss_pos_word with three variants."""
+        word = 'N^mor-mor-mor#V^mor#P^mor-mor'
         actual_output = NungonCleaner.null_ambiguous_gloss_pos_word(word)
         desired_output = '???^???-???-???'
         self.assertEqual(actual_output, desired_output)
