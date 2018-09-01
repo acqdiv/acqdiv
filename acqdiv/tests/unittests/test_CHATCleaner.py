@@ -6,6 +6,7 @@ from acqdiv.parsers.xml.CHATCleaner import JapaneseMiiProCleaner
 from acqdiv.parsers.xml.CHATCleaner import SesothoCleaner
 from acqdiv.parsers.xml.CHATCleaner import TurkishCleaner
 from acqdiv.parsers.xml.CHATCleaner import YucatecCleaner
+from acqdiv.parsers.xml.CHATCleaner import NungonCleaner
 
 
 class TestCHATCleaner(unittest.TestCase):
@@ -1439,6 +1440,7 @@ class TestJapaneseMiiProCleaner(unittest.TestCase):
 
 ###############################################################################
 
+
 class TestSesothoCleaner(unittest.TestCase):
 
     # ---------- utterance cleaning ----------
@@ -2064,6 +2066,34 @@ class TestYucatecCleaner(unittest.TestCase):
         actual_output = YucatecCleaner.remove_colon_dash(word)
         desired_output = 'STEM|stem'
         self.assertEqual(actual_output, desired_output)
+
+###############################################################################
+
+
+class TestNungonCleaner(unittest.TestCase):
+
+    def test_remove_parentheses(self):
+        """Test remove_parentheses."""
+        seg_tier = '(this is a test)'
+        actual_output = NungonCleaner.remove_parentheses(seg_tier)
+        desired_output = 'this is a test'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_morph_tier(self):
+        """Test clean_morph_tier."""
+        morph_tier = 'PRON^this=is &=coughs ART^a N^test [laughs].'
+        actual_output = NungonCleaner.clean_morph_tier(morph_tier)
+        desired_output = 'PRON^this=is ART^a N^test'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_seg_tier(self):
+        """Test clean_seg_tier."""
+        morph_tier = 'this=is &=coughs (a) test [laughs].'
+        actual_output = NungonCleaner.clean_morph_tier(morph_tier)
+        desired_output = 'this=is a test'
+        self.assertEqual(actual_output, desired_output)
+
+
 
 
 if __name__ == '__main__':
