@@ -2072,12 +2072,16 @@ class TestYucatecCleaner(unittest.TestCase):
 
 class TestNungonCleaner(unittest.TestCase):
 
+    # ---------- remove_parentheses ----------
+
     def test_remove_parentheses(self):
         """Test remove_parentheses."""
         seg_tier = '(this is a test)'
         actual_output = NungonCleaner.remove_parentheses(seg_tier)
         desired_output = 'this is a test'
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- clean_morph_tier ----------
 
     def test_clean_morph_tier(self):
         """Test clean_morph_tier."""
@@ -2086,11 +2090,59 @@ class TestNungonCleaner(unittest.TestCase):
         desired_output = 'PRON^this=is ART^a N^test'
         self.assertEqual(actual_output, desired_output)
 
+    def test_clean_morph_tier_untranscribed(self):
+        """Test clean_morph_tier with untranscribed morphology tier."""
+        morph_tier = 'xxx'
+        actual_output = NungonCleaner.clean_morph_tier(morph_tier)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- clean_seg_tier ----------
+
     def test_clean_seg_tier(self):
         """Test clean_seg_tier."""
         morph_tier = 'this=is &=coughs (a) test [laughs].'
-        actual_output = NungonCleaner.clean_morph_tier(morph_tier)
+        actual_output = NungonCleaner.clean_seg_tier(morph_tier)
         desired_output = 'this=is a test'
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- unify_untranscribed_morpheme_word ----------
+
+    def test_unify_untranscribed_morpheme_word_single_question_mark(self):
+        """Test unify_untranscribed_morpheme_word with single question mark."""
+        word = '?'
+        actual_output = NungonCleaner.unify_untranscribed_morpheme_word(word)
+        desired_output = '???'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_untranscribed_morpheme_word_xxx(self):
+        """Test unify_untranscribed_morpheme_word with xxx."""
+        word = 'xxx'
+        actual_output = NungonCleaner.unify_untranscribed_morpheme_word(word)
+        desired_output = '???'
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- null_untranscribed_morph_tier ----------
+
+    def test_null_untranscribed_morph_tier_single_question_mark(self):
+        """Test null_untranscribed_morph_tier with single question mark."""
+        utterance = '?'
+        actual_output = NungonCleaner.null_untranscribed_morph_tier(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_null_untranscribed_morph_tier_xxx(self):
+        """Test null_untranscribed_morph_tier with xxx."""
+        utterance = 'xxx'
+        actual_output = NungonCleaner.null_untranscribed_morph_tier(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_null_untranscribed_morph_tier_xxxx(self):
+        """Test null_untranscribed_morph_tier with xxxx."""
+        utterance = 'xxxx'
+        actual_output = NungonCleaner.null_untranscribed_morph_tier(utterance)
+        desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
 

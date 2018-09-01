@@ -1282,9 +1282,24 @@ class YucatecCleaner(CHATCleaner):
 
 ###############################################################################
 
+
 class NungonCleaner(CHATCleaner):
 
     # ---------- morphology tier cleaning ----------
+
+    @staticmethod
+    def null_untranscribed_morph_tier(morph_tier):
+        """Null utterances containing only untranscribed material.
+
+        Untranscribed morphology tiers are either '?' or 'xxx{3,}'.
+
+        Note:
+            Nulling means here the utterance is returned as an empty string.
+        """
+        if re.fullmatch(r'\?|x{3,}', morph_tier):
+            return ''
+        else:
+            return morph_tier
 
     @staticmethod
     def remove_parentheses(seg_tier):
@@ -1298,7 +1313,7 @@ class NungonCleaner(CHATCleaner):
     def clean_morph_tier(cls, morph_tier):
         for cleaning_method in [
                 cls.remove_scoped_symbols, cls.remove_events,
-                cls.remove_parentheses, cls.remove_terminator]:
+                cls.remove_terminator, cls.null_untranscribed_morph_tier]:
             morph_tier = cleaning_method(morph_tier)
 
         return morph_tier
@@ -1307,3 +1322,16 @@ class NungonCleaner(CHATCleaner):
     def clean_seg_tier(cls, seg_tier):
         seg_tier = cls.remove_parentheses(seg_tier)
         return cls.clean_morph_tier(seg_tier)
+
+    # ---------- morpheme word cleaning ----------
+
+    @staticmethod
+    def unify_untranscribed_morpheme_word(morpheme_word):
+        """Unify untranscribed morpheme words.
+
+        Untranscribed morpheme words are either '?' or xxx{3,}.
+        """
+        if re.fullmatch(r'\?|x{3,}', morpheme_word):
+            return '???'
+        else:
+            return morpheme_word
