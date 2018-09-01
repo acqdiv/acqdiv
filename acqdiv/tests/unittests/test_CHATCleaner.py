@@ -2161,7 +2161,23 @@ class TestNungonCleaner(unittest.TestCase):
         desired_output = 'morpheme'
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- remove_trailing_hashtag ----------
 
+    def test_remove_trailing_hashtag(self):
+        """Test remove_trailing_hashtag."""
+        gloss = 'gloss#'
+        actual_output = NungonCleaner.remove_trailing_hashtag(gloss)
+        desired_output = 'gloss'
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- null_ambiguous_gloss_pos_word ----------
+
+    def test_null_ambiguous_gloss_pos_word(self):
+        """Test null_ambiguous_gloss_pos_word."""
+        word = 'N^mor-mor-mor#V^mor'
+        actual_output = NungonCleaner.null_ambiguous_gloss_pos_word(word)
+        desired_output = '???^???-???-???'
+        self.assertEqual(actual_output, desired_output)
 
 
 if __name__ == '__main__':

@@ -1340,6 +1340,31 @@ class NungonCleaner(CHATCleaner):
     def clean_morpheme_word(cls, morpheme_word):
         return cls.unify_untranscribed_morpheme_word(morpheme_word)
 
+    @staticmethod
+    def null_ambiguous_gloss_pos_word(gloss_pos_word):
+        """Null ambiguous gloss/POS word.
+
+        Ambiguous segment words are coded on the gloss/POS word. Variants are
+        separated by #. The structure of the first variant is taken and every
+        morpheme in it is set to ???.
+        """
+        if '#' in gloss_pos_word:
+            variants = gloss_pos_word.split('#')
+            variant = variants[0]
+            return re.sub(r'[^-^]+', '???', variant)
+        else:
+            return gloss_pos_word
+
+    @classmethod
+    def clean_gloss_word(cls, gloss_word):
+        gloss_word = cls.null_ambiguous_gloss_pos_word(gloss_word)
+        return cls.clean_morpheme_word(gloss_word)
+
+    @classmethod
+    def clean_pos_word(cls, pos_word):
+        pos_word = cls.null_ambiguous_gloss_pos_word(pos_word)
+        return cls.clean_morpheme_word(pos_word)
+
     # ---------- morpheme cleaning ----------
 
     @staticmethod
@@ -1354,3 +1379,15 @@ class NungonCleaner(CHATCleaner):
     @classmethod
     def clean_morpheme(cls, morpheme):
         return cls.remove_question_mark(morpheme)
+
+    # ---------- gloss cleaning ----------
+
+    @staticmethod
+    def remove_trailing_hashtag(gloss):
+        """Remove a trailing # from the gloss."""
+        return gloss.rstrip('#')
+
+    @classmethod
+    def clean_gloss(cls, gloss):
+        gloss = cls.remove_trailing_hashtag(gloss)
+        return cls.clean_morpheme(gloss)
