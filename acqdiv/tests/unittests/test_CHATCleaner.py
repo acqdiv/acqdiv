@@ -2145,6 +2145,22 @@ class TestNungonCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
+    def test_null_untranscribed_morph_tier_with_angle_brackets(self):
+        """Test null_untranscribed_morph_tier with <xxx>."""
+        utterance = '<xxx>'
+        actual_output = NungonCleaner.null_untranscribed_morph_tier(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- remove_question_mark ----------
+
+    def test_remove_question_mark(self):
+        """Test remove_question_mark."""
+        morpheme = '?morpheme'
+        actual_output = NungonCleaner.remove_question_mark(morpheme)
+        desired_output = 'morpheme'
+        self.assertEqual(actual_output, desired_output)
+
 
 
 

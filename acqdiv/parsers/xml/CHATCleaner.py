@@ -1291,12 +1291,12 @@ class NungonCleaner(CHATCleaner):
     def null_untranscribed_morph_tier(morph_tier):
         """Null utterances containing only untranscribed material.
 
-        Untranscribed morphology tiers are either '?' or 'xxx{3,}'.
+        Untranscribed morphology tiers are either '?' or 'xxx{3,}' or <xxx>.
 
         Note:
             Nulling means here the utterance is returned as an empty string.
         """
-        if re.fullmatch(r'\?|x{3,}', morph_tier):
+        if re.fullmatch(r'\?|<?x{3,}>?', morph_tier):
             return ''
         else:
             return morph_tier
@@ -1335,3 +1335,22 @@ class NungonCleaner(CHATCleaner):
             return '???'
         else:
             return morpheme_word
+
+    @classmethod
+    def clean_morpheme_word(cls, morpheme_word):
+        return cls.unify_untranscribed_morpheme_word(morpheme_word)
+
+    # ---------- morpheme cleaning ----------
+
+    @staticmethod
+    def remove_question_mark(morpheme):
+        """Remove the question mark in the morpheme.
+
+        Question marks might code insecure annotations. They are prefixed to
+        the morpheme.
+        """
+        return morpheme.lstrip('?')
+
+    @classmethod
+    def clean_morpheme(cls, morpheme):
+        return cls.remove_question_mark(morpheme)
