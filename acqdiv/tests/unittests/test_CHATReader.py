@@ -2431,6 +2431,58 @@ class TestNungonReader(unittest.TestCase):
         desired_output = []
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- iter_gloss_pos ----------
+
+    def test_get_iter_gloss_pos_only_stem(self):
+        """Test iter_gloss_pos with only stem."""
+        word = 'stempos^stemgloss'
+        actual_output = list(NungonReader.iter_gloss_pos(word))
+        desired_output = [('stemgloss', 'stempos')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_iter_gloss_pos_suffixes(self):
+        """Test iter_gloss_pos with suffixes."""
+        word = 'stempos^stemgloss-sfx1-sfx2.fs'
+        actual_output = list(NungonReader.iter_gloss_pos(word))
+        desired_output = [('stemgloss', 'stempos'),
+                          ('sfx1', 'sfx'),
+                          ('sfx2.fs', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_iter_gloss_pos_prefixes(self):
+        """Test iter_gloss_pos with prefixes."""
+        word = 'pfx1-pfx2.fs-stempos^stemgloss'
+        actual_output = list(NungonReader.iter_gloss_pos(word))
+        desired_output = [('pfx1', 'pfx'),
+                          ('pfx2.fs', 'pfx'),
+                          ('stemgloss', 'stempos')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_iter_gloss_pos_prefixes_suffixes(self):
+        """Test iter_gloss_pos with prefixes and suffixes."""
+        word = 'pfx1-pfx2.fs-stempos^stemgloss-sfx1-sfx2.fs'
+        actual_output = list(NungonReader.iter_gloss_pos(word))
+        desired_output = [('pfx1', 'pfx'),
+                          ('pfx2.fs', 'pfx'),
+                          ('stemgloss', 'stempos'),
+                          ('sfx1', 'sfx'),
+                          ('sfx2.fs', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_iter_gloss_pos_no_stem_one_morpheme(self):
+        """Test iter_gloss_pos with one morpheme and no stem marker."""
+        word = 'gloss'
+        actual_output = list(NungonReader.iter_gloss_pos(word))
+        desired_output = [('gloss', '')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_iter_gloss_pos_no_stem_multiple_morphemes(self):
+        """Test iter_gloss_pos with multiple morphemes and no stem marker."""
+        word = 'gloss1.fs-gloss2-gloss3'
+        actual_output = list(NungonReader.iter_gloss_pos(word))
+        desired_output = [('gloss1.fs', ''), ('gloss2', ''), ('gloss3', '')]
+        self.assertEqual(actual_output, desired_output)
+
 
 class TestNungonReaderRecord(unittest.TestCase):
     """Test record readers of NungonReader."""
