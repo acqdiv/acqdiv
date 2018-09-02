@@ -1389,6 +1389,19 @@ class NungonCleaner(CHATCleaner):
 
     # ---------- gloss cleaning ----------
 
+    @staticmethod
+    def replace_slash(gloss):
+        """Replace the slash by a dot between numbers."""
+        return re.sub(r'(\d)/(\d)', r'\1.\2', gloss)
+
+    @staticmethod
+    def replace_plus(gloss):
+        """Replace the plus by a dot."""
+        return gloss.replace('+', '.')
+
     @classmethod
     def clean_gloss(cls, gloss):
-        return cls.clean_morpheme(gloss)
+        for cleaning_method in [
+                cls.clean_morpheme, cls.replace_slash, cls.replace_plus]:
+            gloss = cleaning_method(gloss)
+        return gloss
