@@ -2483,6 +2483,24 @@ class TestNungonReader(unittest.TestCase):
         desired_output = [('gloss1.fs', ''), ('gloss2', ''), ('gloss3', '')]
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- get_glosses ----------
+
+    def test_get_glosses(self):
+        """Test get_glosses."""
+        word = 'pfx1-pfx2.fs-stempos^stemgloss-sfx1-sfx2.fs'
+        actual_output = NungonReader.get_glosses(word)
+        desired_output = ['pfx1', 'pfx2.fs', 'stemgloss', 'sfx1', 'sfx2.fs']
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- get_poses ----------
+
+    def test_get_poses(self):
+        """Test get_poses."""
+        word = 'pfx1-pfx2.fs-stempos^stemgloss-sfx1-sfx2.fs'
+        actual_output = NungonReader.get_poses(word)
+        desired_output = ['pfx', 'pfx', 'stempos', 'sfx', 'sfx']
+        self.assertEqual(actual_output, desired_output)
+
 
 class TestNungonReaderRecord(unittest.TestCase):
     """Test record readers of NungonReader."""
