@@ -1740,3 +1740,18 @@ class NungonReader(ACQDIVCHATReader):
     @classmethod
     def get_poses(cls, pos_word):
         return [pos for _, pos in cls.iter_gloss_pos(pos_word)]
+
+    @classmethod
+    def get_morpheme_language(cls, seg, gloss, pos):
+        """Get the morpheme language.
+
+        The morpheme language is coded in the POS tag. If it starts with 'eng',
+        the morpheme is English, if it starts with 'tp', the morpheme is Tok
+        Pisin.
+        """
+        if pos.startswith('eng'):
+            return 'English'
+        elif pos.startswith('tp'):
+            return 'Tok Pisin'
+        else:
+            return 'Nungon'

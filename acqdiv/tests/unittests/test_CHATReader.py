@@ -2501,6 +2501,35 @@ class TestNungonReader(unittest.TestCase):
         desired_output = ['pfx', 'pfx', 'stempos', 'sfx', 'sfx']
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- get_morpheme_language ----------
+
+    def test_get_morpheme_language_tok_pisin(self):
+        """Test get_morpheme_language with Tok Pisin."""
+        seg = ''
+        gloss = ''
+        pos = 'tpn'
+        actual_output = NungonReader.get_morpheme_language(seg, gloss, pos)
+        desired_output = 'Tok Pisin'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_language_english(self):
+        """Test get_morpheme_language with English."""
+        seg = ''
+        gloss = ''
+        pos = 'engn'
+        actual_output = NungonReader.get_morpheme_language(seg, gloss, pos)
+        desired_output = 'English'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_language_nungon(self):
+        """Test get_morpheme_language with Nungon."""
+        seg = ''
+        gloss = ''
+        pos = 'n'
+        actual_output = NungonReader.get_morpheme_language(seg, gloss, pos)
+        desired_output = 'Nungon'
+        self.assertEqual(actual_output, desired_output)
+
 
 class TestNungonReaderRecord(unittest.TestCase):
     """Test record readers of NungonReader."""
