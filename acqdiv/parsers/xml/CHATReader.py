@@ -1698,3 +1698,45 @@ class NungonReader(ACQDIVCHATReader):
         else:
             return []
 
+    @staticmethod
+    def iter_gloss_pos(gloss_pos_word):
+        """Iter glosses and POS tags of a word.
+
+        Morphemes are separated by dashes ('-'). Stems have a POS tag which is
+        prefixed to the gloss by a caret ('^'). Prefixes and suffixes have only
+        explicit glosses. They receive the POS tag 'pfx' and 'sfx',
+        respectively. Some words do not have a stem marker in which case all
+        morphemes get only glosses but no POS tags assigned.
+
+        Yields:
+            tuple: (gloss, POS tag)
+        """
+        morphemes = gloss_pos_word.split('-')
+
+        # check if there is a stem marker
+        if '^' not in gloss_pos_word:
+            for gloss in morphemes:
+                yield gloss, ''
+        else:
+            stem_passed = False
+            for morpheme in morphemes:
+                # check if it is the stem
+                if '^' in morpheme:
+                    pos, gloss = morpheme.split('^')
+                    stem_passed = True
+                else:
+                    gloss = morpheme
+                    if stem_passed:
+                        pos = 'sfx'
+                    else:
+                        pos = 'pfx'
+
+                yield gloss, pos
+
+    @classmethod
+    def get_glosses(cls, gloss_word):
+        return [gloss for gloss, _ in cls.iter_gloss_pos(gloss_word)]
+
+    @classmethod
+    def get_poses(cls, pos_word):
+        return [pos for _, pos in cls.iter_gloss_pos(pos_word)]
