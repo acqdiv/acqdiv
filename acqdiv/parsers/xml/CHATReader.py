@@ -1722,7 +1722,10 @@ class NungonReader(ACQDIVCHATReader):
             for morpheme in morphemes:
                 # check if it is the stem
                 if '^' in morpheme:
-                    pos, gloss = morpheme.split('^')
+                    # match POS up to the last ^ (in case there are several ^)
+                    match = re.search(r'(.*)\^(.*)', morpheme)
+                    gloss = match.group(2)
+                    pos = match.group(1)
                     stem_passed = True
                 else:
                     gloss = morpheme

@@ -326,6 +326,16 @@ class YucatecParser(CHATParser):
         return CHATCleaner.YucatecCleaner()
 
 
+class NungonParser(CHATParser):
+    @staticmethod
+    def get_reader():
+        return CHATReader.NungonReader()
+
+    @staticmethod
+    def get_cleaner():
+        return CHATCleaner.NungonCleaner()
+
+
 def main():
     import glob
     import acqdiv
@@ -337,6 +347,7 @@ def main():
     start_time = time.time()
 
     for corpus, parser_cls in [
+            ('Nungon', NungonParser),
             ('Yucatec', YucatecParser),
             ('Turkish', TurkishParser),
             ('Japanese_MiiPro', JapaneseMiiProParser),

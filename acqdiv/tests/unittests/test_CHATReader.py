@@ -2483,6 +2483,13 @@ class TestNungonReader(unittest.TestCase):
         desired_output = [('gloss1.fs', ''), ('gloss2', ''), ('gloss3', '')]
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_iter_gloss_pos_multiple_carets(self):
+        """Test iter_gloss_pos with multiple carets."""
+        word = 'n^v^stem-sfx'
+        actual_output = list(NungonReader.iter_gloss_pos(word))
+        desired_output = [('stem', 'n^v'), ('sfx', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- get_glosses ----------
 
     def test_get_glosses(self):
