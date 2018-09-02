@@ -2165,9 +2165,9 @@ class TestNungonCleaner(unittest.TestCase):
 
     def test_remove_trailing_hashtag(self):
         """Test remove_trailing_hashtag."""
-        gloss = 'gloss#'
-        actual_output = NungonCleaner.remove_trailing_hashtag(gloss)
-        desired_output = 'gloss'
+        word = 'pos^gloss#'
+        actual_output = NungonCleaner.remove_trailing_hashtag(word)
+        desired_output = 'pos^gloss'
         self.assertEqual(actual_output, desired_output)
 
     # ---------- null_ambiguous_gloss_pos_word ----------

@@ -1341,6 +1341,11 @@ class NungonCleaner(CHATCleaner):
         return cls.unify_untranscribed_morpheme_word(morpheme_word)
 
     @staticmethod
+    def remove_trailing_hashtag(gloss_pos_word):
+        """Remove a trailing # from the gloss/POS word."""
+        return gloss_pos_word.rstrip('#')
+
+    @staticmethod
     def null_ambiguous_gloss_pos_word(gloss_pos_word):
         """Null ambiguous gloss/POS word.
 
@@ -1357,11 +1362,13 @@ class NungonCleaner(CHATCleaner):
 
     @classmethod
     def clean_gloss_word(cls, gloss_word):
+        gloss_word = cls.remove_trailing_hashtag(gloss_word)
         gloss_word = cls.null_ambiguous_gloss_pos_word(gloss_word)
         return cls.clean_morpheme_word(gloss_word)
 
     @classmethod
     def clean_pos_word(cls, pos_word):
+        pos_word = cls.remove_trailing_hashtag(pos_word)
         pos_word = cls.null_ambiguous_gloss_pos_word(pos_word)
         return cls.clean_morpheme_word(pos_word)
 
@@ -1382,12 +1389,6 @@ class NungonCleaner(CHATCleaner):
 
     # ---------- gloss cleaning ----------
 
-    @staticmethod
-    def remove_trailing_hashtag(gloss):
-        """Remove a trailing # from the gloss."""
-        return gloss.rstrip('#')
-
     @classmethod
     def clean_gloss(cls, gloss):
-        gloss = cls.remove_trailing_hashtag(gloss)
         return cls.clean_morpheme(gloss)
