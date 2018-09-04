@@ -11,19 +11,11 @@ from acqdiv.parsers.xml.CHATReader import TurkishReader
 from acqdiv.parsers.xml.CHATReader import YucatecReader
 from acqdiv.parsers.xml.CHATReader import NungonReader
 
-"""The metadata is a combination of hiia.cha (Sesotho), aki20803.ch 
-(Japanese Miyata) and made up data to cover more cases. 
-
-For the test to work, make sure to have test.cha in the same directory.
-The file is a version of hiia.cha where the metadata is modified and 
-most of the records are deleted.
-"""
-
 
 class TestCHATReader(unittest.TestCase):
     """Class to test the CHATReader."""
 
-    # ---------- metadata ----------
+    # ---------- iter_metadata_fields ----------
 
     def test_iter_metadata_fields(self):
         """Test iter_metadata_fields with normal intput."""
@@ -84,6 +76,8 @@ class TestCHATReader(unittest.TestCase):
                           '@Comment:\tHere comes a comment.']
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- get_metadata_field ----------
+
     def test_get_metadata_field_normal_field(self):
         """Test get_metadata_field for a normal field."""
         actual_output = CHATReader.get_metadata_field('@Languages:\tsme')
@@ -101,7 +95,7 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ('Participants', ptcs)
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- @Media ----------
+    # ---------- get_media_fields ----------
 
     def test_get_media_fields_two_fields(self):
         """Test get_media_fields method for two field input."""
@@ -116,12 +110,16 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ('h2ab', 'audio', 'unknown speaker')
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- get_media_filename ----------
+
     def test_get_media_filename(self):
         """Test get_media_filename with standard case of 3 fields."""
         media_fields = ['h2ab', 'video', 'unlinked']
         actual_output = CHATReader.get_media_filename(media_fields)
         desired_output = 'h2ab'
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- get_media_format ----------
 
     def test_get_media_format(self):
         """Test get_media_format with standard case of 3 fields."""
@@ -130,6 +128,8 @@ class TestCHATReader(unittest.TestCase):
         desired_output = 'video'
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- get_media_comment ----------
+
     def test_get_media_comment(self):
         """Test get_media_comment with standard case of 3 fields."""
         media_fields = ['h2ab', 'video', 'unlinked']
@@ -137,7 +137,7 @@ class TestCHATReader(unittest.TestCase):
         desired_output = 'unlinked'
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- @Participants ----------
+    # ---------- iter_participants ----------
 
     def test_iter_participants(self):
         """Test iter_participants for a normal case."""
@@ -165,7 +165,13 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ptcs_list
         self.assertEqual(actual_output, desired_output)
 
-    # TODO: new test case
+    # ---------- get_participant_fields ----------
+
+    def test_get_participant_fields_one_field(self):
+        """Test get_participant_fields for one field input."""
+        actual_output = CHATReader.get_participant_fields('MEM')
+        desired_output = ('MEM', '', '')
+        self.assertEqual(actual_output, desired_output)
 
     def test_get_participant_fields_two_fields(self):
         """Test get_participant_fields for two field input."""
@@ -180,7 +186,7 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ('CHI', 'Hlobohang', 'Target_Child')
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- @ID ----------
+    # ---------- get_id_fields ----------
 
     def test_get_id_fields_all_empty_fields(self):
         """Test get_id_fields for the case of all fields being empty."""
@@ -201,6 +207,8 @@ class TestCHATReader(unittest.TestCase):
                           '', 'Grandmother', '', '')
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- get_id_language ----------
+
     def test_get_id_language(self):
         """Test get_id_language with id-fields of MEM of test.cha."""
         id_fields = ('sme', 'Sesotho', 'MEM', '', 'female', '', '',
@@ -208,6 +216,8 @@ class TestCHATReader(unittest.TestCase):
         actual_output = CHATReader.get_id_language(id_fields)
         desired_output = 'sme'
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- get_id_corpus ----------
 
     def test_get_id_corpus(self):
         """Test get_id_corpus with id-fields of MEM of test.cha."""
@@ -217,6 +227,8 @@ class TestCHATReader(unittest.TestCase):
         desired_output = 'Sesotho'
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- get_id_code ----------
+
     def test_get_id_code(self):
         """Test get_id_code with id-fields of MEM of test.cha."""
         id_fields = ('sme', 'Sesotho', 'MEM', '', 'female', '', '',
@@ -224,6 +236,8 @@ class TestCHATReader(unittest.TestCase):
         actual_output = CHATReader.get_id_code(id_fields)
         desired_output = 'MEM'
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- get_id_age ----------
 
     def test_get_id_age(self):
         """Test get_id_age with id-fields of MEM of test.cha."""
@@ -233,6 +247,8 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- get_id_sex ----------
+
     def test_get_id_sex(self):
         """Test get_id_sex with id-fields of MEM of test.cha."""
         id_fields = ('sme', 'Sesotho', 'MEM', '', 'female', '', '',
@@ -240,6 +256,8 @@ class TestCHATReader(unittest.TestCase):
         actual_output = CHATReader.get_id_sex(id_fields)
         desired_output = 'female'
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- get_id_group ----------
 
     def test_get_id_group(self):
         """Test get_id_group with id-fields of MEM of test.cha."""
@@ -249,6 +267,8 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- get_id_ses ----------
+
     def test_get_id_ses(self):
         """Test get_id_ses with id-fields of MEM of test.cha."""
         id_fields = ('sme', 'Sesotho', 'MEM', '', 'female', '', '',
@@ -256,6 +276,8 @@ class TestCHATReader(unittest.TestCase):
         actual_output = CHATReader.get_id_ses(id_fields)
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- get_id_role ----------
 
     def test_get_id_role(self):
         """Test get_id_role with id-fields of MEM of test.cha."""
@@ -265,6 +287,8 @@ class TestCHATReader(unittest.TestCase):
         desired_output = 'Grandmother'
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- get_id_education ----------
+
     def test_get_id_education(self):
         """Test get_id_education with id-fields of MEM of test.cha."""
         id_fields = ('sme', 'Sesotho', 'MEM', '', 'female', '', '',
@@ -272,6 +296,8 @@ class TestCHATReader(unittest.TestCase):
         actual_output = CHATReader.get_id_education(id_fields)
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- get_id_custom ----------
 
     def test_get_id_custom(self):
         """Test get_id_custom with id-fields of MEM of test.cha."""
@@ -281,7 +307,7 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- Record ----------
+    # ---------- replace_line_breaks ----------
 
     def test_replace_line_breaks_single(self):
         """Test replace_line_breaks for single line break."""
@@ -300,6 +326,8 @@ class TestCHATReader(unittest.TestCase):
                          'sm1-t^p-v^play-m^s pr house(9 , 10/6)/lc ' \
                          'sm1-t^p-v^chat-m^s cj n^name .'
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- iter_records ----------
 
     def test_iter_records(self):
         """Test iter_records for multiple records. (standard case)"""
@@ -339,7 +367,7 @@ class TestCHATReader(unittest.TestCase):
                           '\n%eng:\tIt is a stereo']
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- Main line ----------
+    # ---------- get_mainline ----------
 
     def test_get_mainline_standard_case(self):
         """Test get_mainline for a standard record."""
@@ -364,6 +392,8 @@ class TestCHATReader(unittest.TestCase):
         actual_output = CHATReader.get_mainline(record)
         desired_output = '*KAT:	ke eng ? 0_8551'
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- get_mainline_fields ----------
 
     def test_get_mainline_fields_with_time(self):
         """Test get_mainline_fields for mainline with timestamp."""
@@ -442,6 +472,8 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ('KAT', 'ke eng ntho ena e?', '', '')
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- get_utterance_words ----------
+
     def test_get_utterance_words_standard_case(self):
         """Test get_utterance_words for standard input."""
         utterance = 'ke eng ntho ena e?'
@@ -463,7 +495,7 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ['ke', 'eng', 'ntho', 'ena', 'e?']
         self.assertEqual(actual_output, desired_output)
 
-    # TODO: add more test cases for the other terminators
+    # ---------- get_utterance_terminator ----------
 
     def test_get_utterance_terminator_space_before(self):
         """Test get_utterance_terminator with space before."""
@@ -521,7 +553,91 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- dependent tiers ----------
+    def test_get_utterance_terminator_question(self):
+        """Test get_utterance_terminator with question mark."""
+        utterance = 'this is a test ?'
+        actual_output = CHATReader.get_utterance_terminator(utterance)
+        desired_output = '?'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_exclamation(self):
+        """Test get_utterance_terminator with exclamation mark."""
+        utterance = 'this is a test !'
+        actual_output = CHATReader.get_utterance_terminator(utterance)
+        desired_output = '!'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_broken_for_coding(self):
+        """Test get_utterance_terminator with broken-for-coding mark."""
+        utterance = 'this is a test +.'
+        actual_output = CHATReader.get_utterance_terminator(utterance)
+        desired_output = '+.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_trail_off(self):
+        """Test get_utterance_terminator with trail-off mark."""
+        utterance = 'this is a test +...'
+        actual_output = CHATReader.get_utterance_terminator(utterance)
+        desired_output = '+...'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_trail_off_of_a_question(self):
+        """Test get_utterance_terminator with trail-off-of-a-question mark."""
+        utterance = 'this is a test +..?'
+        actual_output = CHATReader.get_utterance_terminator(utterance)
+        desired_output = '+..?'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_question_with_exclamation(self):
+        """Test get_utterance_terminator with question-exclamation mark."""
+        utterance = 'this is a test +!?'
+        actual_output = CHATReader.get_utterance_terminator(utterance)
+        desired_output = '+!?'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_interruption(self):
+        """Test get_utterance_terminator with interruption mark."""
+        utterance = 'this is a test +/.'
+        actual_output = CHATReader.get_utterance_terminator(utterance)
+        desired_output = '+/.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_interruption_of_a_question(self):
+        """Test get_utterance_terminator with interruption-question mark."""
+        utterance = 'this is a test +/?'
+        actual_output = CHATReader.get_utterance_terminator(utterance)
+        desired_output = '+/?'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_self_interruption(self):
+        """Test get_utterance_terminator with self-interruption mark."""
+        utterance = 'this is a test +//.'
+        actual_output = CHATReader.get_utterance_terminator(utterance)
+        desired_output = '+//.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_self_interrupted_question(self):
+        """Test get_utterance_terminator with self-interrupted-question."""
+        utterance = 'this is a test +//?'
+        actual_output = CHATReader.get_utterance_terminator(utterance)
+        desired_output = '+//?'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_quotation_follows(self):
+        """Test get_utterance_terminator with quotation-follows mark."""
+        utterance = 'this is a test +"/.'
+        actual_output = CHATReader.get_utterance_terminator(utterance)
+        desired_output = '+"/.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_terminator_quotation_precedes(self):
+        """Test get_utterance_terminator with quotation-precedes mark."""
+        utterance = 'this is a test +".'
+        actual_output = CHATReader.get_utterance_terminator(utterance)
+        desired_output = '+".'
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- iter_dependent_tiers ----------
 
     def test_iter_dependent_tiers_standard_case(self):
         """Test iter_dependent_tiers for standard input."""
@@ -548,6 +664,8 @@ class TestCHATReader(unittest.TestCase):
                           '%cod%:	cp thing(9 , 10) 9-aj .',
                           '%eng:	A new% thing']
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- get_dependent_tier ----------
 
     def test_get_dependent_tier_standard_case(self):
         """Test get_dependent_tier for standard input."""
