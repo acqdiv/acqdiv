@@ -668,18 +668,22 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         retracing_regex2 = re.compile(r'(\S+) \[(/{1,3}|/-)\]')
         return retracing_regex2.sub(r'\1', clean)
 
-    # TODO: implement
-    @staticmethod
-    def get_retracing_target(utterance):
+    @classmethod
+    def get_retracing_target(cls, utterance):
         """Get the target form of retracings.
 
         Coding in CHAT: [/], [//], [///], [/-]
 
-        Removal of retracing markers. For retracings with correction ([//]),
-        Both the retraced and retracing part receive the retracing value, e.g.
-        < hui do > [//] hoi du -> hoi du hoi du
+        Same treatment as the actual form, except for single-word
+        corrections in which both the retraced and retracing part receive
+        the retracing value, e.g. hui [//] hoi du -> hoi hoi du. Multiple words
+        being corrected cannot be replaced by their target forms since the
+        correcting part can be of variable length.
         """
-        pass
+        # single-word correction
+        retracing_regex = re.compile(r'([^>\s]+) \[//\] (\S+)')
+        utterance = retracing_regex.sub(r'\2 \2', utterance)
+        return cls.get_retracing_actual(utterance)
 
     @classmethod
     def to_actual_utterance(cls, utterance):

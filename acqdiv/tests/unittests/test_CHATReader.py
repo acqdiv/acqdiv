@@ -1252,6 +1252,64 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
         desired_output = 'I want what do you eat'
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- get_retracing_target ----------
+
+    def test_get_retracing_target_retracing(self):
+        """Test get_retracing_target."""
+        utterance = 'this is [/] is a test'
+        actual_output = ACQDIVCHATReader.get_retracing_target(utterance)
+        desired_output = 'this is is a test'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_retracing_target_retracing_several_words(self):
+        """Test get_retracing_target."""
+        utterance = '<this is> [/] this is a test'
+        actual_output = ACQDIVCHATReader.get_retracing_target(utterance)
+        desired_output = 'this is this is a test'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_retracing_target_correction(self):
+        """Test get_retracing_target."""
+        utterance = 'this us [//] is a test'
+        actual_output = ACQDIVCHATReader.get_retracing_target(utterance)
+        desired_output = 'this is is a test'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_retracing_target_correction_several_words(self):
+        """Test get_retracing_target."""
+        utterance = '<this us> [//] this is a test'
+        actual_output = ACQDIVCHATReader.get_retracing_target(utterance)
+        desired_output = 'this us this is a test'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_retracing_target_reformulation(self):
+        """Test get_retracing_target."""
+        utterance = 'what [///] why do you eat'
+        actual_output = ACQDIVCHATReader.get_retracing_target(utterance)
+        desired_output = 'what why do you eat'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_retracing_target_reformulation_several_words(self):
+        """Test get_retracing_target."""
+        utterance = '<for what> [///] why do you eat'
+        actual_output = ACQDIVCHATReader.get_retracing_target(utterance)
+        desired_output = 'for what why do you eat'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_retracing_target_false_start(self):
+        """Test get_retracing_target."""
+        utterance = 'I want [/-] would do that'
+        actual_output = ACQDIVCHATReader.get_retracing_target(utterance)
+        desired_output = 'I want would do that'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_retracing_target_false_start_several_words(self):
+        """Test get_retracing_target."""
+        utterance = '<I want> [///] what do you eat'
+        actual_output = ACQDIVCHATReader.get_retracing_target(utterance)
+        desired_output = 'I want what do you eat'
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- to_actual_utterance ----------
 
     def test_to_actual_utterance_empty_string(self):
