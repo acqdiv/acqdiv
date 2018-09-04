@@ -769,16 +769,30 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     # ---------- morphemes ----------
 
     @staticmethod
-    def get_segments(seg_word):
-        raise NotImplementedError
+    def get_morphemes(morpheme_word):
+        """Get morphemes of a word.
 
-    @staticmethod
-    def get_glosses(gloss_word):
-        raise NotImplementedError
+        Per default, morphemes are separated by a dash.
 
-    @staticmethod
-    def get_poses(pos_word):
-        raise NotImplementedError
+        Args:
+            morpheme_word (str): Word consisting of morphemes.
+
+        Returns:
+            list: The morphemes of the word.
+        """
+        return morpheme_word.split('-')
+
+    @classmethod
+    def get_segments(cls, seg_word):
+        return cls.get_morphemes(seg_word)
+
+    @classmethod
+    def get_glosses(cls, gloss_word):
+        return cls.get_morphemes(gloss_word)
+
+    @classmethod
+    def get_poses(cls, pos_word):
+        return cls.get_morphemes(pos_word)
 
     @staticmethod
     def get_morpheme_language(seg, gloss, pos):

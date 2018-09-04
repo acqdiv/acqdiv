@@ -1408,22 +1408,25 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_get_segments(self):
-        """Test get_segments. Should raise a NotImplementedError."""
-        seg_word = 'abc'
-        self.assertRaises(NotImplementedError, ACQDIVCHATReader.get_segments,
-                          seg_word)
+        """Test get_segments."""
+        seg_word = 'mor1-mor2-mor3'
+        actual_output = ACQDIVCHATReader.get_segments(seg_word)
+        desired_output = ['mor1', 'mor2', 'mor3']
+        return self.assertEqual(actual_output, desired_output)
 
     def test_get_glosses(self):
-        """Test get_glosses. Should raise a NotImplementedError."""
-        gloss_word = 'abc'
-        self.assertRaises(NotImplementedError, ACQDIVCHATReader.get_glosses,
-                          gloss_word)
+        """Test get_glosses."""
+        gloss_word = 'mor1-mor2-mor3'
+        actual_output = ACQDIVCHATReader.get_segments(gloss_word)
+        desired_output = ['mor1', 'mor2', 'mor3']
+        return self.assertEqual(actual_output, desired_output)
 
     def test_get_poses(self):
-        """Test get_poses. Should raise a NotImplementedError."""
-        pos_word = 'abc'
-        self.assertRaises(NotImplementedError, ACQDIVCHATReader.get_poses,
-                          pos_word)
+        """Test get_poses."""
+        pos_word = 'mor1-mor2-mor3'
+        actual_output = ACQDIVCHATReader.get_segments(pos_word)
+        desired_output = ['mor1', 'mor2', 'mor3']
+        return self.assertEqual(actual_output, desired_output)
 
 ###############################################################################
 
