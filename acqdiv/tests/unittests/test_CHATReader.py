@@ -800,6 +800,7 @@ class TestACQDIVCHATReaderRecord(unittest.TestCase):
                    '%mor:\tThis is the morphology tier\n'
                    '%eng:\tThis is the translation.\n'
                    '%com:\tThis is the comment\n'
+                   '%exp:\tThis is the explanation\n'
                    '@End')
         cls.reader = ACQDIVCHATReader()
         cls.reader.read(io.StringIO(session))
@@ -823,13 +824,13 @@ class TestACQDIVCHATReaderRecord(unittest.TestCase):
         desired_output = 'This is the translation.'
         self.assertEqual(actual_output, desired_output)
 
-    # TODO: test with explanation tier
     def test_get_comments(self):
         """Test get_comments."""
         actual_output = self.reader.get_comments()
         desired_output = ('This is the comment; '
                           'This is the situation; '
-                          'This is the action')
+                          'This is the action; '
+                          'This is the explanation')
         self.assertEqual(actual_output, desired_output)
 
     def test_get_record_speaker_label(self):
@@ -898,50 +899,20 @@ class TestACQDIVCHATReaderRecord(unittest.TestCase):
 class TestACQDIVCHATReaderIterators(unittest.TestCase):
     """Test iterator methods of ACQDIVCHATReader."""
 
-    # TODO: use shorter session example
-    # TODO: use english in session example, e.g. '*ABC:\tThis is utterance 1.'
-
     @classmethod
     def setUpClass(cls):
         session = ('@UTF8\n'
                    '@Begin\n'
-                   '@Languages:\tsme\n'
-                   '@Date:\t12-SEP-1997\n'
-                   '@Participants:\tMEM Mme_Manyili Grandmother , '
-                   'CHI Hlobohang Target_Child\n'
-                   '@ID:\tsme|Sesotho|MEM||female|||Grandmother|||\n'
-                   '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||\n'
-                   '@Birth of CHI:\t14-JAN-2006\n@Birth of MEM:\t11-OCT-1974\n'
-                   '@Media:\th2ab, audio\n'
-                   '@Comment:\tall snd kana jmor cha ok Wakachi2002;\n'
-                   '@Warning:\trecorded time: 1:00:00\n'
-                   '@Comment:\tuses desu and V-masu\n'
-                   '@Situation:\tAki and AMO preparing to look at book , '
-                   '"Miichan no otsukai"\n'
-                   '*MEM:\tke eng ? \x150_8551\x15\n'
-                   '%gls:\tke eng ?\n'
-                   '%cod:\tcp wh ?\n'
-                   '%eng:\tWhat is it ?\n'
-                   '%sit:\tPoints to tape\n'
-                   '%com:\tis furious\n'
-                   '%add:\tCHI\n'
-                   '*CHI:\tke ntencha ncha . \x158551_19738\x15\n'
-                   '%gls:\tke ntho e-ncha .\n'
-                   '%cod:\tcp thing(9 , 10) 9-aj .\n'
-                   '%eng:\tA new thing\n'
-                   '%com:\ttest comment\n'
-                   '*MEM:\tke eng ntho ena e? \x1519738_24653\x15\n'
-                   '%gls:\tke eng ntho ena e ?\n'
-                   '%cod:\tcp wh thing(9 , 10) d9 ij ?\n'
-                   '%eng:\tWhat is this thing ?\n'
-                   '%sit:\tPoints to tape\n'
-                   '*CHI:\te nte ena . \x1524300_28048\x15\n'
-                   '%gls:\tke ntho ena .\n%cod:\tcp thing(9 , 10) d9 .\n'
-                   '%eng:\tIt is this thing\n'
-                   '*MEM:\tke khomba\n\tkhomba . \x1528048_31840\x15\n'
-                   '%gls:\tkekumbakumba .\n'
-                   '%cod:\tcp tape_recorder(9 , 10) .\n'
-                   '%eng:\tIt is a stereo\n@End')
+                   '@Participants:\tMOT Kim Mother, CHI Daniel Target_Child\n'
+                   '@ID:\t|English|MOT|||||Mother|||\n'
+                   '@ID:\t|English|CHI|2;8.|male|||Target_Child|||\n'
+                   '*MOT:\tThis is the first mainline of MOT .\n'
+                   '%eng:\tThis is the translation\n'
+                   '*CHI:\tThis is the first mainline of CHI .\n'
+                   '%gls:\tThis is the gls tier\n'
+                   '%cod:\tThis is the cod tier\n'
+                   '*MOT:\tThis is the second mainline of MOT .\n'
+                   '@End')
         cls.reader = ACQDIVCHATReader()
         cls.reader.read(io.StringIO(session))
 
@@ -951,23 +922,15 @@ class TestACQDIVCHATReaderIterators(unittest.TestCase):
         while self.reader.load_next_speaker():
             actual_output.append(self.reader._speaker)
         desired_output = [
-            {'id': ('sme', 'Sesotho', 'MEM', '', 'female', '', '',
-                    'Grandmother', '', ''),
-             'participant': ('MEM', 'Mme_Manyili', 'Grandmother')},
-            {'id': ('sme', 'Sesotho', 'CHI', '2;2.', '', '', '',
+            {'id': ('', 'English', 'MOT', '', '', '', '', 'Mother', '', ''),
+             'participant': ('MOT', 'Kim', 'Mother')},
+            {'id': ('', 'English', 'CHI', '2;8.', 'male', '', '',
                     'Target_Child', '', ''),
-            'participant': ('CHI', 'Hlobohang', 'Target_Child')}]
+             'participant': ('CHI', 'Daniel', 'Target_Child')}]
         self.assertEqual(actual_output, desired_output)
 
     def test_load_next_record(self):
-        """Test load_next_record for the records in 'test.cha'
-
-        At the moment the method throws an Error because of a problem
-        of the regex on line 302-303 in the CHATReader.
-        -> regex on line 301 assumes, that all mainlines have a
-        terminator this is not true and can be tested with:
-        grep -P '^\*\w{2,3}?:\t((?![.!?]).)*$' */cha/*.cha
-        """
+        """Test load_next_record."""
         actual_output = []
         while self.reader.load_next_record():
             uid = self.reader._uid
@@ -975,40 +938,15 @@ class TestACQDIVCHATReaderIterators(unittest.TestCase):
             dep_tiers = self.reader._dependent_tiers
             actual_output.append((uid, main_line_fields, dep_tiers))
         desired_output = [
-            (0, ('MEM', 'ke eng ?', '0', '8551'),
-             {
-                 'gls': 'ke eng ?', 'cod': 'cp wh ?',
-                 'eng': 'What is it ?',
-                 'sit': 'Points to tape',
-                 'com': 'is furious',
-                 'add': 'CHI'
-             }),
-            (1, ('CHI', 'ke ntencha ncha .', '8551', '19738'),
-             {
-                 'gls': 'ke ntho e-ncha .',
-                 'cod': 'cp thing(9 , 10) 9-aj .',
-                 'eng': 'A new thing',
-                 'com': 'test comment'
-             }),
-            (2, ('MEM', 'ke eng ntho ena e?', '19738', '24653'),
-             {
-                 'gls': 'ke eng ntho ena e ?',
-                 'cod': 'cp wh thing(9 , 10) d9 ij ?',
-                 'eng': 'What is this thing ?',
-                 'sit': 'Points to tape'
-             }),
-            (3, ('CHI', 'e nte ena .', '24300', '28048'),
-             {
-                 'gls': 'ke ntho ena .',
-                 'cod': 'cp thing(9 , 10) d9 .',
-                 'eng': 'It is this thing',
-             }),
-            (4, ('MEM', 'ke khomba khomba .', '28048', '31840'),
-             {
-                 'gls': 'kekumbakumba .',
-                 'cod': 'cp tape_recorder(9 , 10) .',
-                 'eng': 'It is a stereo'
-             })
+            (0,
+             ('MOT', 'This is the first mainline of MOT .', '', ''),
+             {'eng': 'This is the translation'}),
+            (1,
+             ('CHI', 'This is the first mainline of CHI .', '', ''),
+             {'gls': 'This is the gls tier', 'cod': 'This is the cod tier'}),
+            (2,
+             ('MOT', 'This is the second mainline of MOT .', '', ''),
+             {})
         ]
         self.assertEqual(actual_output, desired_output)
 
@@ -1020,18 +958,11 @@ class TestACQDIVCHATReaderRead(unittest.TestCase):
         session = (
             '@UTF8\n'
             '@Begin\n'
-            '@Languages:\tsme\n'
             '@Date:\t12-SEP-1997\n'
-            '@Participants:\tMEM Mme_Manyili Grandmother , '
-            'CHI Hlobohang Target_Child\n'
-            '@ID:\tsme|Sesotho|MEM||female|||Grandmother|||\n'
-            '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||\n'
-            '@Birth of CHI:\t14-JAN-2006\n'
-            '@Birth of MEM:\t11-OCT-1974\n'
-            '@Media:\th2ab, audio\n'
-            '@Warning:\trecorded time: 1:00:00\n'
-            '@Comment:\tuses desu and V-masu\n'
-            '@Situation:\tThis is the situation.\n'
+            '@Participants:\tMOT Kim Mother, CHI Daniel Target_Child\n'
+            '@ID:\t|English|MOT|||||Mother|||\n'
+            '@ID:\t|English|CHI|2;8.|male|||Target_Child|||\n'
+            '@Birth of CHI:\t19-FEB-2005\n'
             '@End')
         cls.reader = ACQDIVCHATReader()
         cls.reader.read(io.StringIO(session))
@@ -1045,35 +976,28 @@ class TestACQDIVCHATReaderRead(unittest.TestCase):
     def test_metadata_set(self):
         """Test whether _metadata is set."""
         actual_output = self.reader._metadata
-        desired_output = {'Languages': 'sme',
-                          'Date': '12-SEP-1997',
-                          'Birth of CHI': '14-JAN-2006',
-                          'Birth of MEM': '11-OCT-1974',
-                          'Media': 'h2ab, audio',
-                          'Comment': 'uses desu and V-masu',
-                          'Warning': 'recorded time: 1:00:00',
-                          'Situation': 'This is the situation.'}
+        desired_output = {'Date': '12-SEP-1997',
+                          'Birth of CHI': '19-FEB-2005'}
         self.assertEqual(actual_output, desired_output)
 
     def test_speakers_set(self):
         """Test whether _speakers is set."""
         actual_output = self.reader._speakers
-        desired_output = {'MEM':
-                              {'id': ('sme', 'Sesotho', 'MEM', '', 'female',
-                                      '', '', 'Grandmother', '', ''),
-                               'participant': ('MEM', 'Mme_Manyili',
-                                               'Grandmother')},
-                          'CHI':
-                              {'id': ('sme', 'Sesotho', 'CHI', '2;2.',
-                                      '', '', '', 'Target_Child', '', ''),
-                               'participant': ('CHI', 'Hlobohang',
-                                               'Target_Child')}}
+        desired_output = {
+            'MOT': {
+                'id': ('', 'English', 'MOT', '', '', '', '', 'Mother', '', ''),
+                'participant': ('MOT', 'Kim', 'Mother')},
+            'CHI': {
+                'id': ('', 'English', 'CHI', '2;8.', 'male', '', '',
+                       'Target_Child', '', ''),
+                'participant': ('CHI', 'Daniel', 'Target_Child')}
+        }
         self.assertEqual(actual_output, desired_output)
 
     def test_speaker_iterator_set(self):
         """Test whether _speaker_iterator is set."""
         actual_output = list(self.reader._speaker_iterator)
-        desired_output = ['MEM', 'CHI']
+        desired_output = ['MOT', 'CHI']
         self.assertEqual(actual_output, desired_output)
 
     def test_record_iterator_set(self):
@@ -1088,7 +1012,6 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
     # ---------- actual & target ----------
 
     # Test for the get_shortening_actual-method.
-    # All examples are modified versions of real utterances.
 
     def test_get_shortening_actual_standard_case(self):
         """Test get_shortening_actual with 1 shortening occurence."""
@@ -1500,15 +1423,40 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    # TODO: implement
+    def test_get_morpheme_words(self):
+        """Test get_morpheme_words."""
+        mor_tier = 'This is an example'
+        actual_output = ACQDIVCHATReader.get_morpheme_words(mor_tier)
+        desired_output = ['This', 'is', 'an', 'example']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_words_multiple_whitespaces(self):
+        """Test get_morpheme_words."""
+        mor_tier = 'This  is   an example'
+        actual_output = ACQDIVCHATReader.get_morpheme_words(mor_tier)
+        desired_output = ['This', 'is', 'an', 'example']
+        self.assertEqual(actual_output, desired_output)
+
     def test_get_seg_words(self):
-        pass
+        """Test get_seg_words."""
+        seg_tier = 'This is an example'
+        actual_output = ACQDIVCHATReader.get_seg_words(seg_tier)
+        desired_output = ['This', 'is', 'an', 'example']
+        self.assertEqual(actual_output, desired_output)
 
     def test_get_gloss_words(self):
-        pass
+        """Test get_gloss_words."""
+        gloss_tier = 'This is an example'
+        actual_output = ACQDIVCHATReader.get_gloss_words(gloss_tier)
+        desired_output = ['This', 'is', 'an', 'example']
+        self.assertEqual(actual_output, desired_output)
 
     def test_get_pos_words(self):
-        pass
+        """Test get_pos_words."""
+        pos_tier = 'This is an example'
+        actual_output = ACQDIVCHATReader.get_seg_words(pos_tier)
+        desired_output = ['This', 'is', 'an', 'example']
+        self.assertEqual(actual_output, desired_output)
 
     def test_get_main_morpheme(self):
         """Test get_main_morpheme."""
