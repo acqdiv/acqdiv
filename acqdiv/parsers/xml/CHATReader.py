@@ -662,10 +662,10 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
         Removal of retracing markers.
         """
         # several scoped words
-        retracing_regex1 = re.compile(r'<(.*?)> \[/{1,3}|/-\]')
+        retracing_regex1 = re.compile(r'<(.*?)> \[(/{1,3}|/-)\]')
         clean = retracing_regex1.sub(r'\1', utterance)
         # one scoped word
-        retracing_regex2 = re.compile(r'(\S+) \[/{1,3}|/-\]')
+        retracing_regex2 = re.compile(r'(\S+) \[(/{1,3}|/-)\]')
         return retracing_regex2.sub(r'\1', clean)
 
     # TODO: implement
