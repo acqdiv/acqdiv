@@ -1423,6 +1423,8 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- get_morpheme_words ----------
+
     def test_get_morpheme_words(self):
         """Test get_morpheme_words."""
         mor_tier = 'This is an example'
@@ -1473,6 +1475,13 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_morphemes(self):
+        """Test get_morphemes."""
+        seg_word = 'mor1-mor2-mor3'
+        actual_output = ACQDIVCHATReader.get_morphemes(seg_word)
+        desired_output = ['mor1', 'mor2', 'mor3']
+        return self.assertEqual(actual_output, desired_output)
+
     def test_get_segments(self):
         """Test get_segments."""
         seg_word = 'mor1-mor2-mor3'
@@ -1483,14 +1492,14 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
     def test_get_glosses(self):
         """Test get_glosses."""
         gloss_word = 'mor1-mor2-mor3'
-        actual_output = ACQDIVCHATReader.get_segments(gloss_word)
+        actual_output = ACQDIVCHATReader.get_glosses(gloss_word)
         desired_output = ['mor1', 'mor2', 'mor3']
         return self.assertEqual(actual_output, desired_output)
 
     def test_get_poses(self):
         """Test get_poses."""
         pos_word = 'mor1-mor2-mor3'
-        actual_output = ACQDIVCHATReader.get_segments(pos_word)
+        actual_output = ACQDIVCHATReader.get_poses(pos_word)
         desired_output = ['mor1', 'mor2', 'mor3']
         return self.assertEqual(actual_output, desired_output)
 
@@ -1498,6 +1507,8 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
 
 
 class TestEnglishManchester1ReaderGeneric(unittest.TestCase):
+
+    # ---------- get_word_language ----------
 
     def test_get_word_language_english(self):
         word = 'yes'
@@ -1516,6 +1527,8 @@ class TestEnglishManchester1ReaderGeneric(unittest.TestCase):
         actual_output = EnglishManchester1Reader.get_word_language(word)
         desired_output = 'Italian'
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- iter_morphemes ----------
 
     def test_iter_morphemes_stem_no_gloss(self):
         """Test iter_morphemes with stem and no gloss."""
@@ -1594,6 +1607,55 @@ class TestEnglishManchester1ReaderGeneric(unittest.TestCase):
         desired_output = [('stem&FUSone', 'stem&FUSone', 'stem:POSone'),
                           ('', 'SFX', 'sfx'),
                           ('stem&FUStwo', 'stem&FUStwo', 'stem:POStwo')]
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- get_morpheme_language ----------
+
+    def test_get_morpheme_languageEnglish(self):
+        """Test get_morpheme_language with English."""
+        seg = ''
+        gloss = ''
+        pos = 'N'
+        actual_output = EnglishManchester1Reader.get_morpheme_language(
+            seg, gloss, pos)
+        desired_output = 'English'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_languageL2(self):
+        """Test get_morpheme_language with L2."""
+        seg = ''
+        gloss = ''
+        pos = 'L2'
+        actual_output = EnglishManchester1Reader.get_morpheme_language(
+            seg, gloss, pos)
+        desired_output = 'L2'
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- get_segments ----------
+
+    def test_get_segments(self):
+        """Test get_segments."""
+        word = 'pfxone#pfxtwo#stem:POS|stem&FUS-SFXONE-SFXTWO'
+        actual_output = EnglishManchester1Reader.get_segments(word)
+        desired_output = ['pfxone', 'pfxtwo', 'stem&FUS', '', '']
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- get_glosses ----------
+
+    def test_get_glosses(self):
+        """Test get_glosses."""
+        word = 'pfxone#pfxtwo#stem:POS|stem&FUS-SFXONE-SFXTWO'
+        actual_output = EnglishManchester1Reader.get_glosses(word)
+        desired_output = ['pfxone', 'pfxtwo', 'stem&FUS', 'SFXONE', 'SFXTWO']
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- get_poses ----------
+
+    def test_get_poses(self):
+        """Test get_poses."""
+        word = 'pfxone#pfxtwo#stem:POS|stem&FUS-SFXONE-SFXTWO'
+        actual_output = EnglishManchester1Reader.get_poses(word)
+        desired_output = ['pfx', 'pfx', 'stem:POS', 'sfx', 'sfx']
         self.assertEqual(actual_output, desired_output)
 
 

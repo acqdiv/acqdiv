@@ -804,6 +804,8 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
 
 class EnglishManchester1Reader(ACQDIVCHATReader):
 
+    # TODO: move all corrections to cleaner/postprocessor
+
     @staticmethod
     def correct_speaker_name(name, label, role, target_child_name):
         """Correct speaker name.
