@@ -807,7 +807,7 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
     # TODO: move all corrections to cleaner/postprocessor
 
     @staticmethod
-    def correct_speaker_name(name, label, role, target_child_name):
+    def correct_speaker_name(name, label, role, target_child_name, pid):
         """Correct speaker name.
 
         Corrections:
@@ -819,12 +819,16 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
             [speaker_role of target_child_name]
         - if name missing and label != INV
             set name to [speaker_role of target_child_name]
+        - if name == 'CHI' (and PID == '11312/c-00019860-1'):
+            set name to 'Liz'
         """
         # order is important!
         if target_child_name == 'Carl' and label == 'FAT':
             return 'Ian'
         elif name in {'Mother', 'Father', 'Grandfather'}:
             return role + ' of ' + target_child_name
+        elif name == 'CHI' and pid == '11312/c-00019860-1':
+            return 'Liz'
         elif name:
             return name
         else:
@@ -842,8 +846,10 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
         role = self.get_speaker_role()
         target_child_name = self.get_participant_name(
             self._speakers[self._target_child]['participant'])
+        pid = self._metadata.get('PID', '')
 
-        return self.correct_speaker_name(name, label, role, target_child_name)
+        return self.correct_speaker_name(
+            name, label, role, target_child_name, pid)
 
     @staticmethod
     def correct_speaker_label(label):
