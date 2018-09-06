@@ -4,6 +4,7 @@
 import os
 import json
 import logging
+import importlib
 import configparser
 from configparser import ExtendedInterpolation
 
@@ -56,6 +57,12 @@ class SessionParser(object):
 
         if format == "xml":
             return XMLParserFactory(config)
+        elif format == "cha":
+            parser_module = importlib.import_module(
+                'acqdiv.parsers.xml.CHATParser')
+            parser_class = config['paths']['parser']
+            parser = getattr(parser_module, parser_class)
+            return parser
         elif format == "toolbox":
             return lambda file_path: ToolboxParser(config, file_path)
         elif format == "json":

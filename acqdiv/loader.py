@@ -76,7 +76,8 @@ def load(test=True):
 
     configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini',
                'Japanese_Miyata.ini', 'Japanese_MiiPro.ini', 'Russian.ini',
-               'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini', 'Nungon.ini']
+               'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini', 'Nungon.ini',
+               'English_Manchester1.ini']
 
     # Parse the config file and call the sessions processor.
     for config in configs:

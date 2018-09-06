@@ -68,13 +68,15 @@ def setup(test=False):
     roles.optionxform = str
     roles.read("ini/role_mapping.ini")
 
-    global chintang, cree, indonesian, inuktitut, miyata, miipro, nungon, \
-        russian, sesotho, turkish, yucatec
+    global chintang, cree, english_manchester1, indonesian, inuktitut, \
+        miyata, miipro, nungon, russian, sesotho, turkish, yucatec
 
     chintang = CorpusConfigParser()
     chintang.read("ini/Chintang.ini")
     cree = CorpusConfigParser()
     cree.read("ini/Cree.ini")
+    english_manchester1 = CorpusConfigParser()
+    english_manchester1.read('ini/English_Manchester1.ini')
     indonesian = CorpusConfigParser()
     indonesian.read("ini/Indonesian.ini")
     inuktitut = CorpusConfigParser()
@@ -102,6 +104,8 @@ def get_config(corpus_name):
         return chintang
     elif corpus_name == "Cree":
         return cree
+    elif corpus_name == "English_Manchester1":
+        return english_manchester1
     elif corpus_name == "Indonesian":
         return indonesian
     elif corpus_name == "Inuktitut":
@@ -226,6 +230,9 @@ def _speakers_update_age():
         results = []
         if config["metadata"]["type"] == "imdi":
             results = _update_imdi_age(rows)
+        elif config["metadata"]["type"] == "cha":
+            results = _update_cha_age(rows)
+        # TODO: remove once all CHAT parsers are written
         else:
             results = _update_xml_age(rows)
         _update_rows(db.Speaker.__table__, "speaker_id", results)
@@ -1096,6 +1103,19 @@ def _update_imdi_age(rows):
                     logger.warning(
                         'Couldn\'t transform age of speaker {}'.format(row.id),
                         exc_info=sys.exc_info())
+    return results
+
+
+def _update_cha_age(rows):
+    """Process speaker ages in CHAT corpora."""
+    results = []
+    for row in rows:
+        if row.age_raw:
+            new_age = age.format_cha_age(row.age_raw)
+            if new_age:
+                aid = age.calculate_xml_days(new_age)
+                results.append(
+                    {'speaker_id': row.id, 'age': new_age, 'age_in_days': aid})
     return results
 
 
