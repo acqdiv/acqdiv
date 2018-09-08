@@ -357,6 +357,8 @@ class ToolboxFile(object):
 
             # incorporate the Indonesian stuff
             elif self.config['corpus']['corpus'] == "Indonesian":
+                # TODO: () are not stripped (-> might interfer with
+                # actual vs. target distinction)
                 # delete punctuation and garbage
                 utterance = re.sub('[‘’\'“”\"\.!,;:\+\/]|\?$|<|>', '', utterance)
                 utterance = utterance.strip()
@@ -385,6 +387,8 @@ class ToolboxFile(object):
         morphids = []   # morpheme dict ids
 
         # Russian specific morpheme inference
+        # TODO: segment tier is not cleaned while gloss tier is cleaned
+        # TODO: gloss tier has POS tags while pos tier does not have glosses
         if self.config['corpus']['corpus'] == "Russian":
 
             if 'morpheme' in utterance.keys():
@@ -407,6 +411,7 @@ class ToolboxFile(object):
                 # The Russian tier \mor contains both glosses and POS, separated by "-" or ":".
                 # Method for distinguishing and extracting them:
                 for pos in pos_cleaned:
+                    # TODO: does it make to NULL this?
                     # get morpheme language
                     if 'FOREIGN' in pos:
                         langs.append(None)
@@ -537,6 +542,8 @@ class ToolboxFile(object):
                         langs.append([self.config['languages'][w.strip('-')]
                                       for w in word.split()])
                     except KeyError:
+                        # TODO: cannot align with gloss words/morphemes if
+                        # number of morphemes is > 1
                         langs.append(['Chintang'])
 
                 del utterance['morpheme_lang']
