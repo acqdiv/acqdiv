@@ -1,5 +1,5 @@
 import unittest
-from acqdiv.parsers.parsers import ToolboxParser
+from acqdiv.parsers.ToolboxParser import *
 from acqdiv.parsers.parsers import CorpusConfigParser
 
 
@@ -13,7 +13,7 @@ class TestChintangParser(unittest.TestCase):
         config = CorpusConfigParser()
         config.read('../../ini/Chintang.ini')
         file_path = 'test_files/Chintang.txt'
-        cls.parser = ToolboxParser(config, file_path)
+        cls.parser = ChintangParser(config, file_path)
 
     def test_get_session_metadata(self):
         actual_output = self.parser.get_session_metadata()
@@ -109,7 +109,7 @@ class TestIndonesianParser(unittest.TestCase):
         config = CorpusConfigParser()
         config.read('../../ini/Indonesian.ini')
         file_path = 'test_files/Indonesian.txt'
-        cls.parser = ToolboxParser(config, file_path)
+        cls.parser = IndonesianParser(config, file_path)
 
     def test_get_session_metadata(self):
         actual_output = self.parser.get_session_metadata()
@@ -200,7 +200,7 @@ class TestRussianParser(unittest.TestCase):
         config = CorpusConfigParser()
         config.read('../../ini/Russian.ini')
         file_path = 'test_files/Russian.txt'
-        cls.parser = ToolboxParser(config, file_path)
+        cls.parser = RussianParser(config, file_path)
 
     def test_get_session_metadata(self):
         actual_output = self.parser.get_session_metadata()

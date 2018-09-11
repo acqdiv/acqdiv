@@ -34,7 +34,7 @@ def struct_eqv(xs, ys):
         return False
 
 
-class ToolboxFile(object):
+class ToolboxReader(object):
     """Toolbox Standard Format text file as iterable over records."""
 
     _separator = re.compile(b'\r?\n\r?\n(\r?\n)')
@@ -696,6 +696,24 @@ def memorymapped(path, access=mmap.ACCESS_READ):
         m.close()
         fd.close()
 
+###############################################################################
+
+
+class ChintangReader(ToolboxReader):
+    pass
+
+###############################################################################
+
+
+class IndonesianReader(ToolboxReader):
+    pass
+
+###############################################################################
+
+
+class RussianReader(ToolboxReader):
+    pass
+
 
 def main():
     from acqdiv.parsers.parsers import CorpusConfigParser
@@ -705,7 +723,7 @@ def main():
     f = "tests/corpora/Chintang/Toolbox/Chintang.txt"
     # cfg.read("Russian.ini")
     # f = "../../corpora/Russian/toolbox/A00210817.txt"
-    t = ToolboxFile(cfg, f)
+    t = ToolboxReader(cfg, f)
     for record in t:
         print(record)
         # for k, v in record.items():
