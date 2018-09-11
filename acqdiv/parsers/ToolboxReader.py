@@ -267,61 +267,16 @@ class ToolboxReader(object):
         Returns:
             str: The sentence type.
         """
-        if self.config['corpus']['corpus'] == "Russian":
-            match_punctuation = re.search('([.?!])$',
-                                          utterance['utterance_raw'])
-            if match_punctuation is not None:
-                sentence_type = None
-                if match_punctuation.group(1) == '.':
-                    sentence_type = 'default'
-                if match_punctuation.group(1) == '?':
-                    sentence_type = 'question'
-                if match_punctuation.group(1) == '!':
-                    sentence_type = 'imperative'
-                return sentence_type
-
-        if self.config['corpus']['corpus'] == "Indonesian":
-            if re.search('\.', utterance['utterance_raw']):
-                return 'default'
-            elif re.search('\?\s*$', utterance['utterance_raw']):
-                return 'question'
-            elif re.search('!', utterance['utterance_raw']):
-                return 'imperative'
-            else:
-                return None
-
-        # https://github.com/uzling/acqdiv/issues/253
-        # \eng: . = default, ? = question, ! = exclamation
-        # \nep: । = default, rest identical.
-        # Note this is not a "pipe" but the so-called danda at U+0964
-        if self.config['corpus']['corpus'] == "Chintang":
-            if ('nepali' in utterance.keys()
-                    and utterance['nepali'] is not None):
-                match_punctuation = re.search('([।?!])$', utterance['nepali'])
-                if match_punctuation is not None:
-                    sentence_type = None
-                    if match_punctuation.group(1) == '।':
-                        sentence_type = 'default'
-                    if match_punctuation.group(1) == '?':
-                        sentence_type = 'question'
-                    if match_punctuation.group(1) == '!':
-                        sentence_type = 'exclamation'
-                    return sentence_type
-            elif ('eng' in utterance.keys()
-                  and utterance['translation'] is not None):
-                match_punctuation = re.search('([।?!])$',
-                                              utterance['translation'])
-                if match_punctuation is not None:
-                    sentence_type = None
-                    if match_punctuation.group(1) == '.':
-                        sentence_type = 'default'
-                    if match_punctuation.group(1) == '?':
-                        sentence_type = 'question'
-                    if match_punctuation.group(1) == '!':
-                        sentence_type = 'exclamation'
-                    return sentence_type
-            else:
-                return None
+        match_punctuation = re.search('([.?!])$', utterance['utterance_raw'])
+        if match_punctuation is not None:
+            sentence_type = None
+            if match_punctuation.group(1) == '.':
+                sentence_type = 'default'
+            if match_punctuation.group(1) == '?':
+                sentence_type = 'question'
+            if match_punctuation.group(1) == '!':
+                sentence_type = 'imperative'
+            return sentence_type
 
     def get_warnings(self, utterance):
         """Get warnings for insecure transcriptions for Russian and Indonesian.
@@ -700,13 +655,55 @@ def memorymapped(path, access=mmap.ACCESS_READ):
 
 
 class ChintangReader(ToolboxReader):
-    pass
+
+    def get_sentence_type(self, utterance):
+        # https://github.com/uzling/acqdiv/issues/253
+        # \eng: . = default, ? = question, ! = exclamation
+        # \nep: । = default, rest identical.
+        # Note this is not a "pipe" but the so-called danda at U+0964
+        if ('nepali' in utterance.keys()
+                and utterance['nepali'] is not None):
+            match_punctuation = re.search('([।?!])$', utterance['nepali'])
+            if match_punctuation is not None:
+                sentence_type = None
+                if match_punctuation.group(1) == '।':
+                    sentence_type = 'default'
+                if match_punctuation.group(1) == '?':
+                    sentence_type = 'question'
+                if match_punctuation.group(1) == '!':
+                    sentence_type = 'exclamation'
+                return sentence_type
+        elif ('eng' in utterance.keys()
+              and utterance['translation'] is not None):
+            match_punctuation = re.search('([।?!])$',
+                                          utterance['translation'])
+            if match_punctuation is not None:
+                sentence_type = None
+                if match_punctuation.group(1) == '.':
+                    sentence_type = 'default'
+                if match_punctuation.group(1) == '?':
+                    sentence_type = 'question'
+                if match_punctuation.group(1) == '!':
+                    sentence_type = 'exclamation'
+                return sentence_type
+        else:
+            return None
+
 
 ###############################################################################
 
 
 class IndonesianReader(ToolboxReader):
-    pass
+
+    def get_sentence_type(self, utterance):
+        if re.search('\.', utterance['utterance_raw']):
+            return 'default'
+        elif re.search('\?\s*$', utterance['utterance_raw']):
+            return 'question'
+        elif re.search('!', utterance['utterance_raw']):
+            return 'imperative'
+        else:
+            return None
 
 ###############################################################################
 
