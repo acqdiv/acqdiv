@@ -1,92 +1,72 @@
-import logging
-from acqdiv.parsers.ToolboxReader import ToolboxReader
+from acqdiv.parsers.ToolboxReader import *
 from acqdiv.parsers.metadata import Chat, Imdi
 
 
 class ToolboxParser:
-    """ Toolbox parser for Chintang, Indonesian, Russian, & potentially Dene
+    """Gathers all data for the DB for a given Toolbox session file.
+
+    Uses the ToolboxReader for reading a toolbox file and Imdi or Chat for
+    reading the corresponding metadata file.
     """
-    def __init__(self, config, file_path):
-        """ Initialize a Toolbox parser
+
+    def get_record_reader(self):
+        return ToolboxReader(self.config, self.toolbox_file)
+
+    def get_metadata_reader(self):
+        temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
+                                         self.config['paths']['metadata_dir'])
+        metadata_file_path = temp.replace(".txt", ".imdi")
+        return Imdi(self.config, metadata_file_path)
+
+    def __init__(self, config, toolbox_path):
+        """Get toolbox and metadata readers.
 
         Args:
-            config: corpus config ini file
-            file_path: path to a corpus session file
-
-        Returns:
-            A Toolbox parser
+            config (CorpusConfigParser): Corpus config ini file.
+            toolbox_path (str): Path to the toolbox file.
         """
         self.config = config
-        self.file_path = file_path
+        self.toolbox_file = toolbox_path
         self.logger = logging.getLogger('pipeline.' + __name__)
 
-        # Session body for utterances, etc.
-        self.session_file = ToolboxReader(self.config, self.file_path)
-
-        # Metadata
-        if self.config['metadata']['type'] == "xml":
-            # Hack to get the separate metadata file paths for IMDIs
-            temp = self.file_path.replace(self.config['paths']['sessions_dir'], self.config['paths']['metadata_dir'])
-            self.metadata_file_path = temp.replace(".txt", ".xml")
-            self.metadata_parser = Chat(self.config, self.metadata_file_path)
-        elif self.config['metadata']['type'] == "imdi":
-            temp = self.file_path.replace(self.config['paths']['sessions_dir'], self.config['paths']['metadata_dir'])
-            self.metadata_file_path = temp.replace(".txt", ".imdi")
-            self.metadata_parser = Imdi(self.config, self.metadata_file_path)
-        else:
-            assert 0, "Unknown metadata format type: "#  + format
-
-        # check for missing metadata files?
-        """
-        if not os.path.isfile(self.metadata_file_path):
-            print("MISSING FILE:", self.metadata_file_path)
-            sys.exit(1)
-        """
-        # self.metadata_parser = Imdi(self.metadata_file_path)
+        # get record reader
+        self.record_reader = self.get_record_reader()
+        # get metadata reader
+        self.metadata_reader = self.get_metadata_reader()
 
     def get_session_metadata(self):
-        """ Do toolbox-specific parsing of session metadata
-
-        Args:
-            config: corpus config ini file
-            file_path: path to a corpus session file
+        """Get the metadata of a session.
 
         Returns:
-            Session metadata
+            dict: Session metadata.
         """
-        # TODO: fix this to just session or just __attrs__ in the metadata parser
-        # this is an ugly hack due to the Indonesian corpus (body=Toolbox, but meta=XML)
-        if self.metadata_parser.__class__.__name__ == "Imdi":
-            md = self.metadata_parser.metadata['session']
-            try:
-                md['media_type'] = (
-                    self.metadata_parser.metadata['media']['mediafile']['type'])
-            except KeyError:
-                md['media_type'] = None
-                self.logger.info('Session {} has no media type information'.format(
-                   self.file_path))
-            return md
-        elif self.metadata_parser.__class__.__name__ == "Chat":
-            return self.metadata_parser.metadata['__attrs__']
-        else:
-            assert 0, "Unknown metadata format type: "#  + format
+        # TODO: fix this to session or just __attrs__ in the metadata reader
+        md = self.metadata_reader.metadata['session']
+        try:
+            md['media_type'] = (
+                self.metadata_reader.metadata['media']['mediafile']['type'])
+        except KeyError:
+            md['media_type'] = None
+            self.logger.info('Session {} has no media type information'.format(
+               self.toolbox_file))
+        return md
 
     def next_speaker(self):
-        """ Yield participants metadata for the Speaker table in the db
+        """Yield participants metadata for the Speaker table in the DB.
 
         Returns:
-            Ordered dictionary of speaker (participant) metadata
+            OrderedDict: Speaker (participant) metadata.
         """
-        for speaker in self.metadata_parser.metadata['participants']:
+        for speaker in self.metadata_reader.metadata['participants']:
             yield speaker
 
     def next_utterance(self):
-        """ Yield session level utterance data:
+        """Yield session level utterance data.
 
         Returns:
-             Ordered dictionary of config file record_tiers
+             OrderedDict: Utterance data.
         """
-        for record in self.session_file:
+        for record in self.record_reader:
             if record is None:
                 raise StopIteration
             yield record
@@ -95,17 +75,31 @@ class ToolboxParser:
 
 
 class ChintangParser(ToolboxParser):
-    pass
+
+    def get_record_reader(self):
+        return ChintangReader(self.config, self.toolbox_file)
 
 ###############################################################################
 
 
 class IndonesianParser(ToolboxParser):
-    pass
+
+    def get_metadata_reader(self):
+        temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
+                                         self.config['paths']['metadata_dir'])
+        metadata_file_path = temp.replace(".txt", ".xml")
+        return Chat(self.config, metadata_file_path)
+
+    def get_session_metadata(self):
+        return self.metadata_reader.metadata['__attrs__']
+
+    def get_record_reader(self):
+        return IndonesianReader(self.config, self.toolbox_file)
 
 ###############################################################################
 
 
 class RussianParser(ToolboxParser):
-    pass
 
+    def get_record_reader(self):
+        return RussianReader(self.config, self.toolbox_file)
