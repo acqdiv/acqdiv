@@ -142,13 +142,6 @@ class ToolboxReader(object):
         else:
             utterance['sentence_type'] = self.get_sentence_type(utterance)
 
-        if self.config['corpus']['corpus'] == 'Indonesian':
-            try:
-                if utterance['speaker_label'] == '@PAR':
-                    return None, None, None
-            except KeyError:
-                pass
-
         child_directed = self.get_childdirected(utterance)
         if child_directed:
             utterance['childdirected'] = child_directed
@@ -705,6 +698,15 @@ class ChintangReader(ToolboxReader):
 
 
 class IndonesianReader(ToolboxReader):
+
+    def make_rec(self, record):
+        utterance, words, morphemes = super().make_rec(record)
+        if utterance:
+            if 'speaker_label' in utterance:
+                if utterance['speaker_label'] == '@PAR':
+                    return None, None, None
+
+        return utterance, words, morphemes
 
     def get_sentence_type(self, utterance):
         if re.search('\.', utterance['utterance_raw']):
