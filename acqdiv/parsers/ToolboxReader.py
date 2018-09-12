@@ -149,22 +149,15 @@ class ToolboxReader(object):
             except KeyError:
                 pass
 
+        child_directed = self.get_childdirected(utterance)
+        if child_directed:
+            utterance['childdirected'] = child_directed
+
         if self.config['corpus']['corpus'] == 'Chintang':
             # We infer sentence type from Chintang \nep
             # but we do not add the nepali field to the database yet
             if 'nepali' in utterance:
                 del utterance['nepali']
-
-            # Clean up directedness in Chintang
-            if 'childdirected' in utterance:
-                tos_raw = utterance['childdirected']
-                if 'directed' in tos_raw:
-                    if 'child' in tos_raw:
-                        utterance['childdirected'] = True
-                    else:
-                        utterance['childdirected'] = False
-                else:
-                    del utterance['childdirected']
 
         # Create clean utterance
         utterance['utterance'] = self.clean_utterance(
@@ -208,6 +201,10 @@ class ToolboxReader(object):
                 words.append({})
 
         return utterance, words, morphemes
+
+    def get_childdirected(self, utterance):
+        """Not coded per default."""
+        return None
 
     def get_words(self, utterance):
         """Get list of words from the utterance.
@@ -655,6 +652,20 @@ def memorymapped(path, access=mmap.ACCESS_READ):
 
 
 class ChintangReader(ToolboxReader):
+
+    def get_childdirected(self, utterance):
+
+        if 'childdirected' in utterance:
+            tos_raw = utterance['childdirected']
+            if 'directed' in tos_raw:
+                if 'child' in tos_raw:
+                    return True
+                else:
+                    return False
+            else:
+                del utterance['childdirected']
+
+        return None
 
     def get_sentence_type(self, utterance):
         # https://github.com/uzling/acqdiv/issues/253
