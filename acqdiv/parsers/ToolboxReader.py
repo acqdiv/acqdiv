@@ -253,49 +253,11 @@ class ToolboxReader(object):
         Returns:
             str: The cleaned utterance.
         """
-
-        # TODO: incorporate Russian \pho and \text tiers
-        # https://github.com/uzling/acqdiv/blob/master/extraction/
-        # parsing/corpus_parser_functions.py#L1586-L1599
-        if utterance is None:
-            return None
-        else:
+        if utterance is not None:
             # replace xxx/www/*** by ???
             utterance = re.sub('xxx?|www|\*{3}', '???', utterance)
 
-            if self.config['corpus']['corpus'] == "Russian":
-                utterance = re.sub(
-                    '[‘’\'“”\".!,:+/]+|(&lt; )|(?<=\\s)\?(?=\\s|$)',
-                    '',
-                    utterance)
-                utterance = re.sub('\\s-\\s', ' ', utterance)
-
-                # TODO: Get warnings that are on utterance
-                # (and not word/morpheme) level
-                # Insecure transcriptions [?], [=( )?], [xxx]:
-                # add warning, delete marker
-                # Note that [xxx] usually replaces a complete utterance
-                # and is non-aligned, in contrast to xxx without brackets,
-                # which can be counted as a word
-                if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
-                    utterance = re.sub('\[\s*=?.*?\]', '', utterance)
-
-                utterance = re.sub('\s+', ' ', utterance).replace('=', '')
-                utterance = utterance.strip()
-
-            # incorporate the Indonesian stuff
-            elif self.config['corpus']['corpus'] == "Indonesian":
-                # TODO: () are not stripped (-> might interfer with
-                # actual vs. target distinction)
-                # delete punctuation and garbage
-                utterance = re.sub('[‘’\'“”\".!,;:+/]|\?$|<|>', '', utterance)
-                utterance = utterance.strip()
-
-                # Insecure transcription [?], add warning, delete marker
-                if re.search('\[\?\]', utterance):
-                    utterance = re.sub('\[\?\]', '', utterance)
-
-            return utterance
+        return utterance
 
     def get_morphemes(self, utterance):
         """Get list of lists of morphemes.
@@ -706,6 +668,22 @@ class IndonesianReader(ToolboxReader):
 
         return None
 
+    def clean_utterance(self, utterance):
+        utterance = super().clean_utterance(utterance)
+
+        if utterance is not None:
+            # TODO: () are not stripped (-> might interfer with
+            # actual vs. target distinction)
+            # delete punctuation and garbage
+            utterance = re.sub('[‘’\'“”\".!,;:+/]|\?$|<|>', '', utterance)
+            utterance = utterance.strip()
+
+            # Insecure transcription [?], add warning, delete marker
+            if re.search('\[\?\]', utterance):
+                utterance = re.sub('\[\?\]', '', utterance)
+
+        return utterance
+
 ###############################################################################
 
 
@@ -728,6 +706,34 @@ class RussianReader(ToolboxReader):
             mor['gloss_raw'] for mword in morphemes for mor in mword)
 
         return utterance, words, morphemes
+
+    def clean_utterance(self, utterance):
+        utterance = super().clean_utterance(utterance)
+
+        # TODO: incorporate Russian \pho and \text tiers
+        # https://github.com/uzling/acqdiv/blob/master/extraction/
+        # parsing/corpus_parser_functions.py#L1586-L1599
+        if utterance is not None:
+            utterance = re.sub(
+                '[‘’\'“”\".!,:+/]+|(&lt; )|(?<=\\s)\?(?=\\s|$)',
+                '',
+                utterance)
+            utterance = re.sub('\\s-\\s', ' ', utterance)
+
+            # TODO: Get warnings that are on utterance
+            # (and not word/morpheme) level
+            # Insecure transcriptions [?], [=( )?], [xxx]:
+            # add warning, delete marker
+            # Note that [xxx] usually replaces a complete utterance
+            # and is non-aligned, in contrast to xxx without brackets,
+            # which can be counted as a word
+            if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
+                utterance = re.sub('\[\s*=?.*?\]', '', utterance)
+
+            utterance = re.sub('\s+', ' ', utterance).replace('=', '')
+            utterance = utterance.strip()
+
+        return utterance
 
 
 def main():
