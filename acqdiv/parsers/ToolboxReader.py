@@ -241,36 +241,8 @@ class ToolboxReader(object):
             return sentence_type
 
     def get_warnings(self, utterance):
-        """Get warnings for insecure transcriptions for Russian and Indonesian.
-
-        Includes intended form for Russian.
-
-        Args:
-            utterance (str): The utterance.
-
-        Returns:
-            str: The transcription warning.
-        """
-        if self.config['corpus']['corpus'] == "Russian":
-            if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
-                for target in re.findall('\[=\?\s+[^\]]+\]', utterance):
-                    target_clean = re.sub('["\[\]?=]', '', target)
-                    transcription_warning = (
-                        'transcription insecure (intended '
-                        'form might have been "' + target_clean + '")')
-                    return transcription_warning
-
-        if self.config['corpus']['corpus'] == "Indonesian":
-                # Insecure transcription [?], add warning, delete marker
-                # cf. https://github.com/uzling/acqdiv/blob/master/
-                # extraction/parsing/corpus_parser_functions.py#L1605-1610
-                if re.search('\[\?\]', utterance):
-                    # TODO: what's that used for?
-                    # utterance = re.sub('\[\?\]', '', utterance)
-                    transcription_warning = 'transcription insecure'
-                    return transcription_warning
-        else:
-            pass
+        """No warnings per default."""
+        return None
 
     def clean_utterance(self, utterance):
         """Clean up corpus-specific utterances.
@@ -722,10 +694,33 @@ class IndonesianReader(ToolboxReader):
         else:
             return None
 
+    def get_warnings(self, utterance):
+        # Insecure transcription [?], add warning, delete marker
+        # cf. https://github.com/uzling/acqdiv/blob/master/
+        # extraction/parsing/corpus_parser_functions.py#L1605-1610
+        if re.search('\[\?\]', utterance):
+            # TODO: what's that used for?
+            # utterance = re.sub('\[\?\]', '', utterance)
+            transcription_warning = 'transcription insecure'
+            return transcription_warning
+
+        return None
+
 ###############################################################################
 
 
 class RussianReader(ToolboxReader):
+
+    def get_warnings(self, utterance):
+        if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
+            for target in re.findall('\[=\?\s+[^\]]+\]', utterance):
+                target_clean = re.sub('["\[\]?=]', '', target)
+                transcription_warning = (
+                    'transcription insecure (intended '
+                    'form might have been "' + target_clean + '")')
+                return transcription_warning
+
+        return None
 
     def make_rec(self, record):
         utterance, words, morphemes = super().make_rec(record)
