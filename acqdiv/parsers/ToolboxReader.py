@@ -143,7 +143,7 @@ class ToolboxReader(object):
             utterance['sentence_type'] = self.get_sentence_type(utterance)
 
         child_directed = self.get_childdirected(utterance)
-        if child_directed:
+        if child_directed is not None:
             utterance['childdirected'] = child_directed
 
         # Create clean utterance
