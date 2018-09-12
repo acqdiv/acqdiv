@@ -208,29 +208,11 @@ class ToolboxReader(object):
         words = utterance.split()
 
         for word in words:
-            d = {}
-            if self.config['corpus']['corpus'] == 'Indonesian':
-                # Distinguish between word and word_target;
-                # otherwise the target word is identical to the actual word:
-                # https://github.com/uzling/acqdiv/blob/master/extraction
-                # /parsing/corpus_parser_functions.py#L1859-L1867
-                # Also: xx(x), www and *** is garbage from chat
-                if re.search('\(', word):
-                    d['word_target'] = re.sub('[()]', '', word)
-                    d['word'] = re.sub('\([^)]+\)', '', word)
-                    d['word_actual'] = d['word']
-                    result.append(d)
-                else:
-                    d['word_target'] = re.sub('xxx?|www', '???', word)
-                    d['word'] = re.sub('xxx?', '???', word)
-                    d['word_actual'] = d['word']
-                    result.append(d)
-            else:
-                d['word'] = re.sub('xxx?|www|\*\*\*', '???', word)
-                # Actual vs target distinction <forehead slap>
-                if self.config['corpus']['corpus'] in ['Chintang', 'Russian']:
-                    d['word_actual'] = word
-                result.append(d)
+            d = {
+                'word': re.sub('xxx?|www|\*\*\*', '???', word),
+                'word_actual': word
+            }
+            result.append(d)
         return result
 
     def get_sentence_type(self, utterance):
@@ -705,6 +687,30 @@ class IndonesianReader(ToolboxReader):
                     return None, None, None
 
         return utterance, words, morphemes
+
+    def get_words(self, utterance):
+        result = []
+        words = utterance.split()
+
+        for word in words:
+            d = {}
+            # Distinguish between word and word_target;
+            # otherwise the target word is identical to the actual word:
+            # https://github.com/uzling/acqdiv/blob/master/extraction
+            # /parsing/corpus_parser_functions.py#L1859-L1867
+            # Also: xx(x), www and *** is garbage from chat
+            if re.search('\(', word):
+                d['word_target'] = re.sub('[()]', '', word)
+                d['word'] = re.sub('\([^)]+\)', '', word)
+                d['word_actual'] = d['word']
+                result.append(d)
+            else:
+                d['word_target'] = re.sub('xxx?|www', '???', word)
+                d['word'] = re.sub('xxx?', '???', word)
+                d['word_actual'] = d['word']
+                result.append(d)
+
+        return result
 
     def get_sentence_type(self, utterance):
         if re.search('\.', utterance['utterance_raw']):
