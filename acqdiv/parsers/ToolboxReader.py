@@ -146,12 +146,6 @@ class ToolboxReader(object):
         if child_directed:
             utterance['childdirected'] = child_directed
 
-        if self.config['corpus']['corpus'] == 'Chintang':
-            # We infer sentence type from Chintang \nep
-            # but we do not add the nepali field to the database yet
-            if 'nepali' in utterance:
-                del utterance['nepali']
-
         # Create clean utterance
         utterance['utterance'] = self.clean_utterance(
                                     utterance['utterance_raw'])
@@ -645,6 +639,15 @@ def memorymapped(path, access=mmap.ACCESS_READ):
 
 
 class ChintangReader(ToolboxReader):
+
+    def make_rec(self, record):
+        utterance, words, morphemes = super().make_rec(record)
+        # We infer sentence type from Chintang \nep
+        # but we do not add the nepali field to the database yet
+        if 'nepali' in utterance:
+            del utterance['nepali']
+
+        return utterance, words, morphemes
 
     def get_childdirected(self, utterance):
 
