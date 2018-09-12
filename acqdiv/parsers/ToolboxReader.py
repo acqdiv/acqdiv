@@ -170,10 +170,6 @@ class ToolboxReader(object):
         else:
             morphemes = self.get_morphemes(utterance)
 
-        if self.config['corpus']['corpus'] == 'Russian':
-            utterance['gloss_raw'] = ' '.join(
-                mor['gloss_raw'] for mword in morphemes for mor in mword)
-
         for i in range(len(words)):
             try:
                 words[i]['word_language'] = \
@@ -650,7 +646,6 @@ class ChintangReader(ToolboxReader):
         return utterance, words, morphemes
 
     def get_childdirected(self, utterance):
-
         if 'childdirected' in utterance:
             tos_raw = utterance['childdirected']
             if 'directed' in tos_raw:
@@ -725,7 +720,13 @@ class IndonesianReader(ToolboxReader):
 
 
 class RussianReader(ToolboxReader):
-    pass
+
+    def make_rec(self, record):
+        utterance, words, morphemes = super().make_rec(record)
+        utterance['gloss_raw'] = ' '.join(
+            mor['gloss_raw'] for mword in morphemes for mor in mword)
+
+        return utterance, words, morphemes
 
 
 def main():
