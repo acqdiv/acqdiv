@@ -347,6 +347,7 @@ def main():
     start_time = time.time()
 
     for corpus, parser_cls in [
+            ('Sesotho', SesothoParser),
             ('Nungon', NungonParser),
             ('Yucatec', YucatecParser),
             ('Turkish', TurkishParser),
