@@ -51,6 +51,7 @@ class ToolboxReader(object):
         self.config = config
         self.path = file_path
         self.tier_separator = re.compile(b'\n')
+        self.warnings = []
 
         # get database column names
         self.field_markers = []
@@ -259,7 +260,7 @@ class ToolboxReader(object):
 
         return utterance
 
-    def get_morphemes(self, utterance):
+    def get_morphemesorig(self, utterance):
         """Get list of lists of morphemes.
 
         Each morpheme is a dict of key-value pairs.
@@ -523,6 +524,174 @@ class ToolboxReader(object):
                     'type': self.config['morphemes']['type'],
                     'warning': None if len(warnings) == 0 else
                     " ".join(warnings)}
+                word_morphemes.append(d)
+            result.append(word_morphemes)
+        return result
+
+    # ---------- morpheme tier ----------
+
+    @classmethod
+    def get_seg_tier(cls, utterance):
+        return utterance.get('morpheme', '')
+
+    @classmethod
+    def get_gloss_tier(cls, utterance):
+        return utterance.get('gloss_raw', '')
+
+    @classmethod
+    def get_pos_tier(cls, utterance):
+        return utterance.get('pos_raw', '')
+
+    @classmethod
+    def get_lang_tier(cls, utterance):
+        return utterance.get('morpheme_lang', '')
+
+    @classmethod
+    def get_id_tier(cls, utterance):
+        return utterance.get('lemma_id', '')
+
+    # ---------- morpheme words ----------
+
+    @classmethod
+    def get_morpheme_words(cls, morpheme_tier):
+        if morpheme_tier:
+            return re.split(cls._word_boundary, morpheme_tier)
+        else:
+            return []
+
+    @classmethod
+    def get_seg_words(cls, segment_tier):
+        return cls.get_morpheme_words(segment_tier)
+
+    @classmethod
+    def get_gloss_words(cls, gloss_tier):
+        return cls.get_morpheme_words(gloss_tier)
+
+    @classmethod
+    def get_pos_words(cls, pos_tier):
+        return cls.get_morpheme_words(pos_tier)
+
+    @classmethod
+    def get_lang_words(cls, morpheme_lang_tier):
+        return cls.get_morpheme_words(morpheme_lang_tier)
+
+    @classmethod
+    def get_id_words(cls, id_tier):
+        return cls.get_morpheme_words(id_tier)
+
+    # ---------- morphemes ----------
+
+    @classmethod
+    def get_morphemes(cls, morpheme_word):
+        if morpheme_word:
+            return morpheme_word.split()
+        else:
+            return []
+
+    @classmethod
+    def get_segs(cls, segment_word):
+        return cls.get_morphemes(segment_word)
+
+    @classmethod
+    def get_glosses(cls, gloss_word):
+        return cls.get_morphemes(gloss_word)
+
+    @classmethod
+    def get_poses(cls, pos_word):
+        return cls.get_morphemes(pos_word)
+
+    @classmethod
+    def get_langs(cls, morpheme_lang_word):
+        return cls.get_morphemes(morpheme_lang_word)
+
+    @classmethod
+    def get_ids(cls, id_word):
+        return cls.get_morphemes(id_word)
+
+    @classmethod
+    def get_list_of_list_morphemes(
+            cls, utterance, tier_getter, words_getter, morphemes_getter):
+        """Get list of list of morphemes.
+
+        Args:
+            utterance (dict): The utterance dictionary containing the tiers.
+            tier_getter (func): To get the correct tier.
+            words_getter (func): To get the words of the tier.
+            morphemes_getter(func): To get the morphemes of the word.
+
+        Returns:
+            list(list): List of list of morphemes (= morpheme word).
+        """
+        lists = []
+        tier = tier_getter(utterance)
+        words = words_getter(tier)
+        for word in words:
+            morphemes = morphemes_getter(word)
+            lists.append(morphemes)
+
+        return lists
+
+    def get_all_morphemes(self, utt):
+        """Get list of lists of morphemes.
+
+        Each morpheme is a dict of key-value pairs.
+
+        Args:
+            utt (dict): The utterance.
+
+        Returns:
+            list: Lists that contain dictionary of morphemes.
+        """
+        result = []
+        self.warnings = []
+
+        # get segments
+        segments = self.get_list_of_list_morphemes(
+            utt, self.get_seg_tier, self.get_seg_words, self.get_segs)
+        # get glosses
+        glosses = self.get_list_of_list_morphemes(
+            utt, self.get_gloss_tier, self.get_gloss_words, self.get_glosses)
+        # get parts-of-spech tags
+        poses = self.get_list_of_list_morphemes(
+            utt, self.get_pos_tier, self.get_pos_words, self.get_poses)
+        # get morpheme languages
+        langs = self.get_list_of_list_morphemes(
+            utt, self.get_lang_tier, self.get_lang_words, self.get_langs)
+        # get morpheme dict IDs
+        morphids = self.get_list_of_list_morphemes(
+            utt, self.get_id_tier, self.get_id_words, self.get_ids)
+
+        len_mw = len(glosses)
+        # len_align = len([i for gw in glosses for i in gw])
+        tiers = []
+        for t in (segments, glosses, poses, langs, morphids):
+            if struct_eqv(t, glosses):
+                tiers.append(t)
+            else:
+                tiers.append([[] for _ in range(len_mw)])
+                logger.info("Length of glosses and {} don't match in the "
+                            "Toolbox file: {}".format(
+                                t, utt['source_id']))
+        # This bit adds None (NULL in the DB) for any mis-alignments
+        # tiers = list(zip_longest(morphemes, glosses, poses, fillvalue=[]))
+        # gls = [m for m in w for w in
+        mwords = zip(*tiers)
+        for mw in mwords:
+            alignment = list(zip_longest(mw[0], mw[1], mw[2], mw[3], mw[4],
+                                         fillvalue=None))
+            word_morphemes = []
+            for morpheme in alignment:
+                # TODO: 'type': move to postprocessing if faster
+                # -> what type of morpheme as defined in the corpus .ini
+                d = {
+                    'morpheme': morpheme[0],
+                    'gloss_raw': morpheme[1],
+                    'pos_raw': morpheme[2],
+                    'morpheme_language': morpheme[3],
+                    'lemma_id': morpheme[4],
+                    'type': self.config['morphemes']['type'],
+                    'warning': None if len(self.warnings) == 0 else
+                    " ".join(self.warnings)}
                 word_morphemes.append(d)
             result.append(word_morphemes)
         return result
