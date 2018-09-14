@@ -791,7 +791,7 @@ class SesothoCleaner(CHATCleaner):
         speech.
         """
         if utterance.startswith('('):
-            return re.sub(r'\(\w+\) ', ' ', utterance)
+            return re.sub(r'\(\w+\) ', '', utterance)
 
         return re.sub(r' \(\w+\) ', ' ', utterance)
 
