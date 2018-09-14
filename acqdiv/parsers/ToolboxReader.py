@@ -610,7 +610,8 @@ class ToolboxReader(object):
 
     @classmethod
     def get_list_of_list_morphemes(
-            cls, utterance, tier_getter, words_getter, morphemes_getter):
+            cls, utterance, tier_getter, words_getter, morphemes_getter,
+            clean_tier=None, clean_word=None, clean_morpheme=None):
         """Get list of list of morphemes.
 
         Args:
@@ -618,15 +619,33 @@ class ToolboxReader(object):
             tier_getter (func): To get the correct tier.
             words_getter (func): To get the words of the tier.
             morphemes_getter(func): To get the morphemes of the word.
+            clean_tier (func): To clean the tier.
+            clean_word (func): To clean the word.
+            clean_morpheme (func): To clean the morpheme.
 
         Returns:
             list(list): List of list of morphemes (= morpheme word).
         """
         lists = []
+        # get the tier
         tier = tier_getter(utterance)
+        # clean the tier
+        if clean_tier is not None:
+            tier = clean_tier(tier)
+        # get the words
         words = words_getter(tier)
         for word in words:
-            morphemes = morphemes_getter(word)
+            # clean the word
+            if clean_word is not None:
+                word = clean_word(word)
+            # get the morphemes
+            morphemes = []
+            for morpheme in morphemes_getter(word):
+                # clean the morpheme
+                if clean_morpheme is not None:
+                    morpheme = clean_morpheme(morpheme)
+                morphemes.append(morpheme)
+
             lists.append(morphemes)
 
         return lists
@@ -647,13 +666,16 @@ class ToolboxReader(object):
 
         # get segments
         segments = self.get_list_of_list_morphemes(
-            utt, self.get_seg_tier, self.get_seg_words, self.get_segs)
+            utt, self.get_seg_tier, self.get_seg_words, self.get_segs,
+            self.clean_seg_tier, self.clean_seg_word, self.clean_seg)
         # get glosses
         glosses = self.get_list_of_list_morphemes(
-            utt, self.get_gloss_tier, self.get_gloss_words, self.get_glosses)
+            utt, self.get_gloss_tier, self.get_gloss_words, self.get_glosses,
+            self.clean_gloss_tier, self.clean_gloss_word, self.clean_gloss)
         # get parts-of-spech tags
         poses = self.get_list_of_list_morphemes(
-            utt, self.get_pos_tier, self.get_pos_words, self.get_poses)
+            utt, self.get_pos_tier, self.get_pos_words, self.get_poses,
+            self.clean_pos_tier, self.clean_pos_word, self.clean_pos)
         # get morpheme languages
         langs = self.get_list_of_list_morphemes(
             utt, self.get_lang_tier, self.get_lang_words, self.get_langs)
@@ -695,6 +717,68 @@ class ToolboxReader(object):
                 word_morphemes.append(d)
             result.append(word_morphemes)
         return result
+
+    # ---------- cleaners ----------
+
+    @classmethod
+    def clean_morph_tier(cls, morph_tier):
+        """No cleaning per default."""
+        return morph_tier
+
+    @classmethod
+    def clean_seg_tier(cls, seg_tier):
+        """No cleaning per default."""
+        return cls.clean_morph_tier(seg_tier)
+
+    @classmethod
+    def clean_gloss_tier(cls, gloss_tier):
+        """No cleaning per default."""
+        return cls.clean_morph_tier(gloss_tier)
+
+    @classmethod
+    def clean_pos_tier(cls, pos_tier):
+        """No cleaning per default."""
+        return cls.clean_morph_tier(pos_tier)
+
+    @classmethod
+    def clean_morpheme_word(cls, morpheme_word):
+        """No cleaning per default."""
+        return morpheme_word
+
+    @classmethod
+    def clean_seg_word(cls, segment_word):
+        """No cleaning per default."""
+        return cls.clean_morpheme_word(segment_word)
+
+    @classmethod
+    def clean_gloss_word(cls, gloss_word):
+        """No cleaning per default."""
+        return cls.clean_morpheme_word(gloss_word)
+
+    @classmethod
+    def clean_pos_word(cls, pos_word):
+        """No cleaning per default."""
+        return cls.clean_morpheme_word(pos_word)
+
+    @classmethod
+    def clean_morpheme(cls, morpheme):
+        """No cleaning per default."""
+        return morpheme
+
+    @classmethod
+    def clean_seg(cls, segment):
+        """No cleaning per default."""
+        return cls.clean_morpheme(segment)
+
+    @classmethod
+    def clean_gloss(cls, gloss):
+        """No cleaning per default."""
+        return cls.clean_morpheme(gloss)
+
+    @classmethod
+    def clean_pos(cls, pos):
+        """No cleaning per default."""
+        return cls.clean_morpheme(pos)
 
     def __repr__(self):
         """Pretty print class name + plus path of session file."""
