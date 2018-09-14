@@ -937,6 +937,32 @@ class IndonesianReader(ToolboxReader):
 
         return utterance
 
+    @staticmethod
+    def remove_punctuation(morpheme_tier):
+        return re.sub('[‘’\'“”\".!,:?+/]', '', morpheme_tier)
+
+    @staticmethod
+    def unify_unknown(morpheme_tier):
+        return re.sub('xxx?|www', '???', morpheme_tier)
+
+    @classmethod
+    def clean_morph_tier(cls, morph_tier):
+        for cleaning_method in [cls.remove_punctuation, cls.unify_unknown]:
+            morph_tier = cleaning_method(morph_tier)
+        return morph_tier
+
+    # TODO: this is not pretty
+    @classmethod
+    def get_lang_tier(cls, utterance):
+        tier = utterance.get('gloss_raw')
+        return cls.clean_morph_tier(tier)
+
+    @classmethod
+    def get_langs(cls, morpheme_lang_word):
+        return ['Indonesian' for _ in cls.get_morphemes(morpheme_lang_word)]
+
+    # TODO: extract relevant source 'nt' (comment) field?
+
 ###############################################################################
 
 
@@ -1066,7 +1092,7 @@ class RussianReader(ToolboxReader):
                 # 3) For all other POS, the glosses start behind the first ":",
                 # e.g. PRO-DEM-NOUN:NOM:SG -> POS PRO.DEM.NOUN, gloss NOM.SG
                 else:
-                    match_gloss_pos = re.search('(^[^(V|ADJ)].*?):(.*$)',word)
+                    match_gloss_pos = re.search('(^[^(V|ADJ)].*?):(.*$)', word)
                     if match_gloss_pos:
                         gloss_word = match_gloss_pos.group(2)
                         pos_word = match_gloss_pos.group(1)
