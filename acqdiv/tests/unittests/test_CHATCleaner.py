@@ -1463,11 +1463,18 @@ class TestSesothoCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    def test_remove_words_in_parentheses_single(self):
-        """Test remove_words_parentheses with 1 word in parentheses."""
-        utterance = '(uye) ausi'
+    def test_remove_words_in_parentheses_single_beginning(self):
+        """Test remove_words_parentheses with 1 parenth. word at beginning."""
+        utterance = '(uye) ausi .'
         actual_output = SesothoCleaner.remove_words_in_parentheses(utterance)
-        desired_output = 'ausi'
+        desired_output = 'ausi .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_words_in_parentheses_single_end(self):
+        """Test remove_words_parentheses with 1 parenth. word at end."""
+        utterance = 'ausi (uye) .'
+        actual_output = SesothoCleaner.remove_words_in_parentheses(utterance)
+        desired_output = 'ausi .'
         self.assertEqual(actual_output, desired_output)
 
     def test_remove_words_in_parentheses_multiple(self):
