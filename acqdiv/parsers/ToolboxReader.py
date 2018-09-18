@@ -101,29 +101,39 @@ class ToolboxReader(object):
           tuple: (utterance, words, morphemes)
         """
         utterance = {}
-
         warnings = []
         tiers = self.tier_separator.split(record)
         for tier in tiers:
+            # split into field marker and content
             tokens = re.split(b'\\s+', tier, maxsplit=1)
-            field_marker = tokens[0].decode()
-            field_marker = field_marker.replace("\\", "")
-            content = None
+            # get original field marker name
+            orig_field_marker = tokens[0].decode()
+            # remove \\ before the field marker name
+            orig_field_marker = orig_field_marker.replace("\\", "")
 
-            if len(tokens) > 1:
+            # check if content is missing
+            if len(tokens) <= 1:
+                content = ''
+            else:
+                # get content
                 content = tokens[1].decode()
+                # remove redundant whitespaces
                 content = re.sub('\\s+', ' ', content)
+                # remove leading/trailing whitespaces
                 content = content.strip()
+
+                # ignore metadata
                 if content.startswith('@'):
                     return None, None, None
-                elif content == "":
-                    # TODO: log
-                    continue
 
-            if field_marker in self.field_markers:
-                utterance[self.config['record_tiers'][field_marker]] = content
-                if content is None:
-                    warnings.append(self.config['record_tiers'][field_marker])
+            if orig_field_marker in self.field_markers:
+                # map corpus-specific field-marker to standard field marker
+                field_marker = self.config['record_tiers'][orig_field_marker]
+                # add content to dictionary
+                utterance[field_marker] = content
+                if not content:
+                    warnings.append(
+                        self.config['record_tiers'][orig_field_marker])
 
         # Some records will not have an utterance, append None
         if 'utterance_raw' not in utterance:
