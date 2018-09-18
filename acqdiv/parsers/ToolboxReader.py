@@ -7,32 +7,6 @@ import logging
 import contextlib
 from itertools import zip_longest
 
-# logging.basicConfig(filename='toolbox.log', level=logging.INFO)
-logger = logging.getLogger('pipeline' + __name__)
-
-
-def longer_of(a, b):
-    """Return the longer of two lists."""
-    if len(a) > len(b):
-        return a
-    else:
-        return b
-
-
-def struct_eqv(xs, ys):
-    """Test whether two lists have the same nested structure."""
-    if len(xs) == len(ys):
-        for x, y in zip(xs, ys):
-            if isinstance(x, list) or isinstance(y, list):
-                if not (isinstance(x, list) and isinstance(y, list)):
-                    return False
-                else:
-                    if not struct_eqv(x, y):
-                        return False
-        return True
-    else:
-        return False
-
 
 class ToolboxReader(object):
     """Toolbox Standard Format text file as iterable over records."""
@@ -52,6 +26,8 @@ class ToolboxReader(object):
         self.config = config
         self.path = file_path
         self.tier_separator = re.compile(b'\n')
+        # logging.basicConfig(filename='toolbox.log', level=logging.INFO)
+        self.logger = logging.getLogger('pipeline' + __name__)
 
         # get database column names
         self.field_markers = []
@@ -382,6 +358,21 @@ class ToolboxReader(object):
 
         return lists
 
+    @staticmethod
+    def struct_eqv(xs, ys):
+        """Test whether two lists have the same nested structure."""
+        if len(xs) == len(ys):
+            for x, y in zip(xs, ys):
+                if isinstance(x, list) or isinstance(y, list):
+                    if not (isinstance(x, list) and isinstance(y, list)):
+                        return False
+                    else:
+                        if not ToolboxReader.struct_eqv(x, y):
+                            return False
+            return True
+        else:
+            return False
+
     def get_all_morphemes(self, utt):
         """Get list of lists of morphemes.
 
@@ -426,11 +417,11 @@ class ToolboxReader(object):
         # len_align = len([i for gw in glosses for i in gw])
         tiers = []
         for t in (segments, glosses, poses, langs, morphids):
-            if struct_eqv(t, glosses):
+            if self.struct_eqv(t, glosses):
                 tiers.append(t)
             else:
                 tiers.append([[] for _ in range(len_mw)])
-                logger.info("Length of glosses and {} don't match in the "
+                self.logger.info("Length of glosses and {} don't match in the "
                             "Toolbox file: {}".format(
                                 t, utt['source_id']))
         # This bit adds None (NULL in the DB) for any mis-alignments
