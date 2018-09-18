@@ -750,7 +750,7 @@ class IndonesianReader(ToolboxReader):
 
     @classmethod
     def get_lang_tier(cls, utterance):
-        return utterance.get('gloss_raw')
+        return utterance.get('gloss_raw', '')
 
     @classmethod
     def get_langs(cls, morpheme_lang_word):
@@ -845,7 +845,7 @@ class RussianReader(ToolboxReader):
 
     @classmethod
     def get_lang_tier(cls, utterance):
-        return utterance.get('pos_raw')
+        return utterance.get('pos_raw', '')
 
     @classmethod
     def clean_lang_tier(cls, lang_tier):
