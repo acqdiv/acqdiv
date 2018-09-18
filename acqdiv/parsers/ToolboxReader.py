@@ -678,10 +678,17 @@ class ToolboxReader(object):
             self.clean_pos_tier, self.clean_pos_word, self.clean_pos)
         # get morpheme languages
         langs = self.get_list_of_list_morphemes(
-            utt, self.get_lang_tier, self.get_lang_words, self.get_langs)
+            utt, self.get_lang_tier, self.get_lang_words, self.get_langs,
+            self.clean_lang_tier, self.clean_lang_word, self.clean_lang)
         # get morpheme dict IDs
         morphids = self.get_list_of_list_morphemes(
-            utt, self.get_id_tier, self.get_id_words, self.get_ids)
+            utt, self.get_id_tier, self.get_id_words, self.get_ids,
+            self.clean_morph_tier, self.clean_morpheme_word,
+            self.clean_morpheme)
+
+        # remove morpheme language tier (as it is not part of the DB)
+        if 'morpheme_lang' in utt:
+            del utt['morpheme_lang']
 
         len_mw = len(glosses)
         # len_align = len([i for gw in glosses for i in gw])
@@ -720,6 +727,8 @@ class ToolboxReader(object):
 
     # ---------- cleaners ----------
 
+    # ---------- morphology tiers ----------
+
     @classmethod
     def clean_morph_tier(cls, morph_tier):
         """No cleaning per default."""
@@ -739,6 +748,13 @@ class ToolboxReader(object):
     def clean_pos_tier(cls, pos_tier):
         """No cleaning per default."""
         return cls.clean_morph_tier(pos_tier)
+
+    @classmethod
+    def clean_lang_tier(cls, lang_tier):
+        """No cleaning per default."""
+        return cls.clean_morph_tier(lang_tier)
+
+    # ---------- morpheme words ----------
 
     @classmethod
     def clean_morpheme_word(cls, morpheme_word):
@@ -761,6 +777,13 @@ class ToolboxReader(object):
         return cls.clean_morpheme_word(pos_word)
 
     @classmethod
+    def clean_lang_word(cls, lang_word):
+        """No cleaning per default."""
+        return cls.clean_morpheme_word(lang_word)
+
+    # ---------- morphemes ----------
+
+    @classmethod
     def clean_morpheme(cls, morpheme):
         """No cleaning per default."""
         return morpheme
@@ -779,6 +802,11 @@ class ToolboxReader(object):
     def clean_pos(cls, pos):
         """No cleaning per default."""
         return cls.clean_morpheme(pos)
+
+    @classmethod
+    def clean_lang(cls, lang):
+        """No cleaning per default."""
+        return lang
 
     def __repr__(self):
         """Pretty print class name + plus path of session file."""
@@ -859,6 +887,37 @@ class ChintangReader(ToolboxReader):
                 return sentence_type
         else:
             return None
+
+    @staticmethod
+    def remove_punctuation(seg_tier):
+        return re.sub('[‘’\'“”\".!,:?+/]', '', seg_tier)
+
+    @staticmethod
+    def unify_unknown(seg_tier):
+        return re.sub('\*\*\*', '???', seg_tier)
+
+    @classmethod
+    def clean_seg_tier(cls, seg_tier):
+        for cleaning_method in [cls.remove_punctuation, cls.unify_unknown]:
+            seg_tier = cleaning_method(seg_tier)
+
+        return seg_tier
+
+    @staticmethod
+    def remove_floating_clitic(morpheme_word):
+        # TODO: double check this logic is correct with Robert
+        return morpheme_word.replace(" - ", " ")
+
+    @classmethod
+    def clean_morpheme_word(cls, morpheme_word):
+        return cls.remove_floating_clitic(morpheme_word)
+
+    def clean_lang(self, lang):
+        lang = lang.strip('-')
+        if lang in self.config['languages']:
+            return self.config['languages'][lang]
+        else:
+            return 'Chintang'
 
 
 ###############################################################################
@@ -951,11 +1010,9 @@ class IndonesianReader(ToolboxReader):
             morph_tier = cleaning_method(morph_tier)
         return morph_tier
 
-    # TODO: this is not pretty
     @classmethod
     def get_lang_tier(cls, utterance):
-        tier = utterance.get('gloss_raw')
-        return cls.clean_morph_tier(tier)
+        return utterance.get('gloss_raw')
 
     @classmethod
     def get_langs(cls, morpheme_lang_word):
@@ -1050,9 +1107,11 @@ class RussianReader(ToolboxReader):
 
     @classmethod
     def get_lang_tier(cls, utterance):
-        tier = utterance.get('pos_raw')
-        # TODO: consider adding cleaners for language morpheme tier
-        return cls.clean_gloss_pos_punctuation(tier)
+        return utterance.get('pos_raw')
+
+    @classmethod
+    def clean_lang_tier(cls, lang_tier):
+        return cls.clean_gloss_pos_punctuation(lang_tier)
 
     # ---------- morpheme words ----------
 
