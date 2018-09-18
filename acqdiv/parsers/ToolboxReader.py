@@ -8,6 +8,22 @@ import contextlib
 from itertools import zip_longest
 
 
+@contextlib.contextmanager
+def memorymapped(path, access=mmap.ACCESS_READ):
+    """ Return a block context with path as memory-mapped file. """
+    fd = open(path)
+    try:
+        m = mmap.mmap(fd.fileno(), 0, access=access)
+    except Exception:
+        fd.close()
+        raise
+    try:
+        yield m
+    finally:
+        m.close()
+        fd.close()
+
+
 class ToolboxReader(object):
     """Toolbox Standard Format text file as iterable over records."""
 
@@ -162,8 +178,45 @@ class ToolboxReader(object):
 
         return utterance, words, morphemes
 
-    def get_childdirected(self, utterance):
-        """Not coded per default."""
+    def get_childdirected(self, record):
+        """Not coded per default.
+
+        Args:
+            record (dictionary): The record.
+        """
+        return None
+
+    def get_sentence_type(self, record):
+        """Get utterance type (aka sentence type) of an utterance.
+
+        Possible values:
+            - default (.)
+            - question (?)
+            - imperative or exclamation (!)
+
+        Args:
+            record (dictionary): The record.
+
+        Returns:
+            str: The sentence type.
+        """
+        match_punctuation = re.search('([.?!])$', record['utterance_raw'])
+        if match_punctuation is not None:
+            sentence_type = None
+            if match_punctuation.group(1) == '.':
+                sentence_type = 'default'
+            if match_punctuation.group(1) == '?':
+                sentence_type = 'question'
+            if match_punctuation.group(1) == '!':
+                sentence_type = 'imperative'
+            return sentence_type
+
+    def get_warnings(self, utterance):
+        """No warnings per default.
+
+        Args:
+            utterance (str): The utterance.
+        """
         return None
 
     def get_words(self, utterance):
@@ -191,50 +244,6 @@ class ToolboxReader(object):
             }
             result.append(d)
         return result
-
-    def get_sentence_type(self, utterance):
-        """Get utterance type (aka sentence type) of an utterance.
-
-        Possible values:
-            - default (.)
-            - question (?)
-            - imperative or exclamation (!)
-
-        Args:
-            utterance (dictionary): The utterance.
-
-        Returns:
-            str: The sentence type.
-        """
-        match_punctuation = re.search('([.?!])$', utterance['utterance_raw'])
-        if match_punctuation is not None:
-            sentence_type = None
-            if match_punctuation.group(1) == '.':
-                sentence_type = 'default'
-            if match_punctuation.group(1) == '?':
-                sentence_type = 'question'
-            if match_punctuation.group(1) == '!':
-                sentence_type = 'imperative'
-            return sentence_type
-
-    def get_warnings(self, utterance):
-        """No warnings per default."""
-        return None
-
-    def clean_utterance(self, utterance):
-        """Clean up corpus-specific utterances.
-
-        Args:
-            utterance (str): The raw utterance.
-
-        Returns:
-            str: The cleaned utterance.
-        """
-        if utterance is not None:
-            # replace xxx/www/*** by ???
-            utterance = re.sub('xxx?|www|\*{3}', '???', utterance)
-
-        return utterance
 
     # ---------- morpheme tier ----------
 
@@ -450,6 +459,27 @@ class ToolboxReader(object):
 
     # ---------- cleaners ----------
 
+    # ---------- utterance ----------
+
+    @staticmethod
+    def unify_unknown(utterance):
+        return re.sub('xxx?|www|\*{3}', '???', utterance)
+
+    @classmethod
+    def clean_utterance(cls, utterance):
+        """Clean up corpus-specific utterances.
+
+        Args:
+            utterance (str): The raw utterance.
+
+        Returns:
+            str: The cleaned utterance.
+        """
+        if utterance is not None:
+            return cls.unify_unknown(utterance)
+
+        return utterance
+
     # ---------- morphology tiers ----------
 
     @classmethod
@@ -536,21 +566,6 @@ class ToolboxReader(object):
         return '%s(%r)' % (self.__class__.__name__, self.path)
 
 
-@contextlib.contextmanager
-def memorymapped(path, access=mmap.ACCESS_READ):
-    """ Return a block context with path as memory-mapped file. """
-    fd = open(path)
-    try:
-        m = mmap.mmap(fd.fileno(), 0, access=access)
-    except Exception:
-        fd.close()
-        raise
-    try:
-        yield m
-    finally:
-        m.close()
-        fd.close()
-
 ###############################################################################
 
 
@@ -565,27 +580,27 @@ class ChintangReader(ToolboxReader):
 
         return utterance, words, morphemes
 
-    def get_childdirected(self, utterance):
-        if 'childdirected' in utterance:
-            tos_raw = utterance['childdirected']
+    def get_childdirected(self, record):
+        if 'childdirected' in record:
+            tos_raw = record['childdirected']
             if 'directed' in tos_raw:
                 if 'child' in tos_raw:
                     return True
                 else:
                     return False
             else:
-                del utterance['childdirected']
+                del record['childdirected']
 
         return None
 
-    def get_sentence_type(self, utterance):
+    def get_sentence_type(self, record):
         # https://github.com/uzling/acqdiv/issues/253
         # \eng: . = default, ? = question, ! = exclamation
         # \nep: । = default, rest identical.
         # Note this is not a "pipe" but the so-called danda at U+0964
-        if ('nepali' in utterance.keys()
-                and utterance['nepali'] is not None):
-            match_punctuation = re.search('([।?!])$', utterance['nepali'])
+        if ('nepali' in record.keys()
+                and record['nepali'] is not None):
+            match_punctuation = re.search('([।?!])$', record['nepali'])
             if match_punctuation is not None:
                 sentence_type = None
                 if match_punctuation.group(1) == '।':
@@ -595,10 +610,10 @@ class ChintangReader(ToolboxReader):
                 if match_punctuation.group(1) == '!':
                     sentence_type = 'exclamation'
                 return sentence_type
-        elif ('eng' in utterance.keys()
-              and utterance['translation'] is not None):
+        elif ('eng' in record.keys()
+              and record['translation'] is not None):
             match_punctuation = re.search('([।?!])$',
-                                          utterance['translation'])
+                                          record['translation'])
             if match_punctuation is not None:
                 sentence_type = None
                 if match_punctuation.group(1) == '.':
@@ -681,12 +696,12 @@ class IndonesianReader(ToolboxReader):
 
         return result
 
-    def get_sentence_type(self, utterance):
-        if re.search('\.', utterance['utterance_raw']):
+    def get_sentence_type(self, record):
+        if re.search('\.', record['utterance_raw']):
             return 'default'
-        elif re.search('\?\s*$', utterance['utterance_raw']):
+        elif re.search('\?\s*$', record['utterance_raw']):
             return 'question'
-        elif re.search('!', utterance['utterance_raw']):
+        elif re.search('!', record['utterance_raw']):
             return 'imperative'
         else:
             return None
