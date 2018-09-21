@@ -1558,6 +1558,63 @@ class TestSesothoParser(unittest.TestCase):
         desired_output = (utt_dict, words_list, morpheme_list)
         self.assertEqual(actual_output, desired_output)
 
+###############################################################################
+
+
+class TestTurkishParser(unittest.TestCase):
+
+    def setUp(self):
+        self.session_file_path = './test_CHATParser.cha'
+        self.parser = TurkishParser(self.session_file_path)
+        self.maxDiff = None
+
+    def test_get_reader(self):
+        """Test get_reader. (Sesotho)"""
+        actual_reader = self.parser.get_reader()
+        self.assertTrue(isinstance(actual_reader, TurkishReader))
+
+    def test_get_cleaner(self):
+        """Test get_cleaner. (Sesotho)"""
+        actual_cleaner = self.parser.get_cleaner()
+        self.assertTrue(isinstance(actual_cleaner, TurkishCleaner))
+
+    def test_next_utterance_no_misalignments_single_word(self):
+        """Test next_utterance with utt containing no misalignemnts. (Turkish)
+
+        Test with a one-word utterance.
+        """
+        session_str = ('*GRA:\tne ?\n%add:\tMOT\n@End')
+        self.parser.reader.read(io.StringIO(session_str))
+        actual_output = list(self.parser.next_utterance())[0]
+        utt_dict = {
+            'source_id': 'u0',
+            'speaker_label': 'GRA',
+            'addressee': 'MOT',
+            'utterance_raw': 'ne ?',
+            'utterance': 'ne',
+            'translation': None,
+            'morpheme': None,
+            'gloss_raw': None,
+            'pos_raw': None,
+            'sentence_type': 'question',
+            'start_raw': None,
+            'end_raw': None,
+            'comment': None,
+            'warning': None
+        }
+        words_list = [
+            {
+                'word_language': 'Turkish',
+                'word': 'ne',
+                'word_actual': 'ne',
+                'word_target': 'ne',
+                'warning': None
+            }
+        ]
+        morpheme_list = []
+        desired_output = (utt_dict, words_list, morpheme_list)
+        self.assertEqual(actual_output, desired_output)
+
 
 if __name__ == '__main__':
     unittest.main()
