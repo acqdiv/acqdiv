@@ -2058,6 +2058,46 @@ class TestTurkishParser(unittest.TestCase):
         desired_output = (utt_dict, words_list, morpheme_list)
         self.assertEqual(actual_output, desired_output)
 
+###############################################################################
+
+
+class TestYucatecParser(unittest.TestCase):
+
+    def setUp(self):
+        self.session_file_path = './test_CHATParser.cha'
+        self.parser = YucatecParser(self.session_file_path)
+        self.maxDiff = None
+
+    def test_get_reader(self):
+        """Test get_reader. (Yucatec)"""
+        actual_reader = self.parser.get_reader()
+        self.assertTrue(isinstance(actual_reader, YucatecReader))
+
+    def test_get_cleaner(self):
+        """Test get_cleaner. (Yucatec)"""
+        actual_cleaner = self.parser.get_cleaner()
+        self.assertTrue(isinstance(actual_cleaner, YucatecCleaner))
+
+###############################################################################
+
+
+class TestNungonParser(unittest.TestCase):
+
+    def setUp(self):
+        self.session_file_path = './test_CHATParser.cha'
+        self.parser = NungonParser(self.session_file_path)
+        self.maxDiff = None
+
+    def test_get_reader(self):
+        """Test get_reader. (Nungon)"""
+        actual_reader = self.parser.get_reader()
+        self.assertTrue(isinstance(actual_reader, NungonReader))
+
+    def test_get_cleaner(self):
+        """Test get_cleaner. (Nungon)"""
+        actual_cleaner = self.parser.get_cleaner()
+        self.assertTrue(isinstance(actual_cleaner, NungonCleaner))
+
 
 if __name__ == '__main__':
     unittest.main()
