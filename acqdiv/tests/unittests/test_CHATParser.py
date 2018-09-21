@@ -1578,12 +1578,12 @@ class TestTurkishParser(unittest.TestCase):
         actual_cleaner = self.parser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, TurkishCleaner))
 
-    def test_next_utterance_no_misalignments_single_word(self):
+    def test_next_utterance_no_misalignments_single_word_no_mor(self):
         """Test next_utterance with utt containing no misalignemnts. (Turkish)
 
-        Test with a one-word utterance.
+        Test with a one-word utterance without morphology.
         """
-        session_str = ('*GRA:\tne ?\n%add:\tMOT\n@End')
+        session_str = '*GRA:\tne ?\n%add:\tMOT\n@End'
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
@@ -1612,6 +1612,88 @@ class TestTurkishParser(unittest.TestCase):
             }
         ]
         morpheme_list = []
+        desired_output = (utt_dict, words_list, morpheme_list)
+        self.assertEqual(actual_output, desired_output)
+
+    def test_next_utterance_no_misalignments_multiple_words_with_mor(self):
+        """Test next_utterance with utt containing 2 words. (Turkish)
+
+        Utterance contains morphology.
+        """
+
+        session_str = ('*BAB:\tinmekmi istiyo(r)sun ?\n%add:\tCHI\n%xmor:\t'
+                       'V|in-INF-QUE V|iste-IPFV-2S ?\n@End')
+        self.parser.reader.read(io.StringIO(session_str))
+        actual_output = list(self.parser.next_utterance())[0]
+        utt_dict = {
+            'source_id': 'u0',
+            'speaker_label': 'BAB',
+            'addressee': 'CHI',
+            'utterance_raw': 'inmekmi istiyo(r)sun ?',
+            'utterance': 'inmekmi istiyosun',
+            'translation': None,
+            'morpheme': 'V|in-INF-QUE V|iste-IPFV-2S ?',
+            'gloss_raw': 'V|in-INF-QUE V|iste-IPFV-2S ?',
+            'pos_raw': 'V|in-INF-QUE V|iste-IPFV-2S ?',
+            'sentence_type': 'question',
+            'start_raw': None,
+            'end_raw': None,
+            'comment': None,
+            'warning': None
+        }
+        words_list = [
+            {
+                'word_language': 'Turkish',
+                'word': 'inmekmi',
+                'word_actual': 'inmekmi',
+                'word_target': 'inmekmi',
+                'warning': None
+            },
+            {
+                'word_language': 'Turkish',
+                'word': 'istiyosun',
+                'word_actual': 'istiyosun',
+                'word_target': 'istiyorsun',
+                'warning': None
+            }
+        ]
+        morpheme_list = [
+            [
+                {
+                    'gloss_raw': None,
+                    'morpheme': 'in',
+                    'morpheme_language': None,
+                    'pos_raw': 'V'
+                }, {
+                    'gloss_raw': 'INF',
+                    'morpheme': None,
+                    'morpheme_language': None,
+                    'pos_raw': 'sfx'
+                }, {
+                    'gloss_raw': 'QUE',
+                    'morpheme': None,
+                    'morpheme_language': None,
+                    'pos_raw': 'sfx'
+                }
+            ],
+            [
+                {
+                    'gloss_raw': None,
+                    'morpheme': 'iste',
+                    'morpheme_language': None,
+                    'pos_raw': 'V'
+                }, {
+                    'gloss_raw': 'IPFV',
+                    'morpheme': None,
+                    'morpheme_language': None,
+                    'pos_raw': 'sfx'
+                }, {
+                    'gloss_raw': '2S',
+                    'morpheme': None,
+                    'morpheme_language': None,
+                    'pos_raw': 'sfx'}
+            ]
+        ]
         desired_output = (utt_dict, words_list, morpheme_list)
         self.assertEqual(actual_output, desired_output)
 
