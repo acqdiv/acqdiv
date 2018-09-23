@@ -74,7 +74,8 @@ class CHATParser(CorpusParserInterface):
         """Yields the next utterance of a session."""
         while self.reader.load_next_record():
 
-            source_id = self.reader.get_uid()
+            source_id = self.get_source_id()
+
             addressee = self.reader.get_addressee()
             translation = self.reader.get_translation()
             comment = self.reader.get_comments()
@@ -254,6 +255,14 @@ class CHATParser(CorpusParserInterface):
                 morphemes.append(wmorphemes)
 
             yield utterance_dict, words, morphemes
+
+    def get_source_id(self):
+        """Get the source id of the current utterance."""
+        fname = self.reader.get_session_filename()
+        uid = self.reader.get_uid()
+        if fname:
+            return '{}_{}'.format(fname, uid)
+        return uid
 
 
 class CreeParser(CHATParser):
