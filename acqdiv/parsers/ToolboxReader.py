@@ -31,6 +31,7 @@ class ToolboxReader(object):
     _record_marker = re.compile(br'\\ref')
     _word_boundary = re.compile('(?<![\-\s])\s+(?![\-\s])')
     warnings = []
+    language = 'Undefined'
 
     def __init__(self, config, file_path):
         """ Initializes a Toolbox file object
@@ -154,24 +155,24 @@ class ToolboxReader(object):
                                     utterance['utterance_raw'])
 
         # Append utterance warnings if data fields are missing in the input
-        if utterance['utterance_raw'] is not None:
+        if utterance['utterance_raw']:
             if self.get_warnings(utterance['utterance_raw']) is not None:
                 warnings.append(self.get_warnings(utterance['utterance_raw']))
         if len(warnings) > 0:
-            utterance['warning'] = ("Empty value in the input for: "
+            utterance['warning'] = ("Empty value in the input for: " +
                                     ", ".join(warnings))
 
         # Get words
-        if utterance['utterance'] is None:
-            words = []
-        else:
+        if utterance['utterance']:
             words = self.get_words(utterance['utterance'])
+        else:
+            words = []
 
         # Get morphemes
-        if utterance['utterance'] is None:
-            morphemes = []
-        else:
+        if utterance['utterance']:
             morphemes = self.get_all_morphemes(utterance)
+        else:
+            morphemes = []
 
         for i in range(len(words)):
             try:
@@ -185,6 +186,11 @@ class ToolboxReader(object):
             misalignment = len(morphemes) - len(words)
             for i in range(0, misalignment):
                 words.append({})
+
+        # set empty string to NULL
+        for field in utterance:
+            if utterance[field] == '':
+                utterance[field] = None
 
         return utterance, words, morphemes
 
@@ -435,11 +441,15 @@ class ToolboxReader(object):
         len_mw = len(glosses)
         # len_align = len([i for gw in glosses for i in gw])
         tiers = []
-        for t in (segments, glosses, poses, langs, morphids):
+        for i, t in enumerate((segments, glosses, poses, langs, morphids)):
             if self.struct_eqv(t, glosses):
                 tiers.append(t)
             else:
-                tiers.append([[] for _ in range(len_mw)])
+                # set a default language
+                if i == 3:
+                    tiers.append([[self.language] for _ in range(len_mw)])
+                else:
+                    tiers.append([[] for _ in range(len_mw)])
                 self.logger.info("Length of glosses and {} don't match in the "
                             "Toolbox file: {}".format(
                                 t, utt['source_id']))
@@ -581,6 +591,8 @@ class ToolboxReader(object):
 
 class ChintangReader(ToolboxReader):
 
+    language = 'Chintang'
+
     def make_rec(self, record):
         utterance, words, morphemes = super().make_rec(record)
         # We infer sentence type from Chintang \nep
@@ -672,6 +684,8 @@ class ChintangReader(ToolboxReader):
 
 
 class IndonesianReader(ToolboxReader):
+
+    language = 'Indonesian'
 
     def make_rec(self, record):
         utterance, words, morphemes = super().make_rec(record)
@@ -772,6 +786,8 @@ class IndonesianReader(ToolboxReader):
 
 
 class RussianReader(ToolboxReader):
+
+    language = 'Russian'
 
     def get_warnings(self, utterance):
         if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
