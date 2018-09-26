@@ -42,7 +42,6 @@ class ToolboxReader(object):
         """
         self.config = config
         self.path = file_path
-        self.tier_separator = re.compile(b'\n')
         # logging.basicConfig(filename='toolbox.log', level=logging.INFO)
         self.logger = logging.getLogger('pipeline' + __name__)
 
@@ -69,63 +68,104 @@ class ToolboxReader(object):
             The record marker needs to be updated if the corpus doesn't use
             "\ref" for record markers.
 
-        Returns:
+        Yields:
             tuple:
                 utterance: {}
                 words: [{},{}...]
                 morphemes: [[{},{}...], [{},{}...]...]
         """
         with open(self.path, 'rb') as f:
-            with contextlib.closing(
-                    mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as data:
-                ma = self._record_marker.search(data)
-                # Skip the first rows that contain metadata information:
-                # https://github.com/uzling/acqdiv/issues/154
-                # TODO: what's that used for?
-                # header = data[:ma.start()].decode()
+            for record in self.iter_records(f):
+                yield self.make_rec(record)
+
+    def iter_records(self, toolbox_file):
+        """Iter the records of a toolbox file.
+
+        Args:
+            toolbox_file (file/file-like): The toolbox file.
+
+        Yields:
+            str: The record.
+        """
+        with contextlib.closing(mmap.mmap(toolbox_file.fileno(),
+                                          0, access=mmap.ACCESS_READ)) as data:
+            ma = self._record_marker.search(data)
+            # Skip the first rows that contain metadata information:
+            # https://github.com/uzling/acqdiv/issues/154
+            # TODO: what's that used for?
+            # header = data[:ma.start()].decode()
+            pos = ma.start()
+            for ma in self._record_marker.finditer(data, ma.end()):
+                yield data[pos:ma.start()].decode()
                 pos = ma.start()
-                for ma in self._record_marker.finditer(data, ma.end()):
-                    yield self.make_rec(data[pos:ma.start()])
-                    pos = ma.start()
-                if ma is None:
-                    raise StopIteration
-                else:
-                    yield self.make_rec(data[pos:])
+
+            if ma is None:
+                raise StopIteration
+            else:
+                yield data[pos:].decode()
+
+    def get_tiers(self, record):
+        """Return tiers of the record.
+
+        Args:
+            record (str): The record.
+
+        Returns:
+            list: The tiers of the record.
+        """
+        return record.split('\n')
+
+    def get_tier(self, tier):
+        """Return field marker and content.
+
+        Args:
+            tier (str): '\\name content'.
+
+        Returns:
+            tuple: (name, content).
+        """
+        # split into field marker and content
+        tokens = re.split(r'\s+', tier, maxsplit=1)
+        # get field marker
+        field_marker = tokens[0]
+        # remove \\ before the field marker
+        field_marker = field_marker.replace("\\", "")
+
+        # if content is missing
+        if len(tokens) <= 1:
+            content = ''
+        else:
+            content = tokens[1]
+
+        return field_marker, content
+
+    def remove_redundant_whitespaces(self, string):
+        """Remove redundant whitespaces."""
+        string = re.sub(r'\s+', ' ', string)
+        string = string.strip()
+        return string
 
     def make_rec(self, record):
         """Parse and make utterance, words and morpheme structures.
 
         Args:
-          record (bytestring): Toolbox record.
+          record (str): Toolbox record.
 
         Returns:
           tuple: (utterance, words, morphemes)
         """
         utterance = {}
         warnings = []
-        tiers = self.tier_separator.split(record)
-        for tier in tiers:
-            # split into field marker and content
-            tokens = re.split(b'\\s+', tier, maxsplit=1)
-            # get original field marker name
-            orig_field_marker = tokens[0].decode()
-            # remove \\ before the field marker name
-            orig_field_marker = orig_field_marker.replace("\\", "")
+        # iter tiers of the record
+        for tier in self.get_tiers(record):
+            # get field marker and content of tier
+            orig_field_marker, content = self.get_tier(tier)
+            # clean the content
+            content = self.remove_redundant_whitespaces(content)
 
-            # check if content is missing
-            if len(tokens) <= 1:
-                content = ''
-            else:
-                # get content
-                content = tokens[1].decode()
-                # remove redundant whitespaces
-                content = re.sub('\\s+', ' ', content)
-                # remove leading/trailing whitespaces
-                content = content.strip()
-
-                # ignore metadata
-                if content.startswith('@'):
-                    return None, None, None
+            # ignore metadata
+            if content.startswith('@'):
+                return None, None, None
 
             if orig_field_marker in self.field_markers:
                 # map corpus-specific field-marker to standard field marker
