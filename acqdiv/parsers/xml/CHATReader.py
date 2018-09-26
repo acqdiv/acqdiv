@@ -528,7 +528,7 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
             return 1
 
     def get_uid(self):
-        return 'u' + str(self._uid)
+        return str(self._uid)
 
     def get_addressee(self):
         return self._dependent_tiers.get('add', '')
