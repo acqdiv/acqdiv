@@ -23,27 +23,9 @@ class TestCHATParser(unittest.TestCase):
         self.assertTrue(isinstance(actual_cleaner, CHATCleaner))
 
     def test_get_session_metadata(self):
-        """Test get_session_metadata with test.cha. (CHATParser)"""
-        session_str = (
-            '@UTF8\n'
-            '@Begin\n'
-            '@Languages:\tsme\n'
-            '@Date:\t12-SEP-1997\n'
-            '@Participants:\tMEM Mme_Manyili Grandmother , '
-            'CHI Hlobohang Target_Child\n'
-            '@ID:\tsme|Sesotho|MEM||female|||Grandmother|||\n'
-            '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||\n'
-            '@Birth of CHI:\t14-JAN-2006\n'
-            '@Birth of MEM:\t11-OCT-1974\n'
-            '@Media:\th2ab, audio\n'
-            '@Comment:\tall snd kana jmor cha ok Wakachi2002;\n'
-            '@Warning:\trecorded time: 1:00:00\n'
-            '@Comment:\tuses desu and V-masu\n'
-            '@Situation:\tAki and AMO preparing to look at book , '
-            '"Miichan no otsukai"\n'
-            '*MEM:\tke eng ? \x150_8551\x15\n%gls:\tke eng ?\n'
-            '@End')
-        self.parser.reader.read(io.StringIO(session_str))
+        """Test get_session_metadata with TestCHATParser.cha. (CHATParser)"""
+        with open('TestCHATParser.cha', 'r', encoding='utf8') as session:
+            self.parser.reader.read(session)
         actual_output = self.parser.get_session_metadata()
         desired_output = {
             'date': '1997-09-12',
@@ -53,26 +35,8 @@ class TestCHATParser(unittest.TestCase):
 
     def test_next_speaker(self):
         """Test next_speaker with test.cha. (CHATParser)"""
-        session_str = (
-            '@UTF8\n'
-            '@Begin\n'
-            '@Languages:\tsme\n'
-            '@Date:\t12-SEP-1997\n'
-            '@Participants:\tMEM Mme_Manyili Grandmother , '
-            'CHI Hlobohang Target_Child\n'
-            '@ID:\tsme|Sesotho|MEM||female|||Grandmother|||\n'
-            '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||\n'
-            '@Birth of CHI:\t14-JAN-2006\n'
-            '@Birth of MEM:\t11-OCT-1974\n'
-            '@Media:\th2ab, audio\n'
-            '@Comment:\tall snd kana jmor cha ok Wakachi2002;\n'
-            '@Warning:\trecorded time: 1:00:00\n'
-            '@Comment:\tuses desu and V-masu\n'
-            '@Situation:\tAki and AMO preparing to look at book , '
-            '"Miichan no otsukai"\n'
-            '*MEM:\tke eng ? \x150_8551\x15\n%gls:\tke eng ?\n'
-            '@End')
-        self.parser.reader.read(io.StringIO(session_str))
+        with open('TestCHATParser.cha', 'r', encoding='utf8') as session:
+            self.parser.reader.read(session)
         actual_output = list(self.parser.next_speaker())
         mem_dict = {
             'speaker_label': 'MEM',
