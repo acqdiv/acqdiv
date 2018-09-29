@@ -75,7 +75,6 @@ class CHATParser(CorpusParserInterface):
         while self.reader.load_next_record():
 
             source_id = self.get_source_id()
-            print(source_id)
             addressee = self.reader.get_addressee()
             translation = self.reader.get_translation()
             comment = self.reader.get_comments()
