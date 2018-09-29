@@ -1233,12 +1233,12 @@ class TestSesothoParser(unittest.TestCase):
 
     def test_get_reader(self):
         """Test get_reader. (Sesotho)"""
-        actual_reader = self.parser.get_reader()
+        actual_reader = SesothoParser.get_reader()
         self.assertTrue(isinstance(actual_reader, SesothoReader))
 
     def test_get_cleaner(self):
         """Test get_cleaner. (Sesotho)"""
-        actual_cleaner = self.parser.get_cleaner()
+        actual_cleaner = SesothoParser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, SesothoCleaner))
 
     def test_next_utterance_no_misalignments_single_word(self):
@@ -1564,12 +1564,12 @@ class TestTurkishParser(unittest.TestCase):
 
     def test_get_reader(self):
         """Test get_reader. (Sesotho)"""
-        actual_reader = self.parser.get_reader()
+        actual_reader = TurkishParser.get_reader()
         self.assertTrue(isinstance(actual_reader, TurkishReader))
 
     def test_get_cleaner(self):
         """Test get_cleaner. (Sesotho)"""
-        actual_cleaner = self.parser.get_cleaner()
+        actual_cleaner = TurkishParser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, TurkishCleaner))
 
     def test_next_utterance_no_misalignments_single_word_no_mor(self):
@@ -2063,12 +2063,12 @@ class TestYucatecParser(unittest.TestCase):
 
     def test_get_reader(self):
         """Test get_reader. (Yucatec)"""
-        actual_reader = self.parser.get_reader()
+        actual_reader = YucatecParser.get_reader()
         self.assertTrue(isinstance(actual_reader, YucatecReader))
 
     def test_get_cleaner(self):
         """Test get_cleaner. (Yucatec)"""
-        actual_cleaner = self.parser.get_cleaner()
+        actual_cleaner = YucatecParser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, YucatecCleaner))
 
     def test_next_utterance_no_misalignments_single_word_no_mor(self):
@@ -2129,12 +2129,12 @@ class TestNungonParser(unittest.TestCase):
 
     def test_get_reader(self):
         """Test get_reader. (Nungon)"""
-        actual_reader = self.parser.get_reader()
+        actual_reader = NungonParser.get_reader()
         self.assertTrue(isinstance(actual_reader, NungonReader))
 
     def test_get_cleaner(self):
         """Test get_cleaner. (Nungon)"""
-        actual_cleaner = self.parser.get_cleaner()
+        actual_cleaner = NungonParser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, NungonCleaner))
 
 
