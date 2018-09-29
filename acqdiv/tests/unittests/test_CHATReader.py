@@ -722,9 +722,9 @@ class TestACQDIVCHATReaderMetadata(unittest.TestCase):
         desired_output = '12-SEP-1997'
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_session_filename(self):
-        """Test get_session_filename for sessions name of 'test.cha'."""
-        actual_output = self.reader.get_session_filename()
+    def test_get_session_media_filename(self):
+        """Test get_session_media_filename for sessions name of 'test.cha'."""
+        actual_output = self.reader.get_session_media_filename()
         desired_output = 'media_filename'
         self.assertEqual(actual_output, desired_output)
 
@@ -809,7 +809,7 @@ class TestACQDIVCHATReaderRecord(unittest.TestCase):
     def test_get_uid(self):
         """Test get_uid."""
         actual_output = self.reader.get_uid()
-        desired_output = 'u0'
+        desired_output = '0'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_addressee(self):
