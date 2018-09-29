@@ -1724,7 +1724,7 @@ class TestInuktitutReader(unittest.TestCase):
     def test_get_actual_alternative_single_alternative(self):
         """Test get_actual_alternative with 1 alternative."""
         utterance = 'nuutuinnaq [=? nauk tainna]'
-        actual_output = self.reader.get_actual_alternative(utterance)
+        actual_output = InuktitutReader.get_actual_alternative(utterance)
         desired_output = 'nauk tainna'
         self.assertEqual(actual_output, desired_output)
 
@@ -1732,14 +1732,14 @@ class TestInuktitutReader(unittest.TestCase):
         """Test get_actual_alternative with 2 alternatives."""
         utterance = ('nuutuinnaq [=? nauk tainna] hela nuutuinnaq '
                      '[=? nauk tainna] .')
-        actual_output = self.reader.get_actual_alternative(utterance)
+        actual_output = InuktitutReader.get_actual_alternative(utterance)
         desired_output = 'nauk tainna hela nauk tainna .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_actual_alternative_no_alternatives(self):
         """Test get_actual_alternative with 2 alternatives."""
         utterance = 'nuutuinnaq hela nuutuinnaq .'
-        actual_output = self.reader.get_actual_alternative(utterance)
+        actual_output = InuktitutReader.get_actual_alternative(utterance)
         desired_output = 'nuutuinnaq hela nuutuinnaq .'
         self.assertEqual(actual_output, desired_output)
 
@@ -1755,7 +1755,7 @@ class TestInuktitutReader(unittest.TestCase):
     def test_get_target_alternative_single_alternative(self):
         """Test get_target_alternative with 1 alternative."""
         utterance = 'nuutuinnaq [=? nauk tainna]'
-        actual_output = self.reader.get_target_alternative(utterance)
+        actual_output = InuktitutReader.get_target_alternative(utterance)
         desired_output = 'nuutuinnaq'
         self.assertEqual(actual_output, desired_output)
 
@@ -1763,7 +1763,7 @@ class TestInuktitutReader(unittest.TestCase):
         """Test get_target_alternative with 2 alternatives."""
         utterance = ('nuutuinnaq [=? nauk tainna] hela nuutuinnaq '
                      '[=? nauk tainna] .')
-        actual_output = self.reader.get_target_alternative(utterance)
+        actual_output = InuktitutReader.get_target_alternative(utterance)
         desired_output = 'nuutuinnaq hela nuutuinnaq .'
         self.assertEqual(actual_output, desired_output)
 
@@ -1886,14 +1886,14 @@ class TestInuktitutReader(unittest.TestCase):
     def test_iter_morphemes_standard_case(self):
         """Test iter_morphemes with a morph in the expected format."""
         morph_word = 'WH|nani^whereat'
-        actual_output = list(self.reader.iter_morphemes(morph_word))
+        actual_output = list(InuktitutReader.iter_morphemes(morph_word))
         desired_output = [('WH', 'nani', 'whereat')]
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_morphemes_multiple_morphemes(self):
         """Test iter_morphemes with 3 morphe-words."""
         morph_words = 'VR|malik^follow+VV|liq^POL+VI|gitsi^IMP_2pS'
-        actual_output = list(self.reader.iter_morphemes(morph_words))
+        actual_output = list(InuktitutReader.iter_morphemes(morph_words))
         desired_output = [('VR', 'malik', 'follow'),
                           ('VV', 'liq', 'POL'),
                           ('VI', 'gitsi', 'IMP_2pS')]
@@ -1902,14 +1902,14 @@ class TestInuktitutReader(unittest.TestCase):
     def test_iter_morphemes_no_match(self):
         """Test iter_morphemes with a morpheme that yields no match."""
         morph_word = 'WH|nani|whereat'
-        actual_output = list(self.reader.iter_morphemes(morph_word))
+        actual_output = list(InuktitutReader.iter_morphemes(morph_word))
         desired_output = [('', '', '')]
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_morphemes_empty_string(self):
         """Test iter_morphemes with an empty string."""
         morph_word = ''
-        actual_output = list(self.reader.iter_morphemes(morph_word))
+        actual_output = list(InuktitutReader.iter_morphemes(morph_word))
         desired_output = [('', '', '')]
         self.assertEqual(actual_output, desired_output)
 
@@ -1918,7 +1918,7 @@ class TestInuktitutReader(unittest.TestCase):
     def test_get_segments(self):
         """Test get_segments with a standard segment word."""
         xmor = 'VN|paaq^remove+VI|got^IMP_2sS'
-        actual_output = self.reader.get_segments(xmor)
+        actual_output = InuktitutReader.get_segments(xmor)
         desired_output = ['paaq', 'got']
         self.assertEqual(actual_output, desired_output)
 
@@ -1927,7 +1927,7 @@ class TestInuktitutReader(unittest.TestCase):
     def test_get_glosses(self):
         """Test get_glosses with a standard gloss word."""
         xmor = 'VN|paaq^remove+VI|got^IMP_2sS'
-        actual_output = self.reader.get_glosses(xmor)
+        actual_output = InuktitutReader.get_glosses(xmor)
         desired_output = ['remove', 'IMP_2sS']
         self.assertEqual(actual_output, desired_output)
 
@@ -1936,7 +1936,7 @@ class TestInuktitutReader(unittest.TestCase):
     def test_get_poses(self):
         """Test get_poses with a standard pos word."""
         xmor = 'VN|paaq^remove+VI|got^IMP_2sS'
-        actual_output = self.reader.get_poses(xmor)
+        actual_output = InuktitutReader.get_poses(xmor)
         desired_output = ['VN', 'VI']
         self.assertEqual(actual_output, desired_output)
 
@@ -1945,14 +1945,14 @@ class TestInuktitutReader(unittest.TestCase):
     def test_get_morpheme_language_inuktitut(self):
         """Test get_morpheme_language with a morpheme in Inuktitut."""
         seg, gloss, pos = 'ba', '1sg', 'V'
-        actual_output = self.reader.get_morpheme_language(seg, gloss, pos)
+        actual_output = InuktitutReader.get_morpheme_language(seg, gloss, pos)
         desired_output = 'Inuktitut'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_morpheme_language_english(self):
         """Test get_morpheme_language with a morpheme in Inuktitut."""
         seg, gloss, pos = 'ba@e', '1sg', 'V'
-        actual_output = self.reader.get_morpheme_language(seg, gloss, pos)
+        actual_output = InuktitutReader.get_morpheme_language(seg, gloss, pos)
         desired_output = 'English'
         self.assertEqual(actual_output, desired_output)
 
@@ -2265,14 +2265,14 @@ class TestSesothoReader(unittest.TestCase):
     def test_get_segments_standard_case(self):
         """Test get_segments with hyphen separated segment word."""
         seg_word = 'prefix-stem-affix'
-        actual_output = self.reader.get_segments(seg_word)
+        actual_output = SesothoReader.get_segments(seg_word)
         desired_output = ['prefix', 'stem', 'affix']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_segments_empty_string(self):
         """Test get_segments with an empty string."""
         seg_word = ''
-        actual_output = self.reader.get_segments(seg_word)
+        actual_output = SesothoReader.get_segments(seg_word)
         desired_output = ['']
         self.assertEqual(actual_output, desired_output)
 
@@ -2443,28 +2443,28 @@ class TestCreeReader(unittest.TestCase):
     def test_get_morphemes_one_tilde(self):
         """Test get_morphemes with morpheme-word containing one tilde."""
         morph_word = 'first~second'
-        actual_output = self.reader.get_morphemes(morph_word)
+        actual_output = CreeReader.get_morphemes(morph_word)
         desired_output = ['first', 'second']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_morphemes_multiple_tildes(self):
         """Test get_morphemes with morpheme-word containing 3 tildes."""
         morph_word = 'first~second~third~fourth'
-        actual_output = self.reader.get_morphemes(morph_word)
+        actual_output = CreeReader.get_morphemes(morph_word)
         desired_output = ['first', 'second', 'third', 'fourth']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_morphemes_no_tilde(self):
         """Test get_morphemes with morpheme-word containing no tilde."""
         morph_word = 'first'
-        actual_output = self.reader.get_morphemes(morph_word)
+        actual_output = CreeReader.get_morphemes(morph_word)
         desired_output = ['first']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_morphemes_empty_string(self):
         """Test get_morphemes with morpheme-word containing no tilde."""
         morph_word = ''
-        actual_output = self.reader.get_morphemes(morph_word)
+        actual_output = CreeReader.get_morphemes(morph_word)
         desired_output = []
         self.assertEqual(actual_output, desired_output)
 
@@ -2474,7 +2474,7 @@ class TestCreeReader(unittest.TestCase):
         Just one test because the method only calls get_morphemes.
         """
         seg_word = 'first'
-        actual_output = self.reader.get_segments(seg_word)
+        actual_output = CreeReader.get_segments(seg_word)
         desired_output = ['first']
         self.assertEqual(actual_output, desired_output)
 
@@ -2484,7 +2484,7 @@ class TestCreeReader(unittest.TestCase):
         Just one test because the method only calls get_morphemes.
         """
         seg_word = 'first~second'
-        actual_output = self.reader.get_glosses(seg_word)
+        actual_output = CreeReader.get_glosses(seg_word)
         desired_output = ['first', 'second']
         self.assertEqual(actual_output, desired_output)
 
@@ -2494,7 +2494,7 @@ class TestCreeReader(unittest.TestCase):
         Just one test because the method only calls get_morphemes.
         """
         seg_word = 'first~second~third'
-        actual_output = self.reader.get_glosses(seg_word)
+        actual_output = CreeReader.get_glosses(seg_word)
         desired_output = ['first', 'second', 'third']
         self.assertEqual(actual_output, desired_output)
 
@@ -2503,7 +2503,7 @@ class TestCreeReader(unittest.TestCase):
         seg = 'hem'
         gloss = '1sg'
         pos = 'V'
-        actual_output = self.reader.get_morpheme_language(seg, gloss, pos)
+        actual_output = CreeReader.get_morpheme_language(seg, gloss, pos)
         desired_output = 'Cree'
         self.assertEqual(actual_output, desired_output)
 
@@ -2512,7 +2512,7 @@ class TestCreeReader(unittest.TestCase):
         seg = 'fly'
         gloss = 'Eng'
         pos = 'V'
-        actual_output = self.reader.get_morpheme_language(seg, gloss, pos)
+        actual_output = CreeReader.get_morpheme_language(seg, gloss, pos)
         desired_output = 'English'
         self.assertEqual(actual_output, desired_output)
 
