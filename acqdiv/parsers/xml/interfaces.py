@@ -14,7 +14,7 @@ class CorpusReaderInterface:
         """
         raise NotImplementedError
 
-    def get_session_filename(self):
+    def get_session_media_filename(self):
         """Get the the media file name of the session.
 
         Returns: str

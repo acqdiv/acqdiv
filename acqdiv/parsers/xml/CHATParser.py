@@ -34,7 +34,7 @@ class CHATParser(CorpusParserInterface):
             dict: Date and media file name of session.
         """
         date = self.cleaner.clean_date(self.reader.get_session_date())
-        filename = self.reader.get_session_filename()
+        filename = self.reader.get_session_media_filename()
 
         session_dict = {
             'date': date if date else None,
@@ -75,7 +75,7 @@ class CHATParser(CorpusParserInterface):
         while self.reader.load_next_record():
 
             source_id = self.get_source_id()
-
+            print(source_id)
             addressee = self.reader.get_addressee()
             translation = self.reader.get_translation()
             comment = self.reader.get_comments()
@@ -258,7 +258,7 @@ class CHATParser(CorpusParserInterface):
 
     def get_source_id(self):
         """Get the source id of the current utterance."""
-        fname = self.reader.get_session_filename()
+        fname = self.session_path.split('/')[-1]
         uid = self.reader.get_uid()
         if fname:
             return '{}_{}'.format(fname, uid)
