@@ -75,6 +75,7 @@ class CHATParser(CorpusParserInterface):
         while self.reader.load_next_record():
 
             source_id = self.get_source_id()
+            print(source_id)
             addressee = self.reader.get_addressee()
             translation = self.reader.get_translation()
             comment = self.reader.get_comments()
@@ -258,9 +259,10 @@ class CHATParser(CorpusParserInterface):
     def get_source_id(self):
         """Get the source id of the current utterance."""
         fname = self.session_path.split('/')[-1]
+        fname_no_ext = fname.split('.')[0]
         uid = self.reader.get_uid()
         if fname:
-            return '{}_{}'.format(fname, uid)
+            return '{}_{}'.format(fname_no_ext, uid)
         return uid
 
 
