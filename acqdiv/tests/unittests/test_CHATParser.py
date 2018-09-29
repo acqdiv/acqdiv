@@ -9,8 +9,7 @@ class TestCHATParser(unittest.TestCase):
     """Class to test the CHATParser."""
 
     def setUp(self):
-        self.session_file_path = './test_CHATParser.cha'
-        self.parser = CHATParser(self.session_file_path)
+        self.parser = CHATParser('__init__.py')
         self.maxDiff = None
 
     def test_get_reader(self):
@@ -105,8 +104,7 @@ class TestInuktitutParser(unittest.TestCase):
     """
 
     def setUp(self):
-        self.session_file_path = './test_CHATParser.cha'
-        self.parser = InuktitutParser(self.session_file_path)
+        self.parser = InuktitutParser('__init__.py')
         self.maxDiff = None
 
     def test_get_reader(self):
@@ -128,7 +126,7 @@ class TestInuktitutParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'MAE',
             'addressee': 'RO',
             'utterance_raw': 'Allaigutama  .',
@@ -179,7 +177,7 @@ class TestInuktitutParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'AUN',
             'addressee': 'WOL',
             'utterance_raw': 'ana nitu  ?',
@@ -253,7 +251,7 @@ class TestInuktitutParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'AUN',
             'addressee': 'WOL',
             'utterance_raw': 'ana  ?',
@@ -320,7 +318,7 @@ class TestInuktitutParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'AUN',
             'addressee': 'WOL',
             'utterance_raw': 'ana nitu  ?',
@@ -394,7 +392,7 @@ class TestInuktitutParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'AUN',
             'addressee': 'WOL',
             'utterance_raw': 'ana nitu  ?',
@@ -468,7 +466,7 @@ class TestInuktitutParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'AUN',
             'addressee': 'WOL',
             'utterance_raw': 'ana nitu  ?',
@@ -539,8 +537,7 @@ class TestJapaneseMiiProParser(unittest.TestCase):
     """Class to test the JapaneseMiiProParser."""
 
     def setUp(self):
-        self.session_file_path = './test_CHATParser.cha'
-        self.parser = JapaneseMiiProParser(self.session_file_path)
+        self.parser = JapaneseMiiProParser('__init__.py')
         self.maxDiff = None
 
     def test_get_reader(self):
@@ -560,7 +557,7 @@ class TestJapaneseMiiProParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'MOT',
             'addressee': None,
             'utterance_raw': 'nani ?',
@@ -605,7 +602,7 @@ class TestJapaneseMiiProParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'MOT',
             'addressee': None,
             'utterance_raw': 'Honochan doozo .',
@@ -671,7 +668,7 @@ class TestJapaneseMiiProParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'MOT',
             'addressee': None,
             'utterance_raw': 'doozo .',
@@ -730,7 +727,7 @@ class TestJapaneseMiiProParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'MOT',
             'addressee': None,
             'utterance_raw': 'Honochan doozo .',
@@ -796,7 +793,7 @@ class TestJapaneseMiiProParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'MOT',
             'addressee': None,
             'utterance_raw': 'Honochan doozo .',
@@ -861,8 +858,7 @@ class TestCreeParser(unittest.TestCase):
     """Class to test the CreeParser."""
 
     def setUp(self):
-        self.session_file_path = './test_CHATParser.cha'
-        self.parser = CreeParser(self.session_file_path)
+        self.parser = CreeParser('__init__.py')
         self.maxDiff = None
 
     def test_get_reader(self):
@@ -882,7 +878,7 @@ class TestCreeParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'CHI',
             'addressee': None,
             'utterance_raw': 'chair .',
@@ -920,7 +916,7 @@ class TestCreeParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'CHI',
             'addressee': None,
             'utterance_raw': '‹wâu nîyi› .',
@@ -982,7 +978,7 @@ class TestCreeParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'CHI',
             'addressee': None,
             'utterance_raw': '‹wâu› .',
@@ -1043,7 +1039,7 @@ class TestCreeParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'CHI',
             'addressee': None,
             'utterance_raw': '‹wâu nîyi› .',
@@ -1104,7 +1100,7 @@ class TestCreeParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'CHI',
             'addressee': None,
             'utterance_raw': '‹wâu nîyi› .',
@@ -1166,7 +1162,7 @@ class TestCreeParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'CHI',
             'addressee': None,
             'utterance_raw': '‹wâu nîyi› .',
@@ -1232,8 +1228,7 @@ class TestSesothoParser(unittest.TestCase):
     """
 
     def setUp(self):
-        self.session_file_path = './test_CHATParser.cha'
-        self.parser = SesothoParser(self.session_file_path)
+        self.parser = SesothoParser('__init__.py')
         self.maxDiff = None
 
     def test_get_reader(self):
@@ -1256,7 +1251,7 @@ class TestSesothoParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'HLE',
             'addressee': None,
             'utterance_raw': 'Tsebo .',
@@ -1308,7 +1303,7 @@ class TestSesothoParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'MHL',
             'addressee': None,
             'utterance_raw': 'e tsamaya (uye) (ho)dula pela ausi Mamello .',
@@ -1449,7 +1444,7 @@ class TestSesothoParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'NHL',
             'addressee': None,
             'utterance_raw': 'tsamaya .',
@@ -1508,7 +1503,7 @@ class TestSesothoParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'NHM',
             'addressee': None,
             'utterance_raw': 'e tsamaya .',
@@ -1564,8 +1559,7 @@ class TestSesothoParser(unittest.TestCase):
 class TestTurkishParser(unittest.TestCase):
 
     def setUp(self):
-        self.session_file_path = './test_CHATParser.cha'
-        self.parser = TurkishParser(self.session_file_path)
+        self.parser = TurkishParser('__init__.py')
         self.maxDiff = None
 
     def test_get_reader(self):
@@ -1587,7 +1581,7 @@ class TestTurkishParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'GRA',
             'addressee': 'MOT',
             'utterance_raw': 'ne ?',
@@ -1625,7 +1619,7 @@ class TestTurkishParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'BAB',
             'addressee': 'CHI',
             'utterance_raw': 'inmekmi istiyo(r)sun ?',
@@ -1703,7 +1697,7 @@ class TestTurkishParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'BAB',
             'addressee': 'CHI',
             'utterance_raw': 'inmekmi ?',
@@ -1779,7 +1773,7 @@ class TestTurkishParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'BAB',
             'addressee': 'CHI',
             'utterance_raw': 'inmekmi istiyo(r)sun ?',
@@ -1840,7 +1834,7 @@ class TestTurkishParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'BAB',
             'addressee': 'CHI',
             'utterance_raw': 'inmekmi istiyo(r)sun ?',
@@ -1918,7 +1912,7 @@ class TestTurkishParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'BAB',
             'addressee': 'CHI',
             'utterance_raw': 'inmekmi istiyo(r)sun ?',
@@ -1996,7 +1990,7 @@ class TestTurkishParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'BAB',
             'addressee': 'CHI',
             'utterance_raw': 'inmekmi istiyo(r)sun ?',
@@ -2064,8 +2058,7 @@ class TestTurkishParser(unittest.TestCase):
 class TestYucatecParser(unittest.TestCase):
 
     def setUp(self):
-        self.session_file_path = './test_CHATParser.cha'
-        self.parser = YucatecParser(self.session_file_path)
+        self.parser = YucatecParser('__init__.py')
         self.maxDiff = None
 
     def test_get_reader(self):
@@ -2088,7 +2081,7 @@ class TestYucatecParser(unittest.TestCase):
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
         utt_dict = {
-            'source_id': 'u0',
+            'source_id': '__init___0',
             'speaker_label': 'LOR',
             'addressee': None,
             'utterance_raw': 'baʼax .',
@@ -2131,8 +2124,7 @@ class TestYucatecParser(unittest.TestCase):
 class TestNungonParser(unittest.TestCase):
 
     def setUp(self):
-        self.session_file_path = './test_CHATParser.cha'
-        self.parser = NungonParser(self.session_file_path)
+        self.parser = NungonParser('__init__.py')
         self.maxDiff = None
 
     def test_get_reader(self):
