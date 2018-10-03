@@ -191,7 +191,8 @@ class ToolboxReader(object):
     def get_utterance_raw(cls, rec_dict):
         return rec_dict.get('text', '')
 
-    def get_sentence_type(self, rec_dict):
+    @classmethod
+    def get_sentence_type(cls, rec_dict):
         """Get utterance type (aka sentence type) of an utterance.
 
         Possible values:
@@ -205,7 +206,7 @@ class ToolboxReader(object):
         Returns:
             str: The sentence type.
         """
-        utterance_raw = self.get_utterance_raw(rec_dict)
+        utterance_raw = cls.get_utterance_raw(rec_dict)
         match_punctuation = re.search('([.?!])$', utterance_raw)
         if match_punctuation is not None:
             if match_punctuation.group(1) == '.':
@@ -217,7 +218,8 @@ class ToolboxReader(object):
 
         return ''
 
-    def get_childdirected(self, rec_dict):
+    @classmethod
+    def get_childdirected(cls, rec_dict):
         """Not coded per default.
 
         Args:
@@ -225,15 +227,18 @@ class ToolboxReader(object):
         """
         return None
 
-    def get_translation(self, rec_dict):
+    @classmethod
+    def get_translation(cls, rec_dict):
         return rec_dict.get('eng', '')
 
-    def get_comment(self, rec_dict):
+    @classmethod
+    def get_comment(cls, rec_dict):
         return rec_dict.get('comment', '')
 
-    def get_warning(self):
-        if self.warnings:
-            return "Empty value in the input for: " + ", ".join(self.warnings)
+    @classmethod
+    def get_warning(cls):
+        if cls.warnings:
+            return "Empty value in the input for: " + ", ".join(cls.warnings)
         else:
             return ''
 
@@ -278,22 +283,46 @@ class ToolboxReader(object):
 
         if not self.is_record(rec_dict):
             return None, None, None
+        else:
+            utterance = self.get_utterance(rec_dict)
+            words = self.get_words(utterance['utterance'])
+            morphemes = self.get_all_morphemes(rec_dict)
 
+            self.add_word_language(words, morphemes)
+            self.fix_misalignments(words, morphemes)
+
+            return utterance, words, morphemes
+
+    @classmethod
+    def get_utterance(cls, rec_dict):
+        """Get the utterance dictionary.
+
+        Extracts all fields from the record dictionary relevant for the DB.
+
+        Args:
+            rec_dict (dict): The record dictionary.
+
+        Returns:
+            dict: The utterance dictionary.
+        """
         # get utterance data
-        speaker_label = self.get_speaker_label(rec_dict)
-        addressee = self.get_addressee(rec_dict)
-        utterance_raw = self.get_utterance_raw(rec_dict)
-        utterance_clean = self.clean_utterance(utterance_raw)
-        sentence_type = self.get_sentence_type(rec_dict)
-        child_directed = self.get_childdirected(rec_dict)
-        source_id = self.get_source_id(rec_dict)
-        start_raw = self.get_start_raw(rec_dict)
-        end_raw = self.get_end_raw(rec_dict)
-        translation = self.get_translation(rec_dict)
-        comment = self.get_comment(rec_dict)
+        speaker_label = cls.get_speaker_label(rec_dict)
+        addressee = cls.get_addressee(rec_dict)
+        utterance_raw = cls.get_utterance_raw(rec_dict)
+        utterance_clean = cls.clean_utterance(utterance_raw)
+        sentence_type = cls.get_sentence_type(rec_dict)
+        child_directed = cls.get_childdirected(rec_dict)
+        source_id = cls.get_source_id(rec_dict)
+        start_raw = cls.get_start_raw(rec_dict)
+        end_raw = cls.get_end_raw(rec_dict)
+        translation = cls.get_translation(rec_dict)
+        comment = cls.get_comment(rec_dict)
+        morpheme = cls.get_seg_tier(rec_dict)
+        gloss_raw = cls.get_gloss_tier(rec_dict)
+        pos_raw = cls.get_pos_tier(rec_dict)
 
-        self.add_utterance_warnings(utterance_raw)
-        warning = self.get_warning()
+        cls.add_utterance_warnings(utterance_raw)
+        warning = cls.get_warning()
 
         utterance = {
             'speaker_label': speaker_label if speaker_label else None,
@@ -307,18 +336,16 @@ class ToolboxReader(object):
             'end_raw': end_raw if end_raw else None,
             'translation': translation if translation else None,
             'comment': comment if comment else None,
-            'warning': warning if warning else None
+            'warning': warning if warning else None,
+            'morpheme': morpheme if morpheme else None,
+            'gloss_raw': gloss_raw if gloss_raw else None,
+            'pos_raw': pos_raw if pos_raw else None
         }
 
-        words = self.get_words(utterance_clean)
-        morphemes = self.get_all_morphemes(rec_dict)
+        return utterance
 
-        self.add_word_language(words, morphemes)
-        self.fix_misalignments(words, morphemes)
-
-        return utterance, words, morphemes
-
-    def add_utterance_warnings(self, utterance):
+    @classmethod
+    def add_utterance_warnings(cls, utterance):
         """No warnings per default.
 
         Args:

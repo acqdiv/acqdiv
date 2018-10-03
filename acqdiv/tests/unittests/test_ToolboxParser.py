@@ -154,6 +154,7 @@ class TestIndonesianParser(unittest.TestCase):
             'warning': None,
             'morpheme': 'w1pfxseg- w1stemseg -w1sfxseg w2stemseg',
             'gloss_raw': 'w1pfxgloss- w1stemgloss -w1sfxgloss w2stemgloss',
+            'pos_raw': None,
             'translation': 'This is the translation.'}
 
         words = [

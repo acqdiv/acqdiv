@@ -27,7 +27,8 @@ class ChintangReader(ToolboxReader):
     def get_lang_tier(cls, rec_dict):
         return rec_dict.get('lg', '')
 
-    def get_childdirected(self, rec_dict):
+    @classmethod
+    def get_childdirected(cls, rec_dict):
         for tier in ['TOS', 'tos']:
             if tier in rec_dict:
                 tos_raw = rec_dict[tier]
@@ -43,7 +44,16 @@ class ChintangReader(ToolboxReader):
     def get_id_tier(cls, rec_dict):
         return rec_dict.get('id', '')
 
-    def get_sentence_type(self, rec_dict):
+    @classmethod
+    def get_utterance(cls, rec_dict):
+        """Get utterance with lemma IDs."""
+        utterance = super().get_utterance(rec_dict)
+        lemma_id = cls.get_id_tier(rec_dict)
+        utterance['lemma_id'] = lemma_id
+        return utterance
+
+    @classmethod
+    def get_sentence_type(cls, rec_dict):
         # https://github.com/uzling/acqdiv/issues/253
         # \eng: . = default, ? = question, ! = exclamation
         # \nep: । = default, rest identical.

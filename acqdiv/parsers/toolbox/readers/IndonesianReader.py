@@ -73,8 +73,9 @@ class IndonesianReader(ToolboxReader):
 
         return result
 
-    def get_sentence_type(self, rec_dict):
-        utterance_raw = self.get_utterance_raw(rec_dict)
+    @classmethod
+    def get_sentence_type(cls, rec_dict):
+        utterance_raw = cls.get_utterance_raw(rec_dict)
         if re.search('\.', utterance_raw):
             return 'default'
         elif re.search('\?\s*$', utterance_raw):
@@ -84,7 +85,8 @@ class IndonesianReader(ToolboxReader):
         else:
             return ''
 
-    def add_utterance_warnings(self, utterance):
+    @classmethod
+    def add_utterance_warnings(cls, utterance):
         # Insecure transcription [?], add warning, delete marker
         # cf. https://github.com/uzling/acqdiv/blob/master/
         # extraction/parsing/corpus_parser_functions.py#L1605-1610
@@ -92,9 +94,10 @@ class IndonesianReader(ToolboxReader):
             # TODO: what's that used for?
             # utterance = re.sub('\[\?\]', '', utterance)
             transcription_warning = 'transcription insecure'
-            self.warnings.append(transcription_warning)
+            cls.warnings.append(transcription_warning)
 
-    def clean_utterance(self, utterance):
+    @classmethod
+    def clean_utterance(cls, utterance):
         utterance = super().clean_utterance(utterance)
 
         if utterance is not None:

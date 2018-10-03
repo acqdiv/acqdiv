@@ -31,14 +31,15 @@ class RussianReader(ToolboxReader):
     def get_morpheme_type():
         return 'actual'
 
-    def add_utterance_warnings(self, utterance):
+    @classmethod
+    def add_utterance_warnings(cls, utterance):
         if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
             for target in re.findall('\[=\?\s+[^\]]+\]', utterance):
                 target_clean = re.sub('["\[\]?=]', '', target)
                 transcription_warning = (
                     'transcription insecure (intended '
                     'form might have been "' + target_clean + '")')
-                self.warnings.append(transcription_warning)
+                cls.warnings.append(transcription_warning)
 
     def make_rec(self, record):
         utterance, words, morphemes = super().make_rec(record)
@@ -47,7 +48,8 @@ class RussianReader(ToolboxReader):
 
         return utterance, words, morphemes
 
-    def clean_utterance(self, utterance):
+    @classmethod
+    def clean_utterance(cls, utterance):
         utterance = super().clean_utterance(utterance)
 
         # TODO: incorporate Russian \pho and \text tiers
