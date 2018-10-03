@@ -27,28 +27,18 @@ def memorymapped(path, access=mmap.ACCESS_READ):
 class ToolboxReader(object):
     """Toolbox Standard Format text file as iterable over records."""
 
-    _separator = re.compile(b'\r?\n\r?\n(\r?\n)')
-    _record_marker = re.compile(br'\\ref')
-    _word_boundary = re.compile('(?<![\-\s])\s+(?![\-\s])')
     warnings = []
     language = 'Undefined'
 
-    def __init__(self, config, file_path):
-        """ Initializes a Toolbox file object
+    def __init__(self, file_path):
+        """Initializes a Toolbox file object.
 
         Args:
-            config (CorpusConfigParser): The corpus config file.
             file_path (str): The path of the session file.
         """
-        self.config = config
         self.path = file_path
         # logging.basicConfig(filename='toolbox.log', level=logging.INFO)
         self.logger = logging.getLogger('pipeline' + __name__)
-
-        # get database column names
-        self.field_markers = []
-        for k, v in self.config['record_tiers'].items():
-            self.field_markers.append(k)
 
     def __iter__(self):
         """Yield utterance, words, morphemes a session transcript file.
@@ -59,7 +49,7 @@ class ToolboxReader(object):
 
         - get_sentence_type: Extract the sentence type.
         - clean_utterance: Clean up the utterance.
-        - get_warnings: Get warnings like "transcription insecure".
+        - add_utterance_warnings: Get warnings like "transcription insecure".
         - get_words: Extract the words in an utterance for the words table.
         - get_morphemes: Extract the morphemes in a word for the morphemes
                          table.
@@ -78,7 +68,8 @@ class ToolboxReader(object):
             for record in self.iter_records(f):
                 yield self.make_rec(record)
 
-    def iter_records(self, toolbox_file):
+    @staticmethod
+    def iter_records(toolbox_file):
         """Iter the records of a toolbox file.
 
         Args:
@@ -87,15 +78,17 @@ class ToolboxReader(object):
         Yields:
             str: The record.
         """
+        _record_marker = re.compile(br'\\ref')
+
         with contextlib.closing(mmap.mmap(toolbox_file.fileno(),
                                           0, access=mmap.ACCESS_READ)) as data:
-            ma = self._record_marker.search(data)
+            ma = _record_marker.search(data)
             # Skip the first rows that contain metadata information:
             # https://github.com/uzling/acqdiv/issues/154
             # TODO: what's that used for?
             # header = data[:ma.start()].decode()
             pos = ma.start()
-            for ma in self._record_marker.finditer(data, ma.end()):
+            for ma in _record_marker.finditer(data, ma.end()):
                 yield data[pos:ma.start()].decode()
                 pos = ma.start()
 
@@ -104,7 +97,8 @@ class ToolboxReader(object):
             else:
                 yield data[pos:].decode()
 
-    def get_tiers(self, record):
+    @staticmethod
+    def get_tiers(record):
         """Return tiers of the record.
 
         Args:
@@ -115,7 +109,8 @@ class ToolboxReader(object):
         """
         return record.split('\n')
 
-    def get_tier(self, tier):
+    @staticmethod
+    def get_tier(tier):
         """Return field marker and content.
 
         Args:
@@ -139,11 +134,134 @@ class ToolboxReader(object):
 
         return field_marker, content
 
-    def remove_redundant_whitespaces(self, string):
+    @staticmethod
+    def remove_redundant_whitespaces(string):
         """Remove redundant whitespaces."""
         string = re.sub(r'\s+', ' ', string)
         string = string.strip()
         return string
+
+    @classmethod
+    def get_record_dict(cls, record):
+        """Get the record dictionary.
+
+        Metadata is ignored and returned as an empty dictionary.
+
+        Args:
+            record (str): Toolbox record.
+
+        Returns:
+            dict: Key and content of tiers.
+        """
+        rec_dict = {}
+
+        # iter tiers of the record
+        for tier in cls.get_tiers(record):
+            # get field marker and content of tier
+            field_marker, content = cls.get_tier(tier)
+            # clean the content
+            content = cls.remove_redundant_whitespaces(content)
+
+            # add content to dictionary
+            rec_dict[field_marker] = content
+
+        return rec_dict
+
+    @classmethod
+    def get_source_id(cls, rec_dict):
+        return rec_dict.get('ref', '')
+
+    @classmethod
+    def get_speaker_label(cls, rec_dict):
+        return rec_dict.get('ELANParticipant', '')
+
+    @classmethod
+    def get_addressee(cls, rec_dict):
+        return rec_dict.get('add', '')
+
+    @classmethod
+    def get_start_raw(cls, rec_dict):
+        return rec_dict.get('ELANBegin', '')
+
+    @classmethod
+    def get_end_raw(cls, rec_dict):
+        return rec_dict.get('ELANEnd', '')
+
+    @classmethod
+    def get_utterance_raw(cls, rec_dict):
+        return rec_dict.get('text', '')
+
+    def get_sentence_type(self, rec_dict):
+        """Get utterance type (aka sentence type) of an utterance.
+
+        Possible values:
+            - default (.)
+            - question (?)
+            - imperative or exclamation (!)
+
+        Args:
+            rec_dict (dict): The record.
+
+        Returns:
+            str: The sentence type.
+        """
+        if 'utterance_raw' in rec_dict:
+            utterance_raw = rec_dict['utterance_raw']
+            match_punctuation = re.search('([.?!])$', utterance_raw)
+            if match_punctuation is not None:
+                if match_punctuation.group(1) == '.':
+                    return 'default'
+                elif match_punctuation.group(1) == '?':
+                    return 'question'
+                elif match_punctuation.group(1) == '!':
+                    return 'imperative'
+
+        return ''
+
+    def get_childdirected(self, rec_dict):
+        """Not coded per default.
+
+        Args:
+            rec_dict (dict): The record.
+        """
+        return None
+
+    def get_translation(self, rec_dict):
+        return rec_dict.get('eng', '')
+
+    def get_comment(self, rec_dict):
+        return rec_dict.get('comment', '')
+
+    def get_warning(self):
+        return "Empty value in the input for: " + ", ".join(self.warnings)
+
+    @classmethod
+    def add_word_language(cls, words, morphemes):
+        for i in range(len(words)):
+            try:
+                words[i]['word_language'] = \
+                    morphemes[i][0]['morpheme_language']
+            except IndexError:
+                break
+
+    @classmethod
+    def fix_misalignments(cls, words, morphemes):
+        """Fix words less than morphemes misalignments."""
+        if len(morphemes) - len(words) > 0:
+            misalignment = len(morphemes) - len(words)
+            for i in range(0, misalignment):
+                words.append({})
+
+    @classmethod
+    def is_record(cls, rec_dict):
+        """Is the record really a record or just metadata?"""
+        for tier in rec_dict:
+            content = rec_dict[tier]
+
+            if content.startswith('@'):
+                return False
+
+        return True
 
     def make_rec(self, record):
         """Parse and make utterance, words and morpheme structures.
@@ -154,126 +272,57 @@ class ToolboxReader(object):
         Returns:
           tuple: (utterance, words, morphemes)
         """
-        utterance = {}
-        warnings = []
-        # iter tiers of the record
-        for tier in self.get_tiers(record):
-            # get field marker and content of tier
-            orig_field_marker, content = self.get_tier(tier)
-            # clean the content
-            content = self.remove_redundant_whitespaces(content)
+        rec_dict = self.get_record_dict(record)
 
-            # ignore metadata
-            if content.startswith('@'):
-                return None, None, None
+        if not self.is_record(rec_dict):
+            return None, None, None
 
-            if orig_field_marker in self.field_markers:
-                # map corpus-specific field-marker to standard field marker
-                field_marker = self.config['record_tiers'][orig_field_marker]
-                # add content to dictionary
-                utterance[field_marker] = content
-                if not content:
-                    warnings.append(
-                        self.config['record_tiers'][orig_field_marker])
+        # get utterance data
+        speaker_label = self.get_speaker_label(rec_dict)
+        addressee = self.get_addressee(rec_dict)
+        utterance_raw = self.get_utterance_raw(rec_dict)
+        utterance_clean = self.clean_utterance(utterance_raw)
+        sentence_type = self.get_sentence_type(rec_dict)
+        child_directed = self.get_childdirected(rec_dict)
+        source_id = self.get_source_id(rec_dict)
+        start_raw = self.get_start_raw(rec_dict)
+        end_raw = self.get_end_raw(rec_dict)
+        translation = self.get_translation(rec_dict)
+        comment = self.get_comment(rec_dict)
 
-        # Some records will not have an utterance, append None
-        if 'utterance_raw' not in utterance:
-            utterance['utterance_raw'] = None
+        self.add_utterance_warnings(utterance_raw)
+        warning = self.get_warning()
 
-        # Set sentence type
-        if utterance['utterance_raw'] is None:
-            utterance['sentence_type'] = None
-        else:
-            utterance['sentence_type'] = self.get_sentence_type(utterance)
+        utterance = {
+            'speaker_label': speaker_label if speaker_label else None,
+            'addressee': addressee if addressee else None,
+            'utterance_raw': utterance_raw if utterance_raw else None,
+            'utterance': utterance_clean if utterance_clean else None,
+            'sentence_type': sentence_type if sentence_type else None,
+            'child_directed': child_directed,
+            'source_id': source_id if source_id else None,
+            'start_raw': start_raw if start_raw else None,
+            'end_raw': end_raw if end_raw else None,
+            'translation': translation if translation else None,
+            'comment': comment if comment else None,
+            'warning': warning if warning else None
+        }
 
-        child_directed = self.get_childdirected(utterance)
-        if child_directed is not None:
-            utterance['childdirected'] = child_directed
+        words = self.get_words(utterance_clean)
+        morphemes = self.get_all_morphemes(rec_dict)
 
-        # Create clean utterance
-        utterance['utterance'] = self.clean_utterance(
-                                    utterance['utterance_raw'])
-
-        # Append utterance warnings if data fields are missing in the input
-        if utterance['utterance_raw']:
-            if self.get_warnings(utterance['utterance_raw']) is not None:
-                warnings.append(self.get_warnings(utterance['utterance_raw']))
-        if len(warnings) > 0:
-            utterance['warning'] = ("Empty value in the input for: " +
-                                    ", ".join(warnings))
-
-        # Get words
-        if utterance['utterance']:
-            words = self.get_words(utterance['utterance'])
-        else:
-            words = []
-
-        # Get morphemes
-        if utterance['utterance']:
-            morphemes = self.get_all_morphemes(utterance)
-        else:
-            morphemes = []
-
-        for i in range(len(words)):
-            try:
-                words[i]['word_language'] = \
-                    morphemes[i][0]['morpheme_language']
-            except IndexError:
-                break
-
-        # Fix words less than morphemes misalignments
-        if len(morphemes) - len(words) > 0:
-            misalignment = len(morphemes) - len(words)
-            for i in range(0, misalignment):
-                words.append({})
-
-        # set empty string to NULL
-        for field in utterance:
-            if utterance[field] == '':
-                utterance[field] = None
+        self.add_word_language(words, morphemes)
+        self.fix_misalignments(words, morphemes)
 
         return utterance, words, morphemes
 
-    def get_childdirected(self, record):
-        """Not coded per default.
-
-        Args:
-            record (dictionary): The record.
-        """
-        return None
-
-    def get_sentence_type(self, record):
-        """Get utterance type (aka sentence type) of an utterance.
-
-        Possible values:
-            - default (.)
-            - question (?)
-            - imperative or exclamation (!)
-
-        Args:
-            record (dictionary): The record.
-
-        Returns:
-            str: The sentence type.
-        """
-        match_punctuation = re.search('([.?!])$', record['utterance_raw'])
-        if match_punctuation is not None:
-            sentence_type = None
-            if match_punctuation.group(1) == '.':
-                sentence_type = 'default'
-            if match_punctuation.group(1) == '?':
-                sentence_type = 'question'
-            if match_punctuation.group(1) == '!':
-                sentence_type = 'imperative'
-            return sentence_type
-
-    def get_warnings(self, utterance):
+    def add_utterance_warnings(self, utterance):
         """No warnings per default.
 
         Args:
             utterance (str): The utterance.
         """
-        return None
+        pass
 
     def get_words(self, utterance):
         """Get list of words from the utterance.
@@ -304,31 +353,33 @@ class ToolboxReader(object):
     # ---------- morpheme tier ----------
 
     @classmethod
-    def get_seg_tier(cls, utterance):
-        return utterance.get('morpheme', '')
+    def get_seg_tier(cls, rec_dict):
+        return rec_dict.get('morpheme', '')
 
     @classmethod
-    def get_gloss_tier(cls, utterance):
-        return utterance.get('gloss_raw', '')
+    def get_gloss_tier(cls, rec_dict):
+        return rec_dict.get('gloss_raw', '')
 
     @classmethod
-    def get_pos_tier(cls, utterance):
-        return utterance.get('pos_raw', '')
+    def get_pos_tier(cls, rec_dict):
+        return rec_dict.get('pos_raw', '')
 
     @classmethod
-    def get_lang_tier(cls, utterance):
-        return utterance.get('morpheme_lang', '')
+    def get_lang_tier(cls, rec_dict):
+        return rec_dict.get('morpheme_lang', '')
 
     @classmethod
-    def get_id_tier(cls, utterance):
-        return utterance.get('lemma_id', '')
+    def get_id_tier(cls, rec_dict):
+        return rec_dict.get('lemma_id', '')
 
     # ---------- morpheme words ----------
 
     @classmethod
     def get_morpheme_words(cls, morpheme_tier):
+        _word_boundary = re.compile('(?<![\-\s])\s+(?![\-\s])')
+
         if morpheme_tier:
-            return re.split(cls._word_boundary, morpheme_tier)
+            return re.split(_word_boundary, morpheme_tier)
         else:
             return []
 
@@ -438,13 +489,17 @@ class ToolboxReader(object):
         else:
             return False
 
-    def get_all_morphemes(self, utt):
+    @staticmethod
+    def get_morpheme_type():
+        return 'target'
+
+    def get_all_morphemes(self, rec_dict):
         """Get list of lists of morphemes.
 
         Each morpheme is a dict of key-value pairs.
 
         Args:
-            utt (dict): The utterance.
+            rec_dict (dict): The utterance.
 
         Returns:
             list: Lists that contain dictionary of morphemes.
@@ -454,29 +509,30 @@ class ToolboxReader(object):
 
         # get segments
         segments = self.get_list_of_list_morphemes(
-            utt, self.get_seg_tier, self.get_seg_words, self.get_segs,
+            rec_dict, self.get_seg_tier, self.get_seg_words, self.get_segs,
             self.clean_seg_tier, self.clean_seg_word, self.clean_seg)
         # get glosses
         glosses = self.get_list_of_list_morphemes(
-            utt, self.get_gloss_tier, self.get_gloss_words, self.get_glosses,
-            self.clean_gloss_tier, self.clean_gloss_word, self.clean_gloss)
+            rec_dict, self.get_gloss_tier, self.get_gloss_words,
+            self.get_glosses, self.clean_gloss_tier, self.clean_gloss_word,
+            self.clean_gloss)
         # get parts-of-spech tags
         poses = self.get_list_of_list_morphemes(
-            utt, self.get_pos_tier, self.get_pos_words, self.get_poses,
+            rec_dict, self.get_pos_tier, self.get_pos_words, self.get_poses,
             self.clean_pos_tier, self.clean_pos_word, self.clean_pos)
         # get morpheme languages
         langs = self.get_list_of_list_morphemes(
-            utt, self.get_lang_tier, self.get_lang_words, self.get_langs,
+            rec_dict, self.get_lang_tier, self.get_lang_words, self.get_langs,
             self.clean_lang_tier, self.clean_lang_word, self.clean_lang)
         # get morpheme dict IDs
         morphids = self.get_list_of_list_morphemes(
-            utt, self.get_id_tier, self.get_id_words, self.get_ids,
+            rec_dict, self.get_id_tier, self.get_id_words, self.get_ids,
             self.clean_morph_tier, self.clean_morpheme_word,
             self.clean_morpheme)
 
         # remove morpheme language tier (as it is not part of the DB)
-        if 'morpheme_lang' in utt:
-            del utt['morpheme_lang']
+        if 'morpheme_lang' in rec_dict:
+            del rec_dict['morpheme_lang']
 
         len_mw = len(glosses)
         # len_align = len([i for gw in glosses for i in gw])
@@ -490,9 +546,9 @@ class ToolboxReader(object):
                     tiers.append([[self.language] for _ in range(len_mw)])
                 else:
                     tiers.append([[] for _ in range(len_mw)])
-                self.logger.info("Length of glosses and {} don't match in the "
-                            "Toolbox file: {}".format(
-                                t, utt['source_id']))
+                self.logger.info(
+                    "Length of glosses and {} don't match in the "
+                    "Toolbox file: {}".format(t, self.get_source_id(rec_dict)))
         # This bit adds None (NULL in the DB) for any mis-alignments
         # tiers = list(zip_longest(morphemes, glosses, poses, fillvalue=[]))
         # gls = [m for m in w for w in
@@ -502,15 +558,13 @@ class ToolboxReader(object):
                                          fillvalue=None))
             word_morphemes = []
             for morpheme in alignment:
-                # TODO: 'type': move to postprocessing if faster
-                # -> what type of morpheme as defined in the corpus .ini
                 d = {
                     'morpheme': morpheme[0],
                     'gloss_raw': morpheme[1],
                     'pos_raw': morpheme[2],
                     'morpheme_language': morpheme[3],
                     'lemma_id': morpheme[4],
-                    'type': self.config['morphemes']['type'],
+                    'type': self.get_morpheme_type(),
                     'warning': None if len(self.warnings) == 0 else
                     " ".join(self.warnings)}
                 word_morphemes.append(d)
@@ -633,36 +687,49 @@ class ChintangReader(ToolboxReader):
 
     language = 'Chintang'
 
-    def make_rec(self, record):
-        utterance, words, morphemes = super().make_rec(record)
-        # We infer sentence type from Chintang \nep
-        # but we do not add the nepali field to the database yet
-        if 'nepali' in utterance:
-            del utterance['nepali']
+    @classmethod
+    def get_utterance_raw(cls, rec_dict):
+        return rec_dict.get('gw', '')
 
-        return utterance, words, morphemes
+    @classmethod
+    def get_seg_tier(cls, rec_dict):
+        return rec_dict.get('mph', '')
 
-    def get_childdirected(self, record):
-        if 'childdirected' in record:
-            tos_raw = record['childdirected']
-            if 'directed' in tos_raw:
-                if 'child' in tos_raw:
-                    return True
-                else:
-                    return False
-            else:
-                del record['childdirected']
+    @classmethod
+    def get_gloss_tier(cls, rec_dict):
+        return rec_dict.get('mgl', '')
+
+    @classmethod
+    def get_pos_tier(cls, rec_dict):
+        return rec_dict.get('ps', '')
+
+    @classmethod
+    def get_lang_tier(cls, rec_dict):
+        return rec_dict.get('lg', '')
+
+    def get_childdirected(self, rec_dict):
+        for tier in ['TOS', 'tos']:
+            if tier in rec_dict:
+                tos_raw = rec_dict[tier]
+                if 'directed' in tos_raw:
+                    if 'child' in tos_raw:
+                        return True
+                    else:
+                        return False
 
         return None
 
-    def get_sentence_type(self, record):
+    @classmethod
+    def get_id_tier(cls, rec_dict):
+        return rec_dict.get('id', '')
+
+    def get_sentence_type(self, rec_dict):
         # https://github.com/uzling/acqdiv/issues/253
         # \eng: . = default, ? = question, ! = exclamation
         # \nep: । = default, rest identical.
         # Note this is not a "pipe" but the so-called danda at U+0964
-        if ('nepali' in record.keys()
-                and record['nepali'] is not None):
-            match_punctuation = re.search('([।?!])$', record['nepali'])
+        if 'nep' in rec_dict.keys() and rec_dict['nep']:
+            match_punctuation = re.search('([।?!])$', rec_dict['nep'])
             if match_punctuation is not None:
                 sentence_type = None
                 if match_punctuation.group(1) == '।':
@@ -672,10 +739,9 @@ class ChintangReader(ToolboxReader):
                 if match_punctuation.group(1) == '!':
                     sentence_type = 'exclamation'
                 return sentence_type
-        elif ('eng' in record.keys()
-              and record['translation'] is not None):
+        elif 'eng' in rec_dict and rec_dict['translation']:
             match_punctuation = re.search('([।?!])$',
-                                          record['translation'])
+                                          rec_dict['translation'])
             if match_punctuation is not None:
                 sentence_type = None
                 if match_punctuation.group(1) == '.':
@@ -686,7 +752,7 @@ class ChintangReader(ToolboxReader):
                     sentence_type = 'exclamation'
                 return sentence_type
         else:
-            return None
+            return ''
 
     @staticmethod
     def remove_punctuation(seg_tier):
@@ -713,11 +779,32 @@ class ChintangReader(ToolboxReader):
         return cls.remove_floating_clitic(morpheme_word)
 
     def clean_lang(self, lang):
+        languages = {
+            'C': 'Chintang',
+            'N': 'Nepali',
+            'E': 'English',
+            'C/N': 'Nepali',
+            'N/E': 'Nepali',
+            'C/N/E': 'English',
+            'B': 'Bantawa',
+            'C/B': 'Chintang/Bantawa',
+            'C(M)': 'Chintang',
+            'C(S)': 'Chintang',
+            'C/E': 'English',
+            'C/E/N': 'English',
+            'C/N/H': 'Hindi',
+            'C+N': 'Chintang/Nepali',
+            'H': 'Hindi',
+            'N/Arabic': 'Arabic',
+            'N/H': 'Hindi',
+            '***': 'Chintang'
+        }
+
         lang = lang.strip('-')
-        if lang in self.config['languages']:
-            return self.config['languages'][lang]
+        if lang in languages:
+            return languages[lang]
         else:
-            return 'Chintang'
+            return self.language
 
 
 ###############################################################################
@@ -727,14 +814,47 @@ class IndonesianReader(ToolboxReader):
 
     language = 'Indonesian'
 
-    def make_rec(self, record):
-        utterance, words, morphemes = super().make_rec(record)
-        if utterance:
-            if 'speaker_label' in utterance:
-                if utterance['speaker_label'] == '@PAR':
-                    return None, None, None
+    @classmethod
+    def get_source_id(cls, rec_dict):
+        return rec_dict.get('id', '')
 
-        return utterance, words, morphemes
+    @classmethod
+    def get_speaker_label(cls, rec_dict):
+        return rec_dict.get('sp', '')
+
+    @classmethod
+    def get_start_raw(cls, rec_dict):
+        return rec_dict.get('begin', '')
+
+    @classmethod
+    def get_utterance_raw(cls, rec_dict):
+        return rec_dict.get('tx', '')
+
+    @classmethod
+    def get_translation(cls, rec_dict):
+        return rec_dict.get('ft', '')
+
+    @classmethod
+    def get_comment(cls, rec_dict):
+        return rec_dict.get('nt', '')
+
+    @classmethod
+    def get_seg_tier(cls, rec_dict):
+        return rec_dict.get('mb', '')
+
+    @classmethod
+    def get_gloss_tier(cls, rec_dict):
+        return rec_dict.get('ge', '')
+
+    @classmethod
+    def is_record(cls, rec_dict):
+        if not super().is_record(rec_dict):
+            return False
+
+        if cls.get_speaker_label(rec_dict) == '@PAR':
+            return False
+
+        return True
 
     def get_words(self, utterance):
         result = []
@@ -760,17 +880,18 @@ class IndonesianReader(ToolboxReader):
 
         return result
 
-    def get_sentence_type(self, record):
-        if re.search('\.', record['utterance_raw']):
+    def get_sentence_type(self, rec_dict):
+        utterance_raw = self.get_utterance_raw(rec_dict)
+        if re.search('\.', utterance_raw):
             return 'default'
-        elif re.search('\?\s*$', record['utterance_raw']):
+        elif re.search('\?\s*$', utterance_raw):
             return 'question'
-        elif re.search('!', record['utterance_raw']):
+        elif re.search('!', utterance_raw):
             return 'imperative'
         else:
-            return None
+            return ''
 
-    def get_warnings(self, utterance):
+    def add_utterance_warnings(self, utterance):
         # Insecure transcription [?], add warning, delete marker
         # cf. https://github.com/uzling/acqdiv/blob/master/
         # extraction/parsing/corpus_parser_functions.py#L1605-1610
@@ -778,9 +899,7 @@ class IndonesianReader(ToolboxReader):
             # TODO: what's that used for?
             # utterance = re.sub('\[\?\]', '', utterance)
             transcription_warning = 'transcription insecure'
-            return transcription_warning
-
-        return None
+            self.warnings.append(transcription_warning)
 
     def clean_utterance(self, utterance):
         utterance = super().clean_utterance(utterance)
@@ -813,14 +932,12 @@ class IndonesianReader(ToolboxReader):
         return morph_tier
 
     @classmethod
-    def get_lang_tier(cls, utterance):
-        return utterance.get('gloss_raw', '')
+    def get_lang_tier(cls, rec_dict):
+        return rec_dict.get('gloss_raw', '')
 
     @classmethod
     def get_langs(cls, morpheme_lang_word):
         return ['Indonesian' for _ in cls.get_morphemes(morpheme_lang_word)]
-
-    # TODO: extract relevant source 'nt' (comment) field?
 
 ###############################################################################
 
@@ -829,16 +946,38 @@ class RussianReader(ToolboxReader):
 
     language = 'Russian'
 
-    def get_warnings(self, utterance):
+    @classmethod
+    def get_utterance_raw(cls, rec_dict):
+        return rec_dict.get('text', '')
+
+    @classmethod
+    def get_speaker_label(cls, rec_dict):
+        return rec_dict.get('EUDICOp', '')
+
+    @classmethod
+    def get_seg_tier(cls, rec_dict):
+        return rec_dict.get('lem', '')
+
+    @classmethod
+    def get_gloss_tier(cls, rec_dict):
+        return rec_dict.get('mor', '')
+
+    @classmethod
+    def get_pos_tier(cls, rec_dict):
+        return rec_dict.get('mor', '')
+
+    @staticmethod
+    def get_morpheme_type():
+        return 'actual'
+
+    def add_utterance_warnings(self, utterance):
         if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
             for target in re.findall('\[=\?\s+[^\]]+\]', utterance):
                 target_clean = re.sub('["\[\]?=]', '', target)
                 transcription_warning = (
                     'transcription insecure (intended '
                     'form might have been "' + target_clean + '")')
-                return transcription_warning
-
-        return None
+                self.warnings.append(transcription_warning)
 
     def make_rec(self, record):
         utterance, words, morphemes = super().make_rec(record)
@@ -892,10 +1031,6 @@ class RussianReader(ToolboxReader):
 
         return seg_tier
 
-    @classmethod
-    def get_gloss_tier(cls, utterance):
-        return utterance.get('pos_raw', '')
-
     @staticmethod
     def clean_gloss_pos_punctuation(gloss_pos_tier):
         return gloss_pos_tier.replace('PUNCT', '').replace('ANNOT', '').\
@@ -910,8 +1045,8 @@ class RussianReader(ToolboxReader):
         return cls.clean_gloss_pos_punctuation(pos_tier)
 
     @classmethod
-    def get_lang_tier(cls, utterance):
-        return utterance.get('pos_raw', '')
+    def get_lang_tier(cls, rec_dict):
+        return rec_dict.get('pos_raw', '')
 
     @classmethod
     def clean_lang_tier(cls, lang_tier):

@@ -10,7 +10,7 @@ class ToolboxParser:
     """
 
     def get_record_reader(self):
-        return ToolboxReader(self.config, self.toolbox_file)
+        return ToolboxReader(self.toolbox_file)
 
     def get_metadata_reader(self):
         temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
@@ -77,7 +77,7 @@ class ToolboxParser:
 class ChintangParser(ToolboxParser):
 
     def get_record_reader(self):
-        return ChintangReader(self.config, self.toolbox_file)
+        return ChintangReader(self.toolbox_file)
 
 ###############################################################################
 
@@ -94,7 +94,7 @@ class IndonesianParser(ToolboxParser):
         return self.metadata_reader.metadata['__attrs__']
 
     def get_record_reader(self):
-        return IndonesianReader(self.config, self.toolbox_file)
+        return IndonesianReader(self.toolbox_file)
 
 ###############################################################################
 
@@ -102,4 +102,4 @@ class IndonesianParser(ToolboxParser):
 class RussianParser(ToolboxParser):
 
     def get_record_reader(self):
-        return RussianReader(self.config, self.toolbox_file)
+        return RussianReader(self.toolbox_file)
