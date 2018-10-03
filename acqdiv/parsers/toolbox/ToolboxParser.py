@@ -1,4 +1,9 @@
-from acqdiv.parsers.ToolboxReader import *
+import logging
+
+from acqdiv.parsers.toolbox.readers.ChintangReader import ChintangReader
+from acqdiv.parsers.toolbox.readers.IndonesianReader import IndonesianReader
+from acqdiv.parsers.toolbox.readers.RussianReader import RussianReader
+from acqdiv.parsers.toolbox.readers.ToolboxReader import ToolboxReader
 from acqdiv.parsers.metadata import Chat, Imdi
 
 

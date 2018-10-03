@@ -1,5 +1,5 @@
 import unittest
-from acqdiv.parsers.ToolboxParser import *
+from acqdiv.parsers.toolbox.ToolboxParser import *
 from acqdiv.parsers.parsers import CorpusConfigParser
 
 
