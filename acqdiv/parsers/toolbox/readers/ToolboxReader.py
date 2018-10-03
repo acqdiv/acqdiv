@@ -205,16 +205,15 @@ class ToolboxReader(object):
         Returns:
             str: The sentence type.
         """
-        if 'utterance_raw' in rec_dict:
-            utterance_raw = rec_dict['utterance_raw']
-            match_punctuation = re.search('([.?!])$', utterance_raw)
-            if match_punctuation is not None:
-                if match_punctuation.group(1) == '.':
-                    return 'default'
-                elif match_punctuation.group(1) == '?':
-                    return 'question'
-                elif match_punctuation.group(1) == '!':
-                    return 'imperative'
+        utterance_raw = self.get_utterance_raw(rec_dict)
+        match_punctuation = re.search('([.?!])$', utterance_raw)
+        if match_punctuation is not None:
+            if match_punctuation.group(1) == '.':
+                return 'default'
+            elif match_punctuation.group(1) == '?':
+                return 'question'
+            elif match_punctuation.group(1) == '!':
+                return 'imperative'
 
         return ''
 
@@ -233,7 +232,10 @@ class ToolboxReader(object):
         return rec_dict.get('comment', '')
 
     def get_warning(self):
-        return "Empty value in the input for: " + ", ".join(self.warnings)
+        if self.warnings:
+            return "Empty value in the input for: " + ", ".join(self.warnings)
+        else:
+            return ''
 
     @classmethod
     def add_word_language(cls, words, morphemes):
@@ -299,7 +301,7 @@ class ToolboxReader(object):
             'utterance_raw': utterance_raw if utterance_raw else None,
             'utterance': utterance_clean if utterance_clean else None,
             'sentence_type': sentence_type if sentence_type else None,
-            'child_directed': child_directed,
+            'childdirected': child_directed,
             'source_id': source_id if source_id else None,
             'start_raw': start_raw if start_raw else None,
             'end_raw': end_raw if end_raw else None,
@@ -529,10 +531,6 @@ class ToolboxReader(object):
             rec_dict, self.get_id_tier, self.get_id_words, self.get_ids,
             self.clean_morph_tier, self.clean_morpheme_word,
             self.clean_morpheme)
-
-        # remove morpheme language tier (as it is not part of the DB)
-        if 'morpheme_lang' in rec_dict:
-            del rec_dict['morpheme_lang']
 
         len_mw = len(glosses)
         # len_align = len([i for gw in glosses for i in gw])

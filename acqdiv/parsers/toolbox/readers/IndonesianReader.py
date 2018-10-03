@@ -126,7 +126,7 @@ class IndonesianReader(ToolboxReader):
 
     @classmethod
     def get_lang_tier(cls, rec_dict):
-        return rec_dict.get('gloss_raw', '')
+        return cls.get_gloss_tier(rec_dict)
 
     @classmethod
     def get_langs(cls, morpheme_lang_word):
