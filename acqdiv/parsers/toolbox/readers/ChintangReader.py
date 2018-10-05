@@ -69,9 +69,9 @@ class ChintangReader(ToolboxReader):
                 if match_punctuation.group(1) == '!':
                     sentence_type = 'exclamation'
                 return sentence_type
-        elif 'eng' in rec_dict and rec_dict['translation']:
+        elif cls.get_translation(rec_dict):
             match_punctuation = re.search('([।?!])$',
-                                          rec_dict['translation'])
+                                          cls.get_translation(rec_dict))
             if match_punctuation is not None:
                 sentence_type = None
                 if match_punctuation.group(1) == '.':

@@ -64,7 +64,7 @@ class SessionParser(object):
             return parser
         elif format == "toolbox":
             parser_module = importlib.import_module(
-                'acqdiv.parsers.ToolboxParser')
+                'acqdiv.parsers.toolbox.ToolboxParser')
             parser_class = config['paths']['parser']
             parser = getattr(parser_module, parser_class)
             return lambda file_path: parser(config, file_path)

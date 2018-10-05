@@ -270,6 +270,11 @@ class ToolboxReader(object):
 
         return True
 
+    def null_empty_values(self, dictionary):
+        for key in dictionary:
+            if dictionary[key] == '':
+                dictionary[key] = None
+
     def make_rec(self, record):
         """Parse and make utterance, words and morpheme structures.
 
@@ -290,6 +295,7 @@ class ToolboxReader(object):
 
             self.add_word_language(words, morphemes)
             self.fix_wm_misalignments(words, morphemes)
+            self.null_empty_values(utterance)
 
             return utterance, words, morphemes
 
@@ -325,21 +331,21 @@ class ToolboxReader(object):
         warning = cls.get_warning()
 
         utterance = {
-            'speaker_label': speaker_label if speaker_label else None,
-            'addressee': addressee if addressee else None,
-            'utterance_raw': utterance_raw if utterance_raw else None,
-            'utterance': utterance_clean if utterance_clean else None,
-            'sentence_type': sentence_type if sentence_type else None,
+            'speaker_label': speaker_label,
+            'addressee': addressee,
+            'utterance_raw': utterance_raw,
+            'utterance': utterance_clean,
+            'sentence_type': sentence_type,
             'childdirected': child_directed,
-            'source_id': source_id if source_id else None,
-            'start_raw': start_raw if start_raw else None,
-            'end_raw': end_raw if end_raw else None,
-            'translation': translation if translation else None,
-            'comment': comment if comment else None,
-            'warning': warning if warning else None,
-            'morpheme': morpheme if morpheme else None,
-            'gloss_raw': gloss_raw if gloss_raw else None,
-            'pos_raw': pos_raw if pos_raw else None
+            'source_id': source_id,
+            'start_raw': start_raw,
+            'end_raw': end_raw,
+            'translation': translation,
+            'comment': comment,
+            'warning': warning,
+            'morpheme': morpheme,
+            'gloss_raw': gloss_raw,
+            'pos_raw': pos_raw
         }
 
         return utterance
