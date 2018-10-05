@@ -45,9 +45,9 @@ class ChintangReader(ToolboxReader):
         return rec_dict.get('id', '')
 
     @classmethod
-    def get_utterance(cls, rec_dict):
+    def get_utterance_dict(cls, rec_dict):
         """Get utterance with lemma IDs."""
-        utterance = super().get_utterance(rec_dict)
+        utterance = super().get_utterance_dict(rec_dict)
         lemma_id = cls.get_id_tier(rec_dict)
         utterance['lemma_id'] = lemma_id
         return utterance
@@ -108,7 +108,8 @@ class ChintangReader(ToolboxReader):
     def clean_morpheme_word(cls, morpheme_word):
         return cls.remove_floating_clitic(morpheme_word)
 
-    def clean_lang(self, lang):
+    @classmethod
+    def clean_lang(cls, lang):
         languages = {
             'C': 'Chintang',
             'N': 'Nepali',
@@ -134,4 +135,4 @@ class ChintangReader(ToolboxReader):
         if lang in languages:
             return languages[lang]
         else:
-            return self.language
+            return cls.language

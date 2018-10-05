@@ -49,7 +49,7 @@ class IndonesianReader(ToolboxReader):
 
         return True
 
-    def get_words(self, utterance):
+    def get_words_dict(self, utterance):
         result = []
         words = utterance.split()
 

@@ -50,7 +50,7 @@ class ToolboxReader(object):
         - get_sentence_type: Extract the sentence type.
         - clean_utterance: Clean up the utterance.
         - add_utterance_warnings: Get warnings like "transcription insecure".
-        - get_words: Extract the words in an utterance for the words table.
+        - get_words_dict: Extract the words in an utterance for the words table.
         - get_morphemes: Extract the morphemes in a word for the morphemes
                          table.
 
@@ -284,9 +284,9 @@ class ToolboxReader(object):
         if not self.is_record(rec_dict):
             return None, None, None
         else:
-            utterance = self.get_utterance(rec_dict)
-            words = self.get_words(utterance['utterance'])
-            morphemes = self.get_all_morphemes(rec_dict)
+            utterance = self.get_utterance_dict(rec_dict)
+            words = self.get_words_dict(utterance['utterance'])
+            morphemes = self.get_morphemes_dict(rec_dict)
 
             self.add_word_language(words, morphemes)
             self.fix_misalignments(words, morphemes)
@@ -294,7 +294,7 @@ class ToolboxReader(object):
             return utterance, words, morphemes
 
     @classmethod
-    def get_utterance(cls, rec_dict):
+    def get_utterance_dict(cls, rec_dict):
         """Get the utterance dictionary.
 
         Extracts all fields from the record dictionary relevant for the DB.
@@ -353,7 +353,7 @@ class ToolboxReader(object):
         """
         pass
 
-    def get_words(self, utterance):
+    def get_words_dict(self, utterance):
         """Get list of words from the utterance.
 
         Each word is a dictionary of key-value pairs.
@@ -463,12 +463,12 @@ class ToolboxReader(object):
 
     @classmethod
     def get_list_of_list_morphemes(
-            cls, utterance, tier_getter, words_getter, morphemes_getter,
+            cls, rec_dict, tier_getter, words_getter, morphemes_getter,
             clean_tier=None, clean_word=None, clean_morpheme=None):
         """Get list of list of morphemes.
 
         Args:
-            utterance (dict): The utterance dictionary containing the tiers.
+            rec_dict (dict): The record dictionary containing the tiers.
             tier_getter (func): To get the correct tier.
             words_getter (func): To get the words of the tier.
             morphemes_getter(func): To get the morphemes of the word.
@@ -481,7 +481,7 @@ class ToolboxReader(object):
         """
         lists = []
         # get the tier
-        tier = tier_getter(utterance)
+        tier = tier_getter(rec_dict)
         # clean the tier
         if clean_tier is not None:
             tier = clean_tier(tier)
@@ -503,6 +503,45 @@ class ToolboxReader(object):
 
         return lists
 
+    @classmethod
+    def get_morphology_data(cls, rec_dict):
+        """Get morphology data.
+
+        This method returns at a minimum segments, glosses, POS tags and the
+        languages. It can additionally return other morphology data such as the
+        morpheme dictionary IDs.
+
+        Args:
+            rec_dict (dict): The record dictionary.
+
+        Returns:
+            tuple: (segments, glosses, poses, languages, *)
+        """
+        # get segments
+        segments = cls.get_list_of_list_morphemes(
+            rec_dict, cls.get_seg_tier, cls.get_seg_words, cls.get_segs,
+            cls.clean_seg_tier, cls.clean_seg_word, cls.clean_seg)
+        # get glosses
+        glosses = cls.get_list_of_list_morphemes(
+            rec_dict, cls.get_gloss_tier, cls.get_gloss_words,
+            cls.get_glosses, cls.clean_gloss_tier, cls.clean_gloss_word,
+            cls.clean_gloss)
+        # get parts-of-spech tags
+        poses = cls.get_list_of_list_morphemes(
+            rec_dict, cls.get_pos_tier, cls.get_pos_words, cls.get_poses,
+            cls.clean_pos_tier, cls.clean_pos_word, cls.clean_pos)
+        # get morpheme languages
+        langs = cls.get_list_of_list_morphemes(
+            rec_dict, cls.get_lang_tier, cls.get_lang_words, cls.get_langs,
+            cls.clean_lang_tier, cls.clean_lang_word, cls.clean_lang)
+        # get morpheme dict IDs
+        morphids = cls.get_list_of_list_morphemes(
+            rec_dict, cls.get_id_tier, cls.get_id_words, cls.get_ids,
+            cls.clean_morph_tier, cls.clean_morpheme_word,
+            cls.clean_morpheme)
+
+        return segments, glosses, poses, langs, morphids
+
     @staticmethod
     def struct_eqv(xs, ys):
         """Test whether two lists have the same nested structure."""
@@ -522,7 +561,7 @@ class ToolboxReader(object):
     def get_morpheme_type():
         return 'target'
 
-    def get_all_morphemes(self, rec_dict):
+    def get_morphemes_dict(self, rec_dict):
         """Get list of lists of morphemes.
 
         Each morpheme is a dict of key-value pairs.
@@ -533,31 +572,10 @@ class ToolboxReader(object):
         Returns:
             list: Lists that contain dictionary of morphemes.
         """
-        result = []
         self.warnings = []
 
-        # get segments
-        segments = self.get_list_of_list_morphemes(
-            rec_dict, self.get_seg_tier, self.get_seg_words, self.get_segs,
-            self.clean_seg_tier, self.clean_seg_word, self.clean_seg)
-        # get glosses
-        glosses = self.get_list_of_list_morphemes(
-            rec_dict, self.get_gloss_tier, self.get_gloss_words,
-            self.get_glosses, self.clean_gloss_tier, self.clean_gloss_word,
-            self.clean_gloss)
-        # get parts-of-spech tags
-        poses = self.get_list_of_list_morphemes(
-            rec_dict, self.get_pos_tier, self.get_pos_words, self.get_poses,
-            self.clean_pos_tier, self.clean_pos_word, self.clean_pos)
-        # get morpheme languages
-        langs = self.get_list_of_list_morphemes(
-            rec_dict, self.get_lang_tier, self.get_lang_words, self.get_langs,
-            self.clean_lang_tier, self.clean_lang_word, self.clean_lang)
-        # get morpheme dict IDs
-        morphids = self.get_list_of_list_morphemes(
-            rec_dict, self.get_id_tier, self.get_id_words, self.get_ids,
-            self.clean_morph_tier, self.clean_morpheme_word,
-            self.clean_morpheme)
+        segments, glosses, poses, langs, morphids = self.get_morphology_data(
+            rec_dict)
 
         len_mw = len(glosses)
         # len_align = len([i for gw in glosses for i in gw])
@@ -574,9 +592,12 @@ class ToolboxReader(object):
                 self.logger.info(
                     "Length of glosses and {} don't match in the "
                     "Toolbox file: {}".format(t, self.get_source_id(rec_dict)))
+
         # This bit adds None (NULL in the DB) for any mis-alignments
         # tiers = list(zip_longest(morphemes, glosses, poses, fillvalue=[]))
         # gls = [m for m in w for w in
+
+        result = []
         mwords = zip(*tiers)
         for mw in mwords:
             alignment = list(zip_longest(mw[0], mw[1], mw[2], mw[3], mw[4],
