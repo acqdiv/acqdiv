@@ -449,10 +449,6 @@ class ToolboxReader(object):
     def get_lang_tier(cls, rec_dict):
         return rec_dict.get('morpheme_lang', '')
 
-    @classmethod
-    def get_id_tier(cls, rec_dict):
-        return rec_dict.get('lemma_id', '')
-
     # ---------- morpheme words ----------
 
     @classmethod
@@ -480,10 +476,6 @@ class ToolboxReader(object):
     def get_lang_words(cls, morpheme_lang_tier):
         return cls.get_morpheme_words(morpheme_lang_tier)
 
-    @classmethod
-    def get_id_words(cls, id_tier):
-        return cls.get_morpheme_words(id_tier)
-
     # ---------- morphemes ----------
 
     @classmethod
@@ -508,10 +500,6 @@ class ToolboxReader(object):
     @classmethod
     def get_langs(cls, morpheme_lang_word):
         return cls.get_morphemes(morpheme_lang_word)
-
-    @classmethod
-    def get_ids(cls, id_word):
-        return cls.get_morphemes(id_word)
 
     @classmethod
     def get_list_of_list_morphemes(

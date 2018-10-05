@@ -45,6 +45,14 @@ class ChintangReader(ToolboxReader):
         return rec_dict.get('id', '')
 
     @classmethod
+    def get_id_words(cls, id_tier):
+        return cls.get_morpheme_words(id_tier)
+
+    @classmethod
+    def get_ids(cls, id_word):
+        return cls.get_morphemes(id_word)
+
+    @classmethod
     def get_utterance_data(cls, rec_dict):
         """Get utterance with lemma IDs."""
         utterance = super().get_utterance_data(rec_dict)
