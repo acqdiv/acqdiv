@@ -50,7 +50,7 @@ class ToolboxReader(object):
         - get_sentence_type: Extract the sentence type.
         - clean_utterance: Clean up the utterance.
         - add_utterance_warnings: Get warnings like "transcription insecure".
-        - get_words_dict: Extract the words in an utterance for the words table.
+        - get_words_data: Extract the words in an utterance for the words table.
         - get_morphemes: Extract the morphemes in a word for the morphemes
                          table.
 
@@ -289,9 +289,9 @@ class ToolboxReader(object):
         if not self.is_record(rec_dict):
             return None, None, None
         else:
-            utterance = self.get_utterance_dict(rec_dict)
-            words = self.get_words_dict(utterance['utterance'])
-            morphemes = self.get_morphemes_dict(rec_dict)
+            utterance = self.get_utterance_data(rec_dict)
+            words = self.get_words_data(utterance['utterance'])
+            morphemes = self.get_morphemes_data(rec_dict)
 
             self.add_word_language(words, morphemes)
             self.fix_wm_misalignments(words, morphemes)
@@ -300,7 +300,7 @@ class ToolboxReader(object):
             return utterance, words, morphemes
 
     @classmethod
-    def get_utterance_dict(cls, rec_dict):
+    def get_utterance_data(cls, rec_dict):
         """Get the utterance dictionary.
 
         Extracts all fields from the record dictionary relevant for the DB.
@@ -359,27 +359,28 @@ class ToolboxReader(object):
         """
         pass
 
-    def get_words_dict(self, utterance):
+    @classmethod
+    def get_words(cls, utterance):
+        return utterance.split()
+
+    def get_words_data(self, utterance):
         """Get list of words from the utterance.
 
         Each word is a dictionary of key-value pairs.
-
-        This function does Toolbox corpus-specific word processing and
-        distinguishes between word and word_target if necessary.
 
         Args:
             utterance (str): The utterance.
 
         Returns:
-            list: Dictionaries with word and
-                  parent utterance id (utterance_id_fk).
+            list(dict): The list of words as dictionaries.
         """
         result = []
-        words = utterance.split()
+        words = self.get_words(utterance)
 
         for word in words:
+            word_clean = self.clean_word(word)
             d = {
-                'word': re.sub('xxx?|www|\*\*\*', '???', word),
+                'word': word_clean,
                 'word_actual': word
             }
             result.append(d)
@@ -562,7 +563,7 @@ class ToolboxReader(object):
     def get_morpheme_type():
         return 'target'
 
-    def get_morphemes_dict(self, rec_dict):
+    def get_morphemes_data(self, rec_dict):
         """Get list of lists of morphemes.
 
         Each morpheme is a dict of key-value pairs.
@@ -667,6 +668,10 @@ class ToolboxReader(object):
             return cls.unify_unknown(utterance)
 
         return utterance
+
+    @classmethod
+    def clean_word(cls, word):
+        return cls.unify_unknown(word)
 
     # ---------- morphology tiers ----------
 
