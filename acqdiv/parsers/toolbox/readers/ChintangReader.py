@@ -84,6 +84,27 @@ class ChintangReader(ToolboxReader):
         else:
             return ''
 
+    @classmethod
+    def get_morphology_data(cls, rec_dict):
+        """Get morphology data + morpheme dict IDs."""
+        tiers = super().get_morphology_data(rec_dict)
+
+        # get morpheme dict IDs
+        morphids = cls.get_list_of_list_morphemes(
+            rec_dict, cls.get_id_tier, cls.get_id_words, cls.get_ids,
+            cls.clean_morph_tier, cls.clean_morpheme_word,
+            cls.clean_morpheme)
+
+        return tiers + (morphids,)
+
+    @classmethod
+    def get_morpheme_dict(cls, morpheme):
+        """Get morpheme dict + morpheme dictionary ID."""
+        d = super().get_morpheme_dict(morpheme)
+        d['lemma_id'] = morpheme[4]
+
+        return d
+
     @staticmethod
     def remove_punctuation(seg_tier):
         return re.sub('[‘’\'“”\".!,:?+/]', '', seg_tier)

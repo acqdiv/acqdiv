@@ -252,7 +252,7 @@ class ToolboxReader(object):
                 break
 
     @classmethod
-    def fix_misalignments(cls, words, morphemes):
+    def fix_wm_misalignments(cls, words, morphemes):
         """Fix words less than morphemes misalignments."""
         if len(morphemes) - len(words) > 0:
             misalignment = len(morphemes) - len(words)
@@ -289,7 +289,7 @@ class ToolboxReader(object):
             morphemes = self.get_morphemes_dict(rec_dict)
 
             self.add_word_language(words, morphemes)
-            self.fix_misalignments(words, morphemes)
+            self.fix_wm_misalignments(words, morphemes)
 
             return utterance, words, morphemes
 
@@ -534,13 +534,8 @@ class ToolboxReader(object):
         langs = cls.get_list_of_list_morphemes(
             rec_dict, cls.get_lang_tier, cls.get_lang_words, cls.get_langs,
             cls.clean_lang_tier, cls.clean_lang_word, cls.clean_lang)
-        # get morpheme dict IDs
-        morphids = cls.get_list_of_list_morphemes(
-            rec_dict, cls.get_id_tier, cls.get_id_words, cls.get_ids,
-            cls.clean_morph_tier, cls.clean_morpheme_word,
-            cls.clean_morpheme)
 
-        return segments, glosses, poses, langs, morphids
+        return segments, glosses, poses, langs
 
     @staticmethod
     def struct_eqv(xs, ys):
@@ -570,52 +565,79 @@ class ToolboxReader(object):
             rec_dict (dict): The utterance.
 
         Returns:
-            list: Lists that contain dictionary of morphemes.
+            list: Lists that contain dictionaries of morphemes.
         """
         self.warnings = []
+        morphology_data = self.get_morphology_data(rec_dict)
+        fixed_morphology_data = self.fix_mm_misalignments(morphology_data)
 
-        segments, glosses, poses, langs, morphids = self.get_morphology_data(
-            rec_dict)
+        morphemes_dict = []
+        mwords = zip(*fixed_morphology_data)
+        for mw in mwords:
+            alignment = list(zip_longest(*mw, fillvalue=None))
+            word_morphemes = []
+            for morpheme in alignment:
+                d = self.get_morpheme_dict(morpheme)
+                word_morphemes.append(d)
+            morphemes_dict.append(word_morphemes)
 
+        return morphemes_dict
+
+    @classmethod
+    def fix_mm_misalignments(cls, morphology_data):
+        """Fix morpheme misalignments in the morphology data.
+
+        The gloss tier is used for comparison. If there are any misalignments
+        between the gloss and another morphology tier, then the values of
+        the morpohlogy tier are deleted. In the case of morpheme language,
+        the default language will be used.
+
+        Args:
+            morphology_data (tuple): (segments, glosses, poses, languages, *)
+
+        Returns:
+            tuple: (segments, glosses, poses, languages, *)
+        """
+        glosses = morphology_data[1]
         len_mw = len(glosses)
-        # len_align = len([i for gw in glosses for i in gw])
-        tiers = []
-        for i, t in enumerate((segments, glosses, poses, langs, morphids)):
-            if self.struct_eqv(t, glosses):
-                tiers.append(t)
+        fixed_morphology_data = []
+        # for each type of morphology tier
+        for i, t in enumerate(morphology_data):
+            # check if there are misalignments
+            if cls.struct_eqv(t, glosses):
+                fixed_morphology_data.append(t)
             else:
                 # set a default language
                 if i == 3:
-                    tiers.append([[self.language] for _ in range(len_mw)])
+                    fixed_morphology_data.append(
+                        [[cls.language] for _ in range(len_mw)])
                 else:
-                    tiers.append([[] for _ in range(len_mw)])
-                self.logger.info(
-                    "Length of glosses and {} don't match in the "
-                    "Toolbox file: {}".format(t, self.get_source_id(rec_dict)))
+                    # null all values
+                    fixed_morphology_data.append(
+                        [[] for _ in range(len_mw)])
 
-        # This bit adds None (NULL in the DB) for any mis-alignments
-        # tiers = list(zip_longest(morphemes, glosses, poses, fillvalue=[]))
-        # gls = [m for m in w for w in
+        return fixed_morphology_data
 
-        result = []
-        mwords = zip(*tiers)
-        for mw in mwords:
-            alignment = list(zip_longest(mw[0], mw[1], mw[2], mw[3], mw[4],
-                                         fillvalue=None))
-            word_morphemes = []
-            for morpheme in alignment:
-                d = {
-                    'morpheme': morpheme[0],
-                    'gloss_raw': morpheme[1],
-                    'pos_raw': morpheme[2],
-                    'morpheme_language': morpheme[3],
-                    'lemma_id': morpheme[4],
-                    'type': self.get_morpheme_type(),
-                    'warning': None if len(self.warnings) == 0 else
-                    " ".join(self.warnings)}
-                word_morphemes.append(d)
-            result.append(word_morphemes)
-        return result
+    @classmethod
+    def get_morpheme_dict(cls, morpheme):
+        """Get the morpheme dictionary.
+
+        Args:
+            tuple: (segment, glosse, pos, language, *)
+
+        Returns:
+            dict: Every morpheme values mapped to a dictionary key.
+        """
+        d = {
+            'morpheme': morpheme[0],
+            'gloss_raw': morpheme[1],
+            'pos_raw': morpheme[2],
+            'morpheme_language': morpheme[3],
+            'type': cls.get_morpheme_type(),
+            'warning': " ".join(cls.warnings) if cls.warnings else None
+        }
+
+        return d
 
     # ---------- cleaners ----------
 
