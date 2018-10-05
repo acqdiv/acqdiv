@@ -169,21 +169,18 @@ class TestIndonesianParser(unittest.TestCase):
                  'gloss_raw': 'w1pfxgloss-',
                  'pos_raw': None,
                  'morpheme_language': 'Indonesian',
-                 'lemma_id': None,
                  'type': 'target',
                  'warning': None},
                 {'morpheme': 'w1stemseg',
                  'gloss_raw': 'w1stemgloss',
                  'pos_raw': None,
                  'morpheme_language': 'Indonesian',
-                 'lemma_id': None,
                  'type': 'target',
                  'warning': None},
                 {'morpheme': '-w1sfxseg',
                  'gloss_raw': '-w1sfxgloss',
                  'pos_raw': None,
                  'morpheme_language': 'Indonesian',
-                 'lemma_id': None,
                  'type': 'target',
                  'warning': None}],
             [
@@ -191,7 +188,6 @@ class TestIndonesianParser(unittest.TestCase):
                  'gloss_raw': 'w2stemgloss',
                  'pos_raw': None,
                  'morpheme_language': 'Indonesian',
-                 'lemma_id': None,
                  'type': 'target',
                  'warning': None}]]
         desired_output = [(None, None, None),
@@ -271,7 +267,6 @@ class TestRussianParser(unittest.TestCase):
                  'gloss_raw': 'PST:SG:F:IRREFL:IPFV',
                  'pos_raw': 'V',
                  'morpheme_language': 'Russian',
-                 'lemma_id': None,
                  'type': 'actual',
                  'warning': None}
             ],
@@ -280,7 +275,6 @@ class TestRussianParser(unittest.TestCase):
                  'gloss_raw': 'NOM:SG',
                  'pos_raw': 'PRO-DEM-NOUN',
                  'morpheme_language': 'Russian',
-                 'lemma_id': None,
                  'type': 'actual',
                  'warning': None}
             ],
@@ -289,7 +283,6 @@ class TestRussianParser(unittest.TestCase):
                  'gloss_raw': 'PCL',
                  'pos_raw': 'PCL',
                  'morpheme_language': 'Russian',
-                 'lemma_id': None,
                  'type': 'actual',
                  'warning': None}
             ]
