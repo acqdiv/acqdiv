@@ -10,7 +10,7 @@ from configparser import ExtendedInterpolation
 
 from acqdiv.parsers.metadata import Imdi, Chat
 from acqdiv.parsers.toolbox import ToolboxFile
-from acqdiv.parsers.xml_parser import XMLParserFactory
+from acqdiv.parsers.xml.xml_parser import XMLParserFactory
 
 logger = logging.getLogger('pipeline.' + __name__)
 

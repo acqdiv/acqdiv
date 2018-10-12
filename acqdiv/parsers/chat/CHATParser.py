@@ -1,7 +1,6 @@
-from acqdiv.parsers.xml import CHATReader
-from acqdiv.parsers.xml import CHATCleaner
+from acqdiv.parsers.chat import CHATCleaner, CHATReader
 
-from acqdiv.parsers.xml.interfaces import CorpusParserInterface
+from acqdiv.parsers.chat.interfaces import CorpusParserInterface
 
 
 class CHATParser(CorpusParserInterface):

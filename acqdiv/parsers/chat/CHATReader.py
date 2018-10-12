@@ -1,6 +1,6 @@
 import re
 
-from acqdiv.parsers.xml.interfaces import CorpusReaderInterface
+from acqdiv.parsers.chat.interfaces import CorpusReaderInterface
 
 
 class CHATReader:

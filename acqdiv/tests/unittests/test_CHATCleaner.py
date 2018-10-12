@@ -1,12 +1,12 @@
 import unittest
-from acqdiv.parsers.xml.CHATCleaner import CHATCleaner
-from acqdiv.parsers.xml.CHATCleaner import InuktitutCleaner
-from acqdiv.parsers.xml.CHATCleaner import CreeCleaner
-from acqdiv.parsers.xml.CHATCleaner import JapaneseMiiProCleaner
-from acqdiv.parsers.xml.CHATCleaner import SesothoCleaner
-from acqdiv.parsers.xml.CHATCleaner import TurkishCleaner
-from acqdiv.parsers.xml.CHATCleaner import YucatecCleaner
-from acqdiv.parsers.xml.CHATCleaner import NungonCleaner
+from acqdiv.parsers.chat.CHATCleaner import CHATCleaner
+from acqdiv.parsers.chat.CHATCleaner import InuktitutCleaner
+from acqdiv.parsers.chat.CHATCleaner import CreeCleaner
+from acqdiv.parsers.chat.CHATCleaner import JapaneseMiiProCleaner
+from acqdiv.parsers.chat.CHATCleaner import SesothoCleaner
+from acqdiv.parsers.chat.CHATCleaner import TurkishCleaner
+from acqdiv.parsers.chat.CHATCleaner import YucatecCleaner
+from acqdiv.parsers.chat.CHATCleaner import NungonCleaner
 
 
 class TestCHATCleaner(unittest.TestCase):

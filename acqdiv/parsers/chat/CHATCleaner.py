@@ -1,6 +1,6 @@
 import re
 
-from acqdiv.parsers.xml.interfaces import CorpusCleanerInterface
+from acqdiv.parsers.chat.interfaces import CorpusCleanerInterface
 
 
 class CHATCleaner(CorpusCleanerInterface):
