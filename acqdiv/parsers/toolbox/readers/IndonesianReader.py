@@ -98,24 +98,25 @@ class IndonesianReader(ToolboxReader):
             cls.warnings.append(transcription_warning)
 
     @classmethod
+    def remove_utterance_punctuation(cls, utterance):
+        utterance = re.sub('[‘’\'“”\".!,;:+/]|\?$|<|>', '', utterance)
+        return cls.remove_redundant_whitespaces(utterance)
+
+    @classmethod
+    def remove_insecure_transcription_marker(cls, utterance):
+        return re.sub('\[\?\]', '', utterance)
+
+    @classmethod
     def clean_utterance(cls, utterance):
-        utterance = super().clean_utterance(utterance)
-
-        if utterance is not None:
-            # TODO: () are not stripped (-> might interfer with
-            # actual vs. target distinction)
-            # delete punctuation and garbage
-            utterance = re.sub('[‘’\'“”\".!,;:+/]|\?$|<|>', '', utterance)
-            utterance = utterance.strip()
-
-            # Insecure transcription [?], add warning, delete marker
-            if re.search('\[\?\]', utterance):
-                utterance = re.sub('\[\?\]', '', utterance)
+        for cleaning_method in [
+                super().clean_utterance, cls.remove_utterance_punctuation,
+                cls.remove_insecure_transcription_marker]:
+            utterance = cleaning_method(utterance)
 
         return utterance
 
     @staticmethod
-    def remove_punctuation(morpheme_tier):
+    def remove_morph_tier_punctuation(morpheme_tier):
         return re.sub('[‘’\'“”\".!,:?+/]', '', morpheme_tier)
 
     @staticmethod
@@ -124,7 +125,8 @@ class IndonesianReader(ToolboxReader):
 
     @classmethod
     def clean_morph_tier(cls, morph_tier):
-        for cleaning_method in [cls.remove_punctuation, cls.unify_unknown]:
+        for cleaning_method in [
+                cls.remove_morph_tier_punctuation, cls.unify_unknown]:
             morph_tier = cleaning_method(morph_tier)
         return morph_tier
 

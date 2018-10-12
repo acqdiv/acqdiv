@@ -118,12 +118,13 @@ class ChintangReader(ToolboxReader):
         return re.sub('[‘’\'“”\".!,:?+/]', '', seg_tier)
 
     @staticmethod
-    def unify_unknown(seg_tier):
+    def unify_unknown_seg_tier(seg_tier):
         return re.sub('\*\*\*', '???', seg_tier)
 
     @classmethod
     def clean_seg_tier(cls, seg_tier):
-        for cleaning_method in [cls.remove_punctuation, cls.unify_unknown]:
+        for cleaning_method in [
+                cls.remove_punctuation, cls.unify_unknown_seg_tier]:
             seg_tier = cleaning_method(seg_tier)
 
         return seg_tier

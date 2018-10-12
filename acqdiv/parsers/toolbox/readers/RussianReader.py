@@ -50,31 +50,43 @@ class RussianReader(ToolboxReader):
         return utterance, words, morphemes
 
     @classmethod
+    def remove_punctuation(cls, utterance):
+        utterance = re.sub(
+            '[‘’\'“”\".!,:+/]+|(&lt; )|(?<=\\s)\?(?=\\s|$)', '', utterance)
+        return cls.remove_redundant_whitespaces(utterance)
+
+    @classmethod
+    def remove_dashes(cls, utterance):
+        return re.sub('\\s-\\s', ' ', utterance)
+
+    @classmethod
+    def remove_insecure_transcription_markers(cls, utterance):
+        """Remove insecure transcription markers.
+
+        Insecure transcription markers: [?], [=( )?], [xxx].
+        Note that [xxx] usually replaces a complete utterance and is
+        non-aligned, in contrast to xxx without brackets, which can be
+        counted as a word.
+        """
+        # TODO: Get warnings on utterance level
+        if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
+            utterance = re.sub('\[\s*=?.*?\]', '', utterance)
+            return cls.remove_redundant_whitespaces(utterance)
+
+        return utterance
+
+    @classmethod
+    def remove_equal_signs(cls, utterance):
+        utterance = utterance.replace('=', '')
+        return cls.remove_redundant_whitespaces(utterance)
+
+    @classmethod
     def clean_utterance(cls, utterance):
-        utterance = super().clean_utterance(utterance)
-
-        # TODO: incorporate Russian \pho and \text tiers
-        # https://github.com/uzling/acqdiv/blob/master/extraction/
-        # parsing/corpus_parser_functions.py#L1586-L1599
-        if utterance is not None:
-            utterance = re.sub(
-                '[‘’\'“”\".!,:+/]+|(&lt; )|(?<=\\s)\?(?=\\s|$)',
-                '',
-                utterance)
-            utterance = re.sub('\\s-\\s', ' ', utterance)
-
-            # TODO: Get warnings that are on utterance
-            # (and not word/morpheme) level
-            # Insecure transcriptions [?], [=( )?], [xxx]:
-            # add warning, delete marker
-            # Note that [xxx] usually replaces a complete utterance
-            # and is non-aligned, in contrast to xxx without brackets,
-            # which can be counted as a word
-            if re.search('\[(\s*=?.*?|\s*xxx\s*)\]', utterance):
-                utterance = re.sub('\[\s*=?.*?\]', '', utterance)
-
-            utterance = re.sub('\s+', ' ', utterance).replace('=', '')
-            utterance = utterance.strip()
+        for cleaning_method in [
+                super().clean_utterance, cls.remove_punctuation,
+                cls.remove_dashes, cls.remove_insecure_transcription_markers,
+                cls.remove_equal_signs]:
+            utterance = cleaning_method(utterance)
 
         return utterance
 

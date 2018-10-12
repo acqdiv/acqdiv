@@ -668,10 +668,7 @@ class ToolboxReader(object):
         Returns:
             str: The cleaned utterance.
         """
-        if utterance is not None:
-            return cls.unify_unknown(utterance)
-
-        return utterance
+        return cls.unify_unknown(utterance)
 
     # ---------- utterance word ----------
 
