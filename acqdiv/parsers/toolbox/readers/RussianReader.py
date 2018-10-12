@@ -41,7 +41,8 @@ class RussianReader(ToolboxReader):
                     'form might have been "' + target_clean + '")')
                 cls.warnings.append(transcription_warning)
 
-    def make_rec(self, record):
+    @classmethod
+    def make_rec(cls, record):
         utterance, words, morphemes = super().make_rec(record)
         utterance['gloss_raw'] = ' '.join(
             mor['gloss_raw'] for mword in morphemes for mor in mword)

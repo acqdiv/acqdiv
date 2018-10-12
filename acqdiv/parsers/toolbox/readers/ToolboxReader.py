@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Parser for Toolbox files for the Russian, Chintang and Indonesian corpora"""
+"""Generic Reader for toolbox files."""
 
 import re
 import mmap
-import logging
 import contextlib
 from itertools import zip_longest
 
@@ -95,7 +94,8 @@ class ToolboxReader(object):
             else:
                 yield data[pos:].decode()
 
-    def make_rec(self, record):
+    @classmethod
+    def make_rec(cls, record):
         """Parse and make utterance, words and morpheme structures.
 
         Args:
@@ -104,23 +104,23 @@ class ToolboxReader(object):
         Returns:
           tuple: (utterance, words, morphemes)
         """
-        rec_dict = self.get_record_dict(record)
+        rec_dict = cls.get_record_dict(record)
 
-        if not self.is_record(rec_dict):
+        if not cls.is_record(rec_dict):
             return None, None, None
         else:
-            utterance = self.get_utterance_data(rec_dict)
-            words = self.get_words_data(utterance['utterance'])
+            utterance = cls.get_utterance_data(rec_dict)
+            words = cls.get_words_data(utterance['utterance'])
 
             # TODO: morphemes are nulled if there is no utterance, is this OK?
             if utterance['utterance']:
-                morphemes = self.get_morphemes_data(rec_dict)
-                self.add_word_language(words, morphemes)
-                self.fix_wm_misalignments(words, morphemes)
+                morphemes = cls.get_morphemes_data(rec_dict)
+                cls.add_word_language(words, morphemes)
+                cls.fix_wm_misalignments(words, morphemes)
             else:
                 morphemes = []
 
-            self.null_empty_values(utterance)
+            cls.null_empty_values(utterance)
 
             return utterance, words, morphemes
 
@@ -346,7 +346,8 @@ class ToolboxReader(object):
 
     # ---------- words data ----------
 
-    def get_words_data(self, utterance):
+    @classmethod
+    def get_words_data(cls, utterance):
         """Get list of words from the utterance.
 
         Each word is a dictionary of key-value pairs.
@@ -358,10 +359,10 @@ class ToolboxReader(object):
             list(dict): The list of words as dictionaries.
         """
         result = []
-        words = self.get_words(utterance)
+        words = cls.get_words(utterance)
 
         for word in words:
-            word_clean = self.clean_word(word)
+            word_clean = cls.clean_word(word)
             d = {
                 'word': word_clean,
                 'word_actual': word
@@ -375,7 +376,8 @@ class ToolboxReader(object):
 
     # ---------- morphemes data ----------
 
-    def get_morphemes_data(self, rec_dict):
+    @classmethod
+    def get_morphemes_data(cls, rec_dict):
         """Get list of lists of morphemes.
 
         Each morpheme is a dict of key-value pairs.
@@ -386,9 +388,9 @@ class ToolboxReader(object):
         Returns:
             list: Lists that contain dictionaries of morphemes.
         """
-        type(self).warnings = []
-        morphology_data = self.get_morphology_data(rec_dict)
-        fixed_morphology_data = self.fix_mm_misalignments(morphology_data)
+        cls.warnings = []
+        morphology_data = cls.get_morphology_data(rec_dict)
+        fixed_morphology_data = cls.fix_mm_misalignments(morphology_data)
 
         morphemes_dict = []
         mwords = zip(*fixed_morphology_data)
@@ -396,7 +398,7 @@ class ToolboxReader(object):
             alignment = list(zip_longest(*mw, fillvalue=None))
             word_morphemes = []
             for morpheme in alignment:
-                d = self.get_morpheme_dict(morpheme)
+                d = cls.get_morpheme_dict(morpheme)
                 word_morphemes.append(d)
             morphemes_dict.append(word_morphemes)
 

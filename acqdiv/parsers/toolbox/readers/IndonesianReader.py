@@ -49,7 +49,8 @@ class IndonesianReader(ToolboxReader):
 
         return True
 
-    def get_words_data(self, utterance):
+    @classmethod
+    def get_words_data(cls, utterance):
         result = []
         words = utterance.split()
 
