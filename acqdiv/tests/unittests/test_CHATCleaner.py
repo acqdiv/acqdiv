@@ -1349,56 +1349,56 @@ class TestJapaneseMiiProCleaner(unittest.TestCase):
     def test_remove_non_words_single(self):
         """Test remove_non_words with 1 non-word on the morphtier."""
         morph_tier = 'n:prop|Ikun tag|‡ .'
-        actual_output = self.cleaner.remove_non_words(morph_tier)
+        actual_output = JapaneseMiiProCleaner.remove_non_words(morph_tier)
         desired_output = 'n:prop|Ikun .'
         self.assertEqual(actual_output, desired_output)
 
     def test_remove_non_words_multiple(self):
         """Test remove_non_words with 3 non-words on the morphtier."""
         morph_tier = 'tag|V n:prop|Ikun tag|do tag|‡ .'
-        actual_output = self.cleaner.remove_non_words(morph_tier)
+        actual_output = JapaneseMiiProCleaner.remove_non_words(morph_tier)
         desired_output = 'n:prop|Ikun .'
         self.assertEqual(actual_output, desired_output)
 
     def test_remove_non_words_no_non_words(self):
         """Test remove_non_words with no non-words on the morphtier."""
         morph_tier = 'n:prop|Ikun .'
-        actual_output = self.cleaner.remove_non_words(morph_tier)
+        actual_output = JapaneseMiiProCleaner.remove_non_words(morph_tier)
         desired_output = 'n:prop|Ikun .'
         self.assertEqual(actual_output, desired_output)
 
     def test_remove_non_words_empty_string(self):
         """Test remove_non_words with an empty string."""
         morph_tier = ''
-        actual_output = self.cleaner.remove_non_words(morph_tier)
+        actual_output = JapaneseMiiProCleaner.remove_non_words(morph_tier)
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
     def test_clean_morph_tier_single(self):
         """Test clean_morph_tier with 1 non-word and period."""
         morph_tier = 'n:prop|Ikun tag|‡ .'
-        actual_output = self.cleaner.clean_morph_tier(morph_tier)
+        actual_output = JapaneseMiiProCleaner.clean_morph_tier(morph_tier)
         desired_output = 'n:prop|Ikun'
         self.assertEqual(actual_output, desired_output)
 
     def test_clean_morph_tier_multiple(self):
         """Test clean_morph_tier with 3 non-words and question mark."""
         morph_tier = 'tag|da tag|do n:prop|Ikun tag|‡ ?'
-        actual_output = self.cleaner.clean_morph_tier(morph_tier)
+        actual_output = JapaneseMiiProCleaner.clean_morph_tier(morph_tier)
         desired_output = 'n:prop|Ikun'
         self.assertEqual(actual_output, desired_output)
 
     def test_clean_morph_tier_no_non_words(self):
         """Test clean_morph_tier with no non-words and excl mark."""
         morph_tier = 'n:prop|Ikun !'
-        actual_output = self.cleaner.clean_morph_tier(morph_tier)
+        actual_output = JapaneseMiiProCleaner.clean_morph_tier(morph_tier)
         desired_output = 'n:prop|Ikun'
         self.assertEqual(actual_output, desired_output)
 
     def test_clean_morph_tier_empty_string(self):
         """Test clean_morph_tier with no non-words and excl mark."""
         morph_tier = ''
-        actual_output = self.cleaner.clean_morph_tier(morph_tier)
+        actual_output = JapaneseMiiProCleaner.clean_morph_tier(morph_tier)
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
@@ -1410,7 +1410,7 @@ class TestJapaneseMiiProCleaner(unittest.TestCase):
         functionality is used.
         """
         seg_tier = 'n:prop|Ikun tag|‡ .'
-        actual_output = self.cleaner.clean_seg_tier(seg_tier)
+        actual_output = JapaneseMiiProCleaner.clean_seg_tier(seg_tier)
         desired_output = 'n:prop|Ikun'
         self.assertEqual(actual_output, desired_output)
 
@@ -1422,7 +1422,7 @@ class TestJapaneseMiiProCleaner(unittest.TestCase):
         general functionality is used.
         """
         gloss_tier = 'n:prop|Ikun tag|‡ .'
-        actual_output = self.cleaner.clean_gloss_tier(gloss_tier)
+        actual_output = JapaneseMiiProCleaner.clean_gloss_tier(gloss_tier)
         desired_output = 'n:prop|Ikun'
         self.assertEqual(actual_output, desired_output)
 
@@ -1434,7 +1434,7 @@ class TestJapaneseMiiProCleaner(unittest.TestCase):
         general functionality is used.
         """
         pos_tier = 'n:prop|Ikun tag|‡ .'
-        actual_output = self.cleaner.clean_pos_tier(pos_tier)
+        actual_output = JapaneseMiiProCleaner.clean_pos_tier(pos_tier)
         desired_output = 'n:prop|Ikun'
         self.assertEqual(actual_output, desired_output)
 

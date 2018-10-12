@@ -456,7 +456,7 @@ class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
     def get_session_date(self):
         return self._metadata.get('Date', '')
 
-    def get_session_filename(self):
+    def get_session_media_filename(self):
         media_field = self._metadata.get('Media', '')
         media_fields = self.get_media_fields(media_field)
         return self.get_media_filename(media_fields)
