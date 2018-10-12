@@ -1,13 +1,13 @@
 import re
 
-from acqdiv.parsers.chat.interfaces import CorpusReaderInterface
+from acqdiv.parsers.chat.readers.CHATReaderInterface import CHATReaderInterface
 from acqdiv.parsers.chat.readers.CHATReader import CHATReader
 
 
-class ACQDIVCHATReader(CHATReader, CorpusReaderInterface):
+class ACQDIVCHATReader(CHATReader, CHATReaderInterface):
     """The customized and optimized reader for the ACQDIV pipeline.
 
-    Implements the CorpusReaderInterface.
+    Implements the CHATReaderInterface.
     """
 
     def __init__(self):

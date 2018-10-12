@@ -17,10 +17,10 @@ import acqdiv.parsers.chat.readers.TurkishReader
 import acqdiv.parsers.chat.readers.YucatecReader
 from acqdiv.parsers.chat.cleaners import CHATCleaner
 
-from acqdiv.parsers.chat.interfaces import CorpusParserInterface
+from acqdiv.parsers.chat.CHATParserInterface import CHATParserInterface
 
 
-class CHATParser(CorpusParserInterface):
+class CHATParser(CHATParserInterface):
     """Gathers all data for the DB for a given CHAT session file.
 
     Uses the CHATReader for reading and inferring data from the CHAT file and

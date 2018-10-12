@@ -1,9 +1,10 @@
 import re
 
-from acqdiv.parsers.chat.interfaces import CorpusCleanerInterface
+from acqdiv.parsers.chat.cleaners.CHATCleanerInterface import \
+    CHATCleanerInterface
 
 
-class CHATCleaner(CorpusCleanerInterface):
+class CHATCleaner(CHATCleanerInterface):
     """Clean parts of a CHAT record.
 
     This class provides a range of cleaning methods that perform modifications,
