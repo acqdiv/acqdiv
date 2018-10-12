@@ -109,7 +109,7 @@ class RussianReader(ToolboxReader):
 
     @classmethod
     def get_lang_tier(cls, rec_dict):
-        return rec_dict.get('pos_raw', '')
+        return cls.get_pos_tier(rec_dict)
 
     @classmethod
     def clean_lang_tier(cls, lang_tier):
@@ -179,7 +179,6 @@ class RussianReader(ToolboxReader):
     @classmethod
     def get_langs(cls, morpheme_lang_word):
         if 'FOREIGN' in morpheme_lang_word:
-            # TODO: does it make sense to NULL this?
-            return [None]
+            return ['FOREIGN']
         else:
             return ['Russian']

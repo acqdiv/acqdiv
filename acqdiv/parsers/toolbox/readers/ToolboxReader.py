@@ -37,8 +37,6 @@ class ToolboxReader(object):
             file_path (str): The path of the session file.
         """
         self.path = file_path
-        # logging.basicConfig(filename='toolbox.log', level=logging.INFO)
-        self.logger = logging.getLogger('pipeline' + __name__)
 
     def __iter__(self):
         """Yield utterance, words, morphemes a session transcript file.
@@ -113,10 +111,15 @@ class ToolboxReader(object):
         else:
             utterance = self.get_utterance_data(rec_dict)
             words = self.get_words_data(utterance['utterance'])
-            morphemes = self.get_morphemes_data(rec_dict)
 
-            self.add_word_language(words, morphemes)
-            self.fix_wm_misalignments(words, morphemes)
+            # TODO: morphemes are nulled if there is no utterance, is this OK?
+            if utterance['utterance']:
+                morphemes = self.get_morphemes_data(rec_dict)
+                self.add_word_language(words, morphemes)
+                self.fix_wm_misalignments(words, morphemes)
+            else:
+                morphemes = []
+
             self.null_empty_values(utterance)
 
             return utterance, words, morphemes
@@ -216,6 +219,8 @@ class ToolboxReader(object):
         Returns:
             dict: The utterance dictionary.
         """
+        cls.warnings = []
+
         # get utterance data
         speaker_label = cls.get_speaker_label(rec_dict)
         addressee = cls.get_addressee(rec_dict)
@@ -381,7 +386,7 @@ class ToolboxReader(object):
         Returns:
             list: Lists that contain dictionaries of morphemes.
         """
-        self.warnings = []
+        type(self).warnings = []
         morphology_data = self.get_morphology_data(rec_dict)
         fixed_morphology_data = self.fix_mm_misalignments(morphology_data)
 
