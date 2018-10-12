@@ -1,8 +1,16 @@
 import io
 import unittest
 from acqdiv.parsers.chat.CHATParser import *
+from acqdiv.parsers.chat.cleaners.CreeCleaner import CreeCleaner
+from acqdiv.parsers.chat.cleaners.InuktitutCleaner import InuktitutCleaner
+from acqdiv.parsers.chat.cleaners.JapaneseMiiProCleaner import \
+    JapaneseMiiProCleaner
+from acqdiv.parsers.chat.cleaners.NungonCleaner import NungonCleaner
+from acqdiv.parsers.chat.cleaners.SesothoCleaner import SesothoCleaner
+from acqdiv.parsers.chat.cleaners.TurkishCleaner import TurkishCleaner
+from acqdiv.parsers.chat.cleaners.YucatecCleaner import YucatecCleaner
 from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
-from acqdiv.parsers.chat.CHATCleaner import *
+from acqdiv.parsers.chat.cleaners.CHATCleaner import *
 from acqdiv.parsers.chat.readers.CreeReader import CreeReader
 from acqdiv.parsers.chat.readers.InuktitutReader import InuktitutReader
 from acqdiv.parsers.chat.readers.JapaneseMiiProReader import \

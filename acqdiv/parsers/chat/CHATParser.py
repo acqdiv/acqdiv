@@ -1,3 +1,11 @@
+import acqdiv.parsers.chat.cleaners.CreeCleaner
+import acqdiv.parsers.chat.cleaners.EnglishManchester1Cleaner
+import acqdiv.parsers.chat.cleaners.InuktitutCleaner
+import acqdiv.parsers.chat.cleaners.JapaneseMiiProCleaner
+import acqdiv.parsers.chat.cleaners.NungonCleaner
+import acqdiv.parsers.chat.cleaners.SesothoCleaner
+import acqdiv.parsers.chat.cleaners.TurkishCleaner
+import acqdiv.parsers.chat.cleaners.YucatecCleaner
 import acqdiv.parsers.chat.readers.ACQDIVCHATReader
 import acqdiv.parsers.chat.readers.CreeReader
 import acqdiv.parsers.chat.readers.EnglishManchester1Reader
@@ -7,8 +15,7 @@ import acqdiv.parsers.chat.readers.NungonReader
 import acqdiv.parsers.chat.readers.SesothoReader
 import acqdiv.parsers.chat.readers.TurkishReader
 import acqdiv.parsers.chat.readers.YucatecReader
-from acqdiv.parsers.chat import CHATCleaner
-from acqdiv.parsers.chat.readers import CHATReader
+from acqdiv.parsers.chat.cleaners import CHATCleaner
 
 from acqdiv.parsers.chat.interfaces import CorpusParserInterface
 
@@ -281,7 +288,7 @@ class CreeParser(CHATParser):
 
     @staticmethod
     def get_cleaner():
-        return CHATCleaner.CreeCleaner()
+        return acqdiv.parsers.chat.cleaners.CreeCleaner.CreeCleaner()
 
 
 class EnglishManchester1Parser(CHATParser):
@@ -291,7 +298,7 @@ class EnglishManchester1Parser(CHATParser):
 
     @staticmethod
     def get_cleaner():
-        return CHATCleaner.EnglishManchester1Cleaner()
+        return acqdiv.parsers.chat.cleaners.EnglishManchester1Cleaner.EnglishManchester1Cleaner()
 
 
 class InuktitutParser(CHATParser):
@@ -301,7 +308,7 @@ class InuktitutParser(CHATParser):
 
     @staticmethod
     def get_cleaner():
-        return CHATCleaner.InuktitutCleaner()
+        return acqdiv.parsers.chat.cleaners.InuktitutCleaner.InuktitutCleaner()
 
 
 class JapaneseMiiProParser(CHATParser):
@@ -311,7 +318,7 @@ class JapaneseMiiProParser(CHATParser):
 
     @staticmethod
     def get_cleaner():
-        return CHATCleaner.JapaneseMiiProCleaner()
+        return acqdiv.parsers.chat.cleaners.JapaneseMiiProCleaner.JapaneseMiiProCleaner()
 
 
 class SesothoParser(CHATParser):
@@ -321,7 +328,7 @@ class SesothoParser(CHATParser):
 
     @staticmethod
     def get_cleaner():
-        return CHATCleaner.SesothoCleaner()
+        return acqdiv.parsers.chat.cleaners.SesothoCleaner.SesothoCleaner()
 
 
 class TurkishParser(CHATParser):
@@ -331,7 +338,7 @@ class TurkishParser(CHATParser):
 
     @staticmethod
     def get_cleaner():
-        return CHATCleaner.TurkishCleaner()
+        return acqdiv.parsers.chat.cleaners.TurkishCleaner.TurkishCleaner()
 
 
 class YucatecParser(CHATParser):
@@ -341,7 +348,7 @@ class YucatecParser(CHATParser):
 
     @staticmethod
     def get_cleaner():
-        return CHATCleaner.YucatecCleaner()
+        return acqdiv.parsers.chat.cleaners.YucatecCleaner.YucatecCleaner()
 
 
 class NungonParser(CHATParser):
@@ -351,7 +358,7 @@ class NungonParser(CHATParser):
 
     @staticmethod
     def get_cleaner():
-        return CHATCleaner.NungonCleaner()
+        return acqdiv.parsers.chat.cleaners.NungonCleaner.NungonCleaner()
 
 
 def main():
