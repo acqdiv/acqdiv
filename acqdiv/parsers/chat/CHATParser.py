@@ -1,4 +1,14 @@
-from acqdiv.parsers.chat import CHATCleaner, CHATReader
+import acqdiv.parsers.chat.readers.ACQDIVCHATReader
+import acqdiv.parsers.chat.readers.CreeReader
+import acqdiv.parsers.chat.readers.EnglishManchester1Reader
+import acqdiv.parsers.chat.readers.InuktitutReader
+import acqdiv.parsers.chat.readers.JapaneseMiiProReader
+import acqdiv.parsers.chat.readers.NungonReader
+import acqdiv.parsers.chat.readers.SesothoReader
+import acqdiv.parsers.chat.readers.TurkishReader
+import acqdiv.parsers.chat.readers.YucatecReader
+from acqdiv.parsers.chat import CHATCleaner
+from acqdiv.parsers.chat.readers import CHATReader
 
 from acqdiv.parsers.chat.interfaces import CorpusParserInterface
 
@@ -20,7 +30,7 @@ class CHATParser(CorpusParserInterface):
 
     @staticmethod
     def get_reader():
-        return CHATReader.ACQDIVCHATReader()
+        return acqdiv.parsers.chat.readers.ACQDIVCHATReader.ACQDIVCHATReader()
 
     @staticmethod
     def get_cleaner():
@@ -267,7 +277,7 @@ class CHATParser(CorpusParserInterface):
 class CreeParser(CHATParser):
     @staticmethod
     def get_reader():
-        return CHATReader.CreeReader()
+        return acqdiv.parsers.chat.readers.CreeReader.CreeReader()
 
     @staticmethod
     def get_cleaner():
@@ -277,7 +287,7 @@ class CreeParser(CHATParser):
 class EnglishManchester1Parser(CHATParser):
     @staticmethod
     def get_reader():
-        return CHATReader.EnglishManchester1Reader()
+        return acqdiv.parsers.chat.readers.EnglishManchester1Reader.EnglishManchester1Reader()
 
     @staticmethod
     def get_cleaner():
@@ -287,7 +297,7 @@ class EnglishManchester1Parser(CHATParser):
 class InuktitutParser(CHATParser):
     @staticmethod
     def get_reader():
-        return CHATReader.InuktitutReader()
+        return acqdiv.parsers.chat.readers.InuktitutReader.InuktitutReader()
 
     @staticmethod
     def get_cleaner():
@@ -297,7 +307,7 @@ class InuktitutParser(CHATParser):
 class JapaneseMiiProParser(CHATParser):
     @staticmethod
     def get_reader():
-        return CHATReader.JapaneseMiiProReader()
+        return acqdiv.parsers.chat.readers.JapaneseMiiProReader.JapaneseMiiProReader()
 
     @staticmethod
     def get_cleaner():
@@ -307,7 +317,7 @@ class JapaneseMiiProParser(CHATParser):
 class SesothoParser(CHATParser):
     @staticmethod
     def get_reader():
-        return CHATReader.SesothoReader()
+        return acqdiv.parsers.chat.readers.SesothoReader.SesothoReader()
 
     @staticmethod
     def get_cleaner():
@@ -317,7 +327,7 @@ class SesothoParser(CHATParser):
 class TurkishParser(CHATParser):
     @staticmethod
     def get_reader():
-        return CHATReader.TurkishReader()
+        return acqdiv.parsers.chat.readers.TurkishReader.TurkishReader()
 
     @staticmethod
     def get_cleaner():
@@ -327,7 +337,7 @@ class TurkishParser(CHATParser):
 class YucatecParser(CHATParser):
     @staticmethod
     def get_reader():
-        return CHATReader.YucatecReader()
+        return acqdiv.parsers.chat.readers.YucatecReader.YucatecReader()
 
     @staticmethod
     def get_cleaner():
@@ -337,7 +347,7 @@ class YucatecParser(CHATParser):
 class NungonParser(CHATParser):
     @staticmethod
     def get_reader():
-        return CHATReader.NungonReader()
+        return acqdiv.parsers.chat.readers.NungonReader.NungonReader()
 
     @staticmethod
     def get_cleaner():

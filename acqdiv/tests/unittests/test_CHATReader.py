@@ -1,15 +1,17 @@
 import unittest
 import io
-from acqdiv.parsers.chat.CHATReader import CHATReader
-from acqdiv.parsers.chat.CHATReader import ACQDIVCHATReader
-from acqdiv.parsers.chat.CHATReader import InuktitutReader
-from acqdiv.parsers.chat.CHATReader import JapaneseMiiProReader
-from acqdiv.parsers.chat.CHATReader import CreeReader
-from acqdiv.parsers.chat.CHATReader import EnglishManchester1Reader
-from acqdiv.parsers.chat.CHATReader import SesothoReader
-from acqdiv.parsers.chat.CHATReader import TurkishReader
-from acqdiv.parsers.chat.CHATReader import YucatecReader
-from acqdiv.parsers.chat.CHATReader import NungonReader
+from acqdiv.parsers.chat.readers.CHATReader import CHATReader
+from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
+from acqdiv.parsers.chat.readers.InuktitutReader import InuktitutReader
+from acqdiv.parsers.chat.readers.JapaneseMiiProReader import \
+    JapaneseMiiProReader
+from acqdiv.parsers.chat.readers.CreeReader import CreeReader
+from acqdiv.parsers.chat.readers.EnglishManchester1Reader import \
+    EnglishManchester1Reader
+from acqdiv.parsers.chat.readers.SesothoReader import SesothoReader
+from acqdiv.parsers.chat.readers.TurkishReader import TurkishReader
+from acqdiv.parsers.chat.readers.YucatecReader import YucatecReader
+from acqdiv.parsers.chat.readers.NungonReader import NungonReader
 
 
 class TestCHATReader(unittest.TestCase):

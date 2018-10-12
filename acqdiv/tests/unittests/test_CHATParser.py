@@ -1,8 +1,16 @@
 import io
 import unittest
 from acqdiv.parsers.chat.CHATParser import *
-from acqdiv.parsers.chat.CHATReader import *
+from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
 from acqdiv.parsers.chat.CHATCleaner import *
+from acqdiv.parsers.chat.readers.CreeReader import CreeReader
+from acqdiv.parsers.chat.readers.InuktitutReader import InuktitutReader
+from acqdiv.parsers.chat.readers.JapaneseMiiProReader import \
+    JapaneseMiiProReader
+from acqdiv.parsers.chat.readers.NungonReader import NungonReader
+from acqdiv.parsers.chat.readers.SesothoReader import SesothoReader
+from acqdiv.parsers.chat.readers.TurkishReader import TurkishReader
+from acqdiv.parsers.chat.readers.YucatecReader import YucatecReader
 
 
 class TestCHATParser(unittest.TestCase):
