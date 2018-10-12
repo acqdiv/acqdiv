@@ -52,15 +52,11 @@ class IndonesianReader(ToolboxReader):
     @classmethod
     def get_words_data(cls, utterance):
         result = []
-        words = utterance.split()
-
-        for word in words:
+        # TODO: this is not modular yet
+        for word in cls.get_words(utterance):
             d = {}
             # Distinguish between word and word_target;
-            # otherwise the target word is identical to the actual word:
-            # https://github.com/uzling/acqdiv/blob/master/extraction
-            # /parsing/corpus_parser_functions.py#L1859-L1867
-            # Also: xx(x), www and *** is garbage from chat
+            # otherwise the target word is identical to the actual word
             if re.search('\(', word):
                 d['word_target'] = re.sub('[()]', '', word)
                 d['word'] = re.sub('\([^)]+\)', '', word)
@@ -92,8 +88,6 @@ class IndonesianReader(ToolboxReader):
         # cf. https://github.com/uzling/acqdiv/blob/master/
         # extraction/parsing/corpus_parser_functions.py#L1605-1610
         if re.search('\[\?\]', utterance):
-            # TODO: what's that used for?
-            # utterance = re.sub('\[\?\]', '', utterance)
             transcription_warning = 'transcription insecure'
             cls.warnings.append(transcription_warning)
 
