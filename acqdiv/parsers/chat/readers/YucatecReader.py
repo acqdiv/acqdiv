@@ -152,6 +152,9 @@ class YucatecReader(ACQDIVCHATReader):
                         pos = 'sfx'
                     yield seg, gloss, pos
 
+    def get_translation(self):
+        return self._dependent_tiers.get('xspn', '')
+
     @classmethod
     def get_segments(cls, seg_word):
         return [seg for seg, _, _ in cls.iter_morphemes(seg_word)]
