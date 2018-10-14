@@ -59,7 +59,7 @@ class SessionParser(object):
             return XMLParserFactory(config)
         elif format == "cha":
             parser_module = importlib.import_module(
-                'acqdiv.parsers.xml.CHATParser')
+                'acqdiv.parsers.chat.CHATParser')
             parser_class = config['paths']['parser']
             parser = getattr(parser_module, parser_class)
             return parser
