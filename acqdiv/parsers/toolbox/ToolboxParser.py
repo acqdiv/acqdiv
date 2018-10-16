@@ -4,6 +4,7 @@ from acqdiv.parsers.toolbox.readers.ChintangReader import ChintangReader
 from acqdiv.parsers.toolbox.readers.IndonesianReader import IndonesianReader
 from acqdiv.parsers.toolbox.readers.RussianReader import RussianReader
 from acqdiv.parsers.toolbox.readers.ToolboxReader import ToolboxReader
+from acqdiv.parsers.toolbox.readers.QuaqetReader import QuaqetReader
 from acqdiv.parsers.metadata import Chat, Imdi
 
 
@@ -108,3 +109,12 @@ class RussianParser(ToolboxParser):
 
     def get_record_reader(self):
         return RussianReader(self.toolbox_file)
+
+
+###############################################################################
+
+
+class QuaqetParser(ToolboxParser):
+
+    def get_record_reader(self):
+        return QuaqetReader(self.toolbox_file)
