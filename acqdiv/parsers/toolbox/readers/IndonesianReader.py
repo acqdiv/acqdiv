@@ -50,10 +50,13 @@ class IndonesianReader(ToolboxReader):
         return True
 
     @classmethod
-    def get_words_data(cls, utterance):
+    def get_words_data(cls, rec_dict):
         result = []
         # TODO: this is not modular yet
-        for word in cls.get_words(utterance):
+        utterance = cls.get_utterance_raw(rec_dict)
+        utterance_clean = cls.clean_utterance(utterance)
+
+        for word in cls.get_words(utterance_clean):
             d = {}
             # Distinguish between word and word_target;
             # otherwise the target word is identical to the actual word

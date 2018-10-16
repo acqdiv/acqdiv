@@ -110,7 +110,7 @@ class ToolboxReader(object):
             return None, None, None
         else:
             utterance = cls.get_utterance_data(rec_dict)
-            words = cls.get_words_data(utterance['utterance'])
+            words = cls.get_words_data(rec_dict)
 
             # TODO: morphemes are nulled if there is no utterance, is this OK?
             if utterance['utterance']:
@@ -282,7 +282,7 @@ class ToolboxReader(object):
 
     @classmethod
     def get_utterance_raw(cls, rec_dict):
-        return rec_dict.get('text', '')
+        return rec_dict.get('tx', '')
 
     @classmethod
     def get_sentence_type(cls, rec_dict):
@@ -347,19 +347,21 @@ class ToolboxReader(object):
     # ---------- words data ----------
 
     @classmethod
-    def get_words_data(cls, utterance):
+    def get_words_data(cls, rec_dict):
         """Get list of words from the utterance.
 
         Each word is a dictionary of key-value pairs.
 
         Args:
-            utterance (str): The utterance.
+            rec_dict (dict): The record dictionary.
 
         Returns:
             list(dict): The list of words as dictionaries.
         """
         result = []
-        words = cls.get_words(utterance)
+        utterance = cls.get_utterance_raw(rec_dict)
+        utterance_clean = cls.clean_utterance(utterance)
+        words = cls.get_words(utterance_clean)
 
         for word in words:
             word_clean = cls.clean_word(word)
@@ -442,19 +444,19 @@ class ToolboxReader(object):
 
     @classmethod
     def get_seg_tier(cls, rec_dict):
-        return rec_dict.get('morpheme', '')
+        return rec_dict.get('mb', '')
 
     @classmethod
     def get_gloss_tier(cls, rec_dict):
-        return rec_dict.get('gloss_raw', '')
+        return rec_dict.get('ge', '')
 
     @classmethod
     def get_pos_tier(cls, rec_dict):
-        return rec_dict.get('pos_raw', '')
+        return rec_dict.get('ps', '')
 
     @classmethod
     def get_lang_tier(cls, rec_dict):
-        return rec_dict.get('morpheme_lang', '')
+        return rec_dict.get('lg', '')
 
     # ---------- morpheme words ----------
 
