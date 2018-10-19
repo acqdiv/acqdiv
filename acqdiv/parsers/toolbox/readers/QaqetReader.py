@@ -1,11 +1,7 @@
 from acqdiv.parsers.toolbox.readers.ToolboxReader import ToolboxReader
 
 
-class QuaqetReader(ToolboxReader):
-
-    @classmethod
-    def get_addressee(cls, rec_dict):
-        return rec_dict.get('add', '')
+class QaqetReader(ToolboxReader):
 
     @classmethod
     def get_utterance_raw(cls, rec_dict):
@@ -65,19 +61,3 @@ class QuaqetReader(ToolboxReader):
             return 'question'
         else:
             return 'default'
-
-    @classmethod
-    def get_seg_tier(cls, rec_dict):
-        return rec_dict.get('mb', '')
-
-    @classmethod
-    def get_gloss_tier(cls, rec_dict):
-        return rec_dict.get('ge', '')
-
-    @classmethod
-    def get_pos_tier(cls, rec_dict):
-        return rec_dict.get('ps', '')
-
-    @classmethod
-    def get_lang_tier(cls, rec_dict):
-        return rec_dict.get('lg', '')
