@@ -84,8 +84,6 @@ class ChintangParser(ToolboxParser):
     def get_record_reader(self):
         return ChintangReader(self.toolbox_file)
 
-###############################################################################
-
 
 class IndonesianParser(ToolboxParser):
 
@@ -101,10 +99,16 @@ class IndonesianParser(ToolboxParser):
     def get_record_reader(self):
         return IndonesianReader(self.toolbox_file)
 
-###############################################################################
-
 
 class RussianParser(ToolboxParser):
 
     def get_record_reader(self):
         return RussianReader(self.toolbox_file)
+
+
+class TuatschinParser(ToolboxParser):
+
+    def get_record_reader(self):
+        return RussianReader(self.toolbox_file)
+
+
