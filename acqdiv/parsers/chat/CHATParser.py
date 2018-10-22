@@ -31,6 +31,7 @@ class CHATParser(CHATParserInterface):
         self.session_path = session_path
         self.reader = self.get_reader()
         self.cleaner = self.get_cleaner()
+        self.consistent_actual_target = True
 
         with open(session_path) as session_file:
             self.reader.read(session_file)
@@ -141,6 +142,11 @@ class CHATParser(CHATParserInterface):
                 word = self.cleaner.clean_word(word)
                 word_actual = self.cleaner.clean_word(word_actual)
                 word_target = self.cleaner.clean_word(word_target)
+
+                if not self.consistent_actual_target:
+                    if word_actual == word_target:
+                        word_actual = None
+                        word_target = None
 
                 word_dict = {
                     'word_language': word_language if word_language else None,
