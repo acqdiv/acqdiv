@@ -11,7 +11,7 @@ class TuatschinReader(ToolboxReader):
 
     @classmethod
     def get_utterance_raw(cls, rec_dict):
-        return rec_dict.get('text', '')
+        return rec_dict.get('token', '')
 
     @classmethod
     def get_sentence_type(cls, rec_dict):
