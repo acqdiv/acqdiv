@@ -222,12 +222,13 @@ class CHATCleaner(CHATCleanerInterface):
     @classmethod
     def clean_utterance(cls, utterance):
         for cleaning_method in [
-                cls.null_event_utterances, cls.unify_untranscribed,
-                cls.handle_repetitions, cls.remove_terminator,
-                cls.remove_events, cls.remove_omissions,
-                cls.remove_linkers, cls.remove_separators, cls.remove_ca,
+                cls.unify_untranscribed, cls.handle_repetitions,
+                cls.remove_terminator, cls.remove_events,
+                cls.remove_omissions, cls.remove_linkers,
+                cls.remove_separators, cls.remove_ca,
                 cls.remove_pauses_between_words, cls.remove_scoped_symbols,
-                cls.null_untranscribed_utterances, cls.remove_commas]:
+                cls.remove_commas, cls.null_untranscribed_utterances,
+                cls.null_event_utterances]:
             utterance = cleaning_method(utterance)
 
         return utterance
