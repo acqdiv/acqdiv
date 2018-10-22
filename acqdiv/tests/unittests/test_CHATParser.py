@@ -2066,7 +2066,7 @@ class TestYucatecParser(unittest.TestCase):
             'addressee': None,
             'utterance_raw': 'baʼax .',
             'utterance': 'baʼax',
-            'translation': None,
+            'translation': 'qué .',
             'morpheme': 'INT|baʼax .',
             'gloss_raw': 'INT|baʼax .',
             'pos_raw': 'INT|baʼax .',
