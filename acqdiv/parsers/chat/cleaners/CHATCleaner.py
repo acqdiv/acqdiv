@@ -215,6 +215,11 @@ class CHATCleaner(CHATCleanerInterface):
         return cls.remove_redundant_whitespaces(clean)
 
     @classmethod
+    def remove_commas(cls, utterance):
+        """Remove commas from utterance."""
+        return re.sub(r',', '', utterance)
+
+    @classmethod
     def clean_utterance(cls, utterance):
         for cleaning_method in [
                 cls.null_event_utterances, cls.unify_untranscribed,
@@ -222,7 +227,7 @@ class CHATCleaner(CHATCleanerInterface):
                 cls.remove_events, cls.remove_omissions,
                 cls.remove_linkers, cls.remove_separators, cls.remove_ca,
                 cls.remove_pauses_between_words, cls.remove_scoped_symbols,
-                cls.null_untranscribed_utterances]:
+                cls.null_untranscribed_utterances, cls.remove_commas]:
             utterance = cleaning_method(utterance)
 
         return utterance
