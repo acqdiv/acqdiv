@@ -8,6 +8,10 @@ class QaqetReader(ToolboxReader):
     language = 'Qaqet'
 
     @classmethod
+    def get_addressee(cls, rec_dict):
+        return rec_dict.get('addr', '')
+
+    @classmethod
     def get_utterance_raw(cls, rec_dict):
         return cls.get_actual_utterance(rec_dict)
 
