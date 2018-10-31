@@ -113,18 +113,24 @@ class TestQaqetReader(unittest.TestCase):
         desired_output = 'mor'
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- null_untranscribed_morpheme ----------
+    # ---------- untranscribed_morphology_tier ----------
 
-    def test_null_untranscribed_morpheme_question_mark(self):
+    def test_null_untranscribed_morphology_tier_question_marks(self):
         morpheme = '??'
-        actual_output = Qr.null_untranscribed_morpheme(morpheme)
+        actual_output = Qr.null_untranscribed_morphology_tier(morpheme)
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    def test_null_untranscribed_morpheme_stars(self):
+    def test_untranscribed_morphology_tier_stars(self):
         morpheme = '***'
-        actual_output = Qr.null_untranscribed_morpheme(morpheme)
+        actual_output = Qr.null_untranscribed_morphology_tier(morpheme)
         desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_untranscribed_morphology_tier_more_material(self):
+        morpheme = 'qiqu ?? qiqu'
+        actual_output = Qr.null_untranscribed_morphology_tier(morpheme)
+        desired_output = 'qiqu ?? qiqu'
         self.assertEqual(actual_output, desired_output)
 
     # ---------- lang2lang ----------
@@ -141,4 +147,60 @@ class TestQaqetReader(unittest.TestCase):
         morpheme = 'Q='
         actual_output = Qr.clean_lang(morpheme)
         desired_output = 'Qaqet'
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- remove_events_seg_tier ----------
+
+    def test_remove_events_seg_tier_one_event(self):
+        seg_tier = 'qaquqi sneeze quqi'
+        actual_output = Qr.remove_events_seg_tier(seg_tier)
+        desired_output = 'qaquqi quqi'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_events_seg_tier_two_events(self):
+        seg_tier = 'sound laugh'
+        actual_output = Qr.remove_events_seg_tier(seg_tier)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- remove_events_gloss_tier ----------
+
+    def test_remove_events_gloss_tier_one_event(self):
+        gloss_tier = 'qaquqi yes quqi'
+        actual_output = Qr.remove_events_gloss_tier(gloss_tier)
+        desired_output = 'qaquqi quqi'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_events_gloss_tier_two_events(self):
+        gloss_tier = 'SOUND LAUGH'
+        actual_output = Qr.remove_events_gloss_tier(gloss_tier)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- remove_events_pos_tier ----------
+
+    def test_remove_events_pos_tier_one_event(self):
+        pos_tier = 'ART GESTURE DIR'
+        actual_output = Qr.remove_events_pos_tier(pos_tier)
+        desired_output = 'ART DIR'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_events_pos_tier_two_events(self):
+        pos_tier = 'SOUND SOUND'
+        actual_output = Qr.remove_events_pos_tier(pos_tier)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- unify_unknowns_morpheme ----------
+
+    def test_unify_unknowns_morpheme_question_mark(self):
+        morpheme = '??'
+        actual_output = Qr.unify_unknowns_morpheme(morpheme)
+        desired_output = '???'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_unknowns_morpheme_xxx(self):
+        morpheme = 'xxx'
+        actual_output = Qr.unify_unknowns_morpheme(morpheme)
+        desired_output = '???'
         self.assertEqual(actual_output, desired_output)

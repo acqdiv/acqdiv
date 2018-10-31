@@ -18,6 +18,28 @@ class QaqetReader(ToolboxReader):
         return rec_dict.get('trs-i', '')
 
     @classmethod
+    def get_translation(cls, rec_dict):
+        return rec_dict.get('ft', '')
+
+    @classmethod
+    def get_comment(cls, rec_dict):
+        return rec_dict.get('nt', '')
+
+    @classmethod
+    def get_sentence_type(cls, rec_dict):
+        """Get sentence type.
+
+        Usually, there are no terminators in the transcriptions. In this case,
+        the default value used. Only questions are explicitly marked,
+        exclamations not.
+        """
+        utterance = cls.get_utterance_raw(rec_dict)
+        if utterance.endswith('?'):
+            return 'question'
+        else:
+            return 'default'
+
+    @classmethod
     def get_words_data(cls, rec_dict):
         result = []
         actual_utterance = cls.clean_utterance(cls.get_utterance_raw(rec_dict))
@@ -42,7 +64,9 @@ class QaqetReader(ToolboxReader):
             result.append(d)
         return result
 
-    # ---------- clean utterance ----------
+    # ---------- cleaners ----------
+
+    # ---------- utterance ----------
 
     @classmethod
     def remove_events_utterance(cls, utterance):
@@ -93,27 +117,71 @@ class QaqetReader(ToolboxReader):
 
         return utterance
 
-    @classmethod
-    def get_translation(cls, rec_dict):
-        return rec_dict.get('ft', '')
+    # ---------- morphology tier ----------
 
     @classmethod
-    def get_comment(cls, rec_dict):
-        return rec_dict.get('nt', '')
+    def null_untranscribed_morphology_tier(cls, morph_tier):
+        untranscribed_re = re.compile(r'\?\?|\*{3}|x{1,4}')
+
+        if untranscribed_re.fullmatch(morph_tier):
+            return ''
+
+        return morph_tier
 
     @classmethod
-    def get_sentence_type(cls, rec_dict):
-        """Get sentence type.
+    def clean_morph_tier(cls, morph_tier):
+        return cls.null_untranscribed_morphology_tier(morph_tier)
 
-        Usually, there are no terminators in the transcriptions. In this case,
-        the default value used. Only questions are explicitly marked,
-        exclamations not.
-        """
-        utterance = cls.get_utterance_raw(rec_dict)
-        if utterance.endswith('?'):
-            return 'question'
-        else:
-            return 'default'
+    @classmethod
+    def remove_events_seg_tier(cls, seg_tier):
+        events = {'click', 'cry', 'laugh', 'raises-eyebrows', 'shakes-head',
+                  'sings', 'sneeze', 'sound', 'spits'}
+
+        for event in events:
+            seg_tier = seg_tier.replace(event, '')
+
+        return cls.remove_redundant_whitespaces(seg_tier)
+
+    @classmethod
+    def clean_seg_tier(cls, seg_tier):
+        return cls.remove_events_seg_tier(seg_tier)
+
+    @classmethod
+    def remove_events_gloss_tier(cls, gloss_tier):
+        events = {'CLICK', 'CRY', 'LAUGH', 'SINGS', 'SNEEZE', 'SOUND', 'SPITS',
+                  'yes', 'what?'}
+        for event in events:
+            gloss_tier = gloss_tier.replace(event, '')
+
+        return cls.remove_redundant_whitespaces(gloss_tier)
+
+    @classmethod
+    def clean_gloss_tier(cls, gloss_tier):
+        return cls.remove_events_gloss_tier(gloss_tier)
+
+    @classmethod
+    def remove_events_pos_tier(cls, pos_tier):
+        events = {'GESTURE', 'SOUND'}
+
+        for event in events:
+            pos_tier = pos_tier.replace(event, '')
+
+        return cls.remove_redundant_whitespaces(pos_tier)
+
+    @classmethod
+    def clean_pos_tier(cls, pos_tier):
+        return cls.remove_events_pos_tier(pos_tier)
+
+    # ---------- morpheme ----------
+
+    @classmethod
+    def unify_unknowns_morpheme(cls, morpheme):
+        unknown_re = re.compile(r'x{1,4}|\?{2}|\*{3}')
+        return unknown_re.sub('???', morpheme)
+
+    @classmethod
+    def clean_morpheme(cls, morpheme):
+        return cls.unify_unknowns_morpheme(morpheme)
 
     @classmethod
     def remove_morpheme_sep(cls, morpheme):
@@ -124,27 +192,21 @@ class QaqetReader(ToolboxReader):
         return morpheme.strip('-').strip('=')
 
     @classmethod
-    def null_untranscribed_morpheme(cls, morpheme):
-        if morpheme in {'??', '***'}:
-            return ''
-
-        return morpheme
-
-    @classmethod
     def lang2lang(cls, lang):
         """Map the original language label to ACQDIV label."""
         mapping = {
             'Q': 'Qaqet',
             'TP': 'Tok Pisin',
             'E': 'English',
-            'GE': 'German'}
+            'GE': 'German',
+            '???': ''
+        }
 
         return mapping[lang]
 
     @classmethod
     def clean_lang(cls, lang):
         lang = cls.remove_morpheme_sep(lang)
-        lang = cls.null_untranscribed_morpheme(lang)
 
         if lang:
             return cls.lang2lang(lang)
