@@ -302,6 +302,24 @@ class Imdi(Parser):
     #     return seconds
 
 
+class QaqetIMDI(Imdi):
+
+    def get_tc_code(self, session_code):
+        return re.search(r'[A-Z]{3}', session_code).group()
+
+    def get_participants(self):
+        participants = super().get_participants()
+        tc_code = self.get_tc_code(self.root.Session.Name.text)
+
+        for participant in participants:
+            if participant['code'] == tc_code:
+                participant['role'] = 'Target_Child'
+            else:
+                participant['role'] = participant['familysocialrole']
+
+        return participants
+
+
 class Chat(Parser):
     """
     Subclass of metadata.Parser class to deal with CHAT XML metadata extraction.
