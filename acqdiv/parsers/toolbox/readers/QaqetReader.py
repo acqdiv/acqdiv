@@ -5,6 +5,8 @@ from acqdiv.parsers.toolbox.readers.ToolboxReader import ToolboxReader
 
 class QaqetReader(ToolboxReader):
 
+    language = 'Qaqet'
+
     @classmethod
     def get_utterance_raw(cls, rec_dict):
         return cls.get_actual_utterance(rec_dict)
@@ -199,7 +201,7 @@ class QaqetReader(ToolboxReader):
             'TP': 'Tok Pisin',
             'E': 'English',
             'GE': 'German',
-            '???': ''
+            '???': 'Qaqet'
         }
 
         return mapping[lang]
