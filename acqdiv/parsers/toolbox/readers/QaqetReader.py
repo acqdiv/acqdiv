@@ -9,7 +9,12 @@ class QaqetReader(ToolboxReader):
 
     @classmethod
     def get_addressee(cls, rec_dict):
-        return rec_dict.get('addr', '')
+        add = rec_dict.get('addr', '')
+
+        if add == 'unknown':
+            return ''
+
+        return add
 
     @classmethod
     def get_utterance_raw(cls, rec_dict):
