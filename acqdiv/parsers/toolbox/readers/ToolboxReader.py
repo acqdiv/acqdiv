@@ -757,7 +757,7 @@ class ToolboxReader(object):
     @classmethod
     def clean_lang(cls, lang):
         """No cleaning per default."""
-        return lang
+        return cls.clean_morpheme(lang)
 
     def __repr__(self):
         """Pretty print class name + plus path of session file."""

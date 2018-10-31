@@ -206,6 +206,7 @@ class QaqetReader(ToolboxReader):
 
     @classmethod
     def clean_lang(cls, lang):
+        lang = super().clean_lang(lang)
         lang = cls.remove_morpheme_sep(lang)
 
         if lang:
