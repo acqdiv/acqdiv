@@ -512,7 +512,10 @@ class TestToolboxReader(unittest.TestCase):
             ToolboxReader.clean_seg_word,
             ToolboxReader.clean_seg
         )
-        desired_output = [['w1pfxseg-', 'w1stemseg', '-w1sfxseg'], ['w2stemseg']]
+        desired_output = [
+            ['w1pfxseg-', 'w1stemseg', '-w1sfxseg'],
+            ['w2stemseg']
+        ]
         self.assertEqual(actual_output, desired_output)
 
     def test_get_list_of_list_morphemes_empty_dict(self):
@@ -617,13 +620,289 @@ class TestToolboxReader(unittest.TestCase):
         desired_output = True
         self.assertEqual(actual_output, desired_output)
 
-    def test_get_morpheme_dict(self):
-        pass
+    def test_get_morpheme_dict_no_warning(self):
+        morpheme = ('segment', 'gloss', 'pos', 'language')
+        actual_output = ToolboxReader.get_morpheme_dict(morpheme)
+        desired_output = {
+            'morpheme': 'segment',
+            'gloss_raw': 'gloss',
+            'pos_raw': 'pos',
+            'morpheme_language': 'language',
+            'type': 'target',
+            'warning': None
+        }
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_dict_with_warning(self):
+        morpheme = ('segment', 'gloss', 'pos', 'language')
+        ToolboxReader.warnings = ['warning 1', 'warning 2']
+        actual_output = ToolboxReader.get_morpheme_dict(morpheme)
+        desired_output = {
+            'morpheme': 'segment',
+            'gloss_raw': 'gloss',
+            'pos_raw': 'pos',
+            'morpheme_language': 'language',
+            'type': 'target',
+            'warning': 'warning 1 warning 2'
+        }
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_dict_with_warnings(self):
+        morpheme = ('segment', 'gloss', 'pos', 'language')
+        ToolboxReader.warnings = ['warning 1', 'warning 2']
+        actual_output = ToolboxReader.get_morpheme_dict(morpheme)
+        desired_output = {
+            'morpheme': 'segment',
+            'gloss_raw': 'gloss',
+            'pos_raw': 'pos',
+            'morpheme_language': 'language',
+            'type': 'target',
+            'warning': 'warning 1 warning 2'
+        }
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_dict_with_empty_fields(self):
+        morpheme = (None, 'gloss', None, 'language')
+        actual_output = ToolboxReader.get_morpheme_dict(morpheme)
+        desired_output = {
+            'morpheme': None,
+            'gloss_raw': 'gloss',
+            'pos_raw': None,
+            'morpheme_language': 'language',
+            'type': 'target',
+            'warning': None
+        }
+        self.assertEqual(actual_output, desired_output)
 
     def test_get_morpheme_type(self):
-        pass
+        actual_output = ToolboxReader.get_morpheme_type()
+        desired_output = 'target'
+        self.assertEqual(actual_output, desired_output)
 
     # ---------- miscellaneous ----------
+
+    def test_add_word_language_same_length(self):
+        """TODO: add_word_language needs documentation"""
+        words = [{'word': 'word1'}, {'word': 'word2'}, {'word': 'word3'}]
+        morphemes = [
+            [{'morpheme_language': 'a_lang'}],
+            [{'morpheme_language': 'a_lang'}],
+            [{'morpheme_language': 'a_lang'}]
+        ]
+        ToolboxReader.add_word_language(words, morphemes)
+        desired = [
+            {'word': 'word1', 'word_language': 'a_lang'},
+            {'word': 'word2', 'word_language': 'a_lang'},
+            {'word': 'word3', 'word_language': 'a_lang'}
+        ]
+        self.assertEqual(words, desired)
+
+    def test_fix_wm_misalignments_not_misaligned(self):
+        words = [{}, {}]
+        morphemes = [{}, {}]
+        ToolboxReader.fix_wm_misalignments(words, morphemes)
+        desired = [{}, {}]
+        self.assertEqual(words, desired)
+
+    def test_fix_wm_misalignments_misaligned(self):
+        words = [{}, {}]
+        morphemes = [{}, {}, {}]
+        ToolboxReader.fix_wm_misalignments(words, morphemes)
+        desired = [{}, {}, {}]
+        self.assertEqual(words, desired)
+
+    def test_fix_wm_misalignments_misaligned_no_words(self):
+        words = []
+        morphemes = [{}]
+        ToolboxReader.fix_wm_misalignments(words, morphemes)
+        desired = [{}]
+        self.assertEqual(words, desired)
+
+    def test_fix_wm_misalignments_no_words_no_morphemes(self):
+        words = []
+        morphemes = []
+        ToolboxReader.fix_wm_misalignments(words, morphemes)
+        desired = []
+        self.assertEqual(words, desired)
+
+    def test_null_empty_values_multiple_empty_values(self):
+        dictionary = {1: '', 2: 'hey', 3: ''}
+        ToolboxReader.null_empty_values(dictionary)
+        desired = {1: None, 2: 'hey', 3: None}
+        self.assertEqual(dictionary, desired)
+
+    def test_null_empty_values_empty_dict(self):
+        dictionary = {}
+        ToolboxReader.null_empty_values(dictionary)
+        desired = {}
+        self.assertEqual(dictionary, desired)
+
+    # ---------- cleaners ----------
+
+    # ---------- utterance ----------
+
+    def test_unify_unknown_xxx(self):
+        utterance = 'xxx are xxx'
+        actual_output = ToolboxReader.unify_unknown(utterance)
+        desired_output = '??? are ???'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_unknown_www(self):
+        utterance = 'here www examples'
+        actual_output = ToolboxReader.unify_unknown(utterance)
+        desired_output = 'here ??? examples'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_unknown_stars(self):
+        utterance = 'here *** examples'
+        actual_output = ToolboxReader.unify_unknown(utterance)
+        desired_output = 'here ??? examples'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_unknown_xxx_stars_www(self):
+        utterance = 'xxx *** www, ***'
+        actual_output = ToolboxReader.unify_unknown(utterance)
+        desired_output = '??? ??? ???, ???'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_unknown_empty_string(self):
+        utterance = ''
+        actual_output = ToolboxReader.unify_unknown(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_utterance_stars_xxx(self):
+        utterance = 'These *** some good xxx .'
+        actual_output = ToolboxReader.clean_utterance(utterance)
+        desired_output = 'These ??? some good ??? .'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_utterance_empty_string(self):
+        utterance = ''
+        actual_output = ToolboxReader.clean_utterance(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- utterance word ----------
+
+    def test_clean_word_xxx(self):
+        utterance = 'xxx-less'
+        actual_output = ToolboxReader.clean_utterance(utterance)
+        desired_output = '???-less'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_word_empty_string(self):
+        utterance = ''
+        actual_output = ToolboxReader.clean_utterance(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- morphology tiers ----------
+
+    def test_clean_morph_tier(self):
+        morph_tier = 'the morph tier'
+        actual_output = ToolboxReader.clean_morph_tier(morph_tier)
+        desired_output = 'the morph tier'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_seg_tier(self):
+        seg_tier = 'the seg tier'
+        actual_output = ToolboxReader.clean_seg_tier(seg_tier)
+        desired_output = 'the seg tier'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_gloss_tier(self):
+        gloss_tier = 'the gloss tier'
+        actual_output = ToolboxReader.clean_gloss_tier(gloss_tier)
+        desired_output = 'the gloss tier'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_pos_tier(self):
+        pos_tier = 'the pos tier'
+        actual_output = ToolboxReader.clean_pos_tier(pos_tier)
+        desired_output = 'the pos tier'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_lang_tier(self):
+        lang_tier = 'the lang tier'
+        actual_output = ToolboxReader.clean_lang_tier(lang_tier)
+        desired_output = 'the lang tier'
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- morpheme words ----------
+
+    def test_clean_morpheme_word(self):
+        morpheme_word = 'mor-word'
+        actual_output = ToolboxReader.clean_morpheme_word(morpheme_word)
+        desired_output = 'mor-word'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_seg_word(self):
+        seg_word = 'seg-word'
+        actual_output = ToolboxReader.clean_seg_word(seg_word)
+        desired_output = 'seg-word'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_gloss_word(self):
+        gloss_word = 'gloss-word'
+        actual_output = ToolboxReader.clean_gloss_word(gloss_word)
+        desired_output = 'gloss-word'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_pos_word(self):
+        pos_word = 'pos-word'
+        actual_output = ToolboxReader.clean_pos_word(pos_word)
+        desired_output = 'pos-word'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_lang_word(self):
+        lang_word = 'lang-word'
+        actual_output = ToolboxReader.clean_lang_word(lang_word)
+        desired_output = 'lang-word'
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- morphemes ----------
+
+    def test_clean_morpheme(self):
+        morpheme = 'morpheme'
+        actual_output = ToolboxReader.clean_morpheme(morpheme)
+        desired_output = 'morpheme'
+        self.assertEqual(actual_output, desired_output)
+    
+    def test_clean_seg(self):
+        seg = 'seg'
+        actual_output = ToolboxReader.clean_seg(seg)
+        desired_output = 'seg'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_gloss(self):
+        gloss = 'gloss'
+        actual_output = ToolboxReader.clean_gloss(gloss)
+        desired_output = 'gloss'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_pos(self):
+        pos = 'pos'
+        actual_output = ToolboxReader.clean_pos(pos)
+        desired_output = 'pos'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_lang(self):
+        lang = 'lang'
+        actual_output = ToolboxReader.clean_lang(lang)
+        desired_output = 'lang'
+        self.assertEqual(actual_output, desired_output)
+
+    def test___repr__(self):
+        """Test for correct represenation of class.
+
+        If needed create a file 'Toolbox.txt' and use this file
+        instead of 'Chintang.txt'.
+        """
+        reader = ToolboxReader('./Chintang.txt')
+        actual_output = reader.__repr__()
+        desired_output = "ToolboxReader('./Chintang.txt')"
+        self.assertEqual(actual_output, desired_output)
 
 
 if __name__ == '__main__':
