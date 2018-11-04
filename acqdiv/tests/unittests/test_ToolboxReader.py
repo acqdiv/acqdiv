@@ -562,10 +562,59 @@ class TestToolboxReader(unittest.TestCase):
         desired_output = ([[], []], glosses, poses, langs)
         self.assertEqual(actual_output, desired_output)
 
-    def test_fix_mm_misalignments_empty_input(self):
+    def test_fix_mm_misalignments_empty_list_input(self):
         morphology_data = ([], [], [], [], [])
         actual_output = ToolboxReader.fix_mm_misalignments(morphology_data)
         desired_output = ([], [], [], [], [])
+        self.assertEqual(actual_output, desired_output)
+
+    def test_struct_eqv_no_nesting_struct_is_equal(self):
+        xs = [2]
+        ys = [5]
+        actual_output = ToolboxReader.struct_eqv(xs, ys)
+        desired_output = True
+        self.assertEqual(actual_output, desired_output)
+
+    def test_struct_eqv_no_nesting_struct_is_different(self):
+        xs = [2]
+        ys = []
+        actual_output = ToolboxReader.struct_eqv(xs, ys)
+        desired_output = False
+        self.assertEqual(actual_output, desired_output)
+
+    def test_struct_eqv_nesting_struct_is_equal(self):
+        xs = [[3, 4], [2]]
+        ys = [[1, 7], [6]]
+        actual_output = ToolboxReader.struct_eqv(xs, ys)
+        desired_output = True
+        self.assertEqual(actual_output, desired_output)
+
+    def test_struct_eqv_nesting_struct_is_different(self):
+        xs = [[3, 4], []]
+        ys = [[1, 7], [6]]
+        actual_output = ToolboxReader.struct_eqv(xs, ys)
+        desired_output = False
+        self.assertEqual(actual_output, desired_output)
+
+    def test_struct_eqv_multiple_nesting_struct_is_equal(self):
+        xs = [[3, [[4]]], [1, []]]
+        ys = [[1, [[7]]], [2, []]]
+        actual_output = ToolboxReader.struct_eqv(xs, ys)
+        desired_output = True
+        self.assertEqual(actual_output, desired_output)
+
+    def test_struct_eqv_multiple_nesting_struct_is_different(self):
+        xs = [[3, [[4, 3]]], [1, []]]
+        ys = [[1, [[7]]], [2, [], []]]
+        actual_output = ToolboxReader.struct_eqv(xs, ys)
+        desired_output = False
+        self.assertEqual(actual_output, desired_output)
+
+    def test_struct_eqv_empty_lists(self):
+        xs = []
+        ys = []
+        actual_output = ToolboxReader.struct_eqv(xs, ys)
+        desired_output = True
         self.assertEqual(actual_output, desired_output)
 
     def test_get_morpheme_dict(self):
