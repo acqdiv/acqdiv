@@ -95,6 +95,19 @@ class TuatschinReader(ToolboxReader):
     def clean_utterance(cls, utterance):
         return cls.remove_punctuation_utterance(utterance)
 
+    # ---------- seg tier cleaners ----------
+
+    @staticmethod
+    def null_untranscribed_seg_tier(seg_tier):
+        if seg_tier == 'XXX':
+            return ''
+
+        return seg_tier
+
+    @staticmethod
+    def unify_unknown_seg_tier(seg_tier):
+        return seg_tier.replace('XXX', '???')
+
     @classmethod
     def remove_dot_repetitions_seg_tier(cls, seg_tier):
         """Remove '. . .' or '. . . .' in segment tier."""
@@ -102,5 +115,17 @@ class TuatschinReader(ToolboxReader):
         return cls.remove_redundant_whitespaces(seg_tier)
 
     @classmethod
+    def remove_punctuation_seg_tier(cls, seg_tier):
+        utterance = re.sub(r'[?!,]', '', seg_tier)
+        return cls.remove_redundant_whitespaces(utterance)
+
+    @classmethod
     def clean_seg_tier(cls, seg_tier):
-        return cls.remove_dot_repetitions_seg_tier(seg_tier)
+        for cleaning_method in [
+                cls.remove_dot_repetitions_seg_tier,
+                cls.remove_punctuation_seg_tier,
+                cls.null_untranscribed_seg_tier,
+                cls.unify_unknown_seg_tier]:
+            seg_tier = cleaning_method(seg_tier)
+
+        return seg_tier
