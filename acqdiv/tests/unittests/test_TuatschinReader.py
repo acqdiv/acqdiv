@@ -84,3 +84,17 @@ class TestTuatschinReader(unittest.TestCase):
         actual_output = Tr.remove_punct_inv(gloss_tier, pos_tier)
         desired_output = 'AAA AAA'
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- remove_punct_inv ----------
+
+    def test_unify_unknown_pos_tier_none(self):
+        pos_tier = 'N AUX V'
+        actual_output = Tr.unify_unknown_pos_tier(pos_tier)
+        desired_output = 'N AUX V'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_unknown_pos_tier(self):
+        pos_tier = 'N X V'
+        actual_output = Tr.unify_unknown_pos_tier(pos_tier)
+        desired_output = 'N ??? V'
+        self.assertEqual(actual_output, desired_output)

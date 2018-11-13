@@ -76,16 +76,6 @@ class TuatschinReader(ToolboxReader):
         return [morpheme_word]
 
     @classmethod
-    def remove_pos_punctuation(cls, pos_tier):
-        """Remove POS tag 'PUNCT' in POS tier."""
-        pos_tier = pos_tier.replace('PUNCT', '')
-        return cls.remove_redundant_whitespaces(pos_tier)
-
-    @classmethod
-    def clean_pos_tier(cls, pos_tier):
-        return cls.remove_pos_punctuation(pos_tier)
-
-    @classmethod
     def remove_punctuation_utterance(cls, utterance):
         """Remove '...' or '....' in utterances."""
         utterance = re.sub(r'[.?!,]', '', utterance)
@@ -208,7 +198,7 @@ class TuatschinReader(ToolboxReader):
     # ---------- POS tier cleaners ----------
 
     @classmethod
-    def remove_punct(cls, pos_tier):
+    def remove_punct_pos_tier(cls, pos_tier):
         pos_tier = pos_tier.replace('PUNCT', '')
         return cls.remove_redundant_whitespaces(pos_tier)
 
@@ -221,12 +211,13 @@ class TuatschinReader(ToolboxReader):
 
     @staticmethod
     def unify_unknown_pos_tier(pos_tier):
-        return pos_tier.replace('X', '???')
+        rgx = re.compile(r'\bX\b')
+        return rgx.sub('???', pos_tier)
 
     @classmethod
-    def clean_gloss_tier(cls, pos_tier):
+    def clean_pos_tier(cls, pos_tier):
         for cleaning_method in [
-                cls.remove_punct,
+                cls.remove_punct_pos_tier,
                 cls.null_untranscribed_pos_tier,
                 cls.unify_unknown_pos_tier]:
             pos_tier = cleaning_method(pos_tier)
