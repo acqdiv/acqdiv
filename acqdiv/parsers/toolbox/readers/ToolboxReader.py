@@ -66,7 +66,11 @@ class ToolboxReader(object):
                 yield self.make_rec(record)
 
     @staticmethod
-    def iter_records(toolbox_file):
+    def get_record_marker():
+        return br'\\ref'
+
+    @classmethod
+    def iter_records(cls, toolbox_file):
         """Iter the records of a toolbox file.
 
         Args:
@@ -75,7 +79,7 @@ class ToolboxReader(object):
         Yields:
             str: The record.
         """
-        _record_marker = re.compile(br'\\ref')
+        _record_marker = re.compile(cls.get_record_marker())
 
         with contextlib.closing(mmap.mmap(toolbox_file.fileno(),
                                           0, access=mmap.ACCESS_READ)) as data:

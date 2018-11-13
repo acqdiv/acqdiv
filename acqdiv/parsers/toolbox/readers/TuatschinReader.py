@@ -5,9 +5,13 @@ from acqdiv.parsers.toolbox.readers.ToolboxReader import ToolboxReader
 
 class TuatschinReader(ToolboxReader):
 
+    @staticmethod
+    def get_record_marker():
+        return br'\\u_id'
+
     @classmethod
     def get_source_id(cls, rec_dict):
-        return rec_dict.get('ref', 'u_id')
+        return rec_dict.get('u_id')
 
     @classmethod
     def get_utterance_raw(cls, rec_dict):
