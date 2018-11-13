@@ -113,6 +113,9 @@ class ToolboxReader(object):
         if not cls.is_record(rec_dict):
             return None, None, None
         else:
+            # clean across different fields
+            rec_dict = cls.cross_clean(rec_dict)
+
             utterance = cls.get_utterance_data(rec_dict)
             words = cls.get_words_data(rec_dict)
 
@@ -657,6 +660,10 @@ class ToolboxReader(object):
                 dictionary[key] = None
 
     # ---------- cleaners ----------
+
+    @staticmethod
+    def cross_clean(rec_dict):
+        return rec_dict
 
     # ---------- utterance ----------
 
