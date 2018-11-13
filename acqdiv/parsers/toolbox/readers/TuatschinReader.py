@@ -129,3 +129,31 @@ class TuatschinReader(ToolboxReader):
             seg_tier = cleaning_method(seg_tier)
 
         return seg_tier
+
+    # ---------- POS tier cleaners ----------
+
+    @classmethod
+    def remove_punct(cls, pos_tier):
+        pos_tier = pos_tier.replace('PUNCT', '')
+        return cls.remove_redundant_whitespaces(pos_tier)
+
+    @staticmethod
+    def null_untranscribed_pos_tier(pos_tier):
+        if pos_tier == 'X':
+            return ''
+
+        return pos_tier
+
+    @staticmethod
+    def unify_unknown_pos_tier(pos_tier):
+        return pos_tier.replace('X', '???')
+
+    @classmethod
+    def clean_gloss_tier(cls, pos_tier):
+        for cleaning_method in [
+                cls.remove_punct,
+                cls.null_untranscribed_pos_tier,
+                cls.unify_unknown_pos_tier]:
+            pos_tier = cleaning_method(pos_tier)
+
+        return pos_tier
