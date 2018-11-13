@@ -36,35 +36,18 @@ class TestTuatschinReader(unittest.TestCase):
         desired_output = 'WHAT ??? THAT'
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- null_untranscribed_seg_tier ----------
-
-    def test_null_untranscribed_seg_tier(self):
-        seg_tier = 'XXX'
-        actual_output = Tr.null_untranscribed_seg_tier(seg_tier)
-        desired_output = ''
-        self.assertEqual(actual_output, desired_output)
-
     # ---------- clean_seg_tier ----------
 
-    def test_clean_seg_tier_untranscribed(self):
+    def test_clean_seg_tier_unknown(self):
         seg_tier = 'XXX'
         actual_output = Tr.clean_seg_tier(seg_tier)
-        desired_output = ''
+        desired_output = '???'
         self.assertEqual(actual_output, desired_output)
 
     def test_clean_seg_tier_unknown_question_mark(self):
         seg_tier = 'WHAT XXX THAT ?'
         actual_output = Tr.clean_seg_tier(seg_tier)
         desired_output = 'WHAT ??? THAT'
-        self.assertEqual(actual_output, desired_output)
-
-    # ---------- null_untranscribed_gloss_tier ----------
-
-    def test_null_untranscribed_gloss_tier(self):
-        gloss_tier = 'inv'
-        seg_tier = 'XXX'
-        actual_output = Tr.null_untranscribed_gloss_tier(gloss_tier, seg_tier)
-        desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
     # ---------- unify_unknown_gloss_tier ----------

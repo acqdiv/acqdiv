@@ -87,21 +87,6 @@ class TuatschinReader(ToolboxReader):
 
     # ---------- cross cleaners ----------
 
-    @staticmethod
-    def null_untranscribed_gloss_tier(gloss_tier, seg_tier):
-        """Null untranscribed gloss tier.
-
-        This has to be inferred from the segment tier. If the segment tier
-        only contains XXX, then the gloss tier is nulled.
-
-        Returns:
-            str: The cleaned gloss tier.
-        """
-        if seg_tier == 'XXX':
-            return ''
-
-        return gloss_tier
-
     @classmethod
     def unify_unknown_gloss_tier(cls, gloss_tier, seg_tier):
         """Unify unknown in gloss tier.
@@ -154,20 +139,12 @@ class TuatschinReader(ToolboxReader):
         seg_tier = cls.get_seg_tier(rec_dict)
         pos_tier = cls.get_pos_tier(rec_dict)
         gloss_tier = cls.remove_punct_inv(gloss_tier, pos_tier)
-        gloss_tier = cls.null_untranscribed_gloss_tier(gloss_tier, seg_tier)
         gloss_tier = cls.unify_unknown_gloss_tier(gloss_tier, seg_tier)
         rec_dict['morphosyn'] = gloss_tier
 
         return rec_dict
 
     # ---------- seg tier cleaners ----------
-
-    @staticmethod
-    def null_untranscribed_seg_tier(seg_tier):
-        if seg_tier == 'XXX':
-            return ''
-
-        return seg_tier
 
     @staticmethod
     def unify_unknown_seg_tier(seg_tier):
@@ -189,7 +166,6 @@ class TuatschinReader(ToolboxReader):
         for cleaning_method in [
                 cls.remove_dot_repetitions_seg_tier,
                 cls.remove_punctuation_seg_tier,
-                cls.null_untranscribed_seg_tier,
                 cls.unify_unknown_seg_tier]:
             seg_tier = cleaning_method(seg_tier)
 
@@ -203,13 +179,6 @@ class TuatschinReader(ToolboxReader):
         return cls.remove_redundant_whitespaces(pos_tier)
 
     @staticmethod
-    def null_untranscribed_pos_tier(pos_tier):
-        if pos_tier == 'X':
-            return ''
-
-        return pos_tier
-
-    @staticmethod
     def unify_unknown_pos_tier(pos_tier):
         rgx = re.compile(r'\bX\b')
         return rgx.sub('???', pos_tier)
@@ -218,7 +187,6 @@ class TuatschinReader(ToolboxReader):
     def clean_pos_tier(cls, pos_tier):
         for cleaning_method in [
                 cls.remove_punct_pos_tier,
-                cls.null_untranscribed_pos_tier,
                 cls.unify_unknown_pos_tier]:
             pos_tier = cleaning_method(pos_tier)
 
