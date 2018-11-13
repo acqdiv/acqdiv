@@ -81,9 +81,15 @@ class TuatschinReader(ToolboxReader):
         utterance = re.sub(r'[.?!,]', '', utterance)
         return cls.remove_redundant_whitespaces(utterance)
 
+    @staticmethod
+    def unify_unknown_utterance(pos_tier):
+        return pos_tier.replace('xxx', '???')
+
     @classmethod
     def clean_utterance(cls, utterance):
-        return cls.remove_punctuation_utterance(utterance)
+        utterance = cls.remove_punctuation_utterance(utterance)
+        utterance = cls.unify_unknown_utterance(utterance)
+        return utterance
 
     # ---------- cross cleaners ----------
 
