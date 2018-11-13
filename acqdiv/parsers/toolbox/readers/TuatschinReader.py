@@ -95,6 +95,81 @@ class TuatschinReader(ToolboxReader):
     def clean_utterance(cls, utterance):
         return cls.remove_punctuation_utterance(utterance)
 
+    # ---------- cross cleaners ----------
+
+    @staticmethod
+    def null_untranscribed_gloss_tier(gloss_tier, seg_tier):
+        """Null untranscribed gloss tier.
+
+        This has to be inferred from the segment tier. If the segment tier
+        only contains XXX, then the gloss tier is nulled.
+
+        Returns:
+            str: The cleaned gloss tier.
+        """
+        if seg_tier == 'XXX':
+            return ''
+
+        return gloss_tier
+
+    @classmethod
+    def unify_unknown_gloss_tier(cls, gloss_tier, seg_tier):
+        """Unify unknown in gloss tier.
+
+        Annotated with 'inv'. Since 'inv' (=invariable forms) is also used
+        in other cases (such as ADP, ADV, etc.), the segment tier has to be
+        used for inference.
+
+        Returns:
+            str: The cleaned gloss tier.
+        """
+        gloss_words = cls.get_gloss_words(gloss_tier)
+        seg_words = cls.get_seg_words(seg_tier)
+
+        if len(gloss_words) == len(seg_words):
+            for i, seg_word in enumerate(seg_words):
+                if seg_word == 'XXX':
+                    gloss_words[i] = '???'
+
+            return ' '.join(gloss_words)
+
+        return gloss_tier
+
+    @classmethod
+    def remove_punct_inv(cls, gloss_tier, pos_tier):
+        """Remove punctuation inv's in gloss tier.
+
+        Punctuation receives in the gloss tier the 'inv' value. Since
+        'inv' (=invariable forms) is also used in other cases
+        (such as ADP, ADV, etc.), the POS tier has to be used for inference.
+
+        Returns:
+            str: The cleaned gloss tier.
+        """
+        gloss_words = cls.get_gloss_words(gloss_tier)
+        pos_words = cls.get_pos_words(pos_tier)
+
+        if len(gloss_words) == len(pos_words):
+            for i, pos_word in enumerate(pos_words):
+                if pos_word == 'PUNCT':
+                    gloss_words[i] = ''
+
+            return ' '.join((w for w in gloss_words if w))
+
+        return gloss_tier
+
+    @classmethod
+    def cross_clean(cls, rec_dict):
+        gloss_tier = cls.get_gloss_tier(rec_dict)
+        seg_tier = cls.get_seg_tier(rec_dict)
+        pos_tier = cls.get_pos_tier(rec_dict)
+        gloss_tier = cls.remove_punct_inv(gloss_tier, pos_tier)
+        gloss_tier = cls.null_untranscribed_gloss_tier(gloss_tier, seg_tier)
+        gloss_tier = cls.unify_unknown_gloss_tier(gloss_tier, seg_tier)
+        rec_dict['morphosyn'] = gloss_tier
+
+        return rec_dict
+
     # ---------- seg tier cleaners ----------
 
     @staticmethod

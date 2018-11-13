@@ -58,4 +58,29 @@ class TestTuatschinReader(unittest.TestCase):
         desired_output = 'WHAT ??? THAT'
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- null_untranscribed_gloss_tier ----------
 
+    def test_null_untranscribed_gloss_tier(self):
+        gloss_tier = 'inv'
+        seg_tier = 'XXX'
+        actual_output = Tr.null_untranscribed_gloss_tier(gloss_tier, seg_tier)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- unify_unknown_gloss_tier ----------
+
+    def test_unify_unknown_gloss_tier(self):
+        gloss_tier = 'AAA inv AAA inv'
+        seg_tier = 'WHAT XXX THAT XXX'
+        actual_output = Tr.unify_unknown_gloss_tier(gloss_tier, seg_tier)
+        desired_output = 'AAA ??? AAA ???'
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- remove_punct_inv ----------
+
+    def test_remove_punct_inv(self):
+        gloss_tier = 'AAA inv AAA inv'
+        pos_tier = 'WHAT PUNCT THAT PUNCT'
+        actual_output = Tr.remove_punct_inv(gloss_tier, pos_tier)
+        desired_output = 'AAA AAA'
+        self.assertEqual(actual_output, desired_output)
