@@ -17,14 +17,20 @@ class TuatschinReader(ToolboxReader):
 
     @classmethod
     def get_utterance_raw(cls, rec_dict):
+        """Get the raw utterance.
+
+        \token is the normalized/tokenized tier of \text which is the very
+        original transcription. \token is taken as the raw utterance.
+        """
         return rec_dict.get('token', '')
 
     @classmethod
     def get_sentence_type(cls, rec_dict):
         """Get sentence type.
 
-        There are only explicit question (?) and exclamation (!) markers. If
-        they are missing, declarative (default) sentence type is assumed.
+        There are only explicit question ('?'), exclamation ('!') and trail
+        off ('. . .') markers. If they are missing, declarative (default)
+        sentence type is assumed.
         """
         utterance = cls.get_utterance_raw(rec_dict)
         # remove the typical trailing whitespaces
@@ -81,12 +87,20 @@ class TuatschinReader(ToolboxReader):
 
     @classmethod
     def remove_punctuation_utterance(cls, utterance):
-        """Remove '...' or '....' in utterances."""
+        """Remove punctuation in the utterance.
+
+        Utterances can contain the following punctuation: '?', '!', ',' and
+        dot repetitions '. . .'.
+        """
         utterance = re.sub(r'[.?!,]', '', utterance)
         return cls.remove_redundant_whitespaces(utterance)
 
     @staticmethod
     def unify_unknown_utterance(pos_tier):
+        """Unify unknowns in the utterance.
+
+        'xxx' stands for incomprehensible forms and is standardized to '???'.
+        """
         return pos_tier.replace('xxx', '???')
 
     @classmethod
@@ -99,7 +113,7 @@ class TuatschinReader(ToolboxReader):
 
     @classmethod
     def unify_unknown_gloss_tier(cls, gloss_tier, seg_tier):
-        """Unify unknown in gloss tier.
+        """Unify unknowns on the gloss tier.
 
         Annotated with 'inv'. Since 'inv' (=invariable forms) is also used
         in other cases (such as ADP, ADV, etc.), the segment tier has to be
@@ -122,9 +136,9 @@ class TuatschinReader(ToolboxReader):
 
     @classmethod
     def remove_punct_inv(cls, gloss_tier, pos_tier):
-        """Remove punctuation inv's in gloss tier.
+        """Remove punctuation inv's on the gloss tier.
 
-        Punctuation receives in the gloss tier the 'inv' value. Since
+        Punctuation receives on the gloss tier the 'inv' value. Since
         'inv' (=invariable forms) is also used in other cases
         (such as ADP, ADV, etc.), the POS tier has to be used for inference.
 
@@ -158,16 +172,28 @@ class TuatschinReader(ToolboxReader):
 
     @staticmethod
     def unify_unknown_seg_tier(seg_tier):
+        """Unify unknowns on the segment tier.
+
+        'XXX' stands for unknown/incomprehensible forms and is standardized
+        to '???'.
+        """
         return seg_tier.replace('XXX', '???')
 
     @classmethod
     def remove_dot_repetitions_seg_tier(cls, seg_tier):
-        """Remove '. . .' or '. . . .' in segment tier."""
+        """Remove trail offs on the segment tier.
+
+        Trail offs are marked with dot repetitions (3 or 4 times).
+        """
         seg_tier = re.sub(r'\. \. \.( \.)?', '', seg_tier)
         return cls.remove_redundant_whitespaces(seg_tier)
 
     @classmethod
     def remove_punctuation_seg_tier(cls, seg_tier):
+        """Remove punctuation on the segment tier.
+
+        The segment tier can contain the following punctuation: '?', '!', ','.
+        """
         utterance = re.sub(r'[?!,]', '', seg_tier)
         return cls.remove_redundant_whitespaces(utterance)
 
@@ -185,11 +211,21 @@ class TuatschinReader(ToolboxReader):
 
     @classmethod
     def remove_punct_pos_tier(cls, pos_tier):
+        """Remove PUNCT on the POS tier.
+
+        Punctuation receives the POS tag 'PUNCT'.
+        """
         pos_tier = pos_tier.replace('PUNCT', '')
         return cls.remove_redundant_whitespaces(pos_tier)
 
     @staticmethod
     def unify_unknown_pos_tier(pos_tier):
+        """Unify unknowns on the POS tier.
+
+        'X' stands either for child words that have an unclear POS tag or
+        incomprehensible/unknown forms (see XXX on the segment tier) and is
+        standardized to '???'.
+        """
         rgx = re.compile(r'\bX\b')
         return rgx.sub('???', pos_tier)
 
