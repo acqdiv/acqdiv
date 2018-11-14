@@ -33,6 +33,8 @@ class TuatschinReader(ToolboxReader):
             return 'question'
         elif utterance.endswith('!'):
             return 'exclamation'
+        elif utterance.endswith('. . .'):
+            return 'trail off'
         else:
             return 'default'
 
