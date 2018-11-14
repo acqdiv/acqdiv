@@ -5,6 +5,8 @@ from acqdiv.parsers.toolbox.readers.ToolboxReader import ToolboxReader
 
 class TuatschinReader(ToolboxReader):
 
+    language = 'Tuatschin'
+
     @staticmethod
     def get_record_marker():
         return br'\\u_id'
