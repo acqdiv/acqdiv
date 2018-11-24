@@ -24,5 +24,13 @@ class DeneReader(ToolboxReader):
             return 'default'
 
     @classmethod
+    def get_translation(cls, rec_dict):
+        return rec_dict.get('eng_u', '')
+
+    @classmethod
+    def get_comment(cls, rec_dict):
+        return rec_dict.get('com', '')
+
+    @classmethod
     def unify_unknown(cls, utterance):
         return utterance.replace('xxx', '???')
