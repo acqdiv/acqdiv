@@ -1,6 +1,7 @@
 import logging
 
 from acqdiv.parsers.toolbox.readers.ChintangReader import ChintangReader
+from acqdiv.parsers.toolbox.readers.DeneReader import DeneReader
 from acqdiv.parsers.toolbox.readers.IndonesianReader import IndonesianReader
 from acqdiv.parsers.toolbox.readers.RussianReader import RussianReader
 from acqdiv.parsers.toolbox.readers.TuatschinReader import TuatschinReader
@@ -85,6 +86,18 @@ class ChintangParser(ToolboxParser):
 
     def get_record_reader(self):
         return ChintangReader(self.toolbox_file)
+
+
+class DeneParser(ToolboxParser):
+
+    def get_record_reader(self):
+        return DeneReader(self.toolbox_file)
+
+    def get_metadata_reader(self):
+        temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
+                                         self.config['paths']['metadata_dir'])
+        metadata_file_path = temp.replace('.tbt', '.imdi')
+        return Imdi(self.config, metadata_file_path)
 
 
 class IndonesianParser(ToolboxParser):
