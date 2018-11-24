@@ -1,3 +1,5 @@
+import re
+
 from acqdiv.parsers.toolbox.readers.ToolboxReader import ToolboxReader
 
 
@@ -19,8 +21,6 @@ class KuWaruReader(ToolboxReader):
 
         if utterance.endswith('?'):
             return 'question'
-        elif utterance.endswith('.'):
-            return 'default'
         else:
             return 'default'
 
@@ -69,3 +69,18 @@ class KuWaruReader(ToolboxReader):
                 langs.append('Ku Waru')
 
         return langs
+
+    @classmethod
+    def unify_unknown(cls, utterance):
+        return utterance.replace('***', '???')
+
+    @classmethod
+    def remove_punctuation(cls, utterance):
+        utterance = re.sub(r'[?.]', '', utterance)
+        return cls.remove_redundant_whitespaces(utterance)
+
+    @classmethod
+    def clean_utterance(cls, utterance):
+        utterance = cls.remove_punctuation(utterance)
+        utterance = cls.unify_unknown(utterance)
+        return utterance
