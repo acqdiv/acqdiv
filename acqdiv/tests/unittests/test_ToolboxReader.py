@@ -104,7 +104,7 @@ class TestToolboxReader(unittest.TestCase):
 
     def test_is_record_false(self):
         rec_dict = {
-            '@participant': 'PA1 name2 PA2 name2',
+            'tx': '@Participants: CHI Tim child, MOT Lisa mother',
         }
         self.assertFalse(ToolboxReader.is_record(rec_dict))
 
@@ -130,7 +130,7 @@ class TestToolboxReader(unittest.TestCase):
             'speaker_label': 'MAR',
             'addressee': '',
             'utterance_raw': 'w1 w2 .',
-            'utterance': 'w1 w2',
+            'utterance': 'w1 w2 .',
             'sentence_type': 'default',
             'childdirected': None,
             'source_id': 'session_name.001',
@@ -1048,9 +1048,9 @@ class TestChintangReader(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_get_ids(self):
-        id_word = 'w1pfxseg-   w1stemseg   -w1sfxseg'
+        id_word = 'w1pfx-   w1stem   -w1sfx w2stem -w2sfx'
         actual_output = ChintangReader.get_id_words(id_word)
-        desired_output = ['w1pfxseg-', 'w1stemseg', '-w1sfxseg']
+        desired_output = ['w1pfx-   w1stem   -w1sfx', 'w2stem -w2sfx']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_utterance_data(self):
@@ -1059,7 +1059,7 @@ class TestChintangReader(unittest.TestCase):
             'ELANBegin': '00:50:11.150',
             'ELANEnd': '00:50:22.350',
             'ELANParticipant': 'MAR',
-            'gw': 'w1 w2 ?',
+            'gw': 'w1 w2',
             'id': 'w1pfxseg-   w1stemseg   -w1sfxseg      w2stemseg',
             'mgl': 'w1pfxgloss- w1stemgloss -w1sfxgloss    w2stemgloss',
             'ps': 'w1pfxpos-   w1stempos   -w1sfxpos      w2stempos',
@@ -1072,7 +1072,7 @@ class TestChintangReader(unittest.TestCase):
         desired_output = {
             'speaker_label': 'MAR',
             'addressee': '',
-            'utterance_raw': 'w1 w2 ?',
+            'utterance_raw': 'w1 w2',
             'utterance': 'w1 w2',
             'sentence_type': 'question',
             'childdirected': True,

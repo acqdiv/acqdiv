@@ -585,7 +585,7 @@ class ToolboxReader(object):
                     fixed_morphology_data.append(
                         [[] for _ in range(len_mw)])
 
-        return fixed_morphology_data
+        return tuple(fixed_morphology_data)
 
     @staticmethod
     def struct_eqv(xs, ys):
