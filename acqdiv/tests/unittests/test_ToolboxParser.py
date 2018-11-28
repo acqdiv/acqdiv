@@ -1,4 +1,6 @@
+import os
 import unittest
+import acqdiv
 from acqdiv.parsers.toolbox.ToolboxParser import *
 from acqdiv.parsers.parsers import CorpusConfigParser
 
@@ -11,8 +13,10 @@ class TestChintangParser(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         config = CorpusConfigParser()
-        config.read('../../ini/Chintang.ini')
-        file_path = 'test_files/Chintang.txt'
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+        config.read(os.path.join(here, 'ini/Chintang.ini'))
+        file_path = os.path.join(
+            here, 'tests/unittests/test_files/Chintang.txt')
         cls.parser = ChintangParser(config, file_path)
 
     def test_get_session_metadata(self):
@@ -110,8 +114,10 @@ class TestIndonesianParser(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         config = CorpusConfigParser()
-        config.read('../../ini/Indonesian.ini')
-        file_path = 'test_files/Indonesian.txt'
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+        config.read(os.path.join(here, 'ini/Indonesian.ini'))
+        file_path = os.path.join(
+            here, 'tests/unittests/test_files/Indonesian.txt')
         cls.parser = IndonesianParser(config, file_path)
 
     def test_get_session_metadata(self):
@@ -203,8 +209,10 @@ class TestRussianParser(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         config = CorpusConfigParser()
-        config.read('../../ini/Russian.ini')
-        file_path = 'test_files/Russian.txt'
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+        config.read(os.path.join(here, 'ini/Russian.ini'))
+        file_path = os.path.join(
+            here, 'tests/unittests/test_files/Russian.txt')
         cls.parser = RussianParser(config, file_path)
 
     def test_get_session_metadata(self):
