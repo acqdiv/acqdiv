@@ -39,24 +39,28 @@ def postprocess(args):
 def test(args):
     """Run the tests."""
     # get test suite creators
-    # for test_integrity the unittest loader
+    # unittest version
     test_loader = unittest.TestLoader()
-    # for test_regression the nose loader because there are no test classes
-    # but only test methods which the unittest loader cannot find
+    runner = unittest.TextTestRunner()
+    # nose version
     nose_test_loader = nose.loader.TestLoader()
+    nose_runner = nose.core.TextTestRunner()
+
+    # run unittests
+    suite = test_loader.discover('tests/unittests')
+    runner.run(suite)
 
     if args.f:
         # get a test suite of all test cases for the production DB
         suite = test_loader.loadTestsFromTestCase(ValidationTest_ProductionDB)
-    else:
+        runner.run(suite)
+
+    if args.o:
         # get a test suite of all test cases for the development DB
         suite = test_loader.loadTestsFromTestCase(ValidationTest_DevDB)
+        runner.run(suite)
         nose_suite = nose_test_loader.loadTestsFromModule(test_regression)
-        nose_runner = nose.core.TextTestRunner()
         nose_runner.run(nose_suite)
-
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
 
 
 def pipeline(args):
@@ -111,12 +115,14 @@ def get_cmd_args():
     # command 'test'
     parser_test = subparsers.add_parser(
         'test', help='Run tests',
-        description=('By default, runs the regression tests and '
-                     'integrity tests for the test database. '
+        description=('By default, runs the unit tests. '
+                     'To run the validation tests for the test database. '
                      'To run integrity tests for the full database, '
                      'use the flag -f.'))
     parser_test.add_argument(
-        '-f', action='store_true', help='Run on full database')
+        '-f', action='store_true', help='Run validation tests on full DB')
+    parser_test.add_argument(
+        '-o', action='store_true', help='Run old tests. Deprecated soon.')
     parser_test.set_defaults(func=test)
 
     # command 'pipeline'
@@ -140,7 +146,8 @@ def get_cmd_args():
 
 
 def main():
-    os.chdir(os.path.abspath(os.path.dirname(acqdiv.__file__)))
+    here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+    os.chdir(here)
     args = get_cmd_args()
     args.func(args)
 
