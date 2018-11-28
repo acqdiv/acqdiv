@@ -4,7 +4,8 @@ from acqdiv.parsers.toolbox.readers.ChintangReader import ChintangReader
 from acqdiv.parsers.toolbox.readers.IndonesianReader import IndonesianReader
 from acqdiv.parsers.toolbox.readers.RussianReader import RussianReader
 from acqdiv.parsers.toolbox.readers.ToolboxReader import ToolboxReader
-from acqdiv.parsers.metadata import Chat, Imdi
+from acqdiv.parsers.toolbox.readers.QaqetReader import QaqetReader
+from acqdiv.parsers.metadata import Chat, Imdi, QaqetIMDI
 
 
 class ToolboxParser:
@@ -108,3 +109,18 @@ class RussianParser(ToolboxParser):
 
     def get_record_reader(self):
         return RussianReader(self.toolbox_file)
+
+
+###############################################################################
+
+
+class QaqetParser(ToolboxParser):
+
+    def get_record_reader(self):
+        return QaqetReader(self.toolbox_file)
+
+    def get_metadata_reader(self):
+        temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
+                                         self.config['paths']['metadata_dir'])
+        metadata_file_path = temp.replace(".txt", ".imdi")
+        return QaqetIMDI(self.config, metadata_file_path)

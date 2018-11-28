@@ -462,7 +462,7 @@ class ToolboxReader(object):
 
     @classmethod
     def get_morpheme_words(cls, morpheme_tier):
-        _word_boundary = re.compile('(?<![\-\s])\s+(?![\-\s])')
+        _word_boundary = re.compile('(?<![(\-|=)\s])\s+(?![(\-|=)\s])')
 
         if morpheme_tier:
             return re.split(_word_boundary, morpheme_tier)
@@ -757,7 +757,7 @@ class ToolboxReader(object):
     @classmethod
     def clean_lang(cls, lang):
         """No cleaning per default."""
-        return lang
+        return cls.clean_morpheme(lang)
 
     def __repr__(self):
         """Pretty print class name + plus path of session file."""
