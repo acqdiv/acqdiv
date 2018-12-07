@@ -716,6 +716,9 @@ def process_morphemes_table():
     print("_morphemes_unify_label")
     _morphemes_unify_label()
 
+    print("_morphemes_unify_label_qaqet")
+    _morphemes_unify_label_qaqet()
+
     print("_morphemes_get_pos_indexes")
     _morphemes_get_pos_indexes()
 
@@ -915,6 +918,76 @@ def _morphemes_unify_label():
             gloss = None if row.gloss_raw not in glosses else glosses[
                 row.gloss_raw]
             pos = None if row.pos_raw not in poses else poses[row.pos_raw]
+            results.append({'morpheme_id': row.id, 'gloss': gloss, 'pos': pos})
+    query.close()
+    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
+
+
+def _morphemes_unify_label_qaqet():
+    """Infer gloss and pos for Qaqet.
+
+    Use pos_raw und gloss_raw to infer pos and gloss. Other than in
+    _morphemes_unify_label raw_labels are first split (by '.') into
+    atomic labels before substitution. The substituted
+    atomic labels are then joined again to complex labels (by '.').
+
+    If no subsitute for the given label is found, it gets a None/Null.
+    If no substitute is found for only one atomic label in a complex
+    label then the not found label gets a '???' (while the other labels
+    are normally substituted).
+    """
+    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw,
+                   db.Morpheme.pos_raw]).where(
+        db.Morpheme.corpus == 'Qaqet')
+    query = conn.execute(s)
+    results = []
+    for corpus, rows in groupby(query, lambda r: r[1]):
+        config = get_config(corpus)
+        glosses = config['gloss']
+        poses = config['pos']
+        for row in rows:
+
+            # Get the gloss label.
+            if row.gloss_raw:
+                atms_gloss_raw = row.gloss_raw.split('.')
+                gloss = []
+                for atm_gl_raw in atms_gloss_raw:
+                    if atm_gl_raw not in glosses:
+                        atm_gl = '???'
+                    else:
+                        atm_gl = glosses[atm_gl_raw]
+                    gloss.append(atm_gl)
+                # If all atm_poses are '???', set to None.
+                for atm_gloss in gloss:
+                    if atm_gloss != '???':
+                        gloss = '.'.join(gloss)
+                        break
+                else:
+                    gloss = None
+            else:
+                gloss = None
+
+            # Get the pos label.
+            if row.pos_raw:
+                atms_pos_raw = row.pos_raw.split('.')
+                pos = []
+                for atm_pos_raw in atms_pos_raw:
+                    if atm_pos_raw not in poses:
+                        atm_pos = '???'
+                    else:
+                        atm_pos = poses[atm_pos_raw]
+                    pos.append(atm_pos)
+
+                # If all atm_poses are '???', set to None.
+                for atm_pos in pos:
+                    if atm_pos != '???':
+                        pos = '.'.join(pos)
+                        break
+                else:
+                    pos = None
+            else:
+                pos = None
+
             results.append({'morpheme_id': row.id, 'gloss': gloss, 'pos': pos})
     query.close()
     _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
