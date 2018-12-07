@@ -187,7 +187,7 @@ class QaqetReader(ToolboxReader):
 
     @classmethod
     def unify_unknowns_morpheme(cls, morpheme):
-        unknown_re = re.compile(r'x{1,4}|\?{2}|\*{3}')
+        unknown_re = re.compile(r'(?<!sf)x{1,4}|\?{2}|\*{3}')
         return unknown_re.sub('???', morpheme)
 
     @classmethod
