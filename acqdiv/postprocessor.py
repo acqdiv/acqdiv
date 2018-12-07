@@ -701,6 +701,8 @@ def process_morphemes_table():
     print("_morphemes_infer_lemma_id_chintang")
     _morphemes_infer_lemma_id_chintang()
 
+    _morphemes_infer_pos_qaqet()
+
     print("_morphemes_infer_labels")
     _morphemes_infer_labels()
 
@@ -755,6 +757,30 @@ def _morphemes_infer_pos_indonesian():
             else:
                 if row.pos_raw not in {'sfx', 'pfx', '???'}:
                     results.append({'morpheme_id': row.id, 'pos_raw': "stem"})
+    rows.close()
+    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
+
+
+def _morphemes_infer_pos_qaqet():
+    """Qaqet part-of-speech inference.
+
+    Clean up affix markers "="; assign sfx, pfx, stem.
+    """
+    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme,
+                   db.Morpheme.pos_raw, db.Morpheme.pos]).where(
+        db.Morpheme.corpus == 'Qaqet')
+    rows = conn.execute(s)
+    results = []
+    for row in rows:
+        if row.pos_raw:
+            if row.pos_raw.startswith('='):
+                results.append({'morpheme_id': row.id, 'pos_raw': 'sfx'})
+            elif row.pos_raw.endswith('='):
+                results.append({'morpheme_id': row.id, 'pos_raw': 'pfx'})
+            else:
+                if row.pos_raw not in ('sfx', 'pfx'):
+                    results.append(
+                        {'morpheme_id': row.id, 'pos_raw': row.pos_raw})
     rows.close()
     _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
