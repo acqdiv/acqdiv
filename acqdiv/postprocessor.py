@@ -839,7 +839,17 @@ def _morphemes_clean_gloss_raw_qaqet():
 
     Remove the affix markers '=' and '-'.
     """
-    pass
+    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme,
+                   db.Morpheme.gloss_raw]).where(
+        db.Morpheme.corpus == 'Qaqet')
+    rows = conn.execute(s)
+    results = []
+    for row in rows:
+        if row.gloss_raw:
+            gloss_raw = row.gloss_raw.strip('-').strip('=')
+            results.append({'morpheme_id': row.id, 'gloss_raw': gloss_raw})
+    rows.close()
+    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
 
 def _morphemes_infer_lemma_id_chintang():
