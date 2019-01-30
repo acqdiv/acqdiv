@@ -44,8 +44,10 @@ class RussianReader(ToolboxReader):
     @classmethod
     def make_rec(cls, record):
         utterance, words, morphemes = super().make_rec(record)
-        utterance['gloss_raw'] = ' '.join(
-            mor['gloss_raw'] for mword in morphemes for mor in mword)
+
+        if morphemes is not None:
+            utterance['gloss_raw'] = ' '.join(
+                mor['gloss_raw'] for mword in morphemes for mor in mword)
 
         return utterance, words, morphemes
 
