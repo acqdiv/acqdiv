@@ -2038,6 +2038,42 @@ class TestTurkishCleaner(unittest.TestCase):
         desired_output = utterance, 'N|bla N|tu V|ta N|bla'
         self.assertEqual(actual_output, desired_output)
 
+    def test_unify_untranscribed_xxx_start(self):
+        """Test with `xxx` at the start of utterance."""
+        utterance = 'xxx great'
+        actual_output = TurkishCleaner.unify_untranscribed(utterance)
+        desired_output = '??? great'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_untranscribed_xxx_end(self):
+        """Test with `xxx` at the end of utterance."""
+        utterance = 'This is xxx'
+        actual_output = TurkishCleaner.unify_untranscribed(utterance)
+        desired_output = 'This is ???'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_untranscribed_xxx_within(self):
+        """Test with `xxx` within utterance."""
+        utterance = 'This xxx great'
+        actual_output = TurkishCleaner.unify_untranscribed(utterance)
+        desired_output = 'This ??? great'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_untranscribed_five_y(self):
+        """Test with five `y`s."""
+        utterance = 'yyyyy'
+        actual_output = TurkishCleaner.unify_untranscribed(utterance)
+        desired_output = '???'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_untranscribed_yyy_within_word(self):
+        """Test `yyy` occurring in word."""
+        utterance = 'yyyia'
+        actual_output = TurkishCleaner.unify_untranscribed(utterance)
+        desired_output = 'yyyia'
+        self.assertEqual(actual_output, desired_output)
+
+
 ###############################################################################
 
 
