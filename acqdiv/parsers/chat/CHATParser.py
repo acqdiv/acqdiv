@@ -87,6 +87,40 @@ class CHATParser(CHATParserInterface):
 
             yield speaker_dict
 
+    def get_words_dict(self, actual_utt, target_utt):
+        actual_words = self.reader.get_utterance_words(actual_utt)
+        target_words = self.reader.get_utterance_words(target_utt)
+
+        words = []
+        for word_actual, word_target in zip(actual_words, target_words):
+
+            if self.reader.get_standard_form() == 'actual':
+                word = word_actual
+            else:
+                word = word_target
+
+            word_language = self.reader.get_word_language(word)
+
+            word = self.cleaner.clean_word(word)
+            word_actual = self.cleaner.clean_word(word_actual)
+            word_target = self.cleaner.clean_word(word_target)
+
+            if not self.consistent_actual_target:
+                if word_actual == word_target:
+                    word_actual = None
+                    word_target = None
+
+            word_dict = {
+                'word_language': word_language if word_language else None,
+                'word': word,
+                'word_actual': word_actual,
+                'word_target': word_target,
+                'warning': None
+            }
+            words.append(word_dict)
+
+        return words
+
     def next_utterance(self):
         """Yields the next utterance of a session."""
         while self.reader.load_next_record():
@@ -125,37 +159,8 @@ class CHATParser(CHATParserInterface):
                 self.cleaner.cross_clean(
                     actual_utt, target_utt, seg_tier, gloss_tier, pos_tier)
 
-            actual_words = self.reader.get_utterance_words(actual_utt)
-            target_words = self.reader.get_utterance_words(target_utt)
-
-            # collect all words of the utterance
-            words = []
-            for word_actual, word_target in zip(actual_words, target_words):
-
-                if self.reader.get_standard_form() == 'actual':
-                    word = word_actual
-                else:
-                    word = word_target
-
-                word_language = self.reader.get_word_language(word)
-
-                word = self.cleaner.clean_word(word)
-                word_actual = self.cleaner.clean_word(word_actual)
-                word_target = self.cleaner.clean_word(word_target)
-
-                if not self.consistent_actual_target:
-                    if word_actual == word_target:
-                        word_actual = None
-                        word_target = None
-
-                word_dict = {
-                    'word_language': word_language if word_language else None,
-                    'word': word,
-                    'word_actual': word_actual,
-                    'word_target': word_target,
-                    'warning': None
-                }
-                words.append(word_dict)
+            # get dictionary of words
+            words = self.get_words_dict(actual_utt, target_utt)
 
             # rebuild utterance from cleaned words
             utterance = ' '.join(w['word'] for w in words)
