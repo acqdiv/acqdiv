@@ -604,10 +604,28 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = 'spaghetti'
         self.assertEqual(actual_output, desired_output)
 
+    def test_remove_pauses_within_words_two_pauses_one_letter_in_between(self):
+        """Test remove_pauses with two pauses separated by one letter."""
+        actual_output = CHATCleaner.remove_pauses_within_words('m^a^t')
+        desired_output = 'mat'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_pauses_within_words_pause_at_the_end(self):
+        """Test remove_pauses with one pause at the end."""
+        actual_output = CHATCleaner.remove_pauses_within_words('ma^')
+        desired_output = 'ma'
+        self.assertEqual(actual_output, desired_output)
+
     def test_remove_pauses_within_words_empty_string(self):
         """Test remove_pauses with an empty string."""
         actual_output = CHATCleaner.remove_pauses_within_words('')
         desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_pauses_within_words_blocking(self):
+        """Test remove_pauses with blocking."""
+        actual_output = CHATCleaner.remove_pauses_within_words('^hey')
+        desired_output = '^hey'
         self.assertEqual(actual_output, desired_output)
 
     # Test for the remove_blocking-method. (≠ or ^)

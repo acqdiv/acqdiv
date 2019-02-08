@@ -264,8 +264,8 @@ class CHATCleaner(CHATCleanerInterface):
 
         Coding in CHAT: ^ within word
         """
-        pause_regex = re.compile(r'(\S+?)\^(\S+?)')
-        return pause_regex.sub(r'\1\2', word)
+        pause_regex = re.compile(r'(\S+?)\^')
+        return pause_regex.sub(r'\1', word)
 
     @staticmethod
     def remove_blocking(word):
