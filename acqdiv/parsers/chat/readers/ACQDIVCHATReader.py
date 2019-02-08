@@ -265,10 +265,16 @@ class ACQDIVCHATReader(CHATReader, CHATReaderInterface):
         """Get the target form of replacements.
 
         Coding in CHAT: [: <words>] .
-        Removes replaced words, keeps replacing words with brackets.
+        Removes replaced words, keeps replacing words within brackets. If there
+        is more than one replacing word, they are joined together by an
+        underscore.
         """
         replacement_regex = re.compile(r'(?:<.*?>|\S+) \[: (.*?)\]')
-        return replacement_regex.sub(r'\1', utterance)
+
+        def x(match):
+            return match.group(1).replace(' ', '_')
+
+        return replacement_regex.sub(x, utterance)
 
     @staticmethod
     def get_fragment_actual(utterance):

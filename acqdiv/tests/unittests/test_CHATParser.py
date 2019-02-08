@@ -75,6 +75,28 @@ class TestCHATParser(unittest.TestCase):
         desired_output = [mem_dict, chi_dict]
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_words_dict_simple_case(self):
+        actual_utt = 'shoulda tested'
+        target_utt = 'should_have tested'
+        actual_output = self.parser.get_words_dict(actual_utt, target_utt)
+        desired_output = [{
+            'word_language': None,
+            'word': 'shoulda',
+            'word_actual': 'shoulda',
+            'word_target': 'should_have',
+            'warning': None
+            },
+            {
+                'word_language': None,
+                'word': 'tested',
+                'word_actual': 'tested',
+                'word_target': 'tested',
+                'warning': None
+            }
+        ]
+        self.assertEqual(actual_output, desired_output)
+
+
 ###############################################################################
 
 

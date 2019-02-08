@@ -1163,6 +1163,20 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_replacement_target_one_by_two(self):
+        """Test get_replacement_target with 1 replacement."""
+        utterance = 'shoulda [: should have]'
+        actual_output = ACQDIVCHATReader.get_replacement_target(utterance)
+        desired_output = 'should_have'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_replacement_target_one_by_three(self):
+        """Test get_replacement_target with 1 replacement."""
+        utterance = 'shouldada [: should have done]'
+        actual_output = ACQDIVCHATReader.get_replacement_target(utterance)
+        desired_output = 'should_have_done'
+        self.assertEqual(actual_output, desired_output)
+
     # Tests for the get_fragment_actual-method.
 
     def test_get_fragment_actual_one_fragment(self):
