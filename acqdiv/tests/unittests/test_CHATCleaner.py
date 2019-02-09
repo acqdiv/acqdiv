@@ -2129,11 +2129,46 @@ class TestTurkishCleaner(unittest.TestCase):
         desired_output = 'yyyia'
         self.assertEqual(actual_output, desired_output)
 
-    def test_unify_untranscribed_xxx_terminator(self):
-        """Test `xxx` with terminator."""
-        utterance = 'xxx.'
+    def test_unify_untranscribed_yyy_terminator(self):
+        """Test `yyy` with terminator."""
+        utterance = 'yyy.'
         actual_output = TurkishCleaner.unify_untranscribed(utterance)
         desired_output = '???.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_untranscribed_multiple_yyy(self):
+        """Test multiple `yyy`s."""
+        utterance = 'This yyy yyy good'
+        actual_output = TurkishCleaner.unify_untranscribed(utterance)
+        desired_output = 'This ??? ??? good'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_untranscribed_yyy_scoped(self):
+        """Test `yyy` within scoping."""
+        utterance = 'This <yyy good> [=! good]'
+        actual_output = TurkishCleaner.unify_untranscribed(utterance)
+        desired_output = 'This <??? good> [=! good]'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_untranscribed_ww(self):
+        """Test `ww`."""
+        utterance = 'This ww good.'
+        actual_output = TurkishCleaner.unify_untranscribed(utterance)
+        desired_output = 'This ??? good.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_untranscribed_x(self):
+        """Test `x`."""
+        utterance = 'x.'
+        actual_output = TurkishCleaner.unify_untranscribed(utterance)
+        desired_output = '???.'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_untranscribed_x_part_of_word(self):
+        """Test `x` being part of a word."""
+        utterance = 'Regex'
+        actual_output = TurkishCleaner.unify_untranscribed(utterance)
+        desired_output = 'Regex'
         self.assertEqual(actual_output, desired_output)
 
 

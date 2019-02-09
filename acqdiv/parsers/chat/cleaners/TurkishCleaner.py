@@ -129,12 +129,11 @@ class TurkishCleaner(CHATCleaner):
     def unify_untranscribed(utterance):
         """Unify untranscribed material as ???.
 
-        Same as super method. Additionally:
-        - also unifies more than three `y`s (e.g. yyyyy)
-        - ignores `yyy` occurring within word.
+        Same as super method. Additionally, also unifies more than three `y`s,
+        `ww` and `x`.
         """
-        untranscribed_regex = re.compile(r'(^|\s)(xxx|y{3,}|www)(\s|$|\.)')
-        return untranscribed_regex.sub(r'\1???\3', utterance)
+        untranscribed_regex = re.compile(r'\b(x+|y{3,}|w{2,})\b')
+        return untranscribed_regex.sub(r'???', utterance)
 
     @classmethod
     def clean_word(cls, word):
