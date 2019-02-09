@@ -2164,11 +2164,39 @@ class TestTurkishCleaner(unittest.TestCase):
         desired_output = '???.'
         self.assertEqual(actual_output, desired_output)
 
+    def test_unify_untranscribed_repetition(self):
+        """Test repetition."""
+        utterance = 'test [x 2]'
+        actual_output = TurkishCleaner.unify_untranscribed(utterance)
+        desired_output = 'test [x 2]'
+        self.assertEqual(actual_output, desired_output)
+
     def test_unify_untranscribed_x_part_of_word(self):
         """Test `x` being part of a word."""
         utterance = 'Regex'
         actual_output = TurkishCleaner.unify_untranscribed(utterance)
         desired_output = 'Regex'
+        self.assertEqual(actual_output, desired_output)
+
+    # clean_utterance
+
+    def test_clean_utterance_mixed_things_to_clean(self):
+        """Test all utterance cleaning methods at once.
+
+        The utterance contains:
+        - redundant whitespace
+        - terminator
+        - untranscribed
+        - events
+        - Null-event
+        - repetition
+        - scoped symbols
+        - pause between words
+        """
+        utterance = ("+^ that's [x 2] xxx (..) mine ↓ &=vocalizes ; <0you"
+                     " pig <she said   [=! cries]>> [=! slaps leg] +/.")
+        actual_output = TurkishCleaner.clean_utterance(utterance)
+        desired_output = "that's that's ??? mine pig she said"
         self.assertEqual(actual_output, desired_output)
 
 

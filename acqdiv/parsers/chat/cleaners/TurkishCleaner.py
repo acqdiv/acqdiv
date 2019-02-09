@@ -132,7 +132,7 @@ class TurkishCleaner(CHATCleaner):
         Same as super method. Additionally, also unifies more than three `y`s,
         `ww` and `x`.
         """
-        untranscribed_regex = re.compile(r'\b(x+|y{3,}|w{2,})\b')
+        untranscribed_regex = re.compile(r'\b((?<!\[)x+|y{3,}|w{2,})\b')
         return untranscribed_regex.sub(r'???', utterance)
 
     @classmethod
