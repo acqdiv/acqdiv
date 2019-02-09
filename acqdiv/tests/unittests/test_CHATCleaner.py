@@ -346,6 +346,12 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = 'hey@i [=! screams] hey@i [=! screams] .'
         self.assertEqual(actual_output, desired_output)
 
+    def test_handle_repetitions_10_repetitions(self):
+        """Test with 10 repetitions."""
+        actual_output = CHATCleaner.handle_repetitions('a [x 10]')
+        desired_output = 'a a a a a a a a a a'
+        self.assertEqual(actual_output, desired_output)
+
     # Tests for the remove_omissions-method.
 
     def test_remove_omissions_single_omission(self):
