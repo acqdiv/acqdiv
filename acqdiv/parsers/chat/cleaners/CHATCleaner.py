@@ -104,7 +104,7 @@ class CHATCleaner(CHATCleanerInterface):
 
         Coding in CHAT: [x <number>]  .
         """
-        repetition_regex = re.compile(r'(?:<(.*?)>|(\S+)) \[x (\d)\]')
+        repetition_regex = re.compile(r'(?:<(.*?)>|(\S+)) ?\[x (\d)\]')
         # build cleaned utterance
         clean = ''
         match_end = 0
@@ -141,9 +141,13 @@ class CHATCleaner(CHATCleanerInterface):
 
         Those occurring in square brackets are ignored.
         """
-        omission_regex = re.compile(r'0\S+[^\]](?=\s|$)')
-        clean = omission_regex.sub('', utterance)
-        return cls.remove_redundant_whitespaces(clean)
+        # if not a null utterance
+        if not utterance.startswith('0['):
+            omission_regex = re.compile(r'0\S+[^\]](?=\s|$)')
+            clean = omission_regex.sub('', utterance)
+            return cls.remove_redundant_whitespaces(clean)
+
+        return utterance
 
     @staticmethod
     def unify_untranscribed(utterance):

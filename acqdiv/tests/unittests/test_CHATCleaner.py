@@ -308,6 +308,12 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
+    def test_handle_repetitions_no_whitespace(self):
+        """Test handle_repetitions with missing whitespace."""
+        actual_output = CHATCleaner.handle_repetitions('hello[x 2]')
+        desired_output = 'hello hello'
+        self.assertEqual(actual_output, desired_output)
+
     # Tests for the remove_omissions-method.
 
     def test_remove_omissions_single_omission(self):
@@ -345,6 +351,13 @@ class TestCHATCleaner(unittest.TestCase):
         """Test remove_omissions with an empty string."""
         actual_output = CHATCleaner.remove_omissions('')
         desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_remove_omissions_null_utterance_no_whitespace(self):
+        """Test with null utterance and no whitespace."""
+        utterance = '0[=! applauses]'
+        actual_output = CHATCleaner.remove_omissions(utterance)
+        desired_output = '0[=! applauses]'
         self.assertEqual(actual_output, desired_output)
 
     # Tests for the unify_untranscribed-method.
@@ -502,6 +515,13 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
+    def test_remove_scoped_symbols_no_withespace(self):
+        """Test remove_scoped_symbols with missing whitespace."""
+        utterance = '0[=! just testing something]'
+        actual_output = CHATCleaner.remove_scoped_symbols(utterance)
+        desired_output = '0'
+        self.assertEqual(actual_output, desired_output)
+
     # Tests for the clean_utterance-method.
 
     def test_clean_utterance_clean_utt(self):
@@ -533,6 +553,13 @@ class TestCHATCleaner(unittest.TestCase):
     def test_clean_utterance_empty_string(self):
         """Test clean_utterance with an empty string."""
         utterance = ''
+        actual_output = CHATCleaner.clean_utterance(utterance)
+        desired_output = ''
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_utterance_null(self):
+        """Test with null utterance."""
+        utterance = '0[=! applauses]'
         actual_output = CHATCleaner.clean_utterance(utterance)
         desired_output = ''
         self.assertEqual(actual_output, desired_output)

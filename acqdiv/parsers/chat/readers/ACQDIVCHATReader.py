@@ -254,10 +254,10 @@ class ACQDIVCHATReader(CHATReader, CHATReaderInterface):
         Keeps replaced words, removes replacing words with brackets.
         """
         # several scoped words
-        replacement_regex1 = re.compile(r'<(.*?)> \[: .*?\]')
+        replacement_regex1 = re.compile(r'<(.*?)> ?\[: .*?\]')
         clean = replacement_regex1.sub(r'\1', utterance)
         # one scoped word
-        replacement_regex2 = re.compile(r'(\S+) \[: .*?\]')
+        replacement_regex2 = re.compile(r'(\S+) ?\[: .*?\]')
         return replacement_regex2.sub(r'\1', clean)
 
     @staticmethod
@@ -269,7 +269,7 @@ class ACQDIVCHATReader(CHATReader, CHATReaderInterface):
         is more than one replacing word, they are joined together by an
         underscore.
         """
-        replacement_regex = re.compile(r'(?:<.*?>|\S+) \[: (.*?)\]')
+        replacement_regex = re.compile(r'(?:<.*?>|\S+) ?\[: (.*?)\]')
 
         def x(match):
             return match.group(1).replace(' ', '_')
@@ -305,10 +305,10 @@ class ACQDIVCHATReader(CHATReader, CHATReaderInterface):
         Removal of retracing markers.
         """
         # several scoped words
-        retracing_regex1 = re.compile(r'<(.*?)> \[(/{1,3}|/-)\]')
+        retracing_regex1 = re.compile(r'<(.*?)> ?\[(/{1,3}|/-)\]')
         clean = retracing_regex1.sub(r'\1', utterance)
         # one scoped word
-        retracing_regex2 = re.compile(r'(\S+) \[(/{1,3}|/-)\]')
+        retracing_regex2 = re.compile(r'(\S+) ?\[(/{1,3}|/-)\]')
         return retracing_regex2.sub(r'\1', clean)
 
     @classmethod
@@ -324,7 +324,7 @@ class ACQDIVCHATReader(CHATReader, CHATReaderInterface):
         correcting part can be of variable length.
         """
         # single-word correction
-        retracing_regex = re.compile(r'([^>\s]+) \[//\] (\S+)')
+        retracing_regex = re.compile(r'([^>\s]+) ?\[//\] (\S+)')
         utterance = retracing_regex.sub(r'\2 \2', utterance)
         return cls.get_retracing_actual(utterance)
 

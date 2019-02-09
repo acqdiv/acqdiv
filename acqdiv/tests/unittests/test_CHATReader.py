@@ -1132,6 +1132,13 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_replacement_actual_no_whitespace(self):
+        """Test get_replacement_actual with missing whitespace."""
+        utterance = 'shoulda[: should have]'
+        actual_output = ACQDIVCHATReader.get_replacement_actual(utterance)
+        desired_output = 'shoulda'
+        self.assertEqual(actual_output, desired_output)
+
     # Tests for the get_replacement_target-method.
 
     def test_get_replacement_target_one_replacement(self):
@@ -1173,6 +1180,13 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
     def test_get_replacement_target_one_by_three(self):
         """Test get_replacement_target with 1 replacement."""
         utterance = 'shouldada [: should have done]'
+        actual_output = ACQDIVCHATReader.get_replacement_target(utterance)
+        desired_output = 'should_have_done'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_replacement_target_no_withespace(self):
+        """Test without whitespace."""
+        utterance = 'shouldada[: should have done]'
         actual_output = ACQDIVCHATReader.get_replacement_target(utterance)
         desired_output = 'should_have_done'
         self.assertEqual(actual_output, desired_output)
@@ -1309,6 +1323,20 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
         desired_output = 'I want what do you eat'
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_retracing_actual_no_whitespace(self):
+        """Test with missing whitespace."""
+        utterance = 'this is[/] is a test'
+        actual_output = ACQDIVCHATReader.get_retracing_actual(utterance)
+        desired_output = 'this is is a test'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_retracing_actual_retracing_several_words_no_whitespace(self):
+        """Test retracing with several words and missing whitespace."""
+        utterance = '<this is>[/] this is a test'
+        actual_output = ACQDIVCHATReader.get_retracing_actual(utterance)
+        desired_output = 'this is this is a test'
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- get_retracing_target ----------
 
     def test_get_retracing_target_retracing(self):
@@ -1367,6 +1395,13 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
         desired_output = 'I want what do you eat'
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_retracing_target_correction_no_whitespace(self):
+        """Test with correction and missing whitespace."""
+        utterance = 'this us[//] is a test'
+        actual_output = ACQDIVCHATReader.get_retracing_target(utterance)
+        desired_output = 'this is is a test'
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- to_actual_utterance ----------
 
     def test_to_actual_utterance_empty_string(self):
@@ -1395,6 +1430,13 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
                      '&ab yarasam [: yorosom] &ac')
         actual_output = ACQDIVCHATReader.to_actual_utterance(utterance)
         desired_output = 'mu:ça yarasam ab yarasam ac'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_actual_utterance_nesting(self):
+        """Test with nesting."""
+        utterance = '<it shoulda[: should have]> [<2] ?'
+        actual_output = ACQDIVCHATReader.to_actual_utterance(utterance)
+        desired_output = '<it shoulda> [<2] ?'
         self.assertEqual(actual_output, desired_output)
 
     def test_to_target_utterance_empty_string(self):
