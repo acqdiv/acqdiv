@@ -63,6 +63,8 @@ class CHATCleaner(CHATCleanerInterface):
         clean = terminator_regex.sub('', utterance)
         return cls.remove_redundant_whitespaces(clean)
 
+    # TODO: check for removal
+
     @staticmethod
     def null_untranscribed_utterances(utterance):
         """Null utterances containing only untranscribed material.
@@ -74,6 +76,8 @@ class CHATCleaner(CHATCleanerInterface):
             return ''
         else:
             return utterance
+
+    # TODO: move to word level
 
     @classmethod
     def null_event_utterances(cls, utterance):
@@ -153,11 +157,18 @@ class CHATCleaner(CHATCleanerInterface):
 
         return utterance
 
+    # TODO: move to word level
+
     @staticmethod
     def unify_untranscribed(utterance):
         """Unify untranscribed material as ???.
 
         Coding in CHAT: xxx, yyy, www   .
+
+        Note:
+            This type of cleaning is done on the utterance level rather than
+            on the word level because `null_untranscribed_utterances` depends
+            on it.
         """
         untranscribed_regex = re.compile(r'xxx|yyy|www')
         return untranscribed_regex.sub('???', utterance)
