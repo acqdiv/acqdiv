@@ -188,6 +188,13 @@ class TestCHATReader(unittest.TestCase):
         desired_output = ('CHI', 'Hlobohang', 'Target_Child')
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_participant_multiple_whitespaces(self):
+        """Test with multiple whitespaces"""
+        ptcs_field = 'CHI   Sara  Target_Child'
+        actual_output = CHATReader.get_participant_fields(ptcs_field)
+        desired_output = ('CHI', 'Sara', 'Target_Child')
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- get_id_fields ----------
 
     def test_get_id_fields_all_empty_fields(self):

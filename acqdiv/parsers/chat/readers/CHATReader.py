@@ -138,7 +138,7 @@ class CHATReader:
         Returns:
             tuple: (label, name, role).
         """
-        fields = participant.split(' ')
+        fields = re.split(r'\s+', participant)
         # name and role is missing
         if len(fields) == 1:
             return fields[0], '', ''
