@@ -104,7 +104,8 @@ class CHATCleaner(CHATCleanerInterface):
 
         Coding in CHAT: [x <number>]  .
         """
-        repetition_regex = re.compile(r'(?:<(.*?)>|(\S+)) ?\[x (\d)\]')
+        repetition_regex = re.compile(
+            r'(?:<(.*?)>|(\S+))( \[.*?\])? ?\[x (\d)\]')
         # build cleaned utterance
         clean = ''
         match_end = 0
@@ -119,8 +120,12 @@ class CHATCleaner(CHATCleanerInterface):
             else:
                 words = match.group(2)
 
+            # append preceding scoped symbol
+            if match.group(3):
+                words += match.group(3)
+
             # repeat the word
-            repetitions = int(match.group(3))
+            repetitions = int(match.group(4))
             clean += ' '.join([words]*repetitions)
 
             match_end = match.end()

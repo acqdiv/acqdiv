@@ -314,6 +314,13 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = 'hello hello'
         self.assertEqual(actual_output, desired_output)
 
+    def test_handle_repetitions_scoped_symbol_before(self):
+        """Test with a preceding scoped symbol."""
+        utterance = 'hey@i [=! screams] [x 2] .'
+        actual_output = CHATCleaner.handle_repetitions(utterance)
+        desired_output = 'hey@i [=! screams] hey@i [=! screams] .'
+        self.assertEqual(actual_output, desired_output)
+
     # Tests for the remove_omissions-method.
 
     def test_remove_omissions_single_omission(self):
