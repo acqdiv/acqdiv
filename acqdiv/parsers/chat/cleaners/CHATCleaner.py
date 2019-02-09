@@ -231,7 +231,8 @@ class CHATCleaner(CHATCleanerInterface):
                 cls.remove_omissions, cls.remove_linkers,
                 cls.remove_separators, cls.remove_ca,
                 cls.remove_pauses_between_words, cls.remove_scoped_symbols,
-                cls.remove_commas, cls.null_untranscribed_utterances,
+                cls.remove_commas,
+                # cls.null_untranscribed_utterances,
                 cls.null_event_utterances]:
             utterance = cleaning_method(utterance)
 

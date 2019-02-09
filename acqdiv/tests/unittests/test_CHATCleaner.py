@@ -883,12 +883,7 @@ class TestInuktitutCleaner(unittest.TestCase):
 
     # ---------- morphology tier cleaning ----------
 
-    # Tests for the clean_xmor-method.
-    # Although the clean_xmor-method removes separators from the
-    # xmor-tier such separators are not tested here, since there
-    # are no occurences of separators in the xmor-tier in the
-    # Inuktitut-corpus.
-
+    @unittest.skip
     def test_clean_xmor_untranscribed_and_scoped_symbols_and_terminator(self):
         """Test clean_xmor with 3 cases at once.
 
