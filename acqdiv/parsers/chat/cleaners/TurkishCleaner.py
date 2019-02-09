@@ -133,7 +133,7 @@ class TurkishCleaner(CHATCleaner):
         - also unifies more than three `y`s (e.g. yyyyy)
         - ignores `yyy` occurring within word.
         """
-        untranscribed_regex = re.compile(r'(^|\s)(xxx|y{3,}|www)(\s|$)')
+        untranscribed_regex = re.compile(r'(^|\s)(xxx|y{3,}|www)(\s|$|\.)')
         return untranscribed_regex.sub(r'\1???\3', utterance)
 
     @classmethod

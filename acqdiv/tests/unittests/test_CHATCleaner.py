@@ -247,6 +247,12 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = '10 years'
         self.assertEqual(actual_output, desired_output)
 
+    def test_null_event_utterances_null_terminator(self):
+        """Test with null followed by terminator."""
+        actual_output = CHATCleaner.null_event_utterances('0.')
+        desired_output = '.'
+        self.assertEqual(actual_output, desired_output)
+
     def test_null_event_utterances_normal_utt(self):
         """Test null_event_utterances with a string without events."""
         actual_output = CHATCleaner.null_event_utterances(
@@ -2086,6 +2092,8 @@ class TestTurkishCleaner(unittest.TestCase):
         desired_output = utterance, 'N|bla N|tu V|ta N|bla'
         self.assertEqual(actual_output, desired_output)
 
+    # unify_untranscribed
+
     def test_unify_untranscribed_xxx_start(self):
         """Test with `xxx` at the start of utterance."""
         utterance = 'xxx great'
@@ -2119,6 +2127,13 @@ class TestTurkishCleaner(unittest.TestCase):
         utterance = 'yyyia'
         actual_output = TurkishCleaner.unify_untranscribed(utterance)
         desired_output = 'yyyia'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_untranscribed_xxx_terminator(self):
+        """Test `xxx` with terminator."""
+        utterance = 'xxx.'
+        actual_output = TurkishCleaner.unify_untranscribed(utterance)
+        desired_output = '???.'
         self.assertEqual(actual_output, desired_output)
 
 
