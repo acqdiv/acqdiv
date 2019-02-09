@@ -105,7 +105,7 @@ class CHATCleaner(CHATCleanerInterface):
         Coding in CHAT: [x <number>]  .
         """
         repetition_regex = re.compile(
-            r'(?:<(.*?)>|(\S+))( \[.*?\])? ?\[x (\d)\]')
+            r'(?:<([^<]*?)>|(\S+))( \[.*?\])? ?\[x (\d)\]')
         # build cleaned utterance
         clean = ''
         match_end = 0

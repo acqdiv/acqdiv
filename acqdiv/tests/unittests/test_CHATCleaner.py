@@ -302,6 +302,13 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = 'how are you how are you'
         self.assertEqual(actual_output, desired_output)
 
+    def test_handle_repetitions_non_scope_angle_bracket(self):
+        """Test with a non-scope angle bracket `[<]`."""
+        utterance = 'ha [<] <ho ho> [x 2]'
+        actual_output = CHATCleaner.handle_repetitions(utterance)
+        desired_output = 'ha [<] ho ho ho ho'
+        self.assertEqual(actual_output, desired_output)
+
     def test_handle_repetitions_empty_string(self):
         """Test handle_repetitions with an empty string."""
         actual_output = CHATCleaner.handle_repetitions('')
