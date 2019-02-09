@@ -2199,6 +2199,14 @@ class TestTurkishCleaner(unittest.TestCase):
         desired_output = "that's that's ??? mine pig she said"
         self.assertEqual(actual_output, desired_output)
 
+    # clean_word
+
+    def test_clean_word_mixed(self):
+        """Test clean_word with markers, drawls, pauses and blocking."""
+        actual_output = TurkishCleaner.clean_word('^ka:+l^e@e')
+        desired_output = 'ka_le'
+        self.assertEqual(actual_output, desired_output)
+
 
 ###############################################################################
 
@@ -2398,7 +2406,6 @@ class TestNungonCleaner(unittest.TestCase):
         actual_output = NungonCleaner.replace_plus(gloss)
         desired_output = '1sg.ben'
         self.assertEqual(actual_output, desired_output)
-
 
 
 if __name__ == '__main__':

@@ -125,6 +125,13 @@ class TurkishCleaner(CHATCleaner):
         """
         return unit.replace('+', '_')
 
+    @classmethod
+    def clean_word(cls, word):
+        word = super().clean_word(word)
+        return cls.replace_plus(word)
+
+    # ---------- utterance cleaning ----------
+
     @staticmethod
     def unify_untranscribed(utterance):
         """Unify untranscribed material as ???.
@@ -134,11 +141,6 @@ class TurkishCleaner(CHATCleaner):
         """
         untranscribed_regex = re.compile(r'\b((?<!\[)x+|y{3,}|w{2,})\b')
         return untranscribed_regex.sub(r'???', utterance)
-
-    @classmethod
-    def clean_word(cls, word):
-        word = super().clean_word(word)
-        return cls.replace_plus(word)
 
     # ---------- morpheme cleaning ----------
 
