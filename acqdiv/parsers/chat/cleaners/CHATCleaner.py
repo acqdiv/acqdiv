@@ -75,16 +75,15 @@ class CHATCleaner(CHATCleanerInterface):
         else:
             return utterance
 
-    @staticmethod
-    def null_event_utterances(utterance):
-        """Null utterances that are events.
+    @classmethod
+    def null_event_utterances(cls, utterance):
+        """Remove zeros coding events.
 
         CHAT coding: 0
         """
-        if utterance == '0':
-            return ''
-        else:
-            return utterance
+        regex = re.compile(r'\b0\b')
+        utterance = regex.sub('', utterance)
+        return cls.remove_redundant_whitespaces(utterance)
 
     @classmethod
     def remove_events(cls, utterance):

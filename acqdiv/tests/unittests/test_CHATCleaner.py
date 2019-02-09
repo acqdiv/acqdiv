@@ -235,6 +235,18 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
+    def test_null_event_utterances_null_and_other_words(self):
+        """Test utterance containing other words apart from `0`."""
+        actual_output = CHATCleaner.null_event_utterances('0 true')
+        desired_output = 'true'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_null_event_utterances_null_digit(self):
+        """Test with zero digit."""
+        actual_output = CHATCleaner.null_event_utterances('10 years')
+        desired_output = '10 years'
+        self.assertEqual(actual_output, desired_output)
+
     def test_null_event_utterances_normal_utt(self):
         """Test null_event_utterances with a string without events."""
         actual_output = CHATCleaner.null_event_utterances(
