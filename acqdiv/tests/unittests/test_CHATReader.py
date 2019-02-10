@@ -1235,6 +1235,20 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
         desired_output = '&=laugh wow &-um'
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_fragment_actual_one_char_fragment(self):
+        """Test with a fragment consisting of one character."""
+        utterance = 'This is &a test'
+        actual_output = ACQDIVCHATReader.get_fragment_actual(utterance)
+        desired_output = 'This is a test'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_actual_ampersand_inside_word(self):
+        """Test with ampersand occurring inside the word."""
+        utterance = 'dont&delete'
+        actual_output = ACQDIVCHATReader.get_fragment_actual(utterance)
+        desired_output = 'dont&delete'
+        self.assertEqual(actual_output, desired_output)
+
     # Tests for the get_fragment_target-method.
 
     def test_get_fragment_target_one_fragment(self):
@@ -1270,6 +1284,20 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
         utterance = '&=laugh &wow &-um'
         actual_output = ACQDIVCHATReader.get_fragment_target(utterance)
         desired_output = '&=laugh xxx &-um'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_target_one_char_fragment(self):
+        """Test with a fragment consisting of one character."""
+        utterance = 'This is &a test'
+        actual_output = ACQDIVCHATReader.get_fragment_target(utterance)
+        desired_output = 'This is xxx test'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_fragment_target_ampersand_inside_word(self):
+        """Test with ampersand occurring inside the word."""
+        utterance = 'dont&handle'
+        actual_output = ACQDIVCHATReader.get_fragment_target(utterance)
+        desired_output = 'dont&handle'
         self.assertEqual(actual_output, desired_output)
 
     # ---------- get_retracing_actual ----------

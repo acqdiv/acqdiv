@@ -283,8 +283,8 @@ class ACQDIVCHATReader(CHATReader, CHATReaderInterface):
         Coding in CHAT: word starting with &.
         Keeps the fragment, removes the & from the word.
         """
-        fragment_regex = re.compile(r'&([^-=]\S+)')
-        return fragment_regex.sub(r'\1', utterance)
+        fragment_regex = re.compile(r'(^|\s)&([^-=\s]\S*)')
+        return fragment_regex.sub(r'\1\2', utterance)
 
     @staticmethod
     def get_fragment_target(utterance):
@@ -293,8 +293,8 @@ class ACQDIVCHATReader(CHATReader, CHATReaderInterface):
         Coding in CHAT: word starting with &.
         The fragment is marked as untranscribed (xxx).
         """
-        fragment_regex = re.compile(r'&[^-=]\S+')
-        return fragment_regex.sub('xxx', utterance)
+        fragment_regex = re.compile(r'(^|\s)&([^-=\s]\S*)')
+        return fragment_regex.sub(r'\1xxx', utterance)
 
     @staticmethod
     def get_retracing_actual(utterance):
