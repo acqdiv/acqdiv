@@ -306,7 +306,7 @@ class CHATReader:
             list: The words.
         """
         if utterance:
-            return re.split('\s+', utterance)
+            return re.split(r'\s+', utterance)
         else:
             return []
 

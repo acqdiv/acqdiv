@@ -5,6 +5,17 @@ from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
 
 class YucatecReader(ACQDIVCHATReader):
 
+    @staticmethod
+    def get_utterance_words(utterance):
+        """Get utterance words.
+
+        Also treats `&` as a word separator.
+        """
+        if utterance:
+            return re.split(r'\s+|&', utterance)
+        else:
+            return []
+
     def get_morph_tier(self):
         return self._dependent_tiers.get('xmor', '')
 

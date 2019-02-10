@@ -2586,6 +2586,36 @@ class TestCreeReader(unittest.TestCase):
 
 class TestYucatecReader(unittest.TestCase):
 
+    # ---------- get_utterance_words ----------
+
+    def test_get_utterance_words_standard_case(self):
+        """Test get_utterance_words for standard input."""
+        utterance = 'ke eng ntho ena e?'
+        actual_output = YucatecReader.get_utterance_words(utterance)
+        desired_output = ['ke', 'eng', 'ntho', 'ena', 'e?']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_words_empty_string(self):
+        """Test get_utterance_words for standard input."""
+        utterance = ''
+        actual_output = YucatecReader.get_utterance_words(utterance)
+        desired_output = []
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_words_multiple_blank_spaces(self):
+        """Test get_utterance_words with multiple blank spaces."""
+        utterance = 'ke eng  ntho ena   e?'
+        actual_output = YucatecReader.get_utterance_words(utterance)
+        desired_output = ['ke', 'eng', 'ntho', 'ena', 'e?']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_utterance_words_ampersand(self):
+        """Test with ampersand."""
+        utterance = 'This is&a test'
+        actual_output = YucatecReader.get_utterance_words(utterance)
+        desired_output = ['This', 'is', 'a', 'test']
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- get_morpheme_words ----------
 
     def test_get_morpheme_words_no_clitics(self):
