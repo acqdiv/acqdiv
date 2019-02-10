@@ -2798,6 +2798,14 @@ class TestYucatecReader(unittest.TestCase):
         desired_output = [('', '', '')]
         self.assertEqual(actual_output, desired_output)
 
+    def test_iter_morphemes_dash_stem(self):
+        """Test with dash in front of stem."""
+        word = 'CLFR.INAN|-stem:PRON|-sfx'
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('stem', '', 'CLFR.INAN'),
+                          ('sfx', 'PRON', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
 ###############################################################################
 
 

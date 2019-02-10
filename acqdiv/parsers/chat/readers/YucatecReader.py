@@ -81,7 +81,7 @@ class YucatecReader(ACQDIVCHATReader):
         else:
             morph_regex = re.compile(
                 r'(?P<prefixes>.*#)?'
-                r'((?P<stemleft>[0-9A-Z.:]+)\|)?(?P<stemright>[^:\-]+)'
+                r'((?P<stemleft>[0-9A-Z.:]+)\|-?)?(?P<stemright>[^:\-]+)'
                 r'(?P<suffixes>[:\-].+)?')
 
             match = morph_regex.fullmatch(word)
