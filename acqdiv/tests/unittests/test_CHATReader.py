@@ -2806,6 +2806,15 @@ class TestYucatecReader(unittest.TestCase):
                           ('sfx', 'PRON', 'sfx')]
         self.assertEqual(actual_output, desired_output)
 
+    def test_iter_morphemes_0(self):
+        """Test with 0."""
+        word = 'V:TRANS|stem:IMP|-0:PREP|sfx'
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('stem', '', 'V:TRANS'),
+                          ('0', 'IMP', 'sfx'),
+                          ('sfx', 'PREP', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
 ###############################################################################
 
 

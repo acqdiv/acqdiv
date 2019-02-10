@@ -148,7 +148,7 @@ class YucatecReader(ACQDIVCHATReader):
             if match.group('suffixes'):
                 suffix_string = match.group('suffixes').lstrip(':').lstrip('-')
                 # iter suffixes
-                for sfx in re.split(r'(?<![A-Z0-9]):|(?<!\|)-', suffix_string):
+                for sfx in re.split(r'(?<![A-Z1-9]):|(?<!\|)-', suffix_string):
                     sfx_structured = re.search(r'(.*)\|-?(.+)', sfx)
                     # structured suffixes
                     if sfx_structured is not None:
