@@ -57,12 +57,8 @@ class YucatecReader(ACQDIVCHATReader):
             - unstructured (NOT ATTESTED!): segment is unfilled, morpheme is
               gloss, POS tag is 'pfx'
         - Stem:
-            - structured: segment is right block, left block is POS tag if:
-                '3PRON', 'ADJ', 'ADV', 'AUX', 'CLFR', 'CLFR.INAN', 'CONJ',
-                'DEICT', 'DEM', 'DET', 'INT', 'INTERJ', 'N', 'N.PROP',
-                'N:PROP', 'NUM', 'PREP', 'PTL', 'QUANT', 'S', 'V', 'V.AUX',
-                'V:AUX', 'VI', 'V.INTRANS', 'VT', 'V.TRANS'
-              otherwise it is a gloss
+            - structured: segment is right block, left block is POS tag if it
+              is in the list `stem_poses`, otherwise it is a gloss
             - unstructured: if morpheme only consists of uppercase letters and
               digits, it is a gloss, otherwise it is a segment
         - Suffixes:
@@ -119,10 +115,13 @@ class YucatecReader(ACQDIVCHATReader):
                 # stems with lexical meaning with the following POS tags
                 # TODO: recheck this list
                 stem_poses = {
-                    '3PRON', 'ADJ', 'ADV', 'AUX', 'CLFR', 'CLFR.INAN', 'CONJ',
-                    'DEICT', 'DEM', 'DET', 'INT', 'INTERJ', 'N', 'N.PROP',
-                    'N:PROP', 'NUM', 'PREP', 'PTL', 'QUANT', 'S', 'V', 'V.AUX',
-                    'V:AUX', 'VI', 'V.INTRANS', 'VT', 'V.TRANS'}
+                    '3PRON', 'ADJ', 'ADV', 'AUX',
+                    'CLFR', 'CLFR.INAN', 'CLFR:INAN',
+                    'CONJ', 'DEICT', 'DEM', 'DET', 'INT', 'INTERJ',
+                    'N', 'N.PROP', 'N:PROP',
+                    'NUM', 'PREP', 'PTL', 'QUANT', 'S',
+                    'V', 'V.AUX', 'V:AUX', 'VI', 'V.INTRANS', 'V:INTRANS',
+                    'VT', 'V.TRANS', 'V:TRANS'}
                 if stem_left in stem_poses:
                     gloss = ''
                     pos = stem_left
