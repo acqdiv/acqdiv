@@ -2715,20 +2715,6 @@ class TestYucatecReader(unittest.TestCase):
         desired_output = [('stem', 'STEMPOS', '')]
         self.assertEqual(actual_output, desired_output)
 
-    def test_iter_morphemes_POS_colon(self):
-        """Test with POS tag containg colon."""
-        word = 'CLFR:INAN|test'
-        actual_output = list(YucatecReader.iter_morphemes(word))
-        desired_output = [('test', '', 'CLFR:INAN')]
-        self.assertEqual(actual_output, desired_output)
-
-    def test_iter_morphemes_POS_dot(self):
-        """Test with POS tag containing dot."""
-        word = 'CLFR.INAN|test'
-        actual_output = list(YucatecReader.iter_morphemes(word))
-        desired_output = [('test', '', 'CLFR.INAN')]
-        self.assertEqual(actual_output, desired_output)
-
     def test_iter_morphemes_unstructured_stem_with_seg(self):
         """Test iter_morphemes with unstructured stem with segment."""
         word = 'stem'
@@ -2783,8 +2769,8 @@ class TestYucatecReader(unittest.TestCase):
                           ('sfxtwo', 'SFXGLOSS2', 'sfx')]
         self.assertEqual(actual_output, desired_output)
 
-    def test_iter_morphemes_subpos_subgloss(self):
-        """Test iter_morphemes with sub POS tag and sub glosses."""
+    def test_iter_morphemes_subpos_subgloss_colon(self):
+        """Test iter_morphemes with sub POS tag and sub glosses with colons."""
         word = ('PFXGLOSS:PFXSUBGLOSS|pfx#'
                 'N:PROP|stem'
                 ':SFXGLOSS:SFXSUBGLOSS|-sfx')
@@ -2792,6 +2778,17 @@ class TestYucatecReader(unittest.TestCase):
         desired_output = [('pfx', 'PFXGLOSS:PFXSUBGLOSS', 'pfx'),
                           ('stem', '', 'N:PROP'),
                           ('sfx', 'SFXGLOSS:SFXSUBGLOSS', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_subpos_subgloss_dot(self):
+        """Test iter_morphemes with sub POS tag and sub glosses with dots."""
+        word = ('PFXGLOSS.PFXSUBGLOSS|pfx#'
+                'N.PROP|stem'
+                ':SFXGLOSS.SFXSUBGLOSS|-sfx')
+        actual_output = list(YucatecReader.iter_morphemes(word))
+        desired_output = [('pfx', 'PFXGLOSS.PFXSUBGLOSS', 'pfx'),
+                          ('stem', '', 'N.PROP'),
+                          ('sfx', 'SFXGLOSS.SFXSUBGLOSS', 'sfx')]
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_morphemes_untranscribed(self):
