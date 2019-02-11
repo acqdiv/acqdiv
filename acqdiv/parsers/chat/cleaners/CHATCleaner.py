@@ -337,10 +337,17 @@ class CHATCleaner(CHATCleanerInterface):
     def clean_pos_tier(cls, pos_tier):
         return cls.clean_morph_tier(pos_tier)
 
-    # ---------- tier cross cleaning ----------
+    # ---------- cross cleaning ----------
 
     @staticmethod
-    def cross_clean(actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
+    def metadata_cross_clean(
+            speaker_label, name, role, age, gender, language, birth_date):
+        """No cleaning by default."""
+        return speaker_label, name, role, age, gender, language, birth_date
+
+    @staticmethod
+    def utterance_cross_clean(
+            actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
         """No cleaning by default."""
         return actual_utt, target_utt, seg_tier, gloss_tier, pos_tier
 

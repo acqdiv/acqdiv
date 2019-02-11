@@ -51,11 +51,22 @@ class CHATCleanerInterface:
         """
         raise NotImplementedError
 
-    # ---------- tier cross cleaning ----------
+    # ---------- cross cleaning ----------
 
     @staticmethod
-    def cross_clean(actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
-        """Clean across tiers.
+    def metadata_cross_clean(
+            speaker_label, name, role, age, gender, language, birth_date):
+        """Clean across speaker metadata.
+
+        Returns:
+            Tuple[str, str, str, str, str, str, str]: The cleaned metadata.
+        """
+        pass
+
+    @staticmethod
+    def utterance_cross_clean(
+            actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
+        """Clean across utterance tiers.
 
         The tiers are assumed to be cleaned.
 

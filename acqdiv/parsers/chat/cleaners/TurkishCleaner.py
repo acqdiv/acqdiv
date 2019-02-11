@@ -11,7 +11,7 @@ class TurkishCleaner(CHATCleaner):
     def clean_morph_tier(cls, morph_tier):
         return cls.remove_terminator(morph_tier)
 
-    # ---------- cross tier cleaning ----------
+    # ---------- cross cleaning ----------
 
     @staticmethod
     def single_morph_word(utterance, morph_tier):
@@ -103,8 +103,8 @@ class TurkishCleaner(CHATCleaner):
         return ' '.join(wwords), ' '.join(mwords)
 
     @classmethod
-    def cross_clean(cls, actual_utt, target_utt, seg_tier, gloss_tier,
-                    pos_tier):
+    def utterance_cross_clean(
+            cls, actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
         """Cross clean between word and segment utterances."""
         # which morphology tier does not matter, they are all the same
         mor_tier = seg_tier

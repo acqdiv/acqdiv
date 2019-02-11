@@ -786,16 +786,16 @@ class TestCHATCleaner(unittest.TestCase):
         desired_output = pos_tier
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- test tier cross cleaning ---------
+    # ---------- cross cleaning ---------
 
-    def test_cross_clean(self):
-        """Test cross_clean for same input as output."""
+    def test_utterance_cross_clean(self):
+        """Test utterance_cross_clean for same input as output."""
         actual_utt = 'ha be'
         target_utt = 'ha be'
         seg_tier = 'h_a b_e'
         gloss_tier = '1sg pl'
         pos_tier = 'V N'
-        actual_output = CHATCleaner.cross_clean(
+        actual_output = CHATCleaner.utterance_cross_clean(
             actual_utt, target_utt, seg_tier, gloss_tier, pos_tier)
         desired_output = (actual_utt, target_utt, seg_tier, gloss_tier,
                           pos_tier)
@@ -1248,7 +1248,7 @@ class TestCreeCleaner(unittest.TestCase):
         desired_output = '1~initial~vta.fin~passive~zzz'
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- tier cross cleaning ----------
+    # ---------- cross cleaning ----------
 
     # Tests for the replace_eng-method.
 
@@ -1294,14 +1294,14 @@ class TestCreeCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    def test_cross_clean(self):
-        """Test cross_clean with several engs."""
+    def test_utterance_cross_clean(self):
+        """Test utterance_cross_clean with several engs."""
         actual_utt = 'hi ha be bye'
         target_utt = 'hi ha be bye'
         seg_tier = 'ke h_a b_e me'
         gloss_tier = 'Eng 1sg pl Eng'
         pos_tier = 'N V N V'
-        actual_output = CreeCleaner.cross_clean(
+        actual_output = CreeCleaner.utterance_cross_clean(
             actual_utt, target_utt, seg_tier, gloss_tier, pos_tier)
         desired_output = (actual_utt, target_utt, seg_tier, 'hi 1sg pl bye',
                           pos_tier)
@@ -1619,7 +1619,7 @@ class TestSesothoCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- test cross cleaning ----------
+    # ---------- cross cleaning ----------
 
     def test_remove_contractions_single(self):
         """Test remove contractions with one contraction."""

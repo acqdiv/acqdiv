@@ -88,7 +88,7 @@ class CreeCleaner(CHATCleaner):
         morph_tier = cls.null_untranscribed_morph_tier(morph_tier)
         return morph_tier
 
-    # ---------- tier cross cleaning ----------
+    # ---------- cross cleaning ----------
 
     @staticmethod
     def replace_eng(gloss_tier, utterance):
@@ -113,8 +113,8 @@ class CreeCleaner(CHATCleaner):
             return ' '.join(new_gloss_words)
 
     @classmethod
-    def cross_clean(cls, actual_utt, target_utt, seg_tier, gloss_tier,
-                    pos_tier):
+    def utterance_cross_clean(
+            cls, actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
         gloss_tier = cls.replace_eng(gloss_tier, actual_utt)
         return actual_utt, target_utt, seg_tier, gloss_tier, pos_tier
 
