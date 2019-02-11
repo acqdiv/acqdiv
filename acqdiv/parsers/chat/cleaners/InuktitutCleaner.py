@@ -5,6 +5,22 @@ from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
 
 class InuktitutCleaner(CHATCleaner):
 
+    # ---------- cross cleaning ----------
+
+    @staticmethod
+    def metadata_cross_clean(
+            speaker_label, name, role, age, gender, language, birth_date):
+        """Add birth dates for ALI, MAE and SUP."""
+
+        if speaker_label == 'ALI' and name == 'Alec':
+            birth_date = '1986-08-25'
+        elif speaker_label == 'MAE' and name == 'Mae':
+            birth_date = '1986-09-02'
+        elif speaker_label == 'SUP' and name == 'Suusi':
+            birth_date = '1986-05-17'
+
+        return speaker_label, name, role, age, gender, language, birth_date
+
     # ---------- word cleaning ----------
 
     @staticmethod
