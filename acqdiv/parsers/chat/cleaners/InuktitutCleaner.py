@@ -40,9 +40,9 @@ class InuktitutCleaner(CHATCleaner):
     def clean_morph_tier(cls, xmor):
         """Clean the morphology tier 'xmor'."""
         for cleaning_method in [
+                cls.remove_terminator,
                 cls.null_event_utterances,
                 cls.unify_untranscribed,
-                cls.remove_terminator,
                 cls.remove_separators,
                 cls.remove_scoped_symbols,
                 # cls.null_untranscribed_utterances
