@@ -76,6 +76,12 @@ class CHATParser(CHATParserInterface):
             birth_date = self.cleaner.clean_date(
                                 self.reader.get_speaker_birthdate())
 
+            # cross cleaning
+            speaker_label, name, role, age, gender, language, birth_date = \
+                self.cleaner.metadata_cross_clean(
+                    speaker_label, name, role, age,
+                    gender, language, birth_date)
+
             speaker_dict = {
                 'speaker_label': speaker_label,
                 'name': name if name else None,
