@@ -8,10 +8,7 @@ class InuktitutCleaner(CHATCleaner):
     # ---------- cross cleaning ----------
 
     @staticmethod
-    def metadata_cross_clean(
-            speaker_label, name, role, age, gender, language, birth_date):
-        """Add birth dates for ALI, MAE and SUP."""
-
+    def add_birth_date(speaker_label, name, birth_date):
         if speaker_label == 'ALI' and name == 'Alec':
             birth_date = '1986-08-25'
         elif speaker_label == 'MAE' and name == 'Mae':
@@ -19,6 +16,13 @@ class InuktitutCleaner(CHATCleaner):
         elif speaker_label == 'SUP' and name == 'Suusi':
             birth_date = '1986-05-17'
 
+        return birth_date
+
+    @classmethod
+    def metadata_cross_clean(
+            cls, speaker_label, name, role, age, gender, language, birth_date):
+        """Add birth dates for ALI, MAE and SUP."""
+        birth_date = cls.add_birth_date(speaker_label, name, birth_date)
         return speaker_label, name, role, age, gender, language, birth_date
 
     # ---------- word cleaning ----------

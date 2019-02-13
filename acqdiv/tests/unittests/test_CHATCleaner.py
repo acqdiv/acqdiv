@@ -853,10 +853,10 @@ class TestCHATCleaner(unittest.TestCase):
 class TestInuktitutCleaner(unittest.TestCase):
     """class to test the InuktitutCleaner."""
 
-    def test_metadata_cross_clean(self):
-        metadata = ('ALI', 'Alec', '', '', '', '', '')
-        actual_output = InuktitutCleaner.metadata_cross_clean(*metadata)
-        desired_output = ('ALI', 'Alec', '', '', '', '', '1986-08-25')
+    def test_add_birth_date(self):
+        metadata = ('ALI', 'Alec', '1984-01-01')
+        actual_output = InuktitutCleaner.add_birth_date(*metadata)
+        desired_output = '1986-08-25'
         self.assertEqual(actual_output, desired_output)
 
     # ---------- word cleaning ----------
