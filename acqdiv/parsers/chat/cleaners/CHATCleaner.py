@@ -341,7 +341,8 @@ class CHATCleaner(CHATCleanerInterface):
 
     @staticmethod
     def metadata_cross_clean(
-            speaker_label, name, role, age, gender, language, birth_date):
+            speaker_label, name, role, age, gender,
+            language, birth_date, target_child):
         """No cleaning by default."""
         return speaker_label, name, role, age, gender, language, birth_date
 
