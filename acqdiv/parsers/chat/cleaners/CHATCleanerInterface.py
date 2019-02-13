@@ -54,6 +54,23 @@ class CHATCleanerInterface:
     # ---------- cross cleaning ----------
 
     @staticmethod
+    def clean_session_metadata(session_filename, date, media_filename):
+        """Clean across session metadata.
+
+        Mostly used for correcting session dates having the default date
+        `1984-01-01`.
+
+        Args:
+            session_filename (str): The name of the session file.
+            date (str): The session date.
+            media_filename (str): The name of the media file.
+
+        Returns:
+            Tuple[str, str]: (date, media filename)
+        """
+        raise NotImplementedError
+
+    @staticmethod
     def clean_speaker_metadata(
             session_filename, speaker_label, name, role,
             age, gender, language, birth_date, target_child):

@@ -53,11 +53,17 @@ class CHATParser(CHATParserInterface):
             dict: Date and media file name of session.
         """
         date = self.cleaner.clean_date(self.reader.get_session_date())
-        filename = self.reader.get_session_media_filename()
+        media_filename = self.reader.get_session_media_filename()
+
+        session_filename = os.path.basename(self.session_path)
+
+        # any corrections of the metadata
+        date, media_filename = self.cleaner.clean_session_metadata(
+            session_filename, date, media_filename)
 
         session_dict = {
             'date': date if date else None,
-            'media_filename': filename if filename else None}
+            'media_filename': media_filename if media_filename else None}
 
         return session_dict
 

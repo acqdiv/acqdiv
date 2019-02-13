@@ -340,6 +340,11 @@ class CHATCleaner(CHATCleanerInterface):
     # ---------- cross cleaning ----------
 
     @staticmethod
+    def clean_session_metadata(session_filename, date, media_filename):
+        """No cleaning by default."""
+        return date, media_filename
+
+    @staticmethod
     def clean_speaker_metadata(
             session_filename, speaker_label, name, role, age,
             gender, language, birth_date, target_child):
