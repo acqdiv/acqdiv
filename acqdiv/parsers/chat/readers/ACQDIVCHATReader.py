@@ -80,13 +80,19 @@ class ACQDIVCHATReader(CHATReader, CHATReaderInterface):
 
                     # set target child
                     p_role = self.get_participant_role(p_fields)
-                    if p_role == 'Target_Child':
-                        self._target_child = p_id
+                    if self._is_target_child(p_role):
+                        p_name = self.get_participant_name(p_fields)
+                        self._target_child = (p_id, p_name)
+
             else:
                 self._metadata[key] = content
 
         self._speaker_iterator = iter(speaker_labels)
         self._record_iterator = self.iter_records(session)
+
+    @classmethod
+    def _is_target_child(cls, role):
+        return role == 'Target_Child'
 
     # ---------- metadata ----------
 
@@ -99,10 +105,10 @@ class ACQDIVCHATReader(CHATReader, CHATReaderInterface):
         return self.get_media_filename(media_fields)
 
     def get_target_child(self):
-        name = self.get_participant_name(
-            self._speakers[self._target_child]['participant'])
+        if self._target_child:
+            return self._target_child
 
-        return self._target_child, name
+        return '', ''
 
     # ---------- speaker ----------
 

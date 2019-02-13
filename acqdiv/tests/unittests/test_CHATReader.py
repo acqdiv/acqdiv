@@ -984,7 +984,7 @@ class TestACQDIVCHATReaderRead(unittest.TestCase):
     def test_target_child_set(self):
         """Test whether _target_child is set."""
         actual_output = self.reader._target_child
-        desired_output = 'CHI'
+        desired_output = ('CHI', 'Daniel')
         self.assertEqual(actual_output, desired_output)
 
     def test_metadata_set(self):

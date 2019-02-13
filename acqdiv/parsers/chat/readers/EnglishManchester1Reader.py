@@ -45,8 +45,7 @@ class EnglishManchester1Reader(ACQDIVCHATReader):
         name = super().get_speaker_name()
         label = self.get_speaker_label()
         role = self.get_speaker_role()
-        target_child_name = self.get_participant_name(
-            self._speakers[self._target_child]['participant'])
+        target_child_name = self.get_target_child()[1]
         pid = self._metadata.get('PID', '')
 
         return self.correct_speaker_name(
