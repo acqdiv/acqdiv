@@ -853,6 +853,12 @@ class TestCHATCleaner(unittest.TestCase):
 class TestInuktitutCleaner(unittest.TestCase):
     """class to test the InuktitutCleaner."""
 
+    def test_metadata_cross_clean(self):
+        metadata = ('ALI', 'Alec', '', '', '', '', '')
+        actual_output = InuktitutCleaner.metadata_cross_clean(*metadata)
+        desired_output = ('ALI', 'Alec', '', '', '', '', '1986-08-25')
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- word cleaning ----------
 
     # Tests for the remove_dashes-method.
