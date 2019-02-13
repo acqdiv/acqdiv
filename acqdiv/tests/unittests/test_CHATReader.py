@@ -753,6 +753,11 @@ class TestACQDIVCHATReaderSpeaker(unittest.TestCase):
         cls.reader.read(io.StringIO(session))
         cls.reader.load_next_speaker()
 
+    def test_get_target_child(self):
+        actual_output = self.reader.get_target_child()
+        desired_output = 'Hlobohang'
+        self.assertEqual(actual_output, desired_output)
+
     def test_get_speaker_age(self):
         actual_output = self.reader.get_speaker_age()
         desired_output = '2;2.'
