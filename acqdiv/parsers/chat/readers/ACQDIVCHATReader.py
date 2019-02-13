@@ -79,8 +79,7 @@ class ACQDIVCHATReader(CHATReader, CHATReaderInterface):
                     speaker_labels.append(p_id)
 
                     # set target child
-                    p_role = self.get_participant_role(p_fields)
-                    if self._is_target_child(p_role):
+                    if self._is_target_child(*p_fields):
                         p_name = self.get_participant_name(p_fields)
                         self._target_child = (p_id, p_name)
 
@@ -91,7 +90,7 @@ class ACQDIVCHATReader(CHATReader, CHATReaderInterface):
         self._record_iterator = self.iter_records(session)
 
     @classmethod
-    def _is_target_child(cls, role):
+    def _is_target_child(cls, label, name, role):
         return role == 'Target_Child'
 
     # ---------- metadata ----------
