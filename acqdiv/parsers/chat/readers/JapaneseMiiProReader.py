@@ -5,6 +5,16 @@ from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
 
 class JapaneseMiiProReader(ACQDIVCHATReader):
 
+    @classmethod
+    def _is_target_child(cls, pos, label, name, role):
+        if role == 'Target_Child':
+            return True
+
+        if role == 'Child' and pos == 0:
+            return True
+
+        return False
+
     def get_morph_tier(self):
         return self._dependent_tiers.get('xtrn', '')
 
