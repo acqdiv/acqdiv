@@ -1,4 +1,5 @@
 import re
+from collections import OrderedDict
 
 from acqdiv.parsers.chat.readers.CHATReaderInterface import CHATReaderInterface
 from acqdiv.parsers.chat.readers.CHATReader import CHATReader
@@ -69,7 +70,8 @@ class ACQDIVCHATReader(CHATReader, CHATReaderInterface):
                     self._speakers[id_code] = {}
                 self._speakers[id_code]['id'] = id_fields
             elif key == 'Participants':
-                for participant in self.iter_participants(content):
+                for pos, participant in enumerate(
+                        self.iter_participants(content)):
                     # set speakers - @Participants
                     p_fields = self.get_participant_fields(participant)
                     p_id = self.get_participant_id(p_fields)
@@ -79,7 +81,7 @@ class ACQDIVCHATReader(CHATReader, CHATReaderInterface):
                     speaker_labels.append(p_id)
 
                     # set target child
-                    if self._is_target_child(*p_fields):
+                    if self._is_target_child(pos, *p_fields):
                         p_name = self.get_participant_name(p_fields)
                         self._target_child = (p_id, p_name)
 
@@ -90,7 +92,20 @@ class ACQDIVCHATReader(CHATReader, CHATReaderInterface):
         self._record_iterator = self.iter_records(session)
 
     @classmethod
-    def _is_target_child(cls, label, name, role):
+    def _is_target_child(cls, pos, label, name, role):
+        """Infer whether this is the target child.
+
+        Per default uses the role (`Target_Child`) to infer it.
+
+        Args:
+            pos (int): Position at which speaker is listed.
+            label (str): Label of speaker.
+            name (str): Name of speaker.
+            role (str): Role of speaker.
+
+        Returns:
+            bool: Is it the target child?
+        """
         return role == 'Target_Child'
 
     # ---------- metadata ----------
