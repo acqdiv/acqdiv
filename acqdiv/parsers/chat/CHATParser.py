@@ -1,3 +1,5 @@
+import os
+
 import acqdiv.parsers.chat.cleaners.CreeCleaner
 import acqdiv.parsers.chat.cleaners.EnglishManchester1Cleaner
 import acqdiv.parsers.chat.cleaners.InuktitutCleaner
@@ -77,10 +79,12 @@ class CHATParser(CHATParserInterface):
                                 self.reader.get_speaker_birthdate())
             target_child = self.reader.get_target_child()
 
-            # cross cleaning
+            session_filename = os.path.basename(self.session_path)
+
+            # any corrections of the metadata
             speaker_label, name, role, age, gender, language, birth_date = \
-                self.cleaner.metadata_cross_clean(
-                    speaker_label, name, role, age,
+                self.cleaner.clean_speaker_metadata(
+                    session_filename, speaker_label, name, role, age,
                     gender, language, birth_date, target_child)
 
             speaker_dict = {

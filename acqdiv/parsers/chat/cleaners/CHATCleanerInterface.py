@@ -54,14 +54,16 @@ class CHATCleanerInterface:
     # ---------- cross cleaning ----------
 
     @staticmethod
-    def metadata_cross_clean(
-            speaker_label, name, role, age, gender,
-            language, birth_date, target_child):
+    def clean_speaker_metadata(
+            session_filename, speaker_label, name, role,
+            age, gender, language, birth_date, target_child):
         """Clean across speaker metadata.
 
-        Mostly used for correcting metadata.
+        Mostly used for correcting speaker metadata so as to match the speakers
+        across different sessions later in the postprocessor.
 
         Args:
+            session_filename (str): The name of the session file.
             speaker_label (str): Code/label of speaker.
             name (str): Full name of speaker.
             role (str): Role of speaker in relation to target child.

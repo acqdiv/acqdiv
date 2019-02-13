@@ -19,9 +19,9 @@ class InuktitutCleaner(CHATCleaner):
         return birth_date
 
     @classmethod
-    def metadata_cross_clean(
-            cls, speaker_label, name, role, age, gender,
-            language, birth_date, target_child):
+    def clean_speaker_metadata(
+            cls, session_filename, speaker_label, name, role,
+            age, gender, language, birth_date, target_child):
         """Add birth dates for ALI, MAE and SUP."""
         birth_date = cls.add_birth_date(speaker_label, name, birth_date)
         return speaker_label, name, role, age, gender, language, birth_date
