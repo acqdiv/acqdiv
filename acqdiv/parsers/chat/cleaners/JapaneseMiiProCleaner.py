@@ -23,6 +23,21 @@ class JapaneseMiiProCleaner(CHATCleaner):
     # ---------- cross cleaning ----------
 
     @classmethod
+    def clean_session_metadata(cls, session_filename, date, media_filename):
+        date = cls.correct_session_date(session_filename, date)
+        return date, media_filename
+
+    @staticmethod
+    def correct_session_date(session_filename, date):
+        match = re.search(r'\d{8}', session_filename)
+
+        if match:
+            date = match.group()
+            return date[:4] + '-' + date[4:6] + date[6:8]
+
+        return date
+
+    @classmethod
     def clean_speaker_metadata(
             cls, session_filename, speaker_label, name, role,
             age, gender, language, birth_date, target_child):
