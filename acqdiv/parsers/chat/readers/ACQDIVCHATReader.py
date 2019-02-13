@@ -99,8 +99,10 @@ class ACQDIVCHATReader(CHATReader, CHATReaderInterface):
         return self.get_media_filename(media_fields)
 
     def get_target_child(self):
-        return self.get_participant_name(
+        name = self.get_participant_name(
             self._speakers[self._target_child]['participant'])
+
+        return self._target_child, name
 
     # ---------- speaker ----------
 

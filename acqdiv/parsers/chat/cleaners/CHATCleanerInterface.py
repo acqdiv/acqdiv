@@ -61,8 +61,20 @@ class CHATCleanerInterface:
 
         Mostly used for correcting metadata.
 
+        Args:
+            speaker_label (str): Code/label of speaker.
+            name (str): Full name of speaker.
+            role (str): Role of speaker in relation to target child.
+            age (str): The age of the speaker at the current session.
+            gender (str): The gender of the speaker.
+            language (str): The language of the speaker.
+            birth_date (str): The birth date of the speaker.
+            target_child (Tuple[str, str]): The label and name of the target
+                child.
+
         Returns:
-            Tuple[str, str, str, str, str, str, str]: The cleaned metadata.
+            Tuple[str, str, str, str, str, str, str]:
+            (speaker_label, name, role, age, gender, language, birth_date)
         """
         pass
 

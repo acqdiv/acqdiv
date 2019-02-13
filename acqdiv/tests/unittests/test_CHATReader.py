@@ -755,7 +755,7 @@ class TestACQDIVCHATReaderSpeaker(unittest.TestCase):
 
     def test_get_target_child(self):
         actual_output = self.reader.get_target_child()
-        desired_output = 'Hlobohang'
+        desired_output = ('CHI', 'Hlobohang')
         self.assertEqual(actual_output, desired_output)
 
     def test_get_speaker_age(self):

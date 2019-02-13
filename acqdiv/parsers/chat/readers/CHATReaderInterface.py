@@ -21,6 +21,14 @@ class CHATReaderInterface:
         """
         raise NotImplementedError
 
+    def get_target_child(self):
+        """Get the target child of the session.
+
+        Returns:
+            Tuple[str, str]: (label, name)
+        """
+        raise NotImplementedError
+
     # ---------- speaker ----------
 
     def load_next_speaker(self):
