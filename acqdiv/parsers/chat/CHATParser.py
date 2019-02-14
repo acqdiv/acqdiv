@@ -140,7 +140,8 @@ class CHATParser(CHATParserInterface):
         while self.reader.load_next_record():
 
             source_id = self.get_source_id()
-            addressee = self.reader.get_addressee()
+            addressee = self.cleaner.clean_record_speaker_label(
+                self.session_filename, self.reader.get_addressee())
             translation = self.reader.get_translation()
             comment = self.reader.get_comments()
             speaker_label = self.cleaner.clean_record_speaker_label(
