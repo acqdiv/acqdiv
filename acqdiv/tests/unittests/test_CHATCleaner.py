@@ -790,13 +790,14 @@ class TestCHATCleaner(unittest.TestCase):
 
     def test_utterance_cross_clean(self):
         """Test utterance_cross_clean for same input as output."""
+        raw_utt = ''
         actual_utt = 'ha be'
         target_utt = 'ha be'
         seg_tier = 'h_a b_e'
         gloss_tier = '1sg pl'
         pos_tier = 'V N'
         actual_output = CHATCleaner.utterance_cross_clean(
-            actual_utt, target_utt, seg_tier, gloss_tier, pos_tier)
+            raw_utt, actual_utt, target_utt, seg_tier, gloss_tier, pos_tier)
         desired_output = (actual_utt, target_utt, seg_tier, gloss_tier,
                           pos_tier)
         self.assertEqual(actual_output, desired_output)
@@ -1302,13 +1303,14 @@ class TestCreeCleaner(unittest.TestCase):
 
     def test_utterance_cross_clean(self):
         """Test utterance_cross_clean with several engs."""
+        raw_utt = ''
         actual_utt = 'hi ha be bye'
         target_utt = 'hi ha be bye'
         seg_tier = 'ke h_a b_e me'
         gloss_tier = 'Eng 1sg pl Eng'
         pos_tier = 'N V N V'
         actual_output = CreeCleaner.utterance_cross_clean(
-            actual_utt, target_utt, seg_tier, gloss_tier, pos_tier)
+            raw_utt, actual_utt, target_utt, seg_tier, gloss_tier, pos_tier)
         desired_output = (actual_utt, target_utt, seg_tier, 'hi 1sg pl bye',
                           pos_tier)
         self.assertEqual(actual_output, desired_output)

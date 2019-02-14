@@ -114,7 +114,8 @@ class CreeCleaner(CHATCleaner):
 
     @classmethod
     def utterance_cross_clean(
-            cls, actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
+            cls, raw_utt, actual_utt, target_utt,
+            seg_tier, gloss_tier, pos_tier):
         gloss_tier = cls.replace_eng(gloss_tier, actual_utt)
         return actual_utt, target_utt, seg_tier, gloss_tier, pos_tier
 

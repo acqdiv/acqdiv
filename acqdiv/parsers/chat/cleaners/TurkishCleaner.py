@@ -104,7 +104,8 @@ class TurkishCleaner(CHATCleaner):
 
     @classmethod
     def utterance_cross_clean(
-            cls, actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
+            cls, raw_utt, actual_utt, target_utt,
+            seg_tier, gloss_tier, pos_tier):
         """Cross clean between word and segment utterances."""
         # which morphology tier does not matter, they are all the same
         mor_tier = seg_tier

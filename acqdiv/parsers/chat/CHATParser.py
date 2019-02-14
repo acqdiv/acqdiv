@@ -173,7 +173,8 @@ class CHATParser(CHATParserInterface):
             # cross cleaning
             actual_utt, target_utt, seg_tier, gloss_tier, pos_tier = \
                 self.cleaner.utterance_cross_clean(
-                    actual_utt, target_utt, seg_tier, gloss_tier, pos_tier)
+                    utterance_raw, actual_utt, target_utt,
+                    seg_tier, gloss_tier, pos_tier)
 
             # get dictionary of words
             words = self.get_words_dict(actual_utt, target_utt)

@@ -358,7 +358,7 @@ class CHATCleaner(CHATCleanerInterface):
 
     @staticmethod
     def utterance_cross_clean(
-            actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
+            raw_utt, actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
         """No cleaning by default."""
         return actual_utt, target_utt, seg_tier, gloss_tier, pos_tier
 

@@ -53,7 +53,8 @@ class SesothoCleaner(CHATCleaner):
 
     @classmethod
     def utterance_cross_clean(
-            cls, actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
+            cls, raw_utt, actual_utt, target_utt,
+            seg_tier, gloss_tier, pos_tier):
         """Clean seg_tier, gloss_tier and pos_tier from contractions."""
         seg_tier, gloss_tier, pos_tier = cls.remove_contractions(
             seg_tier, gloss_tier, pos_tier)

@@ -108,12 +108,12 @@ class CHATCleanerInterface:
 
     @staticmethod
     def utterance_cross_clean(
-            actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
+            raw_utt, actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
         """Clean across utterance tiers.
 
-        The tiers are assumed to be cleaned.
-
-        Returns: str
+        Returns:
+            Tuple[str, str, str, str, str]:
+            (actual_utt, target_utt, seg_tier, gloss_tier, pos_tier)
         """
         raise NotImplementedError
 
