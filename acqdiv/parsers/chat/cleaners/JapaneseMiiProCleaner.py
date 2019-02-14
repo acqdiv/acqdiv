@@ -359,7 +359,7 @@ class JapaneseMiiProCleaner(CHATCleaner):
 
         Uses a fuzzy matching approach as the retracings are not always used
         correctly in the corpus. For example, in some cases they are used for
-        repetitions: < soo soo > [/] soo .
+        repetitions: < soo soo > [/] soo.
 
         Only considers retracings of up to 2 words.
         """
@@ -382,7 +382,8 @@ class JapaneseMiiProCleaner(CHATCleaner):
 
                     if repeated.group(1):
                         wword = repeated.group(2)
-                        if wword in mword:
+                        # first three letters have to match
+                        if wword[:3] in mword:
                             n_reps = len(repeated.group(1).split(' ')) - 1
                             new += n_reps*[mword]
                             del repeated_words[0]
@@ -391,7 +392,8 @@ class JapaneseMiiProCleaner(CHATCleaner):
                         wword1 = repeated.group(5)
                         wword2 = repeated.group(6)
 
-                        if wword1 in morph_words[i-1] and wword2 in mword:
+                        if (wword1[:3] in morph_words[i-1]
+                                and wword2[:3] in mword):
                             n_reps = len(
                                 repeated.group(7).lstrip(' ').split(' ')) - 1
                             new += n_reps*(morph_words[i-1], mword)
