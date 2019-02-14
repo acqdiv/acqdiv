@@ -168,7 +168,7 @@ class JapaneseMiiProCleaner(CHATCleaner):
         morph_tier = cls.remove_terminator(morph_tier)
         return cls.remove_non_words(morph_tier)
 
-    # ---------- cross cleaning ----------
+    # ---------- session metadata cleaning ----------
 
     @classmethod
     def clean_session_metadata(cls, session_filename, date, media_filename):
@@ -185,6 +185,8 @@ class JapaneseMiiProCleaner(CHATCleaner):
             return date[:4] + '-' + date[4:6] + date[6:8]
 
         return date
+
+    # ---------- speaker metadata cleaning ----------
 
     @classmethod
     def clean_speaker_metadata(
@@ -277,6 +279,8 @@ class JapaneseMiiProCleaner(CHATCleaner):
 
         return name
 
+    # ---------- utterance cross clean ----------
+
     @classmethod
     def utterance_cross_clean(
             cls, raw_utt, actual_utt, target_utt,
@@ -342,5 +346,50 @@ class JapaneseMiiProCleaner(CHATCleaner):
                         group.append(mw)
 
                 return ' '.join(morph_new)
+
+        return morph_tier
+
+    @classmethod
+    def add_retracings(cls, raw_utt, actual_utt, morph_tier):
+        """Add retracings to morphology tiers.
+
+        Uses a fuzzy matching approach as the retracings are not always used
+        correctly in the corpus. For example, in some cases they are used for
+        repetitions: < soo soo > [/] soo .
+
+        Only considers retracings of up to 2 words.
+        """
+        # only perform steps if there are retracings
+        if '[/]' in raw_utt and morph_tier:
+
+            regex = re.compile(r'((\S+)( \2)+)|((\S+) (\S+)( \5 \6)+)')
+            repeated_words = list(regex.finditer(actual_utt))
+
+            morph_words = morph_tier.split(' ')
+            new = []
+            for i, mword in enumerate(morph_words):
+
+                new.append(mword)
+
+                if repeated_words:
+                    repeated = repeated_words[0]
+
+                    if repeated.group(1):
+                        wword = repeated.group(2)
+                        if wword in mword:
+                            n_reps = len(repeated.group(1).split(' ')) - 1
+                            new += n_reps*[mword]
+                            del repeated_words[0]
+
+                    elif i > 0 and repeated.group(4):
+                        wword1 = repeated.group(5)
+                        wword2 = repeated.group(6)
+
+                        if wword1 in morph_words[i-1] and wword2 in mword:
+                            n_reps = len(
+                                repeated.group(7).lstrip(' ').split(' ')) - 1
+                            new += n_reps*(morph_words[i-1], mword)
+
+            return ' '.join(new)
 
         return morph_tier
