@@ -367,6 +367,8 @@ class JapaneseMiiProCleaner(CHATCleaner):
         if '[/]' in raw_utt and morph_tier:
 
             regex = re.compile(r'((\S+)( \2)+)|((\S+) (\S+)( \5 \6)+)')
+            actual_utt = ' '.join(
+                [cls.clean_word(word) for word in actual_utt.split(' ')])
             repeated_words = list(regex.finditer(actual_utt))
 
             morph_words = morph_tier.split(' ')
@@ -379,15 +381,15 @@ class JapaneseMiiProCleaner(CHATCleaner):
                     repeated = repeated_words[0]
 
                     if repeated.group(1):
-                        wword = cls.clean_word(repeated.group(2))
+                        wword = repeated.group(2)
                         if wword in mword:
                             n_reps = len(repeated.group(1).split(' ')) - 1
                             new += n_reps*[mword]
                             del repeated_words[0]
 
                     elif i > 0 and repeated.group(4):
-                        wword1 = cls.clean_word(repeated.group(5))
-                        wword2 = cls.clean_word(repeated.group(6))
+                        wword1 = repeated.group(5)
+                        wword2 = repeated.group(6)
 
                         if wword1 in morph_words[i-1] and wword2 in mword:
                             n_reps = len(

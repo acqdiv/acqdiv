@@ -1614,6 +1614,15 @@ class TestJapaneseMiiProCleaner(unittest.TestCase):
         desired_output = 'N|tutu N|ha N|ho N|kuku'
         self.assertEqual(actual_output, desired_output)
 
+    def test_add_retracings_unclean_actual_words(self):
+        raw_utt = 'huhu repeat@o [/] repeat hihi'
+        actual_utt = 'huhu repeat@o repeat hihi'
+        morph_tier = 'N|huhu N|repeat N|hihi'
+        actual_output = JapaneseMiiProCleaner.add_retracings(
+            raw_utt, actual_utt, morph_tier)
+        desired_output = 'N|huhu N|repeat N|repeat N|hihi'
+        self.assertEqual(actual_output, desired_output)
+
 
 ###############################################################################
 
