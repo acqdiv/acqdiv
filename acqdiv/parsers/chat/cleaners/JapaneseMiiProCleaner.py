@@ -59,6 +59,8 @@ class JapaneseMiiProCleaner(CHATCleaner):
         if session_filename.startswith('als'):
             if name == 'Asatokun':
                 return 'Asato'
+            elif name == 'Arichan':
+                return 'Arika'
             elif speaker_label == 'MOT':
                 return 'Mother_of_Arika_and_Asato'
             elif speaker_label == 'ALS':
@@ -67,22 +69,32 @@ class JapaneseMiiProCleaner(CHATCleaner):
         elif session_filename.startswith('aprm'):
             if name == 'Arichan':
                 return 'Arika'
-            elif name == 'Akko':
+            elif speaker_label == 'MOT':
                 return 'Mother_of_Arika_and_Asato'
             elif name == 'Asatokun':
                 return 'Asato'
+            elif speaker_label == 'APR':
+                return 'Arika'
+            elif speaker_label == 'BAA':
+                return 'Obaachan'
 
         elif session_filename.startswith('njd'):
             if name == 'Jurichan':
                 return 'Juri'
             elif name == 'Natchan':
                 return 'Nanami'
-            elif name == 'Okaasan':
+            elif name == 'Fuyumichan':
+                return 'Fuyumi'
+            elif speaker_label == 'MOT':
                 return 'Mother_of_Nanami'
             elif name == 'Arikachan':
                 return 'Arika'
+            elif name == 'Kantakun':
+                return 'Kanta'
             elif speaker_label == 'MOT':
                 return 'Mother_of_Nanami'
+            elif speaker_label == 'MTO':
+                return 'Mother_of_Tomito'
             elif speaker_label == 'NJD':
                 return 'Nanami'
 
