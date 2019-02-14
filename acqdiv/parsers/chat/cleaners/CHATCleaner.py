@@ -42,6 +42,11 @@ class CHATCleaner(CHATCleanerInterface):
     # ---------- utterance cleaning ----------
 
     @staticmethod
+    def clean_record_speaker_label(session_filename, speaker_label):
+        """No cleaning by default."""
+        return speaker_label
+
+    @staticmethod
     def remove_redundant_whitespaces(utterance):
         """Remove redundant whitespaces in utterances.
 

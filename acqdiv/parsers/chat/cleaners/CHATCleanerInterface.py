@@ -25,6 +25,15 @@ class CHATCleanerInterface:
         """
         raise NotImplementedError
 
+    @staticmethod
+    def clean_record_speaker_label(session_filename, speaker_label):
+        """Clean the speaker label in a record.
+
+        Returns:
+            str: The cleaned speaker label.
+        """
+        raise NotImplementedError
+
     # ---------- morphology tier cleaning ----------
 
     @staticmethod

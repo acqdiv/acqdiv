@@ -31,6 +31,7 @@ class CHATParser(CHATParserInterface):
 
     def __init__(self, session_path):
         self.session_path = session_path
+        self.session_filename = os.path.basename(self.session_path)
         self.reader = self.get_reader()
         self.cleaner = self.get_cleaner()
         self.consistent_actual_target = True
@@ -55,11 +56,9 @@ class CHATParser(CHATParserInterface):
         date = self.cleaner.clean_date(self.reader.get_session_date())
         media_filename = self.reader.get_session_media_filename()
 
-        session_filename = os.path.basename(self.session_path)
-
         # any corrections of the metadata
         date, media_filename = self.cleaner.clean_session_metadata(
-            session_filename, date, media_filename)
+            self.session_filename, date, media_filename)
 
         session_dict = {
             'date': date if date else None,
@@ -85,12 +84,10 @@ class CHATParser(CHATParserInterface):
                                 self.reader.get_speaker_birthdate())
             target_child = self.reader.get_target_child()
 
-            session_filename = os.path.basename(self.session_path)
-
             # any corrections of the metadata
             speaker_label, name, role, age, gender, language, birth_date = \
                 self.cleaner.clean_speaker_metadata(
-                    session_filename, speaker_label, name, role, age,
+                    self.session_filename, speaker_label, name, role, age,
                     gender, language, birth_date, target_child)
 
             speaker_dict = {
@@ -146,7 +143,8 @@ class CHATParser(CHATParserInterface):
             addressee = self.reader.get_addressee()
             translation = self.reader.get_translation()
             comment = self.reader.get_comments()
-            speaker_label = self.reader.get_record_speaker_label()
+            speaker_label = self.cleaner.clean_record_speaker_label(
+                self.session_filename, self.reader.get_record_speaker_label())
             utterance_raw = self.reader.get_utterance()
             start_raw = self.reader.get_start_time()
             end_raw = self.reader.get_end_time()
