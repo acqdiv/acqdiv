@@ -1525,6 +1525,49 @@ class TestJapaneseMiiProCleaner(unittest.TestCase):
         desired_output = 'n:prop|Ikun'
         self.assertEqual(actual_output, desired_output)
 
+    # ---------- add_repetitions ----------
+
+    def test_add_repetitions_aligned_no_scoping(self):
+        raw_utterance = 'huhu repeat [x 2] hihi'
+        morph_tier = 'N|huhu N|repeat N|hihi'
+        actual_output = JapaneseMiiProCleaner.add_repetitions(
+            raw_utterance, morph_tier)
+        desired_output = 'N|huhu N|repeat N|repeat N|hihi'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_add_repetitions_aligned_scoping(self):
+        raw_utterance = 'huhu <ha ho> [x 2] hihi'
+        morph_tier = 'N|huhu N|ha N|ho N|hihi'
+        actual_output = JapaneseMiiProCleaner.add_repetitions(
+            raw_utterance, morph_tier)
+        desired_output = 'N|huhu N|ha N|ho N|ha N|ho N|hihi'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_add_repetitions_aligned_complicated_utt(self):
+        raw_utterance = '+^ huhu [x 2] xxx [= not know] (..) ; haha [: höhö]'
+        morph_tier = 'N|huhu N|xxx N|haha'
+        actual_output = JapaneseMiiProCleaner.add_repetitions(
+            raw_utterance, morph_tier)
+        desired_output = 'N|huhu N|huhu N|xxx N|haha'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_add_repetitions_misaligned(self):
+        raw_utterance = 'huhu repeat [x 2] hihi'
+        morph_tier = 'N|huhu N|repeat N|hihi N|hö'
+        actual_output = JapaneseMiiProCleaner.add_repetitions(
+            raw_utterance, morph_tier)
+        desired_output = 'N|huhu N|repeat N|hihi N|hö'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_add_repetitions_no_reps(self):
+        raw_utterance = 'huhu haha hihi'
+        morph_tier = 'N|huhu N|haha N|hihi'
+        actual_output = JapaneseMiiProCleaner.add_repetitions(
+            raw_utterance, morph_tier)
+        desired_output = 'N|huhu N|haha N|hihi'
+        self.assertEqual(actual_output, desired_output)
+
+
 ###############################################################################
 
 

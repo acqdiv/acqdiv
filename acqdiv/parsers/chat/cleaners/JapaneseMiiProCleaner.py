@@ -276,3 +276,71 @@ class JapaneseMiiProCleaner(CHATCleaner):
                 return 'Mother_of_Tomito'
 
         return name
+
+    @classmethod
+    def utterance_cross_clean(
+            cls, raw_utt, actual_utt, target_utt,
+            seg_tier, gloss_tier, pos_tier):
+
+        seg_tier = cls.add_repetitions(raw_utt, seg_tier)
+        gloss_tier = cls.add_repetitions(raw_utt, gloss_tier)
+        pos_tier = cls.add_repetitions(raw_utt, pos_tier)
+
+        return actual_utt, target_utt, seg_tier, gloss_tier, pos_tier
+
+    @classmethod
+    def add_repetitions(cls, raw_utt, morph_tier):
+        """Add repetitions to morphology tier."""
+        # check if there are any repetitions
+        if '[x ' in raw_utt:
+
+            # execute same cleaning steps except those for scoped symbols
+            for cleaning_method in [
+                    cls.remove_terminator,
+                    cls.unify_untranscribed,
+                    cls.remove_events,
+                    cls.remove_omissions,
+                    cls.remove_linkers,
+                    cls.remove_separators,
+                    cls.remove_ca,
+                    cls.remove_pauses_between_words,
+                    cls.remove_commas,
+                    cls.null_event_utterances
+                    ]:
+                raw_utt = cleaning_method(raw_utt)
+
+            # remove scoped symbols except for repetitions
+            scope_regex = re.compile(r'\[[^x].*?\]')
+            raw_utt = scope_regex.sub('', raw_utt)
+            raw_utt = cls.remove_redundant_whitespaces(raw_utt)
+
+            # get words from utterance and morphology tier
+            utt_words = re.split(r'(?<!\[x) (?!\[x)', raw_utt)
+            morph_words = morph_tier.split(' ')
+
+            # check for misalignments
+            if len(utt_words) == len(morph_words):
+
+                morph_new = []
+                group = []
+                for uw, mw in zip(utt_words, morph_words):
+
+                    morph_new.append(mw)
+                    match = re.search(r'\[x (\d+)', uw)
+
+                    if uw.startswith('<'):
+                        group = [mw]
+                    elif match:
+                        reps = int(match.group(1))
+                        if group:
+                            group.append(mw)
+                            morph_new += (reps-1)*group
+                            group = []
+                        else:
+                            morph_new += (reps-1)*[mw]
+                    elif group:
+                        group.append(mw)
+
+                return ' '.join(morph_new)
+
+        return morph_tier
