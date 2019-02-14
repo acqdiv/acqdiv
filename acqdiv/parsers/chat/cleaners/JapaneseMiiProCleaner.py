@@ -290,6 +290,10 @@ class JapaneseMiiProCleaner(CHATCleaner):
         gloss_tier = cls.add_repetitions(raw_utt, gloss_tier)
         pos_tier = cls.add_repetitions(raw_utt, pos_tier)
 
+        seg_tier = cls.add_retracings(raw_utt, actual_utt, seg_tier)
+        gloss_tier = cls.add_retracings(raw_utt, actual_utt, gloss_tier)
+        pos_tier = cls.add_retracings(raw_utt, actual_utt, pos_tier)
+
         return actual_utt, target_utt, seg_tier, gloss_tier, pos_tier
 
     @classmethod
@@ -375,15 +379,15 @@ class JapaneseMiiProCleaner(CHATCleaner):
                     repeated = repeated_words[0]
 
                     if repeated.group(1):
-                        wword = repeated.group(2)
+                        wword = cls.clean_word(repeated.group(2))
                         if wword in mword:
                             n_reps = len(repeated.group(1).split(' ')) - 1
                             new += n_reps*[mword]
                             del repeated_words[0]
 
                     elif i > 0 and repeated.group(4):
-                        wword1 = repeated.group(5)
-                        wword2 = repeated.group(6)
+                        wword1 = cls.clean_word(repeated.group(5))
+                        wword2 = cls.clean_word(repeated.group(6))
 
                         if wword1 in morph_words[i-1] and wword2 in mword:
                             n_reps = len(
