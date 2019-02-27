@@ -1,5 +1,7 @@
+import os
 import unittest
-from acqdiv.parsers.parsers import ToolboxParser
+import acqdiv
+from acqdiv.parsers.toolbox.ToolboxParser import *
 from acqdiv.parsers.parsers import CorpusConfigParser
 
 
@@ -11,9 +13,11 @@ class TestChintangParser(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         config = CorpusConfigParser()
-        config.read('../../ini/Chintang.ini')
-        file_path = 'test_files/Chintang.txt'
-        cls.parser = ToolboxParser(config, file_path)
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+        config.read(os.path.join(here, 'ini/Chintang.ini'))
+        file_path = os.path.join(
+            here, 'tests/unittests/test_files/Chintang.txt')
+        cls.parser = ChintangParser(config, file_path)
 
     def test_get_session_metadata(self):
         actual_output = self.parser.get_session_metadata()
@@ -51,10 +55,13 @@ class TestChintangParser(unittest.TestCase):
             'start_raw': '00:50:11.150',
             'end_raw': '00:50:22.350',
             'speaker_label': 'MAR',
+            'addressee': None,
             'childdirected': True,
             'utterance_raw': 'w1 w2',
             'utterance': 'w1 w2',
             'sentence_type': 'question',
+            'comment': None,
+            'warning': None,
             'lemma_id': 'w1pfxID- w1stemID -w1sfxID w2stemID',
             'morpheme': 'w1pfxseg- w1stemseg -w1sfxseg w2stemseg',
             'gloss_raw': 'w1pfxgloss- w1stemgloss -w1sfxgloss w2stemgloss',
@@ -107,9 +114,11 @@ class TestIndonesianParser(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         config = CorpusConfigParser()
-        config.read('../../ini/Indonesian.ini')
-        file_path = 'test_files/Indonesian.txt'
-        cls.parser = ToolboxParser(config, file_path)
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+        config.read(os.path.join(here, 'ini/Indonesian.ini'))
+        file_path = os.path.join(
+            here, 'tests/unittests/test_files/Indonesian.txt')
+        cls.parser = IndonesianParser(config, file_path)
 
     def test_get_session_metadata(self):
         actual_output = self.parser.get_session_metadata()
@@ -140,12 +149,18 @@ class TestIndonesianParser(unittest.TestCase):
         utterance = {
             'source_id': 'source_id',
             'start_raw': 'start_raw',
+            'end_raw': None,
             'speaker_label': 'speaker_label',
+            'addressee': None,
+            'childdirected': None,
             'utterance_raw': 'w(ord)1 w2.',
             'utterance': 'w(ord)1 w2',
             'sentence_type': 'default',
+            'comment': None,
+            'warning': None,
             'morpheme': 'w1pfxseg- w1stemseg -w1sfxseg w2stemseg',
             'gloss_raw': 'w1pfxgloss- w1stemgloss -w1sfxgloss w2stemgloss',
+            'pos_raw': None,
             'translation': 'This is the translation.'}
 
         words = [
@@ -160,21 +175,18 @@ class TestIndonesianParser(unittest.TestCase):
                  'gloss_raw': 'w1pfxgloss-',
                  'pos_raw': None,
                  'morpheme_language': 'Indonesian',
-                 'lemma_id': None,
                  'type': 'target',
                  'warning': None},
                 {'morpheme': 'w1stemseg',
                  'gloss_raw': 'w1stemgloss',
                  'pos_raw': None,
                  'morpheme_language': 'Indonesian',
-                 'lemma_id': None,
                  'type': 'target',
                  'warning': None},
                 {'morpheme': '-w1sfxseg',
                  'gloss_raw': '-w1sfxgloss',
                  'pos_raw': None,
                  'morpheme_language': 'Indonesian',
-                 'lemma_id': None,
                  'type': 'target',
                  'warning': None}],
             [
@@ -182,7 +194,6 @@ class TestIndonesianParser(unittest.TestCase):
                  'gloss_raw': 'w2stemgloss',
                  'pos_raw': None,
                  'morpheme_language': 'Indonesian',
-                 'lemma_id': None,
                  'type': 'target',
                  'warning': None}]]
         desired_output = [(None, None, None),
@@ -198,9 +209,11 @@ class TestRussianParser(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         config = CorpusConfigParser()
-        config.read('../../ini/Russian.ini')
-        file_path = 'test_files/Russian.txt'
-        cls.parser = ToolboxParser(config, file_path)
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+        config.read(os.path.join(here, 'ini/Russian.ini'))
+        file_path = os.path.join(
+            here, 'tests/unittests/test_files/Russian.txt')
+        cls.parser = RussianParser(config, file_path)
 
     def test_get_session_metadata(self):
         actual_output = self.parser.get_session_metadata()
@@ -238,9 +251,14 @@ class TestRussianParser(unittest.TestCase):
             'start_raw': 'start_raw',
             'end_raw': 'end_raw',
             'speaker_label': 'speaker_label',
+            'addressee': None,
+            'childdirected': None,
             'utterance_raw': 'w1 "," w2 w3 .',
             'utterance': 'w1 w2 w3',
             'sentence_type': 'default',
+            'translation': None,
+            'comment': None,
+            'warning': None,
             'morpheme': 'lem1 "," lem2 lem3 .',
             'gloss_raw': 'PST:SG:F:IRREFL:IPFV NOM:SG PCL',
             'pos_raw': 'V-PST:SG:F:IRREFL:IPFV PUNCT PRO-DEM-NOUN:NOM:SG PCL '
@@ -257,7 +275,6 @@ class TestRussianParser(unittest.TestCase):
                  'gloss_raw': 'PST:SG:F:IRREFL:IPFV',
                  'pos_raw': 'V',
                  'morpheme_language': 'Russian',
-                 'lemma_id': None,
                  'type': 'actual',
                  'warning': None}
             ],
@@ -266,7 +283,6 @@ class TestRussianParser(unittest.TestCase):
                  'gloss_raw': 'NOM:SG',
                  'pos_raw': 'PRO-DEM-NOUN',
                  'morpheme_language': 'Russian',
-                 'lemma_id': None,
                  'type': 'actual',
                  'warning': None}
             ],
@@ -275,7 +291,6 @@ class TestRussianParser(unittest.TestCase):
                  'gloss_raw': 'PCL',
                  'pos_raw': 'PCL',
                  'morpheme_language': 'Russian',
-                 'lemma_id': None,
                  'type': 'actual',
                  'warning': None}
             ]

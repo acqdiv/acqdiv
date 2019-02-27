@@ -1,5 +1,7 @@
 import io
+import os
 import unittest
+import acqdiv
 from acqdiv.parsers.xml.CHATParser import *
 from acqdiv.parsers.xml.CHATReader import *
 from acqdiv.parsers.xml.CHATCleaner import *
@@ -9,7 +11,9 @@ class TestCHATParser(unittest.TestCase):
     """Class to test the CHATParser."""
 
     def setUp(self):
-        self.session_file_path = './test_CHATParser.cha'
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+        self.session_file_path = os.path.join(
+            here, 'tests/unittests/test_CHATParser.cha')
         self.parser = CHATParser(self.session_file_path)
         self.maxDiff = None
 
@@ -105,7 +109,9 @@ class TestInuktitutParser(unittest.TestCase):
     """
 
     def setUp(self):
-        self.session_file_path = './test_CHATParser.cha'
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+        self.session_file_path = os.path.join(
+            here, 'tests/unittests/test_CHATParser.cha')
         self.parser = InuktitutParser(self.session_file_path)
         self.maxDiff = None
 
@@ -539,7 +545,9 @@ class TestJapaneseMiiProParser(unittest.TestCase):
     """Class to test the JapaneseMiiProParser."""
 
     def setUp(self):
-        self.session_file_path = './test_CHATParser.cha'
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+        self.session_file_path = os.path.join(
+            here, 'tests/unittests/test_CHATParser.cha')
         self.parser = JapaneseMiiProParser(self.session_file_path)
         self.maxDiff = None
 
@@ -861,7 +869,9 @@ class TestCreeParser(unittest.TestCase):
     """Class to test the CreeParser."""
 
     def setUp(self):
-        self.session_file_path = './test_CHATParser.cha'
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+        self.session_file_path = os.path.join(
+            here, 'tests/unittests/test_CHATParser.cha')
         self.parser = CreeParser(self.session_file_path)
         self.maxDiff = None
 
@@ -1232,7 +1242,9 @@ class TestSesothoParser(unittest.TestCase):
     """
 
     def setUp(self):
-        self.session_file_path = './test_CHATParser.cha'
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+        self.session_file_path = os.path.join(
+            here, 'tests/unittests/test_CHATParser.cha')
         self.parser = SesothoParser(self.session_file_path)
         self.maxDiff = None
 
