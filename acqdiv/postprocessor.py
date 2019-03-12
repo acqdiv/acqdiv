@@ -69,7 +69,7 @@ def setup(test=False):
     roles.read("ini/role_mapping.ini")
 
     global chintang, cree, english_manchester1, indonesian, inuktitut, \
-        miyata, miipro, nungon, russian, sesotho, turkish, yucatec
+        ku_waru, miyata, miipro, nungon, russian, sesotho, turkish, yucatec
 
     chintang = CorpusConfigParser()
     chintang.read("ini/Chintang.ini")
@@ -81,6 +81,8 @@ def setup(test=False):
     indonesian.read("ini/Indonesian.ini")
     inuktitut = CorpusConfigParser()
     inuktitut.read("ini/Inuktitut.ini")
+    ku_waru = CorpusConfigParser()
+    ku_waru.read('ini/Ku_Waru.ini')
     miyata = CorpusConfigParser()
     miyata.read("ini/Japanese_Miyata.ini")
     miipro = CorpusConfigParser()
@@ -110,6 +112,8 @@ def get_config(corpus_name):
         return indonesian
     elif corpus_name == "Inuktitut":
         return inuktitut
+    elif corpus_name == 'Ku_Waru':
+        return ku_waru
     elif corpus_name == "Japanese_Miyata":
         return miyata
     elif corpus_name == "Japanese_MiiPro":
