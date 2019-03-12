@@ -66,7 +66,11 @@ class ToolboxReader(object):
                 yield self.make_rec(record)
 
     @staticmethod
-    def iter_records(toolbox_file):
+    def get_record_marker():
+        return br'\\ref'
+
+    @classmethod
+    def iter_records(cls, toolbox_file):
         """Iter the records of a toolbox file.
 
         Args:
@@ -75,7 +79,7 @@ class ToolboxReader(object):
         Yields:
             str: The record.
         """
-        _record_marker = re.compile(br'\\ref')
+        _record_marker = re.compile(cls.get_record_marker())
 
         with contextlib.closing(mmap.mmap(toolbox_file.fileno(),
                                           0, access=mmap.ACCESS_READ)) as data:
@@ -109,6 +113,9 @@ class ToolboxReader(object):
         if not cls.is_record(rec_dict):
             return None, None, None
         else:
+            # clean across different fields
+            rec_dict = cls.cross_clean(rec_dict)
+
             utterance = cls.get_utterance_data(rec_dict)
             words = cls.get_words_data(rec_dict)
 
@@ -653,6 +660,10 @@ class ToolboxReader(object):
                 dictionary[key] = None
 
     # ---------- cleaners ----------
+
+    @staticmethod
+    def cross_clean(rec_dict):
+        return rec_dict
 
     # ---------- utterance ----------
 

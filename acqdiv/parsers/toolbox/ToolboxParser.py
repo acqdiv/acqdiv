@@ -3,6 +3,7 @@ import logging
 from acqdiv.parsers.toolbox.readers.ChintangReader import ChintangReader
 from acqdiv.parsers.toolbox.readers.IndonesianReader import IndonesianReader
 from acqdiv.parsers.toolbox.readers.RussianReader import RussianReader
+from acqdiv.parsers.toolbox.readers.TuatschinReader import TuatschinReader
 from acqdiv.parsers.toolbox.readers.ToolboxReader import ToolboxReader
 from acqdiv.parsers.toolbox.readers.QaqetReader import QaqetReader
 from acqdiv.parsers.metadata import Chat, Imdi, QaqetIMDI
@@ -85,8 +86,6 @@ class ChintangParser(ToolboxParser):
     def get_record_reader(self):
         return ChintangReader(self.toolbox_file)
 
-###############################################################################
-
 
 class IndonesianParser(ToolboxParser):
 
@@ -102,16 +101,11 @@ class IndonesianParser(ToolboxParser):
     def get_record_reader(self):
         return IndonesianReader(self.toolbox_file)
 
-###############################################################################
-
 
 class RussianParser(ToolboxParser):
 
     def get_record_reader(self):
         return RussianReader(self.toolbox_file)
-
-
-###############################################################################
 
 
 class QaqetParser(ToolboxParser):
@@ -123,4 +117,17 @@ class QaqetParser(ToolboxParser):
         temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
                                          self.config['paths']['metadata_dir'])
         metadata_file_path = temp.replace(".txt", ".imdi")
+
         return QaqetIMDI(self.config, metadata_file_path)
+
+
+class TuatschinParser(ToolboxParser):
+
+    def get_metadata_reader(self):
+        temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
+                                         self.config['paths']['metadata_dir'])
+        metadata_file_path = temp.replace(".tbt", ".imdi")
+        return Imdi(self.config, metadata_file_path)
+
+    def get_record_reader(self):
+        return TuatschinReader(self.toolbox_file)
