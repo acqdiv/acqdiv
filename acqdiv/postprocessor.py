@@ -69,7 +69,7 @@ def setup(test=False):
     roles.read("ini/role_mapping.ini")
 
     global chintang, cree, english_manchester1, indonesian, inuktitut, \
-        miyata, miipro, nungon, russian, sesotho, turkish, yucatec
+        miyata, miipro, nungon, qaqet, russian, sesotho, turkish, yucatec
 
     chintang = CorpusConfigParser()
     chintang.read("ini/Chintang.ini")
@@ -87,6 +87,8 @@ def setup(test=False):
     miipro.read("ini/Japanese_MiiPro.ini")
     nungon = CorpusConfigParser()
     nungon.read("ini/Nungon.ini")
+    qaqet = CorpusConfigParser()
+    qaqet.read('ini/Qaqet.ini')
     russian = CorpusConfigParser()
     russian.read("ini/Russian.ini")
     sesotho = CorpusConfigParser()
@@ -116,6 +118,8 @@ def get_config(corpus_name):
         return miipro
     elif corpus_name == "Nungon":
         return nungon
+    elif corpus_name == 'Qaqet':
+        return qaqet
     elif corpus_name == "Russian":
         return russian
     elif corpus_name == "Sesotho":
@@ -691,8 +695,17 @@ def process_morphemes_table():
     print("_morphemes_infer_pos_indonesian")
     _morphemes_infer_pos_indonesian()
 
+    print("_morphemes_infer_pos_qaqet")
+    _morphemes_infer_pos_qaqet()
+
     print("_morphemes_infer_pos")
     _morphemes_infer_pos()
+
+    print("_morphemes_clean_morphemes_qaqet")
+    _morphemes_clean_morphemes_qaqet()
+
+    print("_morphemes_clean_gloss_raw_qaqet")
+    _morphemes_clean_gloss_raw_qaqet()
 
     print("_morphemes_infer_lemma_id_chintang")
     _morphemes_infer_lemma_id_chintang()
@@ -702,6 +715,9 @@ def process_morphemes_table():
 
     print("_morphemes_unify_label")
     _morphemes_unify_label()
+
+    print("_morphemes_unify_label_qaqet")
+    _morphemes_unify_label_qaqet()
 
     print("_morphemes_get_pos_indexes")
     _morphemes_get_pos_indexes()
@@ -755,6 +771,30 @@ def _morphemes_infer_pos_indonesian():
     _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
 
+def _morphemes_infer_pos_qaqet():
+    """Qaqet part-of-speech inference.
+
+    Assign sfx and pfx to pos-tags with the affix markers '=' or '-'.
+    """
+    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme,
+                   db.Morpheme.pos_raw, db.Morpheme.pos]).where(
+        db.Morpheme.corpus == 'Qaqet')
+    rows = conn.execute(s)
+    results = []
+    for row in rows:
+        if row.pos_raw:
+            if row.pos_raw.startswith('=') or row.pos_raw.startswith('-'):
+                results.append({'morpheme_id': row.id, 'pos_raw': 'sfx'})
+            elif row.pos_raw.endswith('=') or row.pos_raw.endswith('-'):
+                results.append({'morpheme_id': row.id, 'pos_raw': 'pfx'})
+            else:
+                if row.pos_raw not in ('sfx', 'pfx'):
+                    results.append(
+                        {'morpheme_id': row.id, 'pos_raw': row.pos_raw})
+    rows.close()
+    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
+
+
 def _morphemes_infer_pos():
     """Part-of-speech inference.
 
@@ -775,6 +815,42 @@ def _morphemes_infer_pos():
         results.append(
             {'morpheme_id': row.id, 'pos_raw': pos_raw, 'gloss_raw': gloss_raw,
              'morpheme': morpheme})
+    rows.close()
+    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
+
+
+def _morphemes_clean_morphemes_qaqet():
+    """Clean morphemes in Qaqet.
+
+    Remove affix the affix markers '=' and '-'.
+    """
+    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme,
+                   db.Morpheme.morpheme]).where(
+        db.Morpheme.corpus == 'Qaqet')
+    rows = conn.execute(s)
+    results = []
+    for row in rows:
+        if row.morpheme:
+            morpheme = row.morpheme.strip('-').strip('=')
+            results.append({'morpheme_id': row.id, 'morpheme': morpheme})
+    rows.close()
+    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
+
+
+def _morphemes_clean_gloss_raw_qaqet():
+    """Clean gloss_raw column in qaqet.
+
+    Remove the affix markers '=' and '-'.
+    """
+    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme,
+                   db.Morpheme.gloss_raw]).where(
+        db.Morpheme.corpus == 'Qaqet')
+    rows = conn.execute(s)
+    results = []
+    for row in rows:
+        if row.gloss_raw:
+            gloss_raw = row.gloss_raw.strip('-').strip('=')
+            results.append({'morpheme_id': row.id, 'gloss_raw': gloss_raw})
     rows.close()
     _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
@@ -842,6 +918,76 @@ def _morphemes_unify_label():
             gloss = None if row.gloss_raw not in glosses else glosses[
                 row.gloss_raw]
             pos = None if row.pos_raw not in poses else poses[row.pos_raw]
+            results.append({'morpheme_id': row.id, 'gloss': gloss, 'pos': pos})
+    query.close()
+    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
+
+
+def _morphemes_unify_label_qaqet():
+    """Infer gloss and pos for Qaqet.
+
+    Use pos_raw und gloss_raw to infer pos and gloss. Other than in
+    _morphemes_unify_label raw_labels are first split (by '.') into
+    atomic labels before substitution. The substituted
+    atomic labels are then joined again to complex labels (by '.').
+
+    If no subsitute for the given label is found, it gets a None/Null.
+    If no substitute is found for only one atomic label in a complex
+    label then the not found label gets a '???' (while the other labels
+    are normally substituted).
+    """
+    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw,
+                   db.Morpheme.pos_raw]).where(
+        db.Morpheme.corpus == 'Qaqet')
+    query = conn.execute(s)
+    results = []
+    for corpus, rows in groupby(query, lambda r: r[1]):
+        config = get_config(corpus)
+        glosses = config['gloss']
+        poses = config['pos']
+        for row in rows:
+
+            # Get the gloss label.
+            if row.gloss_raw:
+                atms_gloss_raw = row.gloss_raw.split('.')
+                gloss = []
+                for atm_gl_raw in atms_gloss_raw:
+                    if atm_gl_raw not in glosses:
+                        atm_gl = '???'
+                    else:
+                        atm_gl = glosses[atm_gl_raw]
+                    gloss.append(atm_gl)
+                # If all atm_poses are '???', set to None.
+                for atm_gloss in gloss:
+                    if atm_gloss != '???':
+                        gloss = '.'.join(gloss)
+                        break
+                else:
+                    gloss = None
+            else:
+                gloss = None
+
+            # Get the pos label.
+            if row.pos_raw:
+                atms_pos_raw = row.pos_raw.split('.')
+                pos = []
+                for atm_pos_raw in atms_pos_raw:
+                    if atm_pos_raw not in poses:
+                        atm_pos = '???'
+                    else:
+                        atm_pos = poses[atm_pos_raw]
+                    pos.append(atm_pos)
+
+                # If all atm_poses are '???', set to None.
+                for atm_pos in pos:
+                    if atm_pos != '???':
+                        pos = '.'.join(pos)
+                        break
+                else:
+                    pos = None
+            else:
+                pos = None
+
             results.append({'morpheme_id': row.id, 'gloss': gloss, 'pos': pos})
     query.close()
     _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
