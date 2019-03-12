@@ -68,7 +68,7 @@ def setup(test=False):
     roles.optionxform = str
     roles.read("ini/role_mapping.ini")
 
-    global chintang, cree, english_manchester1, indonesian, inuktitut, \
+    global chintang, cree, dene, english_manchester1, indonesian, inuktitut, \
         ku_waru, miyata, miipro, nungon, qaqet, russian, sesotho, turkish, \
         yucatec
 
@@ -76,6 +76,8 @@ def setup(test=False):
     chintang.read("ini/Chintang.ini")
     cree = CorpusConfigParser()
     cree.read("ini/Cree.ini")
+    dene = CorpusConfigParser()
+    dene.read('ini/Dene.ini')
     english_manchester1 = CorpusConfigParser()
     english_manchester1.read('ini/English_Manchester1.ini')
     indonesian = CorpusConfigParser()
@@ -109,6 +111,8 @@ def get_config(corpus_name):
         return chintang
     elif corpus_name == "Cree":
         return cree
+    elif corpus_name == 'Dene':
+        return dene
     elif corpus_name == "English_Manchester1":
         return english_manchester1
     elif corpus_name == "Indonesian":

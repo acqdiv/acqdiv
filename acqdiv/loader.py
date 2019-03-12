@@ -74,11 +74,24 @@ def load(test=True):
 
     engine = _get_engine(test=test)
 
-    configs = ['Chintang.ini', 'Cree.ini', 'Indonesian.ini', 'Inuktitut.ini',
-               'Japanese_Miyata.ini', 'Japanese_MiiPro.ini', 'Russian.ini',
-               'Sesotho.ini', 'Turkish.ini', 'Yucatec.ini', 'Nungon.ini',
-               'English_Manchester1.ini', 'Qaqet.ini', 'Tuatschin.ini',
-               'Ku_Waru.ini']
+    configs = [
+        'Chintang.ini',
+        'Cree.ini',
+        'Dene.ini',
+        'English_Manchester1.ini',
+        'Indonesian.ini',
+        'Inuktitut.ini',
+        'Japanese_Miyata.ini',
+        'Japanese_MiiPro.ini',
+        'Ku_Waru.ini'
+        'Nungon.ini',
+        'Qaqet.ini',
+        'Russian.ini',
+        'Sesotho.ini',
+        'Tuatschin.ini'
+        'Turkish.ini',
+        'Yucatec.ini',
+    ]
 
     # Parse the config file and call the sessions processor.
     for config in configs:
