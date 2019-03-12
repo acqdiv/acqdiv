@@ -83,12 +83,12 @@ def load(test=True):
         'Inuktitut.ini',
         'Japanese_Miyata.ini',
         'Japanese_MiiPro.ini',
-        'Ku_Waru.ini'
+        'Ku_Waru.ini',
         'Nungon.ini',
         'Qaqet.ini',
         'Russian.ini',
         'Sesotho.ini',
-        'Tuatschin.ini'
+        'Tuatschin.ini',
         'Turkish.ini',
         'Yucatec.ini',
     ]
