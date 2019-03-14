@@ -17,6 +17,9 @@ import acqdiv.parsers.chat.readers.NungonReader
 import acqdiv.parsers.chat.readers.SesothoReader
 import acqdiv.parsers.chat.readers.TurkishReader
 import acqdiv.parsers.chat.readers.YucatecReader
+from acqdiv.parsers.chat.readers.PolishReader import PolishReader
+from acqdiv.parsers.chat.cleaners.PolishCleaner import PolishCleaner
+
 from acqdiv.parsers.chat.cleaners import CHATCleaner
 
 from acqdiv.parsers.chat.CHATParserInterface import CHATParserInterface
@@ -382,6 +385,60 @@ class NungonParser(CHATParser):
     @staticmethod
     def get_cleaner():
         return acqdiv.parsers.chat.cleaners.NungonCleaner.NungonCleaner()
+
+
+class PolishParser(CHATParser):
+
+    @staticmethod
+    def get_reader():
+        return PolishReader()
+
+    @staticmethod
+    def get_cleaner():
+        return PolishCleaner()
+
+    def get_words_dict(self, actual_utt, target_utt):
+        actual_words = self.reader.get_utterance_words(actual_utt)
+        target_words = self.reader.get_utterance_words(target_utt)
+
+        phon_tier = self.reader.get_phon_tier()
+        phon_words = self.reader.get_utterance_words(phon_tier)
+
+        words = []
+        for word_actual, word_target, phon_word in zip(
+                actual_words, target_words, phon_words):
+
+            phons = self.reader.get_phons(phon_word)
+            word_length = self.reader.get_word_length(phon_word)
+
+            if self.reader.get_standard_form() == 'actual':
+                word = word_actual
+            else:
+                word = word_target
+
+            word_language = self.reader.get_word_language(word)
+
+            word = self.cleaner.clean_word(word)
+            word_actual = self.cleaner.clean_word(word_actual)
+            word_target = self.cleaner.clean_word(word_target)
+
+            if not self.consistent_actual_target:
+                if word_actual == word_target:
+                    word_actual = None
+                    word_target = None
+
+            word_dict = {
+                'word_language': word_language if word_language else None,
+                'word': word,
+                'word_actual': word_actual,
+                'word_target': word_target,
+                'warning': None,
+                'segments': phons,
+                'word_length': word_length
+            }
+            words.append(word_dict)
+
+        return words
 
 
 def main():
