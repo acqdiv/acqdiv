@@ -1,5 +1,5 @@
-from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
+from acqdiv.parsers.chat.readers.PhonbankReader import PhonbankReader
 
 
-class ArabicKernReader(ACQDIVCHATReader):
+class ArabicKernReader(PhonbankReader):
     pass
