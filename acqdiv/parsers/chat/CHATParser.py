@@ -17,8 +17,19 @@ import acqdiv.parsers.chat.readers.NungonReader
 import acqdiv.parsers.chat.readers.SesothoReader
 import acqdiv.parsers.chat.readers.TurkishReader
 import acqdiv.parsers.chat.readers.YucatecReader
+
+# Phonbank
 from acqdiv.parsers.chat.readers.PolishReader import PolishReader
 from acqdiv.parsers.chat.cleaners.PolishCleaner import PolishCleaner
+from acqdiv.parsers.chat.readers.ArabicKernReader import ArabicKernReader
+from acqdiv.parsers.chat.cleaners.ArabicKernCleaner import ArabicKernCleaner
+from acqdiv.parsers.chat.readers.ArabicKuwaitiReader import ArabicKuwaitiReader
+from acqdiv.parsers.chat.cleaners.ArabicKuwaitiCleaner import \
+    ArabicKuwaitiCleaner
+from acqdiv.parsers.chat.readers.BerberReader import BerberReader
+from acqdiv.parsers.chat.cleaners.BerberCleaner import BerberCleaner
+from acqdiv.parsers.chat.readers.QuichuaReader import QuichuaReader
+from acqdiv.parsers.chat.cleaners.QuichuaCleaner import QuichuaCleaner
 
 from acqdiv.parsers.chat.cleaners import CHATCleaner
 
@@ -442,6 +453,50 @@ class PolishParser(PhonbankParser):
     @staticmethod
     def get_cleaner():
         return PolishCleaner()
+
+
+class ArabicKernParser(PhonbankParser):
+
+    @staticmethod
+    def get_reader():
+        return ArabicKernReader()
+
+    @staticmethod
+    def get_cleaner():
+        return ArabicKernCleaner()
+
+
+class ArabicKuwaitiParser(PhonbankParser):
+
+    @staticmethod
+    def get_reader():
+        return ArabicKuwaitiReader()
+
+    @staticmethod
+    def get_cleaner():
+        return ArabicKuwaitiCleaner()
+
+
+class BerberParser(PhonbankParser):
+
+    @staticmethod
+    def get_reader():
+        return BerberReader()
+
+    @staticmethod
+    def get_cleaner():
+        return BerberCleaner()
+
+
+class QuichuaParser(PhonbankParser):
+
+    @staticmethod
+    def get_reader():
+        return QuichuaReader()
+
+    @staticmethod
+    def get_cleaner():
+        return QuichuaCleaner()
 
 
 def main():
