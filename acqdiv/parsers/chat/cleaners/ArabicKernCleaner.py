@@ -8,14 +8,13 @@ class ArabicKernCleaner(CHATCleaner):
             cls, session_filename, label, name, role,
             age, gender, language, birth_date, target_child):
 
-        _, tc_name = target_child
-        birth_date = cls.correct_birthdate(birth_date, tc_name)
+        birth_date = cls.correct_birthdate(birth_date, name)
 
         return label, name, role, age, gender, language, birth_date
 
     @staticmethod
-    def correct_birthdate(birth_date, tc_name):
-        if birth_date == '2002-02-03' and tc_name == 'Iyed':
+    def correct_birthdate(birth_date, name):
+        if birth_date == '2002-02-03' and name == 'Iyed':
             return '2002-01-30'
 
         return birth_date
