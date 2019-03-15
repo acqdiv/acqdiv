@@ -387,15 +387,7 @@ class NungonParser(CHATParser):
         return acqdiv.parsers.chat.cleaners.NungonCleaner.NungonCleaner()
 
 
-class PolishParser(CHATParser):
-
-    @staticmethod
-    def get_reader():
-        return PolishReader()
-
-    @staticmethod
-    def get_cleaner():
-        return PolishCleaner()
+class PhonbankParser(CHATParser):
 
     def get_words_dict(self, actual_utt, target_utt):
         actual_words = self.reader.get_utterance_words(actual_utt)
@@ -439,6 +431,17 @@ class PolishParser(CHATParser):
             words.append(word_dict)
 
         return words
+
+
+class PolishParser(PhonbankParser):
+
+    @staticmethod
+    def get_reader():
+        return PolishReader()
+
+    @staticmethod
+    def get_cleaner():
+        return PolishCleaner()
 
 
 def main():
