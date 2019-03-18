@@ -405,7 +405,7 @@ class PhonbankParser(CHATParser):
         target_words = self.reader.get_utterance_words(target_utt)
 
         phon_tier = self.reader.get_phon_tier()
-        phon_words = self.reader.get_utterance_words(phon_tier)
+        phon_words = self.reader.get_phon_words(phon_tier)
 
         words = []
         for word_actual, word_target, phon_word in zip(

@@ -6,6 +6,10 @@ class PhonbankReader(ACQDIVCHATReader):
     def get_phon_tier(self):
         return self._dependent_tiers.get('pho', '')
 
+    @classmethod
+    def get_phon_words(cls, phon_tier):
+        return cls.get_utterance_words(phon_tier)
+
     @staticmethod
     def iter_phons(word):
         wlen = len(word)
