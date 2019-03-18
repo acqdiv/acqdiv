@@ -42,6 +42,7 @@ nosetests.xml
 .project
 .pydevproject
 .idea
+.pytest_cache/
 
 # R files
 *.RDS
