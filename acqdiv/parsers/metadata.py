@@ -119,7 +119,7 @@ class Imdi(Parser):
                 # <Languages>: this may contain several languages -> save as list
                 if actortag == 'Languages':
                     langlist = []
-                    for lang in actornode.iterfind('Language'):
+                    for lang in actornode.xpath("*[local-name() = 'Language']"):
                         if lang.Id.text != None:
                             try:
                                 langlist.append(lang.Id.text.split(':')[1])
