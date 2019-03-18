@@ -1786,10 +1786,54 @@ class TestInuktitutReader(unittest.TestCase):
     """Class to test the InuktitutReader."""
 
     def setUp(self):
-        session_file_path = './test.cha'
+
+        session = (
+            '@UTF8\n'
+            '@Begin\n'
+            '@Languages:\tsme\n'
+            '@Date:\t12-SEP-1997\n'
+            '@Participants:\tMEM Mme_Manyili Grandmother , '
+            'CHI Hlobohang Target_Child\n'
+            '@ID:\tsme|Sesotho|MEM||female|||Grandmother|||\n'
+            '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||\n'
+            '@Birth of CHI:\t14-JAN-2006\n'
+            '@Birth of MEM:\t11-OCT-1974\n'
+            '@Media:\th2ab, audio\n'
+            '@Comment:\tall snd kana jmor cha ok Wakachi2002;\n'
+            '@Warning:\trecorded time: 1:00:00\n'
+            '@Comment:\tuses desu and V-masu\n'
+            '@Situation:\tAki and AMO preparing to look at book , '
+            '"Miichan no otsukai"\n'
+            '*MEM:\tke eng ? 0_8551\n'
+            '%gls:\tke eng ?\n'
+            '%cod:\tcp wh ?\n'
+            '%eng:\tWhat is it ?\n'
+            '%sit:\tPoints to tape\n'
+            '%com:\tis furious\n'
+            '%add:\tCHI\n'
+            '*CHI:\tke ntencha ncha . 8551_19738\n'
+            '%gls:\tke ntho e-ncha .\n'
+            '%cod:\tcp thing(9 , 10) 9-aj .\n'
+            '%eng:\tA new thing\n'
+            '%com:\ttest comment\n'
+            '*MEM:\tke eng ntho ena e? 19738_24653\n'
+            '%gls:\tke eng ntho ena e ?\n'
+            '%cod:\tcp wh thing(9 , 10) d9 ij ?\n'
+            '%eng:\tWhat is this thing ?\n'
+            '%sit:\tPoints to tape\n'
+            '*CHI:\te nte ena . 24300_28048\n'
+            '%gls:\tke ntho ena .\n'
+            '%cod:\tcp thing(9 , 10) d9 .\n'
+            '%eng:\tIt is this thing\n'
+            '*MEM:\tke khomba\n'
+            '\tkhomba . 28048_31840\n'
+            '%gls:\tkekumbakumba .\n'
+            '%cod:\tcp tape_recorder(9 , 10) .\n'
+            '%eng:\tIt is a stereo\n'
+            '@End')
+
         self.reader = InuktitutReader()
-        with open(session_file_path) as session_file:
-            self.reader.read(session_file)
+        self.reader.read(io.StringIO(session))
         self.maxDiff = None
 
     def test_get_start_time_start_time_present(self):

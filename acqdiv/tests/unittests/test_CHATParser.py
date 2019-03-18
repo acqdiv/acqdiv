@@ -40,8 +40,21 @@ class TestCHATParser(unittest.TestCase):
 
     def test_get_session_metadata(self):
         """Test get_session_metadata with TestCHATParser.cha. (CHATParser)"""
-        with open('TestCHATParser.cha', 'r', encoding='utf8') as session:
-            self.parser.reader.read(session)
+        session = (
+            '@UTF8\n'
+            '@Begin\n'
+            '@Date:\t12-SEP-1997\n'
+            '@Participants:\tMEM Mme_Manyili Grandmother , '
+            'CHI Hlobohang Target_Child\n'
+            '@ID:\tsme|Sesotho|MEM||female|||Grandmother|||\n'
+            '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||\n'
+            '@Birth of CHI:\t14-JAN-2006\n'
+            '@Birth of MEM:\t11-OCT-1974\n'
+            '@Media:\th2ab, audio\n'
+            '@End'
+        )
+        self.parser.reader.read(io.StringIO(session))
+
         actual_output = self.parser.get_session_metadata()
         desired_output = {
             'date': '1997-09-12',
@@ -51,8 +64,21 @@ class TestCHATParser(unittest.TestCase):
 
     def test_next_speaker(self):
         """Test next_speaker with test.cha. (CHATParser)"""
-        with open('TestCHATParser.cha', 'r', encoding='utf8') as session:
-            self.parser.reader.read(session)
+        session = (
+            '@UTF8\n'
+            '@Begin\n'
+            '@Date:\t12-SEP-1997\n'
+            '@Participants:\tMEM Mme_Manyili Grandmother , '
+            'CHI Hlobohang Target_Child\n'
+            '@ID:\tsme|Sesotho|MEM||female|||Grandmother|||\n'
+            '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||\n'
+            '@Birth of CHI:\t14-JAN-2006\n'
+            '@Birth of MEM:\t11-OCT-1974\n'
+            '@Media:\th2ab, audio\n'
+            '@End'
+        )
+        self.parser.reader.read(io.StringIO(session))
+
         actual_output = list(self.parser.next_speaker())
         mem_dict = {
             'speaker_label': 'MEM',
