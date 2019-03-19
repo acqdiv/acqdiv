@@ -216,7 +216,7 @@ class QaqetReader(ToolboxReader):
             '???': 'Qaqet'
         }
 
-        return mapping[lang]
+        return mapping.get(lang, '')
 
     @classmethod
     def clean_lang(cls, lang):
