@@ -87,6 +87,12 @@ class TestQaqetReader(unittest.TestCase):
         desired_output = 'Hello ??? how are you'
         self.assertEqual(actual_output, desired_output)
 
+    def test_clean_utterance_babbling(self):
+        utterance = '[x]'
+        actual_output = Qr.clean_utterance(utterance)
+        desired_output = '???'
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- remove_morpheme_sep ----------
 
     def test_remove_morpheme_sep_sfx(self):
@@ -139,6 +145,12 @@ class TestQaqetReader(unittest.TestCase):
         morpheme = 'Q'
         actual_output = Qr.lang2lang(morpheme)
         desired_output = 'Qaqet'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_lang2lang_unknown(self):
+        morpheme = 'blublu'
+        actual_output = Qr.lang2lang(morpheme)
+        desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
     # ---------- clean_lang ----------
@@ -208,5 +220,27 @@ class TestQaqetReader(unittest.TestCase):
     def test_unify_unknowns_morpheme_sfx(self):
         morpheme = 'sfx'
         actual_output = Qr.unify_unknowns_morpheme(morpheme)
+        desired_output = 'sfx'
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- clean_morpheme ----------
+
+    def test_clean_morpheme_sfx_marker(self):
+        morpheme = '-sfx'
+        actual_output = Qr.clean_morpheme(morpheme)
+        desired_output = 'sfx'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_clean_morpheme_xxx(self):
+        morpheme = 'xxx'
+        actual_output = Qr.clean_morpheme(morpheme)
+        desired_output = '???'
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- clean_pos ----------
+
+    def test_clean_pos(self):
+        pos = '-TEST'
+        actual_output = Qr.clean_pos(pos)
         desired_output = 'sfx'
         self.assertEqual(actual_output, desired_output)
