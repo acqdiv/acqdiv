@@ -146,15 +146,12 @@ def load(test=True, catch_errors=False, xml=False, new=False, phonbank=False):
         cfg = CorpusConfigParser()
         cfg.read("ini/"+config)
 
-        # If test mode use test corpora path by overwriting cfg['paths']['path'].
-        if test:
-            cfg['paths']['path'] = "tests/corpora"
-
-        # Process by parsing the files and adding extracted data to the database.
+        # Process by parsing the files and
+        # adding extracted data to the database.
         print("{0} seconds --- Start processing: {1}".format(
             time.time() - start_time, config.split(".")[0]))
         c = CorpusProcessor(cfg, engine)
-        c.process_corpus(catch_errors=catch_errors)
+        c.process_corpus(catch_errors=catch_errors, test=test)
 
     print("%s seconds --- Finished" % (time.time() - start_time))
     print()
