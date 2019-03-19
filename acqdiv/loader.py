@@ -67,22 +67,30 @@ def _get_engine(test=False):
     return engine
 
 
-def load(test=True, catch_errors=False, xml=False):
+def load(test=True, catch_errors=False, xml=False, new=False):
     """Load data from source files into DB.
 
     Args:
         test (bool): Test DB is used.
         catch_errors (bool): Errors are caught.
         xml (bool): Run the XML parsers rather than the CHAT parsers.
+        new (bool): Run over the new corpora as well.
     """
     start_time = time.time()
 
     engine = _get_engine(test=test)
 
+    configs = [
+        'Chintang.ini',
+        'English_Manchester1.ini',
+        'Indonesian.ini',
+        'Russian.ini'
+    ]
+
     if xml:
         base_path = 'xml/'
 
-        configs = [
+        configs += [
             base_path + 'Cree.ini',
             base_path + 'Inuktitut.ini',
             base_path + 'Japanese_Miyata.ini',
@@ -94,7 +102,7 @@ def load(test=True, catch_errors=False, xml=False):
         ]
 
     else:
-        configs = [
+        configs += [
             'Cree.ini',
             'Inuktitut.ini',
             'Japanese_Miyata.ini',
@@ -105,16 +113,13 @@ def load(test=True, catch_errors=False, xml=False):
             'Yucatec.ini'
         ]
 
-    configs += [
-        'Chintang.ini',
-        'Dene.ini',
-        'English_Manchester1.ini',
-        'Indonesian.ini',
-        'Ku_Waru.ini',
-        'Qaqet.ini',
-        'Russian.ini',
-        'Tuatschin.ini'
-    ]
+    if new:
+        configs += [
+            'Dene.ini',
+            'Ku_Waru.ini',
+            'Qaqet.ini',
+            'Tuatschin.ini'
+        ]
 
     # Parse the config file and call the sessions processor.
     for config in configs:

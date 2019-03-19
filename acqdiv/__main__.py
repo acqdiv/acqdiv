@@ -32,7 +32,9 @@ def load(args):
     loader.load(
         test=not args.full,
         catch_errors=args.catch_errors,
-        xml=args.xml)
+        xml=args.xml,
+        new=args.new_corpora
+    )
 
 
 def postprocess(args):
@@ -105,6 +107,9 @@ def get_cmd_args():
         '-e', '--catch-errors', action='store_true', help='Catch errors')
     parser_load.add_argument(
         '-x', '--xml', action='store_true', help='Run the XML parsers')
+    parser_load.add_argument(
+        '-n', '--new-corpora', action='store_true',
+        help='Run over the new corpora as well.')
 
     parser_load.set_defaults(func=load)
 
