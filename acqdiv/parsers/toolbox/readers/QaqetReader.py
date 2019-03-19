@@ -121,8 +121,10 @@ class QaqetReader(ToolboxReader):
     @classmethod
     def clean_utterance(cls, utterance):
         for cleaning_method in [
-                cls.remove_events_utterance, cls.remove_punctuation,
-                cls.null_untranscribed_utterance, cls.unify_unknowns_utterance
+                cls.remove_events_utterance,
+                cls.remove_punctuation,
+                # cls.null_untranscribed_utterance,
+                cls.unify_unknowns_utterance
                 ]:
             utterance = cleaning_method(utterance)
 
@@ -141,7 +143,8 @@ class QaqetReader(ToolboxReader):
 
     @classmethod
     def clean_morph_tier(cls, morph_tier):
-        return cls.null_untranscribed_morphology_tier(morph_tier)
+        # morph_tier = cls.null_untranscribed_morphology_tier(morph_tier)
+        return morph_tier
 
     @classmethod
     def remove_events_seg_tier(cls, seg_tier):
