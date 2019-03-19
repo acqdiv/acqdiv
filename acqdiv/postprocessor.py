@@ -103,6 +103,23 @@ def setup(test=False):
     yucatec = CorpusConfigParser()
     yucatec.read("ini/Yucatec.ini")
 
+    global polish, berber, arabic_kuwaiti, arabic_kern, quichua
+
+    polish = CorpusConfigParser()
+    polish.read('ini/Phonbank/Polish.ini')
+
+    berber = CorpusConfigParser()
+    berber.read('ini/Phonbank/Berber.ini')
+
+    arabic_kuwaiti = CorpusConfigParser()
+    arabic_kuwaiti.read('ini/Phonbank/Arabic_Kuwaiti.ini')
+
+    arabic_kern = CorpusConfigParser()
+    arabic_kern.read('ini/Phonbank/Arabic_Kern.ini')
+
+    quichua = CorpusConfigParser()
+    quichua.read('ini/Phonbank/Quichua.ini')
+
 
 def get_config(corpus_name):
     """ Return the config file.
@@ -137,6 +154,16 @@ def get_config(corpus_name):
         return turkish
     elif corpus_name == "Yucatec":
         return yucatec
+    elif corpus_name == 'Polish':
+        return polish
+    elif corpus_name == 'Arabic_Kern':
+        return arabic_kern
+    elif corpus_name == 'Arabic_Kuwaiti':
+        return arabic_kuwaiti
+    elif corpus_name == 'Berber':
+        return berber
+    elif corpus_name == 'Quichua':
+        return quichua
     else:
         raise Exception
 
