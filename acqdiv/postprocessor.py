@@ -704,9 +704,6 @@ def process_morphemes_table():
     print("_morphemes_infer_pos_indonesian")
     _morphemes_infer_pos_indonesian()
 
-    print("_morphemes_infer_pos_qaqet")
-    _morphemes_infer_pos_qaqet()
-
     print("_morphemes_infer_pos")
     _morphemes_infer_pos()
 
@@ -770,30 +767,6 @@ def _morphemes_infer_pos_indonesian():
             else:
                 if row.pos_raw not in {'sfx', 'pfx', '???'}:
                     results.append({'morpheme_id': row.id, 'pos_raw': "stem"})
-    rows.close()
-    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
-
-
-def _morphemes_infer_pos_qaqet():
-    """Qaqet part-of-speech inference.
-
-    Assign sfx and pfx to pos-tags with the affix markers '=' or '-'.
-    """
-    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme,
-                   db.Morpheme.pos_raw, db.Morpheme.pos]).where(
-        db.Morpheme.corpus == 'Qaqet')
-    rows = conn.execute(s)
-    results = []
-    for row in rows:
-        if row.pos_raw:
-            if row.pos_raw.startswith('=') or row.pos_raw.startswith('-'):
-                results.append({'morpheme_id': row.id, 'pos_raw': 'sfx'})
-            elif row.pos_raw.endswith('=') or row.pos_raw.endswith('-'):
-                results.append({'morpheme_id': row.id, 'pos_raw': 'pfx'})
-            else:
-                if row.pos_raw not in ('sfx', 'pfx'):
-                    results.append(
-                        {'morpheme_id': row.id, 'pos_raw': row.pos_raw})
     rows.close()
     _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 

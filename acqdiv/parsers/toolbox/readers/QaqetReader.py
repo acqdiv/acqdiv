@@ -200,6 +200,21 @@ class QaqetReader(ToolboxReader):
         return morpheme
 
     @classmethod
+    def infer_pos(cls, pos):
+        if pos.startswith('-') or pos.startswith('='):
+            return 'sfx'
+        elif pos.endswith('-') or pos.endswith('='):
+            return 'sfx'
+        else:
+            return pos
+
+    @classmethod
+    def clean_pos(cls, pos):
+        pos = cls.infer_pos(pos)
+        pos = cls.unify_unknowns_morpheme(pos)
+        return pos
+
+    @classmethod
     def remove_morpheme_sep(cls, morpheme):
         """Remove morpheme and clitic separators.
 
