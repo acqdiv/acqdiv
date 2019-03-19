@@ -195,7 +195,9 @@ class QaqetReader(ToolboxReader):
 
     @classmethod
     def clean_morpheme(cls, morpheme):
-        return cls.unify_unknowns_morpheme(morpheme)
+        morpheme = cls.unify_unknowns_morpheme(morpheme)
+        morpheme = cls.remove_morpheme_sep(morpheme)
+        return morpheme
 
     @classmethod
     def remove_morpheme_sep(cls, morpheme):

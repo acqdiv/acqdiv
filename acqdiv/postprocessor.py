@@ -710,12 +710,6 @@ def process_morphemes_table():
     print("_morphemes_infer_pos")
     _morphemes_infer_pos()
 
-    print("_morphemes_clean_morphemes_qaqet")
-    _morphemes_clean_morphemes_qaqet()
-
-    print("_morphemes_clean_gloss_raw_qaqet")
-    _morphemes_clean_gloss_raw_qaqet()
-
     print("_morphemes_infer_lemma_id_chintang")
     _morphemes_infer_lemma_id_chintang()
 
@@ -824,42 +818,6 @@ def _morphemes_infer_pos():
         results.append(
             {'morpheme_id': row.id, 'pos_raw': pos_raw, 'gloss_raw': gloss_raw,
              'morpheme': morpheme})
-    rows.close()
-    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
-
-
-def _morphemes_clean_morphemes_qaqet():
-    """Clean morphemes in Qaqet.
-
-    Remove affix the affix markers '=' and '-'.
-    """
-    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme,
-                   db.Morpheme.morpheme]).where(
-        db.Morpheme.corpus == 'Qaqet')
-    rows = conn.execute(s)
-    results = []
-    for row in rows:
-        if row.morpheme:
-            morpheme = row.morpheme.strip('-').strip('=')
-            results.append({'morpheme_id': row.id, 'morpheme': morpheme})
-    rows.close()
-    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
-
-
-def _morphemes_clean_gloss_raw_qaqet():
-    """Clean gloss_raw column in qaqet.
-
-    Remove the affix markers '=' and '-'.
-    """
-    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme,
-                   db.Morpheme.gloss_raw]).where(
-        db.Morpheme.corpus == 'Qaqet')
-    rows = conn.execute(s)
-    results = []
-    for row in rows:
-        if row.gloss_raw:
-            gloss_raw = row.gloss_raw.strip('-').strip('=')
-            results.append({'morpheme_id': row.id, 'gloss_raw': gloss_raw})
     rows.close()
     _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
