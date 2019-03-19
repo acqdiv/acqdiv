@@ -67,30 +67,53 @@ def _get_engine(test=False):
     return engine
 
 
-def load(test=True, catch_errors=False):
-    """ Main processing loop; for each corpus config file process all session recordings and load database.
+def load(test=True, catch_errors=False, xml=False):
+    """Load data from source files into DB.
+
+    Args:
+        test (bool): Test DB is used.
+        catch_errors (bool): Errors are caught.
+        xml (bool): Run the XML parsers rather than the CHAT parsers.
     """
     start_time = time.time()
 
     engine = _get_engine(test=test)
 
-    configs = [
+    if xml:
+        base_path = 'xml/'
+
+        configs = [
+            base_path + 'Cree.ini',
+            base_path + 'Inuktitut.ini',
+            base_path + 'Japanese_Miyata.ini',
+            base_path + 'Japanese_MiiPro.ini',
+            base_path + 'Nungon.ini',
+            base_path + 'Sesotho.ini',
+            base_path + 'Turkish.ini',
+            base_path + 'Yucatec.ini'
+        ]
+
+    else:
+        configs = [
+            'Cree.ini',
+            'Inuktitut.ini',
+            'Japanese_Miyata.ini',
+            'Japanese_MiiPro.ini',
+            'Nungon.ini',
+            'Sesotho.ini',
+            'Turkish.ini',
+            'Yucatec.ini'
+        ]
+
+    configs += [
         'Chintang.ini',
-        'Cree.ini',
         'Dene.ini',
         'English_Manchester1.ini',
         'Indonesian.ini',
-        'Inuktitut.ini',
-        'Japanese_Miyata.ini',
-        'Japanese_MiiPro.ini',
         'Ku_Waru.ini',
-        'Nungon.ini',
         'Qaqet.ini',
         'Russian.ini',
-        'Sesotho.ini',
-        'Tuatschin.ini',
-        'Turkish.ini',
-        'Yucatec.ini',
+        'Tuatschin.ini'
     ]
 
     # Parse the config file and call the sessions processor.
