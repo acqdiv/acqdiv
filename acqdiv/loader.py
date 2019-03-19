@@ -67,7 +67,7 @@ def _get_engine(test=False):
     return engine
 
 
-def load(test=True):
+def load(test=True, catch_errors=False):
     """ Main processing loop; for each corpus config file process all session recordings and load database.
     """
     start_time = time.time()
@@ -106,7 +106,7 @@ def load(test=True):
         print("{0} seconds --- Start processing: {1}".format(
             time.time() - start_time, config.split(".")[0]))
         c = CorpusProcessor(cfg, engine)
-        c.process_corpus()
+        c.process_corpus(catch_errors=catch_errors)
 
     print("%s seconds --- Finished" % (time.time() - start_time))
     print()

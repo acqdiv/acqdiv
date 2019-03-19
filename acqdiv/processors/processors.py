@@ -26,8 +26,7 @@ class CorpusProcessor(object):
         self.engine = engine
         self.parser_factory = SessionParser.create_parser_factory(self.cfg)
 
-
-    def process_corpus(self):
+    def process_corpus(self, catch_errors=False):
         """ Loops over all raw corpus session input files and processes each and the commits the data to the database.
         """
         for session_file in sorted(glob.glob(self.cfg['paths']['sessions'])):
@@ -35,8 +34,15 @@ class CorpusProcessor(object):
             s = SessionProcessor(self.cfg, session_file,
                     self.parser_factory, self.engine)
 
-            s.process_session()
+            try:
+                s.process_session()
+            except Exception as e:
+                logger.warning("Aborted processing of file {}: "
+                               "exception: {}".format(session_file, type(e)),
+                               exc_info=sys.exc_info())
 
+                if not catch_errors:
+                    raise
 
 class SessionProcessor(object):
     """ SessionProcessor invokes a parser to get the extracted data, and then interacts

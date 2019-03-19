@@ -27,7 +27,7 @@ from acqdiv.tests import test_regression
 def load(args):
     """Run the loader."""
     loader.set_logger(level_i=args.i, supressing_formatter=args.s)
-    loader.load(test=not args.f)
+    loader.load(test=not args.f, catch_errors=args.e)
 
 
 def postprocess(args):
@@ -94,6 +94,9 @@ def get_cmd_args():
         '-s', action='store_true', help='Use suppressing formatter for log')
     parser_load.add_argument(
         '-i', action='store_true', help='Set logging to INFO level')
+    parser_load.add_argument(
+        '-e', action='store_true', help='Catch errors')
+
     parser_load.set_defaults(func=load)
 
     # command 'postprocess'
