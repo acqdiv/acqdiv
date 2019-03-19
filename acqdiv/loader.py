@@ -67,7 +67,7 @@ def _get_engine(test=False):
     return engine
 
 
-def load(test=True, catch_errors=False, xml=False, new=False):
+def load(test=True, catch_errors=False, xml=False, new=False, phonbank=False):
     """Load data from source files into DB.
 
     Args:
@@ -75,6 +75,7 @@ def load(test=True, catch_errors=False, xml=False, new=False):
         catch_errors (bool): Errors are caught.
         xml (bool): Run the XML parsers rather than the CHAT parsers.
         new (bool): Run over the new corpora as well.
+        phonbank (bool): Run over the Phonbank corpoa as well.
     """
     start_time = time.time()
 
@@ -119,6 +120,17 @@ def load(test=True, catch_errors=False, xml=False, new=False):
             'Ku_Waru.ini',
             'Qaqet.ini',
             'Tuatschin.ini'
+        ]
+
+    if phonbank:
+        base_path = 'Phonbank/'
+
+        configs += [
+            base_path + 'Arabic_Kuwaiti.ini',
+            base_path + 'Arabic_Kern.ini',
+            base_path + 'Berber.ini',
+            base_path + 'Polish.ini',
+            base_path + 'Quichua.ini'
         ]
 
     # Parse the config file and call the sessions processor.

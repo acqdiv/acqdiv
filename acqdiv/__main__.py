@@ -33,7 +33,8 @@ def load(args):
         test=not args.full,
         catch_errors=args.catch_errors,
         xml=args.xml,
-        new=args.new_corpora
+        new=args.new_corpora,
+        phonbank=args.phonbank_corpora
     )
 
 
@@ -110,6 +111,9 @@ def get_cmd_args():
     parser_load.add_argument(
         '-n', '--new-corpora', action='store_true',
         help='Run over the new corpora as well.')
+    parser_load.add_argument(
+        '-p', '--phonbank-corpora', action='store_true',
+        help='Run over the Phonbank corpora as well.')
 
     parser_load.set_defaults(func=load)
 
