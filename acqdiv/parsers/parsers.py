@@ -9,7 +9,7 @@ import configparser
 from configparser import ExtendedInterpolation
 
 from acqdiv.parsers.metadata import Chat
-from acqdiv.parsers.xml_parser import XMLParserFactory
+from acqdiv.parsers.xml.xml_parser import XMLParserFactory
 
 logger = logging.getLogger('pipeline.' + __name__)
 
@@ -58,7 +58,7 @@ class SessionParser(object):
             return XMLParserFactory(config)
         elif format == "cha":
             parser_module = importlib.import_module(
-                'acqdiv.parsers.xml.CHATParser')
+                'acqdiv.parsers.chat.CHATParser')
             parser_class = config['paths']['parser']
             parser = getattr(parser_module, parser_class)
             return parser

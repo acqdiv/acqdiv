@@ -35,12 +35,7 @@ class CorpusProcessor(object):
             s = SessionProcessor(self.cfg, session_file,
                     self.parser_factory, self.engine)
 
-            try:
-                s.process_session()
-            except Exception as e:
-                logger.warning("Aborted processing of file {}: "
-                               "exception: {}".format(session_file, type(e)),
-                               exc_info=sys.exc_info())
+            s.process_session()
 
 
 class SessionProcessor(object):
