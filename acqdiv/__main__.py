@@ -41,7 +41,10 @@ def load(args):
 def postprocess(args):
     """Run the postprocessor."""
     postprocessor.set_logger(suppressing_formatter=args.s)
-    postprocessor.postprocess(test=not args.f)
+    postprocessor.postprocess(
+        test=not args.f,
+        xml=args.xml
+    )
 
 
 def test(args):
@@ -131,6 +134,9 @@ def get_cmd_args():
         '-f', action='store_true', help='Run on full database')
     parser_postprocess.add_argument(
         '-s', action='store_true', help='Use suppressing formatter for log')
+    parser_postprocess.add_argument(
+        '-x', '--xml', action='store_true',
+        help='Loader was run with xml parsers')
     parser_postprocess.set_defaults(func=postprocess)
 
     # command 'test'

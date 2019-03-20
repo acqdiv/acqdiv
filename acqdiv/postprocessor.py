@@ -46,11 +46,12 @@ def set_logger(suppressing_formatter=False):
     logger.setLevel(logging.INFO)
 
 
-def setup(test=False):
+def setup(test=False, xml=False):
     """Global setup.
 
     Args:
         test (bool): run on the test database
+        xml (bool): Loader was run with xml parsers
     """
 
     global engine, conn
@@ -68,40 +69,54 @@ def setup(test=False):
     roles.optionxform = str
     roles.read("ini/role_mapping.ini")
 
-    global chintang, cree, dene, english_manchester1, indonesian, inuktitut, \
-        ku_waru, miyata, miipro, nungon, qaqet, russian, sesotho, turkish, \
-        yucatec
+    # standard corpora
+
+    global chintang, cree, english_manchester1, indonesian, inuktitut, \
+        miyata, miipro, nungon, russian, sesotho, turkish, yucatec
 
     chintang = CorpusConfigParser()
     chintang.read("ini/Chintang.ini")
-    cree = CorpusConfigParser()
-    cree.read("ini/Cree.ini")
-    dene = CorpusConfigParser()
-    dene.read('ini/Dene.ini')
     english_manchester1 = CorpusConfigParser()
     english_manchester1.read('ini/English_Manchester1.ini')
     indonesian = CorpusConfigParser()
     indonesian.read("ini/Indonesian.ini")
-    inuktitut = CorpusConfigParser()
-    inuktitut.read("ini/Inuktitut.ini")
-    ku_waru = CorpusConfigParser()
-    ku_waru.read('ini/Ku_Waru.ini')
-    miyata = CorpusConfigParser()
-    miyata.read("ini/Japanese_Miyata.ini")
-    miipro = CorpusConfigParser()
-    miipro.read("ini/Japanese_MiiPro.ini")
-    nungon = CorpusConfigParser()
-    nungon.read("ini/Nungon.ini")
-    qaqet = CorpusConfigParser()
-    qaqet.read('ini/Qaqet.ini')
     russian = CorpusConfigParser()
     russian.read("ini/Russian.ini")
+
+    if xml:
+        base_path = 'ini/xml/'
+    else:
+        base_path = 'ini/'
+
+    cree = CorpusConfigParser()
+    cree.read(base_path + "Cree.ini")
+    inuktitut = CorpusConfigParser()
+    inuktitut.read(base_path + "Inuktitut.ini")
+    miyata = CorpusConfigParser()
+    miyata.read(base_path + "Japanese_Miyata.ini")
+    miipro = CorpusConfigParser()
+    miipro.read(base_path + "Japanese_MiiPro.ini")
+    nungon = CorpusConfigParser()
+    nungon.read(base_path + "Nungon.ini")
     sesotho = CorpusConfigParser()
-    sesotho.read("ini/Sesotho.ini")
+    sesotho.read(base_path + "Sesotho.ini")
     turkish = CorpusConfigParser()
-    turkish.read("ini/Turkish.ini")
+    turkish.read(base_path + "Turkish.ini")
     yucatec = CorpusConfigParser()
-    yucatec.read("ini/Yucatec.ini")
+    yucatec.read(base_path + "Yucatec.ini")
+
+    # new corpora
+
+    global dene, ku_waru, qaqet
+
+    dene = CorpusConfigParser()
+    dene.read('ini/Dene.ini')
+    ku_waru = CorpusConfigParser()
+    ku_waru.read('ini/Ku_Waru.ini')
+    qaqet = CorpusConfigParser()
+    qaqet.read('ini/Qaqet.ini')
+
+    # phonbank corpora
 
     global polish, berber, arabic_kuwaiti, arabic_kern, quichua
 
@@ -168,11 +183,11 @@ def get_config(corpus_name):
         raise Exception
 
 
-def postprocess(test=False):
+def postprocess(test=False, xml=False):
     """Global setup and then call post-processes."""
     start_time = time.time()
 
-    setup(test=test)
+    setup(test=test, xml=xml)
 
     with engine.begin() as conn:
         conn.execute('PRAGMA synchronous = OFF')
