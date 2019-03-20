@@ -40,7 +40,9 @@ def load(args):
 
 def postprocess(args):
     """Run the postprocessor."""
-    postprocessor.set_logger(suppressing_formatter=args.s)
+    postprocessor.set_logger(
+        suppressing_formatter=args.suppress_log_formatter
+    )
     postprocessor.postprocess(
         test=not args.full,
         xml=args.xml
@@ -78,7 +80,6 @@ def pipeline(args):
     """Run the loader, postprocessor and the tests."""
     load(args)
     postprocess(args)
-    test(args)
 
 
 def get_cmd_args():
@@ -133,7 +134,8 @@ def get_cmd_args():
     parser_postprocess.add_argument(
         '-f', '--full', action='store_true', help='Run on full database')
     parser_postprocess.add_argument(
-        '-s', action='store_true', help='Use suppressing formatter for log')
+        '-s', '--suppress-log-formatter',
+        action='store_true', help='Use suppressing formatter for log')
     parser_postprocess.add_argument(
         '-x', '--xml', action='store_true',
         help='Loader was run with xml parsers')
@@ -162,11 +164,24 @@ def get_cmd_args():
                     'on the test database. '
                     'To run them on the full database, use the flag -f.')
     parser_pipeline.add_argument(
-        '-f', action='store_true', help='Run on full database')
+        '-f', '--full', action='store_true', help='Run on full database')
     parser_pipeline.add_argument(
-        '-s', action='store_true', help='Use suppressing formatter for log')
+        '-s', '--suppress-log-formatter',
+        action='store_true', help='Use suppressing formatter for log')
     parser_pipeline.add_argument(
-        '-i', action='store_true', help='Set logging to INFO level')
+        '-i', '--info-log-level',
+        action='store_true', help='Set logging to INFO level')
+    parser_pipeline.add_argument(
+        '-e', '--catch-errors', action='store_true', help='Catch errors')
+    parser_pipeline.add_argument(
+        '-x', '--xml', action='store_true', help='Run the XML parsers')
+    parser_pipeline.add_argument(
+        '-n', '--new-corpora', action='store_true',
+        help='Run over the new corpora as well.')
+    parser_pipeline.add_argument(
+        '-p', '--phonbank-corpora', action='store_true',
+        help='Run over the Phonbank corpora as well.')
+
     parser_pipeline.set_defaults(func=pipeline)
 
     return parser.parse_args()
