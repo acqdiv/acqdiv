@@ -42,7 +42,7 @@ def postprocess(args):
     """Run the postprocessor."""
     postprocessor.set_logger(suppressing_formatter=args.s)
     postprocessor.postprocess(
-        test=not args.f,
+        test=not args.full,
         xml=args.xml
     )
 
@@ -131,7 +131,7 @@ def get_cmd_args():
                      'To run the postprocessor on the full database, '
                      'use the flag -f.'))
     parser_postprocess.add_argument(
-        '-f', action='store_true', help='Run on full database')
+        '-f', '--full', action='store_true', help='Run on full database')
     parser_postprocess.add_argument(
         '-s', action='store_true', help='Use suppressing formatter for log')
     parser_postprocess.add_argument(
