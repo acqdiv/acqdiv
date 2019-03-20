@@ -411,8 +411,10 @@ class PhonbankParser(CHATParser):
         for word_actual, word_target, phon_word in zip(
                 actual_words, target_words, phon_words):
 
-            phons = self.reader.get_phons(phon_word)
-            word_length = self.reader.get_word_length(phon_word)
+            phons = phon_word
+            word_length = None
+            # phons = self.reader.get_phons(phon_word)
+            # word_length = self.reader.get_word_length(phon_word)
 
             if self.reader.get_standard_form() == 'actual':
                 word = word_actual
