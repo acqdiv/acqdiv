@@ -107,7 +107,7 @@ def setup(test=False, xml=False):
 
     # new corpora
 
-    global dene, ku_waru, qaqet
+    global dene, ku_waru, qaqet, tuatschin
 
     dene = CorpusConfigParser()
     dene.read('ini/Dene.ini')
@@ -115,6 +115,8 @@ def setup(test=False, xml=False):
     ku_waru.read('ini/Ku_Waru.ini')
     qaqet = CorpusConfigParser()
     qaqet.read('ini/Qaqet.ini')
+    tuatschin = CorpusConfigParser()
+    tuatschin.read('ini/Tuatschin.ini')
 
     # phonbank corpora
 
@@ -165,6 +167,8 @@ def get_config(corpus_name):
         return russian
     elif corpus_name == "Sesotho":
         return sesotho
+    elif corpus_name == 'Tuatschin':
+        return tuatschin
     elif corpus_name == "Turkish":
         return turkish
     elif corpus_name == "Yucatec":
