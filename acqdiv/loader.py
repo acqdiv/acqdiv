@@ -123,13 +123,6 @@ def load(test=True, catch_errors=False, xml=False, new=False, phonbank=False):
         ]
 
     if phonbank:
-        print(
-            '\n*******************************************\n'
-            'WARNING:\n\n'
-            'Columns `segments` and `word_length`\n'
-            'have to be added manually to the DB scheme!\n\n'
-            'See corpora/Phonbank/README.md\n'
-            '*******************************************\n')
 
         base_path = 'Phonbank/'
 

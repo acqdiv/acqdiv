@@ -411,11 +411,6 @@ class PhonbankParser(CHATParser):
         for word_actual, word_target, phon_word in zip(
                 actual_words, target_words, phon_words):
 
-            phons = phon_word
-            word_length = None
-            # phons = self.reader.get_phons(phon_word)
-            # word_length = self.reader.get_word_length(phon_word)
-
             if self.reader.get_standard_form() == 'actual':
                 word = word_actual
             else:
@@ -429,17 +424,14 @@ class PhonbankParser(CHATParser):
 
             if not self.consistent_actual_target:
                 if word_actual == word_target:
-                    word_actual = None
                     word_target = None
 
             word_dict = {
                 'word_language': word_language if word_language else None,
                 'word': word,
-                'word_actual': word_actual,
+                'word_actual': phon_word,
                 'word_target': word_target,
-                'warning': None,
-                'segments': phons,
-                'word_length': word_length
+                'warning': None
             }
             words.append(word_dict)
 
