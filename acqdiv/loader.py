@@ -75,7 +75,7 @@ def load(test=True, catch_errors=False, xml=False, new=False, phonbank=False):
         catch_errors (bool): Errors are caught.
         xml (bool): Run the XML parsers rather than the CHAT parsers.
         new (bool): Run over the new corpora as well.
-        phonbank (bool): Run over the Phonbank corpoa as well.
+        phonbank (bool): Run over the Phonbank corpora.
     """
     start_time = time.time()
 
@@ -126,7 +126,7 @@ def load(test=True, catch_errors=False, xml=False, new=False, phonbank=False):
 
         base_path = 'Phonbank/'
 
-        configs += [
+        configs = [
             base_path + 'Arabic_Kuwaiti.ini',
             base_path + 'Arabic_Kern.ini',
             base_path + 'Berber.ini',

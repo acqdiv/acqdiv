@@ -117,7 +117,7 @@ def get_cmd_args():
         help='Run over the new corpora as well.')
     parser_load.add_argument(
         '-p', '--phonbank-corpora', action='store_true',
-        help='Run over the Phonbank corpora as well.')
+        help='Run over the Phonbank corpora.')
 
     parser_load.set_defaults(func=load)
 
@@ -180,7 +180,7 @@ def get_cmd_args():
         help='Run over the new corpora as well.')
     parser_pipeline.add_argument(
         '-p', '--phonbank-corpora', action='store_true',
-        help='Run over the Phonbank corpora as well.')
+        help='Run over the Phonbank corpora.')
 
     parser_pipeline.set_defaults(func=pipeline)
 
