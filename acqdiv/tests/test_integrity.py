@@ -144,10 +144,29 @@ class ValidationTest(unittest.TestCase):
     def test_language_per_morpheme(self):
         """ Check whether the language mapping is working as intended """
         query = "SELECT DISTINCT morpheme_language FROM morphemes"
-        langs = ["Arabic", "Bantawa", "Chintang", "Chintang/Bantawa",
-                 "Chintang/Nepali", "Cree", "English", "German", "Hindi",
-                 "Indonesian", "Inuktitut", "Japanese", "Nepali", "Russian",
-                 "Sesotho", "Turkish", "Yucatec", "Nungon", "Tok Pisin", None]
+        langs = [
+            "Arabic",
+            "Bantawa",
+            "Chintang",
+            "Chintang/Bantawa",
+            "Chintang/Nepali",
+            "Cree",
+            "English",
+            "German",
+            "Hindi",
+            "Indonesian",
+            "Inuktitut",
+            "Japanese",
+            "Nepali",
+            'Qaqet',
+            "Russian",
+            "Sesotho",
+            "Turkish",
+            "Yucatec",
+            "Nungon",
+            "Tok Pisin",
+            None
+        ]
         self._in_whitelist(query, langs)
 
     def test_target_children(self):
