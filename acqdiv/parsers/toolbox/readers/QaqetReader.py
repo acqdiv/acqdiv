@@ -180,9 +180,7 @@ class QaqetReader(ToolboxReader):
             'SINGS',
             'SNEEZE',
             'SOUND',
-            'SPITS',
-            'yes',
-            'what?'
+            'SPITS'
         }
         for event in events:
             gloss_tier = gloss_tier.replace(event, '')

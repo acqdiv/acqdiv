@@ -177,12 +177,6 @@ class TestQaqetReader(unittest.TestCase):
 
     # ---------- remove_events_gloss_tier ----------
 
-    def test_remove_events_gloss_tier_one_event(self):
-        gloss_tier = 'qaquqi yes quqi'
-        actual_output = Qr.remove_events_gloss_tier(gloss_tier)
-        desired_output = 'qaquqi quqi'
-        self.assertEqual(actual_output, desired_output)
-
     def test_remove_events_gloss_tier_two_events(self):
         gloss_tier = 'SOUND LAUGH'
         actual_output = Qr.remove_events_gloss_tier(gloss_tier)
