@@ -953,24 +953,9 @@ def _morphemes_unify_label_qaqet():
             else:
                 gloss = None
 
-            # Get the pos label.
-            if row.pos_raw:
-                atms_pos_raw = row.pos_raw.split('.')
-                pos = []
-                for atm_pos_raw in atms_pos_raw:
-                    if atm_pos_raw not in poses:
-                        atm_pos = '???'
-                    else:
-                        atm_pos = poses[atm_pos_raw]
-                    pos.append(atm_pos)
-
-                # If all atm_poses are '???', set to None.
-                for atm_pos in pos:
-                    if atm_pos != '???':
-                        pos = '.'.join(pos)
-                        break
-                else:
-                    pos = None
+            # Get the POS label.
+            if row.pos_raw and row.pos_raw in poses:
+                pos = poses[row.pos_raw]
             else:
                 pos = None
 
