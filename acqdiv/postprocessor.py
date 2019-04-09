@@ -1123,7 +1123,14 @@ def _words_add_pos_labels():
             if row.id in pos_raw_index:
                 # tag in index is pos_raw, so first get UD equivalent
                 pos_raw = pos_raw_index[row.id]
-                pos_ud = None if pos_raw not in poses_ud else poses_ud[pos_raw]
+                if pos_raw in poses_ud:
+                    pos_ud = poses_ud[pos_raw]
+
+                    if pos_ud == '???':
+                        pos_ud = None
+                else:
+                    pos_ud = None
+
                 # now add
                 results_pos_ud.append({'word_id': row.id, 'pos_ud': pos_ud})
     query.close()
