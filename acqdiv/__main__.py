@@ -16,12 +16,10 @@ import os
 import acqdiv
 import argparse
 import unittest
-import nose
 
 from acqdiv import loader, postprocessor
 from acqdiv.tests.test_integrity import ValidationTest_DevDB
 from acqdiv.tests.test_integrity import ValidationTest_ProductionDB
-from acqdiv.tests import test_regression
 
 
 def load(args):
@@ -55,9 +53,6 @@ def test(args):
     # unittest version
     test_loader = unittest.TestLoader()
     runner = unittest.TextTestRunner()
-    # nose version
-    nose_test_loader = nose.loader.TestLoader()
-    nose_runner = nose.core.TextTestRunner()
 
     # run unittests
     suite = test_loader.discover('tests/unittests')
@@ -72,8 +67,6 @@ def test(args):
         # get a test suite of all test cases for the development DB
         suite = test_loader.loadTestsFromTestCase(ValidationTest_DevDB)
         runner.run(suite)
-        nose_suite = nose_test_loader.loadTestsFromModule(test_regression)
-        nose_runner.run(nose_suite)
 
 
 def pipeline(args):
