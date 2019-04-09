@@ -217,10 +217,22 @@ class TestQaqetReader(unittest.TestCase):
         desired_output = '???'
         self.assertEqual(actual_output, desired_output)
 
+    def test_unify_unknowns_morpheme_x(self):
+        morpheme = 'x'
+        actual_output = Qr.unify_unknowns_morpheme(morpheme)
+        desired_output = '???'
+        self.assertEqual(actual_output, desired_output)
+
     def test_unify_unknowns_morpheme_sfx(self):
         morpheme = 'sfx'
         actual_output = Qr.unify_unknowns_morpheme(morpheme)
         desired_output = 'sfx'
+        self.assertEqual(actual_output, desired_output)
+
+    def test_unify_unknowns_morpheme_pfx(self):
+        morpheme = 'pfx'
+        actual_output = Qr.unify_unknowns_morpheme(morpheme)
+        desired_output = 'pfx'
         self.assertEqual(actual_output, desired_output)
 
     # ---------- clean_morpheme ----------
