@@ -12,7 +12,7 @@ from sqlalchemy.orm import sessionmaker
 _pattern_speaker_ages = re.compile('^(\d\d?(;([0-9]|1[01]).([12]?[0-9]|30))?)$')
 
 
-class ValidationTest(object):
+class ValidationTest(unittest.TestCase):
     """ Base class for shared tests between ACQDIV dev(elopment) and production database. """
 
     cwd_path = os.path.dirname(__file__)
@@ -241,7 +241,7 @@ class ValidationTest(object):
                 self.assertNotIn(label, filter_list, msg='value found in (%s) is not permitted')
 
 
-class ValidationTest_DevDB(unittest.TestCase, ValidationTest):
+class ValidationTest_DevDB(ValidationTest):
     """ Subclass of ValidatioTest for testing the development database. """
     @classmethod
     def setUpClass(cls):
@@ -252,7 +252,7 @@ class ValidationTest_DevDB(unittest.TestCase, ValidationTest):
         ValidationTest.setUpClass()
 
 
-class ValidationTest_ProductionDB(unittest.TestCase, ValidationTest):
+class ValidationTest_ProductionDB(ValidationTest):
     """ Subclass of ValidatioTest for testing the production database. """
     @classmethod
     def setUpClass(cls):
