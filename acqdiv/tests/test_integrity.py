@@ -9,7 +9,8 @@ import sqlalchemy as sa
 from dateutil.parser import parse
 from sqlalchemy.orm import sessionmaker
 
-_pattern_speaker_ages = re.compile('^(\d\d?(;([0-9]|1[01]).([12]?[0-9]|30))?)$')
+_pattern_speaker_ages = re.compile(
+    r'^(\d\d?(;(0?[0-9]|1[01]).([012]?[0-9]|30))?)$')
 
 
 class ValidationTest(unittest.TestCase):
