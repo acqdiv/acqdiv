@@ -148,8 +148,18 @@ class QaqetReader(ToolboxReader):
 
     @classmethod
     def remove_events_seg_tier(cls, seg_tier):
-        events = {'click', 'cry', 'laugh', 'raises-eyebrows', 'shakes-head',
-                  'sings', 'sneeze', 'sound', 'spits'}
+        events = {
+            'action'
+            'click',
+            'cry',
+            'laugh',
+            'raises-eyebrows',
+            'shakes-head',
+            'sings',
+            'sneeze',
+            'sound',
+            'spits'
+        }
 
         for event in events:
             seg_tier = seg_tier.replace(event, '')
@@ -162,8 +172,18 @@ class QaqetReader(ToolboxReader):
 
     @classmethod
     def remove_events_gloss_tier(cls, gloss_tier):
-        events = {'CLICK', 'CRY', 'LAUGH', 'SINGS', 'SNEEZE', 'SOUND', 'SPITS',
-                  'yes', 'what?'}
+        events = {
+            'ACTION',
+            'CLICK',
+            'CRY',
+            'LAUGH',
+            'SINGS',
+            'SNEEZE',
+            'SOUND',
+            'SPITS',
+            'yes',
+            'what?'
+        }
         for event in events:
             gloss_tier = gloss_tier.replace(event, '')
 
@@ -175,7 +195,11 @@ class QaqetReader(ToolboxReader):
 
     @classmethod
     def remove_events_pos_tier(cls, pos_tier):
-        events = {'GESTURE', 'SOUND'}
+        events = {
+            'ACTION',
+            'GESTURE',
+            'SOUND'
+        }
 
         for event in events:
             pos_tier = pos_tier.replace(event, '')
