@@ -49,10 +49,16 @@ class ValidationTest(unittest.TestCase):
         pass
 
     def test_columns_for_all_null(self):
-        """ Any column with all NULL rows should throw an error. """
+        """Any column with all NULL rows should throw an error."""
         for table in self.meta.tables.values():
             for column in table.c:
-                self._column_contains_all_nulls(table, column)
+                if str(column) not in [
+                        'morphemes.lemma_id',
+                        'morphemes.warning',
+                        'utterances.warning',
+                        'words.warning'
+                        ]:
+                    self._column_contains_all_nulls(table, column)
 
     def test_columns_for_any_null(self):
         """ User specified columns should never have a NULL row. """
