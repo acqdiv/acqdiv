@@ -150,7 +150,7 @@ class TestQaqetReader(unittest.TestCase):
     def test_lang2lang_unknown(self):
         morpheme = 'blublu'
         actual_output = Qr.lang2lang(morpheme)
-        desired_output = ''
+        desired_output = 'Qaqet'
         self.assertEqual(actual_output, desired_output)
 
     # ---------- clean_lang ----------

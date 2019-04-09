@@ -252,17 +252,12 @@ class QaqetReader(ToolboxReader):
             'TP': 'Tok Pisin',
             'E': 'English',
             'GE': 'German',
-            '???': 'Qaqet'
         }
 
-        return mapping.get(lang, '')
+        return mapping.get(lang, 'Qaqet')
 
     @classmethod
     def clean_lang(cls, lang):
         lang = super().clean_lang(lang)
         lang = cls.remove_morpheme_sep(lang)
-
-        if lang:
-            return cls.lang2lang(lang)
-
-        return lang
+        return cls.lang2lang(lang)
