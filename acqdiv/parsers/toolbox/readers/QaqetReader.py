@@ -252,6 +252,7 @@ class QaqetReader(ToolboxReader):
             'TP': 'Tok Pisin',
             'E': 'English',
             'GE': 'German',
+            'K': 'Kuanua'
         }
 
         return mapping.get(lang, 'Qaqet')
