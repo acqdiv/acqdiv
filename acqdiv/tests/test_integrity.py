@@ -155,6 +155,7 @@ class ValidationTest(unittest.TestCase):
             "English",
             "German",
             "Hindi",
+            'Kuanua',
             "Indonesian",
             "Inuktitut",
             "Japanese",
