@@ -264,3 +264,28 @@ class TuatschinReader(ToolboxReader):
         regex = re.compile(r'_[^_]+')
         pos = regex.sub('', pos)
         return pos
+
+    # ---------- gloss cleaners ----------
+
+    @classmethod
+    def clean_gloss(cls, gloss):
+        for cleaning_method in [
+                cls.remove_pos
+                ]:
+            gloss = cleaning_method(gloss)
+        return gloss
+
+    @staticmethod
+    def remove_pos(gloss):
+        """Remove the POS tag.
+
+        Morpho-syntactic annotations start with the POS tag:
+        [POS].[SUB-GlOSS1].[SUB-GLOSS2]
+
+        Example:
+            ADJ.Fem.Sing => Fem.Sing
+        """
+        regex = re.compile(r'^[^.]+\.')
+        gloss = regex.sub('', gloss)
+
+        return gloss

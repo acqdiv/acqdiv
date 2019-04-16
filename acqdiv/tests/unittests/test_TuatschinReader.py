@@ -102,10 +102,26 @@ class TestTuatschinReader(unittest.TestCase):
         desired_output = 'ADP+DET'
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- remove_specifications ----------
+    # ---------- clean_pos ----------
 
     def test_clean_pos(self):
         pos = 'ADP_Chld'
-        actual_output = Tr.remove_specifications(pos)
+        actual_output = Tr.clean_pos(pos)
         desired_output = 'ADP'
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- remove_pos ----------
+
+    def test_remove_pos(self):
+        gloss = 'ADJ.Fem.Sing'
+        actual_output = Tr.remove_pos(gloss)
+        desired_output = 'Fem.Sing'
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- clean_gloss ----------
+
+    def test_clean_gloss(self):
+        gloss = 'ADJ.Fem.Sing'
+        actual_output = Tr.clean_gloss(gloss)
+        desired_output = 'Fem.Sing'
         self.assertEqual(actual_output, desired_output)
