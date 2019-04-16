@@ -765,6 +765,9 @@ def process_morphemes_table():
     print("_morphemes_unify_label_qaqet")
     _morphemes_unify_label_qaqet()
 
+    print('_morphemes_unify_gloss_tuatschin()')
+    _morphemes_unify_gloss_tuatschin()
+
     print("_morphemes_get_pos_indexes")
     _morphemes_get_pos_indexes()
 
@@ -905,6 +908,55 @@ def _morphemes_unify_label():
                 row.gloss_raw]
             pos = None if row.pos_raw not in poses else poses[row.pos_raw]
             results.append({'morpheme_id': row.id, 'gloss': gloss, 'pos': pos})
+    query.close()
+    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
+
+
+def _morphemes_unify_gloss_tuatschin():
+    s = sa.select(
+        [db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw,
+         db.Morpheme.pos_raw]).where(db.Morpheme.corpus == 'Tuatschin')
+    query = conn.execute(s)
+    results = []
+    for corpus, rows in groupby(query, lambda r: r[1]):
+        config = get_config(corpus)
+        glosses = config['gloss']
+
+        for row in rows:
+            if row.gloss_raw:
+                # replace person/number combinations first
+                pnum_regex = re.compile(r'([0123])\.(Sing)')
+                gloss = pnum_regex.sub(r'\1SG', row.gloss_raw)
+                pnum_regex = re.compile(r'([0123])\.(Plur)')
+                gloss = pnum_regex.sub(r'\1PL', gloss)
+
+                parts = []
+                is_null = False
+                for part in gloss.split('.'):
+                    if re.search(r'[0123](SG|PL)', part):
+                        parts.append(part)
+                    else:
+                        if part in glosses:
+                            part = glosses[part]
+
+                            if part != '???':
+                                parts.append(part)
+                            else:
+                                is_null = True
+                                break
+                        else:
+                            is_null = True
+                            break
+
+                if is_null:
+                    gloss = None
+                else:
+                    gloss = '.'.join(parts)
+
+            else:
+                gloss = None
+
+            results.append({'morpheme_id': row.id, 'gloss': gloss})
     query.close()
     _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
