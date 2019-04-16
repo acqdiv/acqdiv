@@ -237,3 +237,29 @@ class TuatschinReader(ToolboxReader):
             pos_tier = cleaning_method(pos_tier)
 
         return pos_tier
+
+    # ---------- POS tag cleaners ----------
+
+    @classmethod
+    def clean_pos(cls, pos):
+        for cleaning_method in [
+                cls.remove_specifications
+        ]:
+            pos = cleaning_method(pos)
+        return pos
+
+    @staticmethod
+    def remove_specifications(pos):
+        """Remove specifications of POS tags.
+
+        Specifications start with `_`.
+
+        Examples:
+        - words erroneously written apart: _cont
+        - child forms: _Chld
+        - discourse particles: _Discpart
+        ...
+        """
+        regex = re.compile(r'_[^_]+')
+        pos = regex.sub('', pos)
+        return pos
