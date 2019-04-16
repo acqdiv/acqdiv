@@ -8,7 +8,7 @@ from acqdiv.parsers.toolbox.readers.TuatschinReader import TuatschinReader
 from acqdiv.parsers.toolbox.readers.KuWaruReader import KuWaruReader
 from acqdiv.parsers.toolbox.readers.ToolboxReader import ToolboxReader
 from acqdiv.parsers.toolbox.readers.QaqetReader import QaqetReader
-from acqdiv.parsers.metadata import Chat, Imdi, QaqetIMDI
+from acqdiv.parsers.metadata import Chat, Imdi, QaqetIMDI, CMDI
 
 
 class ToolboxParser:
@@ -143,7 +143,7 @@ class TuatschinParser(ToolboxParser):
         temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
                                          self.config['paths']['metadata_dir'])
         metadata_file_path = temp.replace(".tbt", ".imdi")
-        return Imdi(self.config, metadata_file_path)
+        return CMDI(self.config, metadata_file_path)
 
     def get_record_reader(self):
         return TuatschinReader(self.toolbox_file)
