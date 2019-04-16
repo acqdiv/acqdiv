@@ -82,6 +82,12 @@ class TestTuatschinReader(unittest.TestCase):
         desired_output = 'N ??? V'
         self.assertEqual(actual_output, desired_output)
 
+    def test_unify_unknown_pos_tier_Chld(self):
+        pos_tier = 'N X_Chld V'
+        actual_output = Tr.unify_unknown_pos_tier(pos_tier)
+        desired_output = 'N ??? V'
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- remove_specifications ----------
 
     def test_remove_specifications_single(self):

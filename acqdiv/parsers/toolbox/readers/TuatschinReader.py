@@ -222,11 +222,12 @@ class TuatschinReader(ToolboxReader):
     def unify_unknown_pos_tier(pos_tier):
         """Unify unknowns on the POS tier.
 
-        'X' stands either for child words that have an unclear POS tag or
+        `X` stands either for child words that have an unclear POS tag or
         incomprehensible/unknown forms (see XXX on the segment tier) and is
-        standardized to '???'.
+        standardized to '???'. Sometimes, specifications (such as `_Chld`) are
+        suffixed to `X`.
         """
-        rgx = re.compile(r'\bX\b')
+        rgx = re.compile(r'\bX(_\S+)?\b')
         return rgx.sub('???', pos_tier)
 
     @classmethod
