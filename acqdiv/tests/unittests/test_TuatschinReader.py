@@ -20,6 +20,12 @@ class TestTuatschinReader(unittest.TestCase):
         desired_output = 'BE+IT'
         self.assertEqual(actual_output, desired_output)
 
+    def test_remove_punctuation_seg_tier_dot(self):
+        seg_tier = 'test . test'
+        actual_output = Tr.remove_punctuation_seg_tier(seg_tier)
+        desired_output = 'test test'
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- remove_dot_repetitions_seg_tier ----------
 
     def test_remove_dot_repetitions_seg_tier(self):

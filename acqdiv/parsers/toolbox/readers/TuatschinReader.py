@@ -192,9 +192,10 @@ class TuatschinReader(ToolboxReader):
     def remove_punctuation_seg_tier(cls, seg_tier):
         """Remove punctuation on the segment tier.
 
-        The segment tier can contain the following punctuation: '?', '!', ','.
+        The segment tier can contain the following punctuation:
+        `?`, `!`, `,` and `.`
         """
-        utterance = re.sub(r'[?!,]', '', seg_tier)
+        utterance = re.sub(r'[?!,.]', '', seg_tier)
         return cls.remove_redundant_whitespaces(utterance)
 
     @classmethod
