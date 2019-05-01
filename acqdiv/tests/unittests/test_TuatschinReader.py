@@ -131,3 +131,19 @@ class TestTuatschinReader(unittest.TestCase):
         actual_output = Tr.clean_gloss(gloss)
         desired_output = 'Fem.Sing'
         self.assertEqual(actual_output, desired_output)
+
+    # ---------- lowercase_seg_word ----------
+
+    def test_lowercase_seg_word(self):
+        seg_word = 'PLÉDACÙVAGNÌ+IÈ'
+        actual_output = Tr.lowercase_seg_word(seg_word)
+        desired_output = 'plédacùvagnì+iè'
+        self.assertEqual(actual_output, desired_output)
+
+    # ---------- clean_seg_word ----------
+
+    def test_clean_seg_word(self):
+        seg_word = 'PLÉDACÙVAGNÌ+IÈ'
+        actual_output = Tr.clean_seg_word(seg_word)
+        desired_output = 'plédacùvagnì+iè'
+        self.assertEqual(actual_output, desired_output)

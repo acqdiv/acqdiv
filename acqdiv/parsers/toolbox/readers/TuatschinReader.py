@@ -240,6 +240,17 @@ class TuatschinReader(ToolboxReader):
 
         return pos_tier
 
+    # ---------- segment word cleaners ----------
+
+    @classmethod
+    def clean_seg_word(cls, segment_word):
+        segment_word = cls.lowercase_seg_word(segment_word)
+        return segment_word
+
+    @classmethod
+    def lowercase_seg_word(cls, segment_word):
+        return segment_word.lower()
+
     # ---------- POS tag cleaners ----------
 
     @classmethod
