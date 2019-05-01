@@ -304,6 +304,9 @@ class Imdi(Parser):
 
 class CMDI(Parser):
 
+    namespace = ('{http://www.clarin.eu/cmd/1/profiles/clarin.eu:'
+                 'cr1:p_1407745712035}')
+
     def __init__(self, config, path):
         super().__init__(config, path)
         self.metadata["participants"] = self.get_participants()
@@ -315,16 +318,15 @@ class CMDI(Parser):
             participant = {}
 
             for actor_node in actor.getchildren():
-                actor_tag = actor_node.tag.replace(
-                    '{http://www.clarin.eu/cmd/1/profiles/clarin.eu:'
-                    'cr1:p_1407745712035}', '')
+                actor_tag = actor_node.tag.replace(self.namespace, '')
 
                 if actor_tag == 'Actor_Languages':
                     langlist = []
-                    for lang in actor_node.iterfind('Actor_Language'):
+                    for lang in actor_node.iterfind(
+                            self.namespace + 'Actor_Language'):
                         langlist.append(lang.Name.text)
                     if len(langlist) != 0:
-                        participant['languages'] = ''.join(langlist)
+                        participant['languages'] = ','.join(langlist)
                 else:
                     # skip empty fields in the IMDI
                     if not str(actor_node.text).strip() == "":
