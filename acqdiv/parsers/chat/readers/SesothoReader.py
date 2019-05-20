@@ -33,10 +33,6 @@ class SesothoReader(ACQDIVCHATReader):
 
         return ' '.join(utt_words)
 
-    def get_utterance(self):
-        """Get the utterance, created by joined morphemes."""
-        return self._join_morph_to_utt()
-
     def get_actual_utterance(self):
         """Get the actual utterance, created by joined morphemes."""
         return self._join_morph_to_utt()
