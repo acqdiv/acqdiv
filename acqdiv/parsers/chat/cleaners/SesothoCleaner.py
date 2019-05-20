@@ -5,6 +5,37 @@ from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
 
 class SesothoCleaner(CHATCleaner):
 
+    @staticmethod
+    def correct_birthdate(date):
+        if date == '1984-01-01':
+            return ''
+
+        return date
+
+    @staticmethod
+    def correct_speaker_name(name):
+        if name == 'Khetheng':
+            return 'Khethang'
+
+        if name == 'child':
+            return 'Unidentified_child'
+
+        if name == 'MantSo':
+            return 'Mantso'
+
+        return name
+
+    @classmethod
+    def clean_speaker_metadata(
+            cls, session_filename, label, name, role,
+            age, gender, language, birth_date, target_child):
+        """Correct label, role and name of speaker."""
+        birth_date = cls.correct_birthdate(birth_date)
+        name = cls.correct_speaker_name(name)
+
+        return label, name, role, age, gender, language, birth_date
+
+
     # ---------- utterance cleaning ----------
 
     @classmethod
