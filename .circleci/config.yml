@@ -38,7 +38,11 @@ jobs:
           key: v1-dependencies-{{ checksum "requirements.txt" }}
 
       - run:
-          name: run tests
+          name: Install acqdiv
           command: |
             sudo python setup.py install
+
+      - run:
+          name: Run tests
+          command: |
             acqdiv test
