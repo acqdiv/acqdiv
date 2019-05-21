@@ -5,6 +5,41 @@ from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
 
 class CreeCleaner(CHATCleaner):
 
+    @staticmethod
+    def correct_name(name):
+        if name == 'A1':
+            return 'Ani'
+
+        return name
+
+    @staticmethod
+    def correct_speaker_label(speaker_label, name):
+        if name == 'Adult':
+            return 'ADU'
+        elif name == 'A1':
+            return 'CHI'
+
+        return speaker_label
+
+    @staticmethod
+    def correct_role(speaker_label, role):
+        if speaker_label == 'CH2':
+            return 'Child'
+
+        return role
+
+    @classmethod
+    def clean_speaker_metadata(
+            cls, session_filename, label, name, role,
+            age, gender, language, birth_date, target_child):
+        """Correct label, role and name of speaker."""
+
+        label = cls.correct_speaker_label(label, name)
+        name = cls.correct_name(name)
+        role = cls.correct_role(label, role)
+
+        return label, name, role, age, gender, language, birth_date
+
     # ---------- utterance cleaning ----------
 
     @staticmethod
