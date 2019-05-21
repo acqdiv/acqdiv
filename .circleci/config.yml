@@ -46,6 +46,6 @@ jobs:
       - run:
           name: Run tests
           command: |
-            set -e
-            acqdiv test
+            cd acqdiv/tests/unittests
+            python -m unittest
 
