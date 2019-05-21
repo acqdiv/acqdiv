@@ -40,6 +40,7 @@ jobs:
       - run:
           name: Install acqdiv
           command: |
+            set -e
             sudo python setup.py install
 
       - run:
