@@ -14,6 +14,9 @@ class TestChintangParser(unittest.TestCase):
     def setUpClass(cls):
         config = CorpusConfigParser()
         here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+        print(os.path.dirname(acqdiv.__file__))
+        print(here)
+        print(os.path.join(here, 'ini/Chintang.ini'))
         config.read(os.path.join(here, 'ini/Chintang.ini'))
         file_path = os.path.join(
             here, 'tests/unittests/test_files/Chintang.txt')
