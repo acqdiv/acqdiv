@@ -1225,7 +1225,7 @@ class TestCreeCleaner(unittest.TestCase):
     def test_clean_morph_tier_mixed(self):
         """Test clean_morph_tier with square brackets and untranscribed."""
         actual_output = CreeCleaner.clean_morph_tier('[*]')
-        desired_output = ''
+        desired_output = '*'
         self.assertEqual(actual_output, desired_output)
 
     def test_clean_morph_tier_empty_string(self):
