@@ -40,5 +40,6 @@ jobs:
       - run:
           name: run tests
           command: |
+            set -e
             sudo python setup.py install
             acqdiv test
