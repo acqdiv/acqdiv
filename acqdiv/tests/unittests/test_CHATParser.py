@@ -1274,7 +1274,7 @@ class TestSesothoParser(unittest.TestCase):
 
         Test with a one-word utterance.
         """
-        session_str = ('*HLE:\t Tsebo . 1870096_1871196\n%gls:\tTsebo .\n'
+        session_str = ('*HLE:\tTsebo . 1870096_1871196\n%gls:\tTsebo .\n'
                        '%cod:\tn^name .\n%eng:\tTsebo !\n@End')
         self.parser.reader.read(io.StringIO(session_str))
         actual_output = list(self.parser.next_utterance())[0]
@@ -1334,7 +1334,7 @@ class TestSesothoParser(unittest.TestCase):
             'source_id': '__init___0',
             'speaker_label': 'MHL',
             'addressee': None,
-            'utterance_raw': 'e tsamaya (uye) (ho)dula pela ausi Mamello .',
+            'utterance_raw': 'e tsamo dula pela ausi Mamello .',
             'utterance': 'e tsamaya hodula pela ausi Mamello',
             'translation': 'Yes go and (go) sit next to sister Mamello',
             'morpheme': 'e tsamay-a (u-y-e) (ho-)dul-a pela ausi Mamello .',
@@ -1475,7 +1475,7 @@ class TestSesothoParser(unittest.TestCase):
             'source_id': '__init___0',
             'speaker_label': 'NHL',
             'addressee': None,
-            'utterance_raw': 'tsamaya .',
+            'utterance_raw': 'e tsamo .',
             'utterance': 'tsamaya',
             'translation': 'Yes go and',
             'morpheme': 'tsamay-a .',
@@ -1534,7 +1534,7 @@ class TestSesothoParser(unittest.TestCase):
             'source_id': '__init___0',
             'speaker_label': 'NHM',
             'addressee': None,
-            'utterance_raw': 'e tsamaya .',
+            'utterance_raw': 'e tsamo .',
             'utterance': 'e tsamaya',
             'translation': 'Yes go and',
             'morpheme': 'e tsamay-a .',

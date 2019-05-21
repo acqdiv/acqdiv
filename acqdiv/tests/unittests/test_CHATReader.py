@@ -2249,13 +2249,13 @@ class TestSesothoReader(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_get_utterance(self):
-        """Test get_utterance with standard case of only hyphens."""
-        record = ('*CHI:\tplaceholder\n%gls:\ter-e m-ph-e ntho ena .\n%cod:'
+        """Test get_utterance."""
+        record = ('*CHI:\tbla blu bli .\n%gls:\ter-e m-ph-e ntho ena .\n%cod:'
                   '\tplaceholder\n@End')
         self.reader.read(io.StringIO(record))
         self.reader.load_next_record()
         actual_output = self.reader.get_utterance()
-        desired_output = 'ere mphe ntho ena .'
+        desired_output = 'bla blu bli .'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_actual_utterance(self):
@@ -2264,7 +2264,7 @@ class TestSesothoReader(unittest.TestCase):
                   '\tplaceholder\n@End')
         self.reader.read(io.StringIO(record))
         self.reader.load_next_record()
-        actual_output = self.reader.get_utterance()
+        actual_output = self.reader.get_actual_utterance()
         desired_output = 'ere mphe ntho ena .'
         self.assertEqual(actual_output, desired_output)
 
@@ -2274,7 +2274,7 @@ class TestSesothoReader(unittest.TestCase):
                   '\tplaceholder\n@End')
         self.reader.read(io.StringIO(record))
         self.reader.load_next_record()
-        actual_output = self.reader.get_utterance()
+        actual_output = self.reader.get_target_utterance()
         desired_output = 'ere mphe ntho ena .'
         self.assertEqual(actual_output, desired_output)
 
