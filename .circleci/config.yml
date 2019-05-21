@@ -46,5 +46,6 @@ jobs:
       - run:
           name: Run tests
           command: |
+            set -e
             acqdiv test
 
