@@ -376,6 +376,18 @@ class TestCHATReader(unittest.TestCase):
                           '\n%eng:\tIt is a stereo']
         self.assertEqual(actual_output, desired_output)
 
+    def test_iter_records_line_breaks(self):
+        session = ('@UTF8\n@Begin\n@Birth of CHI:\t14-JAN-2006\n'
+                   '*MEM:\tke line\n\tbreak . \x1528048_31840\x15\n'
+                   '%gls:\tke line\n\tbreak .\n'
+                   '@End\n')
+        actual_output = list(CHATReader.iter_records(session))
+        desired_output = [
+            '*MEM:\tke line break . \x1528048_31840\x15\n'
+            '%gls:\tke line break .'
+        ]
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- get_mainline ----------
 
     def test_get_mainline_standard_case(self):
