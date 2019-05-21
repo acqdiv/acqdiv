@@ -40,6 +40,27 @@ class CreeCleaner(CHATCleaner):
 
         return label, name, role, age, gender, language, birth_date
 
+    @classmethod
+    def clean_record_speaker_label(cls, session_filename, speaker_label):
+        child = ['p12', 'p10', 'p21', 'p33', 'p0']
+        adult = ['p13', 'p11', 'p22', 'p2', 'p34']
+
+        if speaker_label in child:
+            return 'CHI'
+
+        elif speaker_label in adult:
+            return 'ADU'
+
+        if (session_filename == '20-A1-2006-10-03.cha'
+                and speaker_label == 'p1'):
+            return 'CHI'
+
+        if (session_filename == '24-A1-2007-03-07.cha'
+                and speaker_label == 'p1'):
+            return 'ADU'
+
+        return speaker_label
+
     # ---------- utterance cleaning ----------
 
     @staticmethod
