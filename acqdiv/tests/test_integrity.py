@@ -96,15 +96,43 @@ class ValidationTest(unittest.TestCase):
     def test_pos(self):
         """ Check pos in database vs whitelist. """
         query = "select pos from morphemes group by pos"
-        pos = [None, "ADJ", "ADV", "ART", "AUX", "CLF", "CONJ", "IDEOPH", "INTJ", "N", "NUM", "PVB", "pfx", "POST",
-               "PREP", "PRODEM", "PTCL", "QUANT", "sfx", "stem", "V", "???"]
-        self._in_whitelist(query, pos)
+
+        poses = [
+            "ADJ", "ADV", "ART", "AUX", "CLF", "CONJ", "IDEOPH",
+            "INTJ", "N", "NUM", "PVB", "pfx", "POST",
+            "PREP", "PRODEM", "PTCL", "QUANT", "sfx", "stem", "V", "???"]
+
+        res = self.session.execute(query)
+        rows = res.fetchall()
+        for row in rows:
+            pos = row[0]
+
+            if pos is not None:
+                # for amalgams (e.g. see Tuatschin)
+                for sub_pos in pos.split('+'):
+                    self.assertIn(
+                        sub_pos, poses,
+                        msg='%s returned by (%s).' % (sub_pos, query))
 
     def test_pos_ud(self):
         """ Check UD pos (on word level) in database vs whitelist. """
         query = "select pos_ud from words group by pos_ud"
-        pos_ud = [None, "ADJ", "ADP", "ADV", "AUX", "CCONJ", "DET", "INTJ", "NOUN", "NUM", "PART", "PRON", "PROPN", "PUNCT", "SCONJ", "SYM", "VERB", "X"]
-        self._in_whitelist(query, pos_ud)        
+        poses = [
+            None, "ADJ", "ADP", "ADV", "AUX", "CCONJ", "DET", "INTJ", "NOUN",
+            "NUM", "PART", "PRON", "PROPN", "PUNCT", "SCONJ", "SYM", "VERB",
+            "X"]
+
+        res = self.session.execute(query)
+        rows = res.fetchall()
+        for row in rows:
+            pos = row[0]
+
+            if pos is not None:
+                # for amalgams (e.g. see Tuatschin)
+                for sub_pos in pos.split('+'):
+                    self.assertIn(
+                        sub_pos, poses,
+                        msg='%s returned by (%s).' % (sub_pos, query))
 
     def test_role(self):
         """ Check roles in database vs whitelist. """
@@ -163,6 +191,7 @@ class ValidationTest(unittest.TestCase):
             'Qaqet',
             "Russian",
             "Sesotho",
+            "Tuatschin",
             "Turkish",
             "Yucatec",
             "Nungon",
