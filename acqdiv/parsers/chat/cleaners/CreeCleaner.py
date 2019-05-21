@@ -120,7 +120,7 @@ class CreeCleaner(CHATCleaner):
     @classmethod
     def clean_morph_tier(cls, morph_tier):
         morph_tier = cls.remove_square_brackets(morph_tier)
-        morph_tier = cls.null_untranscribed_morph_tier(morph_tier)
+        # morph_tier = cls.null_untranscribed_morph_tier(morph_tier)
         return morph_tier
 
     # ---------- cross cleaning ----------
