@@ -65,8 +65,6 @@ class SessionParser(object):
             parser_class = config['paths']['parser']
             parser = getattr(parser_module, parser_class)
             return lambda file_path: parser(config, file_path)
-        elif format == "json":
-            return lambda file_path: JsonParser(config, file_path)
         else:
             assert 0, "Unknown format type: " + format
 

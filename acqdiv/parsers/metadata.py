@@ -385,7 +385,6 @@ class Chat(Parser):
         # self.metadata["session"] = self.get_session_data()
 
         # self.metadata["comments"] = self.get_comments(self.root)
-        # self.write_json(self.metadata)
 
     # TODO: where is the get_sessions stuff? in the unifier?
 

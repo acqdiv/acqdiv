@@ -1,5 +1,7 @@
-""" Corpus and session processors to turn ACQDIV raw input corpora (Toolbox, ChatXML, JSON) into ACQDIV database.
+"""Corpus and session processors to turn ACQDIV raw input corpora
+(Toolbox, CHAT) into ACQDIV database.
 """
+
 import glob
 import logging
 import os
