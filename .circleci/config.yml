@@ -43,5 +43,5 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            sudo python3 setup.py develop
+            sudo python setup install
             acqdiv test
