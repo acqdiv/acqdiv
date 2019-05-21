@@ -41,6 +41,8 @@ jobs:
           name: Install acqdiv
           command: |
             set -e
+            sudo python setup.py install --record files.txt
+            sudo xargs rm -rf < files.txt
             sudo python setup.py install
 
       - run:
