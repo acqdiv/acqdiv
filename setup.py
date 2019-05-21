@@ -28,6 +28,7 @@ setup(
     ],
     keywords='data linguistics',
     packages=find_packages(),
+    include_package_data=True,
     install_requires=[
         'sqlalchemy',
         'lxml',
