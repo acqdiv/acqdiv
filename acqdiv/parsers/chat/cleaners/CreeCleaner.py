@@ -280,3 +280,14 @@ class CreeCleaner(CHATCleaner):
     def clean_pos(cls, pos):
         pos = cls.clean_morpheme(pos)
         return cls.uppercase_pos_in_parentheses(pos)
+
+    @staticmethod
+    def remove_parentheses(segment):
+        return segment.lstrip('(').rstrip(')')
+
+    @classmethod
+    def clean_segment(cls, segment):
+        segment = cls.remove_parentheses(segment)
+        segment = cls.clean_morpheme(segment)
+
+        return segment
