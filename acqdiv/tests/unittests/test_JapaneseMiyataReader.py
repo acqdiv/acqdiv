@@ -9,61 +9,61 @@ class TestJapaneseMiyataReader(unittest.TestCase):
 
     def test_iter_morphemes_stem_no_gloss(self):
         """Test iter_morphemes with stem and no gloss."""
-        word = 'stem:POS|stem&FUS'
+        word = 'stem:POS|stem'
         actual_output = list(JapaneseMiyataReader.iter_morphemes(word))
-        desired_output = [('stem&FUS', '', 'stem:POS')]
+        desired_output = [('stem', '', 'stem:POS')]
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_morphemes_stem_gloss(self):
         """Test iter_morphemes with stem and gloss."""
-        word = 'stem:POS|stem&FUS=stemgloss'
+        word = 'stem:POS|stem=stemgloss'
         actual_output = list(JapaneseMiyataReader.iter_morphemes(word))
-        desired_output = [('stem&FUS', 'stemgloss', 'stem:POS')]
+        desired_output = [('stem', 'stemgloss', 'stem:POS')]
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_morphemes_suffixes_no_stemgloss(self):
         """Test iter_morphemes with suffixes and no stem gloss."""
-        word = 'stem:POS|stem&FUS-SFXONE-SFXTWO'
+        word = 'stem:POS|stem-SFXONE-SFXTWO'
         actual_output = list(JapaneseMiyataReader.iter_morphemes(word))
-        desired_output = [('stem&FUS', '', 'stem:POS'),
+        desired_output = [('stem', '', 'stem:POS'),
                           ('', 'SFXONE', 'sfx'),
                           ('', 'SFXTWO', 'sfx')]
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_morphemes_suffixes_stemgloss(self):
         """Test iter_morphemes with suffixes and stem gloss."""
-        word = 'stem:POS|stem&FUS-SFXONE-SFXTWO=stemgloss'
+        word = 'stem:POS|stem-SFXONE-SFXTWO=stemgloss'
         actual_output = list(JapaneseMiyataReader.iter_morphemes(word))
-        desired_output = [('stem&FUS', 'stemgloss', 'stem:POS'),
+        desired_output = [('stem', 'stemgloss', 'stem:POS'),
                           ('', 'SFXONE', 'sfx'),
                           ('', 'SFXTWO', 'sfx')]
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_morphemes_suffixes_colon(self):
         """Test iter_morphemes with suffix and colon."""
-        word = 'stem:POS|stem&FUS-SFXONE:contr-SFXTWO:SFXTWOseg=stemgloss'
+        word = 'stem:POS|stem-SFXONE:contr-SFXTWO:SFXTWOseg=stemgloss'
         actual_output = list(JapaneseMiyataReader.iter_morphemes(word))
-        desired_output = [('stem&FUS', 'stemgloss', 'stem:POS'),
+        desired_output = [('stem', 'stemgloss', 'stem:POS'),
                           ('', 'SFXONE:contr', 'sfx'),
                           ('SFXTWOseg', 'SFXTWO', 'sfx')]
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_morphemes_prefixes(self):
         """Test iter_morphemes with prefixes."""
-        word = 'pfxone#pfxtwo#stem:POS|stem&FUS=stemgloss'
+        word = 'pfxone#pfxtwo#stem:POS|stem=stemgloss'
         actual_output = list(JapaneseMiyataReader.iter_morphemes(word))
         desired_output = [('pfxone', '', 'pfx'),
                           ('pfxtwo', '', 'pfx'),
-                          ('stem&FUS', 'stemgloss', 'stem:POS')]
+                          ('stem', 'stemgloss', 'stem:POS')]
         self.assertEqual(actual_output, desired_output)
 
     def test_iter_morphemes_prefixes_suffixes_stemgloss(self):
         """Test iter_morphemes with prefixes, suffixes and stem gloss."""
-        word = 'pfxone#pfxtwo#stem:POS|stem&FUS-SFXONE-SFXTWO=stemgloss'
+        word = 'pfxone#pfxtwo#stem:POS|stem-SFXONE-SFXTWO=stemgloss'
         actual_output = list(JapaneseMiyataReader.iter_morphemes(word))
         desired_output = [('pfxone', '', 'pfx'),
                           ('pfxtwo', '', 'pfx'),
-                          ('stem&FUS', 'stemgloss', 'stem:POS'),
+                          ('stem', 'stemgloss', 'stem:POS'),
                           ('', 'SFXONE', 'sfx'),
                           ('', 'SFXTWO', 'sfx')]
         self.assertEqual(actual_output, desired_output)
@@ -121,4 +121,11 @@ class TestJapaneseMiyataReader(unittest.TestCase):
         actual_output = list(JapaneseMiyataReader.iter_morphemes(word))
         desired_output = [('stem', 'stemgloss1_stemgloss2', 'stem:POS'),
                           ('sfxseg', 'SFXGLOSS', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_fusionalsfx(self):
+        """Test iter_morphemes with fusional suffix."""
+        word = 'stem:POS|stem&FUS=stemgloss'
+        actual_output = list(JapaneseMiyataReader.iter_morphemes(word))
+        desired_output = [('stem', 'stemgloss.FUS', 'stem:POS')]
         self.assertEqual(actual_output, desired_output)

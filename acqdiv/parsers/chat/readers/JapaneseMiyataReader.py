@@ -107,12 +107,21 @@ class JapaneseMiyataReader(ACQDIVCHATReader):
                         gloss = sfx
                 # stem
                 else:
-                    pos, segment = morpheme.split('|')
+                    stem_match = re.search(r'([^|]*)\|([^&]*)(&(.*))?',
+                                           morpheme)
+
+                    segment = stem_match.group(2)
+                    pos = stem_match.group(1)
+
                     # if it is a compound part
                     if len(word_groups) > 1:
                         # prepend '=' to segment
                         segment = '=' + segment
+
                     gloss = stem_gloss
+
+                    if stem_match.group(4):
+                        gloss = gloss + '.' + stem_match.group(4)
 
                 yield segment, gloss, pos
 
