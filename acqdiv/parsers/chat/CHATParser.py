@@ -13,6 +13,8 @@ import acqdiv.parsers.chat.readers.CreeReader
 import acqdiv.parsers.chat.readers.EnglishManchester1Reader
 import acqdiv.parsers.chat.readers.InuktitutReader
 import acqdiv.parsers.chat.readers.JapaneseMiiProReader
+import acqdiv.parsers.chat.readers.JapaneseMiyataReader
+import acqdiv.parsers.chat.cleaners.JapaneseMiyataCleaner
 import acqdiv.parsers.chat.readers.NungonReader
 import acqdiv.parsers.chat.readers.SesothoReader
 import acqdiv.parsers.chat.readers.TurkishReader
@@ -356,6 +358,16 @@ class JapaneseMiiProParser(CHATParser):
     @staticmethod
     def get_cleaner():
         return acqdiv.parsers.chat.cleaners.JapaneseMiiProCleaner.JapaneseMiiProCleaner()
+
+
+class JapaneseMiyataParser(CHATParser):
+    @staticmethod
+    def get_reader():
+        return acqdiv.parsers.chat.readers.JapaneseMiyataReader.JapaneseMiyataReader()
+
+    @staticmethod
+    def get_cleaner():
+        return acqdiv.parsers.chat.cleaners.JapaneseMiyataCleaner.JapaneseMiyataCleaner()
 
 
 class SesothoParser(CHATParser):
