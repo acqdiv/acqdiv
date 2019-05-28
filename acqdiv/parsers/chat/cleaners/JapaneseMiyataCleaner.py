@@ -1,5 +1,7 @@
 
 from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
+from acqdiv.parsers.chat.cleaners.JapaneseMiiProCleaner import \
+    JapaneseMiiProCleaner
 
 
 class JapaneseMiyataCleaner(CHATCleaner):
@@ -22,3 +24,18 @@ class JapaneseMiyataCleaner(CHATCleaner):
     def clean_pos(cls, pos):
         pos = cls.replace_colon_by_dot_pos(pos)
         return pos
+
+# ---------- utterance cross clean ----------
+
+    @classmethod
+    def utterance_cross_clean(
+            cls, raw_utt, actual_utt, target_utt,
+            seg_tier, gloss_tier, pos_tier):
+
+        return JapaneseMiiProCleaner.utterance_cross_clean(
+            raw_utt,
+            actual_utt,
+            target_utt,
+            seg_tier,
+            gloss_tier,
+            pos_tier)
