@@ -52,12 +52,12 @@ class JapaneseMiyataReader(ACQDIVCHATReader):
         match = re.search(r'(.+)=(\S+)$', morph_word)
         if match:
             morph_word = match.group(1)
-            glosses = match.group(2).split('_', maxsplit=1)
+            match2 = re.search(r'(.*?)(_([A-Z_]+))?$', match.group(2))
 
-            stem_gloss = glosses[0]
+            stem_gloss = match2.group(1)
 
-            if len(glosses) > 1:
-                sfx_seg_gloss = glosses[1]
+            if match2.group(3):
+                sfx_seg_gloss = match2.group(3)
             else:
                 sfx_seg_gloss = ''
 

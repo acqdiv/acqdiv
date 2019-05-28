@@ -114,3 +114,11 @@ class TestJapaneseMiyataReader(unittest.TestCase):
         desired_output = [('stem', 'stemgloss', 'stem:POS'),
                           ('sfxseg', 'SFXGLOSS', 'sfx')]
         self.assertEqual(actual_output, desired_output)
+
+    def test_iter_morphemes_multiple_stem_glosses(self):
+        """Test iter_morphemes with multiple stem glosses."""
+        word = 'stem:POS|stem-sfxseg=stemgloss1_stemgloss2_SFXGLOSS'
+        actual_output = list(JapaneseMiyataReader.iter_morphemes(word))
+        desired_output = [('stem', 'stemgloss1_stemgloss2', 'stem:POS'),
+                          ('sfxseg', 'SFXGLOSS', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
