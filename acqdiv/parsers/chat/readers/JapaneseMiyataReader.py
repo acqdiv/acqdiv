@@ -24,11 +24,13 @@ class JapaneseMiyataReader(ACQDIVCHATReader):
         A word consists of word groups in the case of compounds (marker: +).
 
         A word group has the following structure:
-        prefix#POS|stem&fusionalsuffix-suffix=gloss
+        prefix#POS|stem&fusionalsuffix-suffix=stemgloss_suffixgloss
 
         prefix: segment, no gloss, no POS (-> assign 'pfx')
         stem: segment, gloss, POS
-        suffix: no segment, with gloss, without POS (-> assign 'sfx')
+        suffix:
+            - if uppercase: no segment, gloss, no POS (-> assign 'sfx')
+            - if lowercase: segment, gloss (after stem gloss), no POS
 
         For every component of the compound '=' is prepended to the part (e.g.
         'n|+n|apple+n|tree' -> '=apple', '=tree'). Both parts receive the same
@@ -50,9 +52,18 @@ class JapaneseMiyataReader(ACQDIVCHATReader):
         match = re.search(r'(.+)=(\S+)$', morph_word)
         if match:
             morph_word = match.group(1)
-            stem_gloss = match.group(2)
+            glosses = match.group(2).split('_', maxsplit=1)
+
+            stem_gloss = glosses[0]
+
+            if len(glosses) > 1:
+                sfx_seg_gloss = glosses[1]
+            else:
+                sfx_seg_gloss = ''
+
         else:
             stem_gloss = ''
+            sfx_seg_gloss = ''
 
         # split into word groups (i.e. into compound parts) (if applicable)
         word_groups = morph_word.split('+')
@@ -82,10 +93,15 @@ class JapaneseMiyataReader(ACQDIVCHATReader):
                     sfx = morpheme.lstrip('-')
                     pos = 'sfx'
                     match = re.search(r'([^:]+)(:(.*))?', sfx)
-                    # check for colon case
+                    # segment with colon
                     if match.group(2) and match.group(3) != 'contr':
                         segment = match.group(3)
                         gloss = match.group(1)
+                    # segment
+                    elif sfx.islower():
+                        segment = sfx
+                        gloss = sfx_seg_gloss
+                    # gloss
                     else:
                         segment = ''
                         gloss = sfx
