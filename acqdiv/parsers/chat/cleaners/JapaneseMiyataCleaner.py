@@ -25,7 +25,7 @@ class JapaneseMiyataCleaner(CHATCleaner):
         pos = cls.replace_colon_by_dot_pos(pos)
         return pos
 
-# ---------- utterance cross clean ----------
+    # ---------- utterance cross clean ----------
 
     @classmethod
     def utterance_cross_clean(
@@ -39,3 +39,41 @@ class JapaneseMiyataCleaner(CHATCleaner):
             seg_tier,
             gloss_tier,
             pos_tier)
+
+    # ---------- speaker metadata cleaning ----------
+
+    @classmethod
+    def clean_speaker_metadata(
+            cls, session_filename, label, name, role,
+            age, gender, language, birth_date, target_child):
+        """Correct label, role and name of speaker."""
+
+        _, tc_name = target_child
+        name = cls.correct_speaker_name(tc_name, name, label)
+
+        return label, name, role, age, gender, language, birth_date
+
+    @classmethod
+    def correct_speaker_name(cls, tc_name, name, label):
+        if tc_name == 'Akifumi' and name == 'Okaasan':
+            return 'Mother_of_AKI'
+        elif tc_name == 'Ryookun':
+            if name == 'Okaasan':
+                return 'Mother_of_RYO'
+            elif name == 'Papa':
+                return 'Father_of_RYO'
+
+        if label == 'REE':
+            return 'Ree'
+
+        if label == 'TOS':
+            return 'Miyatanopapa'
+
+        return name
+
+    # ---------- session metadata cleaning ----------
+
+    @classmethod
+    def clean_session_metadata(cls, session_filename, date, media_filename):
+        """Correct the session date."""
+        return date, media_filename
