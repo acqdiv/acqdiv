@@ -50,8 +50,16 @@ class JapaneseMiyataCleaner(CHATCleaner):
 
         _, tc_name = target_child
         name = cls.correct_speaker_name(tc_name, name, label)
+        role = cls.correct_role(role, session_filename, label)
 
         return label, name, role, age, gender, language, birth_date
+
+    @classmethod
+    def correct_role(cls, role, session_filename, speaker_label):
+        if session_filename.startswith('tai') and speaker_label == 'TAI':
+            return 'Target_Child'
+
+        return role
 
     @classmethod
     def correct_speaker_name(cls, tc_name, name, label):
