@@ -9,7 +9,7 @@ class KuWaruReader(ToolboxReader):
 
     @classmethod
     def get_speaker_label(cls, rec_dict):
-        return rec_dict.get('spkr', '')
+        return rec_dict.get('ELANParticipant', '')
 
     @classmethod
     def get_utterance_raw(cls, rec_dict):
@@ -26,34 +26,19 @@ class KuWaruReader(ToolboxReader):
 
     @classmethod
     def get_seg_tier(cls, rec_dict):
-        return rec_dict.get('morph_u', '')
+        return rec_dict.get('mb', '')
 
     @classmethod
     def get_gloss_tier(cls, rec_dict):
-        return rec_dict.get('morph_gls', '')
+        return rec_dict.get('ge', '')
 
     @classmethod
     def get_pos_tier(cls, rec_dict):
-        return rec_dict.get('morph_pos', '')
+        return rec_dict.get('ps', '')
 
     @classmethod
     def get_translation(cls, rec_dict):
         return rec_dict.get('ft', '')
-
-    @classmethod
-    def get_words_data(cls, rec_dict):
-        result = []
-        utterance = rec_dict.get('tx_word')
-        words = cls.get_words(utterance)
-
-        for word in words:
-            word_clean = cls.clean_word(word)
-            d = {
-                'word': word_clean,
-                'word_actual': word
-            }
-            result.append(d)
-        return result
 
     @classmethod
     def get_lang_tier(cls, rec_dict):
