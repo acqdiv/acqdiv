@@ -9,8 +9,18 @@ class JapaneseMiyataCleaner(CHATCleaner):
     # ---------- morphology tier cleaning ----------
 
     @classmethod
+    def remove_dloc(cls, morph_tier):
+        """Remove dloc|dloc=DISLOC words on the morphology tier.
+
+        dloc|dloc=DISLOC stands for `„` on the utterance.
+        """
+        morph_tier = morph_tier.replace('dloc|dloc=DISLOC', '')
+        return cls.remove_redundant_whitespaces(morph_tier)
+
+    @classmethod
     def clean_morph_tier(cls, morph_tier):
         morph_tier = cls.remove_terminator(morph_tier)
+        morph_tier = cls.remove_dloc(morph_tier)
         return morph_tier
 
     # ---------- morphology tier cleaning ----------
