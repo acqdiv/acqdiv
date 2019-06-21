@@ -1,6 +1,5 @@
 import os
 
-import acqdiv.parsers.chat.cleaners.CreeCleaner
 import acqdiv.parsers.chat.cleaners.EnglishManchester1Cleaner
 import acqdiv.parsers.chat.cleaners.InuktitutCleaner
 import acqdiv.parsers.chat.cleaners.JapaneseMiiProCleaner
@@ -9,7 +8,6 @@ import acqdiv.parsers.chat.cleaners.SesothoCleaner
 import acqdiv.parsers.chat.cleaners.TurkishCleaner
 import acqdiv.parsers.chat.cleaners.YucatecCleaner
 import acqdiv.parsers.chat.readers.ACQDIVCHATReader
-import acqdiv.parsers.chat.readers.CreeReader
 import acqdiv.parsers.chat.readers.EnglishManchester1Reader
 import acqdiv.parsers.chat.readers.InuktitutReader
 import acqdiv.parsers.chat.readers.JapaneseMiiProReader
@@ -320,16 +318,6 @@ class CHATParser(CHATParserInterface):
         return uid
 
 
-class CreeParser(CHATParser):
-    @staticmethod
-    def get_reader():
-        return acqdiv.parsers.chat.readers.CreeReader.CreeReader()
-
-    @staticmethod
-    def get_cleaner():
-        return acqdiv.parsers.chat.cleaners.CreeCleaner.CreeCleaner()
-
-
 class EnglishManchester1Parser(CHATParser):
     @staticmethod
     def get_reader():
@@ -522,7 +510,6 @@ def main():
             ('Turkish', TurkishParser),
             ('Japanese_MiiPro', JapaneseMiiProParser),
             ('English_Manchester1', EnglishManchester1Parser),
-            ('Cree', CreeParser),
             ('Inuktitut', InuktitutParser)]:
 
         corpus_path = os.path.join(

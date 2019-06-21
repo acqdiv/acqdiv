@@ -6,6 +6,8 @@ import importlib
 import configparser
 from configparser import ExtendedInterpolation
 
+from acqdiv.parsers.cree.CreeParser import CreeParser
+
 logger = logging.getLogger('pipeline.' + __name__)
 
 
@@ -27,6 +29,11 @@ class CorpusConfigParser(configparser.ConfigParser):
 class SessionParser(object):
     """ Static class-level method to create a new parser instance based on session format type.
     """
+
+    mappings = {
+        'Cree': CreeParser
+    }
+
     def __init__(self, config, file_path):
         """ Session parser initializer
 
@@ -48,8 +55,11 @@ class SessionParser(object):
             A corpus-type-specific parser
         """
         format = config['corpus']['format']
+        corpus = config['corpus']['corpus']
 
-        if format == "cha":
+        if corpus in SessionParser.mappings:
+            return SessionParser.mappings[corpus]
+        elif format == "cha":
             parser_module = importlib.import_module(
                 'acqdiv.parsers.chat.CHATParser')
             parser_class = config['paths']['parser']
