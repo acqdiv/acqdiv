@@ -7,10 +7,11 @@ from lxml import objectify
 
 DEBUG = 1 # TODO: move debug to standard logging module
 
-class Parser(object):
+
+class MetadataParser(object):
     """ Base metadata parser class.
 
-    metadata.Parser wraps an lxml.objectify tree. It gets relevant metadata
+    metadata.MetadataParser wraps an lxml.objectify tree. It gets relevant metadata
     from the tree and exposes them in a dictionary.
 
     Attributes:
@@ -77,18 +78,18 @@ class Parser(object):
         return everything
 
 
-class Imdi(Parser):
-    """ Subclass of metadata.Parser to deal with IMDI metadata (Chintang and Russian via S. Stoll) """
+class Imdi(MetadataParser):
+    """ Subclass of metadata.MetadataParser to deal with IMDI metadata (Chintang and Russian via S. Stoll) """
 
     # Do we want to load up this dictionary of everything on init
     # so that the caller has to deal with the db-specific parsing?
 
     # do we need to pass in the config?
     # def __init__(self, config, path):
-    #    Parser.__init__(self, config, path)
+    #    MetadataParser.__init__(self, config, path)
 
     def __init__(self, config, path):
-        Parser.__init__(self, config, path)
+        MetadataParser.__init__(self, config, path)
         self.metadata["participants"] = self.get_participants()
         self.metadata["session"] = self.get_session_data()
         self.metadata["project"] = self.get_project_data(self.root)
@@ -302,7 +303,7 @@ class Imdi(Parser):
     #     return seconds
 
 
-class CMDI(Parser):
+class CMDI(MetadataParser):
 
     namespace = ('{http://www.clarin.eu/cmd/1/profiles/clarin.eu:'
                  'cr1:p_1407745712035}')
@@ -365,9 +366,9 @@ class QaqetIMDI(Imdi):
         return participants
 
 
-class Chat(Parser):
+class Chat(MetadataParser):
     """
-    Subclass of metadata.Parser class to deal with CHAT XML metadata extraction.
+    Subclass of metadata.MetadataParser class to deal with CHAT XML metadata extraction.
 
     Unlike in the IMDI files, a lot of data above session level is not
     specified in the Chat/Talkbank XML files, but instead saved in
@@ -376,10 +377,10 @@ class Chat(Parser):
     """
     # do we need to pass in the config?
     # def __init__(self, config, path):
-        # Parser.__init__(self, config, path)
+        # MetadataParser.__init__(self, config, path)
 
     def __init__(self, config, path):
-        Parser.__init__(self, config, path)
+        MetadataParser.__init__(self, config, path)
         self.metadata["participants"] = self.get_participants(self.root)
         self.metadata["comments"] = self.get_comments(self.root)
         # self.metadata["session"] = self.get_session_data()
