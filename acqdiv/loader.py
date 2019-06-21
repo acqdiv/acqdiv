@@ -6,7 +6,7 @@ import logging
 
 from acqdiv import pipeline_logging
 from acqdiv.processors.processors import CorpusProcessor
-from acqdiv.parsers.parsers import CorpusConfigParser
+from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
 from acqdiv.database_backend import db_connect, create_tables
 
 

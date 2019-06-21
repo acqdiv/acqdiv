@@ -2,27 +2,10 @@
 """
 
 import logging
-import configparser
-from configparser import ExtendedInterpolation
 from acqdiv.parsers.ParserMapper import ParserMapper
 
 
 logger = logging.getLogger('pipeline.' + __name__)
-
-
-class CorpusConfigParser(configparser.ConfigParser):
-    """ Config parser for ACQDIV corpus-specific .ini configuration files
-    """
-    def optionxform(self, optionstr):
-        return optionstr
-
-    def __init__(self):
-        """ We subclass Python's default config parser and use our own delimiter and extended interpolation.
-        """
-        super().__init__(delimiters=["=="], interpolation=ExtendedInterpolation())
-
-    def read(self, config, encoding=None):
-        super().read(config, encoding)
 
 
 class SessionParser(object):

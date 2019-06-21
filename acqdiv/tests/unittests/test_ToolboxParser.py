@@ -5,7 +5,7 @@ from acqdiv.parsers.corpora.main.chintang.ChintangParser import ChintangParser
 from acqdiv.parsers.corpora.main.indonesian.IndonesianParser import \
     IndonesianParser
 from acqdiv.parsers.corpora.main.russian.RussianParser import RussianParser
-from acqdiv.parsers.parsers import CorpusConfigParser
+from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
 
 
 ###############################################################################

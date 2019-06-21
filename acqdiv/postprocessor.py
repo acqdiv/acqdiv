@@ -13,7 +13,7 @@ from configparser import ConfigParser
 
 import acqdiv.database_backend as db
 from acqdiv import pipeline_logging
-from acqdiv.parsers.parsers import CorpusConfigParser
+from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
 from acqdiv.processors import age
 
 engine = None
