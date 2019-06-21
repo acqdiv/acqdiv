@@ -30,7 +30,6 @@ def load(args):
     loader.load(
         test=not args.full,
         catch_errors=args.catch_errors,
-        xml=args.xml,
         new=args.new_corpora,
         phonbank=args.phonbank_corpora
     )
@@ -43,7 +42,6 @@ def postprocess(args):
     )
     postprocessor.postprocess(
         test=not args.full,
-        xml=args.xml
     )
 
 
@@ -104,8 +102,6 @@ def get_cmd_args():
     parser_load.add_argument(
         '-e', '--catch-errors', action='store_true', help='Catch errors')
     parser_load.add_argument(
-        '-x', '--xml', action='store_true', help='Run the XML parsers')
-    parser_load.add_argument(
         '-n', '--new-corpora', action='store_true',
         help='Run over the new corpora as well.')
     parser_load.add_argument(
@@ -129,9 +125,6 @@ def get_cmd_args():
     parser_postprocess.add_argument(
         '-s', '--suppress-log-formatter',
         action='store_true', help='Use suppressing formatter for log')
-    parser_postprocess.add_argument(
-        '-x', '--xml', action='store_true',
-        help='Loader was run with xml parsers')
     parser_postprocess.set_defaults(func=postprocess)
 
     # command 'test'
@@ -166,8 +159,6 @@ def get_cmd_args():
         action='store_true', help='Set logging to INFO level')
     parser_pipeline.add_argument(
         '-e', '--catch-errors', action='store_true', help='Catch errors')
-    parser_pipeline.add_argument(
-        '-x', '--xml', action='store_true', help='Run the XML parsers')
     parser_pipeline.add_argument(
         '-n', '--new-corpora', action='store_true',
         help='Run over the new corpora as well.')
