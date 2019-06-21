@@ -6,8 +6,6 @@ import importlib
 import configparser
 from configparser import ExtendedInterpolation
 
-from acqdiv.parsers.xml.xml_parser import XMLParserFactory
-
 logger = logging.getLogger('pipeline.' + __name__)
 
 
@@ -41,7 +39,7 @@ class SessionParser(object):
 
     @staticmethod
     def create_parser_factory(config):
-        """ Factory method for creating a corpus session parser based on input format type (e.g. Toolbox, ChatXML).
+        """Create a corpus session parser based on input format type.
 
         Args:
             config: CorpusConfigParser
@@ -51,9 +49,7 @@ class SessionParser(object):
         """
         format = config['corpus']['format']
 
-        if format == "xml":
-            return XMLParserFactory(config)
-        elif format == "cha":
+        if format == "cha":
             parser_module = importlib.import_module(
                 'acqdiv.parsers.chat.CHATParser')
             parser_class = config['paths']['parser']
