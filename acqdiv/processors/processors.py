@@ -9,7 +9,7 @@ import sys
 import sqlalchemy as sa
 
 import acqdiv.database_backend as db
-from acqdiv.parsers.parsers import SessionParser
+from acqdiv.parsers.SessionParser import SessionParser
 
 logger = logging.getLogger('pipeline.' + __name__)
 
