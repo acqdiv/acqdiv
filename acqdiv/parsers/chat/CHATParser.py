@@ -2,19 +2,6 @@ import os
 
 import acqdiv.parsers.chat.readers.ACQDIVCHATReader
 
-# Phonbank
-from acqdiv.parsers.chat.readers.PolishReader import PolishReader
-from acqdiv.parsers.chat.cleaners.PolishCleaner import PolishCleaner
-from acqdiv.parsers.chat.readers.ArabicKernReader import ArabicKernReader
-from acqdiv.parsers.chat.cleaners.ArabicKernCleaner import ArabicKernCleaner
-from acqdiv.parsers.chat.readers.ArabicKuwaitiReader import ArabicKuwaitiReader
-from acqdiv.parsers.chat.cleaners.ArabicKuwaitiCleaner import \
-    ArabicKuwaitiCleaner
-from acqdiv.parsers.chat.readers.BerberReader import BerberReader
-from acqdiv.parsers.chat.cleaners.BerberCleaner import BerberCleaner
-from acqdiv.parsers.chat.readers.QuichuaReader import QuichuaReader
-from acqdiv.parsers.chat.cleaners.QuichuaCleaner import QuichuaCleaner
-
 from acqdiv.parsers.chat.cleaners import CHATCleaner
 
 from acqdiv.parsers.chat.CHATParserInterface import CHATParserInterface
@@ -340,61 +327,6 @@ class PhonbankParser(CHATParser):
             words.append(word_dict)
 
         return words
-
-
-class PolishParser(PhonbankParser):
-
-    @staticmethod
-    def get_reader():
-        return PolishReader()
-
-    @staticmethod
-    def get_cleaner():
-        return PolishCleaner()
-
-
-class ArabicKernParser(PhonbankParser):
-
-    @staticmethod
-    def get_reader():
-        return ArabicKernReader()
-
-    @staticmethod
-    def get_cleaner():
-        return ArabicKernCleaner()
-
-
-class ArabicKuwaitiParser(PhonbankParser):
-
-    @staticmethod
-    def get_reader():
-        return ArabicKuwaitiReader()
-
-    @staticmethod
-    def get_cleaner():
-        return ArabicKuwaitiCleaner()
-
-
-class BerberParser(PhonbankParser):
-
-    @staticmethod
-    def get_reader():
-        return BerberReader()
-
-    @staticmethod
-    def get_cleaner():
-        return BerberCleaner()
-
-
-class QuichuaParser(PhonbankParser):
-
-    @staticmethod
-    def get_reader():
-        return QuichuaReader()
-
-    @staticmethod
-    def get_cleaner():
-        return QuichuaCleaner()
 
 
 def main():

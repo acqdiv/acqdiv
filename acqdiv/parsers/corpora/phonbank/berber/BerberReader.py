@@ -1,4 +1,4 @@
-from acqdiv.parsers.chat.readers.PhonbankReader import PhonbankReader
+from acqdiv.parsers.corpora.phonbank.PhonbankReader import PhonbankReader
 
 
 class BerberReader(PhonbankReader):

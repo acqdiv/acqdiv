@@ -6,6 +6,8 @@ import importlib
 import configparser
 from configparser import ExtendedInterpolation
 
+# main
+
 from acqdiv.parsers.corpora.main.cree.CreeParser import CreeParser
 from acqdiv.parsers.corpora.main.inuktitut.InuktitutParser import InuktitutParser
 from acqdiv.parsers.corpora.main.turkish.TurkishParser import TurkishParser
@@ -18,6 +20,17 @@ from acqdiv.parsers.corpora.main.japanese_miyata.JapaneseMiyataParser import \
 from acqdiv.parsers.corpora.main.sesotho.SesothoParser import SesothoParser
 from acqdiv.parsers.corpora.main.nungon.NungonParser import NungonParser
 from acqdiv.parsers.corpora.main.yucatec.YucatecParser import YucatecParser
+
+# phonbank
+
+from acqdiv.parsers.corpora.phonbank.arabic_kern.ArabicKernParser import \
+    ArabicKernParser
+from acqdiv.parsers.corpora.phonbank.arabic_kuwaiti.ArabicKuwaitiParser \
+    import ArabicKuwaitiParser
+from acqdiv.parsers.corpora.phonbank.berber.BerberParser import BerberParser
+from acqdiv.parsers.corpora.phonbank.quichua.QuichuaParser import QuichuaParser
+from acqdiv.parsers.corpora.phonbank.polish.PolishParser import PolishParser
+
 
 logger = logging.getLogger('pipeline.' + __name__)
 
@@ -50,7 +63,12 @@ class SessionParser(object):
         'Japanese_Miyata': JapaneseMiyataParser,
         'Sesotho': SesothoParser,
         'Nungon': NungonParser,
-        'Yucatec': YucatecParser
+        'Yucatec': YucatecParser,
+        'Arabic_Kern': ArabicKernParser,
+        'Arabic_Kuwaiti': ArabicKuwaitiParser,
+        'Berber': BerberParser,
+        'Polish': PolishParser,
+        'Quichua': QuichuaParser
     }
 
     def __init__(self, config, file_path):
