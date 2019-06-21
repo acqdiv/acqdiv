@@ -1,7 +1,6 @@
 import os
 
 import acqdiv.parsers.chat.cleaners.EnglishManchester1Cleaner
-import acqdiv.parsers.chat.cleaners.InuktitutCleaner
 import acqdiv.parsers.chat.cleaners.JapaneseMiiProCleaner
 import acqdiv.parsers.chat.cleaners.NungonCleaner
 import acqdiv.parsers.chat.cleaners.SesothoCleaner
@@ -9,7 +8,6 @@ import acqdiv.parsers.chat.cleaners.TurkishCleaner
 import acqdiv.parsers.chat.cleaners.YucatecCleaner
 import acqdiv.parsers.chat.readers.ACQDIVCHATReader
 import acqdiv.parsers.chat.readers.EnglishManchester1Reader
-import acqdiv.parsers.chat.readers.InuktitutReader
 import acqdiv.parsers.chat.readers.JapaneseMiiProReader
 import acqdiv.parsers.chat.readers.JapaneseMiyataReader
 import acqdiv.parsers.chat.cleaners.JapaneseMiyataCleaner
@@ -328,16 +326,6 @@ class EnglishManchester1Parser(CHATParser):
         return acqdiv.parsers.chat.cleaners.EnglishManchester1Cleaner.EnglishManchester1Cleaner()
 
 
-class InuktitutParser(CHATParser):
-    @staticmethod
-    def get_reader():
-        return acqdiv.parsers.chat.readers.InuktitutReader.InuktitutReader()
-
-    @staticmethod
-    def get_cleaner():
-        return acqdiv.parsers.chat.cleaners.InuktitutCleaner.InuktitutCleaner()
-
-
 class JapaneseMiiProParser(CHATParser):
     @staticmethod
     def get_reader():
@@ -510,7 +498,7 @@ def main():
             ('Turkish', TurkishParser),
             ('Japanese_MiiPro', JapaneseMiiProParser),
             ('English_Manchester1', EnglishManchester1Parser),
-            ('Inuktitut', InuktitutParser)]:
+            ]:
 
         corpus_path = os.path.join(
             acqdiv_path, 'corpora/{}/cha/*.cha'.format(corpus))
