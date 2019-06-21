@@ -17,6 +17,7 @@ from acqdiv.parsers.japanese_miyata.JapaneseMiyataParser import \
     JapaneseMiyataParser
 from acqdiv.parsers.sesotho.SesothoParser import SesothoParser
 from acqdiv.parsers.nungon.NungonParser import NungonParser
+from acqdiv.parsers.yucatec.YucatecParser import YucatecParser
 
 logger = logging.getLogger('pipeline.' + __name__)
 
@@ -48,7 +49,8 @@ class SessionParser(object):
         'Japanese_MiiPro': JapaneseMiiProParser,
         'Japanese_Miyata': JapaneseMiyataParser,
         'Sesotho': SesothoParser,
-        'Nungon': NungonParser
+        'Nungon': NungonParser,
+        'Yucatec': YucatecParser
     }
 
     def __init__(self, config, file_path):

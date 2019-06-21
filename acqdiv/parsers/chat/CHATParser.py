@@ -1,8 +1,6 @@
 import os
 
-import acqdiv.parsers.chat.cleaners.YucatecCleaner
 import acqdiv.parsers.chat.readers.ACQDIVCHATReader
-import acqdiv.parsers.chat.readers.YucatecReader
 
 # Phonbank
 from acqdiv.parsers.chat.readers.PolishReader import PolishReader
@@ -302,16 +300,6 @@ class CHATParser(CHATParserInterface):
         if fname:
             return '{}_{}'.format(fname_no_ext, uid)
         return uid
-
-
-class YucatecParser(CHATParser):
-    @staticmethod
-    def get_reader():
-        return acqdiv.parsers.chat.readers.YucatecReader.YucatecReader()
-
-    @staticmethod
-    def get_cleaner():
-        return acqdiv.parsers.chat.cleaners.YucatecCleaner.YucatecCleaner()
 
 
 class PhonbankParser(CHATParser):
