@@ -8,6 +8,7 @@ from configparser import ExtendedInterpolation
 
 from acqdiv.parsers.cree.CreeParser import CreeParser
 from acqdiv.parsers.inuktitut.InuktitutParser import InuktitutParser
+from acqdiv.parsers.turkish.TurkishParser import TurkishParser
 
 logger = logging.getLogger('pipeline.' + __name__)
 
@@ -33,7 +34,8 @@ class SessionParser(object):
 
     mappings = {
         'Cree': CreeParser,
-        'Inuktitut': InuktitutParser
+        'Inuktitut': InuktitutParser,
+        'Turkish': TurkishParser
     }
 
     def __init__(self, config, file_path):

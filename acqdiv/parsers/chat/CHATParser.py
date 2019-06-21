@@ -4,7 +4,6 @@ import acqdiv.parsers.chat.cleaners.EnglishManchester1Cleaner
 import acqdiv.parsers.chat.cleaners.JapaneseMiiProCleaner
 import acqdiv.parsers.chat.cleaners.NungonCleaner
 import acqdiv.parsers.chat.cleaners.SesothoCleaner
-import acqdiv.parsers.chat.cleaners.TurkishCleaner
 import acqdiv.parsers.chat.cleaners.YucatecCleaner
 import acqdiv.parsers.chat.readers.ACQDIVCHATReader
 import acqdiv.parsers.chat.readers.EnglishManchester1Reader
@@ -13,7 +12,6 @@ import acqdiv.parsers.chat.readers.JapaneseMiyataReader
 import acqdiv.parsers.chat.cleaners.JapaneseMiyataCleaner
 import acqdiv.parsers.chat.readers.NungonReader
 import acqdiv.parsers.chat.readers.SesothoReader
-import acqdiv.parsers.chat.readers.TurkishReader
 import acqdiv.parsers.chat.readers.YucatecReader
 
 # Phonbank
@@ -354,16 +352,6 @@ class SesothoParser(CHATParser):
     @staticmethod
     def get_cleaner():
         return acqdiv.parsers.chat.cleaners.SesothoCleaner.SesothoCleaner()
-
-
-class TurkishParser(CHATParser):
-    @staticmethod
-    def get_reader():
-        return acqdiv.parsers.chat.readers.TurkishReader.TurkishReader()
-
-    @staticmethod
-    def get_cleaner():
-        return acqdiv.parsers.chat.cleaners.TurkishCleaner.TurkishCleaner()
 
 
 class YucatecParser(CHATParser):
