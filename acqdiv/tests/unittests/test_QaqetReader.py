@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.toolbox.readers.QaqetReader import QaqetReader as Qr
+from acqdiv.parsers.corpora.main.qaqet.QaqetReader import QaqetReader as Qr
 
 
 class TestQaqetReader(unittest.TestCase):

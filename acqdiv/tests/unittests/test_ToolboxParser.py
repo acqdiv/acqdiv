@@ -1,7 +1,10 @@
 import os
 import unittest
 import acqdiv
-from acqdiv.parsers.toolbox.ToolboxParser import *
+from acqdiv.parsers.corpora.main.chintang.ChintangParser import ChintangParser
+from acqdiv.parsers.corpora.main.indonesian.IndonesianParser import \
+    IndonesianParser
+from acqdiv.parsers.corpora.main.russian.RussianParser import RussianParser
 from acqdiv.parsers.parsers import CorpusConfigParser
 
 

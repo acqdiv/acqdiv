@@ -2,24 +2,32 @@
 """
 
 import logging
-import importlib
 import configparser
 from configparser import ExtendedInterpolation
 
 # main
 
 from acqdiv.parsers.corpora.main.cree.CreeParser import CreeParser
+from acqdiv.parsers.corpora.main.dene.DeneParser import DeneParser
 from acqdiv.parsers.corpora.main.inuktitut.InuktitutParser import InuktitutParser
 from acqdiv.parsers.corpora.main.turkish.TurkishParser import TurkishParser
 from acqdiv.parsers.corpora.main.english.EnglishManchester1Parser import \
     EnglishManchester1Parser
+from acqdiv.parsers.corpora.main.indonesian.IndonesianParser \
+    import IndonesianParser
 from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProParser import \
     JapaneseMiiProParser
 from acqdiv.parsers.corpora.main.japanese_miyata.JapaneseMiyataParser import \
     JapaneseMiyataParser
+from acqdiv.parsers.corpora.main.ku_waru.KuWaruParser import KuWaruParser
 from acqdiv.parsers.corpora.main.sesotho.SesothoParser import SesothoParser
 from acqdiv.parsers.corpora.main.nungon.NungonParser import NungonParser
+from acqdiv.parsers.corpora.main.qaqet.QaqetParser import QaqetParser
+from acqdiv.parsers.corpora.main.russian.RussianParser import RussianParser
+from acqdiv.parsers.corpora.main.tuatschin.TuatschinParser \
+    import TuatschinParser
 from acqdiv.parsers.corpora.main.yucatec.YucatecParser import YucatecParser
+from acqdiv.parsers.corpora.main.chintang.ChintangParser import ChintangParser
 
 # phonbank
 
@@ -68,7 +76,14 @@ class SessionParser(object):
         'Arabic_Kuwaiti': ArabicKuwaitiParser,
         'Berber': BerberParser,
         'Polish': PolishParser,
-        'Quichua': QuichuaParser
+        'Quichua': QuichuaParser,
+        'Tuatschin': TuatschinParser,
+        'Russian': RussianParser,
+        'Qaqet': QaqetParser,
+        'Ku_Waru': KuWaruParser,
+        'Dene': DeneParser,
+        'Chintang': ChintangParser,
+        'Indonesian': IndonesianParser
     }
 
     def __init__(self, config, file_path):
@@ -94,19 +109,11 @@ class SessionParser(object):
         format = config['corpus']['format']
         corpus = config['corpus']['corpus']
 
-        if corpus in SessionParser.mappings:
-            return SessionParser.mappings[corpus]
-        elif format == "cha":
-            parser_module = importlib.import_module(
-                'acqdiv.parsers.chat.CHATParser')
-            parser_class = config['paths']['parser']
-            parser = getattr(parser_module, parser_class)
+        parser = SessionParser.mappings[corpus]
+
+        if format == "cha":
             return parser
         elif format == "toolbox":
-            parser_module = importlib.import_module(
-                'acqdiv.parsers.toolbox.ToolboxParser')
-            parser_class = config['paths']['parser']
-            parser = getattr(parser_module, parser_class)
             return lambda file_path: parser(config, file_path)
         else:
             assert 0, "Unknown format type: " + format

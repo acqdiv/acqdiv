@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.toolbox.readers.TuatschinReader import TuatschinReader \
+from acqdiv.parsers.corpora.main.tuatschin.TuatschinReader import TuatschinReader \
     as Tr
 
 

@@ -1,6 +1,6 @@
 import unittest
 from acqdiv.parsers.toolbox.readers.ToolboxReader import *
-from acqdiv.parsers.toolbox.readers.ChintangReader import ChintangReader
+from acqdiv.parsers.corpora.main.chintang.ChintangReader import ChintangReader
 
 
 class TestToolboxReader(unittest.TestCase):

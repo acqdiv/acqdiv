@@ -1,16 +1,6 @@
 import logging
 
-from acqdiv.parsers.toolbox.readers.ChintangReader import ChintangReader
-from acqdiv.parsers.toolbox.readers.DeneReader import DeneReader
-from acqdiv.parsers.toolbox.readers.IndonesianReader import IndonesianReader
-from acqdiv.parsers.toolbox.readers.RussianReader import RussianReader
-from acqdiv.parsers.toolbox.readers.TuatschinReader import TuatschinReader
-from acqdiv.parsers.toolbox.readers.KuWaruReader import KuWaruReader
 from acqdiv.parsers.toolbox.readers.ToolboxReader import ToolboxReader
-from acqdiv.parsers.toolbox.readers.QaqetReader import QaqetReader
-from acqdiv.parsers.corpora.main.qaqet.QaqetIMDIParser import QaqetIMDI
-from acqdiv.parsers.metadata.CHATParser import CHATParser
-from acqdiv.parsers.metadata.CMDIParser import CMDIParser
 from acqdiv.parsers.metadata.IMDIParser import IMDIParser
 
 
@@ -82,83 +72,3 @@ class ToolboxParser:
             if record is None:
                 raise StopIteration
             yield record
-
-###############################################################################
-
-
-class ChintangParser(ToolboxParser):
-
-    def get_record_reader(self):
-        return ChintangReader(self.toolbox_file)
-
-
-class DeneParser(ToolboxParser):
-
-    def get_record_reader(self):
-        return DeneReader(self.toolbox_file)
-
-    def get_metadata_reader(self):
-        temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
-                                         self.config['paths']['metadata_dir'])
-        metadata_file_path = temp.replace('.tbt', '.imdi')
-        return IMDIParser(self.config, metadata_file_path)
-
-
-class IndonesianParser(ToolboxParser):
-
-    def get_metadata_reader(self):
-        temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
-                                         self.config['paths']['metadata_dir'])
-        metadata_file_path = temp.replace(".txt", ".xml")
-        return CHATParser(self.config, metadata_file_path)
-
-    def get_session_metadata(self):
-        return self.metadata_reader.metadata['__attrs__']
-
-    def get_record_reader(self):
-        return IndonesianReader(self.toolbox_file)
-
-
-class RussianParser(ToolboxParser):
-
-    def get_record_reader(self):
-        return RussianReader(self.toolbox_file)
-
-
-class QaqetParser(ToolboxParser):
-
-    def get_record_reader(self):
-        return QaqetReader(self.toolbox_file)
-
-    def get_metadata_reader(self):
-        temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
-                                         self.config['paths']['metadata_dir'])
-
-        # remove the session number '_\d'
-        metadata_file_path = temp[:-6] + '.imdi'
-
-        return QaqetIMDI(self.config, metadata_file_path)
-
-
-class TuatschinParser(ToolboxParser):
-
-    def get_metadata_reader(self):
-        temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
-                                         self.config['paths']['metadata_dir'])
-        metadata_file_path = temp.replace(".tbt", ".imdi")
-        return CMDIParser(self.config, metadata_file_path)
-
-    def get_record_reader(self):
-        return TuatschinReader(self.toolbox_file)
-
-
-class KuWaruParser(ToolboxParser):
-
-    def get_record_reader(self):
-        return KuWaruReader(self.toolbox_file)
-
-    def get_metadata_reader(self):
-        temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
-                                         self.config['paths']['metadata_dir'])
-        metadata_file_path = temp.replace(".tbt", ".imdi")
-        return CMDIParser(self.config, metadata_file_path)
