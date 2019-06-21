@@ -1,6 +1,6 @@
 
 from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
-from acqdiv.parsers.chat.cleaners.JapaneseMiiProCleaner import \
+from acqdiv.parsers.japanese_miipro.JapaneseMiiProCleaner import \
     JapaneseMiiProCleaner
 
 

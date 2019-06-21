@@ -1,11 +1,9 @@
 import os
 
-import acqdiv.parsers.chat.cleaners.JapaneseMiiProCleaner
 import acqdiv.parsers.chat.cleaners.NungonCleaner
 import acqdiv.parsers.chat.cleaners.SesothoCleaner
 import acqdiv.parsers.chat.cleaners.YucatecCleaner
 import acqdiv.parsers.chat.readers.ACQDIVCHATReader
-import acqdiv.parsers.chat.readers.JapaneseMiiProReader
 import acqdiv.parsers.chat.readers.JapaneseMiyataReader
 import acqdiv.parsers.chat.cleaners.JapaneseMiyataCleaner
 import acqdiv.parsers.chat.readers.NungonReader
@@ -312,16 +310,6 @@ class CHATParser(CHATParserInterface):
         return uid
 
 
-class JapaneseMiiProParser(CHATParser):
-    @staticmethod
-    def get_reader():
-        return acqdiv.parsers.chat.readers.JapaneseMiiProReader.JapaneseMiiProReader()
-
-    @staticmethod
-    def get_cleaner():
-        return acqdiv.parsers.chat.cleaners.JapaneseMiiProCleaner.JapaneseMiiProCleaner()
-
-
 class JapaneseMiyataParser(CHATParser):
     @staticmethod
     def get_reader():
@@ -471,7 +459,6 @@ def main():
             ('Sesotho', SesothoParser),
             ('Nungon', NungonParser),
             ('Yucatec', YucatecParser),
-            ('Japanese_MiiPro', JapaneseMiiProParser),
             ]:
 
         corpus_path = os.path.join(

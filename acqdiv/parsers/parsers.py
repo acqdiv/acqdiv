@@ -11,6 +11,8 @@ from acqdiv.parsers.inuktitut.InuktitutParser import InuktitutParser
 from acqdiv.parsers.turkish.TurkishParser import TurkishParser
 from acqdiv.parsers.english.EnglishManchester1Parser import \
     EnglishManchester1Parser
+from acqdiv.parsers.japanese_miipro.JapaneseMiiProParser import \
+    JapaneseMiiProParser
 
 logger = logging.getLogger('pipeline.' + __name__)
 
@@ -38,7 +40,8 @@ class SessionParser(object):
         'Cree': CreeParser,
         'Inuktitut': InuktitutParser,
         'Turkish': TurkishParser,
-        'English_Manchester1': EnglishManchester1Parser
+        'English_Manchester1': EnglishManchester1Parser,
+        'Japanese_MiiPro': JapaneseMiiProParser
     }
 
     def __init__(self, config, file_path):
