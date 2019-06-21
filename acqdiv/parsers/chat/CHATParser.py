@@ -1,9 +1,7 @@
 import os
 
-import acqdiv.parsers.chat.cleaners.NungonCleaner
 import acqdiv.parsers.chat.cleaners.YucatecCleaner
 import acqdiv.parsers.chat.readers.ACQDIVCHATReader
-import acqdiv.parsers.chat.readers.NungonReader
 import acqdiv.parsers.chat.readers.YucatecReader
 
 # Phonbank
@@ -314,16 +312,6 @@ class YucatecParser(CHATParser):
     @staticmethod
     def get_cleaner():
         return acqdiv.parsers.chat.cleaners.YucatecCleaner.YucatecCleaner()
-
-
-class NungonParser(CHATParser):
-    @staticmethod
-    def get_reader():
-        return acqdiv.parsers.chat.readers.NungonReader.NungonReader()
-
-    @staticmethod
-    def get_cleaner():
-        return acqdiv.parsers.chat.cleaners.NungonCleaner.NungonCleaner()
 
 
 class PhonbankParser(CHATParser):

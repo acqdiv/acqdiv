@@ -1,11 +1,9 @@
 import io
 import unittest
 from acqdiv.parsers.chat.CHATParser import *
-from acqdiv.parsers.chat.cleaners.NungonCleaner import NungonCleaner
 from acqdiv.parsers.chat.cleaners.YucatecCleaner import YucatecCleaner
 from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
 from acqdiv.parsers.chat.cleaners.CHATCleaner import *
-from acqdiv.parsers.chat.readers.NungonReader import NungonReader
 from acqdiv.parsers.chat.readers.YucatecReader import YucatecReader
 
 
@@ -175,23 +173,6 @@ class TestYucatecParser(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
 ###############################################################################
-
-
-class TestNungonParser(unittest.TestCase):
-
-    def setUp(self):
-        self.parser = NungonParser('__init__.py')
-        self.maxDiff = None
-
-    def test_get_reader(self):
-        """Test get_reader. (Nungon)"""
-        actual_reader = NungonParser.get_reader()
-        self.assertTrue(isinstance(actual_reader, NungonReader))
-
-    def test_get_cleaner(self):
-        """Test get_cleaner. (Nungon)"""
-        actual_cleaner = NungonParser.get_cleaner()
-        self.assertTrue(isinstance(actual_cleaner, NungonCleaner))
 
 
 if __name__ == '__main__':
