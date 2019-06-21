@@ -46,12 +46,11 @@ def set_logger(suppressing_formatter=False):
     logger.setLevel(logging.INFO)
 
 
-def setup(test=False, xml=False):
+def setup(test=False):
     """Global setup.
 
     Args:
         test (bool): run on the test database
-        xml (bool): Loader was run with xml parsers
     """
 
     global engine, conn
@@ -83,10 +82,8 @@ def setup(test=False, xml=False):
     russian = CorpusConfigParser()
     russian.read("ini/Russian.ini")
 
-    if xml:
-        base_path = 'ini/xml/'
-    else:
-        base_path = 'ini/'
+
+    base_path = 'ini/'
 
     cree = CorpusConfigParser()
     cree.read(base_path + "Cree.ini")
@@ -187,11 +184,11 @@ def get_config(corpus_name):
         raise Exception
 
 
-def postprocess(test=False, xml=False):
+def postprocess(test=False):
     """Global setup and then call post-processes."""
     start_time = time.time()
 
-    setup(test=test, xml=xml)
+    setup(test=test)
 
     with engine.begin() as conn:
         conn.execute('PRAGMA synchronous = OFF')
@@ -291,7 +288,7 @@ def _speakers_update_age():
             results = _update_imdi_age(rows)
         elif config["metadata"]["type"] == "cha":
             results = _update_cha_age(rows)
-        # TODO: remove once all CHAT parsers are written
+        # Indonesian
         else:
             results = _update_xml_age(rows)
         _update_rows(db.Speaker.__table__, "speaker_id", results)
