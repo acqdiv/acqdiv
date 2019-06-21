@@ -6,18 +6,18 @@ import importlib
 import configparser
 from configparser import ExtendedInterpolation
 
-from acqdiv.parsers.cree.CreeParser import CreeParser
-from acqdiv.parsers.inuktitut.InuktitutParser import InuktitutParser
-from acqdiv.parsers.turkish.TurkishParser import TurkishParser
-from acqdiv.parsers.english.EnglishManchester1Parser import \
+from acqdiv.parsers.corpora.main.cree.CreeParser import CreeParser
+from acqdiv.parsers.corpora.main.inuktitut.InuktitutParser import InuktitutParser
+from acqdiv.parsers.corpora.main.turkish.TurkishParser import TurkishParser
+from acqdiv.parsers.corpora.main.english.EnglishManchester1Parser import \
     EnglishManchester1Parser
-from acqdiv.parsers.japanese_miipro.JapaneseMiiProParser import \
+from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProParser import \
     JapaneseMiiProParser
-from acqdiv.parsers.japanese_miyata.JapaneseMiyataParser import \
+from acqdiv.parsers.corpora.main.japanese_miyata.JapaneseMiyataParser import \
     JapaneseMiyataParser
-from acqdiv.parsers.sesotho.SesothoParser import SesothoParser
-from acqdiv.parsers.nungon.NungonParser import NungonParser
-from acqdiv.parsers.yucatec.YucatecParser import YucatecParser
+from acqdiv.parsers.corpora.main.sesotho.SesothoParser import SesothoParser
+from acqdiv.parsers.corpora.main.nungon.NungonParser import NungonParser
+from acqdiv.parsers.corpora.main.yucatec.YucatecParser import YucatecParser
 
 logger = logging.getLogger('pipeline.' + __name__)
 
