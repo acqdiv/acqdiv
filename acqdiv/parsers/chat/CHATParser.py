@@ -4,8 +4,6 @@ import acqdiv.parsers.chat.cleaners.NungonCleaner
 import acqdiv.parsers.chat.cleaners.SesothoCleaner
 import acqdiv.parsers.chat.cleaners.YucatecCleaner
 import acqdiv.parsers.chat.readers.ACQDIVCHATReader
-import acqdiv.parsers.chat.readers.JapaneseMiyataReader
-import acqdiv.parsers.chat.cleaners.JapaneseMiyataCleaner
 import acqdiv.parsers.chat.readers.NungonReader
 import acqdiv.parsers.chat.readers.SesothoReader
 import acqdiv.parsers.chat.readers.YucatecReader
@@ -308,16 +306,6 @@ class CHATParser(CHATParserInterface):
         if fname:
             return '{}_{}'.format(fname_no_ext, uid)
         return uid
-
-
-class JapaneseMiyataParser(CHATParser):
-    @staticmethod
-    def get_reader():
-        return acqdiv.parsers.chat.readers.JapaneseMiyataReader.JapaneseMiyataReader()
-
-    @staticmethod
-    def get_cleaner():
-        return acqdiv.parsers.chat.cleaners.JapaneseMiyataCleaner.JapaneseMiyataCleaner()
 
 
 class SesothoParser(CHATParser):

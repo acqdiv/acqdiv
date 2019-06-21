@@ -1,5 +1,5 @@
 import unittest
-from acqdiv.parsers.chat.readers.JapaneseMiyataReader import \
+from acqdiv.parsers.japanese_miyata.JapaneseMiyataReader import \
     JapaneseMiyataReader
 
 
