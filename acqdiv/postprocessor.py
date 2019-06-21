@@ -1316,7 +1316,7 @@ def _update_cha_age(rows):
 
 
 def _update_xml_age(rows):
-    """Process speaker ages in Chat XML corpora.
+    """Process speaker ages in CHATParser XML corpora.
 
     Finds all speakers from the corpus in the config and
     calls methods from age.py to fill in the age and age_in_days columns.

@@ -8,13 +8,16 @@ from acqdiv.parsers.toolbox.readers.TuatschinReader import TuatschinReader
 from acqdiv.parsers.toolbox.readers.KuWaruReader import KuWaruReader
 from acqdiv.parsers.toolbox.readers.ToolboxReader import ToolboxReader
 from acqdiv.parsers.toolbox.readers.QaqetReader import QaqetReader
-from acqdiv.parsers.metadata import Chat, Imdi, QaqetIMDI, CMDI
+from acqdiv.parsers.corpora.main.qaqet.QaqetIMDIParser import QaqetIMDI
+from acqdiv.parsers.metadata.CHATParser import CHATParser
+from acqdiv.parsers.metadata.CMDIParser import CMDIParser
+from acqdiv.parsers.metadata.IMDIParser import IMDIParser
 
 
 class ToolboxParser:
     """Gathers all data for the DB for a given Toolbox session file.
 
-    Uses the ToolboxReader for reading a toolbox file and Imdi or Chat for
+    Uses the ToolboxReader for reading a toolbox file and IMDIParser or CHATParser for
     reading the corresponding metadata file.
     """
 
@@ -25,7 +28,7 @@ class ToolboxParser:
         temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
                                          self.config['paths']['metadata_dir'])
         metadata_file_path = temp.replace(".txt", ".imdi")
-        return Imdi(self.config, metadata_file_path)
+        return IMDIParser(self.config, metadata_file_path)
 
     def __init__(self, config, toolbox_path):
         """Get toolbox and metadata readers.
@@ -98,7 +101,7 @@ class DeneParser(ToolboxParser):
         temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
                                          self.config['paths']['metadata_dir'])
         metadata_file_path = temp.replace('.tbt', '.imdi')
-        return Imdi(self.config, metadata_file_path)
+        return IMDIParser(self.config, metadata_file_path)
 
 
 class IndonesianParser(ToolboxParser):
@@ -107,7 +110,7 @@ class IndonesianParser(ToolboxParser):
         temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
                                          self.config['paths']['metadata_dir'])
         metadata_file_path = temp.replace(".txt", ".xml")
-        return Chat(self.config, metadata_file_path)
+        return CHATParser(self.config, metadata_file_path)
 
     def get_session_metadata(self):
         return self.metadata_reader.metadata['__attrs__']
@@ -143,7 +146,7 @@ class TuatschinParser(ToolboxParser):
         temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
                                          self.config['paths']['metadata_dir'])
         metadata_file_path = temp.replace(".tbt", ".imdi")
-        return CMDI(self.config, metadata_file_path)
+        return CMDIParser(self.config, metadata_file_path)
 
     def get_record_reader(self):
         return TuatschinReader(self.toolbox_file)
@@ -158,4 +161,4 @@ class KuWaruParser(ToolboxParser):
         temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
                                          self.config['paths']['metadata_dir'])
         metadata_file_path = temp.replace(".tbt", ".imdi")
-        return CMDI(self.config, metadata_file_path)
+        return CMDIParser(self.config, metadata_file_path)
