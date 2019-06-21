@@ -4,40 +4,7 @@
 import logging
 import configparser
 from configparser import ExtendedInterpolation
-
-# main
-
-from acqdiv.parsers.corpora.main.cree.CreeParser import CreeParser
-from acqdiv.parsers.corpora.main.dene.DeneParser import DeneParser
-from acqdiv.parsers.corpora.main.inuktitut.InuktitutParser import InuktitutParser
-from acqdiv.parsers.corpora.main.turkish.TurkishParser import TurkishParser
-from acqdiv.parsers.corpora.main.english.EnglishManchester1Parser import \
-    EnglishManchester1Parser
-from acqdiv.parsers.corpora.main.indonesian.IndonesianParser \
-    import IndonesianParser
-from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProParser import \
-    JapaneseMiiProParser
-from acqdiv.parsers.corpora.main.japanese_miyata.JapaneseMiyataParser import \
-    JapaneseMiyataParser
-from acqdiv.parsers.corpora.main.ku_waru.KuWaruParser import KuWaruParser
-from acqdiv.parsers.corpora.main.sesotho.SesothoParser import SesothoParser
-from acqdiv.parsers.corpora.main.nungon.NungonParser import NungonParser
-from acqdiv.parsers.corpora.main.qaqet.QaqetParser import QaqetParser
-from acqdiv.parsers.corpora.main.russian.RussianParser import RussianParser
-from acqdiv.parsers.corpora.main.tuatschin.TuatschinParser \
-    import TuatschinParser
-from acqdiv.parsers.corpora.main.yucatec.YucatecParser import YucatecParser
-from acqdiv.parsers.corpora.main.chintang.ChintangParser import ChintangParser
-
-# phonbank
-
-from acqdiv.parsers.corpora.phonbank.arabic_kern.ArabicKernParser import \
-    ArabicKernParser
-from acqdiv.parsers.corpora.phonbank.arabic_kuwaiti.ArabicKuwaitiParser \
-    import ArabicKuwaitiParser
-from acqdiv.parsers.corpora.phonbank.berber.BerberParser import BerberParser
-from acqdiv.parsers.corpora.phonbank.quichua.QuichuaParser import QuichuaParser
-from acqdiv.parsers.corpora.phonbank.polish.PolishParser import PolishParser
+from acqdiv.parsers.ParserMapper import ParserMapper
 
 
 logger = logging.getLogger('pipeline.' + __name__)
@@ -62,30 +29,6 @@ class SessionParser(object):
     """ Static class-level method to create a new parser instance based on session format type.
     """
 
-    mappings = {
-        'Cree': CreeParser,
-        'Inuktitut': InuktitutParser,
-        'Turkish': TurkishParser,
-        'English_Manchester1': EnglishManchester1Parser,
-        'Japanese_MiiPro': JapaneseMiiProParser,
-        'Japanese_Miyata': JapaneseMiyataParser,
-        'Sesotho': SesothoParser,
-        'Nungon': NungonParser,
-        'Yucatec': YucatecParser,
-        'Arabic_Kern': ArabicKernParser,
-        'Arabic_Kuwaiti': ArabicKuwaitiParser,
-        'Berber': BerberParser,
-        'Polish': PolishParser,
-        'Quichua': QuichuaParser,
-        'Tuatschin': TuatschinParser,
-        'Russian': RussianParser,
-        'Qaqet': QaqetParser,
-        'Ku_Waru': KuWaruParser,
-        'Dene': DeneParser,
-        'Chintang': ChintangParser,
-        'Indonesian': IndonesianParser
-    }
-
     def __init__(self, config, file_path):
         """ Session parser initializer
 
@@ -109,7 +52,7 @@ class SessionParser(object):
         format = config['corpus']['format']
         corpus = config['corpus']['corpus']
 
-        parser = SessionParser.mappings[corpus]
+        parser = ParserMapper.map(corpus)
 
         if format == "cha":
             return parser
