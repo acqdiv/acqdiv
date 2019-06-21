@@ -67,13 +67,12 @@ def _get_engine(test=False):
     return engine
 
 
-def load(test=True, catch_errors=False, xml=False, new=False, phonbank=False):
+def load(test=True, catch_errors=False, new=False, phonbank=False):
     """Load data from source files into DB.
 
     Args:
         test (bool): Test DB is used.
         catch_errors (bool): Errors are caught.
-        xml (bool): Run the XML parsers rather than the CHAT parsers.
         new (bool): Run over the new corpora as well.
         phonbank (bool): Run over the Phonbank corpora.
     """
@@ -85,34 +84,16 @@ def load(test=True, catch_errors=False, xml=False, new=False, phonbank=False):
         'Chintang.ini',
         'English_Manchester1.ini',
         'Indonesian.ini',
-        'Russian.ini'
+        'Russian.ini',
+        'Cree.ini',
+        'Inuktitut.ini',
+        'Japanese_Miyata.ini',
+        'Japanese_MiiPro.ini',
+        'Nungon.ini',
+        'Sesotho.ini',
+        'Turkish.ini',
+        'Yucatec.ini'
     ]
-
-    if xml:
-        base_path = 'xml/'
-
-        configs += [
-            base_path + 'Cree.ini',
-            base_path + 'Inuktitut.ini',
-            base_path + 'Japanese_Miyata.ini',
-            base_path + 'Japanese_MiiPro.ini',
-            base_path + 'Nungon.ini',
-            base_path + 'Sesotho.ini',
-            base_path + 'Turkish.ini',
-            base_path + 'Yucatec.ini'
-        ]
-
-    else:
-        configs += [
-            'Cree.ini',
-            'Inuktitut.ini',
-            'Japanese_Miyata.ini',
-            'Japanese_MiiPro.ini',
-            'Nungon.ini',
-            'Sesotho.ini',
-            'Turkish.ini',
-            'Yucatec.ini'
-        ]
 
     if new:
         configs += [
