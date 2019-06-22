@@ -29,7 +29,6 @@ def load(args):
         supressing_formatter=args.suppress_log_formatter)
     loader.load(
         test=not args.full,
-        catch_errors=args.catch_errors,
         new=args.new_corpora,
         phonbank=args.phonbank_corpora
     )
@@ -100,8 +99,6 @@ def get_cmd_args():
         '-i', '--info-log-level',
         action='store_true', help='Set logging to INFO level')
     parser_load.add_argument(
-        '-e', '--catch-errors', action='store_true', help='Catch errors')
-    parser_load.add_argument(
         '-n', '--new-corpora', action='store_true',
         help='Run over the new corpora as well.')
     parser_load.add_argument(
@@ -157,8 +154,6 @@ def get_cmd_args():
     parser_pipeline.add_argument(
         '-i', '--info-log-level',
         action='store_true', help='Set logging to INFO level')
-    parser_pipeline.add_argument(
-        '-e', '--catch-errors', action='store_true', help='Catch errors')
     parser_pipeline.add_argument(
         '-n', '--new-corpora', action='store_true',
         help='Run over the new corpora as well.')

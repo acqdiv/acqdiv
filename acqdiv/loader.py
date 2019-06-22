@@ -67,12 +67,11 @@ def _get_engine(test=False):
     return engine
 
 
-def load(test=True, catch_errors=False, new=False, phonbank=False):
+def load(test=True, new=False, phonbank=False):
     """Load data from source files into DB.
 
     Args:
         test (bool): Test DB is used.
-        catch_errors (bool): Errors are caught.
         new (bool): Run over the new corpora as well.
         phonbank (bool): Run over the Phonbank corpora.
     """
@@ -128,7 +127,7 @@ def load(test=True, catch_errors=False, new=False, phonbank=False):
         corpus_parser = ParserMapper.map(name)
 
         c = corpus_parser(cfg, engine)
-        c.process_corpus(catch_errors=catch_errors, test=test)
+        c.process_corpus(test=test)
 
     print("%s seconds --- Finished" % (time.time() - start_time))
     print()
