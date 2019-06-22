@@ -26,7 +26,7 @@ class CorpusProcessor(object):
         """
         self.cfg = cfg
         self.engine = engine
-        self.parser_factory = SessionParser.create_parser_factory(self.cfg)
+        self.parser_factory = SessionParser.create_parser(self.cfg)
 
     def process_corpus(self, catch_errors=False, test=False):
         """Process corpus files.
