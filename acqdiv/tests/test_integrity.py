@@ -29,7 +29,7 @@ class ValidationTest(unittest.TestCase):
 
         # Load gold database counts.
         cls.cfg = configparser.ConfigParser()
-        cls.cfg.read(cls.config) # TODO: how to close the config file this way?
+        cls.cfg.read(cls.config) # TODO: how to close the metadata_path file this way?
 
         # Load list of tables from csv file and check that the specified table and their columns contain no NULL.
         cls.f_no_nulls = open(os.path.join(

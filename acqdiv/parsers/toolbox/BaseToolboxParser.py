@@ -14,23 +14,20 @@ class BaseToolboxParser(ToolboxParser):
     """
 
     def get_record_reader(self):
-        return ToolboxReader(self.toolbox_file)
+        return ToolboxReader(self.toolbox_path)
 
     def get_metadata_reader(self):
-        temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
-                                         self.config['paths']['metadata_dir'])
-        metadata_file_path = temp.replace(".txt", ".imdi")
-        return IMDIParser(metadata_file_path)
+        return IMDIParser(self.metadata_path)
 
-    def __init__(self, config, toolbox_path):
+    def __init__(self, toolbox_path, metadata_path):
         """Get toolbox and metadata readers.
 
         Args:
-            config (CorpusConfigParser): Corpus config ini file.
             toolbox_path (str): Path to the toolbox file.
+            metadata_path (str): Path to the metadata file.
         """
-        self.config = config
-        self.toolbox_file = toolbox_path
+        self.metadata_path = metadata_path
+        self.toolbox_path = toolbox_path
         self.logger = logging.getLogger('pipeline.' + __name__)
 
         # get record reader
@@ -52,7 +49,7 @@ class BaseToolboxParser(ToolboxParser):
         except KeyError:
             md['media_type'] = None
             self.logger.info('Session {} has no media type information'.format(
-               self.toolbox_file))
+               self.toolbox_path))
         return md
 
     def next_speaker(self):

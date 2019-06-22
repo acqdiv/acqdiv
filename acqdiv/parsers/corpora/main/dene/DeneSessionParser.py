@@ -6,10 +6,7 @@ from acqdiv.parsers.toolbox.BaseToolboxParser import BaseToolboxParser
 class DeneSessionParser(BaseToolboxParser):
 
     def get_record_reader(self):
-        return DeneReader(self.toolbox_file)
+        return DeneReader(self.toolbox_path)
 
     def get_metadata_reader(self):
-        temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
-                                         self.config['paths']['metadata_dir'])
-        metadata_file_path = temp.replace('.tbt', '.imdi')
-        return IMDIParser(metadata_file_path)
+        return IMDIParser(self.metadata_path)

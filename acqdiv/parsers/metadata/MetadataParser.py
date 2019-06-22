@@ -32,7 +32,7 @@ class MetadataParser(object):
         """
         print(self.metadata['__attrs__']['Cname'])
 
-        if self.config['corpus'] == "Indonesian":
+        if self.metadata_path['corpus'] == "Indonesian":
             match = re.match(r"(\w{3})-\d{2}(\d{2})-(\d{2})-(\d{2})",self.metadata['__attrs__']['Cname'])
             self.metadata['__attrs__']['Cname'] = match.group(1).upper() + '-' + match.group(4) + match.group(3) + match.group(2)
         self.metadata['__attrs__']['schemaLocation'] = self.metadata['__attrs__'].pop('{http://www.w3.org/2001/XMLSchema-instance}schemaLocation')

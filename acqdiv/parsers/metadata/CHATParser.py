@@ -10,9 +10,9 @@ class CHATParser(MetadataParser):
     per-corpus files (with the extension .cdc). Therefor, the CHATParser class
     contains significantly less functionality than the IMDI class.
     """
-    # do we need to pass in the config?
-    # def __init__(self, config, path):
-        # MetadataParser.__init__(self, config, path)
+    # do we need to pass in the metadata_path?
+    # def __init__(self, metadata_path, path):
+        # MetadataParser.__init__(self, metadata_path, path)
 
     def __init__(self, path):
         super().__init__(path)

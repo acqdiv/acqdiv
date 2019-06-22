@@ -6,10 +6,7 @@ from acqdiv.parsers.toolbox.BaseToolboxParser import BaseToolboxParser
 class KuWaruSessionParser(BaseToolboxParser):
 
     def get_record_reader(self):
-        return KuWaruReader(self.toolbox_file)
+        return KuWaruReader(self.toolbox_path)
 
     def get_metadata_reader(self):
-        temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
-                                         self.config['paths']['metadata_dir'])
-        metadata_file_path = temp.replace(".tbt", ".imdi")
-        return CMDIParser(metadata_file_path)
+        return CMDIParser(self.metadata_path)

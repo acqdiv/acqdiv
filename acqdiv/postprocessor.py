@@ -136,7 +136,7 @@ def setup(test=False):
 
 
 def get_config(corpus_name):
-    """ Return the config file.
+    """ Return the metadata_path file.
     """
     if corpus_name == "Chintang":
         return chintang
@@ -855,10 +855,10 @@ def _morphemes_infer_lemma_id_chintang():
 
 
 def _morphemes_infer_labels():
-    """Perform morpheme and POS tag substitutions given the config file.
+    """Perform morpheme and POS tag substitutions given the metadata_path file.
 
     Indonesian, Japanese_MiiPro, Japanese_Miyata, Sesotho and Turkish have
-    substitutions defined in their config files.
+    substitutions defined in their metadata_path files.
     """
     s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw,
                    db.Morpheme.pos, db.Morpheme.morpheme])
@@ -1242,7 +1242,7 @@ def _insert_rows(t, rows):
 def _update_imdi_age(rows):
     """Process speaker ages in IMDI corpora.
 
-    Finds all the recording sessions in the corpus in the config. Then,
+    Finds all the recording sessions in the corpus in the metadata_path. Then,
     for each speaker in the session:
 
     First attempts to calculate ages from the speaker's birth date and
@@ -1318,7 +1318,7 @@ def _update_cha_age(rows):
 def _update_xml_age(rows):
     """Process speaker ages in BaseCHATParser XML corpora.
 
-    Finds all speakers from the corpus in the config and
+    Finds all speakers from the corpus in the metadata_path and
     calls methods from age.py to fill in the age and age_in_days columns.
     """
     results = []

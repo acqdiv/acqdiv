@@ -13,7 +13,7 @@ class SessionProcessor(object):
         with the SQLAlchemy ORM backend to push data to it.
     """
     def __init__(self, cfg, file_path, session_parser, engine):
-        """ Init parser with corpus config, file path, a parser factory and a database engine.
+        """ Init parser with corpus metadata_path, file path, a parser factory and a database engine.
 
         Args:
             cfg: CorpusConfigParser
@@ -28,7 +28,7 @@ class SessionProcessor(object):
         self.engine = engine
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
 
-        # Commonly used variables from the corpus config file.
+        # Commonly used variables from the corpus metadata_path file.
         self.language = self.config['corpus']['language']
         self.corpus = self.config['corpus']['corpus']
         self.format = self.config['corpus']['format']

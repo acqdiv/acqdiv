@@ -7,13 +7,10 @@ from acqdiv.parsers.toolbox.BaseToolboxParser import BaseToolboxParser
 class IndonesianSessionParser(BaseToolboxParser):
 
     def get_metadata_reader(self):
-        temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
-                                         self.config['paths']['metadata_dir'])
-        metadata_file_path = temp.replace(".txt", ".xml")
-        return CHATParser(metadata_file_path)
+        return CHATParser(self.metadata_path)
 
     def get_session_metadata(self):
         return self.metadata_reader.metadata['__attrs__']
 
     def get_record_reader(self):
-        return IndonesianReader(self.toolbox_file)
+        return IndonesianReader(self.toolbox_path)

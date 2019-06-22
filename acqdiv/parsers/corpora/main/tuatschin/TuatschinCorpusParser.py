@@ -6,4 +6,9 @@ from acqdiv.parsers.corpora.main.tuatschin.TuatschinSessionParser \
 class TuatschinCorpusParser(CorpusParser):
 
     def get_session_parser(self, session_path):
-        return TuatschinSessionParser(self.cfg, session_path)
+
+        temp = session_path.replace(self.cfg['paths']['sessions_dir'],
+                                    self.cfg['paths']['metadata_dir'])
+        metadata_path = temp.replace('.tbt', '.imdi')
+
+        return TuatschinSessionParser(self.cfg, metadata_path)

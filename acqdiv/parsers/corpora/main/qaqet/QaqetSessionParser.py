@@ -6,13 +6,7 @@ from acqdiv.parsers.toolbox.BaseToolboxParser import BaseToolboxParser
 class QaqetSessionParser(BaseToolboxParser):
 
     def get_record_reader(self):
-        return QaqetReader(self.toolbox_file)
+        return QaqetReader(self.toolbox_path)
 
     def get_metadata_reader(self):
-        temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
-                                         self.config['paths']['metadata_dir'])
-
-        # remove the session number '_\d'
-        metadata_file_path = temp[:-6] + '.imdi'
-
-        return QaqetIMDI(metadata_file_path)
+        return QaqetIMDI(self.metadata_path)
