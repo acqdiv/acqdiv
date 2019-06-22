@@ -15,4 +15,4 @@ class QaqetParser(ToolboxParser):
         # remove the session number '_\d'
         metadata_file_path = temp[:-6] + '.imdi'
 
-        return QaqetIMDI(self.config, metadata_file_path)
+        return QaqetIMDI(metadata_file_path)

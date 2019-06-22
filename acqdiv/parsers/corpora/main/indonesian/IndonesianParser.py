@@ -10,7 +10,7 @@ class IndonesianParser(ToolboxParser):
         temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
                                          self.config['paths']['metadata_dir'])
         metadata_file_path = temp.replace(".txt", ".xml")
-        return CHATParser(self.config, metadata_file_path)
+        return CHATParser(metadata_file_path)
 
     def get_session_metadata(self):
         return self.metadata_reader.metadata['__attrs__']

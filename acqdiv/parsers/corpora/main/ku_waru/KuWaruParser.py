@@ -12,4 +12,4 @@ class KuWaruParser(ToolboxParser):
         temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
                                          self.config['paths']['metadata_dir'])
         metadata_file_path = temp.replace(".tbt", ".imdi")
-        return CMDIParser(self.config, metadata_file_path)
+        return CMDIParser(metadata_file_path)

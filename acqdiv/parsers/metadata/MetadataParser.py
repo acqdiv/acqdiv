@@ -14,13 +14,9 @@ class MetadataParser(object):
         metadata: A dictionary of all metadata values extracted from the
                   file the tree was initialized with.
     """
-    # do we need to pass in the config?
-    # def __init__(self, config, path):
-        # self.config = config
 
-    def __init__(self, config, path):
+    def __init__(self, path):
         self.path = path
-        self.config = config
         self.tree = objectify.parse(path)
         self.root = self.tree.getroot()
         self.metadata = {

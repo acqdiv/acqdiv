@@ -6,15 +6,8 @@ from acqdiv.parsers.metadata.MetadataParser import MetadataParser
 class IMDIParser(MetadataParser):
     """ Subclass of metadata.MetadataParser to deal with IMDI metadata (Chintang and Russian via S. Stoll) """
 
-    # Do we want to load up this dictionary of everything on init
-    # so that the caller has to deal with the db-specific parsing?
-
-    # do we need to pass in the config?
-    # def __init__(self, config, path):
-    #    MetadataParser.__init__(self, config, path)
-
-    def __init__(self, config, path):
-        MetadataParser.__init__(self, config, path)
+    def __init__(self, path):
+        super().__init__(path)
         self.metadata["participants"] = self.get_participants()
         self.metadata["session"] = self.get_session_data()
         self.metadata["project"] = self.get_project_data(self.root)

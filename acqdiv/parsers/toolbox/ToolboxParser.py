@@ -18,7 +18,7 @@ class ToolboxParser:
         temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],
                                          self.config['paths']['metadata_dir'])
         metadata_file_path = temp.replace(".txt", ".imdi")
-        return IMDIParser(self.config, metadata_file_path)
+        return IMDIParser(metadata_file_path)
 
     def __init__(self, config, toolbox_path):
         """Get toolbox and metadata readers.

@@ -6,8 +6,8 @@ class CMDIParser(MetadataParser):
     namespace = ('{http://www.clarin.eu/cmd/1/profiles/clarin.eu:'
                  'cr1:p_1407745712035}')
 
-    def __init__(self, config, path):
-        super().__init__(config, path)
+    def __init__(self, path):
+        super().__init__(path)
         self.metadata["participants"] = self.get_participants()
         self.metadata["session"] = self.get_session_data()
 

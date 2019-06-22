@@ -14,8 +14,8 @@ class CHATParser(MetadataParser):
     # def __init__(self, config, path):
         # MetadataParser.__init__(self, config, path)
 
-    def __init__(self, config, path):
-        MetadataParser.__init__(self, config, path)
+    def __init__(self, path):
+        super().__init__(path)
         self.metadata["participants"] = self.get_participants(self.root)
         self.metadata["comments"] = self.get_comments(self.root)
         # self.metadata["session"] = self.get_session_data()

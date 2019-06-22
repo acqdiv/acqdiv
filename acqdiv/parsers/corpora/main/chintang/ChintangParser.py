@@ -14,4 +14,4 @@ class ChintangParser(ToolboxParser):
             self.config['paths']['sessions_dir'],
             self.config['paths']['metadata_dir'])
         metadata_file_path = temp.replace(".txt", ".imdi")
-        return ChintangIMDIParser(self.config, metadata_file_path)
+        return ChintangIMDIParser(metadata_file_path)
