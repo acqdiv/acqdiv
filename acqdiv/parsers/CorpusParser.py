@@ -1,7 +1,6 @@
 import glob
-import sys
 
-from acqdiv.processors.processors import SessionProcessor, logger
+from acqdiv.processors.processors import SessionProcessor
 
 
 class CorpusParser:
@@ -34,16 +33,7 @@ class CorpusParser:
 
             s = SessionProcessor(
                 self.cfg, session_file, session_parser, self.engine)
-
-            try:
-                s.process_session()
-            except Exception as e:
-                logger.warning("Aborted processing of file {}: "
-                               "exception: {}".format(session_file, type(e)),
-                               exc_info=sys.exc_info())
-
-                if not catch_errors:
-                    raise
+            s.process_session()
 
             if test:
                 break

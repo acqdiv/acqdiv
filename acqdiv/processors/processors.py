@@ -2,13 +2,10 @@
 (Toolbox, CHAT) into ACQDIV database.
 """
 
-import logging
 import os
 import sqlalchemy as sa
 
 import acqdiv.database_backend as db
-
-logger = logging.getLogger('pipeline.' + __name__)
 
 
 class SessionProcessor(object):
@@ -80,7 +77,6 @@ class SessionProcessor(object):
         # Populate the utterances, words and morphemes tables.
         for utterance, words, morphemes in self.session_parser.next_utterance():
             if utterance is None:
-                logger.info("Skipping nonce utterance in {}".format(self.file_path))
                 continue
 
             utterance.update(corpus=self.corpus, language=self.language)
@@ -97,14 +93,7 @@ class SessionProcessor(object):
 
             for i, mword in enumerate(morphemes):
                 w_id = w_ids[i] if link_to_word else None
-                try:
-                    for m in mword:
-                        m.update(corpus=self.corpus, language=self.language, type=self.morpheme_type)
-                        insert_morph(session_id_fk=s_id, utterance_id_fk=u_id, word_id_fk=w_id, **m)
 
-                except TypeError:
-                    logger.warn("Error processing morphemes in "
-                                "word {} in {} utterance {}".format(i, self.corpus, utterance['source_id']))
-                except IndexError:
-                    logger.info("Word {} in {} utterance {} "
-                                "has no morphemes".format(i, self.corpus, utterance['source_id']))
+                for m in mword:
+                    m.update(corpus=self.corpus, language=self.language, type=self.morpheme_type)
+                    insert_morph(session_id_fk=s_id, utterance_id_fk=u_id, word_id_fk=w_id, **m)
