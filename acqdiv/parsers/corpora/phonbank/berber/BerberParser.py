@@ -1,4 +1,4 @@
-from acqdiv.parsers.chat.CHATParser import PhonbankParser
+from acqdiv.parsers.corpora.phonbank.PhonbankParser import PhonbankParser
 from acqdiv.parsers.corpora.phonbank.berber.BerberCleaner import BerberCleaner
 from acqdiv.parsers.corpora.phonbank.berber.BerberReader import BerberReader
 
