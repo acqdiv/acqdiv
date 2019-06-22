@@ -1,37 +1,37 @@
 # main
 
-from acqdiv.parsers.corpora.main.chintang.ChintangSessionParser \
-    import ChintangSessionParser
-from acqdiv.parsers.corpora.main.cree.CreeSessionParser \
-    import CreeSessionParser
-from acqdiv.parsers.corpora.main.dene.DeneSessionParser \
-    import DeneSessionParser
-from acqdiv.parsers.corpora.main.english.EnglishManchester1SessionParser \
-    import EnglishManchester1SessionParser
-from acqdiv.parsers.corpora.main.indonesian.IndonesianSessionParser \
-    import IndonesianSessionParser
-from acqdiv.parsers.corpora.main.inuktitut.InuktitutSessionParser \
-    import InuktitutSessionParser
-from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProSessionParser \
-    import JapaneseMiiProSessionParser
-from acqdiv.parsers.corpora.main.japanese_miyata.JapaneseMiyataSessionParser \
-    import JapaneseMiyataSessionParser
-from acqdiv.parsers.corpora.main.ku_waru.KuWaruSessionParser \
-    import KuWaruSessionParser
-from acqdiv.parsers.corpora.main.nungon.NungonSessionParser \
-    import NungonSessionParser
-from acqdiv.parsers.corpora.main.qaqet.QaqetSessionParser \
-    import QaqetSessionParser
-from acqdiv.parsers.corpora.main.russian.RussianSessionParser \
-    import RussianSessionParser
-from acqdiv.parsers.corpora.main.sesotho.SesothoSessionParser \
-    import SesothoSessionParser
-from acqdiv.parsers.corpora.main.tuatschin.TuatschinSessionParser \
-    import TuatschinSessionParser
-from acqdiv.parsers.corpora.main.turkish.TurkishSessionParser \
-    import TurkishSessionParser
-from acqdiv.parsers.corpora.main.yucatec.YucatecSessionParser \
-    import YucatecSessionParser
+from acqdiv.parsers.corpora.main.chintang.ChintangCorpusParser \
+    import ChintangCorpusParser
+from acqdiv.parsers.corpora.main.cree.CreeCorpusParser \
+    import CreeCorpusParser
+from acqdiv.parsers.corpora.main.dene.DeneCorpusParser \
+    import DeneCorpusParser
+from acqdiv.parsers.corpora.main.english.EnglishCorpusParser \
+    import EnglishCorpusParser
+from acqdiv.parsers.corpora.main.indonesian.IndonesianCorpusParser \
+    import IndonesianCorpusParser
+from acqdiv.parsers.corpora.main.inuktitut.InuktitutCorpusParser \
+    import InuktitutCorpusParser
+from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProCorpusParser \
+    import JapaneseMiiProCorpusParser
+from acqdiv.parsers.corpora.main.japanese_miyata.JapaneseMiyataCorpusParser \
+    import JapaneseMiyataCorpusParser
+from acqdiv.parsers.corpora.main.ku_waru.KuWaruCorpusParser \
+    import KuWaruCorpusParser
+from acqdiv.parsers.corpora.main.nungon.NungonCorpusParser \
+    import NungonCorpusParser
+from acqdiv.parsers.corpora.main.qaqet.QaqetCorpusParser \
+    import QaqetCorpusParser
+from acqdiv.parsers.corpora.main.russian.RussianCorpusParser \
+    import RussianCorpusParser
+from acqdiv.parsers.corpora.main.sesotho.SesothoCorpusParser \
+    import SesothoCorpusParser
+from acqdiv.parsers.corpora.main.tuatschin.TuatschinCorpusParser \
+    import TuatschinCorpusParser
+from acqdiv.parsers.corpora.main.turkish.TurkishCorpusParser \
+    import TurkishCorpusParser
+from acqdiv.parsers.corpora.main.yucatec.YucatecCorpusParser \
+    import YucatecCorpusParser
 
 # phonbank
 
@@ -51,22 +51,22 @@ class ParserMapper:
 
     mappings = {
         # main
-        'Chintang': ChintangSessionParser,
-        'Cree': CreeSessionParser,
-        'Dene': DeneSessionParser,
-        'English_Manchester1': EnglishManchester1SessionParser,
-        'Indonesian': IndonesianSessionParser,
-        'Inuktitut': InuktitutSessionParser,
-        'Japanese_MiiPro': JapaneseMiiProSessionParser,
-        'Japanese_Miyata': JapaneseMiyataSessionParser,
-        'Ku_Waru': KuWaruSessionParser,
-        'Nungon': NungonSessionParser,
-        'Qaqet': QaqetSessionParser,
-        'Russian': RussianSessionParser,
-        'Sesotho': SesothoSessionParser,
-        'Tuatschin': TuatschinSessionParser,
-        'Turkish': TurkishSessionParser,
-        'Yucatec': YucatecSessionParser,
+        'Chintang': ChintangCorpusParser,
+        'Cree': CreeCorpusParser,
+        'Dene': DeneCorpusParser,
+        'English_Manchester1': EnglishCorpusParser,
+        'Indonesian': IndonesianCorpusParser,
+        'Inuktitut': InuktitutCorpusParser,
+        'Japanese_MiiPro': JapaneseMiiProCorpusParser,
+        'Japanese_Miyata': JapaneseMiyataCorpusParser,
+        'Ku_Waru': KuWaruCorpusParser,
+        'Nungon': NungonCorpusParser,
+        'Qaqet': QaqetCorpusParser,
+        'Russian': RussianCorpusParser,
+        'Sesotho': SesothoCorpusParser,
+        'Tuatschin': TuatschinCorpusParser,
+        'Turkish': TurkishCorpusParser,
+        'Yucatec': YucatecCorpusParser,
 
         # phonbank
         'Arabic_Kern': ArabicKernParser,

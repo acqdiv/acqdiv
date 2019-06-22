@@ -5,9 +5,9 @@ import argparse
 import logging
 
 from acqdiv import pipeline_logging
-from acqdiv.parsers.CorpusParser import CorpusParser
 from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
 from acqdiv.database_backend import db_connect, create_tables
+from acqdiv.parsers.ParserMapper import ParserMapper
 
 
 def set_logger(level_i=False, supressing_formatter=False):
@@ -115,16 +115,19 @@ def load(test=True, catch_errors=False, new=False, phonbank=False):
             base_path + 'Quichua.ini'
         ]
 
-    # Parse the config file and call the sessions processor.
     for config in configs:
+
         cfg = CorpusConfigParser()
         cfg.read("ini/"+config)
 
-        # Process by parsing the files and
-        # adding extracted data to the database.
         print("{0} seconds --- Start processing: {1}".format(
             time.time() - start_time, config.split(".")[0]))
-        c = CorpusParser(cfg, engine)
+
+        name = cfg['corpus']['corpus']
+
+        corpus_parser = ParserMapper.map(name)
+
+        c = corpus_parser(cfg, engine)
         c.process_corpus(catch_errors=catch_errors, test=test)
 
     print("%s seconds --- Finished" % (time.time() - start_time))

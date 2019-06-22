@@ -15,19 +15,19 @@ class SessionProcessor(object):
     """ SessionProcessor invokes a parser to get the extracted data, and then interacts
         with the SQLAlchemy ORM backend to push data to it.
     """
-    def __init__(self, cfg, file_path, parser_factory, engine):
+    def __init__(self, cfg, file_path, session_parser, engine):
         """ Init parser with corpus config, file path, a parser factory and a database engine.
 
         Args:
             cfg: CorpusConfigParser
             file_path: path to raw session input file
-            parser_factory: SessionParser (given
+            session_parser: The session parser.
             engine: SQLAlchemy database engine
 
         """
         self.config = cfg
         self.file_path = file_path
-        self.parser_factory = parser_factory
+        self.session_parser = session_parser
         self.engine = engine
         self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
 
@@ -56,8 +56,7 @@ class SessionProcessor(object):
         insert_sess, insert_speaker, insert_utt, insert_word, insert_morph = \
             (sa.insert(model, bind=conn).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word, db.Morpheme))
 
-        self.parser = self.parser_factory(self.file_path)
-        session_metadata = self.parser.get_session_metadata()
+        session_metadata = self.session_parser.get_session_metadata()
         
         # try:
         #     duration = session_metadata['duration']
@@ -73,13 +72,13 @@ class SessionProcessor(object):
 
         # Populate the speakers table.
         speaker_labels = self.config['speaker_labels']
-        for speaker in self.parser.next_speaker():
+        for speaker in self.session_parser.next_speaker():
             d = self._extract(speaker, speaker_labels,
                               language=self.language, corpus=self.corpus)
             insert_speaker(session_id_fk=s_id, **d)
 
         # Populate the utterances, words and morphemes tables.
-        for utterance, words, morphemes in self.parser.next_utterance():
+        for utterance, words, morphemes in self.session_parser.next_utterance():
             if utterance is None:
                 logger.info("Skipping nonce utterance in {}".format(self.file_path))
                 continue

@@ -1,7 +1,6 @@
 import glob
 import sys
 
-from acqdiv.parsers.SessionParser import SessionParser
 from acqdiv.processors.processors import SessionProcessor, logger
 
 
@@ -17,7 +16,6 @@ class CorpusParser:
         """
         self.cfg = cfg
         self.engine = engine
-        self.parser_factory = SessionParser.create_parser(self.cfg)
 
     def get_session_parser(self, session_path):
         pass
@@ -31,8 +29,11 @@ class CorpusParser:
         """
         for session_file in sorted(glob.glob(self.cfg['paths']['sessions'])):
             print("\t", session_file)
-            s = SessionProcessor(self.cfg, session_file,
-                    self.parser_factory, self.engine)
+
+            session_parser = self.get_session_parser(session_file)
+
+            s = SessionProcessor(
+                self.cfg, session_file, session_parser, self.engine)
 
             try:
                 s.process_session()
