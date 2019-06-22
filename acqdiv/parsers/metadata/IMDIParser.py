@@ -71,22 +71,8 @@ class IMDIParser(MetadataParser):
 
             # check collected participant dictionary, then append to list of all participants
             if not len(participant) == 0:
-                # Chintang only: special role inference
-                # Default for participant['role'] is the value taken from the field Role; overwrite this by more specific value UNLESS the existing value is "Target Child"
-
-                if self.config['corpus']['corpus'] == "Chintang":
-                    # (1) Actor/FamilySocialRole is on average more specific than Actor/Role
-                    if ('familysocialrole' in participant and
-                        participant['familysocialrole'] not in ['Unspecified', 'unspecified'] and
-                        participant['role'] not in ['target child', 'Target child', 'Target Child']):
-                        participant['role'] = participant['familysocialrole']
-                    # (2) Even better values can sometimes be found in Actor/Keys. This list of nodes has been evaluated above; the relevant value is now in participant['family_key']
-                    if ('family_key' in participant and
-                        participant['family_key'] not in ['None', 'none', 'n/a', '?', '??'] and
-                        participant['role'] not in ['target child', 'Target child', 'Target Child']):
-                        participant['role'] = participant['family_key']
-
                 participants.append(participant)
+
         return participants
 
 
