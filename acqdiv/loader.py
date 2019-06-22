@@ -5,7 +5,7 @@ import argparse
 import logging
 
 from acqdiv import pipeline_logging
-from acqdiv.processors.processors import CorpusProcessor
+from acqdiv.parsers.CorpusParser import CorpusParser
 from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
 from acqdiv.database_backend import db_connect, create_tables
 
@@ -124,7 +124,7 @@ def load(test=True, catch_errors=False, new=False, phonbank=False):
         # adding extracted data to the database.
         print("{0} seconds --- Start processing: {1}".format(
             time.time() - start_time, config.split(".")[0]))
-        c = CorpusProcessor(cfg, engine)
+        c = CorpusParser(cfg, engine)
         c.process_corpus(catch_errors=catch_errors, test=test)
 
     print("%s seconds --- Finished" % (time.time() - start_time))
