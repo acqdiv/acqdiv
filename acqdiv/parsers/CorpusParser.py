@@ -19,6 +19,9 @@ class CorpusParser:
         self.engine = engine
         self.parser_factory = SessionParser.create_parser(self.cfg)
 
+    def get_session_parser(self):
+        pass
+
     def process_corpus(self, catch_errors=False, test=False):
         """Process corpus files.
 
