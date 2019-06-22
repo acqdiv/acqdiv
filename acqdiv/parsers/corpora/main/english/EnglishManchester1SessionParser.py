@@ -5,7 +5,7 @@ from acqdiv.parsers.corpora.main.english.EnglishManchester1Cleaner import \
     EnglishManchester1Cleaner
 
 
-class EnglishManchester1Parser(CHATParser):
+class EnglishManchester1SessionParser(CHATParser):
     @staticmethod
     def get_reader():
         return EnglishManchester1Reader()

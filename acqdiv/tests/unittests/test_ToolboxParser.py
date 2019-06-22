@@ -1,10 +1,10 @@
 import os
 import unittest
 import acqdiv
-from acqdiv.parsers.corpora.main.chintang.ChintangParser import ChintangParser
-from acqdiv.parsers.corpora.main.indonesian.IndonesianParser import \
-    IndonesianParser
-from acqdiv.parsers.corpora.main.russian.RussianParser import RussianParser
+from acqdiv.parsers.corpora.main.chintang.ChintangSessionParser import ChintangSessionParser
+from acqdiv.parsers.corpora.main.indonesian.IndonesianSessionParser import \
+    IndonesianSessionParser
+from acqdiv.parsers.corpora.main.russian.RussianSessionParser import RussianSessionParser
 from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
 
 
@@ -20,7 +20,7 @@ class TestChintangParser(unittest.TestCase):
         config.read(os.path.join(here, 'ini/Chintang.ini'))
         file_path = os.path.join(
             here, 'tests/unittests/test_files/Chintang.txt')
-        cls.parser = ChintangParser(config, file_path)
+        cls.parser = ChintangSessionParser(config, file_path)
 
     def test_get_session_metadata(self):
         actual_output = self.parser.get_session_metadata()
@@ -121,7 +121,7 @@ class TestIndonesianParser(unittest.TestCase):
         config.read(os.path.join(here, 'ini/Indonesian.ini'))
         file_path = os.path.join(
             here, 'tests/unittests/test_files/Indonesian.txt')
-        cls.parser = IndonesianParser(config, file_path)
+        cls.parser = IndonesianSessionParser(config, file_path)
 
     def test_get_session_metadata(self):
         actual_output = self.parser.get_session_metadata()
@@ -216,7 +216,7 @@ class TestRussianParser(unittest.TestCase):
         config.read(os.path.join(here, 'ini/Russian.ini'))
         file_path = os.path.join(
             here, 'tests/unittests/test_files/Russian.txt')
-        cls.parser = RussianParser(config, file_path)
+        cls.parser = RussianSessionParser(config, file_path)
 
     def test_get_session_metadata(self):
         actual_output = self.parser.get_session_metadata()

@@ -3,19 +3,19 @@ import unittest
 
 from acqdiv.parsers.corpora.main.inuktitut.InuktitutCleaner import \
     InuktitutCleaner
-from acqdiv.parsers.corpora.main.inuktitut.InuktitutParser import \
-    InuktitutParser
+from acqdiv.parsers.corpora.main.inuktitut.InuktitutSessionParser import \
+    InuktitutSessionParser
 from acqdiv.parsers.corpora.main.inuktitut.InuktitutReader import \
     InuktitutReader
 
 
 class TestInuktitutParser(unittest.TestCase):
     """
-    Class to test InuktitutParser.
+    Class to test InuktitutSessionParser.
     """
 
     def setUp(self):
-        self.parser = InuktitutParser('__init__.py')
+        self.parser = InuktitutSessionParser('__init__.py')
         self.maxDiff = None
 
     def test_get_reader(self):

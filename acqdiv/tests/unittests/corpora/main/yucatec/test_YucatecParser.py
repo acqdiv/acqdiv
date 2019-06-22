@@ -2,24 +2,24 @@ import io
 import unittest
 
 from acqdiv.parsers.corpora.main.yucatec.YucatecCleaner import YucatecCleaner
-from acqdiv.parsers.corpora.main.yucatec.YucatecParser import YucatecParser
+from acqdiv.parsers.corpora.main.yucatec.YucatecSessionParser import YucatecSessionParser
 from acqdiv.parsers.corpora.main.yucatec.YucatecReader import YucatecReader
 
 
 class TestYucatecParser(unittest.TestCase):
 
     def setUp(self):
-        self.parser = YucatecParser('__init__.py')
+        self.parser = YucatecSessionParser('__init__.py')
         self.maxDiff = None
 
     def test_get_reader(self):
         """Test get_reader. (Yucatec)"""
-        actual_reader = YucatecParser.get_reader()
+        actual_reader = YucatecSessionParser.get_reader()
         self.assertTrue(isinstance(actual_reader, YucatecReader))
 
     def test_get_cleaner(self):
         """Test get_cleaner. (Yucatec)"""
-        actual_cleaner = YucatecParser.get_cleaner()
+        actual_cleaner = YucatecSessionParser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, YucatecCleaner))
 
     def test_next_utterance_no_misalignments_single_word_no_mor(self):

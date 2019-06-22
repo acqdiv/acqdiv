@@ -3,7 +3,7 @@ from acqdiv.parsers.corpora.main.cree.CreeReader import CreeReader
 from acqdiv.parsers.corpora.main.cree.CreeCleaner import CreeCleaner
 
 
-class CreeParser(CHATParser):
+class CreeSessionParser(CHATParser):
     @staticmethod
     def get_reader():
         return CreeReader()

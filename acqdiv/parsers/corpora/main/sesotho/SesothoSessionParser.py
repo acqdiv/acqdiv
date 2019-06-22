@@ -3,7 +3,7 @@ from acqdiv.parsers.corpora.main.sesotho.SesothoReader import SesothoReader
 from acqdiv.parsers.corpora.main.sesotho.SesothoCleaner import SesothoCleaner
 
 
-class SesothoParser(CHATParser):
+class SesothoSessionParser(CHATParser):
     @staticmethod
     def get_reader():
         return SesothoReader()

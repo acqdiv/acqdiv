@@ -2,12 +2,12 @@ import io
 import unittest
 
 from acqdiv.parsers.corpora.main.sesotho.SesothoCleaner import SesothoCleaner
-from acqdiv.parsers.corpora.main.sesotho.SesothoParser import SesothoParser
+from acqdiv.parsers.corpora.main.sesotho.SesothoSessionParser import SesothoSessionParser
 from acqdiv.parsers.corpora.main.sesotho.SesothoReader import SesothoReader
 
 
 class TestSesothoParser(unittest.TestCase):
-    """Class to test the SesothoParser.
+    """Class to test the SesothoSessionParser.
 
     There are no tests for misalignments between words and the morpheme
     tiers since the words are replaced by morphemes anyway.
@@ -17,17 +17,17 @@ class TestSesothoParser(unittest.TestCase):
     """
 
     def setUp(self):
-        self.parser = SesothoParser('__init__.py')
+        self.parser = SesothoSessionParser('__init__.py')
         self.maxDiff = None
 
     def test_get_reader(self):
         """Test get_reader. (Sesotho)"""
-        actual_reader = SesothoParser.get_reader()
+        actual_reader = SesothoSessionParser.get_reader()
         self.assertTrue(isinstance(actual_reader, SesothoReader))
 
     def test_get_cleaner(self):
         """Test get_cleaner. (Sesotho)"""
-        actual_cleaner = SesothoParser.get_cleaner()
+        actual_cleaner = SesothoSessionParser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, SesothoCleaner))
 
     def test_next_utterance_no_misalignments_single_word(self):

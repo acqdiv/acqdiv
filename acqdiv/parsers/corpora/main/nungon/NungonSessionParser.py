@@ -3,7 +3,7 @@ from acqdiv.parsers.corpora.main.nungon.NungonReader import NungonReader
 from acqdiv.parsers.corpora.main.nungon.NungonCleaner import NungonCleaner
 
 
-class NungonParser(CHATParser):
+class NungonSessionParser(CHATParser):
     @staticmethod
     def get_reader():
         return NungonReader()

@@ -4,7 +4,7 @@ from acqdiv.parsers.corpora.main.chintang.ChintangIMDIParser \
     import ChintangIMDIParser
 
 
-class ChintangParser(ToolboxParser):
+class ChintangSessionParser(ToolboxParser):
 
     def get_record_reader(self):
         return ChintangReader(self.toolbox_file)

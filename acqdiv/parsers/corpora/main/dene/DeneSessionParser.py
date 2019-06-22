@@ -3,7 +3,7 @@ from acqdiv.parsers.metadata.IMDIParser import IMDIParser
 from acqdiv.parsers.toolbox.ToolboxParser import ToolboxParser
 
 
-class DeneParser(ToolboxParser):
+class DeneSessionParser(ToolboxParser):
 
     def get_record_reader(self):
         return DeneReader(self.toolbox_file)

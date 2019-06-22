@@ -5,7 +5,7 @@ from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProCleaner import \
     JapaneseMiiProCleaner
 
 
-class JapaneseMiiProParser(CHATParser):
+class JapaneseMiiProSessionParser(CHATParser):
     @staticmethod
     def get_reader():
         return JapaneseMiiProReader()

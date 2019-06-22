@@ -3,7 +3,7 @@ from acqdiv.parsers.corpora.main.turkish.TurkishReader import TurkishReader
 from acqdiv.parsers.corpora.main.turkish.TurkishCleaner import TurkishCleaner
 
 
-class TurkishParser(CHATParser):
+class TurkishSessionParser(CHATParser):
     @staticmethod
     def get_reader():
         return TurkishReader()

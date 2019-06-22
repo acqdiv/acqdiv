@@ -2,24 +2,24 @@ import io
 import unittest
 
 from acqdiv.parsers.corpora.main.turkish.TurkishCleaner import TurkishCleaner
-from acqdiv.parsers.corpora.main.turkish.TurkishParser import TurkishParser
+from acqdiv.parsers.corpora.main.turkish.TurkishSessionParser import TurkishSessionParser
 from acqdiv.parsers.corpora.main.turkish.TurkishReader import TurkishReader
 
 
 class TestTurkishParser(unittest.TestCase):
 
     def setUp(self):
-        self.parser = TurkishParser('__init__.py')
+        self.parser = TurkishSessionParser('__init__.py')
         self.maxDiff = None
 
     def test_get_reader(self):
         """Test get_reader. (Sesotho)"""
-        actual_reader = TurkishParser.get_reader()
+        actual_reader = TurkishSessionParser.get_reader()
         self.assertTrue(isinstance(actual_reader, TurkishReader))
 
     def test_get_cleaner(self):
         """Test get_cleaner. (Sesotho)"""
-        actual_cleaner = TurkishParser.get_cleaner()
+        actual_cleaner = TurkishSessionParser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, TurkishCleaner))
 
     def test_next_utterance_no_misalignments_single_word_no_mor(self):

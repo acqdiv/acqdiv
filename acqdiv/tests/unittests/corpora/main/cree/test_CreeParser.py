@@ -2,15 +2,15 @@ import io
 import unittest
 
 from acqdiv.parsers.corpora.main.cree.CreeCleaner import CreeCleaner
-from acqdiv.parsers.corpora.main.cree.CreeParser import CreeParser
+from acqdiv.parsers.corpora.main.cree.CreeSessionParser import CreeSessionParser
 from acqdiv.parsers.corpora.main.cree.CreeReader import CreeReader
 
 
 class TestCreeParser(unittest.TestCase):
-    """Class to test the CreeParser."""
+    """Class to test the CreeSessionParser."""
 
     def setUp(self):
-        self.parser = CreeParser('__init__.py')
+        self.parser = CreeSessionParser('__init__.py')
         self.maxDiff = None
 
     def test_get_reader(self):

@@ -5,7 +5,7 @@ from acqdiv.parsers.corpora.main.inuktitut.InuktitutCleaner import \
     InuktitutCleaner
 
 
-class InuktitutParser(CHATParser):
+class InuktitutSessionParser(CHATParser):
     @staticmethod
     def get_reader():
         return InuktitutReader()

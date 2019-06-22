@@ -3,26 +3,26 @@ import unittest
 
 from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProCleaner import \
     JapaneseMiiProCleaner
-from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProParser import \
-    JapaneseMiiProParser
+from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProSessionParser import \
+    JapaneseMiiProSessionParser
 from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProReader import \
     JapaneseMiiProReader
 
 
 class TestJapaneseMiiProParser(unittest.TestCase):
-    """Class to test the JapaneseMiiProParser."""
+    """Class to test the JapaneseMiiProSessionParser."""
 
     def setUp(self):
-        self.parser = JapaneseMiiProParser('__init__.py')
+        self.parser = JapaneseMiiProSessionParser('__init__.py')
         self.maxDiff = None
 
     def test_get_reader(self):
-        """Test get_reader for JapaneseMiiProParser."""
+        """Test get_reader for JapaneseMiiProSessionParser."""
         actual_reader = self.parser.get_reader()
         self.assertTrue(isinstance(actual_reader, JapaneseMiiProReader))
 
     def test_get_cleaner(self):
-        """Test get_cleaner for JapaneseMiiProParser."""
+        """Test get_cleaner for JapaneseMiiProSessionParser."""
         actual_cleaner = self.parser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, JapaneseMiiProCleaner))
 

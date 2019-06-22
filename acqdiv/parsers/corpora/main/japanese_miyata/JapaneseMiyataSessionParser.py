@@ -5,7 +5,7 @@ from acqdiv.parsers.corpora.main.japanese_miyata.JapaneseMiyataCleaner import \
     JapaneseMiyataCleaner
 
 
-class JapaneseMiyataParser(CHATParser):
+class JapaneseMiyataSessionParser(CHATParser):
     @staticmethod
     def get_reader():
         return JapaneseMiyataReader()
