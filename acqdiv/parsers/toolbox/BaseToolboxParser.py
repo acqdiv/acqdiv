@@ -1,5 +1,3 @@
-import logging
-
 from acqdiv.parsers.toolbox.ToolboxParser \
     import ToolboxParser
 from acqdiv.parsers.toolbox.readers.ToolboxReader import ToolboxReader
@@ -28,7 +26,6 @@ class BaseToolboxParser(ToolboxParser):
         """
         self.metadata_path = metadata_path
         self.toolbox_path = toolbox_path
-        self.logger = logging.getLogger('pipeline.' + __name__)
 
         # get record reader
         self.record_reader = self.get_record_reader()
@@ -48,8 +45,6 @@ class BaseToolboxParser(ToolboxParser):
                 self.metadata_reader.metadata['media']['mediafile']['type'])
         except KeyError:
             md['media_type'] = None
-            self.logger.info('Session {} has no media type information'.format(
-               self.toolbox_path))
         return md
 
     def next_speaker(self):

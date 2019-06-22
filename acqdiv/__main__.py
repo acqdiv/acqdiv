@@ -24,9 +24,6 @@ from acqdiv.tests.test_integrity import ValidationTest_ProductionDB
 
 def load(args):
     """Run the loader."""
-    loader.set_logger(
-        level_i=args.info_log_level,
-        supressing_formatter=args.suppress_log_formatter)
     loader.load(
         test=not args.full,
         new=args.new_corpora,
@@ -36,9 +33,6 @@ def load(args):
 
 def postprocess(args):
     """Run the postprocessor."""
-    postprocessor.set_logger(
-        suppressing_formatter=args.suppress_log_formatter
-    )
     postprocessor.postprocess(
         test=not args.full,
     )
@@ -93,12 +87,6 @@ def get_cmd_args():
     parser_load.add_argument(
         '-f', '--full', action='store_true', help='Run on full database')
     parser_load.add_argument(
-        '-s', '--suppress-log-formatter',
-        action='store_true', help='Use suppressing formatter for log')
-    parser_load.add_argument(
-        '-i', '--info-log-level',
-        action='store_true', help='Set logging to INFO level')
-    parser_load.add_argument(
         '-n', '--new-corpora', action='store_true',
         help='Run over the new corpora as well.')
     parser_load.add_argument(
@@ -119,9 +107,6 @@ def get_cmd_args():
                      'use the flag -f.'))
     parser_postprocess.add_argument(
         '-f', '--full', action='store_true', help='Run on full database')
-    parser_postprocess.add_argument(
-        '-s', '--suppress-log-formatter',
-        action='store_true', help='Use suppressing formatter for log')
     parser_postprocess.set_defaults(func=postprocess)
 
     # command 'test'
@@ -148,12 +133,6 @@ def get_cmd_args():
                     'To run them on the full database, use the flag -f.')
     parser_pipeline.add_argument(
         '-f', '--full', action='store_true', help='Run on full database')
-    parser_pipeline.add_argument(
-        '-s', '--suppress-log-formatter',
-        action='store_true', help='Use suppressing formatter for log')
-    parser_pipeline.add_argument(
-        '-i', '--info-log-level',
-        action='store_true', help='Set logging to INFO level')
     parser_pipeline.add_argument(
         '-n', '--new-corpora', action='store_true',
         help='Run over the new corpora as well.')

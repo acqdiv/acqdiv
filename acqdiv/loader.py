@@ -2,49 +2,9 @@
 """
 import time
 import argparse
-import logging
-
-from acqdiv import pipeline_logging
 from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
 from acqdiv.database_backend import db_connect, create_tables
 from acqdiv.parsers.CorpusParserMapper import CorpusParserMapper
-
-
-def set_logger(level_i=False, supressing_formatter=False):
-    """Set a logger.
-
-    Args:
-        level_i (bool): logging level is set to INFO
-
-    """
-    logger = logging.getLogger('pipeline')
-    handler = logging.FileHandler('errors.log', mode='w')
-    if level_i:
-        handler.setLevel(logging.INFO)
-    else:
-        handler.setLevel(logging.WARNING)
-
-    if supressing_formatter:
-        formatter = logging.Formatter('%(asctime)s - %(name)s - '
-                                      '%(levelname)s - %(message)s')
-    else:
-        formatter = pipeline_logging.SuppressingFormatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
-
-    # Uncomment to define a Handler which writes INFO messages or higher to the sys.stderr.
-    """
-    console = logging.StreamHandler()
-    console.setLevel(logging.INFO)
-    # set a format which is simpler for console use
-    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-    # tell the handler to use this format
-    console.setFormatter(formatter)
-    # add the handler to the root logger
-    logging.getLogger('').addHandler(console)
-    """
 
 
 def _get_engine(test=False):
@@ -143,11 +103,7 @@ def load(test=True, new=False, phonbank=False):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('-t', action='store_true')
-    p.add_argument('-s', action='store_true')
-    p.add_argument('-i', action='store_true')
     args = p.parse_args()
-
-    set_logger(level_i=args.i, supressing_formatter=args.s)
     load(test=args.t)
 
 

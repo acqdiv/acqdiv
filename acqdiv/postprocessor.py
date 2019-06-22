@@ -12,7 +12,6 @@ from itertools import groupby
 from configparser import ConfigParser
 
 import acqdiv.database_backend as db
-from acqdiv import pipeline_logging
 from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
 from acqdiv.processors import age
 
@@ -23,27 +22,6 @@ cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 age_pattern = re.compile(".*;.*\..*")
 pos_index = {}
 pos_raw_index = {}
-
-
-def set_logger(suppressing_formatter=False):
-    """Set a logger.
-
-    Args:
-        suppressing_formatter (bool): suppress tracebacks in log file
-    """
-    global logger
-    logger = logging.getLogger('pipeline.postprocessor')
-    handler = logging.FileHandler('errors.log', mode='a')
-    handler.setLevel(logging.INFO)
-    if suppressing_formatter:
-        formatter = logging.Formatter('%(asctime)s - %(name)s - '
-                                      '%(levelname)s - %(message)s')
-    else:
-        formatter = pipeline_logging.SuppressingFormatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
 
 
 def setup(test=False):
@@ -376,7 +354,7 @@ def _speakers_standardize_roles():
             macrorole = None
 
         for item in not_found:
-            logger.warning(
+            logging.warning(
                 '\'{}\' from {} not found in role_mapping.ini'.format(item[0],
                                                                       item[1]),
                 exc_info=sys.exc_info())
@@ -529,7 +507,7 @@ def _speakers_get_target_children():
                 tc_id = tc_id_result.id
 
             else:
-                logger.warning(
+                logging.warning(
                     "Multiple target children for session {} in {}".format(
                         session_id, rec.corpus))
                 continue
@@ -586,7 +564,7 @@ def _utterances_standardize_timestamps():
                 results.append(
                     {'utterance_id': row.id, 'start': start, 'end': end})
             except Exception as e:
-                logger.warning('Error unifying timestamps: {}'.format(row, e),
+                logging.warning('Error unifying timestamps: {}'.format(row, e),
                                exc_info=sys.exc_info())
     rows.close()
     _update_rows(db.Utterance.__table__, 'utterance_id', results)
@@ -1267,13 +1245,13 @@ def _update_imdi_age(rows):
                 results.append({'speaker_id': row.id, 'age': formatted_age,
                                 'age_in_days': age_in_days})
             except age.BirthdateError:
-                logger.warning(
+                logging.warning(
                     'Couldn\'t calculate age of speaker {} from birth and '
                     'recording dates: '
                     'Invalid birthdate.'.format(row.id),
                     exc_info=sys.exc_info())
             except age.SessionDateError:
-                logger.warning(
+                logging.warning(
                     'Couldn\'t calculate age of speaker {} from birth and '
                     'recording dates: '
                     'Invalid recording date.'.format(row.id),
@@ -1296,7 +1274,7 @@ def _update_imdi_age(rows):
                     results.append({'speaker_id': row.id, 'age': formatted_age,
                                     'age_in_days': age_in_days})
                 except ValueError:
-                    logger.warning(
+                    logging.warning(
                         'Couldn\'t transform age of speaker {}'.format(row.id),
                         exc_info=sys.exc_info())
     return results
@@ -1342,10 +1320,7 @@ def _get_session_date(session_id):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('-t', action='store_true')
-    p.add_argument('-s', action='store_true')
     args = p.parse_args()
-
-    set_logger(suppressing_formatter=args.s)
 
     postprocess(test=args.t)
 
