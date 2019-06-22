@@ -1,10 +1,10 @@
 from acqdiv.parsers.corpora.main.indonesian.IndonesianReader import \
     IndonesianReader
 from acqdiv.parsers.metadata.CHATParser import CHATParser
-from acqdiv.parsers.toolbox.ToolboxParser import ToolboxParser
+from acqdiv.parsers.toolbox.BaseToolboxParser import BaseToolboxParser
 
 
-class IndonesianSessionParser(ToolboxParser):
+class IndonesianSessionParser(BaseToolboxParser):
 
     def get_metadata_reader(self):
         temp = self.toolbox_file.replace(self.config['paths']['sessions_dir'],

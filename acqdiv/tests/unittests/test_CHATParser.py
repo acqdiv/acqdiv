@@ -1,29 +1,29 @@
 import io
 import unittest
-from acqdiv.parsers.chat.CHATParser import *
-from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
-from acqdiv.parsers.chat.cleaners.CHATCleaner import *
+from acqdiv.parsers.chat.BaseCHATParser import *
+from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
+from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import *
 
 
 class TestCHATParser(unittest.TestCase):
-    """Class to test the CHATParser."""
+    """Class to test the BaseCHATParser."""
 
     def setUp(self):
-        self.parser = CHATParser('__init__.py')
+        self.parser = BaseCHATParser('__init__.py')
         self.maxDiff = None
 
     def test_get_reader(self):
-        """Test get_reader. (CHATParser)"""
-        actual_reader = CHATParser.get_reader()
-        self.assertTrue(isinstance(actual_reader, ACQDIVCHATReader))
+        """Test get_reader. (BaseCHATParser)"""
+        actual_reader = BaseCHATParser.get_reader()
+        self.assertTrue(isinstance(actual_reader, BaseCHATReader))
 
     def test_get_cleaner(self):
-        """Test get_cleaner. (CHATParser)"""
-        actual_cleaner = CHATParser.get_cleaner()
-        self.assertTrue(isinstance(actual_cleaner, CHATCleaner))
+        """Test get_cleaner. (BaseCHATParser)"""
+        actual_cleaner = BaseCHATParser.get_cleaner()
+        self.assertTrue(isinstance(actual_cleaner, BaseCHATCleaner))
 
     def test_get_session_metadata(self):
-        """Test get_session_metadata with TestCHATParser.cha. (CHATParser)"""
+        """Test get_session_metadata with TestCHATParser.cha. (BaseCHATParser)"""
         session = (
             '@UTF8\n'
             '@Begin\n'
@@ -47,7 +47,7 @@ class TestCHATParser(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_next_speaker(self):
-        """Test next_speaker with test.cha. (CHATParser)"""
+        """Test next_speaker with test.cha. (BaseCHATParser)"""
         session = (
             '@UTF8\n'
             '@Begin\n'

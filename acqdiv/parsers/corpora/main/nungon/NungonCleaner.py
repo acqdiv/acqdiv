@@ -1,9 +1,9 @@
 import re
 
-from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
+from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import BaseCHATCleaner
 
 
-class NungonCleaner(CHATCleaner):
+class NungonCleaner(BaseCHATCleaner):
 
     # ---------- morphology tier cleaning ----------
 

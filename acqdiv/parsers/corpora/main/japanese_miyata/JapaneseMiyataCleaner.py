@@ -1,10 +1,10 @@
 
-from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
+from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import BaseCHATCleaner
 from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProCleaner import \
     JapaneseMiiProCleaner
 
 
-class JapaneseMiyataCleaner(CHATCleaner):
+class JapaneseMiyataCleaner(BaseCHATCleaner):
 
     # ---------- morphology tier cleaning ----------
 

@@ -1,9 +1,9 @@
 import re
 
-from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
+from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
 
 
-class EnglishManchester1Reader(ACQDIVCHATReader):
+class EnglishManchester1Reader(BaseCHATReader):
 
     # TODO: move all corrections to cleaner/postprocessor
 

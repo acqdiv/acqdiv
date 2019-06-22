@@ -1,9 +1,9 @@
 import re
 
-from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
+from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import BaseCHATCleaner
 
 
-class JapaneseMiiProCleaner(CHATCleaner):
+class JapaneseMiiProCleaner(BaseCHATCleaner):
 
     @staticmethod
     def correct_speaker_label(session_filename, speaker_label):

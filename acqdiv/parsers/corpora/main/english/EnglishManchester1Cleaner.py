@@ -1,9 +1,9 @@
 import re
 
-from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
+from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import BaseCHATCleaner
 
 
-class EnglishManchester1Cleaner(CHATCleaner):
+class EnglishManchester1Cleaner(BaseCHATCleaner):
 
     @classmethod
     def remove_non_words(cls, morph_tier):

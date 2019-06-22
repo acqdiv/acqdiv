@@ -1,9 +1,12 @@
+"""Abstract class for corpus parsing."""
+
 import glob
 
 from acqdiv.processors.processors import SessionProcessor
+from abc import ABC, abstractmethod
 
 
-class CorpusParser:
+class CorpusParser(ABC):
     """Parses all sessions of a corpus."""
 
     def __init__(self, cfg, engine):
@@ -16,13 +19,14 @@ class CorpusParser:
         self.cfg = cfg
         self.engine = engine
 
+    @abstractmethod
     def get_session_parser(self, session_path):
         """Get a session parser.
 
         Returns:
             SessionParser: The session parser.
         """
-        raise NotImplementedError
+        pass
 
     def process_corpus(self, test=False):
         """Parse all sessions of a corpus.

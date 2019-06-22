@@ -1,9 +1,9 @@
 import re
 
-from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
+from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
 
 
-class JapaneseMiyataReader(ACQDIVCHATReader):
+class JapaneseMiyataReader(BaseCHATReader):
 
     @staticmethod
     def get_word_language(word):

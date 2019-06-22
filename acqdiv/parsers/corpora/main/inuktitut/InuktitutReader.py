@@ -1,9 +1,9 @@
 import re
 
-from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
+from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
 
 
-class InuktitutReader(ACQDIVCHATReader):
+class InuktitutReader(BaseCHATReader):
     """Inferences for Inuktitut."""
 
     def get_start_time(self):

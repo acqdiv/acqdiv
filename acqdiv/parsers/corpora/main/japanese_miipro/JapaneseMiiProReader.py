@@ -1,9 +1,9 @@
 import re
 
-from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
+from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
 
 
-class JapaneseMiiProReader(ACQDIVCHATReader):
+class JapaneseMiiProReader(BaseCHATReader):
 
     @classmethod
     def _is_target_child(cls, pos, label, name, role):

@@ -1,9 +1,9 @@
 import re
 
-from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
+from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
 
 
-class TurkishReader(ACQDIVCHATReader):
+class TurkishReader(BaseCHATReader):
 
     def get_start_time(self):
         """Get the start time.

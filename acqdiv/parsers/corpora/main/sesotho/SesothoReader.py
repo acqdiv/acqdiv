@@ -1,9 +1,9 @@
 import re
 
-from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
+from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
 
 
-class SesothoReader(ACQDIVCHATReader):
+class SesothoReader(BaseCHATReader):
     """Class to implement Sesotho Reading methods.
 
     Normally the methods get_utterance(), get_actual_utterance() and

@@ -1,7 +1,7 @@
-from acqdiv.parsers.chat.CHATParser import CHATParser
+from acqdiv.parsers.chat.BaseCHATParser import BaseCHATParser
 
 
-class PhonbankParser(CHATParser):
+class PhonbankParser(BaseCHATParser):
 
     def get_words_dict(self, actual_utt, target_utt):
         actual_words = self.reader.get_utterance_words(actual_utt)

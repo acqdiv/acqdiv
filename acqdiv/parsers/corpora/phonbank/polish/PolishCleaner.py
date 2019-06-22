@@ -1,7 +1,7 @@
-from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
+from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import BaseCHATCleaner
 
 
-class PolishCleaner(CHATCleaner):
+class PolishCleaner(BaseCHATCleaner):
 
     @classmethod
     def clean_speaker_metadata(

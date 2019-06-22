@@ -1,9 +1,9 @@
-from acqdiv.parsers.chat.CHATParser import CHATParser
+from acqdiv.parsers.chat.BaseCHATParser import BaseCHATParser
 from acqdiv.parsers.corpora.main.yucatec.YucatecReader import YucatecReader
 from acqdiv.parsers.corpora.main.yucatec.YucatecCleaner import YucatecCleaner
 
 
-class YucatecSessionParser(CHATParser):
+class YucatecSessionParser(BaseCHATParser):
     @staticmethod
     def get_reader():
         return YucatecReader()

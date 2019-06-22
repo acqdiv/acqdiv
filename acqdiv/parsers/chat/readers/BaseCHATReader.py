@@ -1,14 +1,13 @@
 import re
-from collections import OrderedDict
 
-from acqdiv.parsers.chat.readers.CHATReaderInterface import CHATReaderInterface
 from acqdiv.parsers.chat.readers.CHATReader import CHATReader
+from acqdiv.parsers.chat.readers.RawCHATReader import RawCHATReader
 
 
-class ACQDIVCHATReader(CHATReader, CHATReaderInterface):
+class BaseCHATReader(RawCHATReader, CHATReader):
     """The customized and optimized reader for the ACQDIV pipeline.
 
-    Implements the CHATReaderInterface.
+    Implements the CHATReader.
     """
 
     def __init__(self):

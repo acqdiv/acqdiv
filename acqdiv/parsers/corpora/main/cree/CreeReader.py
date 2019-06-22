@@ -1,7 +1,7 @@
-from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
+from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
 
 
-class CreeReader(ACQDIVCHATReader):
+class CreeReader(BaseCHATReader):
 
     @staticmethod
     def get_main_morpheme():

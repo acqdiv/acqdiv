@@ -1,9 +1,9 @@
-from acqdiv.parsers.chat.CHATParser import CHATParser
+from acqdiv.parsers.chat.BaseCHATParser import BaseCHATParser
 from acqdiv.parsers.corpora.main.cree.CreeReader import CreeReader
 from acqdiv.parsers.corpora.main.cree.CreeCleaner import CreeCleaner
 
 
-class CreeSessionParser(CHATParser):
+class CreeSessionParser(BaseCHATParser):
     @staticmethod
     def get_reader():
         return CreeReader()

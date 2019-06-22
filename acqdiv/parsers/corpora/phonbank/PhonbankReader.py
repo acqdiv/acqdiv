@@ -1,7 +1,7 @@
-from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
+from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
 
 
-class PhonbankReader(ACQDIVCHATReader):
+class PhonbankReader(BaseCHATReader):
 
     def get_phon_tier(self):
         return self._dependent_tiers.get('pho', '')

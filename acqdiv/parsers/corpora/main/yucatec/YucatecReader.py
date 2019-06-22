@@ -1,9 +1,9 @@
 import re
 
-from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
+from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
 
 
-class YucatecReader(ACQDIVCHATReader):
+class YucatecReader(BaseCHATReader):
 
     @staticmethod
     def get_utterance_words(utterance):

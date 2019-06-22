@@ -1,9 +1,9 @@
 import re
 
-from acqdiv.parsers.chat.readers.ACQDIVCHATReader import ACQDIVCHATReader
+from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
 
 
-class NungonReader(ACQDIVCHATReader):
+class NungonReader(BaseCHATReader):
 
     # ---------- morphology tier ----------
 

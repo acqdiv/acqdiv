@@ -1,9 +1,9 @@
 from acqdiv.parsers.corpora.main.dene.DeneReader import DeneReader
 from acqdiv.parsers.metadata.IMDIParser import IMDIParser
-from acqdiv.parsers.toolbox.ToolboxParser import ToolboxParser
+from acqdiv.parsers.toolbox.BaseToolboxParser import BaseToolboxParser
 
 
-class DeneSessionParser(ToolboxParser):
+class DeneSessionParser(BaseToolboxParser):
 
     def get_record_reader(self):
         return DeneReader(self.toolbox_file)
