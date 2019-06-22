@@ -7,7 +7,7 @@ import logging
 from acqdiv import pipeline_logging
 from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
 from acqdiv.database_backend import db_connect, create_tables
-from acqdiv.parsers.ParserMapper import ParserMapper
+from acqdiv.parsers.CorpusParserMapper import CorpusParserMapper
 
 
 def set_logger(level_i=False, supressing_formatter=False):
@@ -124,7 +124,7 @@ def load(test=True, new=False, phonbank=False):
 
         name = cfg['corpus']['corpus']
 
-        corpus_parser = ParserMapper.map(name)
+        corpus_parser = CorpusParserMapper.map(name)
 
         c = corpus_parser(cfg, engine)
         c.process_corpus(test=test)

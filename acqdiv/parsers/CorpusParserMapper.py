@@ -47,7 +47,7 @@ from acqdiv.parsers.corpora.phonbank.quichua.QuichuaParser \
     import QuichuaParser
 
 
-class ParserMapper:
+class CorpusParserMapper:
 
     mappings = {
         # main
@@ -78,4 +78,4 @@ class ParserMapper:
 
     @staticmethod
     def map(name):
-        return ParserMapper.mappings[name]
+        return CorpusParserMapper.mappings[name]
