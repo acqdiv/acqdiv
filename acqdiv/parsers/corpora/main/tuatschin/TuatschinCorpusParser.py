@@ -11,4 +11,4 @@ class TuatschinCorpusParser(CorpusParser):
                                     self.cfg['paths']['metadata_dir'])
         metadata_path = temp.replace('.tbt', '.imdi')
 
-        return TuatschinSessionParser(self.cfg, metadata_path)
+        return TuatschinSessionParser(session_path, metadata_path)

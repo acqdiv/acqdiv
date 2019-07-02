@@ -49,7 +49,9 @@ def load(test=True, new=False, phonbank=False):
         'Japanese_Miyata.ini',
         'Japanese_MiiPro.ini',
         'Nungon.ini',
+        'Qaqet.ini',
         'Sesotho.ini',
+        'Tuatschin.ini',
         'Turkish.ini',
         'Yucatec.ini'
     ]
@@ -57,9 +59,7 @@ def load(test=True, new=False, phonbank=False):
     if new:
         configs += [
             'Dene.ini',
-            'Ku_Waru.ini',
-            'Qaqet.ini',
-            'Tuatschin.ini'
+            'Ku_Waru.ini'
         ]
 
     if phonbank:
