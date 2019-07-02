@@ -1,6 +1,7 @@
 """ Entry point for loading ACQDIV raw input corpora data into the ACQDIV-DB
 """
 import time
+import datetime
 import argparse
 from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
 from acqdiv.database_backend import db_connect, create_tables
@@ -19,9 +20,11 @@ def _get_engine(test=False):
         engine = db_connect('sqlite:///database/test.sqlite3')
         create_tables(engine)
     else:
-        print("Writing database to: database/acqdiv.sqlite3")
+        date = datetime.datetime.now().strftime('%Y-%m-%d')
+        path = 'sqlite:///database/acqdiv_corpus_{}.sqlite3'.format(date)
+        print("Writing database to: {}".format(path))
         print()
-        engine = db_connect('sqlite:///database/acqdiv.sqlite3')
+        engine = db_connect(path)
         create_tables(engine)
 
     return engine
