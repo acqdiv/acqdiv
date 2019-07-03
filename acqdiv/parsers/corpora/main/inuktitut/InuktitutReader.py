@@ -6,6 +6,16 @@ from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
 class InuktitutReader(BaseCHATReader):
     """Inferences for Inuktitut."""
 
+    # TODO: delete this once the source data is fixed
+    @staticmethod
+    def get_dependent_tier(dependent_tier):
+        try:
+            key, content = dependent_tier.split(':\t')
+        except ValueError:
+            key, content = dependent_tier.split(': ', maxsplit=1)
+
+        return key.lstrip('%'), content
+
     def get_start_time(self):
         return self._dependent_tiers.get('tim', '')
 
