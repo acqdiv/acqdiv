@@ -1,6 +1,8 @@
 import re
 
 from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import BaseCHATCleaner
+from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
+    import CHATUtteranceCleaner
 
 
 class TurkishCleaner(BaseCHATCleaner):
@@ -9,7 +11,7 @@ class TurkishCleaner(BaseCHATCleaner):
 
     @classmethod
     def clean_morph_tier(cls, morph_tier):
-        return cls.remove_terminator(morph_tier)
+        return CHATUtteranceCleaner.remove_terminator(morph_tier)
 
     # ---------- cross cleaning ----------
 

@@ -1,6 +1,8 @@
 import re
 
 from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import BaseCHATCleaner
+from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
+    import CHATUtteranceCleaner
 
 
 class JapaneseMiiProCleaner(BaseCHATCleaner):
@@ -161,11 +163,11 @@ class JapaneseMiiProCleaner(BaseCHATCleaner):
         """
         non_words_regex = re.compile(r'tag\|\S+')
         morph_tier = non_words_regex.sub('', morph_tier)
-        return cls.remove_redundant_whitespaces(morph_tier)
+        return CHATUtteranceCleaner.remove_redundant_whitespaces(morph_tier)
 
     @classmethod
     def clean_morph_tier(cls, morph_tier):
-        morph_tier = cls.remove_terminator(morph_tier)
+        morph_tier = CHATUtteranceCleaner.remove_terminator(morph_tier)
         return cls.remove_non_words(morph_tier)
 
     # ---------- session metadata cleaning ----------
@@ -304,23 +306,24 @@ class JapaneseMiiProCleaner(BaseCHATCleaner):
 
             # execute same cleaning steps except those for scoped symbols
             for cleaning_method in [
-                    cls.remove_terminator,
-                    cls.unify_untranscribed,
-                    cls.remove_events,
-                    cls.remove_omissions,
-                    cls.remove_linkers,
-                    cls.remove_separators,
-                    cls.remove_ca,
-                    cls.remove_pauses_between_words,
-                    cls.remove_commas,
-                    cls.null_event_utterances
+                    CHATUtteranceCleaner.remove_terminator,
+                    CHATUtteranceCleaner.unify_untranscribed,
+                    CHATUtteranceCleaner.remove_events,
+                    CHATUtteranceCleaner.remove_omissions,
+                    CHATUtteranceCleaner.remove_linkers,
+                    CHATUtteranceCleaner.remove_separators,
+                    CHATUtteranceCleaner.remove_ca,
+                    CHATUtteranceCleaner.remove_pauses_between_words,
+                    CHATUtteranceCleaner.remove_commas,
+                    CHATUtteranceCleaner.null_event_utterances
                     ]:
                 raw_utt = cleaning_method(raw_utt)
 
             # remove scoped symbols except for repetitions
             scope_regex = re.compile(r'\[[^x].*?\]')
             raw_utt = scope_regex.sub('', raw_utt)
-            raw_utt = cls.remove_redundant_whitespaces(raw_utt)
+            raw_utt = CHATUtteranceCleaner.remove_redundant_whitespaces(
+                raw_utt)
 
             # get words from utterance and morphology tier
             utt_words = re.split(r'(?<!\[x) (?!\[x)', raw_utt)

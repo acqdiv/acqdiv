@@ -1,6 +1,8 @@
 import re
 
 from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import BaseCHATCleaner
+from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
+    import CHATUtteranceCleaner
 
 
 class InuktitutCleaner(BaseCHATCleaner):
@@ -45,12 +47,12 @@ class InuktitutCleaner(BaseCHATCleaner):
     def clean_morph_tier(cls, xmor):
         """Clean the morphology tier 'xmor'."""
         for cleaning_method in [
-                cls.remove_terminator,
-                cls.null_event_utterances,
-                cls.unify_untranscribed,
-                cls.remove_separators,
-                cls.remove_scoped_symbols,
-                # cls.null_untranscribed_utterances
+                CHATUtteranceCleaner.remove_terminator,
+                CHATUtteranceCleaner.null_event_utterances,
+                CHATUtteranceCleaner.unify_untranscribed,
+                CHATUtteranceCleaner.remove_separators,
+                CHATUtteranceCleaner.remove_scoped_symbols,
+                # CHATUtteranceCleaner.null_untranscribed_utterances
                 ]:
             xmor = cleaning_method(xmor)
 
@@ -60,7 +62,7 @@ class InuktitutCleaner(BaseCHATCleaner):
 
     @classmethod
     def clean_morpheme_word(cls, morpheme_word):
-        return cls.remove_terminator(morpheme_word)
+        return CHATUtteranceCleaner.remove_terminator(morpheme_word)
 
     # ---------- morpheme cleaning ----------
 

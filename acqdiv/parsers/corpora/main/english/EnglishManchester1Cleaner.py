@@ -1,6 +1,8 @@
 import re
 
 from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import BaseCHATCleaner
+from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
+    import CHATUtteranceCleaner
 
 
 class EnglishManchester1Cleaner(BaseCHATCleaner):
@@ -21,13 +23,13 @@ class EnglishManchester1Cleaner(BaseCHATCleaner):
                                      r'|eq\|eq')
 
         morph_tier = non_words_regex.sub('', morph_tier)
-        return cls.remove_redundant_whitespaces(morph_tier)
+        return CHATUtteranceCleaner.remove_redundant_whitespaces(morph_tier)
 
     @classmethod
     def clean_morph_tier(cls, morph_tier):
         for cleaning_method in [
-                cls.remove_terminator, cls.remove_non_words,
-                cls.remove_omissions]:
+                CHATUtteranceCleaner.remove_terminator, cls.remove_non_words,
+                CHATUtteranceCleaner.remove_omissions]:
             morph_tier = cleaning_method(morph_tier)
 
         return morph_tier

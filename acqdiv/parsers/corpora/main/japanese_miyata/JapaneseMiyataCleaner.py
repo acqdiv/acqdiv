@@ -3,6 +3,9 @@ from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import BaseCHATCleaner
 from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProCleaner import \
     JapaneseMiiProCleaner
 
+from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
+    import CHATUtteranceCleaner
+
 
 class JapaneseMiyataCleaner(BaseCHATCleaner):
 
@@ -15,11 +18,11 @@ class JapaneseMiyataCleaner(BaseCHATCleaner):
         dloc|dloc=DISLOC stands for `„` on the utterance.
         """
         morph_tier = morph_tier.replace('dloc|dloc=DISLOC', '')
-        return cls.remove_redundant_whitespaces(morph_tier)
+        return CHATUtteranceCleaner.remove_redundant_whitespaces(morph_tier)
 
     @classmethod
     def clean_morph_tier(cls, morph_tier):
-        morph_tier = cls.remove_terminator(morph_tier)
+        morph_tier = CHATUtteranceCleaner.remove_terminator(morph_tier)
         morph_tier = cls.remove_dloc(morph_tier)
         return morph_tier
 

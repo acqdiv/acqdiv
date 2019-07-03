@@ -1,6 +1,8 @@
 import re
 
 from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import BaseCHATCleaner
+from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
+    import CHATUtteranceCleaner
 
 
 class YucatecCleaner(BaseCHATCleaner):
@@ -15,7 +17,7 @@ class YucatecCleaner(BaseCHATCleaner):
 
         Also removes the colon and the dash.
         """
-        utterance = super().remove_terminator(utterance)
+        utterance = CHATUtteranceCleaner.remove_terminator(utterance)
         return utterance.rstrip('-').rstrip(':')
 
     # ---------- morphology tier cleaning ----------
@@ -24,7 +26,7 @@ class YucatecCleaner(BaseCHATCleaner):
     def remove_double_hashes(cls, morph_tier):
         """Remove ## from the morphology tier."""
         morph_tier = re.sub(r'(^| )##( |$)', r'\1\2', morph_tier)
-        return cls.remove_redundant_whitespaces(morph_tier)
+        return CHATUtteranceCleaner.remove_redundant_whitespaces(morph_tier)
 
     @classmethod
     def clean_morph_tier(cls, morph_tier):

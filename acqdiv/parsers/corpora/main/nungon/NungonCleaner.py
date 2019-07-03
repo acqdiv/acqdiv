@@ -1,6 +1,8 @@
 import re
 
 from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import BaseCHATCleaner
+from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
+    import CHATUtteranceCleaner
 
 
 class NungonCleaner(BaseCHATCleaner):
@@ -32,8 +34,10 @@ class NungonCleaner(BaseCHATCleaner):
     @classmethod
     def clean_morph_tier(cls, morph_tier):
         for cleaning_method in [
-                cls.remove_scoped_symbols, cls.remove_events,
-                cls.remove_terminator, cls.null_untranscribed_morph_tier]:
+                CHATUtteranceCleaner.remove_scoped_symbols,
+                CHATUtteranceCleaner.remove_events,
+                CHATUtteranceCleaner.remove_terminator,
+                cls.null_untranscribed_morph_tier]:
             morph_tier = cleaning_method(morph_tier)
 
         return morph_tier

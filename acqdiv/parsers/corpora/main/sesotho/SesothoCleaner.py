@@ -1,6 +1,8 @@
 import re
 
 from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import BaseCHATCleaner
+from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
+    import CHATUtteranceCleaner
 
 
 class SesothoCleaner(BaseCHATCleaner):
@@ -78,7 +80,7 @@ class SesothoCleaner(BaseCHATCleaner):
     def remove_timestamp(cls, translation):
         """Remove timestamps in the Sesotho translation tier."""
         translation = re.sub(r'[0-9]+_[0-9]+', '', translation)
-        return cls.remove_redundant_whitespaces(translation)
+        return CHATUtteranceCleaner.remove_redundant_whitespaces(translation)
 
     # ---------- cross cleaning ----------
 
@@ -144,12 +146,12 @@ class SesothoCleaner(BaseCHATCleaner):
     @classmethod
     def clean_seg_tier(cls, seg_tier):
         """Clean the segment tier by removing the terminator."""
-        return cls.remove_terminator(seg_tier)
+        return CHATUtteranceCleaner.remove_terminator(seg_tier)
 
     @classmethod
     def clean_gloss_tier(cls, gloss_tier):
         """Clean the gloss tier."""
-        for method in [cls.remove_terminator,
+        for method in [CHATUtteranceCleaner.remove_terminator,
                        cls.remove_spaces_noun_class_parentheses,
                        cls.replace_noun_class_separator]:
             gloss_tier = method(gloss_tier)
