@@ -7,6 +7,7 @@ import csv
 import argparse
 import logging
 import sqlalchemy as sa
+import glob
 
 from itertools import groupby
 from configparser import ConfigParser
@@ -37,7 +38,20 @@ def setup(test=False):
     if test:
         engine = sa.create_engine('sqlite:///database/test.sqlite3')
     else:
-        engine = sa.create_engine('sqlite:///database/acqdiv.sqlite3')
+        chosen_path = None
+        # chose most recent sqlite file in the database directory
+        for path in sorted(glob.glob('database/acqdiv_corpus_*.sqlite3'),
+                           reverse=True):
+            chosen_path = path
+            break
+
+        if chosen_path is None:
+            logging.error('No sqlite file exists! Run the loader first.\n')
+            sys.exit(1)
+
+        engine = sa.create_engine('sqlite:///{}'.format(chosen_path))
+        print('Postprocessing {}...'.format(chosen_path))
+
     conn = engine.connect()
 
     # Load the role mapping.ini for unifying roles.
