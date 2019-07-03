@@ -39,9 +39,11 @@ class CorpusParser(ABC):
 
             session_parser = self.get_session_parser(session_path)
 
-            s = SessionProcessor(
-                self.cfg, session_path, session_parser, self.engine)
-            s.process_session()
+            if session_parser is not None:
 
-            if test:
-                break
+                s = SessionProcessor(
+                    self.cfg, session_path, session_parser, self.engine)
+                s.process_session()
+
+                if test:
+                    break
