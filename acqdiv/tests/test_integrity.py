@@ -82,10 +82,26 @@ class ValidationTest(unittest.TestCase):
     def test_sentence_type(self):
         """ Check sentence types in database vs whitelist. """
         query = "select sentence_type from utterances group by sentence_type"
-        sentence_types = [None, "default", "question", "exclamation", "imperative", "trail off",
-                          "interruption", "trail off question", "self interruption", "self interruption question",
-                          "quotation next line", "quotation precedes", "interruption question",
-                          'interruption of a question', 'transcription break']
+        sentence_types = [
+            None,
+            # ACQDIV sentence types
+            "default",
+            "question",
+            "exclamation",
+            "imperative",
+            # CHAT specific
+            'transcription break',
+            "trail off",
+            'trail off of question',
+            'question with exclamation',
+            'interruption',
+            'interruption of a question',
+            'self-interruption',
+            'self-interrupted question',
+            'quotation follows',
+            "quotation precedes",
+        ]
+
         self._in_whitelist(query, sentence_types)
 
     def test_gender(self):
