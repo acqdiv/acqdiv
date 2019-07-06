@@ -1,3 +1,5 @@
+import re
+
 from acqdiv.parsers.chat.readers.CHATReader import CHATReader
 from acqdiv.parsers.chat.readers.RawCHATReader import RawCHATReader
 from acqdiv.parsers.chat.readers.ActualTargetUtteranceExtractor \
@@ -222,6 +224,15 @@ class BaseCHATReader(RawCHATReader, CHATReader):
         return self.get_mainline_utterance(self._main_line_fields)
 
     @staticmethod
+    def get_utterance_terminator(utterance):
+        terminator_regex = re.compile(r'([+/.!?"]*[!?.])(?=(\s*\[\+|\s*$))')
+        match = terminator_regex.search(utterance)
+        if match:
+            return match.group(1)
+        else:
+            return ''
+
+    @staticmethod
     def terminator2sentence_type(terminator):
         """Map utterance terminator to sentence type.
 
@@ -296,7 +307,24 @@ class BaseCHATReader(RawCHATReader, CHATReader):
     def get_pos_tier(self):
         return self.get_morph_tier()
 
-    # ---------- morpheme words ----------
+    # ---------- words ----------
+
+    @staticmethod
+    def get_utterance_words(utterance):
+        """Get the words of an utterance.
+
+        Words are defined as units separated by a blank space.
+
+        Args:
+            utterance (str): The utterance.
+
+        Returns:
+            list: The words.
+        """
+        if utterance:
+            return re.split(r'\s+', utterance)
+        else:
+            return []
 
     @classmethod
     def get_morpheme_words(cls, morph_tier):

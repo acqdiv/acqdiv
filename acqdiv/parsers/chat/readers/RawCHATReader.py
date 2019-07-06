@@ -370,32 +370,6 @@ class RawCHATReader:
         return main_line_fields[1]
 
     @staticmethod
-    def get_utterance_words(utterance):
-        """Get the words of an utterance.
-
-        Words are defined as units separated by a blank space.
-
-        Args:
-            utterance (str): The utterance.
-
-        Returns:
-            list: The words.
-        """
-        if utterance:
-            return re.split(r'\s+', utterance)
-        else:
-            return []
-
-    @staticmethod
-    def get_utterance_terminator(utterance):
-        terminator_regex = re.compile(r'([+/.!?"]*[!?.])(?=(\s*\[\+|\s*$))')
-        match = terminator_regex.search(utterance)
-        if match:
-            return match.group(1)
-        else:
-            return ''
-
-    @staticmethod
     def get_mainline_start_time(main_line_fields):
         return main_line_fields[2]
 
