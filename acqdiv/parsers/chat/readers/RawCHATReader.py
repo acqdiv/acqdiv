@@ -1,8 +1,84 @@
 import re
 
+from acqdiv.parsers.chat.model.CHAT import CHAT
+from acqdiv.parsers.chat.model.Participant import Participant
+from acqdiv.parsers.chat.model.Record import Record
+
 
 class RawCHATReader:
     """Generic reader methods for a CHAT file."""
+
+    @classmethod
+    def parse(cls, session_file):
+        chat = CHAT()
+        session = session_file.read()
+        cls.add_headers(chat, session)
+        cls.add_records(chat, session)
+
+        return chat
+
+    @classmethod
+    def add_headers(cls, chat, session):
+        for metadata_field in cls.iter_metadata_fields(session):
+            key, content = cls.get_metadata_field(metadata_field)
+
+            if key == 'ID':
+                id_fields = cls.get_id_fields(content)
+                code = cls.get_id_code(id_fields)
+                participant = chat.participants[code]
+                participant.code = code
+                participant.age = cls.get_id_age(id_fields)
+                participant.language = cls.get_id_language(id_fields)
+                participant.group = cls.get_id_group(id_fields)
+                participant.role = cls.get_id_role(id_fields)
+                participant.corpus = cls.get_id_corpus(id_fields)
+                participant.custom = cls.get_id_custom(id_fields)
+                participant.education = cls.get_id_education(id_fields)
+                participant.ses = cls.get_id_ses(id_fields)
+                participant.sex = cls.get_id_sex(id_fields)
+
+            elif key == 'Participants':
+                for participant in cls.iter_participants(content):
+                    p_fields = cls.get_participant_fields(participant)
+                    participant = Participant()
+                    participant.code = cls.get_participant_id(p_fields)
+                    participant.role = cls.get_participant_role(p_fields)
+                    participant.name = cls.get_participant_name(p_fields)
+                    chat.participants[participant.code] = participant
+
+            elif key == 'Media':
+                media_fields = cls.get_media_fields(content)
+                chat.media_format = cls.get_media_format(media_fields)
+                chat.media_filename = cls.get_media_filename(media_fields)
+                chat.media_comment = cls.get_media_comment(media_fields)
+
+            elif key.startswith('Birth of'):
+                _, _, participant_id = key.split(' ')
+                chat.participants[participant_id].birth_date = content
+
+            else:
+                if hasattr(chat, key.lower()):
+                    setattr(chat, key.lower(), content)
+
+    @classmethod
+    def add_records(cls, chat, session):
+        uid = 0
+        for rec_str in cls.iter_records(session):
+            rec = Record()
+            rec.uid = uid
+            main_line = cls.get_mainline(rec_str)
+            main_line_fields = cls.get_mainline_fields(main_line)
+            rec.speaker_id = cls.get_mainline_speaker_id(main_line_fields)
+            rec.utterance = cls.get_mainline_utterance(main_line_fields)
+            rec.start_time = cls.get_mainline_start_time(main_line_fields)
+            rec.end_time = cls.get_mainline_end_time(main_line_fields)
+
+            for dependent_tier in cls.iter_dependent_tiers(rec_str):
+                key, content = cls.get_dependent_tier(dependent_tier)
+                rec.dependent_tiers[key] = content
+
+            chat.records.append(rec)
+            uid += 1
 
     @staticmethod
     def _replace_line_breaks(session):
