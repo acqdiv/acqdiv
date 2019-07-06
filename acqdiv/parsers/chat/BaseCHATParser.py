@@ -177,7 +177,7 @@ class BaseCHATParser(CHATParser):
                 'morpheme': seg_tier_raw if seg_tier_raw else None,
                 'gloss_raw': gloss_tier_raw if gloss_tier_raw else None,
                 'pos_raw': pos_tier_raw if pos_tier_raw else None,
-                'sentence_type': sentence_type,
+                'sentence_type': sentence_type if sentence_type else None,
                 'start_raw': start_raw if start_raw else None,
                 'end_raw': end_raw if end_raw else None,
                 'comment': comment if comment else None,
