@@ -10,7 +10,7 @@ from acqdiv.parsers.chat.CHATParser import CHATParser
 class BaseCHATParser(CHATParser):
     """Gathers all data for the DB for a given CHAT session file.
 
-    Uses the RawCHATReader for reading and inferring data from the CHAT file and
+    Uses the CHATFileParser for reading and inferring data from the CHAT file and
     CHATCleaner for cleaning these data.
     """
 

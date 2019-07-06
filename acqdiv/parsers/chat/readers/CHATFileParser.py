@@ -5,11 +5,19 @@ from acqdiv.parsers.chat.model.Participant import Participant
 from acqdiv.parsers.chat.model.Record import Record
 
 
-class RawCHATReader:
-    """Generic reader methods for a CHAT file."""
+class CHATFileParser:
+    """Methods for creating a CHAT instance."""
 
     @classmethod
     def parse(cls, session_file):
+        """Get a CHAT instance from a CHAT file.
+
+        Args:
+            session_file (file/file-like object): A CHAT file.
+
+        Returns:
+            CHAT: The CHAT instance.
+        """
         chat = CHAT()
         session = session_file.read()
         cls.add_headers(chat, session)
@@ -19,6 +27,12 @@ class RawCHATReader:
 
     @classmethod
     def add_headers(cls, chat, session):
+        """Add all headers to the CHAT instance.
+
+        Args:
+            chat (CHAT): The CHAT instance.
+            session (str): The CHAT file as a string.
+        """
         for metadata_field in cls.iter_metadata_fields(session):
             key, content = cls.get_metadata_field(metadata_field)
 
@@ -62,6 +76,12 @@ class RawCHATReader:
 
     @classmethod
     def add_records(cls, chat, session):
+        """Add the records to the CHAT instance.
+
+        Args:
+            chat (CHAT): The CHAT instance.
+            session (str): The CHAT file as a string.
+        """
         uid = 0
         for rec_str in cls.iter_records(session):
             rec = Record()

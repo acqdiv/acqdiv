@@ -1,12 +1,12 @@
 import re
 
 from acqdiv.parsers.chat.readers.CHATReader import CHATReader
-from acqdiv.parsers.chat.readers.RawCHATReader import RawCHATReader
+from acqdiv.parsers.chat.readers.CHATFileParser import CHATFileParser
 from acqdiv.parsers.chat.readers.ActualTargetUtteranceExtractor \
     import ActualTargetUtteranceExtractor
 
 
-class BaseCHATReader(RawCHATReader, CHATReader):
+class BaseCHATReader(CHATFileParser, CHATReader):
     """The customized and optimized reader for the ACQDIV pipeline.
 
     Implements the CHATReader.
