@@ -449,7 +449,7 @@ class ValidationTest_ProductionDB(ValidationTest):
                             corpus))
             # Nungon has a lower threshold because speakers (especially aunts
             # and uncles) are listed that never speak an utterance
-            if corpus == 'Nungon':
+            elif corpus == 'Nungon':
                 self.assertGreaterEqual(
                     proportion, 70,
                     msg="Proportion for speakers in {} too low.".format(
