@@ -648,6 +648,13 @@ class TestCHATReader(unittest.TestCase):
         desired_output = '+".'
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_utterance_terminator_trailing_whitespace(self):
+        """Test get_utterance_terminator with trailing whitespace."""
+        utterance = 'Is this a test ? '
+        actual_output = RawCHATReader.get_utterance_terminator(utterance)
+        desired_output = '?'
+        self.assertEqual(actual_output, desired_output)
+
     # ---------- iter_dependent_tiers ----------
 
     def test_iter_dependent_tiers_standard_case(self):
