@@ -181,6 +181,7 @@ class ValidationTest(unittest.TestCase):
             "Chintang/Nepali",
             "Cree",
             "English",
+            'FOREIGN',
             "German",
             "Hindi",
             'Kuanua',
