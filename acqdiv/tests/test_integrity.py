@@ -84,7 +84,8 @@ class ValidationTest(unittest.TestCase):
         query = "select sentence_type from utterances group by sentence_type"
         sentence_types = [None, "default", "question", "exclamation", "imperative", "trail off",
                           "interruption", "trail off question", "self interruption", "self interruption question",
-                          "quotation next line", "quotation precedes", "interruption question"]
+                          "quotation next line", "quotation precedes", "interruption question",
+                          'interruption of a question', 'transcription break']
         self._in_whitelist(query, sentence_types)
 
     def test_gender(self):

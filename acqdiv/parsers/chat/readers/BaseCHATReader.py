@@ -231,7 +231,7 @@ class BaseCHATReader(RawCHATReader, CHATReader):
         mapping = {'.': 'default',
                    '?': 'question',
                    '!': 'exclamation',
-                   '+.': 'broken for coding',
+                   '+.': 'transcription break',
                    '+...': 'trail off',
                    '+..?': 'trail off of question',
                    '+!?': 'question with exclamation',
