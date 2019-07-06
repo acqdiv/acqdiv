@@ -447,10 +447,17 @@ class ValidationTest_ProductionDB(ValidationTest):
                     proportion, 60,
                     msg = "Proportion for speakers in {} too low.".format(
                             corpus))
+            # Nungon has a lower threshold because speakers (especially aunts
+            # and uncles) are listed that never speak an utterance
+            if corpus == 'Nungon':
+                self.assertGreaterEqual(
+                    proportion, 70,
+                    msg="Proportion for speakers in {} too low.".format(
+                            corpus))
             else:
                 self.assertGreaterEqual(
                     proportion, lowerbound,
-                    msg = "Proportion for speakers in {} too high.".format(
+                    msg="Proportion for speakers in {} too low.".format(
                             corpus))
 
             self.assertLessEqual(
