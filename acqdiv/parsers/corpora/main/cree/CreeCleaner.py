@@ -258,7 +258,8 @@ class CreeCleaner(CHATCleaner):
     @classmethod
     def clean_gloss(cls, gloss):
         gloss = cls.clean_morpheme(gloss)
-        return cls.replace_gloss_connector(gloss)
+        # gloss = cls.replace_gloss_connector(gloss)
+        return gloss
 
     @staticmethod
     def uppercase_pos_in_parentheses(pos):
