@@ -126,7 +126,7 @@ class TestEnglishManchester1ReaderGeneric(unittest.TestCase):
         pos = 'L2'
         actual_output = EnglishManchester1Reader.get_morpheme_language(
             seg, gloss, pos)
-        desired_output = 'L2'
+        desired_output = 'FOREIGN'
         self.assertEqual(actual_output, desired_output)
 
     # ---------- get_segments ----------

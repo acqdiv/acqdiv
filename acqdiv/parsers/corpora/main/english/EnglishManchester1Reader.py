@@ -177,6 +177,6 @@ class EnglishManchester1Reader(BaseCHATReader):
     @staticmethod
     def get_morpheme_language(seg, gloss, pos):
         if pos == 'L2':
-            return 'L2'
+            return 'FOREIGN'
         else:
             return 'English'
