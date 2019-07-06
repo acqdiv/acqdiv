@@ -360,8 +360,14 @@ class ValidationTest_ProductionDB(ValidationTest):
                                                    WHERE corpus = '{corpus}')
                    FROM {table}
                    WHERE {column} IS NOT NULL AND corpus = '{corpus}'"""
-        msg = "Proportion of non-NULL values too low for {} - {} - {}"
+        msg = 'Proportion of non-NULL values too low:'
+
+        fails = []
+
+        print('Computing proportions of non-nulls:')
+
         for row in self.reader_proportion_nulls:
+            print(row)
             table = row[0]
             column = row[1]
             corpus = row[2]
@@ -372,16 +378,20 @@ class ValidationTest_ProductionDB(ValidationTest):
                     res = self.session.execute(query.format(
                         table=table, column=column, corpus=corpus))
                     result = res.fetchone()[0]
-                    self.assertGreaterEqual(
-                        result, proportion,
-                        msg=msg.format(table, column, corpus))
+
+                    if result < proportion:
+                        fails.append(
+                            (corpus, table, column, result, proportion))
             else:
                 res = self.session.execute(query.format(
                         table=table, column=column, corpus=corpus))
                 result = res.fetchone()[0]
-                self.assertGreaterEqual(
-                    result, proportion,
-                    msg=msg.format(table, column, corpus))
+
+                if result < proportion:
+                    fails.append(
+                        (corpus, table, column, result, proportion))
+
+        self.assertListEqual(fails, [], msg=msg+str(fails))
 
     def test_speaker_proportions(self):
         """Check proportion of (unique)speakers in utterances."""
