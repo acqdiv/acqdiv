@@ -4,6 +4,8 @@ from acqdiv.parsers.chat.readers.CHATReader import CHATReader
 from acqdiv.parsers.chat.readers.CHATFileParser import CHATFileParser
 from acqdiv.parsers.chat.readers.ActualTargetUtteranceExtractor \
     import ActualTargetUtteranceExtractor
+from acqdiv.parsers.chat.readers.SentenceTypeExtractor \
+    import SentenceTypeExtractor
 
 
 class BaseCHATReader(CHATFileParser, CHATReader):
@@ -223,42 +225,9 @@ class BaseCHATReader(CHATFileParser, CHATReader):
     def get_utterance(self):
         return self.get_mainline_utterance(self._main_line_fields)
 
-    @staticmethod
-    def get_utterance_terminator(utterance):
-        terminator_regex = re.compile(r'([+/.!?"]*[!?.])(?=(\s*\[\+|\s*$))')
-        match = terminator_regex.search(utterance)
-        if match:
-            return match.group(1)
-        else:
-            return ''
-
-    @staticmethod
-    def terminator2sentence_type(terminator):
-        """Map utterance terminator to sentence type.
-
-        Returns:
-            str: The sentence type.
-        """
-        mapping = {'.': 'default',
-                   '?': 'question',
-                   '!': 'exclamation',
-                   '+.': 'transcription break',
-                   '+...': 'trail off',
-                   '+..?': 'trail off of question',
-                   '+!?': 'question with exclamation',
-                   '+/.': 'interruption',
-                   '+/?': 'interruption of a question',
-                   '+//.': 'self-interruption',
-                   '+//?': 'self-interrupted question',
-                   '+"/.': 'quotation follows',
-                   '+".': 'quotation precedes'}
-
-        return mapping.get(terminator, '')
-
     def get_sentence_type(self):
         utterance = self.get_mainline_utterance(self._main_line_fields)
-        terminator = self.get_utterance_terminator(utterance)
-        return self.terminator2sentence_type(terminator)
+        return SentenceTypeExtractor.get_sentence_type(utterance)
 
     # ---------- actual & target ----------
 
