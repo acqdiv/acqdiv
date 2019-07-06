@@ -2,7 +2,7 @@ import os
 
 import acqdiv.parsers.chat.readers.BaseCHATReader
 
-from acqdiv.parsers.chat.cleaners import BaseCHATCleaner
+from acqdiv.parsers.chat.cleaners import CHATCleaner
 
 from acqdiv.parsers.chat.CHATParser import CHATParser
 
@@ -11,7 +11,7 @@ class BaseCHATParser(CHATParser):
     """Gathers all data for the DB for a given CHAT session file.
 
     Uses the RawCHATReader for reading and inferring data from the CHAT file and
-    BaseCHATCleaner for cleaning these data.
+    CHATCleaner for cleaning these data.
     """
 
     def __init__(self, session_path):
@@ -30,7 +30,7 @@ class BaseCHATParser(CHATParser):
 
     @staticmethod
     def get_cleaner():
-        return BaseCHATCleaner.BaseCHATCleaner()
+        return CHATCleaner.CHATCleaner()
 
     def get_session_metadata(self):
         """Get the metadata of a session.

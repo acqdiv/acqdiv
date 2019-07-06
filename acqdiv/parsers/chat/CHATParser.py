@@ -19,6 +19,6 @@ class CHATParser(SessionParser):
     def get_cleaner():
         """Get a cleaner instance.
 
-        Returns: BaseCHATCleaner
+        Returns: CHATCleaner
         """
         pass

@@ -1,5 +1,5 @@
-from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import BaseCHATCleaner
+from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
 
 
-class QuichuaCleaner(BaseCHATCleaner):
+class QuichuaCleaner(CHATCleaner):
     pass

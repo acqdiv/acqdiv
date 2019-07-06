@@ -1,13 +1,13 @@
-from abc import ABC, abstractmethod
+from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
+    import CHATUtteranceCleaner
+
+from acqdiv.parsers.chat.cleaners.CHATWordCleaner import CHATWordCleaner
 
 
-class CHATCleaner(ABC):
-    """Interface for cleaning the ACQDIV (CHAT) corpora."""
-
-    # ---------- metadata cleaning ----------
+class CHATCleaner:
+    """Default cleaner for CHAT corpora."""
 
     @staticmethod
-    @abstractmethod
     def clean_date(date):
         """Clean the date.
 
@@ -17,67 +17,97 @@ class CHATCleaner(ABC):
 
         Returns: str
         """
-        pass
-
-    # ---------- utterance cleaning ----------
-
-    @staticmethod
-    @abstractmethod
-    def clean_utterance(utterance):
-        """Clean the utterance.
-
-        Returns: str
-        """
-        pass
+        mapping = {'JAN': '01', 'FEB': '02', 'MAR': '03', 'APR': '04',
+                   'MAY': '05', 'JUN': '06', 'JUL': '07', 'AUG': '08',
+                   'SEP': '09', 'OCT': '10', 'NOV': '11', 'DEC': '12'}
+        if not date:
+            return ''
+        else:
+            day, month, year = date.split('-')
+            month_clean = mapping[month]
+            return '-'.join([year, month_clean, day])
 
     @staticmethod
-    @abstractmethod
     def clean_record_speaker_label(session_filename, speaker_label):
         """Clean the speaker label in a record.
+
+        No cleaning by default.
 
         Returns:
             str: The cleaned speaker label.
         """
-        pass
+        return speaker_label
 
-    # ---------- morphology tier cleaning ----------
+    @classmethod
+    def clean_utterance(cls, utterance):
+        """Clean the utterance.
+
+        Returns: str
+        """
+        return CHATUtteranceCleaner.clean(utterance)
 
     @staticmethod
-    @abstractmethod
-    def clean_seg_tier(seg_tier):
+    def clean_translation(translation):
+        """Clean the translation.
+
+        No cleaning by default.
+
+        Returns: str
+        """
+        return translation
+
+    @classmethod
+    def clean_word(cls, word):
+        """Clean the word.
+
+        Returns: str
+        """
+        return CHATWordCleaner.clean(word)
+
+    @staticmethod
+    def clean_morph_tier(morph_tier):
+        """Clean the morphology tier.
+
+        Default cleaner for the segment, gloss and POS tiers.
+
+        No cleaning by default.
+
+        Returns: str
+        """
+        return morph_tier
+
+    @classmethod
+    def clean_seg_tier(cls, seg_tier):
         """Clean the segment tier.
 
         Returns: str
         """
-        pass
+        return cls.clean_morph_tier(seg_tier)
 
-    @staticmethod
-    @abstractmethod
-    def clean_gloss_tier(gloss_tier):
+    @classmethod
+    def clean_gloss_tier(cls, gloss_tier):
         """Clean the gloss tier.
 
         Returns: str
         """
-        pass
+        return cls.clean_morph_tier(gloss_tier)
 
-    @staticmethod
-    @abstractmethod
-    def clean_pos_tier(pos_tier):
+    @classmethod
+    def clean_pos_tier(cls, pos_tier):
         """Clean the POS tier.
 
         Returns: str
         """
-        pass
-
-    # ---------- cross cleaning ----------
+        return cls.clean_morph_tier(pos_tier)
 
     @staticmethod
-    @abstractmethod
     def clean_session_metadata(session_filename, date, media_filename):
         """Clean across session metadata.
 
         Mostly used for correcting session dates having the default date
         `1984-01-01`.
+
+        No cleaning by default.
 
         Args:
             session_filename (str): The name of the session file.
@@ -87,17 +117,18 @@ class CHATCleaner(ABC):
         Returns:
             Tuple[str, str]: (date, media filename)
         """
-        pass
+        return date, media_filename
 
     @staticmethod
-    @abstractmethod
     def clean_speaker_metadata(
-            session_filename, speaker_label, name, role,
-            age, gender, language, birth_date, target_child):
+            session_filename, speaker_label, name, role, age,
+            gender, language, birth_date, target_child):
         """Clean across speaker metadata.
 
         Mostly used for correcting speaker metadata so as to match the speakers
         across different sessions later in the postprocessor.
+
+        No cleaning by default.
 
         Args:
             session_filename (str): The name of the session file.
@@ -115,83 +146,89 @@ class CHATCleaner(ABC):
             Tuple[str, str, str, str, str, str, str]:
             (speaker_label, name, role, age, gender, language, birth_date)
         """
-        pass
+        return speaker_label, name, role, age, gender, language, birth_date
 
     @staticmethod
-    @abstractmethod
     def utterance_cross_clean(
             raw_utt, actual_utt, target_utt, seg_tier, gloss_tier, pos_tier):
         """Clean across utterance tiers.
+
+        No cleaning by default.
 
         Returns:
             Tuple[str, str, str, str, str]:
             (actual_utt, target_utt, seg_tier, gloss_tier, pos_tier)
         """
-        pass
-
-    # ---------- word cleaning ----------
+        return actual_utt, target_utt, seg_tier, gloss_tier, pos_tier
 
     @staticmethod
-    @abstractmethod
-    def clean_word(word):
-        """Clean the word.
+    def clean_morpheme_word(morpheme_word):
+        """Clean the morpheme word.
+
+        Default cleaner for the segment, gloss and POS words.
+
+        No cleaning by default.
 
         Returns: str
         """
-        pass
+        return morpheme_word
 
-    @staticmethod
-    @abstractmethod
-    def clean_seg_word(seg_word):
+    @classmethod
+    def clean_seg_word(cls, seg_word):
         """Clean the segment word.
 
         Returns: str
         """
-        pass
+        return cls.clean_morpheme_word(seg_word)
 
-    @staticmethod
-    @abstractmethod
-    def clean_gloss_word(gloss_word):
+    @classmethod
+    def clean_gloss_word(cls, gloss_word):
         """Clean the gloss word.
 
         Returns: str
         """
-        pass
+        return cls.clean_morpheme_word(gloss_word)
 
-    @staticmethod
-    @abstractmethod
-    def clean_pos_word(pos_word):
+    @classmethod
+    def clean_pos_word(cls, pos_word):
         """Clean the POS tag word.
 
         Returns: str
         """
-        pass
-
-    # ---------- morpheme cleaning ----------
+        return cls.clean_morpheme_word(pos_word)
 
     @staticmethod
-    @abstractmethod
-    def clean_segment(segment):
+    def clean_morpheme(morpheme):
+        """Clean the morpheme.
+
+        Default cleaner for the segment, gloss and POS.
+
+        No cleaning by default.
+
+        Returns: str
+        """
+        return morpheme
+
+    @classmethod
+    def clean_segment(cls, segment):
         """Clean the segment.
 
         Returns: str
         """
-        pass
+        return cls.clean_morpheme(segment)
 
-    @staticmethod
-    @abstractmethod
-    def clean_gloss(gloss):
+    @classmethod
+    def clean_gloss(cls, gloss):
         """Clean the gloss.
 
         Returns: str
         """
-        pass
+        return cls.clean_morpheme(gloss)
 
-    @staticmethod
-    @abstractmethod
-    def clean_pos(pos):
+    @classmethod
+    def clean_pos(cls, pos):
         """Clean the POS tag.
 
         Returns: str
         """
-        pass
+        return cls.clean_morpheme(pos)

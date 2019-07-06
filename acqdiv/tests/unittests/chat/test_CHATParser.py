@@ -2,7 +2,7 @@ import io
 import unittest
 from acqdiv.parsers.chat.BaseCHATParser import *
 from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
-from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import *
+from acqdiv.parsers.chat.cleaners.CHATCleaner import *
 
 
 class TestCHATParser(unittest.TestCase):
@@ -20,7 +20,7 @@ class TestCHATParser(unittest.TestCase):
     def test_get_cleaner(self):
         """Test get_cleaner. (BaseCHATParser)"""
         actual_cleaner = BaseCHATParser.get_cleaner()
-        self.assertTrue(isinstance(actual_cleaner, BaseCHATCleaner))
+        self.assertTrue(isinstance(actual_cleaner, CHATCleaner))
 
     def test_get_session_metadata(self):
         """Test get_session_metadata with TestCHATParser.cha. (BaseCHATParser)"""

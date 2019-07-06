@@ -1,7 +1,7 @@
-from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import BaseCHATCleaner
+from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
 
 
-class ArabicKuwaitiCleaner(BaseCHATCleaner):
+class ArabicKuwaitiCleaner(CHATCleaner):
 
     @classmethod
     def clean_speaker_metadata(

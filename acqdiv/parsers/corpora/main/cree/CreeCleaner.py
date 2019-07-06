@@ -1,9 +1,9 @@
 import re
 
-from acqdiv.parsers.chat.cleaners.BaseCHATCleaner import BaseCHATCleaner
+from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
 
 
-class CreeCleaner(BaseCHATCleaner):
+class CreeCleaner(CHATCleaner):
 
     @staticmethod
     def correct_name(name):
