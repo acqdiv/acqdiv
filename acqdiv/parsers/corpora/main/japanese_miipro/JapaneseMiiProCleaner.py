@@ -184,7 +184,7 @@ class JapaneseMiiProCleaner(CHATCleaner):
 
         if match:
             date = match.group()
-            return date[:4] + '-' + date[4:6] + date[6:8]
+            return date[:4] + '-' + date[4:6] + '-' + date[6:8]
 
         return date
 
