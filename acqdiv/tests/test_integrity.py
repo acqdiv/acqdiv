@@ -350,16 +350,46 @@ class ValidationTest_ProductionDB(ValidationTest):
         super().tearDownClass()
         self.f_proportions.close()
 
+    def compute_null_proportion(self, query, corpus, table, column, expected, fails):
+        try:
+            res = self.session.execute(query.format(
+                table=table, column=column, corpus=corpus))
+        except Exception:
+            return
+
+        result = res.fetchall()
+
+        if result:
+            not_null_count = 0
+            total = 0
+
+            for r in result:
+                val = r[0]
+                total += 1
+                if (val is not None
+                        and not re.fullmatch(r'[\s*?#wxy0]*', str(val))):
+                    not_null_count += 1
+
+            actual = not_null_count / total
+
+            t = (corpus, table, column, actual, expected)
+            print((corpus, table, column, actual, expected))
+
+            if actual < expected:
+                fails.append(t)
+
     def test_columns_for_proportion_null(self):
         """ Check proportion of nulls per table per corpus. """
         corpora = ["Chintang", "Cree", "Indonesian", "Inuktitut",
                    "Japanese_Miyata", "Japanese_MiiPro", "Russian",
                    "Sesotho", "Turkish", "Yucatec"]
-        query = """SELECT CAST(COUNT(*) AS FLOAT)/(SELECT COUNT(*)
-                                                   FROM {table}
-                                                   WHERE corpus = '{corpus}')
-                   FROM {table}
-                   WHERE {column} IS NOT NULL AND corpus = '{corpus}'"""
+
+        query = """
+            SELECT {column}
+            FROM {table}
+            WHERE corpus = '{corpus}'
+        """
+
         msg = 'Proportion of non-NULL values too low:'
 
         fails = []
@@ -367,29 +397,19 @@ class ValidationTest_ProductionDB(ValidationTest):
         print('Computing proportions of non-nulls:')
 
         for row in self.reader_proportion_nulls:
-            print(row)
+
             table = row[0]
             column = row[1]
             corpus = row[2]
-            proportion = float(row[3])
+            expected = float(row[3])
 
-            if corpus == "all":
+            if corpus == 'all':
                 for corpus in corpora:
-                    res = self.session.execute(query.format(
-                        table=table, column=column, corpus=corpus))
-                    result = res.fetchone()[0]
-
-                    if result < proportion:
-                        fails.append(
-                            (corpus, table, column, result, proportion))
+                    self.compute_null_proportion(
+                        query, corpus, table, column, expected, fails)
             else:
-                res = self.session.execute(query.format(
-                        table=table, column=column, corpus=corpus))
-                result = res.fetchone()[0]
-
-                if result < proportion:
-                    fails.append(
-                        (corpus, table, column, result, proportion))
+                self.compute_null_proportion(
+                    query, corpus, table, column, expected, fails)
 
         self.assertListEqual(fails, [], msg=msg+str(fails))
 
