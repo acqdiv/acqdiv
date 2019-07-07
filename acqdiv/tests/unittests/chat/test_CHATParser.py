@@ -1,29 +1,33 @@
-import io
+import acqdiv
 import unittest
-from acqdiv.parsers.chat.BaseCHATParser import *
-from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
+from acqdiv.parsers.chat.CHATParser import *
+from acqdiv.parsers.chat.readers.CHATReader import CHATReader
 from acqdiv.parsers.chat.cleaners.CHATCleaner import *
 
 
 class TestCHATParser(unittest.TestCase):
-    """Class to test the BaseCHATParser."""
+    """Class to test the CHATParser."""
 
     def setUp(self):
-        self.parser = BaseCHATParser('__init__.py')
         self.maxDiff = None
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+
+        self.dummy_cha_path = os.path.join(
+            here,
+            'tests/unittests/chat/test_files/dummy.cha')
 
     def test_get_reader(self):
-        """Test get_reader. (BaseCHATParser)"""
-        actual_reader = BaseCHATParser.get_reader()
-        self.assertTrue(isinstance(actual_reader, BaseCHATReader))
+        """Test get_reader. (CHATParser)"""
+        actual_reader = CHATParser.get_reader(io.StringIO(''))
+        self.assertTrue(isinstance(actual_reader, CHATReader))
 
     def test_get_cleaner(self):
-        """Test get_cleaner. (BaseCHATParser)"""
-        actual_cleaner = BaseCHATParser.get_cleaner()
+        """Test get_cleaner. (CHATParser)"""
+        actual_cleaner = CHATParser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, CHATCleaner))
 
     def test_get_session_metadata(self):
-        """Test get_session_metadata with TestCHATParser.cha. (BaseCHATParser)"""
+        """Test get_session_metadata with TestCHATParser.cha. (CHATParser)"""
         session = (
             '@UTF8\n'
             '@Begin\n'
@@ -37,9 +41,10 @@ class TestCHATParser(unittest.TestCase):
             '@Media:\th2ab, audio\n'
             '@End'
         )
-        self.parser.reader.read(io.StringIO(session))
+        parser = CHATParser(self.dummy_cha_path)
+        parser.reader = CHATReader(io.StringIO(session))
 
-        actual_output = self.parser.get_session_metadata()
+        actual_output = parser.get_session_metadata()
         desired_output = {
             'date': '1997-09-12',
             'media_filename': 'h2ab'
@@ -47,7 +52,7 @@ class TestCHATParser(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
     def test_next_speaker(self):
-        """Test next_speaker with test.cha. (BaseCHATParser)"""
+        """Test next_speaker with test.cha. (CHATParser)"""
         session = (
             '@UTF8\n'
             '@Begin\n'
@@ -61,9 +66,10 @@ class TestCHATParser(unittest.TestCase):
             '@Media:\th2ab, audio\n'
             '@End'
         )
-        self.parser.reader.read(io.StringIO(session))
+        parser = CHATParser(self.dummy_cha_path)
+        parser.reader = CHATReader(io.StringIO(session))
 
-        actual_output = list(self.parser.next_speaker())
+        actual_output = list(parser.next_speaker())
         mem_dict = {
             'speaker_label': 'MEM',
             'name': 'Mme_Manyili',
@@ -88,7 +94,9 @@ class TestCHATParser(unittest.TestCase):
     def test_get_words_dict_simple_case(self):
         actual_utt = 'shoulda tested'
         target_utt = 'should_have tested'
-        actual_output = self.parser.get_words_dict(actual_utt, target_utt)
+        parser = CHATParser(self.dummy_cha_path)
+        parser.reader = CHATReader(io.StringIO(''))
+        actual_output = parser.get_words_dict(actual_utt, target_utt)
         desired_output = [{
             'word_language': None,
             'word': 'shoulda',

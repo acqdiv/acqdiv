@@ -1,9 +1,9 @@
 import re
 
-from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
+from acqdiv.parsers.chat.readers.CHATReader import CHATReader
 
 
-class SesothoReader(BaseCHATReader):
+class SesothoReader(CHATReader):
     """Class to implement Sesotho Reading methods.
 
     Normally the methods get_utterance(), get_actual_utterance() and
@@ -14,8 +14,8 @@ class SesothoReader(BaseCHATReader):
     words and those to the utterance.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, session_file):
+        super().__init__(session_file)
         self._passed_stem = False
 
     def _join_morph_to_utt(self):
@@ -47,13 +47,13 @@ class SesothoReader(BaseCHATReader):
         Cross-cleaning has to be done from here for access to different
         tiers at the same time.
         """
-        return self._dependent_tiers.get('gls', '')
+        return self.record.dependent_tiers.get('gls', '')
 
     def get_gloss_tier(self):
-        return self._dependent_tiers.get('cod', '')
+        return self.record.dependent_tiers.get('cod', '')
 
     def get_pos_tier(self):
-        return self._dependent_tiers.get('cod', '')
+        return self.record.dependent_tiers.get('cod', '')
 
     def infer_pos(self, gloss, num_morphemes):
         """Infer the pos-tag for a gloss.

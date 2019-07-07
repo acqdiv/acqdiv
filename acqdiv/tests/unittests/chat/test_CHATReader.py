@@ -1,7 +1,8 @@
 import unittest
 import io
 from acqdiv.parsers.chat.readers.CHATFileParser import CHATFileParser
-from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
+from acqdiv.parsers.chat.readers.CHATReader import CHATReader
+from acqdiv.parsers.chat.model.Participant import Participant
 
 
 class TestCHATReader(unittest.TestCase):
@@ -488,21 +489,21 @@ class TestCHATReader(unittest.TestCase):
     def test_get_utterance_words_standard_case(self):
         """Test get_utterance_words for standard input."""
         utterance = 'ke eng ntho ena e?'
-        actual_output = BaseCHATReader.get_utterance_words(utterance)
+        actual_output = CHATReader.get_utterance_words(utterance)
         desired_output = ['ke', 'eng', 'ntho', 'ena', 'e?']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_utterance_words_empty_string(self):
         """Test get_utterance_words for standard input."""
         utterance = ''
-        actual_output = BaseCHATReader.get_utterance_words(utterance)
+        actual_output = CHATReader.get_utterance_words(utterance)
         desired_output = []
         self.assertEqual(actual_output, desired_output)
 
     def test_get_utterance_words_multiple_blank_spaces(self):
         """Test get_utterance_words with multiple blank spaces."""
         utterance = 'ke eng  ntho ena   e?'
-        actual_output = BaseCHATReader.get_utterance_words(utterance)
+        actual_output = CHATReader.get_utterance_words(utterance)
         desired_output = ['ke', 'eng', 'ntho', 'ena', 'e?']
         self.assertEqual(actual_output, desired_output)
 
@@ -570,7 +571,7 @@ class TestCHATReader(unittest.TestCase):
 ###############################################################################
 
 class TestACQDIVCHATReaderMetadata(unittest.TestCase):
-    """Test metadata readers of BaseCHATReader.
+    """Test metadata readers of CHATReader.
 
     Excluding speaker metadata.
     """
@@ -582,8 +583,7 @@ class TestACQDIVCHATReaderMetadata(unittest.TestCase):
                    '@Date:\t12-SEP-1997\n'
                    '@Media:\tmedia_filename, audio\n'
                    '@End')
-        cls.reader = BaseCHATReader()
-        cls.reader.read(io.StringIO(session))
+        cls.reader = CHATReader(io.StringIO(session))
 
     def test_get_session_date(self):
         """Test get_session_date with test.cha. """
@@ -599,7 +599,7 @@ class TestACQDIVCHATReaderMetadata(unittest.TestCase):
 
 
 class TestACQDIVCHATReaderSpeaker(unittest.TestCase):
-    """Test speaker readers of BaseCHATReader."""
+    """Test speaker readers of CHATReader."""
 
     @classmethod
     def setUpClass(cls):
@@ -609,8 +609,7 @@ class TestACQDIVCHATReaderSpeaker(unittest.TestCase):
                    '@ID:\tsme|Sesotho|CHI|2;2.||||Target_Child|||\n'
                    '@Birth of CHI:\t14-JAN-2006\n'
                    '@End')
-        cls.reader = BaseCHATReader()
-        cls.reader.read(io.StringIO(session))
+        cls.reader = CHATReader(io.StringIO(session))
         cls.reader.load_next_speaker()
 
     def test_get_target_child(self):
@@ -661,7 +660,7 @@ class TestACQDIVCHATReaderSpeaker(unittest.TestCase):
 
 
 class TestACQDIVCHATReaderRecord(unittest.TestCase):
-    """Test record readers of BaseCHATReader."""
+    """Test record readers of CHATReader."""
 
     @classmethod
     def setUpClass(cls):
@@ -676,8 +675,7 @@ class TestACQDIVCHATReaderRecord(unittest.TestCase):
                    '%com:\tThis is the comment\n'
                    '%exp:\tThis is the explanation\n'
                    '@End')
-        cls.reader = BaseCHATReader()
-        cls.reader.read(io.StringIO(session))
+        cls.reader = CHATReader(io.StringIO(session))
         cls.reader.load_next_record()
 
     def test_get_uid(self):
@@ -771,7 +769,7 @@ class TestACQDIVCHATReaderRecord(unittest.TestCase):
 
 
 class TestACQDIVCHATReaderIterators(unittest.TestCase):
-    """Test iterator methods of BaseCHATReader."""
+    """Test iterator methods of CHATReader."""
 
     @classmethod
     def setUpClass(cls):
@@ -787,29 +785,32 @@ class TestACQDIVCHATReaderIterators(unittest.TestCase):
                    '%cod:\tThis is the cod tier\n'
                    '*MOT:\tThis is the second mainline of MOT .\n'
                    '@End')
-        cls.reader = BaseCHATReader()
-        cls.reader.read(io.StringIO(session))
+        cls.reader = CHATReader(io.StringIO(session))
 
     def test_load_next_speaker(self):
         """Test load_next_speaker."""
         actual_output = []
         while self.reader.load_next_speaker():
-            actual_output.append(self.reader._speaker)
-        desired_output = [
-            {'id': ('', 'English', 'MOT', '', '', '', '', 'Mother', '', ''),
-             'participant': ('MOT', 'Kim', 'Mother')},
-            {'id': ('', 'English', 'CHI', '2;8.', 'male', '', '',
-                    'Target_Child', '', ''),
-             'participant': ('CHI', 'Daniel', 'Target_Child')}]
-        self.assertEqual(actual_output, desired_output)
+            actual_output.append(self.reader.participant)
+
+        desired_output = (
+            actual_output[0].name == 'Kim' and
+            actual_output[0].code == 'MOT' and
+            actual_output[1].name == 'Daniel' and
+            actual_output[1].code == 'CHI'
+        )
+        assert desired_output
 
     def test_load_next_record(self):
         """Test load_next_record."""
         actual_output = []
         while self.reader.load_next_record():
-            uid = self.reader._uid
-            main_line_fields = self.reader._main_line_fields
-            dep_tiers = self.reader._dependent_tiers
+            uid = self.reader.record.uid
+            main_line_fields = (self.reader.record.participant_code,
+                                self.reader.record.utterance,
+                                self.reader.record.start_time,
+                                self.reader.record.end_time)
+            dep_tiers = self.reader.record.dependent_tiers
             actual_output.append((uid, main_line_fields, dep_tiers))
         desired_output = [
             (0,
@@ -825,75 +826,20 @@ class TestACQDIVCHATReaderIterators(unittest.TestCase):
         self.assertEqual(actual_output, desired_output)
 
 
-class TestACQDIVCHATReaderRead(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        session = (
-            '@UTF8\n'
-            '@Begin\n'
-            '@Date:\t12-SEP-1997\n'
-            '@Participants:\tMOT Kim Mother, CHI Daniel Target_Child\n'
-            '@ID:\t|English|MOT|||||Mother|||\n'
-            '@ID:\t|English|CHI|2;8.|male|||Target_Child|||\n'
-            '@Birth of CHI:\t19-FEB-2005\n'
-            '@End')
-        cls.reader = BaseCHATReader()
-        cls.reader.read(io.StringIO(session))
-
-    def test_target_child_set(self):
-        """Test whether _target_child is set."""
-        actual_output = self.reader._target_child
-        desired_output = ('CHI', 'Daniel')
-        self.assertEqual(actual_output, desired_output)
-
-    def test_metadata_set(self):
-        """Test whether _metadata is set."""
-        actual_output = self.reader._metadata
-        desired_output = {'Date': '12-SEP-1997',
-                          'Birth of CHI': '19-FEB-2005'}
-        self.assertEqual(actual_output, desired_output)
-
-    def test_speakers_set(self):
-        """Test whether _speakers is set."""
-        actual_output = self.reader._speakers
-        desired_output = {
-            'MOT': {
-                'id': ('', 'English', 'MOT', '', '', '', '', 'Mother', '', ''),
-                'participant': ('MOT', 'Kim', 'Mother')},
-            'CHI': {
-                'id': ('', 'English', 'CHI', '2;8.', 'male', '', '',
-                       'Target_Child', '', ''),
-                'participant': ('CHI', 'Daniel', 'Target_Child')}
-        }
-        self.assertEqual(actual_output, desired_output)
-
-    def test_speaker_iterator_set(self):
-        """Test whether _speaker_iterator is set."""
-        actual_output = list(self.reader._speaker_iterator)
-        desired_output = ['MOT', 'CHI']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_record_iterator_set(self):
-        actual_output = list(self.reader._record_iterator)
-        desired_output = []
-        self.assertEqual(actual_output, desired_output)
-
-
 class TestACQDIVCHATReaderGeneric(unittest.TestCase):
-    """Class to test all static and class methods of BaseCHATReader."""
+    """Class to test all static and class methods of CHATReader."""
 
     # ---------- morphology ----------
 
     def test_get_standard_form(self):
         """Test get_standard_form."""
-        actual_output = BaseCHATReader.get_standard_form()
+        actual_output = CHATReader.get_standard_form()
         desired_output = 'actual'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_word_language(self):
         """Test get_word_language."""
-        actual_output = BaseCHATReader.get_word_language('dal')
+        actual_output = CHATReader.get_word_language('dal')
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
@@ -902,41 +848,41 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
     def test_get_morpheme_words(self):
         """Test get_morpheme_words."""
         mor_tier = 'This is an example'
-        actual_output = BaseCHATReader.get_morpheme_words(mor_tier)
+        actual_output = CHATReader.get_morpheme_words(mor_tier)
         desired_output = ['This', 'is', 'an', 'example']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_morpheme_words_multiple_whitespaces(self):
         """Test get_morpheme_words."""
         mor_tier = 'This  is   an example'
-        actual_output = BaseCHATReader.get_morpheme_words(mor_tier)
+        actual_output = CHATReader.get_morpheme_words(mor_tier)
         desired_output = ['This', 'is', 'an', 'example']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_seg_words(self):
         """Test get_seg_words."""
         seg_tier = 'This is an example'
-        actual_output = BaseCHATReader.get_seg_words(seg_tier)
+        actual_output = CHATReader.get_seg_words(seg_tier)
         desired_output = ['This', 'is', 'an', 'example']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_gloss_words(self):
         """Test get_gloss_words."""
         gloss_tier = 'This is an example'
-        actual_output = BaseCHATReader.get_gloss_words(gloss_tier)
+        actual_output = CHATReader.get_gloss_words(gloss_tier)
         desired_output = ['This', 'is', 'an', 'example']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_pos_words(self):
         """Test get_pos_words."""
         pos_tier = 'This is an example'
-        actual_output = BaseCHATReader.get_seg_words(pos_tier)
+        actual_output = CHATReader.get_seg_words(pos_tier)
         desired_output = ['This', 'is', 'an', 'example']
         self.assertEqual(actual_output, desired_output)
 
     def test_get_main_morpheme(self):
         """Test get_main_morpheme."""
-        actual_output = BaseCHATReader.get_main_morpheme()
+        actual_output = CHATReader.get_main_morpheme()
         desired_output = 'gloss'
         self.assertEqual(actual_output, desired_output)
 
@@ -945,35 +891,35 @@ class TestACQDIVCHATReaderGeneric(unittest.TestCase):
         seg = 'Hatschi'
         gloss = 'sneeze'
         pos = 'N'
-        actual_output = BaseCHATReader.get_morpheme_language(seg, gloss, pos)
+        actual_output = CHATReader.get_morpheme_language(seg, gloss, pos)
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
     def test_get_morphemes(self):
         """Test get_morphemes."""
         seg_word = 'mor1-mor2-mor3'
-        actual_output = BaseCHATReader.get_morphemes(seg_word)
+        actual_output = CHATReader.get_morphemes(seg_word)
         desired_output = ['mor1', 'mor2', 'mor3']
         return self.assertEqual(actual_output, desired_output)
 
     def test_get_segments(self):
         """Test get_segments."""
         seg_word = 'mor1-mor2-mor3'
-        actual_output = BaseCHATReader.get_segments(seg_word)
+        actual_output = CHATReader.get_segments(seg_word)
         desired_output = ['mor1', 'mor2', 'mor3']
         return self.assertEqual(actual_output, desired_output)
 
     def test_get_glosses(self):
         """Test get_glosses."""
         gloss_word = 'mor1-mor2-mor3'
-        actual_output = BaseCHATReader.get_glosses(gloss_word)
+        actual_output = CHATReader.get_glosses(gloss_word)
         desired_output = ['mor1', 'mor2', 'mor3']
         return self.assertEqual(actual_output, desired_output)
 
     def test_get_poses(self):
         """Test get_poses."""
         pos_word = 'mor1-mor2-mor3'
-        actual_output = BaseCHATReader.get_poses(pos_word)
+        actual_output = CHATReader.get_poses(pos_word)
         desired_output = ['mor1', 'mor2', 'mor3']
         return self.assertEqual(actual_output, desired_output)
 

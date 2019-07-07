@@ -1,20 +1,20 @@
-from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
+from acqdiv.parsers.chat.readers.CHATReader import CHATReader
 
 
-class CreeReader(BaseCHATReader):
+class CreeReader(CHATReader):
 
     @staticmethod
     def get_main_morpheme():
         return 'segment'
 
     def get_seg_tier(self):
-        return self._dependent_tiers.get('xtarmor', '')
+        return self.record.dependent_tiers.get('xtarmor', '')
 
     def get_gloss_tier(self):
-        return self._dependent_tiers.get('xmormea', '')
+        return self.record.dependent_tiers.get('xmormea', '')
 
     def get_pos_tier(self):
-        return self._dependent_tiers.get('xmortyp', '')
+        return self.record.dependent_tiers.get('xmortyp', '')
 
     @staticmethod
     def get_morphemes(word):

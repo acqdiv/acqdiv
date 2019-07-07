@@ -88,7 +88,7 @@ class CHATFileParser:
             rec.uid = uid
             main_line = cls.get_mainline(rec_str)
             main_line_fields = cls.get_mainline_fields(main_line)
-            rec.speaker_id = cls.get_mainline_speaker_id(main_line_fields)
+            rec.participant_code = cls.get_mainline_speaker_id(main_line_fields)
             rec.utterance = cls.get_mainline_utterance(main_line_fields)
             rec.start_time = cls.get_mainline_start_time(main_line_fields)
             rec.end_time = cls.get_mainline_end_time(main_line_fields)
@@ -429,5 +429,10 @@ class CHATFileParser:
         Returns:
             tuple: (key, content).
         """
-        key, content = dependent_tier.split(':\t')
+        try:
+            key, content = dependent_tier.split(':\t')
+        # TODO: delete this once the source data (Inuktitut) is fixed
+        except ValueError:
+            key, content = dependent_tier.split(': ', maxsplit=1)
+
         return key.lstrip('%'), content

@@ -1,9 +1,9 @@
 import re
 
-from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
+from acqdiv.parsers.chat.readers.CHATReader import CHATReader
 
 
-class JapaneseMiyataReader(BaseCHATReader):
+class JapaneseMiyataReader(CHATReader):
 
     @staticmethod
     def get_word_language(word):
@@ -15,7 +15,7 @@ class JapaneseMiyataReader(BaseCHATReader):
             return 'Japanese'
 
     def get_morph_tier(self):
-        return self._dependent_tiers.get('trn', '')
+        return self.record.dependent_tiers.get('trn', '')
 
     @staticmethod
     def iter_morphemes(morph_word):

@@ -1,16 +1,16 @@
 import re
 
-from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
+from acqdiv.parsers.chat.readers.CHATReader import CHATReader
 
 
-class TurkishReader(BaseCHATReader):
+class TurkishReader(CHATReader):
 
     def get_start_time(self):
         """Get the start time.
 
         It is located on the %tim tier.
         """
-        time = self._dependent_tiers.get('tim', '')
+        time = self.record.dependent_tiers.get('tim', '')
         if not time:
             return ''
         else:
@@ -22,7 +22,7 @@ class TurkishReader(BaseCHATReader):
 
         It is located on the %tim tier and might be missing.
         """
-        time = self._dependent_tiers.get('tim', '')
+        time = self.record.dependent_tiers.get('tim', '')
         if not time:
             return ''
         else:
@@ -34,7 +34,7 @@ class TurkishReader(BaseCHATReader):
                 return ''
 
     def get_morph_tier(self):
-        return self._dependent_tiers.get('xmor', '')
+        return self.record.dependent_tiers.get('xmor', '')
 
     @staticmethod
     def get_word_language(word):

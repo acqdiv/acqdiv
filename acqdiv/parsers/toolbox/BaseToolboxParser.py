@@ -7,7 +7,7 @@ from acqdiv.parsers.metadata.IMDIParser import IMDIParser
 class BaseToolboxParser(ToolboxParser):
     """Gathers all data for the DB for a given Toolbox session file.
 
-    Uses the ToolboxReader for reading a toolbox file and IMDIParser or BaseCHATParser for
+    Uses the ToolboxReader for reading a toolbox file and IMDIParser or CHATParser for
     reading the corresponding metadata file.
     """
 

@@ -1,9 +1,9 @@
 import re
 
-from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
+from acqdiv.parsers.chat.readers.CHATReader import CHATReader
 
 
-class EnglishManchester1Reader(BaseCHATReader):
+class EnglishManchester1Reader(CHATReader):
 
     # TODO: move all corrections to cleaner/postprocessor
 
@@ -46,7 +46,7 @@ class EnglishManchester1Reader(BaseCHATReader):
         label = self.get_speaker_label()
         role = self.get_speaker_role()
         target_child_name = self.get_target_child()[1]
-        pid = self._metadata.get('PID', '')
+        pid = self.chat.pid
 
         return self.correct_speaker_name(
             name, label, role, target_child_name, pid)

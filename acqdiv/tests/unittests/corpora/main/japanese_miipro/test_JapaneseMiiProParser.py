@@ -1,10 +1,12 @@
 import io
 import unittest
+import os
+import acqdiv
 
 from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProCleaner import \
     JapaneseMiiProCleaner
-from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProSessionParser import \
-    JapaneseMiiProSessionParser
+from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProSessionParser \
+    import JapaneseMiiProSessionParser
 from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProReader import \
     JapaneseMiiProReader
 
@@ -13,27 +15,32 @@ class TestJapaneseMiiProParser(unittest.TestCase):
     """Class to test the JapaneseMiiProSessionParser."""
 
     def setUp(self):
-        self.parser = JapaneseMiiProSessionParser('__init__.py')
         self.maxDiff = None
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+
+        self.dummy_cha_path = os.path.join(
+            here,
+            'tests/unittests/chat/test_files/dummy.cha')
 
     def test_get_reader(self):
         """Test get_reader for JapaneseMiiProSessionParser."""
-        actual_reader = self.parser.get_reader()
+        actual_reader = JapaneseMiiProSessionParser.get_reader(io.StringIO(''))
         self.assertTrue(isinstance(actual_reader, JapaneseMiiProReader))
 
     def test_get_cleaner(self):
         """Test get_cleaner for JapaneseMiiProSessionParser."""
-        actual_cleaner = self.parser.get_cleaner()
+        actual_cleaner = JapaneseMiiProSessionParser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, JapaneseMiiProCleaner))
 
     def test_next_utterance_no_misalignments_single_word(self):
         """Test next_utterance with no misalignemnts. (JapaneseMiiPro)"""
         session_str = ('*MOT:\tnani ? 107252_107995\n%xtrn:\tn:deic:wh|nani'
                        ' ?\n%ort:\t何 ?\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = JapaneseMiiProSessionParser(self.dummy_cha_path)
+        parser.reader = JapaneseMiiProReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'MOT',
             'addressee': None,
             'utterance_raw': 'nani ?',
@@ -75,10 +82,11 @@ class TestJapaneseMiiProParser(unittest.TestCase):
         session_str = ('tom20010724.cha:*MOT:\tHonochan doozo . '
                        '4087868_4089193\n%xtrn:\tn:prop|Hono-chan co:g|doozo'
                        ' .\n%ort:\tホノちゃんどうぞ。\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = JapaneseMiiProSessionParser(self.dummy_cha_path)
+        parser.reader = JapaneseMiiProReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'MOT',
             'addressee': None,
             'utterance_raw': 'Honochan doozo .',
@@ -141,10 +149,11 @@ class TestJapaneseMiiProParser(unittest.TestCase):
         session_str = ('tom20010724.cha:*MOT:\tdoozo . '
                        '4087868_4089193\n%xtrn:\tn:prop|Hono-chan co:g|doozo'
                        ' .\n%ort:\tホノちゃんどうぞ。\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = JapaneseMiiProSessionParser(self.dummy_cha_path)
+        parser.reader = JapaneseMiiProReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'MOT',
             'addressee': None,
             'utterance_raw': 'doozo .',
@@ -200,10 +209,11 @@ class TestJapaneseMiiProParser(unittest.TestCase):
         session_str = ('tom20010724.cha:*MOT:\tHonochan doozo . '
                        '4087868_4089193\n%xtrn:\tn:prop|Hono-chan co:g|'
                        ' .\n%ort:\tホノちゃんどうぞ。\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = JapaneseMiiProSessionParser(self.dummy_cha_path)
+        parser.reader = JapaneseMiiProReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'MOT',
             'addressee': None,
             'utterance_raw': 'Honochan doozo .',
@@ -266,10 +276,11 @@ class TestJapaneseMiiProParser(unittest.TestCase):
         session_str = ('tom20010724.cha:*MOT:\tHonochan doozo . '
                        '4087868_4089193\n%xtrn:\t|Hono-chan co:g|doozo'
                        ' .\n%ort:\tホノちゃんどうぞ。\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = JapaneseMiiProSessionParser(self.dummy_cha_path)
+        parser.reader = JapaneseMiiProReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'MOT',
             'addressee': None,
             'utterance_raw': 'Honochan doozo .',

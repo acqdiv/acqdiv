@@ -1,23 +1,13 @@
 import re
 
-from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
+from acqdiv.parsers.chat.readers.CHATReader import CHATReader
 
 
-class InuktitutReader(BaseCHATReader):
+class InuktitutReader(CHATReader):
     """Inferences for Inuktitut."""
 
-    # TODO: delete this once the source data is fixed
-    @staticmethod
-    def get_dependent_tier(dependent_tier):
-        try:
-            key, content = dependent_tier.split(':\t')
-        except ValueError:
-            key, content = dependent_tier.split(': ', maxsplit=1)
-
-        return key.lstrip('%'), content
-
     def get_start_time(self):
-        return self._dependent_tiers.get('tim', '')
+        return self.record.dependent_tiers.get('tim', '')
 
     def get_end_time(self):
         return ''
@@ -63,7 +53,7 @@ class InuktitutReader(BaseCHATReader):
         return self.get_target_alternative(utterance)
 
     def get_morph_tier(self):
-        return self._dependent_tiers.get('xmor', '')
+        return self.record.dependent_tiers.get('xmor', '')
 
     @staticmethod
     def iter_morphemes(word):

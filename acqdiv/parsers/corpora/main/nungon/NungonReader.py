@@ -1,9 +1,9 @@
 import re
 
-from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
+from acqdiv.parsers.chat.readers.CHATReader import CHATReader
 
 
-class NungonReader(BaseCHATReader):
+class NungonReader(CHATReader):
 
     # ---------- morphology tier ----------
 
@@ -14,15 +14,15 @@ class NungonReader(BaseCHATReader):
         is more common.
         """
         for seg_tier_name in ['xgls', 'gls']:
-            if seg_tier_name in self._dependent_tiers:
-                return self._dependent_tiers[seg_tier_name]
+            if seg_tier_name in self.record.dependent_tiers:
+                return self.record.dependent_tiers[seg_tier_name]
         return ''
 
     def get_gloss_tier(self):
-        return self._dependent_tiers.get('xcod', '')
+        return self.record.dependent_tiers.get('xcod', '')
 
     def get_pos_tier(self):
-        return self._dependent_tiers.get('xcod', '')
+        return self.record.dependent_tiers.get('xcod', '')
 
     # ---------- morpheme words ----------
 

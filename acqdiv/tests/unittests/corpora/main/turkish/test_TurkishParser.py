@@ -1,5 +1,7 @@
 import io
 import unittest
+import os
+import acqdiv
 
 from acqdiv.parsers.corpora.main.turkish.TurkishCleaner import TurkishCleaner
 from acqdiv.parsers.corpora.main.turkish.TurkishSessionParser import TurkishSessionParser
@@ -9,12 +11,19 @@ from acqdiv.parsers.corpora.main.turkish.TurkishReader import TurkishReader
 class TestTurkishParser(unittest.TestCase):
 
     def setUp(self):
-        self.parser = TurkishSessionParser('__init__.py')
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+
+        self.dummy_cha_path = os.path.join(
+            here,
+            'tests/unittests/chat/test_files/dummy.cha')
+
         self.maxDiff = None
 
     def test_get_reader(self):
         """Test get_reader. (Sesotho)"""
-        actual_reader = TurkishSessionParser.get_reader()
+        session_str = '*GRA:\tne ?\n%add:\tMOT\n@End'
+        actual_reader = TurkishSessionParser.get_reader(
+            io.StringIO(session_str))
         self.assertTrue(isinstance(actual_reader, TurkishReader))
 
     def test_get_cleaner(self):
@@ -28,10 +37,11 @@ class TestTurkishParser(unittest.TestCase):
         Test with a one-word utterance without morphology.
         """
         session_str = '*GRA:\tne ?\n%add:\tMOT\n@End'
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = TurkishSessionParser(self.dummy_cha_path)
+        parser.reader = TurkishReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'GRA',
             'addressee': 'MOT',
             'utterance_raw': 'ne ?',
@@ -66,10 +76,11 @@ class TestTurkishParser(unittest.TestCase):
         """
         session_str = ('*BAB:\tinmekmi istiyo(r)sun ?\n%add:\tCHI\n%xmor:\t'
                        'V|in-INF-QUE V|iste-IPFV-2S ?\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = TurkishSessionParser(self.dummy_cha_path)
+        parser.reader = TurkishReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'BAB',
             'addressee': 'CHI',
             'utterance_raw': 'inmekmi istiyo(r)sun ?',
@@ -144,10 +155,11 @@ class TestTurkishParser(unittest.TestCase):
         """Test next_utterance with too few words. (Turkish)"""
         session_str = ('*BAB:\tinmekmi ?\n%add:\tCHI\n%xmor:\t'
                        'V|in-INF-QUE V|iste-IPFV-2S ?\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = TurkishSessionParser(self.dummy_cha_path)
+        parser.reader = TurkishReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'BAB',
             'addressee': 'CHI',
             'utterance_raw': 'inmekmi ?',
@@ -220,10 +232,11 @@ class TestTurkishParser(unittest.TestCase):
         """
         session_str = ('*BAB:\tinmekmi istiyo(r)sun ?\n%add:\tCHI\n%xmor:\t'
                        'V|in-INF-QUE ?\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = TurkishSessionParser(self.dummy_cha_path)
+        parser.reader = TurkishReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'BAB',
             'addressee': 'CHI',
             'utterance_raw': 'inmekmi istiyo(r)sun ?',
@@ -281,10 +294,11 @@ class TestTurkishParser(unittest.TestCase):
         """Test next_utterance with too few poses. (Turkish)"""
         session_str = ('*BAB:\tinmekmi istiyo(r)sun ?\n%add:\tCHI\n%xmor:\t'
                        'V|in-INF-QUE |iste-IPFV-2S ?\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = TurkishSessionParser(self.dummy_cha_path)
+        parser.reader = TurkishReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'BAB',
             'addressee': 'CHI',
             'utterance_raw': 'inmekmi istiyo(r)sun ?',
@@ -359,10 +373,11 @@ class TestTurkishParser(unittest.TestCase):
         """Test next_utterance with too few segments. (Turkish)"""
         session_str = ('*BAB:\tinmekmi istiyo(r)sun ?\n%add:\tCHI\n%xmor:\t'
                        'V|in-INF-QUE V|-IPFV-2S ?\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = TurkishSessionParser(self.dummy_cha_path)
+        parser.reader = TurkishReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'BAB',
             'addressee': 'CHI',
             'utterance_raw': 'inmekmi istiyo(r)sun ?',
@@ -437,10 +452,11 @@ class TestTurkishParser(unittest.TestCase):
         """Test next_utterance with too few glosses. (Turkish)"""
         session_str = ('*BAB:\tinmekmi istiyo(r)sun ?\n%add:\tCHI\n%xmor:\t'
                        'V|in-INF-QUE V|iste ?\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = TurkishSessionParser(self.dummy_cha_path)
+        parser.reader = TurkishReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'BAB',
             'addressee': 'CHI',
             'utterance_raw': 'inmekmi istiyo(r)sun ?',

@@ -525,12 +525,12 @@ class ToolboxReader(object):
 
         Args:
             rec_dict (dict): The record dictionary containing the tiers.
-            tier_getter (func): To get the correct tier.
-            words_getter (func): To get the words of the tier.
-            morphemes_getter(func): To get the morphemes of the word.
-            clean_tier (func): To clean the tier.
-            clean_word (func): To clean the word.
-            clean_morpheme (func): To clean the morpheme.
+            tier_getter (compute_null_proportion): To get the correct tier.
+            words_getter (compute_null_proportion): To get the words of the tier.
+            morphemes_getter(compute_null_proportion): To get the morphemes of the word.
+            clean_tier (compute_null_proportion): To clean the tier.
+            clean_word (compute_null_proportion): To clean the word.
+            clean_morpheme (compute_null_proportion): To clean the morpheme.
 
         Returns:
             list(list): List of list of morphemes (= morpheme word).

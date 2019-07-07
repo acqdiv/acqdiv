@@ -15,8 +15,7 @@ class TestNungonReaderRecord(unittest.TestCase):
                    '%xgls:\tThis is the segment tier\n'
                    '%xcod:\tThis is the gloss/POS tier\n'
                    '@End')
-        cls.reader = NungonReader()
-        cls.reader.read(io.StringIO(session))
+        cls.reader = NungonReader(io.StringIO(session))
         cls.reader.load_next_record()
 
     def test_get_seg_tier(self):

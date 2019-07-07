@@ -1,8 +1,11 @@
 import io
 import unittest
+import os
+import acqdiv
 
 from acqdiv.parsers.corpora.main.sesotho.SesothoCleaner import SesothoCleaner
-from acqdiv.parsers.corpora.main.sesotho.SesothoSessionParser import SesothoSessionParser
+from acqdiv.parsers.corpora.main.sesotho.SesothoSessionParser \
+    import SesothoSessionParser
 from acqdiv.parsers.corpora.main.sesotho.SesothoReader import SesothoReader
 
 
@@ -17,12 +20,16 @@ class TestSesothoParser(unittest.TestCase):
     """
 
     def setUp(self):
-        self.parser = SesothoSessionParser('__init__.py')
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+
+        self.dummy_cha_path = os.path.join(
+            here,
+            'tests/unittests/chat/test_files/dummy.cha')
         self.maxDiff = None
 
     def test_get_reader(self):
         """Test get_reader. (Sesotho)"""
-        actual_reader = SesothoSessionParser.get_reader()
+        actual_reader = SesothoSessionParser.get_reader(io.StringIO(''))
         self.assertTrue(isinstance(actual_reader, SesothoReader))
 
     def test_get_cleaner(self):
@@ -37,10 +44,11 @@ class TestSesothoParser(unittest.TestCase):
         """
         session_str = ('*HLE:\tTsebo . 1870096_1871196\n%gls:\tTsebo .\n'
                        '%cod:\tn^name .\n%eng:\tTsebo !\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = SesothoSessionParser(self.dummy_cha_path)
+        parser.reader = SesothoReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'HLE',
             'addressee': None,
             'utterance_raw': 'Tsebo .',
@@ -89,10 +97,11 @@ class TestSesothoParser(unittest.TestCase):
                        'Mamello .\n%cod:\tij v^leave-m^i (sm2s-t^p_v^go-m^s) '
                        '(if-)v^sit-m^in loc sister(1a , 2a) n^name .\n%eng:\t'
                        'Yes go and (go) sit next to sister Mamello\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = SesothoSessionParser(self.dummy_cha_path)
+        parser.reader = SesothoReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'MHL',
             'addressee': None,
             'utterance_raw': 'e tsamo dula pela ausi Mamello .',
@@ -230,10 +239,11 @@ class TestSesothoParser(unittest.TestCase):
         session_str = ('*NHL:\te tsamo . 113200_115376\n%gls:\ttsamay-a '
                        '.\n%cod:\tij v^leave-m^i '
                        '.\n%eng:\tYes go and\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = SesothoSessionParser(self.dummy_cha_path)
+        parser.reader = SesothoReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'NHL',
             'addressee': None,
             'utterance_raw': 'e tsamo .',
@@ -289,10 +299,11 @@ class TestSesothoParser(unittest.TestCase):
 
         session_str = ('*NHM:\te tsamo . 113200_115376\n%gls:\te tsamay-a .'
                        '\n%cod:\tv^leave-m^i .\n%eng:\tYes go and\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = SesothoSessionParser(self.dummy_cha_path)
+        parser.reader = SesothoReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'NHM',
             'addressee': None,
             'utterance_raw': 'e tsamo .',

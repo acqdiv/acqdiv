@@ -1,8 +1,11 @@
 import io
 import unittest
+import os
+import acqdiv
 
 from acqdiv.parsers.corpora.main.cree.CreeCleaner import CreeCleaner
-from acqdiv.parsers.corpora.main.cree.CreeSessionParser import CreeSessionParser
+from acqdiv.parsers.corpora.main.cree.CreeSessionParser \
+    import CreeSessionParser
 from acqdiv.parsers.corpora.main.cree.CreeReader import CreeReader
 
 
@@ -10,27 +13,34 @@ class TestCreeParser(unittest.TestCase):
     """Class to test the CreeSessionParser."""
 
     def setUp(self):
-        self.parser = CreeSessionParser('__init__.py')
         self.maxDiff = None
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+
+        self.dummy_cha_path = os.path.join(
+            here,
+            'tests/unittests/chat/test_files/dummy.cha')
 
     def test_get_reader(self):
         """Test get_reader. (Cree)"""
-        actual_reader = self.parser.get_reader()
+        session_str = ('*CHI:\tchair . 2883660_2884622\n%pho:\t*\n%mod:\t*\n'
+                       '%eng:\tohhhhhh\n@End')
+        actual_reader = CreeSessionParser.get_reader(io.StringIO(session_str))
         self.assertTrue(isinstance(actual_reader, CreeReader))
 
     def test_get_cleaner(self):
         """Test get_cleaner. (Cree)"""
-        actual_cleaner = self.parser.get_cleaner()
+        actual_cleaner = CreeSessionParser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, CreeCleaner))
 
     def test_next_utterance_no_misalignments_single_word(self):
         """Test next_utterance with utt containing no misalignemnts. (Cree)"""
         session_str = ('*CHI:\tchair . 2883660_2884622\n%pho:\t*\n%mod:\t*\n'
                        '%eng:\tohhhhhh\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = CreeSessionParser(self.dummy_cha_path)
+        parser.reader = CreeReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'CHI',
             'addressee': None,
             'utterance_raw': 'chair .',
@@ -65,10 +75,11 @@ class TestCreeParser(unittest.TestCase):
                        '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
                        '%xmortyp:\t[ni pro]\n%xtarmor:\t[wo *]\n%xmormea:\t'
                        '[egg 1]\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = CreeSessionParser(self.dummy_cha_path)
+        parser.reader = CreeReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'CHI',
             'addressee': None,
             'utterance_raw': '‹wâu nîyi› .',
@@ -127,10 +138,11 @@ class TestCreeParser(unittest.TestCase):
                        '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
                        '%xmortyp:\t[ni pro]\n%xtarmor:\t[wo *]\n%xmormea:\t'
                        '[egg 1]\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = CreeSessionParser(self.dummy_cha_path)
+        parser.reader = CreeReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'CHI',
             'addressee': None,
             'utterance_raw': '‹wâu› .',
@@ -188,10 +200,11 @@ class TestCreeParser(unittest.TestCase):
                        '\n%mod:\t‹ˈwo›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
                        '%xmortyp:\t[ni pro]\n%xtarmor:\t[wo]\n%xmormea:\t'
                        '[egg 1]\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = CreeSessionParser(self.dummy_cha_path)
+        parser.reader = CreeReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'CHI',
             'addressee': None,
             'utterance_raw': '‹wâu nîyi› .',
@@ -249,10 +262,11 @@ class TestCreeParser(unittest.TestCase):
                        '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
                        '%xmortyp:\t[ni pro]\n%xtarmor:\t[wo *]\n%xmormea:\t'
                        '[egg]\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = CreeSessionParser(self.dummy_cha_path)
+        parser.reader = CreeReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'CHI',
             'addressee': None,
             'utterance_raw': '‹wâu nîyi› .',
@@ -311,10 +325,11 @@ class TestCreeParser(unittest.TestCase):
                        '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
                        '%xmortyp:\t[pro]\n%xtarmor:\t[wo *]\n%xmormea:\t'
                        '[egg 1]\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = CreeSessionParser(self.dummy_cha_path)
+        parser.reader = CreeReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'CHI',
             'addressee': None,
             'utterance_raw': '‹wâu nîyi› .',

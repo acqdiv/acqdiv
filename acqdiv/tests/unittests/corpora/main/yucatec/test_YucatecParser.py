@@ -1,5 +1,7 @@
 import io
 import unittest
+import os
+import acqdiv
 
 from acqdiv.parsers.corpora.main.yucatec.YucatecCleaner import YucatecCleaner
 from acqdiv.parsers.corpora.main.yucatec.YucatecSessionParser import YucatecSessionParser
@@ -9,12 +11,19 @@ from acqdiv.parsers.corpora.main.yucatec.YucatecReader import YucatecReader
 class TestYucatecParser(unittest.TestCase):
 
     def setUp(self):
-        self.parser = YucatecSessionParser('__init__.py')
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+
+        self.dummy_cha_path = os.path.join(
+            here,
+            'tests/unittests/chat/test_files/dummy.cha')
         self.maxDiff = None
 
     def test_get_reader(self):
         """Test get_reader. (Yucatec)"""
-        actual_reader = YucatecSessionParser.get_reader()
+        session_str = ('*LOR:\tbaʼax .\n%xpho:\tbaaʼx\n%xmor:\tINT|baʼax .\n'
+                       '%xspn:\tqué .\n@End')
+        actual_reader = YucatecSessionParser.get_reader(
+            io.StringIO(session_str))
         self.assertTrue(isinstance(actual_reader, YucatecReader))
 
     def test_get_cleaner(self):
@@ -29,10 +38,11 @@ class TestYucatecParser(unittest.TestCase):
         """
         session_str = ('*LOR:\tbaʼax .\n%xpho:\tbaaʼx\n%xmor:\tINT|baʼax .\n'
                        '%xspn:\tqué .\n@End')
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = YucatecSessionParser(self.dummy_cha_path)
+        parser.reader = YucatecReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'LOR',
             'addressee': None,
             'utterance_raw': 'baʼax .',

@@ -15,8 +15,7 @@ class TestEnglishManchester1ReaderSpeaker(unittest.TestCase):
                    '@ID:\teng|Manchester|MOT||female|||Mother|||\n'
                    '@ID:\teng|Manchester|CHI|1;10.07||||Target_Child|||\n'
                    '@End')
-        cls.reader = EnglishManchester1Reader()
-        cls.reader.read(io.StringIO(session))
+        cls.reader = EnglishManchester1Reader(io.StringIO(session))
         cls.reader.load_next_speaker()
 
     def test_get_speaker_name(self):

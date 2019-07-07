@@ -9,7 +9,6 @@ class TestCreeReader(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.reader = CreeReader()
         cls.maxDiff = None
 
     def test_get_main_morpheme(self):
@@ -24,9 +23,9 @@ class TestCreeReader(unittest.TestCase):
                        '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
                        '%xmortyp:\t[ni pro]\n%xtarmor:\t[wo *]\n%xmormea:\t'
                        '[egg 1]\n@End')
-        self.reader.read(io.StringIO(session_str))
-        self.reader.load_next_record()
-        actual_output = self.reader.get_seg_tier()
+        reader = CreeReader(io.StringIO(session_str))
+        reader.load_next_record()
+        actual_output = reader.get_seg_tier()
         desired_output = '[wo *]'
         self.assertEqual(actual_output, desired_output)
 
@@ -36,9 +35,9 @@ class TestCreeReader(unittest.TestCase):
                        '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
                        '%xmortyp:\t[ni pro]\n%xmormea:\t'
                        '[egg 1]\n@End')
-        self.reader.read(io.StringIO(session_str))
-        self.reader.load_next_record()
-        actual_output = self.reader.get_seg_tier()
+        reader = CreeReader(io.StringIO(session_str))
+        reader.load_next_record()
+        actual_output = reader.get_seg_tier()
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
@@ -48,9 +47,9 @@ class TestCreeReader(unittest.TestCase):
                        '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
                        '%xmortyp:\t[ni pro]\n%xtarmor:\t[wo *]\n%xmormea:\t'
                        '[egg 1]\n@End')
-        self.reader.read(io.StringIO(session_str))
-        self.reader.load_next_record()
-        actual_output = self.reader.get_gloss_tier()
+        reader = CreeReader(io.StringIO(session_str))
+        reader.load_next_record()
+        actual_output = reader.get_gloss_tier()
         desired_output = '[egg 1]'
         self.assertEqual(actual_output, desired_output)
 
@@ -59,9 +58,9 @@ class TestCreeReader(unittest.TestCase):
         session_str = ('*CHI:\t‹wâu nîyi› . 1198552_1209903\n%pho:\t‹wo ni›'
                        '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
                        '%xmortyp:\t[ni pro]\n%xtarmor:\t[wo *]\n@End')
-        self.reader.read(io.StringIO(session_str))
-        self.reader.load_next_record()
-        actual_output = self.reader.get_gloss_tier()
+        reader = CreeReader(io.StringIO(session_str))
+        reader.load_next_record()
+        actual_output = reader.get_gloss_tier()
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
@@ -71,9 +70,9 @@ class TestCreeReader(unittest.TestCase):
                        '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
                        '%xmortyp:\t[ni pro]\n%xtarmor:\t[wo *]\n%xmormea:\t'
                        '[egg 1]\n@End')
-        self.reader.read(io.StringIO(session_str))
-        self.reader.load_next_record()
-        actual_output = self.reader.get_pos_tier()
+        reader = CreeReader(io.StringIO(session_str))
+        reader.load_next_record()
+        actual_output = reader.get_pos_tier()
         desired_output = '[ni pro]'
         self.assertEqual(actual_output, desired_output)
 
@@ -83,9 +82,9 @@ class TestCreeReader(unittest.TestCase):
                        '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
                        '%xtarmor:\t[wo *]\n%xmormea:\t'
                        '[egg 1]\n@End')
-        self.reader.read(io.StringIO(session_str))
-        self.reader.load_next_record()
-        actual_output = self.reader.get_pos_tier()
+        reader = CreeReader(io.StringIO(session_str))
+        reader.load_next_record()
+        actual_output = reader.get_pos_tier()
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 

@@ -55,16 +55,13 @@ class TestInuktitutReader(unittest.TestCase):
             '%eng:\tIt is a stereo\n'
             '@End')
 
-        self.reader = InuktitutReader()
-        self.reader.read(io.StringIO(session))
+        self.reader = InuktitutReader(io.StringIO(session))
+        self.reader.load_next_record()
         self.maxDiff = None
 
     def test_get_start_time_start_time_present(self):
         """Test get_start_time for a case a start time existing."""
-        self.reader._dependent_tiers = {
-            'utt': 'ha be',
-            'tim': '19301'
-        }
+        self.reader.record.dependent_tiers['tim'] = '19301'
         actual_output = self.reader.get_start_time()
         desired_output = '19301'
         self.assertEqual(actual_output, desired_output)
@@ -143,12 +140,8 @@ class TestInuktitutReader(unittest.TestCase):
         - replacement
         - shortening
         """
-        self.reader._main_line_fields = (
-            'CHI',
-            'nuutuinnaq [=? nauk tainna] mu:(ğ)ça &ab yarasam [: yorosom] .',
-            '',
-            ''
-        )
+        self.reader.record.utterance = \
+            'nuutuinnaq [=? nauk tainna] mu:(ğ)ça &ab yarasam [: yorosom] .'
         actual_output = self.reader.get_actual_utterance()
         desired_output = 'nauk tainna mu:ça ab yarasam .'
         self.assertEqual(actual_output, desired_output)
@@ -162,13 +155,9 @@ class TestInuktitutReader(unittest.TestCase):
         - replacement
         - shortening
         """
-        self.reader._main_line_fields = (
-            'CHI',
-            ('&ab mu:(ğ)ça nuutuinnaq [=? nauk tainna] mu:(ğ)ça &ab yarasam '
-             '[: yorosom] yarasam [: yorosom] nuutuinnaq [=? nauk tainna] .'),
-            '',
-            ''
-        )
+        self.reader.record.utterance = (
+            '&ab mu:(ğ)ça nuutuinnaq [=? nauk tainna] mu:(ğ)ça &ab yarasam '
+            '[: yorosom] yarasam [: yorosom] nuutuinnaq [=? nauk tainna] .')
         actual_output = self.reader.get_actual_utterance()
         desired_output = ('ab mu:ça nauk tainna mu:ça ab '
                           'yarasam yarasam nauk tainna .')
@@ -176,7 +165,7 @@ class TestInuktitutReader(unittest.TestCase):
 
     def test_get_actual_utterance_empty_string(self):
         """Test get_actual_utterance with an empty string."""
-        self.reader._main_line_fields = ('CHI', '', '', '')
+        self.reader.record.utterance = ''
         actual_output = self.reader.get_actual_utterance()
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
@@ -192,12 +181,8 @@ class TestInuktitutReader(unittest.TestCase):
         - replacement
         - shortening
         """
-        self.reader._main_line_fields = (
-            'CHI',
-            'nuutuinnaq [=? nauk tainna] mu:(ğ)ça &ab yarasam [: yorosom] .',
-            '',
-            ''
-        )
+        self.reader.record.utterance = \
+            'nuutuinnaq [=? nauk tainna] mu:(ğ)ça &ab yarasam [: yorosom] .'
         actual_output = self.reader.get_target_utterance()
         desired_output = 'nuutuinnaq mu:ğça xxx yorosom .'
         self.assertEqual(actual_output, desired_output)
@@ -211,13 +196,9 @@ class TestInuktitutReader(unittest.TestCase):
         - replacement
         - shortening
         """
-        self.reader._main_line_fields = (
-            'CHI',
-            ('&ab mu:(ğ)ça nuutuinnaq [=? nauk tainna] mu:(ğ)ça &ab yarasam '
-             '[: yorosom] yarasam [: yorosom] nuutuinnaq [=? nauk tainna] .'),
-            '',
-            ''
-        )
+        self.reader.record.utterance = (
+            '&ab mu:(ğ)ça nuutuinnaq [=? nauk tainna] mu:(ğ)ça &ab yarasam '
+            '[: yorosom] yarasam [: yorosom] nuutuinnaq [=? nauk tainna] .')
         actual_output = self.reader.get_target_utterance()
         desired_output = ('xxx mu:ğça nuutuinnaq mu:ğça xxx '
                           'yorosom yorosom nuutuinnaq .')
@@ -225,7 +206,7 @@ class TestInuktitutReader(unittest.TestCase):
 
     def test_get_target_utterance_empty_string(self):
         """Test get_target_utterance with an empty string."""
-        self.reader._main_line_fields = ('CHI', '', '', '')
+        self.reader.record.utterance = ''
         actual_output = self.reader.get_target_utterance()
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
@@ -234,14 +215,14 @@ class TestInuktitutReader(unittest.TestCase):
 
     def test_get_morph_tier_morph_tier_present(self):
         """Test get_morph_tier with test.cha."""
-        self.reader._dependent_tiers = {'xmor': 'test mor tier'}
+        self.reader.record.dependent_tiers['xmor'] = 'test mor tier'
         actual_output = self.reader.get_morph_tier()
         desired_output = 'test mor tier'
         self.assertEqual(actual_output, desired_output)
 
     def test_get_morph_tier_morph_tier_absent(self):
         """Test get_morph_tier with test.cha."""
-        self.reader._dependent_tiers = {'xmor': ''}
+        self.reader.record.dependent_tiers['xmor'] = ''
         actual_output = self.reader.get_morph_tier()
         desired_output = ''
         self.assertEqual(actual_output, desired_output)

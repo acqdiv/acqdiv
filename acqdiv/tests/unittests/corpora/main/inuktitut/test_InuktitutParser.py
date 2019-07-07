@@ -1,5 +1,7 @@
 import io
 import unittest
+import os
+import acqdiv
 
 from acqdiv.parsers.corpora.main.inuktitut.InuktitutCleaner import \
     InuktitutCleaner
@@ -15,17 +17,21 @@ class TestInuktitutParser(unittest.TestCase):
     """
 
     def setUp(self):
-        self.parser = InuktitutSessionParser('__init__.py')
         self.maxDiff = None
+        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+
+        self.dummy_cha_path = os.path.join(
+            here,
+            'tests/unittests/chat/test_files/dummy.cha')
 
     def test_get_reader(self):
         """Test get_reader for Inuktitutparser."""
-        actual_reader = self.parser.get_reader()
+        actual_reader = InuktitutSessionParser.get_reader(io.StringIO(''))
         self.assertTrue(isinstance(actual_reader, InuktitutReader))
 
     def test_get_cleaner(self):
         """Test get_cleaner for Inuktitutparser."""
-        actual_cleaner = self.parser.get_cleaner()
+        actual_cleaner = InuktitutSessionParser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, InuktitutCleaner))
 
     def test_next_utterance_no_misalignments_one_word(self):
@@ -34,10 +40,11 @@ class TestInuktitutParser(unittest.TestCase):
             '*MAE:\tAllaigutama  .\n%eng:\tGive me a comb  .\n%xmor:\tNR|'
             'ollaoguto^comb+NI|mim^MOD_SG .\n%tim:\t00:01:32\n%add:\tRO\n@End'
         )
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = InuktitutSessionParser(self.dummy_cha_path)
+        parser.reader = InuktitutReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'MAE',
             'addressee': 'RO',
             'utterance_raw': 'Allaigutama  .',
@@ -85,10 +92,11 @@ class TestInuktitutParser(unittest.TestCase):
             'NN|ta^here+LO|ane^VIA VP|nir^hurt+VN|jaq^PAR_3sS ?\n%xcod:\t'
             '$VAN $ATA:vl\n%tim:\t00:02:07\n%add:\tWOL\n@End'
         )
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = InuktitutSessionParser(self.dummy_cha_path)
+        parser.reader = InuktitutReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'AUN',
             'addressee': 'WOL',
             'utterance_raw': 'ana nitu  ?',
@@ -159,10 +167,11 @@ class TestInuktitutParser(unittest.TestCase):
             'NN|ta^here+LO|ane^VIA VP|nir^hurt+VN|jaq^PAR_3sS ?\n%xcod:\t'
             '$VAN $ATA:vl\n%tim:\t00:02:07\n%add:\tWOL\n@End'
         )
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = InuktitutSessionParser(self.dummy_cha_path)
+        parser.reader = InuktitutReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'AUN',
             'addressee': 'WOL',
             'utterance_raw': 'ana  ?',
@@ -226,10 +235,11 @@ class TestInuktitutParser(unittest.TestCase):
             'NN|here+LO|ane^VIA VP|nir^hurt+VN|jaq^PAR_3sS ?\n%xcod:\t'
             '$VAN $ATA:vl\n%tim:\t00:02:07\n%add:\tWOL\n@End'
         )
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = InuktitutSessionParser(self.dummy_cha_path)
+        parser.reader = InuktitutReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'AUN',
             'addressee': 'WOL',
             'utterance_raw': 'ana nitu  ?',
@@ -300,10 +310,11 @@ class TestInuktitutParser(unittest.TestCase):
             'NN|ta+LO|ane^VIA VP|nir^hurt+VN|jaq ?\n%xcod:\t'
             '$VAN $ATA:vl\n%tim:\t00:02:07\n%add:\tWOL\n@End'
         )
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = InuktitutSessionParser(self.dummy_cha_path)
+        parser.reader = InuktitutReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'AUN',
             'addressee': 'WOL',
             'utterance_raw': 'ana nitu  ?',
@@ -374,10 +385,11 @@ class TestInuktitutParser(unittest.TestCase):
             'NN|ta^here+ane^VIA nir^hurt+VN|jaq^PAR_3sS ?\n%xcod:\t'
             '$VAN $ATA:vl\n%tim:\t00:02:07\n%add:\tWOL\n@End'
         )
-        self.parser.reader.read(io.StringIO(session_str))
-        actual_output = list(self.parser.next_utterance())[0]
+        parser = InuktitutSessionParser(self.dummy_cha_path)
+        parser.reader = InuktitutReader(io.StringIO(session_str))
+        actual_output = list(parser.next_utterance())[0]
         utt_dict = {
-            'source_id': '__init___0',
+            'source_id': 'dummy_0',
             'speaker_label': 'AUN',
             'addressee': 'WOL',
             'utterance_raw': 'ana nitu  ?',

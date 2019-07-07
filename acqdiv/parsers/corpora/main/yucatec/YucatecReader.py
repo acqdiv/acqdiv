@@ -1,9 +1,9 @@
 import re
 
-from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
+from acqdiv.parsers.chat.readers.CHATReader import CHATReader
 
 
-class YucatecReader(BaseCHATReader):
+class YucatecReader(CHATReader):
 
     @staticmethod
     def get_utterance_words(utterance):
@@ -17,7 +17,7 @@ class YucatecReader(BaseCHATReader):
             return []
 
     def get_morph_tier(self):
-        return self._dependent_tiers.get('xmor', '')
+        return self.record.dependent_tiers.get('xmor', '')
 
     @classmethod
     def get_morpheme_words(cls, morph_tier):
@@ -163,7 +163,7 @@ class YucatecReader(BaseCHATReader):
                     yield seg, gloss, pos
 
     def get_translation(self):
-        return self._dependent_tiers.get('xspn', '')
+        return self.record.dependent_tiers.get('xspn', '')
 
     @classmethod
     def get_segments(cls, seg_word):

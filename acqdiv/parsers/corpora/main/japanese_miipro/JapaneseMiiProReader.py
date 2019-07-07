@@ -1,12 +1,12 @@
 import re
 
-from acqdiv.parsers.chat.readers.BaseCHATReader import BaseCHATReader
+from acqdiv.parsers.chat.readers.CHATReader import CHATReader
 
 
-class JapaneseMiiProReader(BaseCHATReader):
+class JapaneseMiiProReader(CHATReader):
 
     @classmethod
-    def _is_target_child(cls, pos, label, name, role):
+    def _is_target_child(cls, pos, role):
         if role == 'Target_Child':
             return True
 
@@ -15,8 +15,15 @@ class JapaneseMiiProReader(BaseCHATReader):
 
         return False
 
+    def get_target_child(self):
+        for pos, (code, p) in enumerate(self.chat.participants.items()):
+            if self._is_target_child(pos, p.role):
+                return code, p.name
+
+        return '', ''
+
     def get_morph_tier(self):
-        return self._dependent_tiers.get('xtrn', '')
+        return self.record.dependent_tiers.get('xtrn', '')
 
     @staticmethod
     def get_word_language(word):
