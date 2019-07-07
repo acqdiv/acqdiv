@@ -40,11 +40,12 @@ class CHATFileParser:
                 id_fields = cls.get_id_fields(content)
                 code = cls.get_id_code(id_fields)
                 participant = chat.participants[code]
-                participant.code = code
                 participant.age = cls.get_id_age(id_fields)
                 participant.language = cls.get_id_language(id_fields)
                 participant.group = cls.get_id_group(id_fields)
-                participant.role = cls.get_id_role(id_fields)
+                # do not overwrite role from @Participant
+                if not participant.role:
+                    participant.role = cls.get_id_role(id_fields)
                 participant.corpus = cls.get_id_corpus(id_fields)
                 participant.custom = cls.get_id_custom(id_fields)
                 participant.education = cls.get_id_education(id_fields)
