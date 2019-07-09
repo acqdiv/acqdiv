@@ -947,61 +947,71 @@ class PostProcessor:
 
     def _morphemes_unify_unknowns(self):
         """Unify unknown values for morphemes."""
-        s = sa.select([
-            db.Morpheme.id, db.Morpheme.morpheme, db.Morpheme.gloss_raw,
-            db.Morpheme.gloss, db.Morpheme.pos, db.Morpheme.pos_raw,
-            db.Morpheme.lemma_id])
-        rows = self.conn.execute(s)
-        results = []
-        null_values = {'???', '?', '', 'ww', 'xxx', '***'}
+        for corpus in self.corpora_in_DB:
+            s = sa.select([db.Morpheme.id,
+                           db.Morpheme.morpheme,
+                           db.Morpheme.gloss_raw,
+                           db.Morpheme.gloss,
+                           db.Morpheme.pos,
+                           db.Morpheme.pos_raw,
+                           db.Morpheme.lemma_id]).\
+                where(db.Morpheme.corpus == corpus)
 
-        for row in rows:
-            has_changed = False
+            rows = self.conn.execute(s)
+            results = []
+            null_values = {'???', '?', '', 'ww', 'xxx', '***'}
 
-            if row.morpheme in null_values:
-                morpheme = None
-                has_changed = True
-            else:
-                morpheme = row.morpheme
+            for row in rows:
+                has_changed = False
 
-            if row.gloss_raw == '':
-                gloss_raw = None
-                has_changed = True
-            else:
-                gloss_raw = row.gloss_raw
+                if row.morpheme in null_values:
+                    morpheme = None
+                    has_changed = True
+                else:
+                    morpheme = row.morpheme
 
-            if row.gloss in null_values:
-                gloss = None
-                has_changed = True
-            else:
-                gloss = row.gloss
+                if row.gloss_raw == '':
+                    gloss_raw = None
+                    has_changed = True
+                else:
+                    gloss_raw = row.gloss_raw
 
-            if row.pos_raw == '':
-                pos_raw = None
-                has_changed = True
-            else:
-                pos_raw = row.pos_raw
+                if row.gloss in null_values:
+                    gloss = None
+                    has_changed = True
+                else:
+                    gloss = row.gloss
 
-            if row.pos in null_values:
-                pos = None
-                has_changed = True
-            else:
-                pos = row.pos
+                if row.pos_raw == '':
+                    pos_raw = None
+                    has_changed = True
+                else:
+                    pos_raw = row.pos_raw
 
-            if row.lemma_id in null_values:
-                lemma_id = None
-                has_changed = True
-            else:
-                lemma_id = row.lemma_id
+                if row.pos in null_values:
+                    pos = None
+                    has_changed = True
+                else:
+                    pos = row.pos
 
-            if has_changed:
-                results.append({
-                    'morpheme_id': row.id, 'morpheme': morpheme,
-                    'gloss_raw': gloss_raw, 'gloss': gloss, 'pos_raw': pos_raw,
-                    'pos': pos, 'lemma_id': lemma_id})
+                if row.lemma_id in null_values:
+                    lemma_id = None
+                    has_changed = True
+                else:
+                    lemma_id = row.lemma_id
 
-        rows.close()
-        self._update_rows(db.Morpheme.__table__, 'morpheme_id', results)
+                if has_changed:
+                    results.append({
+                        'morpheme_id': row.id,
+                        'morpheme': morpheme,
+                        'gloss_raw': gloss_raw,
+                        'gloss': gloss,
+                        'pos_raw': pos_raw,
+                        'pos': pos,
+                        'lemma_id': lemma_id})
+
+            rows.close()
+            self._update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
     def process_words_table(self):
         """Add POS labels to the word table."""
@@ -1013,51 +1023,59 @@ class PostProcessor:
 
     def _words_unify_unknowns(self):
         """Unify unknown values for words."""
-        s = sa.select([
-            db.Word.id, db.Word.word, db.Word.word_actual,
-            db.Word.word_target, db.Word.pos])
-        rows = self.conn.execute(s)
-        results = []
-        null_values = {"", "xx", "ww", "???", "?", "0"}
+        for corpus in self.corpora_in_DB:
+            s = sa.select([db.Word.id,
+                           db.Word.word,
+                           db.Word.word_actual,
+                           db.Word.word_target,
+                           db.Word.pos]).\
+                where(db.Word.corpus == corpus)
 
-        for row in rows:
-            has_changed = False
+            rows = self.conn.execute(s)
+            results = []
+            null_values = {"", "xx", "ww", "???", "?", "0"}
 
-            if row.word_actual in null_values:
-                word_actual = None
-                has_changed = True
-            else:
-                word_actual = row.word_actual
+            for row in rows:
+                has_changed = False
 
-            if row.word_target in null_values:
-                word_target = None
-                has_changed = True
-            else:
-                word_target = row.word_target
-
-            if row.word in null_values or row.word is None:
-                # If word (= word_actual (except Yucatec)) is missing
-                # use word_target if it's not NULL
-                if word_target is not None:
-                    word = word_target
+                if row.word_actual in null_values:
+                    word_actual = None
+                    has_changed = True
                 else:
-                    word = None
-                has_changed = True
-            else:
-                word = row.word
+                    word_actual = row.word_actual
 
-            if row.pos == '???':
-                pos = None
-                has_changed = True
-            else:
-                pos = row.pos
+                if row.word_target in null_values:
+                    word_target = None
+                    has_changed = True
+                else:
+                    word_target = row.word_target
 
-            if has_changed:
-                results.append({
-                    'word_id': row.id, 'word': word, 'word_actual': word_actual,
-                    'word_target': word_target, 'pos': pos})
+                if row.word in null_values or row.word is None:
+                    # If word (= word_actual (except Yucatec)) is missing
+                    # use word_target if it's not NULL
+                    if word_target is not None:
+                        word = word_target
+                    else:
+                        word = None
+                    has_changed = True
+                else:
+                    word = row.word
 
-        self._update_rows(db.Word.__table__, 'word_id', results)
+                if row.pos == '???':
+                    pos = None
+                    has_changed = True
+                else:
+                    pos = row.pos
+
+                if has_changed:
+                    results.append({
+                        'word_id': row.id,
+                        'word': word,
+                        'word_actual': word_actual,
+                        'word_target': word_target,
+                        'pos': pos})
+
+            self._update_rows(db.Word.__table__, 'word_id', results)
 
     def _words_add_pos_labels(self):
         """Add POS labels (processed and UD)."""
