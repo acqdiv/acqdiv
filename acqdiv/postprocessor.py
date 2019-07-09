@@ -36,46 +36,13 @@ class PostProcessor:
 
         start_time = time.time()
 
-        self.setup(test=test)
+        self.set_engine(test=test)
 
         with self.engine.begin() as self.conn:
-            self.conn.execute('PRAGMA synchronous = OFF')
-            self.conn.execute('PRAGMA journal_mode = MEMORY')
-            self.conn.execution_options(compiled_cache={})
-
-            s = sa.select([db.Session.corpus]).distinct()
-            for row in self.conn.execute(s):
-                corpus = row[0]
-                ccp = CorpusConfigParser()
-
-                main_ini_path = 'ini/' + corpus + '.ini'
-                phonbank_ini_path = 'ini/Phonbank/' + corpus + '.ini'
-
-                if os.path.isfile(main_ini_path):
-                    ccp.read(main_ini_path)
-                elif os.path.isfile(phonbank_ini_path):
-                    ccp.read(phonbank_ini_path)
-                else:
-                    print('No ini found for: ', corpus)
-                    continue
-
-                self.corpora_in_DB[corpus] = ccp
-
-            # Update database tables
-            print("Processing speakers table...")
-            self.process_speakers_table()
-
-            print("Processing utterances table...")
-            self.process_utterances_table()
-
-            print("Processing morphemes table...")
-            self.process_morphemes_table()
-
-            print("Processing words table...")
-            self.process_words_table()
-
-            print("Processing sessions table...")
-            self.process_sessions_table()
+            self.configure_connection()
+            self.set_config_parsers()
+            self.set_roles()
+            self.process_tables()
 
         print("%s seconds --- Finished" % (time.time() - start_time))
         print()
@@ -87,13 +54,12 @@ class PostProcessor:
             print('acqdiv test -f')
         print()
 
-    def setup(self, test=False):
-        """Global setup.
+    def set_engine(self, test=False):
+        """Set the engine.
 
         Args:
-            test (bool): run on the test database
+            test (bool): Is the test DB run?
         """
-        # Testing mode vs full database.
         if test:
             self.engine = sa.create_engine('sqlite:///database/test.sqlite3')
         else:
@@ -111,12 +77,52 @@ class PostProcessor:
             self.engine = sa.create_engine('sqlite:///{}'.format(chosen_path))
             print('Postprocessing {}...'.format(chosen_path))
 
-        self.conn = self.engine.connect()
+    def configure_connection(self):
+        self.conn.execute('PRAGMA synchronous = OFF')
+        self.conn.execute('PRAGMA journal_mode = MEMORY')
+        self.conn.execution_options(compiled_cache={})
 
-        # Load the role mapping.ini for unifying roles.
+    def set_config_parsers(self):
+        s = sa.select([db.Session.corpus]).distinct()
+        for row in self.conn.execute(s):
+            corpus = row[0]
+            ccp = CorpusConfigParser()
+
+            main_ini_path = 'ini/' + corpus + '.ini'
+            phonbank_ini_path = 'ini/Phonbank/' + corpus + '.ini'
+
+            if os.path.isfile(main_ini_path):
+                ccp.read(main_ini_path)
+            elif os.path.isfile(phonbank_ini_path):
+                ccp.read(phonbank_ini_path)
+            else:
+                print('No ini found for: ', corpus)
+                continue
+
+            self.corpora_in_DB[corpus] = ccp
+
+    def set_roles(self):
+        """Load the role-mapping ini for unifying roles."""
         self.roles = ConfigParser(delimiters='=')
         self.roles.optionxform = str
         self.roles.read("ini/role_mapping.ini")
+
+    def process_tables(self):
+        # Update database tables
+        print("Processing speakers table...")
+        self.process_speakers_table()
+
+        print("Processing utterances table...")
+        self.process_utterances_table()
+
+        print("Processing morphemes table...")
+        self.process_morphemes_table()
+
+        print("Processing words table...")
+        self.process_words_table()
+
+        print("Processing sessions table...")
+        self.process_sessions_table()
 
     def get_config(self, corpus):
         """Return the corpus config parser."""
