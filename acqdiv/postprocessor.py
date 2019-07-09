@@ -28,8 +28,6 @@ class PostProcessor:
         self.conn = None
         self.corpora_in_DB = {}
         self.roles = None
-        self.pos_index = {}
-        self.pos_raw_index = {}
 
     def postprocess(self, test=False):
         """Global setup and then call post-processes."""
@@ -668,9 +666,6 @@ class PostProcessor:
         print('_morphemes_unify_gloss_tuatschin()')
         self._morphemes_unify_gloss_tuatschin()
 
-        print("_morphemes_get_pos_indexes")
-        self._morphemes_get_pos_indexes()
-
         print("_morphemes_unify_unknowns")
         self._morphemes_unify_unknowns()
 
@@ -923,28 +918,6 @@ class PostProcessor:
         query.close()
         self._update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
-    def _morphemes_get_pos_indexes(self):
-        """Infer the word's part-of-speech (raw and processed).
-
-        Infer from the morphemes table as index for word pos assignment.
-        """
-        s = sa.select([db.Morpheme.id, db.Morpheme.pos, db.Morpheme.pos_raw,
-                       db.Morpheme.word_id_fk])
-        rows = self.conn.execute(s)
-        for row in rows:
-            if row.pos not in ["sfx", "pfx"]:
-                # row.id will be int type in other tables when look up occurs
-                # type it int here for convenience
-                try:
-                    self.pos_index[int(row.word_id_fk)] = row.pos
-                except TypeError:
-                    pass
-                try:
-                    self.pos_raw_index[int(row.word_id_fk)] = row.pos_raw
-                except TypeError:
-                    pass
-        rows.close()
-
     def _morphemes_unify_unknowns(self):
         """Unify unknown values for morphemes."""
         for corpus in self.corpora_in_DB:
@@ -956,6 +929,8 @@ class PostProcessor:
                            db.Morpheme.pos_raw,
                            db.Morpheme.lemma_id]).\
                 where(db.Morpheme.corpus == corpus)
+
+            print(corpus)
 
             rows = self.conn.execute(s)
             results = []
@@ -1081,6 +1056,33 @@ class PostProcessor:
         """Add POS labels (processed and UD)."""
         for corpus in self.corpora_in_DB:
 
+            # Collect the word IDs together with their POS tags
+            # from the morphemes table
+
+            pos_index = {}
+            pos_raw_index = {}
+
+            s = sa.select([db.Morpheme.id,
+                           db.Morpheme.pos,
+                           db.Morpheme.pos_raw,
+                           db.Morpheme.word_id_fk]).\
+                where(db.Morpheme.corpus == corpus)
+
+            rows = self.conn.execute(s)
+            for row in rows:
+                if row.pos not in ["sfx", "pfx"]:
+                    try:
+                        pos_index[int(row.word_id_fk)] = row.pos
+                    except TypeError:
+                        pass
+                    try:
+                        pos_raw_index[int(row.word_id_fk)] = row.pos_raw
+                    except TypeError:
+                        pass
+            rows.close()
+
+            # Add the POS tags to the words table
+
             s = sa.select([db.Word.id,
                            db.Word.corpus]).\
                 where(db.Word.corpus == corpus)
@@ -1092,12 +1094,12 @@ class PostProcessor:
             poses_ud = config['pos_ud']
 
             for row in query:
-                if row.id in self.pos_index:
+                if row.id in pos_index:
                     results_pos.append(
-                        {'word_id': row.id, 'pos': self.pos_index[row.id]})
-                if row.id in self.pos_raw_index:
+                        {'word_id': row.id, 'pos': pos_index[row.id]})
+                if row.id in pos_raw_index:
                     # tag in index is pos_raw, so first get UD equivalent
-                    pos_raw = self.pos_raw_index[row.id]
+                    pos_raw = pos_raw_index[row.id]
                     if pos_raw in poses_ud:
                         pos_ud = poses_ud[pos_raw]
 
