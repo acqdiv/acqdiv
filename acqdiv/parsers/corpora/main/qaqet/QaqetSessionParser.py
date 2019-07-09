@@ -1,9 +1,9 @@
 from acqdiv.parsers.corpora.main.qaqet.QaqetIMDIParser import QaqetIMDI
 from acqdiv.parsers.corpora.main.qaqet.QaqetReader import QaqetReader
-from acqdiv.parsers.toolbox.BaseToolboxParser import BaseToolboxParser
+from acqdiv.parsers.toolbox.ToolboxParser import ToolboxParser
 
 
-class QaqetSessionParser(BaseToolboxParser):
+class QaqetSessionParser(ToolboxParser):
 
     def get_record_reader(self):
         return QaqetReader(self.toolbox_path)

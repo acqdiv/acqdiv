@@ -1,9 +1,9 @@
 from acqdiv.parsers.corpora.main.russian.RussianReader import RussianReader
-from acqdiv.parsers.toolbox.BaseToolboxParser import BaseToolboxParser
+from acqdiv.parsers.toolbox.ToolboxParser import ToolboxParser
 from acqdiv.parsers.metadata.IMDIParser import IMDIParser
 
 
-class RussianSessionParser(BaseToolboxParser):
+class RussianSessionParser(ToolboxParser):
 
     def get_record_reader(self):
         return RussianReader(self.toolbox_path)

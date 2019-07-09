@@ -1,10 +1,10 @@
 from acqdiv.parsers.corpora.main.tuatschin.TuatschinReader import \
     TuatschinReader
 from acqdiv.parsers.metadata.CMDIParser import CMDIParser
-from acqdiv.parsers.toolbox.BaseToolboxParser import BaseToolboxParser
+from acqdiv.parsers.toolbox.ToolboxParser import ToolboxParser
 
 
-class TuatschinSessionParser(BaseToolboxParser):
+class TuatschinSessionParser(ToolboxParser):
 
     def get_metadata_reader(self):
         return CMDIParser(self.metadata_path)
