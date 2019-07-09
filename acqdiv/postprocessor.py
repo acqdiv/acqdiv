@@ -499,14 +499,20 @@ class PostProcessor:
 
     def _utterances_get_uniquespeaker_ids(self):
         """Add speaker ids and unique speaker ids to utterances table."""
+        s = sa.select([db.Utterance.id,
+                       db.Utterance.speaker_label,
+                       db.Utterance.session_id_fk,
+                       db.Utterance.corpus,
+                       db.Speaker.id.label('speaker_id'),
+                       db.Speaker.uniquespeaker_id_fk]).\
+            select_from(
+                sa.outerjoin(db.Utterance, db.Speaker, sa.and_(
+                    db.Utterance.speaker_label == db.Speaker.speaker_label,
+                    db.Utterance.session_id_fk == db.Speaker.session_id_fk,
+                    db.Utterance.corpus == db.Speaker.corpus
+                )))
 
-        rows = self.engine.execute('''
-        select u.id, u.speaker_label, u.session_id_fk, u.corpus, s.id as speaker_id, s.uniquespeaker_id_fk
-        from utterances u
-        left join speakers s
-        on u.speaker_label = s.speaker_label
-        and u.session_id_fk = s.session_id_fk
-        and u.corpus = s.corpus''')
+        rows = self.conn.execute(s)
 
         results = []
         for row in rows:
@@ -523,13 +529,19 @@ class PostProcessor:
         If the utterance is or is not child directed, we denote this with 1 or 0.
         We use None (NULL) if the corpus is not annotated for child directedness.
         """
-        rows = self.engine.execute('''
-            select u.id, u.corpus, u.addressee, u.speaker_label, s.macrorole
-            from utterances u
-            left join speakers s
-            on u.addressee = s.speaker_label
-            and u.session_id_fk = s.session_id_fk
-            where u.corpus != "Chintang"''')
+        s = sa.select([db.Utterance.id,
+                       db.Utterance.corpus,
+                       db.Utterance.addressee,
+                       db.Utterance.speaker_label,
+                       db.Speaker.macrorole]).\
+            select_from(
+                sa.outerjoin(db.Utterance, db.Speaker, sa.and_(
+                    db.Utterance.addressee == db.Speaker.speaker_label,
+                    db.Utterance.session_id_fk == db.Speaker.session_id_fk
+                ))).\
+            where(db.Utterance.corpus != 'Chintang')
+
+        rows = self.conn.execute(s)
 
         results = []
         for row in rows:
