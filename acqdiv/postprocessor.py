@@ -8,6 +8,7 @@ import argparse
 import logging
 import sqlalchemy as sa
 import glob
+import os
 
 from itertools import groupby
 from configparser import ConfigParser
@@ -18,7 +19,7 @@ from acqdiv.processors import age
 
 engine = None
 conn = None
-corpora_in_DB = []
+corpora_in_DB = {}
 
 cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 age_pattern = re.compile(".*;.*\..*")
@@ -61,120 +62,10 @@ def setup(test=False):
     roles.optionxform = str
     roles.read("ini/role_mapping.ini")
 
-    # standard corpora
 
-    global chintang, cree, english_manchester1, indonesian, inuktitut, \
-        miyata, miipro, nungon, russian, sesotho, turkish, yucatec
-
-    chintang = CorpusConfigParser()
-    chintang.read("ini/Chintang.ini")
-    english_manchester1 = CorpusConfigParser()
-    english_manchester1.read('ini/English_Manchester1.ini')
-    indonesian = CorpusConfigParser()
-    indonesian.read("ini/Indonesian.ini")
-    russian = CorpusConfigParser()
-    russian.read("ini/Russian.ini")
-
-
-    base_path = 'ini/'
-
-    cree = CorpusConfigParser()
-    cree.read(base_path + "Cree.ini")
-    inuktitut = CorpusConfigParser()
-    inuktitut.read(base_path + "Inuktitut.ini")
-    miyata = CorpusConfigParser()
-    miyata.read(base_path + "Japanese_Miyata.ini")
-    miipro = CorpusConfigParser()
-    miipro.read(base_path + "Japanese_MiiPro.ini")
-    nungon = CorpusConfigParser()
-    nungon.read(base_path + "Nungon.ini")
-    sesotho = CorpusConfigParser()
-    sesotho.read(base_path + "Sesotho.ini")
-    turkish = CorpusConfigParser()
-    turkish.read(base_path + "Turkish.ini")
-    yucatec = CorpusConfigParser()
-    yucatec.read(base_path + "Yucatec.ini")
-
-    # new corpora
-
-    global dene, ku_waru, qaqet, tuatschin
-
-    dene = CorpusConfigParser()
-    dene.read('ini/Dene.ini')
-    ku_waru = CorpusConfigParser()
-    ku_waru.read('ini/Ku_Waru.ini')
-    qaqet = CorpusConfigParser()
-    qaqet.read('ini/Qaqet.ini')
-    tuatschin = CorpusConfigParser()
-    tuatschin.read('ini/Tuatschin.ini')
-
-    # phonbank corpora
-
-    global polish, berber, arabic_kuwaiti, arabic_kern, quichua
-
-    polish = CorpusConfigParser()
-    polish.read('ini/Phonbank/Polish.ini')
-
-    berber = CorpusConfigParser()
-    berber.read('ini/Phonbank/Berber.ini')
-
-    arabic_kuwaiti = CorpusConfigParser()
-    arabic_kuwaiti.read('ini/Phonbank/Arabic_Kuwaiti.ini')
-
-    arabic_kern = CorpusConfigParser()
-    arabic_kern.read('ini/Phonbank/Arabic_Kern.ini')
-
-    quichua = CorpusConfigParser()
-    quichua.read('ini/Phonbank/Quichua.ini')
-
-
-def get_config(corpus_name):
-    """ Return the metadata_path file.
-    """
-    if corpus_name == "Chintang":
-        return chintang
-    elif corpus_name == "Cree":
-        return cree
-    elif corpus_name == 'Dene':
-        return dene
-    elif corpus_name == "English_Manchester1":
-        return english_manchester1
-    elif corpus_name == "Indonesian":
-        return indonesian
-    elif corpus_name == "Inuktitut":
-        return inuktitut
-    elif corpus_name == 'Ku_Waru':
-        return ku_waru
-    elif corpus_name == "Japanese_Miyata":
-        return miyata
-    elif corpus_name == "Japanese_MiiPro":
-        return miipro
-    elif corpus_name == "Nungon":
-        return nungon
-    elif corpus_name == 'Qaqet':
-        return qaqet
-    elif corpus_name == "Russian":
-        return russian
-    elif corpus_name == "Sesotho":
-        return sesotho
-    elif corpus_name == 'Tuatschin':
-        return tuatschin
-    elif corpus_name == "Turkish":
-        return turkish
-    elif corpus_name == "Yucatec":
-        return yucatec
-    elif corpus_name == 'Polish':
-        return polish
-    elif corpus_name == 'Arabic_Kern':
-        return arabic_kern
-    elif corpus_name == 'Arabic_Kuwaiti':
-        return arabic_kuwaiti
-    elif corpus_name == 'Berber':
-        return berber
-    elif corpus_name == 'Quichua':
-        return quichua
-    else:
-        raise Exception
+def get_config(corpus):
+    """Return the corpus config parser."""
+    return corpora_in_DB[corpus]
 
 
 def postprocess(test=False):
@@ -192,7 +83,21 @@ def postprocess(test=False):
 
         s = sa.select([db.Session.corpus]).distinct()
         for row in conn.execute(s):
-            corpora_in_DB.append(row[0])
+            corpus = row[0]
+            ccp = CorpusConfigParser()
+
+            main_ini_path = 'ini/' + corpus + '.ini'
+            phonbank_ini_path = 'ini/Phonbank/' + corpus + '.ini'
+
+            if os.path.isfile(main_ini_path):
+                ccp.read(main_ini_path)
+            elif os.path.isfile(phonbank_ini_path):
+                ccp.read(phonbank_ini_path)
+            else:
+                print('No ini found for: ', corpus)
+                continue
+
+            corpora_in_DB[corpus] = ccp
 
         # Update database tables
         print("Processing speakers table...")
