@@ -1061,17 +1061,19 @@ class PostProcessor:
 
     def _words_add_pos_labels(self):
         """Add POS labels (processed and UD)."""
+        for corpus in self.corpora_in_DB:
 
-        s = sa.select([db.Word.id, db.Word.corpus])
-        query = self.conn.execute(s)
-        results_pos = []
-        results_pos_ud = []
+            s = sa.select([db.Word.id,
+                           db.Word.corpus]).\
+                where(db.Word.corpus == corpus)
 
-        for corpus, rows in groupby(query, lambda r: r[1]):
+            query = self.conn.execute(s)
+            results_pos = []
+            results_pos_ud = []
             config = self.get_config(corpus)
             poses_ud = config['pos_ud']
 
-            for row in rows:
+            for row in query:
                 if row.id in self.pos_index:
                     results_pos.append(
                         {'word_id': row.id, 'pos': self.pos_index[row.id]})
@@ -1088,9 +1090,9 @@ class PostProcessor:
 
                     # now add
                     results_pos_ud.append({'word_id': row.id, 'pos_ud': pos_ud})
-        query.close()
-        self._update_rows(db.Word.__table__, 'word_id', results_pos)
-        self._update_rows(db.Word.__table__, 'word_id', results_pos_ud)
+            query.close()
+            self._update_rows(db.Word.__table__, 'word_id', results_pos)
+            self._update_rows(db.Word.__table__, 'word_id', results_pos_ud)
 
     def process_sessions_table(self):
         self._insert_durations()
