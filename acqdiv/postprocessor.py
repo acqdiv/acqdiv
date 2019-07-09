@@ -36,11 +36,11 @@ class PostProcessor:
 
         self.set_engine(test=test)
 
-        with self.engine.begin() as self.conn:
-            self.configure_connection()
-            self.set_config_parsers()
-            self.set_roles()
-            self.process_tables()
+        self.set_roles()
+
+        self.set_config_parsers()
+
+        self.process_tables()
 
         print("%s seconds --- Finished" % (time.time() - start_time))
         print()
@@ -81,23 +81,26 @@ class PostProcessor:
         self.conn.execution_options(compiled_cache={})
 
     def set_config_parsers(self):
-        s = sa.select([db.Session.corpus]).distinct()
-        for row in self.conn.execute(s):
-            corpus = row[0]
-            ccp = CorpusConfigParser()
+        with self.engine.begin() as self.conn:
+            self.configure_connection()
 
-            main_ini_path = 'ini/' + corpus + '.ini'
-            phonbank_ini_path = 'ini/Phonbank/' + corpus + '.ini'
+            s = sa.select([db.Session.corpus]).distinct()
+            for row in self.conn.execute(s):
+                corpus = row[0]
+                ccp = CorpusConfigParser()
 
-            if os.path.isfile(main_ini_path):
-                ccp.read(main_ini_path)
-            elif os.path.isfile(phonbank_ini_path):
-                ccp.read(phonbank_ini_path)
-            else:
-                print('No ini found for: ', corpus)
-                continue
+                main_ini_path = 'ini/' + corpus + '.ini'
+                phonbank_ini_path = 'ini/Phonbank/' + corpus + '.ini'
 
-            self.corpora_in_DB[corpus] = ccp
+                if os.path.isfile(main_ini_path):
+                    ccp.read(main_ini_path)
+                elif os.path.isfile(phonbank_ini_path):
+                    ccp.read(phonbank_ini_path)
+                else:
+                    print('No ini found for: ', corpus)
+                    continue
+
+                self.corpora_in_DB[corpus] = ccp
 
     def set_roles(self):
         """Load the role-mapping ini for unifying roles."""
@@ -106,21 +109,35 @@ class PostProcessor:
         self.roles.read("ini/role_mapping.ini")
 
     def process_tables(self):
-        # Update database tables
-        print("Processing speakers table...")
-        self.process_speakers_table()
+        """Process the tables.
 
-        print("Processing utterances table...")
-        self.process_utterances_table()
+        Hint: Break down transactions (with self.engine.begin() as self.conn)
+        into smaller transactions when memory starts to run out!
+        """
+        with self.engine.begin() as self.conn:
+            self.configure_connection()
+            print("Processing speakers table...")
+            self.process_speakers_table()
 
-        print("Processing morphemes table...")
-        self.process_morphemes_table()
+        with self.engine.begin() as self.conn:
+            self.configure_connection()
+            print("Processing utterances table...")
+            self.process_utterances_table()
 
-        print("Processing words table...")
-        self.process_words_table()
+        with self.engine.begin() as self.conn:
+            self.configure_connection()
+            print("Processing morphemes table...")
+            self.process_morphemes_table()
 
-        print("Processing sessions table...")
-        self.process_sessions_table()
+        with self.engine.begin() as self.conn:
+            self.configure_connection()
+            print("Processing words table...")
+            self.process_words_table()
+
+        with self.engine.begin() as self.conn:
+            self.configure_connection()
+            print("Processing sessions table...")
+            self.process_sessions_table()
 
     def get_config(self, corpus):
         """Return the corpus config parser."""
@@ -791,7 +808,7 @@ class PostProcessor:
         # TODO: Insert some debugging here if the labels are missing?
 
         for corpus in self.corpora_in_DB:
-            print(corpus)
+            print('\t'+corpus)
 
             s = sa.\
                 select([db.Morpheme.id,
@@ -930,7 +947,7 @@ class PostProcessor:
                            db.Morpheme.lemma_id]).\
                 where(db.Morpheme.corpus == corpus)
 
-            print(corpus)
+            print('\t'+corpus)
 
             rows = self.conn.execute(s)
             results = []
@@ -999,6 +1016,9 @@ class PostProcessor:
     def _words_unify_unknowns(self):
         """Unify unknown values for words."""
         for corpus in self.corpora_in_DB:
+
+            print('\t'+corpus)
+
             s = sa.select([db.Word.id,
                            db.Word.word,
                            db.Word.word_actual,
@@ -1055,6 +1075,8 @@ class PostProcessor:
     def _words_add_pos_labels(self):
         """Add POS labels (processed and UD)."""
         for corpus in self.corpora_in_DB:
+
+            print('\t' + corpus)
 
             # Collect the word IDs together with their POS tags
             # from the morphemes table
