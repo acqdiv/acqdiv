@@ -17,7 +17,8 @@ import acqdiv
 import argparse
 import unittest
 
-from acqdiv import loader, postprocessor
+from acqdiv import loader
+from acqdiv.postprocessor import PostProcessor
 from acqdiv.tests.test_integrity import ValidationTest_DevDB
 from acqdiv.tests.test_integrity import ValidationTest_ProductionDB
 
@@ -33,6 +34,7 @@ def load(args):
 
 def postprocess(args):
     """Run the postprocessor."""
+    postprocessor = PostProcessor()
     postprocessor.postprocess(
         test=not args.full,
     )
