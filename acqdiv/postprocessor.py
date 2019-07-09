@@ -18,6 +18,7 @@ from acqdiv.processors import age
 
 engine = None
 conn = None
+corpora_in_DB = []
 
 cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
 age_pattern = re.compile(".*;.*\..*")
@@ -178,6 +179,8 @@ def get_config(corpus_name):
 
 def postprocess(test=False):
     """Global setup and then call post-processes."""
+    global corpora_in_DB
+
     start_time = time.time()
 
     setup(test=test)
@@ -186,6 +189,10 @@ def postprocess(test=False):
         conn.execute('PRAGMA synchronous = OFF')
         conn.execute('PRAGMA journal_mode = MEMORY')
         conn.execution_options(compiled_cache={})
+
+        s = sa.select([db.Session.corpus]).distinct()
+        for row in conn.execute(s):
+            corpora_in_DB.append(row[0])
 
         # Update database tables
         print("Processing speakers table...")
@@ -814,23 +821,28 @@ def _morphemes_infer_pos():
 
     Clean up affix markers "-"; assign sfx, pfx, stem.
     """
-    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.morpheme,
-                   db.Morpheme.gloss_raw, db.Morpheme.pos_raw]).where(sa.or_(
-        db.Morpheme.corpus == "Indonesian",
-        db.Morpheme.corpus == "Chintang"))
-    rows = conn.execute(s)
-    results = []
-    for row in rows:
-        morpheme = None if row.morpheme is None else row.morpheme.replace('-',
-                                                                          '')
-        gloss_raw = None if row.gloss_raw is None else row.gloss_raw.replace(
-            '-', '')
-        pos_raw = None if row.pos_raw is None else row.pos_raw.replace('-', '')
-        results.append(
-            {'morpheme_id': row.id, 'pos_raw': pos_raw, 'gloss_raw': gloss_raw,
-             'morpheme': morpheme})
-    rows.close()
-    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
+    for corpus in ['Indonesian', 'Chintang']:
+        s = sa.\
+            select([db.Morpheme.id,
+                    db.Morpheme.corpus,
+                    db.Morpheme.morpheme,
+                    db.Morpheme.gloss_raw,
+                    db.Morpheme.pos_raw]).\
+            where(db.Morpheme.corpus == corpus)
+        rows = conn.execute(s)
+        results = []
+        for row in rows:
+            morpheme = None if row.morpheme is None else row.morpheme.replace(
+                '-', '')
+            gloss_raw = None if row.gloss_raw is None else row.gloss_raw.replace(
+                '-', '')
+            pos_raw = None if row.pos_raw is None else row.pos_raw.replace(
+                '-', '')
+            results.append(
+                {'morpheme_id': row.id, 'pos_raw': pos_raw, 'gloss_raw': gloss_raw,
+                 'morpheme': morpheme})
+        rows.close()
+        _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
 
 def _morphemes_infer_lemma_id_chintang():
@@ -884,21 +896,32 @@ def _morphemes_unify_label():
     to the database.
     """
     # TODO: Insert some debugging here if the labels are missing?
-    s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw,
-                   db.Morpheme.pos_raw])
-    query = conn.execute(s)
-    results = []
-    for corpus, rows in groupby(query, lambda r: r[1]):
+
+    for corpus in corpora_in_DB:
+        print(corpus)
+
+        s = sa.\
+            select([db.Morpheme.id,
+                    db.Morpheme.corpus,
+                    db.Morpheme.gloss_raw,
+                    db.Morpheme.pos_raw]).\
+            where(db.Morpheme.corpus == corpus)
+
+        query = conn.execute(s)
+
         config = get_config(corpus)
         glosses = config['gloss']
         poses = config['pos']
-        for row in rows:
+
+        results = []
+        for row in query:
             gloss = None if row.gloss_raw not in glosses else glosses[
                 row.gloss_raw]
             pos = None if row.pos_raw not in poses else poses[row.pos_raw]
             results.append({'morpheme_id': row.id, 'gloss': gloss, 'pos': pos})
-    query.close()
-    _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
+
+        query.close()
+        _update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
 
 def _morphemes_unify_gloss_tuatschin():
