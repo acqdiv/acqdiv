@@ -27,6 +27,10 @@ class CorpusParser(ABC):
         corpus.owner = self.cfg['corpus']['owner']
         corpus.sessions = self.iter_sessions()
 
+        corpus.morpheme_type = self.cfg['morphemes']['type']
+        corpus.session_labels = self.cfg['session_labels']
+        corpus.speaker_labels = self.cfg['speaker_labels']
+
         return corpus
 
     @abstractmethod

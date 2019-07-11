@@ -78,7 +78,7 @@ class Loader:
             corpus = corpus_parser.parse()
 
             # add the corpus to the DB
-            proc = DBProcessor(cfg, corpus, engine, test=test)
+            proc = DBProcessor(corpus, engine, test=test)
             proc.process_corpus()
 
         print("%s seconds --- Finished" % (time.time() - start_time))

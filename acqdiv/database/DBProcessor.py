@@ -12,28 +12,20 @@ class DBProcessor(object):
     """ DBProcessor invokes a parser to get the extracted data, and then interacts
         with the SQLAlchemy ORM backend to push data to it.
     """
-    def __init__(self, cfg, corpus, engine, test=False):
+    def __init__(self, corpus, engine, test=False):
         """ Init parser with corpus metadata_path, file path, a parser factory and a database engine.
 
         Args:
-            cfg: CorpusConfigParser
             corpus (acqdiv.model.Corpus.Corpus): The corpus.
             engine: SQLAlchemy database engine
 
         """
-        self.config = cfg
-        self.corp = corpus
+        self.corpus = corpus
         self.test = test
         self.engine = engine
 
-        # Commonly used variables from the corpus metadata_path file.
-        self.language = self.config['corpus']['language']
-        self.corpus = self.config['corpus']['corpus']
-        self.format = self.config['corpus']['format']
-        self.morpheme_type = self.config['morphemes']['type']
-
     def process_corpus(self):
-        for session in self.corp.sessions:
+        for session in self.corpus.sessions:
             self.process_session(session)
 
             if self.test:
@@ -56,6 +48,10 @@ class DBProcessor(object):
 
 
     def _process_session(self, conn, session):
+        corpus = self.corpus.corpus
+        language = self.corpus.language
+        morpheme_type = self.corpus.morpheme_type
+
         insert_sess, insert_speaker, insert_utt, insert_word, insert_morph = \
             (sa.insert(model, bind=conn).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word, db.Morpheme))
 
@@ -66,18 +62,23 @@ class DBProcessor(object):
         # except KeyError:
         #     duration = None
 
-        session_labels = self.config['session_labels']
+        session_labels = self.corpus.session_labels
         # We overwrite a few values in the retrieved session metadata.
-        d = self._extract(session_metadata, session_labels, language=self.language, corpus=self.corpus) # , duration=duration)
+        d = self._extract(session_metadata,
+                          session_labels,
+                          language=language,
+                          corpus=corpus) # , duration=duration)
 
         # Populate sessions table.
         s_id, = insert_sess(**d).inserted_primary_key
 
         # Populate the speakers table.
-        speaker_labels = self.config['speaker_labels']
+        speaker_labels = self.corpus.speaker_labels
         for speaker in session.next_speaker():
-            d = self._extract(speaker, speaker_labels,
-                              language=self.language, corpus=self.corpus)
+            d = self._extract(speaker,
+                              speaker_labels,
+                              language=language,
+                              corpus=corpus)
             insert_speaker(session_id_fk=s_id, **d)
 
         # Populate the utterances, words and morphemes tables.
@@ -85,13 +86,15 @@ class DBProcessor(object):
             if utterance is None:
                 continue
 
-            utterance.update(corpus=self.corpus, language=self.language)
+            utterance.update(corpus=corpus,
+                             language=language)
             u_id, = insert_utt(session_id_fk=s_id, **utterance).inserted_primary_key
 
             w_ids = []
             for w in words:
                 if w:
-                    w.update(corpus=self.corpus, language=self.language)
+                    w.update(corpus=corpus,
+                             language=language)
                     w_id, = insert_word(session_id_fk=s_id, utterance_id_fk=u_id, **w).inserted_primary_key
                     w_ids.append(w_id)
 
@@ -101,5 +104,7 @@ class DBProcessor(object):
                 w_id = w_ids[i] if link_to_word else None
 
                 for m in mword:
-                    m.update(corpus=self.corpus, language=self.language, type=self.morpheme_type)
+                    m.update(corpus=corpus,
+                             language=language,
+                             type=morpheme_type)
                     insert_morph(session_id_fk=s_id, utterance_id_fk=u_id, word_id_fk=w_id, **m)
