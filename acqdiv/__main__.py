@@ -17,7 +17,7 @@ import acqdiv
 import argparse
 import unittest
 
-from acqdiv import loader
+from acqdiv.loader import Loader
 from acqdiv.postprocessor import PostProcessor
 from acqdiv.tests.test_integrity import ValidationTest_DevDB
 from acqdiv.tests.test_integrity import ValidationTest_ProductionDB
@@ -25,6 +25,7 @@ from acqdiv.tests.test_integrity import ValidationTest_ProductionDB
 
 def load(args):
     """Run the loader."""
+    loader = Loader()
     loader.load(
         test=not args.full,
         new=args.new_corpora,
