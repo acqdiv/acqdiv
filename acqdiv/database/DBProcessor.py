@@ -12,17 +12,18 @@ class DBProcessor(object):
     """ DBProcessor invokes a parser to get the extracted data, and then interacts
         with the SQLAlchemy ORM backend to push data to it.
     """
-    def __init__(self, cfg, session_parser, engine):
+    def __init__(self, cfg, corpus, engine, test=False):
         """ Init parser with corpus metadata_path, file path, a parser factory and a database engine.
 
         Args:
             cfg: CorpusConfigParser
-            session_parser: The session parser.
+            corpus (acqdiv.model.Corpus.Corpus): The corpus.
             engine: SQLAlchemy database engine
 
         """
         self.config = cfg
-        self.session_parser = session_parser
+        self.corp = corpus
+        self.test = test
         self.engine = engine
 
         # Commonly used variables from the corpus metadata_path file.
@@ -31,12 +32,20 @@ class DBProcessor(object):
         self.format = self.config['corpus']['format']
         self.morpheme_type = self.config['morphemes']['type']
 
+    def process_corpus(self):
+        for session in self.corp.sessions:
+            self.process_session(session)
 
-    def process_session(self):
+            if self.test:
+                break
+
+
+    def process_session(self, session):
         with self.engine.begin() as conn:
             conn.execute('PRAGMA synchronous = OFF')
             conn.execute('PRAGMA journal_mode = MEMORY')
-            self._process_session(conn.execution_options(compiled_cache={}))
+            self._process_session(conn.execution_options(compiled_cache={}),
+                                  session)
 
 
     @staticmethod
@@ -46,11 +55,11 @@ class DBProcessor(object):
         return result
 
 
-    def _process_session(self, conn):
+    def _process_session(self, conn, session):
         insert_sess, insert_speaker, insert_utt, insert_word, insert_morph = \
             (sa.insert(model, bind=conn).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word, db.Morpheme))
 
-        session_metadata = self.session_parser.get_session_metadata()
+        session_metadata = session.get_session_metadata()
         
         # try:
         #     duration = session_metadata['duration']
@@ -66,13 +75,13 @@ class DBProcessor(object):
 
         # Populate the speakers table.
         speaker_labels = self.config['speaker_labels']
-        for speaker in self.session_parser.next_speaker():
+        for speaker in session.next_speaker():
             d = self._extract(speaker, speaker_labels,
                               language=self.language, corpus=self.corpus)
             insert_speaker(session_id_fk=s_id, **d)
 
         # Populate the utterances, words and morphemes tables.
-        for utterance, words, morphemes in self.session_parser.next_utterance():
+        for utterance, words, morphemes in session.next_utterance():
             if utterance is None:
                 continue
 

@@ -69,18 +69,17 @@ class Loader:
             print("{0} seconds --- Start processing: {1}".format(
                 time.time() - start_time, config.split(".")[0]))
 
+            # get corpus parser based on corpus name
             name = cfg['corpus']['corpus']
-
             corpus_parser_class = CorpusParserMapper.map(name)
             corpus_parser = corpus_parser_class(cfg)
+
+            # get the corpus
             corpus = corpus_parser.parse()
 
-            for session in corpus.sessions:
-                proc = DBProcessor(cfg, session, engine)
-                proc.process_session()
-
-                if test:
-                    break
+            # add the corpus to the DB
+            proc = DBProcessor(cfg, corpus, engine, test=test)
+            proc.process_corpus()
 
         print("%s seconds --- Finished" % (time.time() - start_time))
         print()
