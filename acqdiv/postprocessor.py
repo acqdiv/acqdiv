@@ -15,7 +15,7 @@ from configparser import ConfigParser
 
 import acqdiv.database.database_backend as db
 from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
-from acqdiv.processors import age
+from acqdiv.util import age
 
 
 class PostProcessor:
