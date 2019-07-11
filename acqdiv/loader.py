@@ -1,12 +1,8 @@
 """ Entry point for loading ACQDIV raw input corpora data into the ACQDIV-DB
 """
 import time
-import datetime
 import argparse
 
-from sqlalchemy import create_engine
-
-from acqdiv.database.database_backend import Base
 from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
 from acqdiv.parsers.CorpusParserMapper import CorpusParserMapper
 from acqdiv.database.DBProcessor import DBProcessor
@@ -23,8 +19,6 @@ class Loader:
             phonbank (bool): Run over the Phonbank corpora.
         """
         start_time = time.time()
-
-        engine = self._get_engine(test=test)
 
         configs = [
             'Chintang.ini',
@@ -61,6 +55,8 @@ class Loader:
                 base_path + 'Quichua.ini'
             ]
 
+        db_processor = DBProcessor(test=test)
+
         for config in configs:
 
             cfg = CorpusConfigParser()
@@ -78,8 +74,7 @@ class Loader:
             corpus = corpus_parser.parse()
 
             # add the corpus to the DB
-            proc = DBProcessor(corpus, engine, test=test)
-            proc.process_corpus()
+            db_processor.process_corpus(corpus)
 
         print("%s seconds --- Finished" % (time.time() - start_time))
         print()
@@ -90,56 +85,6 @@ class Loader:
         else:
             print("acqdiv postprocess -f")
         print()
-
-    @classmethod
-    def _get_engine(cls, test=False):
-        """Return a database engine.
-
-        Args:
-            test (bool): Is the test DB used?
-
-        Returns:
-            Engine: The DB engine.
-        """
-        if test:
-            print("Writing test database to: database/test.sqlite3")
-            print()
-            engine = cls.db_connect('sqlite:///database/test.sqlite3')
-            cls.create_tables(engine)
-        else:
-            date = datetime.datetime.now().strftime('%Y-%m-%d')
-            path = 'sqlite:///database/acqdiv_corpus_{}.sqlite3'.format(date)
-            print("Writing database to: {}".format(path))
-            print()
-            engine = cls.db_connect(path)
-            cls.create_tables(engine)
-
-        return engine
-
-    @staticmethod
-    def db_connect(path):
-        """Perform database connection.
-
-        If desired, add database settings in settings.py, e.g. for postgres:
-        return create_engine(URL(**settings.DATABASE)).
-
-        Args:
-            path (str) : Path to DB.
-
-        Returns:
-            SQLAlchemy engine instance.
-        """
-        return create_engine(path, echo=False)
-
-    @staticmethod
-    def create_tables(engine):
-        """Drop all tables before creating them.
-
-            Args:
-                engine: An sqlalchemy database engine.
-        """
-        Base.metadata.drop_all(bind=engine)
-        Base.metadata.create_all(engine)
 
 
 def main():
