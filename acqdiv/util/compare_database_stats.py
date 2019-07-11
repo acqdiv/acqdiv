@@ -1,3 +1,62 @@
+# Use `compare_database_stats.py` to compare two versions of the acqdiv
+# database.
+# Files generated:
+# 1. Metrics like number of words and number of morphemes are computed
+# for both input databases and the difference scaled to 0-1 is calculated.
+# These metrics are calculated for each corpus individually and for all
+# corpora, that exist in both databases (corpus = global).
+# The output is a csv-file with name *corpus_stats.csv*
+# and the columns
+# *corpus, table, measure, db1, db2, difference*.
+#
+# 2. The number of occurrences of all words per corpus is
+# computed. The output is a csv-file with name
+# *words_per_corpus_stats.csv* and the columns
+# *corpus, word, num_in_db1, num_in_db2, diff*.
+#
+# 3. The number of occurrences of all morphemes per corpus is
+# computed. The output is a csv-file with name
+# *morphemes_per_corpus_stats.csv*
+# and the columns
+# *corpus, morpheme, num_in_db1, num_in_db2, diff*.
+#
+# 4. The number of occurrences of all glosses per corpus is
+# computed. The output is a csv-file with name
+# *glosses_per_corpus_stats.csv*
+# and the columns
+# *corpus, glosses, num_in_db1, num_in_db2, diff*.
+#
+# 5. The number of occurrences of all poses per corpus is
+# computed. The output is a csv-file with name
+# *poses_per_corpus_stats.csv*
+# and the columns
+# *corpus, poses, num_in_db1, num_in_db2, diff, in_manual*.
+#
+# Usage:
+# To generate the tables with all frequencies computed:
+# ```
+# python3 compare_database_stats.py -db1 <path_to_db1> -db2 <path_to_db2>
+# ```
+# To generate the tables with only the frequencies where the two DBs
+# differ from each other:
+# ```
+# python3 compare_database_stats.py -db1 <path_to_db1> -db2 <path_to_db2> -od
+# ```
+#
+# `db1` and `db2` are sqlite3-files.
+#
+# `-od` only write rows to file where there is a difference.
+#
+# The script only generates statistics for corpora that exist in
+# both databases. All corpora that only exist in one of the databases
+# are ignored (they also also not included in the global statistics).
+#
+# If the database hasn't gone through postprocessing the pos- and
+# gloss-tables are empty since they haven't yet been inferred.
+#
+# If the two databases have no corpora in common the sql-queries become
+# invalied and the script will crash!
+
 import csv
 import sqlalchemy as sa
 import argparse
