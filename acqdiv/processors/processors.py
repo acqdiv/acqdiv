@@ -5,7 +5,7 @@
 import os
 import sqlalchemy as sa
 
-import acqdiv.database_backend as db
+import acqdiv.database.database_backend as db
 
 
 class SessionProcessor(object):

@@ -13,7 +13,7 @@ import os
 from itertools import groupby
 from configparser import ConfigParser
 
-import acqdiv.database_backend as db
+import acqdiv.database.database_backend as db
 from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
 from acqdiv.processors import age
 

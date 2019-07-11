@@ -2,7 +2,7 @@
 
 import sqlalchemy as sa
 import hashlib
-import acqdiv.database_backend as db
+import acqdiv.database.database_backend as db
 
 engine = None
 conn = None

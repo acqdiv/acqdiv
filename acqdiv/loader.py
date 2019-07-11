@@ -6,7 +6,7 @@ import argparse
 
 from sqlalchemy import create_engine
 
-from acqdiv.database_backend import Base
+from acqdiv.database.database_backend import Base
 from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
 from acqdiv.parsers.CorpusParserMapper import CorpusParserMapper
 
