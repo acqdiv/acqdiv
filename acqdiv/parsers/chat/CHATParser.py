@@ -1,11 +1,13 @@
 import os
-import io
 
 from acqdiv.parsers.chat.readers.CHATReader import CHATReader
 from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
+from acqdiv.parsers.SessionParser import SessionParser
+from acqdiv.model.Session import Session
+from acqdiv.model.Speaker import Speaker
 
 
-class CHATParser:
+class CHATParser(SessionParser):
     """Gathers all data for the DB for a given CHAT session file.
 
     Uses the CHATReader for reading and inferring data from the CHAT file and
@@ -13,6 +15,7 @@ class CHATParser:
     """
 
     def __init__(self, session_path):
+        self.session = Session()
 
         self.session_path = session_path
         self.session_filename = os.path.basename(self.session_path)
@@ -43,12 +46,21 @@ class CHATParser:
         """
         return CHATCleaner()
 
-    def get_session_metadata(self):
-        """Get the metadata of a session.
+    def parse(self):
+        """Get the session instance.
 
         Returns:
-            dict: Date and media file name of session.
+            acqdiv.model.Session.Session: The Session instance.
         """
+        self.add_session_metadata()
+        self.add_speakers()
+
+        return self.session
+
+    def add_session_metadata(self):
+        """Add the metadata of a session."""
+        session = self.session
+
         date = self.cleaner.clean_date(self.reader.get_session_date())
         media_filename = self.reader.get_session_media_filename()
 
@@ -56,21 +68,15 @@ class CHATParser:
         date, media_filename = self.cleaner.clean_session_metadata(
             self.session_filename, date, media_filename)
 
-        session_dict = {
-            'source_id': os.path.splitext(self.session_filename)[0],
-            'date': date if date else None,
-            'media_filename': media_filename if media_filename else None}
+        session.source_id = os.path.splitext(self.session_filename)[0]
+        session.date = date if date else None
+        session.media_filename = media_filename if media_filename else None
 
-        return session_dict
-
-    def next_speaker(self):
-        """Yield the metadata of the next speaker of a session.
-
-        Yields:
-            dict: The label, name, age, birth date, gender, language, role of
-                the speaker.
-        """
+    def add_speakers(self):
+        """Add the speakers of a session."""
         while self.reader.load_next_speaker():
+            speaker = Speaker()
+
             speaker_label = self.reader.get_speaker_label()
             name = self.reader.get_speaker_name()
             role = self.reader.get_speaker_role()
@@ -87,16 +93,15 @@ class CHATParser:
                     self.session_filename, speaker_label, name, role, age,
                     gender, language, birth_date, target_child)
 
-            speaker_dict = {
-                'speaker_label': speaker_label,
-                'name': name if name else None,
-                'age_raw': age if age else None,
-                'gender_raw': gender if gender else None,
-                'role_raw': role,
-                'languages_spoken': language if language else None,
-                'birthdate': birth_date if birth_date else None}
+            speaker.code = speaker_label
+            speaker.name = name if name else None
+            speaker.age_raw = age if age else None
+            speaker.gender_raw = gender if gender else None
+            speaker.role_raw = role
+            speaker.languages_spoken = language if language else None
+            speaker.birth_date = birth_date if birth_date else None
 
-            yield speaker_dict
+            self.session.speakers.append(speaker)
 
     def get_words_dict(self, actual_utt, target_utt):
         actual_words = self.reader.get_utterance_words(actual_utt)

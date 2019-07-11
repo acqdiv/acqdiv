@@ -1,10 +1,13 @@
 from acqdiv.parsers.toolbox.readers.ToolboxReader import ToolboxReader
 from acqdiv.parsers.metadata.IMDIParser import IMDIParser
+from acqdiv.parsers.SessionParser import SessionParser
+from acqdiv.model.Session import Session
+from acqdiv.model.Speaker import Speaker
 
 import os
 
 
-class ToolboxParser:
+class ToolboxParser(SessionParser):
     """Gathers all data for the DB for a given Toolbox session file.
 
     Uses the ToolboxReader for reading a toolbox file and
@@ -24,6 +27,8 @@ class ToolboxParser:
             toolbox_path (str): Path to the toolbox file.
             metadata_path (str): Path to the metadata file.
         """
+        self.session = Session()
+
         self.metadata_path = metadata_path
         self.toolbox_path = toolbox_path
 
@@ -32,15 +37,19 @@ class ToolboxParser:
         # get metadata reader
         self.metadata_reader = self.get_metadata_reader()
 
-    def get_session_metadata(self):
-        """Get the metadata of a session.
+    def parse(self):
+        """Get the session instance.
 
         Returns:
-            dict: Session metadata.
+            acqdiv.model.Session.Session: The Session instance.
         """
-        self.metadata_reader.metadata['session']['source_id'] = \
-            os.path.splitext(os.path.basename(self.toolbox_path))[0]
-        # TODO: fix this to session or just __attrs__ in the metadata reader
+        self.add_session_metadata()
+        self.add_speakers()
+
+        return self.session
+
+    def add_session_metadata(self):
+        """Add the metadata of a session."""
         md = self.metadata_reader.metadata['session']
 
         try:
@@ -48,16 +57,24 @@ class ToolboxParser:
                 self.metadata_reader.metadata['media']['mediafile']['type'])
         except KeyError:
             md['media_type'] = None
-        return md
 
-    def next_speaker(self):
-        """Yield participants metadata for the Speaker table in the DB.
+        self.session.source_id = os.path.splitext(
+            os.path.basename(self.toolbox_path))[0]
+        self.session.date = md.get('date', None)
 
-        Returns:
-            OrderedDict: Speaker (participant) metadata.
-        """
-        for speaker in self.metadata_reader.metadata['participants']:
-            yield speaker
+    def add_speakers(self):
+        """Add the speakers of a session."""
+        for speaker_dict in self.metadata_reader.metadata['participants']:
+            speaker = Speaker()
+            speaker.birth_date = speaker_dict.get('birthdate', None)
+            speaker.gender_raw = speaker_dict.get('sex', None)
+            speaker.code = speaker_dict.get('code', None)
+            speaker.age_raw = speaker_dict.get('age', None)
+            speaker.role_raw = speaker_dict.get('role', None)
+            speaker.name = speaker_dict.get('name', None)
+            speaker.languages_spoken = speaker_dict.get('languages', None)
+
+            self.session.speakers.append(speaker)
 
     def next_utterance(self):
         """Yield session level utterance data.

@@ -102,18 +102,20 @@ class DBProcessor(object):
         result.update(kwargs)
         return result
 
-    def _process_session(self, conn, corpus, session):
+    def _process_session(self, conn, corpus, session_parser):
         """Add session data to the database.
 
         Args:
             conn (Connection): The DB connection.
             corpus (acqdiv.model.Corpus.Corpus): The corpus.
-            session (acqdiv.parsers.SessionParser.SessionParser): The session.
+            session_parser (acqdiv.parsers.SessionParser.SessionParser):
+                The session.
         """
         corpus_name = corpus.corpus
         language = corpus.language
         morpheme_type = corpus.morpheme_type
 
+        # Get insert functions
         insert_sess, insert_speaker, insert_utt, insert_word, insert_morph = \
             (sa.insert(model, bind=conn).execute
              for model in (db.Session,
@@ -122,34 +124,33 @@ class DBProcessor(object):
                            db.Word,
                            db.Morpheme))
 
-        session_metadata = session.get_session_metadata()
-        
-        # try:
-        #     duration = session_metadata['duration']
-        # except KeyError:
-        #     duration = None
+        session = session_parser.parse()
 
-        session_labels = corpus.session_labels
-        # We overwrite a few values in the retrieved session metadata.
-        d = self._extract(session_metadata,
-                          session_labels,
-                          language=language,
-                          corpus=corpus_name)  # , duration=duration)
+        # Populate Sessions table
+        s_id, = insert_sess(
+            corpus=corpus_name,
+            language=language,
+            date=session.date,
+            source_id=session.source_id
+        ).inserted_primary_key
 
-        # Populate sessions table.
-        s_id, = insert_sess(**d).inserted_primary_key
-
-        # Populate the speakers table.
-        speaker_labels = corpus.speaker_labels
-        for speaker in session.next_speaker():
-            d = self._extract(speaker,
-                              speaker_labels,
-                              language=language,
-                              corpus=corpus_name)
-            insert_speaker(session_id_fk=s_id, **d)
+        # Populate Speakers table
+        for speaker in session.speakers:
+            insert_speaker(
+                session_id_fk=s_id,
+                corpus=corpus_name,
+                language=language,
+                birthdate=speaker.birth_date,
+                gender_raw=speaker.gender_raw,
+                speaker_label=speaker.code,
+                age_raw=speaker.age_raw,
+                role_raw=speaker.role_raw,
+                name=speaker.name,
+                languages_spoken=speaker.languages_spoken
+            )
 
         # Populate the utterances, words and morphemes tables.
-        for utterance, words, morphemes in session.next_utterance():
+        for utterance, words, morphemes in session_parser.next_utterance():
             if utterance is None:
                 continue
 

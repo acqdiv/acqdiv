@@ -6,20 +6,11 @@ from abc import ABC, abstractmethod
 class SessionParser(ABC):
 
     @abstractmethod
-    def get_session_metadata(self):
-        """Get the metadata of a session.
+    def parse(self):
+        """Return an instance of a Session.
 
         Returns:
-            dict: The session metadata.
-        """
-        pass
-
-    @abstractmethod
-    def next_speaker(self):
-        """Yield participants metadata for the Speaker table in the DB.
-
-        Returns:
-            OrderedDict: Speaker (participant) metadata.
+            acqdiv.model.Session.Session: The Session instance.
         """
         pass
 
