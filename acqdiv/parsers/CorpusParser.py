@@ -2,7 +2,7 @@
 
 import glob
 
-from acqdiv.processors.processors import SessionProcessor
+from acqdiv.database.DBProcessor import DBProcessor
 from abc import ABC, abstractmethod
 
 
@@ -41,7 +41,7 @@ class CorpusParser(ABC):
 
             if session_parser is not None:
 
-                s = SessionProcessor(
+                s = DBProcessor(
                     self.cfg, session_path, session_parser, self.engine)
                 s.process_session()
 

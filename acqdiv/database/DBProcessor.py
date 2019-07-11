@@ -8,8 +8,8 @@ import sqlalchemy as sa
 import acqdiv.database.database_backend as db
 
 
-class SessionProcessor(object):
-    """ SessionProcessor invokes a parser to get the extracted data, and then interacts
+class DBProcessor(object):
+    """ DBProcessor invokes a parser to get the extracted data, and then interacts
         with the SQLAlchemy ORM backend to push data to it.
     """
     def __init__(self, cfg, file_path, session_parser, engine):
