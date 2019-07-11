@@ -18,11 +18,11 @@ def setup(args):
 
     # Testing vs production database.
     if args.t:
-        engine = sa.create_engine('sqlite:///database/test.sqlite3')
+        engine = sa.create_engine('sqlite:///test.sqlite3')
         metadata = sa.MetaData(bind=engine)
         metadata.reflect(engine)
     else:
-        engine = sa.create_engine('sqlite:///database/acqdiv.sqlite3')
+        engine = sa.create_engine('sqlite:///acqdiv.sqlite3')
     conn = engine.connect()
 
 
