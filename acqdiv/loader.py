@@ -73,8 +73,9 @@ class Loader:
 
             corpus_parser_class = CorpusParserMapper.map(name)
             corpus_parser = corpus_parser_class(cfg)
+            corpus = corpus_parser.parse()
 
-            for session in corpus_parser.iter_sessions():
+            for session in corpus.sessions:
                 proc = DBProcessor(cfg, session, engine)
                 proc.process_session()
 

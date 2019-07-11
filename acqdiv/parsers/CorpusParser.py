@@ -3,10 +3,11 @@
 import glob
 
 from abc import ABC, abstractmethod
+from acqdiv.model.Corpus import Corpus
 
 
 class CorpusParser(ABC):
-    """Parses all sessions of a corpus."""
+    """Methods for constructing a corpus instance."""
 
     def __init__(self, cfg):
         """Initialize config.
@@ -15,6 +16,18 @@ class CorpusParser(ABC):
             cfg (CorpusConfigParser): A config instance.
         """
         self.cfg = cfg
+
+    def parse(self):
+        """Construct a Corpus instance."""
+        corpus = Corpus()
+        corpus.iso_639_3 = self.cfg['corpus']['iso639-3']
+        corpus.glottolog_code = self.cfg['corpus']['glottolog_code']
+        corpus.corpus = self.cfg['corpus']['corpus']
+        corpus.language = self.cfg['corpus']['language']
+        corpus.owner = self.cfg['corpus']['owner']
+        corpus.sessions = self.iter_sessions()
+
+        return corpus
 
     @abstractmethod
     def get_session_parser(self, session_path):
