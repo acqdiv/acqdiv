@@ -46,6 +46,7 @@ class TestCHATParser(unittest.TestCase):
 
         actual_output = parser.get_session_metadata()
         desired_output = {
+            'source_id': 'dummy',
             'date': '1997-09-12',
             'media_filename': 'h2ab'
         }

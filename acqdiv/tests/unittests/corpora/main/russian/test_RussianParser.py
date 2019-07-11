@@ -25,6 +25,7 @@ class TestRussianParser(unittest.TestCase):
     def test_get_session_metadata(self):
         actual_output = self.parser.get_session_metadata()
         desired_output = {
+            'source_id': 'Russian',
             'id': 'Russian',
             'date': 'session date',
             'genre': 'genre',

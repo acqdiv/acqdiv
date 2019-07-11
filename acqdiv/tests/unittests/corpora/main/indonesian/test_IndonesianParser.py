@@ -25,6 +25,7 @@ class TestIndonesianParser(unittest.TestCase):
     def test_get_session_metadata(self):
         actual_output = self.parser.get_session_metadata()
         desired_output = {
+            'source_id': 'Indonesian',
             'Cname': 'Indonesian',
             'Corpus': 'Corpus',
             'Date': 'Date',
