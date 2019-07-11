@@ -9,35 +9,13 @@ from sqlalchemy.engine.url import URL
 
 """
 
-from sqlalchemy import (create_engine, Text, Column, Integer,
+from sqlalchemy import (Text, Column, Integer,
                         Boolean, ForeignKey)
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
-
-def db_connect(path):
-    """ Performs database connection.
-
-    If desired add a database settings in settings.py, e.g. for postgres: return create_engine(URL(**settings.DATABASE))
-
-    path : str
-
-    Returns:
-        SQLAlchemy engine instance
-    """
-    return create_engine(path, echo=False)
-
-
-def create_tables(engine):
-    """ Drops all databases before creating them.
-
-        Args:
-            engine: a sqlalchemy database engine
-    """
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(engine)
 
 # TODO: http://stackoverflow.com/questions/13978554/is-possible-to-create-column-in-sqlalchemy-which-is-going-to-be-automatically-po
 
