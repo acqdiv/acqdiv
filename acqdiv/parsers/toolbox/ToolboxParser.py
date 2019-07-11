@@ -1,6 +1,8 @@
 from acqdiv.parsers.toolbox.readers.ToolboxReader import ToolboxReader
 from acqdiv.parsers.metadata.IMDIParser import IMDIParser
 
+import os
+
 
 class ToolboxParser:
     """Gathers all data for the DB for a given Toolbox session file.
@@ -36,8 +38,11 @@ class ToolboxParser:
         Returns:
             dict: Session metadata.
         """
+        self.metadata_reader.metadata['session']['source_id'] = \
+            os.path.splitext(os.path.basename(self.toolbox_path))[0]
         # TODO: fix this to session or just __attrs__ in the metadata reader
         md = self.metadata_reader.metadata['session']
+
         try:
             md['media_type'] = (
                 self.metadata_reader.metadata['media']['mediafile']['type'])

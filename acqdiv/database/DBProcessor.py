@@ -12,21 +12,18 @@ class DBProcessor(object):
     """ DBProcessor invokes a parser to get the extracted data, and then interacts
         with the SQLAlchemy ORM backend to push data to it.
     """
-    def __init__(self, cfg, file_path, session_parser, engine):
+    def __init__(self, cfg, session_parser, engine):
         """ Init parser with corpus metadata_path, file path, a parser factory and a database engine.
 
         Args:
             cfg: CorpusConfigParser
-            file_path: path to raw session input file
             session_parser: The session parser.
             engine: SQLAlchemy database engine
 
         """
         self.config = cfg
-        self.file_path = file_path
         self.session_parser = session_parser
         self.engine = engine
-        self.filename = os.path.splitext(os.path.basename(self.file_path))[0]
 
         # Commonly used variables from the corpus metadata_path file.
         self.language = self.config['corpus']['language']
@@ -62,7 +59,7 @@ class DBProcessor(object):
 
         session_labels = self.config['session_labels']
         # We overwrite a few values in the retrieved session metadata.
-        d = self._extract(session_metadata, session_labels, source_id=self.filename, language=self.language, corpus=self.corpus) # , duration=duration)
+        d = self._extract(session_metadata, session_labels, language=self.language, corpus=self.corpus) # , duration=duration)
 
         # Populate sessions table.
         s_id, = insert_sess(**d).inserted_primary_key

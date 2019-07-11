@@ -57,6 +57,7 @@ class CHATParser:
             self.session_filename, date, media_filename)
 
         session_dict = {
+            'source_id': os.path.splitext(self.session_filename)[0],
             'date': date if date else None,
             'media_filename': media_filename if media_filename else None}
 

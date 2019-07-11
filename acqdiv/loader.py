@@ -9,6 +9,7 @@ from sqlalchemy import create_engine
 from acqdiv.database.database_backend import Base
 from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
 from acqdiv.parsers.CorpusParserMapper import CorpusParserMapper
+from acqdiv.database.DBProcessor import DBProcessor
 
 
 class Loader:
@@ -70,10 +71,15 @@ class Loader:
 
             name = cfg['corpus']['corpus']
 
-            corpus_parser = CorpusParserMapper.map(name)
+            corpus_parser_class = CorpusParserMapper.map(name)
+            corpus_parser = corpus_parser_class(cfg)
 
-            c = corpus_parser(cfg, engine)
-            c.process_corpus(test=test)
+            for session in corpus_parser.iter_sessions():
+                proc = DBProcessor(cfg, session, engine)
+                proc.process_session()
+
+                if test:
+                    break
 
         print("%s seconds --- Finished" % (time.time() - start_time))
         print()
