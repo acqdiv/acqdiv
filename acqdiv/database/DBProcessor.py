@@ -1,8 +1,3 @@
-"""Corpus and session processors to turn ACQDIV raw input corpora
-(Toolbox, CHAT) into ACQDIV database.
-"""
-
-import os
 import datetime
 
 import sqlalchemy as sa
@@ -13,11 +8,14 @@ import acqdiv.database.database_backend as db
 
 
 class DBProcessor(object):
-    """ DBProcessor invokes a parser to get the extracted data, and then interacts
-        with the SQLAlchemy ORM backend to push data to it.
-    """
+    """Methods for adding corpus data to the database."""
+
     def __init__(self, test=False):
-        """Initialize DB engine."""
+        """Initialize DB engine.
+
+        Args:
+            test (bool): Is testing mode used?
+        """
         self.test = test
         self.engine = self._get_engine(test=self.test)
 
@@ -72,6 +70,11 @@ class DBProcessor(object):
         Base.metadata.create_all(engine)
 
     def process_corpus(self, corpus):
+        """Add the corpus data to the database.
+
+        Args:
+            corpus (acqdiv.model.Corpus.Corpus): The corpus.
+        """
         for session in corpus.sessions:
             self.process_session(corpus, session)
 
@@ -79,6 +82,12 @@ class DBProcessor(object):
                 break
 
     def process_session(self, corpus, session):
+        """Add session data to the database.
+
+        Args:
+            corpus (acqdiv.model.Corpus.Corpus): The corpus.
+            session (acqdiv.parsers.SessionParser.SessionParser): The session.
+        """
         with self.engine.begin() as conn:
             conn.execute('PRAGMA synchronous = OFF')
             conn.execute('PRAGMA journal_mode = MEMORY')
@@ -86,21 +95,32 @@ class DBProcessor(object):
                                   corpus,
                                   session)
 
-
     @staticmethod
     def _extract(dict_, keymap, **kwargs):
-        result = {keymap[k]: dict_[k] for k in (keymap.keys() & dict_.keys())}
+        result = {keymap[k]: dict_[k]
+                  for k in (keymap.keys() & dict_.keys())}
         result.update(kwargs)
         return result
 
-
     def _process_session(self, conn, corpus, session):
+        """Add session data to the database.
+
+        Args:
+            conn (Connection): The DB connection.
+            corpus (acqdiv.model.Corpus.Corpus): The corpus.
+            session (acqdiv.parsers.SessionParser.SessionParser): The session.
+        """
         corpus_name = corpus.corpus
         language = corpus.language
         morpheme_type = corpus.morpheme_type
 
         insert_sess, insert_speaker, insert_utt, insert_word, insert_morph = \
-            (sa.insert(model, bind=conn).execute for model in (db.Session, db.Speaker, db.Utterance, db.Word, db.Morpheme))
+            (sa.insert(model, bind=conn).execute
+             for model in (db.Session,
+                           db.Speaker,
+                           db.Utterance,
+                           db.Word,
+                           db.Morpheme))
 
         session_metadata = session.get_session_metadata()
         
@@ -114,7 +134,7 @@ class DBProcessor(object):
         d = self._extract(session_metadata,
                           session_labels,
                           language=language,
-                          corpus=corpus_name) # , duration=duration)
+                          corpus=corpus_name)  # , duration=duration)
 
         # Populate sessions table.
         s_id, = insert_sess(**d).inserted_primary_key
@@ -135,14 +155,17 @@ class DBProcessor(object):
 
             utterance.update(corpus=corpus_name,
                              language=language)
-            u_id, = insert_utt(session_id_fk=s_id, **utterance).inserted_primary_key
+            u_id, = insert_utt(
+                session_id_fk=s_id, **utterance).inserted_primary_key
 
             w_ids = []
             for w in words:
                 if w:
                     w.update(corpus=corpus_name,
                              language=language)
-                    w_id, = insert_word(session_id_fk=s_id, utterance_id_fk=u_id, **w).inserted_primary_key
+                    w_id, = insert_word(
+                        session_id_fk=s_id,
+                        utterance_id_fk=u_id, **w).inserted_primary_key
                     w_ids.append(w_id)
 
             link_to_word = len(morphemes) == len(w_ids)
@@ -154,4 +177,8 @@ class DBProcessor(object):
                     m.update(corpus=corpus_name,
                              language=language,
                              type=morpheme_type)
-                    insert_morph(session_id_fk=s_id, utterance_id_fk=u_id, word_id_fk=w_id, **m)
+                    insert_morph(
+                        session_id_fk=s_id,
+                        utterance_id_fk=u_id,
+                        word_id_fk=w_id,
+                        **m)
