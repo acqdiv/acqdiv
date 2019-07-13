@@ -19,7 +19,7 @@ import unittest
 
 from acqdiv.loader import Loader
 from acqdiv.postprocessor import PostProcessor
-from acqdiv.tests.test_integrity import IntegrityTest
+from acqdiv.tests.systemtests.test_integrity import IntegrityTest
 
 
 def load(args):

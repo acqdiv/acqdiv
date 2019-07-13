@@ -21,10 +21,10 @@ class IntegrityTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        """Setup test fixtures."""
+        """Setup test resources."""
         # Load database
         database_path = "sqlite:///" + os.path.join(
-                            cls.cwd_path, "../database/acqdiv.sqlite3")
+                            cls.cwd_path, "../../database/acqdiv.sqlite3")
         engine = sa.create_engine(database_path)
         cls.meta = sa.MetaData(engine, reflect=True)
         session_class = sessionmaker(bind=engine)
@@ -32,7 +32,7 @@ class IntegrityTest(unittest.TestCase):
 
         # Load database counts
         config = os.path.join(
-            cls.cwd_path, "fixtures/production_counts.ini")
+            cls.cwd_path, "resources/production_counts.ini")
         cls.cfg = configparser.ConfigParser()
         cls.cfg.read(config)
 
@@ -40,21 +40,21 @@ class IntegrityTest(unittest.TestCase):
         # check that the specified table and their columns contain no NULLs
         cls.f_no_nulls = open(os.path.join(
                                 cls.cwd_path,
-                                "fixtures/tables-no-nulls-allowed.csv"), "r")
+                                "resources/tables-no-nulls-allowed.csv"), "r")
         cls.reader_tables_no_nulls = csv.reader(cls.f_no_nulls)
         next(cls.reader_tables_no_nulls)  # Skip the header
 
         # Load list of tables from csv file and check for coverage proportion.
         cls.f_proportions = open(os.path.join(
                                     cls.cwd_path,
-                                    "fixtures/tables-proportions-filled.csv"),
+                                    "resources/tables-proportions-filled.csv"),
                                  "r")
         cls.reader_proportion_nulls = csv.reader(cls.f_proportions)
         next(cls.reader_proportion_nulls)  # Skip the header
 
     @classmethod
     def tearDownClass(cls):
-        """Tear down the test fixtures."""
+        """Tear down the test resources."""
         cls.session.close()
         cls.f_no_nulls.close()
         cls.f_proportions.close()
