@@ -1,4 +1,3 @@
-""" Tests for ACQDIV dev and production databases. """
 import unittest
 import os
 import re
@@ -9,45 +8,56 @@ import sqlalchemy as sa
 from dateutil.parser import parse
 from sqlalchemy.orm import sessionmaker
 
-_pattern_speaker_ages = re.compile(
-    r'^(\d\d?(;(0?[0-9]|1[01]).([012]?[0-9]|30))?)$')
 
-
-class ValidationTest(unittest.TestCase):
-    """ Base class for shared tests between ACQDIV dev(elopment) and production database. """
+class IntegrityTest(unittest.TestCase):
+    """Integrity tests on the production database."""
 
     cwd_path = os.path.dirname(__file__)
+    session = None
+    meta = None
+    cfg = None
+    f_no_nulls = None
+    f_proportions = None
 
     @classmethod
     def setUpClass(cls):
-        """ Setup test fixtures. """
-        # Load database.
-        engine = sa.create_engine(cls.database_path)
-        cls.meta = sa.MetaData(engine, reflect=True) # Reflects database metadata.
-        Session = sessionmaker(bind=engine)
-        cls.session = Session()
+        """Setup test fixtures."""
+        # Load database
+        database_path = "sqlite:///" + os.path.join(
+                            cls.cwd_path, "../database/acqdiv.sqlite3")
+        engine = sa.create_engine(database_path)
+        cls.meta = sa.MetaData(engine, reflect=True)
+        session_class = sessionmaker(bind=engine)
+        cls.session = session_class()
 
-        # Load gold database counts.
+        # Load database counts
+        config = os.path.join(
+            cls.cwd_path, "fixtures/production_counts.ini")
         cls.cfg = configparser.ConfigParser()
-        cls.cfg.read(cls.config) # TODO: how to close the metadata_path file this way?
+        cls.cfg.read(config)
 
-        # Load list of tables from csv file and check that the specified table and their columns contain no NULL.
+        # Load list of tables from csv file and
+        # check that the specified table and their columns contain no NULLs
         cls.f_no_nulls = open(os.path.join(
                                 cls.cwd_path,
                                 "fixtures/tables-no-nulls-allowed.csv"), "r")
         cls.reader_tables_no_nulls = csv.reader(cls.f_no_nulls)
         next(cls.reader_tables_no_nulls)  # Skip the header
 
+        # Load list of tables from csv file and check for coverage proportion.
+        cls.f_proportions = open(os.path.join(
+                                    cls.cwd_path,
+                                    "fixtures/tables-proportions-filled.csv"),
+                                 "r")
+        cls.reader_proportion_nulls = csv.reader(cls.f_proportions)
+        next(cls.reader_proportion_nulls)  # Skip the header
+
     @classmethod
     def tearDownClass(cls):
-        """ Tear down the test fixtures. """
+        """Tear down the test fixtures."""
         cls.session.close()
         cls.f_no_nulls.close()
-
-    """ The tests! """
-    def test(self):
-        # This is an example test function and should always pass.
-        pass
+        cls.f_proportions.close()
 
     def test_columns_for_all_null(self):
         """Any column with all NULL rows should throw an error."""
@@ -69,15 +79,21 @@ class ValidationTest(unittest.TestCase):
             self._column_contains_null(table, column)
 
     def test_counts(self):
-        """ Use the fixture database gold counts and check the dev or production database. """
+        """Use the fixture database gold counts and check production DB."""
         for section in self.cfg:
             if section == "default":
                 continue
             for option in self.cfg[section]:
                 count = int(self.cfg[section][option])
-                res = self.session.execute("select count(*) from %s where corpus = '%s'" % (option, section))
+                res = self.session.execute(
+                    "select count(*) from %s where corpus = '%s'"
+                    % (option, section))
                 actual = res.fetchone()[0]
-                self.assertEqual(actual, count, msg='%s %s: expected %s, got %s' % (section, option, count, actual))
+                self.assertEqual(
+                    actual,
+                    count,
+                    msg='%s %s: expected %s, got %s'
+                        % (section, option, count, actual))
 
     def test_sentence_type(self):
         """ Check sentence types in database vs whitelist. """
@@ -154,11 +170,45 @@ class ValidationTest(unittest.TestCase):
     def test_role(self):
         """ Check roles in database vs whitelist. """
         query = "select role from speakers group by role"
-        roles = ["Adult", "Aunt", "Babysitter", "Brother", "Caller", "Caretaker", "Child", "Cousin", "Daughter",
-                 "Family_Friend", "Father", "Friend", "Grandfather", "Grandmother", "Great-Grandfather", "Great-Grandmother",
-                 "Housekeeper", "Mother", "Neighbour", "Nephew", "Niece", "Playmate", "Research_Team", "Sibling", "Sister",
-                 "Sister-in-law", "Son", "Speaker", "Student", "Subject", "Target_Child", "Teacher", "Teenager",
-                 "Twin_Brother", "Uncle", "Visitor", None]
+        roles = [
+            "Adult",
+            "Aunt",
+            "Babysitter",
+            "Brother",
+            "Caller",
+            "Caretaker",
+            "Child",
+            "Cousin",
+            "Daughter",
+            "Family_Friend",
+            "Father",
+            "Friend",
+            "Grandfather",
+            "Grandmother",
+            "Great-Grandfather",
+            "Great-Grandmother",
+            "Housekeeper",
+            "Mother",
+            "Neighbour",
+            "Nephew",
+            "Niece",
+            "Playmate",
+            "Research_Team",
+            "Sibling",
+            "Sister",
+            "Sister-in-law",
+            "Son",
+            "Speaker",
+            "Student",
+            "Subject",
+            "Target_Child",
+            "Teacher",
+            "Teenager",
+            "Twin_Brother",
+            "Uncle",
+            "Visitor",
+            None
+        ]
         self._in_whitelist(query, roles)
 
     def test_macrorole(self):
@@ -170,6 +220,8 @@ class ValidationTest(unittest.TestCase):
     def test_speaker_ages(self):
         # should be able to check it in various db columns
         query = "select age from speakers group by age"
+        _pattern_speaker_ages = re.compile(
+            r'^(\d\d?(;(0?[0-9]|1[01]).([012]?[0-9]|30))?)$')
         self._in_string(query, _pattern_speaker_ages)
 
     def test_date_sessions(self):
@@ -238,12 +290,11 @@ class ValidationTest(unittest.TestCase):
 
     def _column_contains_all_nulls(self, table, column):
         """ Test if rows in a column are all NULL. """
-        # TODO: never do this query apparently: https://docs.python.org/2/library/sqlite3.html
-        query = "select count(*) from %s where %s is not NULL" % (table, column)
+        query = "select count(*) from %s where %s is not NULL" \
+                % (table, column)
         res = self.session.execute(query)
         result = res.fetchone()[0]
         self.assertGreater(result, 0, msg='%s %s' % (res, query))
-        # msg='select corpus, count(*) from table where column is not NULL group by corpus'
 
     def _is_valid_date(self, query):
         """Check if input string is NULL or adheres to dateutils format."""
@@ -269,16 +320,13 @@ class ValidationTest(unittest.TestCase):
 
     def _is_match(self, string, pattern):
         """ Check if regex valid against string. """
-        try:
-            if pattern.search(string) is None:
-                return False
-            else:
-                return True
-        except ValueError: # TODO: this fails when the input doesn't conform to the regex, e.g. ints
-            self.assertRaises(ValueError, msg='%s is not a valid data type for regex %s.' % (str(type(string), str(pattern))))
+        if pattern.search(string) is None:
+            return False
+        else:
+            return True
 
     def _validate_string(self, query, pattern, is_string):
-        """ This function validates whether unique strings in a column confirm to some regular expression. """
+        """Validate if unique strings in a column conform to some regex."""
         res = self.session.execute(query)
         rows = res.fetchall()
         for row in rows:
@@ -286,9 +334,12 @@ class ValidationTest(unittest.TestCase):
             if value is not None:
                 is_valid = self._is_match(value, pattern)
                 if is_string:
-                    self.assertTrue(is_valid, msg='%s %s (%s)' % (value, is_valid, query))
+                    self.assertTrue(
+                        is_valid, msg='%s %s (%s)' % (value, is_valid, query))
                 else:
-                    self.assertFalse(is_valid, msg='%s -- %s -- (%s)' % (value, is_valid, query))
+                    self.assertFalse(
+                        is_valid, msg='%s -- %s -- (%s)'
+                                      % (value, is_valid, query))
 
     def _in_string(self, query, pattern):
         """ Check whether the input string is valid given a regex pattern. """
@@ -304,53 +355,29 @@ class ValidationTest(unittest.TestCase):
         self._check_filter_list(query, filter_list, is_whitelist=False)
 
     def _check_filter_list(self, query, filter_list, is_whitelist):
-        """ Given a SQL query that returns a unique list of elements, e.g. select column from table group by column, check that the result types are in the whitelist (or not)."""
+        """Check if results are in list.
+
+        Given a SQL query that returns a unique list of elements,
+        e.g. select column from table group by column,
+        check that the result types are in the whitelist (or not).
+        """
         res = self.session.execute(query)
         rows = res.fetchall()
         for row in rows:
             label = row[0]
             if is_whitelist:  # This is whitelist.
-                self.assertIn(label, filter_list, msg='%s returned by (%s).' % (label, query))
+                self.assertIn(
+                    label,
+                    filter_list,
+                    msg='%s returned by (%s).' % (label, query))
             else:             # This is a blacklist.
-                self.assertNotIn(label, filter_list, msg='value found in (%s) is not permitted')
+                self.assertNotIn(
+                    label,
+                    filter_list,
+                    msg='value found in (%s) is not permitted')
 
-
-class ValidationTest_DevDB(ValidationTest):
-    """ Subclass of ValidatioTest for testing the development database. """
-    @classmethod
-    def setUpClass(cls):
-        ValidationTest.database_path = "sqlite:///" + os.path.join(
-            cls.cwd_path, "../database/test.sqlite3")
-        ValidationTest.config = os.path.join(
-            cls.cwd_path, "fixtures/dev_counts.ini")
-        ValidationTest.setUpClass()
-
-
-class ValidationTest_ProductionDB(ValidationTest):
-    """ Subclass of ValidatioTest for testing the production database. """
-    @classmethod
-    def setUpClass(cls):
-        ValidationTest.database_path = "sqlite:///" + os.path.join(
-            cls.cwd_path, "../database/acqdiv.sqlite3")
-        ValidationTest.config = os.path.join(
-            cls.cwd_path, "fixtures/production_counts.ini")
-        ValidationTest.setUpClass()
-
-        # Load list of tables from csv file and check for coverage proportion.
-        cls.f_proportions = open(os.path.join(
-                                    cls.cwd_path,
-                                    "fixtures/tables-proportions-filled.csv"),
-                                 "r")
-        cls.reader_proportion_nulls = csv.reader(cls.f_proportions)
-        next(cls.reader_proportion_nulls)  # Skip the header
-
-    @classmethod
-    def tearDownClass(self):
-        """ Tear down the test fixtures. """
-        super().tearDownClass()
-        self.f_proportions.close()
-
-    def compute_null_proportion(self, query, corpus, table, column, expected, fails):
+    def compute_null_proportion(
+            self, query, corpus, table, column, expected, fails):
         try:
             res = self.session.execute(query.format(
                 table=table, column=column, corpus=corpus))
@@ -492,7 +519,7 @@ class ValidationTest_ProductionDB(ValidationTest):
             if corpus == "Russian":
                 self.assertGreaterEqual(
                     proportion, 60,
-                    msg = "Proportion for speakers in {} too low.".format(
+                    msg="Proportion for speakers in {} too low.".format(
                             corpus))
             else:
                 self.assertGreaterEqual(
@@ -504,6 +531,7 @@ class ValidationTest_ProductionDB(ValidationTest):
                 proportion, upperbound,
                 msg="Proportion for speakers in {} too high.".format(
                         corpus))
+
 
 if __name__ == '__main__':
     unittest.main()

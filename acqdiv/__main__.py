@@ -19,8 +19,7 @@ import unittest
 
 from acqdiv.loader import Loader
 from acqdiv.postprocessor import PostProcessor
-from acqdiv.tests.test_integrity import ValidationTest_DevDB
-from acqdiv.tests.test_integrity import ValidationTest_ProductionDB
+from acqdiv.tests.test_integrity import IntegrityTest
 
 
 def load(args):
@@ -43,23 +42,14 @@ def postprocess(args):
 
 def test(args):
     """Run the tests."""
-    # get test suite creators
-    # unittest version
     test_loader = unittest.TestLoader()
     runner = unittest.TextTestRunner()
 
-    # run unittests
-    suite = test_loader.discover('tests/unittests')
-    runner.run(suite)
-
-    if args.f:
-        # get a test suite of all test cases for the production DB
-        suite = test_loader.loadTestsFromTestCase(ValidationTest_ProductionDB)
+    if args.i:
+        suite = test_loader.loadTestsFromTestCase(IntegrityTest)
         runner.run(suite)
-
-    if args.o:
-        # get a test suite of all test cases for the development DB
-        suite = test_loader.loadTestsFromTestCase(ValidationTest_DevDB)
+    else:
+        suite = test_loader.discover('tests/unittests')
         runner.run(suite)
 
 
@@ -120,9 +110,7 @@ def get_cmd_args():
                      'To run integrity tests for the full database, '
                      'use the flag -f.'))
     parser_test.add_argument(
-        '-f', action='store_true', help='Run validation tests on full DB')
-    parser_test.add_argument(
-        '-o', action='store_true', help='Run old tests. Deprecated soon.')
+        '-i', action='store_true', help='Run integrity tests on the DB')
     parser_test.set_defaults(func=test)
 
     # command 'pipeline'
