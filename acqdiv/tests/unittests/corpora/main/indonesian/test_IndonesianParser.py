@@ -23,19 +23,30 @@ class TestIndonesianParser(unittest.TestCase):
         cls.parser = IndonesianSessionParser(toolbox_path, metadata_path)
 
     def test_get_session_metadata(self):
-        actual_output = self.parser.get_session_metadata()
+        session = self.parser.parse()
+        actual_output = {
+            'source_id': session.source_id,
+            'Date': session.date
+        }
+
         desired_output = {
             'source_id': 'Indonesian',
-            'Cname': 'Indonesian',
-            'Corpus': 'Corpus',
             'Date': 'Date',
-            'Id': 'Id',
-            'Lang': 'Lang',
-            'PID': 'PID'}
+        }
         self.assertEqual(actual_output, desired_output)
 
     def test_next_speaker(self):
-        actual_output = next(self.parser.next_speaker())
+        session = self.parser.parse()
+        speaker = session.speakers[0]
+        actual_output = {
+            'age': speaker.age_raw,
+            'birthday': speaker.birth_date,
+            'id': speaker.code,
+            'language': speaker.languages_spoken,
+            'name': speaker.name,
+            'role': speaker.role_raw,
+            'sex': speaker.gender_raw
+        }
         desired_output = {
             'age': 'age',
             'birthday': 'birthday',
@@ -43,7 +54,8 @@ class TestIndonesianParser(unittest.TestCase):
             'language': 'language',
             'name': 'name',
             'role': 'role',
-            'sex': 'sex'}
+            'sex': 'sex'
+        }
         self.assertEqual(actual_output, desired_output)
 
     def test_next_utterance(self):

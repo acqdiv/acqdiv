@@ -23,32 +23,42 @@ class TestChintangParser(unittest.TestCase):
         cls.parser = ChintangSessionParser(toolbox_path, metadata_path)
 
     def test_get_session_metadata(self):
-        actual_output = self.parser.get_session_metadata()
+        session = self.parser.parse()
+        actual_output = {
+            'source_id': session.source_id,
+            'date': session.date,
+            'media_type': session.media_filename
+        }
         desired_output = {
             'source_id': 'Chintang',
-            'id': 'Chintang',
             'date': 'session date',
-            'genre': 'genre',
-            'location': {},
-            'situation': 'situation',
-            'media_type': None
+            'media_type': ''
         }
         self.assertEqual(actual_output, desired_output)
 
     def test_next_speaker(self):
-        actual_output = next(self.parser.next_speaker())
+        session = self.parser.parse()
+        speaker = session.speakers[0]
+
+        actual_output = {
+            'role': speaker.role_raw,
+            'name': speaker.name,
+            'code': speaker.code,
+            'languages': speaker.languages_spoken,
+            'age': speaker.age_raw,
+            'birthdate': speaker.birth_date,
+            'sex': speaker.gender_raw,
+        }
+
         desired_output = {
             'role': 'actor family social role',
             'name': 'actor name',
-            'fullname': 'actor fullname',
             'code': 'actor code',
-            'familysocialrole': 'actor family social role',
             'languages': 'actor language id',
-            'ethnicgroup': 'actor ethnic group',
             'age': 'actor age',
             'birthdate': 'actor birthdate',
             'sex': 'actor sex',
-            'education': 'actor education'}
+        }
         self.assertEqual(actual_output, desired_output)
 
     def test_next_utterance(self):
