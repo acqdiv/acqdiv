@@ -401,7 +401,7 @@ class IntegrityTest(unittest.TestCase):
             actual = not_null_count / total
 
             t = (corpus, table, column, actual, expected)
-            print((corpus, table, column, actual, expected))
+            # print((corpus, table, column, actual, expected))
 
             if actual < expected:
                 fails.append(t)
@@ -422,7 +422,7 @@ class IntegrityTest(unittest.TestCase):
 
         fails = []
 
-        print('Computing proportions of non-nulls:')
+        # print('Computing proportions of non-nulls:')
 
         for row in self.reader_proportion_nulls:
 
