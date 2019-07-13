@@ -9,7 +9,5 @@ class Corpus:
         self.owner = ''
         self.sessions = None
 
-        # TODO: move them to right place
+        # TODO: move to right place
         self.morpheme_type = ''
-        self.session_labels = None
-        self.speaker_labels = None
