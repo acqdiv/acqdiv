@@ -416,7 +416,7 @@ class ValidationTest_ProductionDB(ValidationTest):
     def test_speaker_proportions(self):
         """Check proportion of (unique)speakers in utterances."""
         # in percent
-        lowerbound = 80
+        lowerbound = 70
         upperbound = 120
 
         uspeaker_sql = """
@@ -493,13 +493,6 @@ class ValidationTest_ProductionDB(ValidationTest):
                 self.assertGreaterEqual(
                     proportion, 60,
                     msg = "Proportion for speakers in {} too low.".format(
-                            corpus))
-            # Nungon has a lower threshold because speakers (especially aunts
-            # and uncles) are listed that never speak an utterance
-            elif corpus == 'Nungon':
-                self.assertGreaterEqual(
-                    proportion, 70,
-                    msg="Proportion for speakers in {} too low.".format(
                             corpus))
             else:
                 self.assertGreaterEqual(
