@@ -8,6 +8,8 @@ import sqlalchemy as sa
 from dateutil.parser import parse
 from sqlalchemy.orm import sessionmaker
 
+from acqdiv.util.util import get_path_of_most_recent_database
+
 
 class IntegrityTest(unittest.TestCase):
     """Integrity tests on the production database."""
@@ -23,8 +25,7 @@ class IntegrityTest(unittest.TestCase):
     def setUpClass(cls):
         """Setup test resources."""
         # Load database
-        database_path = "sqlite:///" + os.path.join(
-                            cls.cwd_path, "../../database/acqdiv.sqlite3")
+        database_path = get_path_of_most_recent_database()
         engine = sa.create_engine(database_path)
         cls.meta = sa.MetaData(engine, reflect=True)
         session_class = sessionmaker(bind=engine)

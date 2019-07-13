@@ -16,6 +16,7 @@ from configparser import ConfigParser
 import acqdiv.database.database_backend as db
 from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
 from acqdiv.util import age
+from acqdiv.util.util import get_path_of_most_recent_database
 
 
 class PostProcessor:
@@ -61,19 +62,9 @@ class PostProcessor:
         if test:
             self.engine = sa.create_engine('sqlite:///database/test.sqlite3')
         else:
-            chosen_path = None
-            # chose most recent sqlite file in the database directory
-            for path in sorted(glob.glob('database/acqdiv_corpus_*.sqlite3'),
-                               reverse=True):
-                chosen_path = path
-                break
-
-            if chosen_path is None:
-                logging.error('No sqlite file exists! Run the loader first.\n')
-                sys.exit(1)
-
-            self.engine = sa.create_engine('sqlite:///{}'.format(chosen_path))
-            print('Postprocessing {}...'.format(chosen_path))
+            db_path = get_path_of_most_recent_database()
+            self.engine = sa.create_engine(db_path)
+            print('Postprocessing {}...'.format(db_path))
 
     def configure_connection(self):
         self.conn.execute('PRAGMA synchronous = OFF')
