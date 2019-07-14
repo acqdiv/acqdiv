@@ -4,33 +4,29 @@ from acqdiv.parsers.toolbox.readers.ToolboxReader import ToolboxReader
 class DeneReader(ToolboxReader):
 
     @classmethod
-    def get_utterance_raw(cls, rec_dict):
-        return rec_dict.get('full', '')
+    def get_actual_utterance(cls, rec):
+        return rec.get('full', '')
 
     @classmethod
-    def get_seg_tier(cls, rec_dict):
-        return rec_dict.get('seg', '')
+    def get_seg_tier(cls, rec):
+        return rec.get('seg', '')
 
     @classmethod
-    def get_gloss_tier(cls, rec_dict):
-        return rec_dict.get('glo', '')
+    def get_gloss_tier(cls, rec):
+        return rec.get('glo', '')
 
     @classmethod
-    def get_sentence_type(cls, rec_dict):
-        utt = rec_dict.get('full_orig')
+    def get_sentence_type(cls, rec):
+        utt = rec.get('full_orig')
         if utt.endswith('?'):
             return 'question'
         else:
             return 'default'
 
     @classmethod
-    def get_translation(cls, rec_dict):
-        return rec_dict.get('eng_u', '')
+    def get_translation(cls, rec):
+        return rec.get('eng_u', '')
 
     @classmethod
-    def get_comment(cls, rec_dict):
-        return rec_dict.get('com', '')
-
-    @classmethod
-    def unify_unknown(cls, utterance):
-        return utterance.replace('xxx', '???')
+    def get_comment(cls, rec):
+        return rec.get('com', '')

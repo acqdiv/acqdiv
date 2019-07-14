@@ -156,6 +156,9 @@ class DBProcessor(object):
 
             utterance.update(corpus=corpus_name,
                              language=language)
+
+            self.null_empty_values(utterance)
+
             u_id, = insert_utt(
                 session_id_fk=s_id, **utterance).inserted_primary_key
 
@@ -164,6 +167,9 @@ class DBProcessor(object):
                 if w:
                     w.update(corpus=corpus_name,
                              language=language)
+
+                    self.null_empty_values(w)
+
                     w_id, = insert_word(
                         session_id_fk=s_id,
                         utterance_id_fk=u_id, **w).inserted_primary_key
@@ -178,8 +184,19 @@ class DBProcessor(object):
                     m.update(corpus=corpus_name,
                              language=language,
                              type=morpheme_type)
+
+                    self.null_empty_values(m)
+
                     insert_morph(
                         session_id_fk=s_id,
                         utterance_id_fk=u_id,
                         word_id_fk=w_id,
                         **m)
+
+    @staticmethod
+    def null_empty_values(utt_word_mor_dict):
+        for key in utt_word_mor_dict:
+            if not utt_word_mor_dict[key]:
+                utt_word_mor_dict[key] = None
+
+        return utt_word_mor_dict

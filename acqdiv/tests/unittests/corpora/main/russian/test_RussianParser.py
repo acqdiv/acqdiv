@@ -63,23 +63,35 @@ class TestRussianParser(unittest.TestCase):
             'start_raw': 'start_raw',
             'end_raw': 'end_raw',
             'speaker_label': 'speaker_label',
-            'addressee': None,
-            'childdirected': None,
+            'addressee': '',
+            'childdirected': '',
             'utterance_raw': 'w1 "," w2 w3 .',
             'utterance': 'w1 w2 w3',
             'sentence_type': 'default',
-            'translation': None,
-            'comment': None,
-            'warning': None,
+            'translation': '',
+            'comment': '',
+            'warning': '',
             'morpheme': 'lem1 "," lem2 lem3 .',
-            'gloss_raw': 'PST:SG:F:IRREFL:IPFV NOM:SG PCL',
+            'gloss_raw': 'V-PST:SG:F:IRREFL:IPFV PUNCT PRO-DEM-NOUN:NOM:SG '
+                         'PCL PUNCT',
             'pos_raw': 'V-PST:SG:F:IRREFL:IPFV PUNCT PRO-DEM-NOUN:NOM:SG PCL '
                        'PUNCT'}
 
         words = [
-            {'word': 'w1', 'word_actual': 'w1', 'word_language': 'Russian'},
-            {'word': 'w2', 'word_actual': 'w2', 'word_language': 'Russian'},
-            {'word': 'w3', 'word_actual': 'w3', 'word_language': 'Russian'}]
+            {'word': 'w1',
+             'word_actual': 'w1',
+             'word_target': '',
+             'word_language': ''
+             },
+            {'word': 'w2',
+             'word_actual': 'w2',
+             'word_target': '',
+             'word_language': '',
+             },
+            {'word': 'w3',
+             'word_actual': 'w3',
+             'word_target': '',
+             'word_language': ''}]
 
         morphemes = [
             [
@@ -88,7 +100,8 @@ class TestRussianParser(unittest.TestCase):
                  'pos_raw': 'V',
                  'morpheme_language': 'Russian',
                  'type': 'actual',
-                 'warning': None}
+                 'warning': '',
+                 'lemma_id': ''}
             ],
             [
                 {'morpheme': 'lem2',
@@ -96,7 +109,8 @@ class TestRussianParser(unittest.TestCase):
                  'pos_raw': 'PRO-DEM-NOUN',
                  'morpheme_language': 'Russian',
                  'type': 'actual',
-                 'warning': None}
+                 'warning': '',
+                 'lemma_id': ''}
             ],
             [
                 {'morpheme': 'lem3',
@@ -104,7 +118,8 @@ class TestRussianParser(unittest.TestCase):
                  'pos_raw': 'PCL',
                  'morpheme_language': 'Russian',
                  'type': 'actual',
-                 'warning': None}
+                 'warning': '',
+                 'lemma_id': ''}
             ]
         ]
         desired_output = [(utterance, words, morphemes)]

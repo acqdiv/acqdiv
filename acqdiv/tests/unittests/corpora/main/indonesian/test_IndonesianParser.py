@@ -64,54 +64,60 @@ class TestIndonesianParser(unittest.TestCase):
         utterance = {
             'source_id': 'source_id',
             'start_raw': 'start_raw',
-            'end_raw': None,
+            'end_raw': '',
             'speaker_label': 'speaker_label',
-            'addressee': None,
-            'childdirected': None,
+            'addressee': '',
+            'childdirected': '',
             'utterance_raw': 'w(ord)1 w2.',
             'utterance': 'w(ord)1 w2',
             'sentence_type': 'default',
-            'comment': None,
-            'warning': None,
+            'comment': '',
+            'warning': '',
             'morpheme': 'w1pfxseg- w1stemseg -w1sfxseg w2stemseg',
             'gloss_raw': 'w1pfxgloss- w1stemgloss -w1sfxgloss w2stemgloss',
-            'pos_raw': None,
+            'pos_raw': '',
             'translation': 'This is the translation.'}
 
         words = [
-            {'word': 'w1', 'word_actual': 'w1', 'word_target': 'word1',
-             'word_language': 'Indonesian'},
-            {'word': 'w2', 'word_actual': 'w2', 'word_target': 'w2',
-             'word_language': 'Indonesian'}]
+            {'word': 'w1',
+             'word_actual': 'w1',
+             'word_target': 'word1',
+             'word_language': ''},
+            {'word': 'w2',
+             'word_actual': 'w2',
+             'word_target': 'w2',
+             'word_language': ''}]
 
         morphemes = [
             [
                 {'morpheme': 'w1pfxseg-',
                  'gloss_raw': 'w1pfxgloss-',
-                 'pos_raw': None,
+                 'pos_raw': '',
                  'morpheme_language': 'Indonesian',
                  'type': 'target',
-                 'warning': None},
+                 'warning': '',
+                 'lemma_id': ''},
                 {'morpheme': 'w1stemseg',
                  'gloss_raw': 'w1stemgloss',
-                 'pos_raw': None,
+                 'pos_raw': '',
                  'morpheme_language': 'Indonesian',
                  'type': 'target',
-                 'warning': None},
+                 'warning': '',
+                 'lemma_id': ''},
                 {'morpheme': '-w1sfxseg',
                  'gloss_raw': '-w1sfxgloss',
-                 'pos_raw': None,
+                 'pos_raw': '',
                  'morpheme_language': 'Indonesian',
                  'type': 'target',
-                 'warning': None}],
+                 'warning': '',
+                 'lemma_id': ''}],
             [
                 {'morpheme': 'w2stemseg',
                  'gloss_raw': 'w2stemgloss',
-                 'pos_raw': None,
+                 'pos_raw': '',
                  'morpheme_language': 'Indonesian',
                  'type': 'target',
-                 'warning': None}]]
-        desired_output = [(None, None, None),
-                          (None, None, None),
-                          (utterance, words, morphemes)]
+                 'warning': '',
+                 'lemma_id': ''}]]
+        desired_output = [(utterance, words, morphemes)]
         self.assertEqual(actual_output, desired_output)

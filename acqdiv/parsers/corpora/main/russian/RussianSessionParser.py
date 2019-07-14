@@ -1,4 +1,5 @@
 from acqdiv.parsers.corpora.main.russian.RussianReader import RussianReader
+from acqdiv.parsers.corpora.main.russian.RussianCleaner import RussianCleaner
 from acqdiv.parsers.toolbox.ToolboxParser import ToolboxParser
 from acqdiv.parsers.metadata.IMDIParser import IMDIParser
 from acqdiv.model.Speaker import Speaker
@@ -7,10 +8,13 @@ from acqdiv.model.Speaker import Speaker
 class RussianSessionParser(ToolboxParser):
 
     def get_record_reader(self):
-        return RussianReader(self.toolbox_path)
+        return RussianReader()
 
     def get_metadata_reader(self):
         return IMDIParser(self.metadata_path)
+
+    def get_cleaner(self):
+        return RussianCleaner()
 
     def add_speakers(self):
         for speaker_dict in self.metadata_reader.metadata['participants']:

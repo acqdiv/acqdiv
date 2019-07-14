@@ -9,7 +9,7 @@ class TestChintangReader(unittest.TestCase):
         rec_dict = {
             'gw': 'the raw utterance .'
         }
-        actual_output = ChintangReader.get_utterance_raw(rec_dict)
+        actual_output = ChintangReader.get_actual_utterance(rec_dict)
         desired_output = 'the raw utterance .'
         self.assertEqual(actual_output, desired_output)
 
@@ -17,7 +17,7 @@ class TestChintangReader(unittest.TestCase):
         rec_dict = {
             'a': 'the raw utterance .'
         }
-        actual_output = ChintangReader.get_utterance_raw(rec_dict)
+        actual_output = ChintangReader.get_actual_utterance(rec_dict)
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
@@ -148,42 +148,6 @@ class TestChintangReader(unittest.TestCase):
         id_word = 'w1pfx-   w1stem   -w1sfx w2stem -w2sfx'
         actual_output = ChintangReader.get_id_words(id_word)
         desired_output = ['w1pfx-   w1stem   -w1sfx', 'w2stem -w2sfx']
-        self.assertEqual(actual_output, desired_output)
-
-    def test_get_utterance_data(self):
-        rec_dict = {
-            'ref': 'session_name.001',
-            'ELANBegin': '00:50:11.150',
-            'ELANEnd': '00:50:22.350',
-            'ELANParticipant': 'MAR',
-            'gw': 'w1 w2',
-            'id': 'w1pfxseg-   w1stemseg   -w1sfxseg      w2stemseg',
-            'mgl': 'w1pfxgloss- w1stemgloss -w1sfxgloss    w2stemgloss',
-            'ps': 'w1pfxpos-   w1stempos   -w1sfxpos      w2stempos',
-            'lg': 'language-    language   -language      language',
-            'eng': 'This is the translation',
-            'tos': 'child directed',
-            'nep': '?'
-        }
-        actual_output = ChintangReader.get_utterance_data(rec_dict)
-        desired_output = {
-            'speaker_label': 'MAR',
-            'addressee': '',
-            'utterance_raw': 'w1 w2',
-            'utterance': 'w1 w2',
-            'sentence_type': 'question',
-            'childdirected': True,
-            'source_id': 'session_name.001',
-            'start_raw': '00:50:11.150',
-            'end_raw': '00:50:22.350',
-            'translation': 'This is the translation',
-            'comment': '',
-            'warning': '',
-            'morpheme': '',
-            'lemma_id': 'w1pfxseg-   w1stemseg   -w1sfxseg      w2stemseg',
-            'gloss_raw': 'w1pfxgloss- w1stemgloss -w1sfxgloss    w2stemgloss',
-            'pos_raw': 'w1pfxpos-   w1stempos   -w1sfxpos      w2stempos'
-        }
         self.assertEqual(actual_output, desired_output)
 
     def test_get_sentence_type(self):

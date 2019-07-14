@@ -1,9 +1,13 @@
+import os
+import re
+
 from acqdiv.parsers.corpora.main.indonesian.IndonesianReader import \
     IndonesianReader
+from acqdiv.parsers.corpora.main.indonesian.IndonesianCleaner \
+    import IndonesianCleaner
 from acqdiv.parsers.metadata.CHATParser import CHATParser
 from acqdiv.parsers.toolbox.ToolboxParser import ToolboxParser
 from acqdiv.model.Speaker import Speaker
-import os
 
 
 class IndonesianSessionParser(ToolboxParser):
@@ -33,4 +37,29 @@ class IndonesianSessionParser(ToolboxParser):
             self.session.speakers.append(speaker)
 
     def get_record_reader(self):
-        return IndonesianReader(self.toolbox_path)
+        return IndonesianReader()
+
+    def get_cleaner(self):
+        return IndonesianCleaner()
+
+    def get_words_data(self, actual_utterance, target_utterance):
+        result = []
+
+        for word in self.record_reader.get_words(actual_utterance):
+            d = {
+                'word_language': ''
+            }
+            # Distinguish between word and word_target;
+            # otherwise the target word is identical to the actual word
+            if re.search('\(', word):
+                d['word_target'] = re.sub('[()]', '', word)
+                d['word'] = re.sub('\([^)]+\)', '', word)
+                d['word_actual'] = d['word']
+                result.append(d)
+            else:
+                d['word_target'] = re.sub('xxx?|www', '???', word)
+                d['word'] = re.sub('xxx?', '???', word)
+                d['word_actual'] = d['word']
+                result.append(d)
+
+        return result
