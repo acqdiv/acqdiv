@@ -17,3 +17,6 @@ class Record:
     def __iter__(self):
         for tier in self.tiers:
             yield tier
+
+    def __contains__(self, field):
+        return field in self.tiers

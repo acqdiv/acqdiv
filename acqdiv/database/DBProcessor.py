@@ -196,7 +196,7 @@ class DBProcessor(object):
     @staticmethod
     def null_empty_values(utt_word_mor_dict):
         for key in utt_word_mor_dict:
-            if not utt_word_mor_dict[key]:
+            if utt_word_mor_dict[key] == '':
                 utt_word_mor_dict[key] = None
 
         return utt_word_mor_dict
