@@ -113,7 +113,7 @@ class ToolboxReader(object):
 
     @classmethod
     def get_id_tier(cls, rec):
-        return rec.get('id', '')
+        return rec.get('lemma_id', '')
 
     # ---------- words ----------
 

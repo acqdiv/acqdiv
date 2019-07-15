@@ -26,6 +26,10 @@ class ChintangReader(ToolboxReader):
         return rec.get('lg', '')
 
     @classmethod
+    def get_id_tier(cls, rec):
+        return rec.get('id', '')
+
+    @classmethod
     def get_childdirected(cls, rec):
         for tier in ['TOS', 'tos']:
             if tier in rec:
