@@ -21,7 +21,7 @@ from acqdiv.util.util import get_path_of_most_recent_database
 
 class PostProcessor:
 
-    cleaned_age = re.compile('\d{1,2};\d{1,2}\.\d')
+    cleaned_age = re.compile(r'\d{1,2};\d{1,2}\.\d{1,2}')
     age_pattern = re.compile(".*;.*\..*")
 
     def __init__(self):
@@ -185,8 +185,12 @@ class PostProcessor:
         Group by corpus and call age function depending on corpus
         input format (IMDI of CHAT XML).
         """
-        s = sa.select([db.Speaker.id, db.Speaker.session_id_fk, db.Speaker.corpus,
-                       db.Speaker.age_raw, db.Speaker.birthdate])
+        s = sa.select([db.Speaker.id,
+                       db.Speaker.session_id_fk,
+                       db.Speaker.corpus,
+                       db.Speaker.age_raw,
+                       db.Speaker.age,
+                       db.Speaker.birthdate])
         query = self.conn.execute(s)
         for corpus, rows in groupby(query, lambda r: r[2]):
             config = self.get_config(corpus)
@@ -1219,8 +1223,8 @@ class PostProcessor:
                                 'age_in_days': age_in_days})
 
             if ("None" not in row.age_raw
-                    or "Un" not in row.age_raw
-                    or row.age is None):
+                    and "Un" not in row.age_raw
+                    and row.age is None):
                 if not self.cleaned_age.fullmatch(row.age_raw):
                     try:
                         ages = age.clean_incomplete_ages(row.age_raw)
