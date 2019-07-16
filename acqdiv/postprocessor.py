@@ -46,11 +46,8 @@ class PostProcessor:
         print("%s seconds --- Finished" % (time.time() - start_time))
         print()
         print('Next, run tests:')
-
-        if test:
-            print('acqdiv test')
-        else:
-            print('acqdiv test -f')
+        print('acqdiv test')
+        print('acqdiv test -i')
         print()
 
     def set_engine(self, test=False):
