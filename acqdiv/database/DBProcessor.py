@@ -131,7 +131,8 @@ class DBProcessor(object):
             corpus=corpus_name,
             language=language,
             date=session.date,
-            source_id=session.source_id
+            source_id=session.source_id,
+            media_id=session.media_filename if session.media_filename else None
         ).inserted_primary_key
 
         # Populate Speakers table

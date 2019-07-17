@@ -31,6 +31,7 @@ class Session(Base):
 
     id = Column(Integer, primary_key=True)
     source_id = Column(Text, nullable=False, unique=False)
+    media_id = Column(Text, nullable=True, unique=False)
     corpus = Column(Text, nullable=False, unique=False)
     language = Column(Text, nullable=False, unique=False)
     date = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
