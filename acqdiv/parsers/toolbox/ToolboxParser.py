@@ -55,19 +55,26 @@ class ToolboxParser(SessionParser):
 
         return self.session
 
+    def get_media_filenames(self):
+        md = self.metadata_reader.metadata
+
+        media_filenames = set()
+
+        for mediafile in md['media']['mediafile']:
+            link = mediafile['resourcelink']
+            filename = os.path.basename(link)
+            filename_without_ext = os.path.splitext(filename)[0]
+            media_filenames.add(filename_without_ext)
+
+        return ','.join(name for name in media_filenames)
+
     def add_session_metadata(self):
         """Add the metadata of a session."""
-        md = self.metadata_reader.metadata['session']
-
-        try:
-            md['media_type'] = (
-                self.metadata_reader.metadata['media']['mediafile']['type'])
-        except KeyError:
-            md['media_type'] = None
-
         self.session.source_id = os.path.splitext(
             os.path.basename(self.toolbox_path))[0]
-        self.session.date = md.get('date', None)
+        self.session.date = self.metadata_reader.metadata['session'].get(
+            'date', None)
+        self.session.media_filename = self.get_media_filenames()
 
     def add_speakers(self):
         """Add the speakers of a session."""

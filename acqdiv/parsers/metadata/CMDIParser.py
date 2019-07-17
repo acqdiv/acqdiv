@@ -10,6 +10,7 @@ class CMDIParser(MetadataParser):
         super().__init__(path)
         self.metadata["participants"] = self.get_participants()
         self.metadata["session"] = self.get_session_data()
+        self.metadata["media"] = self.get_media_data()
 
     def get_participants(self):
         participants = []
@@ -44,3 +45,11 @@ class CMDIParser(MetadataParser):
         }
 
         return session
+
+    def get_media_data(self):
+        media = {
+            'mediafile': [],
+            'writtenresource': []
+        }
+
+        return media

@@ -150,12 +150,15 @@ class IMDIParser(MetadataParser):
             root: Root node of the session XML.
 
         Returns:
-            A dictionary of media files and metadata (like duration etc.)
+            List: The media files and their metadata (like duration etc.).
         """
-        media = {}
+        media = {
+            'mediafile': [],
+            'writtenresource': []
+        }
         for e in root.Session.Resources.getchildren():
             t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "")
-            media[t.lower()] = self.get_mediafile_data(e)
+            media[t.lower()].append(self.get_mediafile_data(e))
         return media
 
 
