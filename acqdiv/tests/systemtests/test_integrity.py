@@ -271,7 +271,7 @@ class IntegrityTest(unittest.TestCase):
         ]
         self._in_whitelist(query, langs)
 
-    def test_target_children(self):
+    def test_more_target_children_per_session(self):
         """Check whether there is only one target child per session."""
         query = """SELECT session_id_fk
                    FROM speakers
@@ -280,6 +280,19 @@ class IntegrityTest(unittest.TestCase):
         msg = "Session {} has more than one target child"
         for session_id in self.session.execute(query):
             self.fail(msg=msg.format(session_id[0]))
+
+    def test_no_target_child_for_session(self):
+        """Check whether every session has a target child."""
+        query = """SELECT id, corpus, source_id
+                   FROM sessions
+                   WHERE target_child_fk IS NULL"""
+        msg = "Sessions {} do not have a target child."
+        sessions = []
+        for id_corpus_source_id in self.session.execute(query):
+            sessions.append(id_corpus_source_id)
+
+        if sessions:
+            self.fail(msg=msg.format(sessions))
 
     """ Private methods below. """
     def _column_contains_null(self, table, column):
