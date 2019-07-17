@@ -210,18 +210,21 @@ class PostProcessor:
 
         Updates the speakers table.
         """
-        cfg = self.get_config('Indonesian')
-        s = sa.select(
-            [db.Speaker.id, db.Speaker.speaker_label, db.Speaker.name]).where(
-            db.Speaker.corpus == 'Indonesian')
-        rows = self.conn.execute(s)
-        results = []
-        for row in rows:
-            if row.speaker_label == 'EXP':
-                results.append({'speaker_id': row.id,
-                                'speaker_label': cfg['exp_labels'][row.name]})
-        rows.close()
-        self._update_rows(db.Speaker.__table__, 'speaker_id', results)
+        if 'Indonesian' in self.corpora_in_DB:
+            cfg = self.get_config('Indonesian')
+            s = sa.select([db.Speaker.id,
+                           db.Speaker.speaker_label,
+                           db.Speaker.name]).\
+                where(db.Speaker.corpus == 'Indonesian')
+            rows = self.conn.execute(s)
+            results = []
+            for row in rows:
+                if row.speaker_label == 'EXP':
+                    results.append({
+                        'speaker_id': row.id,
+                        'speaker_label': cfg['exp_labels'][row.name]})
+            rows.close()
+            self._update_rows(db.Speaker.__table__, 'speaker_id', results)
 
     def _speakers_standardize_gender_labels(self):
         """Standardize gender labels in the speakers table."""
