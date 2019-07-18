@@ -3,7 +3,7 @@
 import time
 import argparse
 
-from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
+from acqdiv.ini.CorpusConfigParser import CorpusConfigParser
 from acqdiv.parsers.CorpusParserMapper import CorpusParserMapper
 from acqdiv.database.DBProcessor import DBProcessor
 

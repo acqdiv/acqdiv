@@ -7,14 +7,13 @@ import csv
 import argparse
 import logging
 import sqlalchemy as sa
-import glob
 import os
 
 from itertools import groupby
 from configparser import ConfigParser
 
 import acqdiv.database.database_backend as db
-from acqdiv.parsers.CorpusConfigParser import CorpusConfigParser
+from acqdiv.ini.CorpusConfigParser import CorpusConfigParser
 from acqdiv.util import age
 from acqdiv.util.util import get_path_of_most_recent_database
 
