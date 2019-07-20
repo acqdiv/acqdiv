@@ -95,13 +95,6 @@ class DBProcessor(object):
                                   corpus,
                                   session)
 
-    @staticmethod
-    def _extract(dict_, keymap, **kwargs):
-        result = {keymap[k]: dict_[k]
-                  for k in (keymap.keys() & dict_.keys())}
-        result.update(kwargs)
-        return result
-
     def _process_session(self, conn, corpus, session_parser):
         """Add session data to the database.
 
