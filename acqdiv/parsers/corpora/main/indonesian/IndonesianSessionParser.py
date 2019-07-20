@@ -48,7 +48,8 @@ class IndonesianSessionParser(ToolboxParser):
 
         for word in self.record_reader.get_words(actual_utterance):
             w = Word()
-            w.utterance = utt.words.append(w)
+            w.utterance = utt
+            utt.words.append(w)
 
             w.word_language = ''
 
