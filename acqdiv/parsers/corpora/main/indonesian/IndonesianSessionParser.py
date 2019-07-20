@@ -27,6 +27,7 @@ class IndonesianSessionParser(ToolboxParser):
     def add_speakers(self):
         for speaker_dict in self.metadata_reader.metadata['participants']:
             speaker = Speaker()
+            speaker.session = self.session
             speaker.birth_date = speaker_dict.get('birthday', None)
             speaker.gender_raw = speaker_dict.get('sex', None)
             speaker.code = speaker_dict.get('id', None)
