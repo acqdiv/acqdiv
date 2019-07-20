@@ -80,6 +80,7 @@ class CHATParser(SessionParser):
         """Add the speakers of a session."""
         while self.reader.load_next_speaker():
             speaker = Speaker()
+            speaker.session = self.session
 
             speaker_label = self.reader.get_speaker_label()
             name = self.reader.get_speaker_name()

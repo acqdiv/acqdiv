@@ -1,8 +1,10 @@
+from acqdiv.model.Session import Session
 
 
 class Speaker:
 
     def __init__(self):
+        self.session = Session()
         self.code = ''
         self.name = ''
         self.gender_raw = ''
