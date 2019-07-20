@@ -5,6 +5,9 @@ from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
 from acqdiv.parsers.SessionParser import SessionParser
 from acqdiv.model.Session import Session
 from acqdiv.model.Speaker import Speaker
+from acqdiv.model.Utterance import Utterance
+from acqdiv.model.Word import Word
+from acqdiv.model.Morpheme import Morpheme
 
 
 class CHATParser(SessionParser):
@@ -54,6 +57,7 @@ class CHATParser(SessionParser):
         """
         self.add_session_metadata()
         self.add_speakers()
+        self.add_records()
 
         return self.session
 
@@ -103,55 +107,55 @@ class CHATParser(SessionParser):
 
             self.session.speakers.append(speaker)
 
-    def get_words_dict(self, actual_utt, target_utt):
+    def add_words(self, actual_utt, target_utt):
         actual_words = self.reader.get_utterance_words(actual_utt)
         target_words = self.reader.get_utterance_words(target_utt)
 
-        words = []
+        utt = self.session.utterances[-1]
+
         for word_actual, word_target in zip(actual_words, target_words):
+
+            w = Word()
+            w.utterance = utt
+            utt.words.append(w)
 
             if self.reader.get_standard_form() == 'actual':
                 word = word_actual
             else:
                 word = word_target
 
-            word_language = self.reader.get_word_language(word)
-
-            word = self.cleaner.clean_word(word)
-            word_actual = self.cleaner.clean_word(word_actual)
-            word_target = self.cleaner.clean_word(word_target)
+            w.word_language = self.reader.get_word_language(word)
+            w.word = self.cleaner.clean_word(word)
+            w.word_actual = self.cleaner.clean_word(word_actual)
+            w.word_target = self.cleaner.clean_word(word_target)
+            w.warning = ''
 
             if not self.consistent_actual_target:
                 if word_actual == word_target:
-                    word_actual = None
-                    word_target = None
+                    w.word_actual = None
+                    w.word_target = None
 
-            word_dict = {
-                'word_language': word_language if word_language else None,
-                'word': word,
-                'word_actual': word_actual,
-                'word_target': word_target,
-                'warning': None
-            }
-            words.append(word_dict)
-
-        return words
-
-    def next_utterance(self):
-        """Yields the next utterance of a session."""
+    def add_records(self):
+        """
+        """
         while self.reader.load_next_record():
+            utt = Utterance()
+            utt.session = self.session
+            self.session.utterances.append(utt)
 
-            source_id = self.get_source_id()
-            addressee = self.cleaner.clean_record_speaker_label(
+            utt.source_id = self.get_source_id()
+            utt.addressee = self.cleaner.clean_record_speaker_label(
                 self.session_filename, self.reader.get_addressee())
-            translation = self.reader.get_translation()
-            comment = self.reader.get_comments()
-            speaker_label = self.cleaner.clean_record_speaker_label(
+            utt.translation = self.cleaner.clean_translation(
+                                self.reader.get_translation())
+            utt.comment = self.reader.get_comments()
+            utt.speaker_label = self.cleaner.clean_record_speaker_label(
                 self.session_filename, self.reader.get_record_speaker_label())
-            utterance_raw = self.reader.get_utterance()
-            start_raw = self.reader.get_start_time()
-            end_raw = self.reader.get_end_time()
-            sentence_type = self.reader.get_sentence_type()
+            utt.utterance_raw = self.reader.get_utterance()
+            utt.start_raw = self.reader.get_start_time()
+            utt.end_raw = self.reader.get_end_time()
+            utt.sentence_type = self.reader.get_sentence_type()
+            utt.warning = ''
 
             # actual & target distinction
             actual_utt = self.cleaner.clean_utterance(
@@ -159,47 +163,27 @@ class CHATParser(SessionParser):
             target_utt = self.cleaner.clean_utterance(
                 self.reader.get_target_utterance())
 
-            # clean translation
-            translation = self.cleaner.clean_translation(translation)
-
             # get morphology tiers
-            seg_tier_raw = self.reader.get_seg_tier()
-            gloss_tier_raw = self.reader.get_gloss_tier()
-            pos_tier_raw = self.reader.get_pos_tier()
+            utt.morpheme = self.reader.get_seg_tier()
+            utt.gloss_raw = self.reader.get_gloss_tier()
+            utt.pos_raw = self.reader.get_pos_tier()
 
             # clean the morphology tiers
-            seg_tier = self.cleaner.clean_seg_tier(seg_tier_raw)
-            gloss_tier = self.cleaner.clean_gloss_tier(gloss_tier_raw)
-            pos_tier = self.cleaner.clean_pos_tier(pos_tier_raw)
+            seg_tier = self.cleaner.clean_seg_tier(utt.morpheme)
+            gloss_tier = self.cleaner.clean_gloss_tier(utt.gloss_raw)
+            pos_tier = self.cleaner.clean_pos_tier(utt.pos_raw)
 
             # cross cleaning
             actual_utt, target_utt, seg_tier, gloss_tier, pos_tier = \
                 self.cleaner.utterance_cross_clean(
-                    utterance_raw, actual_utt, target_utt,
+                    utt.utterance_raw, actual_utt, target_utt,
                     seg_tier, gloss_tier, pos_tier)
 
             # get dictionary of words
-            words = self.get_words_dict(actual_utt, target_utt)
+            self.add_words(actual_utt, target_utt)
 
             # rebuild utterance from cleaned words
-            utterance = ' '.join(w['word'] for w in words)
-
-            utterance_dict = {
-                'source_id': source_id,
-                'speaker_label': speaker_label,
-                'addressee': addressee if addressee else None,
-                'utterance_raw': utterance_raw,
-                'utterance': utterance if utterance else None,
-                'translation': translation if translation else None,
-                'morpheme': seg_tier_raw if seg_tier_raw else None,
-                'gloss_raw': gloss_tier_raw if gloss_tier_raw else None,
-                'pos_raw': pos_tier_raw if pos_tier_raw else None,
-                'sentence_type': sentence_type if sentence_type else None,
-                'start_raw': start_raw if start_raw else None,
-                'end_raw': end_raw if end_raw else None,
-                'comment': comment if comment else None,
-                'warning': None
-            }
+            utt.utterance = ' '.join(w.word for w in utt.words)
 
             # get morpheme words from the respective morphology tiers
             wsegs = self.reader.get_seg_words(seg_tier)
@@ -233,7 +217,6 @@ class CHATParser(SessionParser):
                 wposes = wlen*['']
 
             # collect morpheme data of an utterance
-            morphemes = []
             # go through all morpheme words
             for wseg, wgloss, wpos in zip(wsegs, wglosses, wposes):
 
@@ -274,27 +257,20 @@ class CHATParser(SessionParser):
 
                 # go through morphemes
                 for seg, gloss, pos in zip(segments, glosses, poses):
+                    m = Morpheme()
+                    m.utterance = utt
 
-                    morpheme_language = self.reader.get_morpheme_language(
+                    m.morpheme_language = self.reader.get_morpheme_language(
                                             seg, gloss, pos)
 
                     # clean the morphemes
-                    seg = self.cleaner.clean_segment(seg)
-                    gloss = self.cleaner.clean_gloss(gloss)
-                    pos = self.cleaner.clean_pos(pos)
+                    m.morpheme = self.cleaner.clean_segment(seg)
+                    m.gloss_raw = self.cleaner.clean_gloss(gloss)
+                    m.pos_raw = self.cleaner.clean_pos(pos)
 
-                    morpheme_dict = {
-                        'morpheme_language':
-                            morpheme_language if morpheme_language else None,
-                        'morpheme': seg if seg else None,
-                        'gloss_raw': gloss if gloss else None,
-                        'pos_raw': pos if pos else None
-                    }
-                    wmorphemes.append(morpheme_dict)
+                    wmorphemes.append(m)
 
-                morphemes.append(wmorphemes)
-
-            yield utterance_dict, words, morphemes
+                utt.morphemes.append(wmorphemes)
 
     def get_source_id(self):
         """Get the source id of the current utterance."""

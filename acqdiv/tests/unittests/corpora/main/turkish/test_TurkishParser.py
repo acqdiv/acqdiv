@@ -3,9 +3,12 @@ import unittest
 import os
 import acqdiv
 
-from acqdiv.parsers.corpora.main.turkish.TurkishCleaner import TurkishCleaner
-from acqdiv.parsers.corpora.main.turkish.TurkishSessionParser import TurkishSessionParser
-from acqdiv.parsers.corpora.main.turkish.TurkishReader import TurkishReader
+from acqdiv.parsers.corpora.main.turkish.TurkishCleaner \
+    import TurkishCleaner
+from acqdiv.parsers.corpora.main.turkish.TurkishSessionParser \
+    import TurkishSessionParser
+from acqdiv.parsers.corpora.main.turkish.TurkishReader \
+    import TurkishReader
 
 
 class TestTurkishParser(unittest.TestCase):
@@ -31,489 +34,89 @@ class TestTurkishParser(unittest.TestCase):
         actual_cleaner = TurkishSessionParser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, TurkishCleaner))
 
-    def test_next_utterance_no_misalignments_single_word_no_mor(self):
-        """Test next_utterance with utt containing no misalignemnts. (Turkish)
-
-        Test with a one-word utterance without morphology.
-        """
-        session_str = '*GRA:\tne ?\n%add:\tMOT\n@End'
+    def test_parse(self):
+        """Test parse()."""
+        session_str = ('*BAB:\tinmekmi istiyo(r)sun ?\n'
+                       '%add:\tCHI\n'
+                       '%xmor:\tV|in-INF-QUE V|iste-IPFV-2S ?\n'
+                       '@End')
         parser = TurkishSessionParser(self.dummy_cha_path)
         parser.reader = TurkishReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'GRA',
-            'addressee': 'MOT',
-            'utterance_raw': 'ne ?',
-            'utterance': 'ne',
-            'translation': None,
-            'morpheme': None,
-            'gloss_raw': None,
-            'pos_raw': None,
-            'sentence_type': 'question',
-            'start_raw': None,
-            'end_raw': None,
-            'comment': None,
-            'warning': None
-        }
-        words_list = [
-            {
-                'word_language': 'Turkish',
-                'word': 'ne',
-                'word_actual': 'ne',
-                'word_target': 'ne',
-                'warning': None
-            }
-        ]
-        morpheme_list = []
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
+        session = parser.parse()
+        utt = session.utterances[0]
 
-    def test_next_utterance_no_misalignments_multiple_words_with_mor(self):
-        """Test next_utterance with utt containing 2 words. (Turkish)
+        utterance = [
+            utt.source_id == 'dummy_0',
+            utt.speaker_label == 'BAB',
+            utt.addressee == 'CHI',
+            utt.utterance_raw == 'inmekmi istiyo(r)sun ?',
+            utt.utterance == 'inmekmi istiyosun',
+            utt.translation == '',
+            utt.morpheme == 'V|in-INF-QUE V|iste-IPFV-2S ?',
+            utt.gloss_raw == 'V|in-INF-QUE V|iste-IPFV-2S ?',
+            utt.pos_raw == 'V|in-INF-QUE V|iste-IPFV-2S ?',
+            utt.sentence_type == 'question',
+            utt.start_raw == '',
+            utt.end_raw == '',
+            utt.comment == '',
+            utt.warning == ''
+        ]
 
-        Utterance contains morphology.
-        """
-        session_str = ('*BAB:\tinmekmi istiyo(r)sun ?\n%add:\tCHI\n%xmor:\t'
-                       'V|in-INF-QUE V|iste-IPFV-2S ?\n@End')
-        parser = TurkishSessionParser(self.dummy_cha_path)
-        parser.reader = TurkishReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'BAB',
-            'addressee': 'CHI',
-            'utterance_raw': 'inmekmi istiyo(r)sun ?',
-            'utterance': 'inmekmi istiyosun',
-            'translation': None,
-            'morpheme': 'V|in-INF-QUE V|iste-IPFV-2S ?',
-            'gloss_raw': 'V|in-INF-QUE V|iste-IPFV-2S ?',
-            'pos_raw': 'V|in-INF-QUE V|iste-IPFV-2S ?',
-            'sentence_type': 'question',
-            'start_raw': None,
-            'end_raw': None,
-            'comment': None,
-            'warning': None
-        }
-        words_list = [
-            {
-                'word_language': 'Turkish',
-                'word': 'inmekmi',
-                'word_actual': 'inmekmi',
-                'word_target': 'inmekmi',
-                'warning': None
-            },
-            {
-                'word_language': 'Turkish',
-                'word': 'istiyosun',
-                'word_actual': 'istiyosun',
-                'word_target': 'istiyorsun',
-                'warning': None
-            }
-        ]
-        morpheme_list = [
-            [
-                {
-                    'gloss_raw': None,
-                    'morpheme': 'in',
-                    'morpheme_language': None,
-                    'pos_raw': 'V'
-                }, {
-                    'gloss_raw': 'INF',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }, {
-                    'gloss_raw': 'QUE',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }
-            ],
-            [
-                {
-                    'gloss_raw': None,
-                    'morpheme': 'iste',
-                    'morpheme_language': None,
-                    'pos_raw': 'V'
-                }, {
-                    'gloss_raw': 'IPFV',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }, {
-                    'gloss_raw': '2S',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'}
-            ]
-        ]
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
+        w1 = utt.words[0]
+        w2 = utt.words[1]
 
-    def test_next_utterance_words_misaligned(self):
-        """Test next_utterance with too few words. (Turkish)"""
-        session_str = ('*BAB:\tinmekmi ?\n%add:\tCHI\n%xmor:\t'
-                       'V|in-INF-QUE V|iste-IPFV-2S ?\n@End')
-        parser = TurkishSessionParser(self.dummy_cha_path)
-        parser.reader = TurkishReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'BAB',
-            'addressee': 'CHI',
-            'utterance_raw': 'inmekmi ?',
-            'utterance': 'inmekmi',
-            'translation': None,
-            'morpheme': 'V|in-INF-QUE V|iste-IPFV-2S ?',
-            'gloss_raw': 'V|in-INF-QUE V|iste-IPFV-2S ?',
-            'pos_raw': 'V|in-INF-QUE V|iste-IPFV-2S ?',
-            'sentence_type': 'question',
-            'start_raw': None,
-            'end_raw': None,
-            'comment': None,
-            'warning': None
-        }
-        words_list = [
-            {
-                'word_language': 'Turkish',
-                'word': 'inmekmi',
-                'word_actual': 'inmekmi',
-                'word_target': 'inmekmi',
-                'warning': None
-            }
+        words = [
+            w1.word_language == 'Turkish',
+            w1.word == 'inmekmi',
+            w1.word_actual == 'inmekmi',
+            w1.word_target == 'inmekmi',
+            w1.warning == '',
+            w2.word_language == 'Turkish',
+            w2.word == 'istiyosun',
+            w2.word_actual == 'istiyosun',
+            w2.word_target == 'istiyorsun',
+            w2.warning == ''
         ]
-        morpheme_list = [
-            [
-                {
-                    'gloss_raw': None,
-                    'morpheme': 'in',
-                    'morpheme_language': None,
-                    'pos_raw': 'V'
-                }, {
-                    'gloss_raw': 'INF',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }, {
-                    'gloss_raw': 'QUE',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }
-            ],
-            [
-                {
-                    'gloss_raw': None,
-                    'morpheme': 'iste',
-                    'morpheme_language': None,
-                    'pos_raw': 'V'
-                }, {
-                    'gloss_raw': 'IPFV',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }, {
-                    'gloss_raw': '2S',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }
-            ]
-        ]
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
 
-    def test_next_utterance_morphology_misaligned(self):
-        """Test next_utterance with too few morpheme words. (Turkish)
+        m1 = utt.morphemes[0][0]
+        m2 = utt.morphemes[0][1]
+        m3 = utt.morphemes[0][2]
+        m4 = utt.morphemes[1][0]
+        m5 = utt.morphemes[1][1]
+        m6 = utt.morphemes[1][2]
 
-        Misalignment on the morpheme tier (xmor) which includes glosses,
-        poses and segments.
-        """
-        session_str = ('*BAB:\tinmekmi istiyo(r)sun ?\n%add:\tCHI\n%xmor:\t'
-                       'V|in-INF-QUE ?\n@End')
-        parser = TurkishSessionParser(self.dummy_cha_path)
-        parser.reader = TurkishReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'BAB',
-            'addressee': 'CHI',
-            'utterance_raw': 'inmekmi istiyo(r)sun ?',
-            'utterance': 'inmekmi istiyosun',
-            'translation': None,
-            'morpheme': 'V|in-INF-QUE ?',
-            'gloss_raw': 'V|in-INF-QUE ?',
-            'pos_raw': 'V|in-INF-QUE ?',
-            'sentence_type': 'question',
-            'start_raw': None,
-            'end_raw': None,
-            'comment': None,
-            'warning': None
-        }
-        words_list = [
-            {
-                'word_language': 'Turkish',
-                'word': 'inmekmi',
-                'word_actual': 'inmekmi',
-                'word_target': 'inmekmi',
-                'warning': None
-            },
-            {
-                'word_language': 'Turkish',
-                'word': 'istiyosun',
-                'word_actual': 'istiyosun',
-                'word_target': 'istiyorsun',
-                'warning': None
-            }
-        ]
-        morpheme_list = [
-            [
-                {
-                    'gloss_raw': None,
-                    'morpheme': 'in',
-                    'morpheme_language': None,
-                    'pos_raw': 'V'
-                }, {
-                    'gloss_raw': 'INF',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }, {
-                    'gloss_raw': 'QUE',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }
-            ]
-        ]
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
+        morphemes = [
+            m1.gloss_raw == '',
+            m1.morpheme == 'in',
+            m1.morpheme_language == '',
+            m1.pos_raw == 'V',
 
-    def test_next_utterance_poses_misaligned(self):
-        """Test next_utterance with too few poses. (Turkish)"""
-        session_str = ('*BAB:\tinmekmi istiyo(r)sun ?\n%add:\tCHI\n%xmor:\t'
-                       'V|in-INF-QUE |iste-IPFV-2S ?\n@End')
-        parser = TurkishSessionParser(self.dummy_cha_path)
-        parser.reader = TurkishReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'BAB',
-            'addressee': 'CHI',
-            'utterance_raw': 'inmekmi istiyo(r)sun ?',
-            'utterance': 'inmekmi istiyosun',
-            'translation': None,
-            'morpheme': 'V|in-INF-QUE |iste-IPFV-2S ?',
-            'gloss_raw': 'V|in-INF-QUE |iste-IPFV-2S ?',
-            'pos_raw': 'V|in-INF-QUE |iste-IPFV-2S ?',
-            'sentence_type': 'question',
-            'start_raw': None,
-            'end_raw': None,
-            'comment': None,
-            'warning': None
-        }
-        words_list = [
-            {
-                'word_language': 'Turkish',
-                'word': 'inmekmi',
-                'word_actual': 'inmekmi',
-                'word_target': 'inmekmi',
-                'warning': None
-            },
-            {
-                'word_language': 'Turkish',
-                'word': 'istiyosun',
-                'word_actual': 'istiyosun',
-                'word_target': 'istiyorsun',
-                'warning': None
-            }
-        ]
-        morpheme_list = [
-            [
-                {
-                    'gloss_raw': None,
-                    'morpheme': 'in',
-                    'morpheme_language': None,
-                    'pos_raw': 'V'
-                }, {
-                    'gloss_raw': 'INF',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }, {
-                    'gloss_raw': 'QUE',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }
-            ],
-            [
-                {
-                    'gloss_raw': None,
-                    'morpheme': 'iste',
-                    'morpheme_language': None,
-                    'pos_raw': None
-                }, {
-                    'gloss_raw': 'IPFV',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }, {
-                    'gloss_raw': '2S',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'}
-            ]
-        ]
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
+            m2.gloss_raw == 'INF',
+            m2.morpheme == '',
+            m2.morpheme_language == '',
+            m2.pos_raw == 'sfx',
 
-    def test_next_utterance_segments_misaligned(self):
-        """Test next_utterance with too few segments. (Turkish)"""
-        session_str = ('*BAB:\tinmekmi istiyo(r)sun ?\n%add:\tCHI\n%xmor:\t'
-                       'V|in-INF-QUE V|-IPFV-2S ?\n@End')
-        parser = TurkishSessionParser(self.dummy_cha_path)
-        parser.reader = TurkishReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'BAB',
-            'addressee': 'CHI',
-            'utterance_raw': 'inmekmi istiyo(r)sun ?',
-            'utterance': 'inmekmi istiyosun',
-            'translation': None,
-            'morpheme': 'V|in-INF-QUE V|-IPFV-2S ?',
-            'gloss_raw': 'V|in-INF-QUE V|-IPFV-2S ?',
-            'pos_raw': 'V|in-INF-QUE V|-IPFV-2S ?',
-            'sentence_type': 'question',
-            'start_raw': None,
-            'end_raw': None,
-            'comment': None,
-            'warning': None
-        }
-        words_list = [
-            {
-                'word_language': 'Turkish',
-                'word': 'inmekmi',
-                'word_actual': 'inmekmi',
-                'word_target': 'inmekmi',
-                'warning': None
-            },
-            {
-                'word_language': 'Turkish',
-                'word': 'istiyosun',
-                'word_actual': 'istiyosun',
-                'word_target': 'istiyorsun',
-                'warning': None
-            }
-        ]
-        morpheme_list = [
-            [
-                {
-                    'gloss_raw': None,
-                    'morpheme': 'in',
-                    'morpheme_language': None,
-                    'pos_raw': 'V'
-                }, {
-                    'gloss_raw': 'INF',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }, {
-                    'gloss_raw': 'QUE',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }
-            ],
-            [
-                {
-                    'gloss_raw': None,
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'V'
-                }, {
-                    'gloss_raw': 'IPFV',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }, {
-                    'gloss_raw': '2S',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'}
-            ]
-        ]
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
+            m3.gloss_raw == 'QUE',
+            m3.morpheme == '',
+            m3.morpheme_language == '',
+            m3.pos_raw == 'sfx',
 
-    def test_next_utterance_glosses_misaligned(self):
-        """Test next_utterance with too few glosses. (Turkish)"""
-        session_str = ('*BAB:\tinmekmi istiyo(r)sun ?\n%add:\tCHI\n%xmor:\t'
-                       'V|in-INF-QUE V|iste ?\n@End')
-        parser = TurkishSessionParser(self.dummy_cha_path)
-        parser.reader = TurkishReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'BAB',
-            'addressee': 'CHI',
-            'utterance_raw': 'inmekmi istiyo(r)sun ?',
-            'utterance': 'inmekmi istiyosun',
-            'translation': None,
-            'morpheme': 'V|in-INF-QUE V|iste ?',
-            'gloss_raw': 'V|in-INF-QUE V|iste ?',
-            'pos_raw': 'V|in-INF-QUE V|iste ?',
-            'sentence_type': 'question',
-            'start_raw': None,
-            'end_raw': None,
-            'comment': None,
-            'warning': None
-        }
-        words_list = [
-            {
-                'word_language': 'Turkish',
-                'word': 'inmekmi',
-                'word_actual': 'inmekmi',
-                'word_target': 'inmekmi',
-                'warning': None
-            },
-            {
-                'word_language': 'Turkish',
-                'word': 'istiyosun',
-                'word_actual': 'istiyosun',
-                'word_target': 'istiyorsun',
-                'warning': None
-            }
+            m4.gloss_raw == '',
+            m4.morpheme == 'iste',
+            m4.morpheme_language == '',
+            m4.pos_raw == 'V',
+
+            m5.gloss_raw == 'IPFV',
+            m5.morpheme == '',
+            m5.morpheme_language == '',
+            m5.pos_raw == 'sfx',
+
+            m6.gloss_raw == '2S',
+            m6.morpheme == '',
+            m6.morpheme_language == '',
+            m6.pos_raw == 'sfx'
         ]
-        morpheme_list = [
-            [
-                {
-                    'gloss_raw': None,
-                    'morpheme': 'in',
-                    'morpheme_language': None,
-                    'pos_raw': 'V'
-                }, {
-                    'gloss_raw': 'INF',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }, {
-                    'gloss_raw': 'QUE',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }
-            ],
-            [
-                {
-                    'gloss_raw': None,
-                    'morpheme': 'iste',
-                    'morpheme_language': None,
-                    'pos_raw': 'V'
-                }
-            ]
-        ]
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
+
+        assert (False not in utterance
+                and False not in words
+                and False not in morphemes)

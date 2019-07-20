@@ -22,7 +22,7 @@ class TestRussianParser(unittest.TestCase):
 
         cls.parser = RussianSessionParser(toolbox_path, metadata_path)
 
-    def test_get_session_metadata(self):
+    def test_session_metadata(self):
         session = self.parser.parse()
         actual_output = {
             'source_id': session.source_id,
@@ -34,7 +34,7 @@ class TestRussianParser(unittest.TestCase):
         }
         self.assertEqual(actual_output, desired_output)
 
-    def test_next_speaker(self):
+    def test_speakers(self):
         session = self.parser.parse()
         speaker = session.speakers[0]
         actual_output = {
@@ -55,72 +55,83 @@ class TestRussianParser(unittest.TestCase):
         }
         self.assertEqual(actual_output, desired_output)
 
-    def test_next_utterance(self):
-        actual_output = list(self.parser.next_utterance())
+    def test_records(self):
+        session = self.parser.parse()
 
-        utterance = {
-            'source_id': 'source_id',
-            'start_raw': 'start_raw',
-            'end_raw': 'end_raw',
-            'speaker_label': 'speaker_label',
-            'addressee': '',
-            'childdirected': '',
-            'utterance_raw': 'w1 "," w2 w3 .',
-            'utterance': 'w1 w2 w3',
-            'sentence_type': 'default',
-            'translation': '',
-            'comment': '',
-            'warning': '',
-            'morpheme': 'lem1 "," lem2 lem3 .',
-            'gloss_raw': 'V-PST:SG:F:IRREFL:IPFV PUNCT PRO-DEM-NOUN:NOM:SG '
-                         'PCL PUNCT',
-            'pos_raw': 'V-PST:SG:F:IRREFL:IPFV PUNCT PRO-DEM-NOUN:NOM:SG PCL '
-                       'PUNCT'}
+        utt = session.utterances[0]
+
+        utterance = [
+            utt.source_id == 'source_id',
+            utt.start_raw == 'start_raw',
+            utt.end_raw == 'end_raw',
+            utt.speaker_label == 'speaker_label',
+            utt.addressee == '',
+            utt.childdirected == '',
+            utt.utterance_raw == 'w1 "," w2 w3 .',
+            utt.utterance == 'w1 w2 w3',
+            utt.sentence_type == 'default',
+            utt.translation == '',
+            utt.comment == '',
+            utt.warning == '',
+            utt.morpheme == 'lem1 "," lem2 lem3 .',
+            utt.gloss_raw == 'V-PST:SG:F:IRREFL:IPFV PUNCT '
+                             'PRO-DEM-NOUN:NOM:SG PCL PUNCT',
+            utt.pos_raw == 'V-PST:SG:F:IRREFL:IPFV PUNCT '
+                           'PRO-DEM-NOUN:NOM:SG PCL PUNCT'
+            ]
+
+        w1 = utt.words[0]
+        w2 = utt.words[1]
+        w3 = utt.words[2]
 
         words = [
-            {'word': 'w1',
-             'word_actual': 'w1',
-             'word_target': '',
-             'word_language': ''
-             },
-            {'word': 'w2',
-             'word_actual': 'w2',
-             'word_target': '',
-             'word_language': '',
-             },
-            {'word': 'w3',
-             'word_actual': 'w3',
-             'word_target': '',
-             'word_language': ''}]
+            w1.word == 'w1',
+            w1.word_actual == 'w1',
+            w1.word_target == '',
+            w1.word_language == '',
+
+            w2.word == 'w2',
+            w2.word_actual == 'w2',
+            w2.word_target == '',
+            w2.word_language == '',
+
+            w3.word == 'w3',
+            w3.word_actual == 'w3',
+            w3.word_target == '',
+            w3.word_language == ''
+        ]
+
+        m1 = utt.morphemes[0][0]
+        m2 = utt.morphemes[1][0]
+        m3 = utt.morphemes[2][0]
 
         morphemes = [
-            [
-                {'morpheme': 'lem1',
-                 'gloss_raw': 'PST:SG:F:IRREFL:IPFV',
-                 'pos_raw': 'V',
-                 'morpheme_language': 'Russian',
-                 'type': 'actual',
-                 'warning': '',
-                 'lemma_id': ''}
-            ],
-            [
-                {'morpheme': 'lem2',
-                 'gloss_raw': 'NOM:SG',
-                 'pos_raw': 'PRO-DEM-NOUN',
-                 'morpheme_language': 'Russian',
-                 'type': 'actual',
-                 'warning': '',
-                 'lemma_id': ''}
-            ],
-            [
-                {'morpheme': 'lem3',
-                 'gloss_raw': 'PCL',
-                 'pos_raw': 'PCL',
-                 'morpheme_language': 'Russian',
-                 'type': 'actual',
-                 'warning': '',
-                 'lemma_id': ''}
-            ]
+            m1.morpheme == 'lem1',
+            m1.gloss_raw == 'PST:SG:F:IRREFL:IPFV',
+            m1.pos_raw == 'V',
+            m1.morpheme_language == 'Russian',
+            m1.type == 'actual',
+            m1.warning == '',
+            m1.lemma_id == '',
+
+            m2.morpheme == 'lem2',
+            m2.gloss_raw == 'NOM:SG',
+            m2.pos_raw == 'PRO-DEM-NOUN',
+            m2.morpheme_language == 'Russian',
+            m2.type == 'actual',
+            m2.warning == '',
+            m2.lemma_id == '',
+
+            m3.morpheme == 'lem3',
+            m3.gloss_raw == 'PCL',
+            m3.pos_raw == 'PCL',
+            m3.morpheme_language == 'Russian',
+            m3.type == 'actual',
+            m3.warning == '',
+            m3.lemma_id == ''
+
         ]
-        desired_output = [(utterance, words, morphemes)]
-        self.assertEqual(actual_output, desired_output)
+
+        assert (False not in utterance
+                and False not in words
+                and False not in morphemes)

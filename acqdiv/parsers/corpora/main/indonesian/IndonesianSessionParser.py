@@ -8,6 +8,7 @@ from acqdiv.parsers.corpora.main.indonesian.IndonesianCleaner \
 from acqdiv.parsers.metadata.CHATParser import CHATParser
 from acqdiv.parsers.toolbox.ToolboxParser import ToolboxParser
 from acqdiv.model.Speaker import Speaker
+from acqdiv.model.Word import Word
 
 
 class IndonesianSessionParser(ToolboxParser):
@@ -42,24 +43,22 @@ class IndonesianSessionParser(ToolboxParser):
     def get_cleaner(self):
         return IndonesianCleaner()
 
-    def get_words_data(self, actual_utterance, target_utterance):
-        result = []
+    def add_words(self, actual_utterance, target_utterance):
+        utt = self.session.utterances[-1]
 
         for word in self.record_reader.get_words(actual_utterance):
-            d = {
-                'word_language': ''
-            }
+            w = Word()
+            w.utterance = utt.words.append(w)
+
+            w.word_language = ''
+
             # Distinguish between word and word_target;
             # otherwise the target word is identical to the actual word
             if re.search('\(', word):
-                d['word_target'] = re.sub('[()]', '', word)
-                d['word'] = re.sub('\([^)]+\)', '', word)
-                d['word_actual'] = d['word']
-                result.append(d)
+                w.word_target = re.sub('[()]', '', word)
+                w.word = re.sub('\([^)]+\)', '', word)
+                w.word_actual = w.word
             else:
-                d['word_target'] = re.sub('xxx?|www', '???', word)
-                d['word'] = re.sub('xxx?', '???', word)
-                d['word_actual'] = d['word']
-                result.append(d)
-
-        return result
+                w.word_target = re.sub('xxx?|www', '???', word)
+                w.word = re.sub('xxx?', '???', word)
+                w.word_actual = w.word

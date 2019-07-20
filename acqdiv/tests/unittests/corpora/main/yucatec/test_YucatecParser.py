@@ -3,9 +3,12 @@ import unittest
 import os
 import acqdiv
 
-from acqdiv.parsers.corpora.main.yucatec.YucatecCleaner import YucatecCleaner
-from acqdiv.parsers.corpora.main.yucatec.YucatecSessionParser import YucatecSessionParser
-from acqdiv.parsers.corpora.main.yucatec.YucatecReader import YucatecReader
+from acqdiv.parsers.corpora.main.yucatec.YucatecCleaner \
+    import YucatecCleaner
+from acqdiv.parsers.corpora.main.yucatec.YucatecSessionParser \
+    import YucatecSessionParser
+from acqdiv.parsers.corpora.main.yucatec.YucatecReader \
+    import YucatecReader
 
 
 class TestYucatecParser(unittest.TestCase):
@@ -31,50 +34,51 @@ class TestYucatecParser(unittest.TestCase):
         actual_cleaner = YucatecSessionParser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, YucatecCleaner))
 
-    def test_next_utterance_no_misalignments_single_word_no_mor(self):
-        """Test next_utterance with utt containing no misalignemnts. (Turkish)
-
-        Test with a one-word utterance without morphology.
-        """
+    def test_parse(self):
+        """Test parse() method."""
         session_str = ('*LOR:\tbaʼax .\n%xpho:\tbaaʼx\n%xmor:\tINT|baʼax .\n'
                        '%xspn:\tqué .\n@End')
         parser = YucatecSessionParser(self.dummy_cha_path)
         parser.reader = YucatecReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'LOR',
-            'addressee': None,
-            'utterance_raw': 'baʼax .',
-            'utterance': 'baʼax',
-            'translation': 'qué .',
-            'morpheme': 'INT|baʼax .',
-            'gloss_raw': 'INT|baʼax .',
-            'pos_raw': 'INT|baʼax .',
-            'sentence_type': 'default',
-            'start_raw': None,
-            'end_raw': None,
-            'comment': None,
-            'warning': None
-        }
+        session = parser.parse()
+        utt = session.utterances[0]
+
+        utt_list = [
+            utt.source_id == 'dummy_0',
+            utt.speaker_label == 'LOR',
+            utt.addressee == '',
+            utt.utterance_raw == 'baʼax .',
+            utt.utterance == 'baʼax',
+            utt.translation == 'qué .',
+            utt.morpheme == 'INT|baʼax .',
+            utt.gloss_raw == 'INT|baʼax .',
+            utt.pos_raw == 'INT|baʼax .',
+            utt.sentence_type == 'default',
+            utt.start_raw == '',
+            utt.end_raw == '',
+            utt.comment == '',
+            utt.warning == ''
+        ]
+
+        w = utt.words[0]
+
         words_list = [
-            {
-                'word_language': None,
-                'word': 'baʼax',
-                'word_actual': 'baʼax',
-                'word_target': 'baʼax',
-                'warning': None
-            }
+            w.word_language == '',
+            w.word == 'baʼax',
+            w.word_actual == 'baʼax',
+            w.word_target == 'baʼax',
+            w.warning == ''
         ]
+
+        m = utt.morphemes[0][0]
+
         morpheme_list = [
-            [
-                {
-                    'gloss_raw': None,
-                    'morpheme': 'baʼax',
-                    'morpheme_language': None,
-                    'pos_raw': 'INT'
-                }
-            ]
+            m.gloss_raw == '',
+            m.morpheme == 'baʼax',
+            m.morpheme_language == '',
+            m.pos_raw == 'INT'
         ]
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
+
+        assert (False not in utt_list
+                and False not in words_list
+                and False not in morpheme_list)

@@ -32,351 +32,248 @@ class TestCreeParser(unittest.TestCase):
         actual_cleaner = CreeSessionParser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, CreeCleaner))
 
-    def test_next_utterance_no_misalignments_single_word(self):
-        """Test next_utterance with utt containing no misalignemnts. (Cree)"""
-        session_str = ('*CHI:\tchair . 2883660_2884622\n%pho:\t*\n%mod:\t*\n'
-                       '%eng:\tohhhhhh\n@End')
+    def test_parse_no_misalignments_single_word(self):
+        """Test parse() with no misalignments."""
+        session_str = ('*CHI:\tchair . 2883660_2884622\n'
+                       '%pho:\t*\n'
+                       '%mod:\t*\n'
+                       '%eng:\tohhhhhh\n'
+                       '@End')
         parser = CreeSessionParser(self.dummy_cha_path)
         parser.reader = CreeReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'CHI',
-            'addressee': None,
-            'utterance_raw': 'chair .',
-            'utterance': 'chair',
-            'translation': 'ohhhhhh',
-            'morpheme': None,
-            'gloss_raw': None,
-            'pos_raw': None,
-            'sentence_type': 'default',
-            'start_raw': '2883660',
-            'end_raw': '2884622',
-            'comment': None,
-            'warning': None
-        }
-        words_list = [
-            {
-                'word_language': None,
-                'word': 'chair',
-                'word_actual': 'chair',
-                'word_target': 'chair',
-                'warning': None
-            }
+        session = parser.parse()
+
+        utt = session.utterances[0]
+
+        utterance = [
+            utt.source_id == 'dummy_0',
+            utt.speaker_label == 'CHI',
+            utt.addressee == '',
+            utt.utterance_raw == 'chair .',
+            utt.utterance == 'chair',
+            utt.translation == 'ohhhhhh',
+            utt.morpheme == '',
+            utt.gloss_raw == '',
+            utt.pos_raw == '',
+            utt.sentence_type == 'default',
+            utt.start_raw == '2883660',
+            utt.end_raw == '2884622',
+            utt.comment == '',
+            utt.warning == ''
         ]
-        morpheme_list = []
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
 
-    def test_next_utterance_no_misalignments_multiple_words(self):
-        """Test next_utterance with utt containing no misalignemnts. (Cree)"""
+        w = utt.words[0]
 
-        session_str = ('*CHI:\t‹wâu nîyi› . 1198552_1209903\n%pho:\t‹wo ni›'
-                       '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
-                       '%xmortyp:\t[ni pro]\n%xtarmor:\t[wo *]\n%xmormea:\t'
-                       '[egg 1]\n@End')
+        words = [
+            w.word_language == '',
+            w.word == 'chair',
+            w.word_actual == 'chair',
+            w.word_target == 'chair',
+            w.warning == ''
+        ]
+
+        assert (False not in utterance
+                and False not in words
+                and len(utt.morphemes) == 0)
+
+    def test_parse_no_misalignments_multiple_words(self):
+        """Test parse() with no misalignemnts."""
+        session_str = ('*CHI:\t‹wâu nîyi› . 1198552_1209903\n'
+                       '%pho:\t‹wo ni›\n'
+                       '%mod:\t‹ˈwo *›\n'
+                       '%eng:\tegg me\n'
+                       '%xactmor:\t[wo ni]\n'
+                       '%xmortyp:\t[ni pro]\n'
+                       '%xtarmor:\t[wo *]\n'
+                       '%xmormea:\t[egg 1]\n'
+                       '@End')
         parser = CreeSessionParser(self.dummy_cha_path)
         parser.reader = CreeReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'CHI',
-            'addressee': None,
-            'utterance_raw': '‹wâu nîyi› .',
-            'utterance': 'wâu nîyi',
-            'translation': 'egg me',
-            'morpheme': '[wo *]',
-            'gloss_raw': '[egg 1]',
-            'pos_raw': '[ni pro]',
-            'sentence_type': 'default',
-            'start_raw': '1198552',
-            'end_raw': '1209903',
-            'comment': None,
-            'warning': None
-        }
-        words_list = [
-            {
-                'word_language': None,
-                'word': 'wâu',
-                'word_actual': 'wâu',
-                'word_target': 'wâu',
-                'warning': None
-            },
-            {
-                'word_language': None,
-                'word': 'nîyi',
-                'word_actual': 'nîyi',
-                'word_target': 'nîyi',
-                'warning': None
-            }
-        ]
-        morpheme_list = [
-            [
-                {
-                    'gloss_raw': 'egg',
-                    'morpheme': 'wo',
-                    'morpheme_language': 'Cree',
-                    'pos_raw': 'ni'
-                },
-            ],
-            [
-                {
-                    'gloss_raw': '1',
-                    'morpheme': None,
-                    'morpheme_language': 'Cree',
-                    'pos_raw': 'pro'
-                }
-            ]
-        ]
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
+        session = parser.parse()
 
-    def test_next_utterance_words_misaligned(self):
-        """Test next_utterance with too few words. (Cree)"""
+        utt = session.utterances[0]
 
-        session_str = ('*CHI:\t‹wâu› . 1198552_1209903\n%pho:\t‹wo ni›'
-                       '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
-                       '%xmortyp:\t[ni pro]\n%xtarmor:\t[wo *]\n%xmormea:\t'
-                       '[egg 1]\n@End')
+        utterance = [
+            utt.source_id == 'dummy_0',
+            utt.speaker_label == 'CHI',
+            utt.addressee == '',
+            utt.utterance_raw == '‹wâu nîyi› .',
+            utt.utterance == 'wâu nîyi',
+            utt.translation == 'egg me',
+            utt.morpheme == '[wo *]',
+            utt.gloss_raw == '[egg 1]',
+            utt.pos_raw == '[ni pro]',
+            utt.sentence_type == 'default',
+            utt.start_raw == '1198552',
+            utt.end_raw == '1209903',
+            utt.comment == '',
+            utt.warning == ''
+        ]
+
+        w1 = utt.words[0]
+        w2 = utt.words[1]
+
+        words = [
+            w1.word_language == '',
+            w1.word == 'wâu',
+            w1.word_actual == 'wâu',
+            w1.word_target == 'wâu',
+            w1.warning == '',
+            w2.word_language == '',
+            w2.word == 'nîyi',
+            w2.word_actual == 'nîyi',
+            w2.word_target == 'nîyi',
+            w2.warning == ''
+        ]
+
+        m1 = utt.morphemes[0][0]
+        m2 = utt.morphemes[1][0]
+
+        morphemes = [
+            m1.gloss_raw == 'egg',
+            m1.morpheme == 'wo',
+            m1.morpheme_language == 'Cree',
+            m1.pos_raw == 'ni',
+            m2.gloss_raw == '1',
+            m2.morpheme == '',
+            m2.morpheme_language == 'Cree',
+            m2.pos_raw == 'pro'
+        ]
+
+        assert (False not in utterance
+                and False not in words
+                and False not in morphemes)
+
+    def test_parse_records_mm_misalignments_1(self):
+        """Test parse() with more glosses/POS tags than segments."""
+        session_str = ('*CHI:\t‹wâu nîyi› . 1198552_1209903\n'
+                       '%pho:\t‹wo ni›\n'
+                       '%mod:\t‹ˈwo›\n'
+                       '%eng:\tegg me\n'
+                       '%xactmor:\t[wo ni]\n'
+                       '%xmortyp:\t[ni pro]\n'
+                       '%xtarmor:\t[wo]\n'
+                       '%xmormea:\t[egg 1]\n'
+                       '@End')
         parser = CreeSessionParser(self.dummy_cha_path)
         parser.reader = CreeReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'CHI',
-            'addressee': None,
-            'utterance_raw': '‹wâu› .',
-            'utterance': 'wâu',
-            'translation': 'egg me',
-            'morpheme': '[wo *]',
-            'gloss_raw': '[egg 1]',
-            'pos_raw': '[ni pro]',
-            'sentence_type': 'default',
-            'start_raw': '1198552',
-            'end_raw': '1209903',
-            'comment': None,
-            'warning': None
-        }
-        words_list = [
-            {
-                'word_language': None,
-                'word': 'wâu',
-                'word_actual': 'wâu',
-                'word_target': 'wâu',
-                'warning': None
-            }
+        session = parser.parse()
+
+        utt = session.utterances[0]
+
+        utterance = [
+            utt.source_id == 'dummy_0',
+            utt.speaker_label == 'CHI',
+            utt.addressee == '',
+            utt.utterance_raw == '‹wâu nîyi› .',
+            utt.utterance == 'wâu nîyi',
+            utt.translation == 'egg me',
+            utt.morpheme == '[wo]',
+            utt.gloss_raw == '[egg 1]',
+            utt.pos_raw == '[ni pro]',
+            utt.sentence_type == 'default',
+            utt.start_raw == '1198552',
+            utt.end_raw == '1209903',
+            utt.comment == '',
+            utt.warning == ''
         ]
-        morpheme_list = [
-            [
-                {
-                    'gloss_raw': 'egg',
-                    'morpheme': 'wo',
-                    'morpheme_language': 'Cree',
-                    'pos_raw': 'ni'
-                },
-            ],
-            [
-                {
-                    'gloss_raw': '1',
-                    'morpheme': None,
-                    'morpheme_language': 'Cree',
-                    'pos_raw': 'pro'
-                }
-            ]
+
+        w1 = utt.words[0]
+        w2 = utt.words[1]
+
+        words = [
+            w1.word_language == '',
+            w1.word == 'wâu',
+            w1.word_actual == 'wâu',
+            w1.word_target == 'wâu',
+            w1.warning == '',
+
+            w2.word_language == '',
+            w2.word == 'nîyi',
+            w2.word_actual == 'nîyi',
+            w2.word_target == 'nîyi',
+            w2.warning == ''
         ]
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
 
-    def test_next_utterance_segments_misaligned(self):
-        """Test next_utterance with too few segments. (Cree)
+        m = utt.morphemes[0][0]
 
-        In Cree the segment tier is the main morphology tier (not the
-        gloss tier). This means that in the desired output, there are
-        only as many morpheme words as there are segment words. The
-        surplus words of the other tiers thus get removed.
-        """
+        morphemes = [
+            m.gloss_raw == '',
+            m.morpheme == 'wo',
+            m.morpheme_language == 'Cree',
+            m.pos_raw == ''
+        ]
 
-        session_str = ('*CHI:\t‹wâu nîyi› . 1198552_1209903\n%pho:\t‹wo ni›'
-                       '\n%mod:\t‹ˈwo›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
-                       '%xmortyp:\t[ni pro]\n%xtarmor:\t[wo]\n%xmormea:\t'
-                       '[egg 1]\n@End')
+        assert (False not in utterance
+                and False not in words
+                and False not in morphemes)
+
+    def test_parse_records_mm_misalignments_2(self):
+        """Test parse() with too few POS tags."""
+
+        session_str = ('*CHI:\t‹wâu nîyi› . 1198552_1209903\n'
+                       '%pho:\t‹wo ni›\n'
+                       '%eng:\tegg me\n'
+                       '%xactmor:\t[wo ni]\n'
+                       '%xmortyp:\t[pro]\n'
+                       '%xtarmor:\t[wo ni]\n'
+                       '%xmormea:\t[egg 1]\n'
+                       '@End')
         parser = CreeSessionParser(self.dummy_cha_path)
         parser.reader = CreeReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'CHI',
-            'addressee': None,
-            'utterance_raw': '‹wâu nîyi› .',
-            'utterance': 'wâu nîyi',
-            'translation': 'egg me',
-            'morpheme': '[wo]',
-            'gloss_raw': '[egg 1]',
-            'pos_raw': '[ni pro]',
-            'sentence_type': 'default',
-            'start_raw': '1198552',
-            'end_raw': '1209903',
-            'comment': None,
-            'warning': None
-        }
-        words_list = [
-            {
-                'word_language': None,
-                'word': 'wâu',
-                'word_actual': 'wâu',
-                'word_target': 'wâu',
-                'warning': None
-            },
-            {
-                'word_language': None,
-                'word': 'nîyi',
-                'word_actual': 'nîyi',
-                'word_target': 'nîyi',
-                'warning': None
-            }
-        ]
-        morpheme_list = [
-            [
-                {
-                    'gloss_raw': None,
-                    'morpheme': 'wo',
-                    'morpheme_language': 'Cree',
-                    'pos_raw': None
-                }
-            ]
-        ]
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
+        session = parser.parse()
 
-    def test_next_utterance_glosses_misaligned(self):
-        """Test next_utterance with too few glosses. (Cree)
+        utt = session.utterances[0]
 
-        In Cree the segment tier is the main morphology tier (not the
-        gloss tier). This means that in the desired output, the number
-        of morpheme words is not dependent on the glosses but on the
-        segments. The desired output of this test case thus contains two
-        morpheme words even though there is only one gloss word.
-        """
+        utterance = [
+            utt.source_id == 'dummy_0',
+            utt.speaker_label == 'CHI',
+            utt.addressee == '',
+            utt.utterance_raw == '‹wâu nîyi› .',
+            utt.utterance == 'wâu nîyi',
+            utt.translation == 'egg me',
+            utt.morpheme == '[wo ni]',
+            utt.gloss_raw == '[egg 1]',
+            utt.pos_raw == '[pro]',
+            utt.sentence_type == 'default',
+            utt.start_raw == '1198552',
+            utt.end_raw == '1209903',
+            utt.comment == '',
+            utt.warning == ''
+        ]
 
-        session_str = ('*CHI:\t‹wâu nîyi› . 1198552_1209903\n%pho:\t‹wo ni›'
-                       '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
-                       '%xmortyp:\t[ni pro]\n%xtarmor:\t[wo *]\n%xmormea:\t'
-                       '[egg]\n@End')
-        parser = CreeSessionParser(self.dummy_cha_path)
-        parser.reader = CreeReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'CHI',
-            'addressee': None,
-            'utterance_raw': '‹wâu nîyi› .',
-            'utterance': 'wâu nîyi',
-            'translation': 'egg me',
-            'morpheme': '[wo *]',
-            'gloss_raw': '[egg]',
-            'pos_raw': '[ni pro]',
-            'sentence_type': 'default',
-            'start_raw': '1198552',
-            'end_raw': '1209903',
-            'comment': None,
-            'warning': None
-        }
-        words_list = [
-            {
-                'word_language': None,
-                'word': 'wâu',
-                'word_actual': 'wâu',
-                'word_target': 'wâu',
-                'warning': None
-            },
-            {
-                'word_language': None,
-                'word': 'nîyi',
-                'word_actual': 'nîyi',
-                'word_target': 'nîyi',
-                'warning': None
-            }
-        ]
-        morpheme_list = [
-            [
-                {
-                    'gloss_raw': None,
-                    'morpheme': 'wo',
-                    'morpheme_language': 'Cree',
-                    'pos_raw': 'ni'
-                },
-            ],
-            [
-                {
-                    'gloss_raw': None,
-                    'morpheme': None,
-                    'morpheme_language': 'Cree',
-                    'pos_raw': 'pro'
-                }
-            ]
-        ]
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
+        w1 = utt.words[0]
+        w2 = utt.words[1]
 
-    def test_next_utterance_poses_misaligned(self):
-        """Test next_utterance with too few poses. (Cree)"""
+        words = [
+            w1.word_language == '',
+            w1.word == 'wâu',
+            w1.word_actual == 'wâu',
+            w1.word_target == 'wâu',
+            w1.warning == '',
 
-        session_str = ('*CHI:\t‹wâu nîyi› . 1198552_1209903\n%pho:\t‹wo ni›'
-                       '\n%mod:\t‹ˈwo *›\n%eng:\tegg me\n%xactmor:\t[wo ni]\n'
-                       '%xmortyp:\t[pro]\n%xtarmor:\t[wo *]\n%xmormea:\t'
-                       '[egg 1]\n@End')
-        parser = CreeSessionParser(self.dummy_cha_path)
-        parser.reader = CreeReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'CHI',
-            'addressee': None,
-            'utterance_raw': '‹wâu nîyi› .',
-            'utterance': 'wâu nîyi',
-            'translation': 'egg me',
-            'morpheme': '[wo *]',
-            'gloss_raw': '[egg 1]',
-            'pos_raw': '[pro]',
-            'sentence_type': 'default',
-            'start_raw': '1198552',
-            'end_raw': '1209903',
-            'comment': None,
-            'warning': None
-        }
-        words_list = [
-            {
-                'word_language': None,
-                'word': 'wâu',
-                'word_actual': 'wâu',
-                'word_target': 'wâu',
-                'warning': None
-            },
-            {
-                'word_language': None,
-                'word': 'nîyi',
-                'word_actual': 'nîyi',
-                'word_target': 'nîyi',
-                'warning': None
-            }
+            w2.word_language == '',
+            w2.word == 'nîyi',
+            w2.word_actual == 'nîyi',
+            w2.word_target == 'nîyi',
+            w2.warning == ''
         ]
-        morpheme_list = [
-            [
-                {
-                    'gloss_raw': 'egg',
-                    'morpheme': 'wo',
-                    'morpheme_language': 'Cree',
-                    'pos_raw': None
-                },
-            ],
-            [
-                {
-                    'gloss_raw': '1',
-                    'morpheme': None,
-                    'morpheme_language': 'Cree',
-                    'pos_raw': None
-                }
-            ]
+
+        m1 = utt.morphemes[0][0]
+        m2 = utt.morphemes[1][0]
+
+        morphemes = [
+            m1.gloss_raw == 'egg',
+            m1.morpheme == 'wo',
+            m1.morpheme_language == 'Cree',
+            m1.pos_raw == '',
+
+            m2.gloss_raw == '1',
+            m2.morpheme == 'ni',
+            m2.morpheme_language == 'Cree',
+            m2.pos_raw == ''
         ]
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
+
+        assert (False not in utterance
+                and False not in words
+                and False not in morphemes)

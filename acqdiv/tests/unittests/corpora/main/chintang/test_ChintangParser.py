@@ -22,7 +22,7 @@ class TestChintangParser(unittest.TestCase):
 
         cls.parser = ChintangSessionParser(toolbox_path, metadata_path)
 
-    def test_get_session_metadata(self):
+    def test_add_session_metadata(self):
         session = self.parser.parse()
         actual_output = {
             'source_id': session.source_id,
@@ -36,7 +36,7 @@ class TestChintangParser(unittest.TestCase):
         }
         self.assertEqual(actual_output, desired_output)
 
-    def test_next_speaker(self):
+    def test_add_speakers(self):
         session = self.parser.parse()
         speaker = session.speakers[0]
 
@@ -61,10 +61,30 @@ class TestChintangParser(unittest.TestCase):
         }
         self.assertEqual(actual_output, desired_output)
 
-    def test_next_utterance(self):
-        actual_output = list(self.parser.next_utterance())
+    def test_add_record(self):
+        session = self.parser.parse()
 
-        utterance = {
+        utt = session.utterances[-1]
+
+        actual_utterance = {
+            'source_id': utt.source_id,
+            'start_raw': utt.start_raw,
+            'end_raw': utt.end_raw,
+            'speaker_label': utt.speaker_label,
+            'addressee': utt.addressee,
+            'childdirected': utt.childdirected,
+            'utterance_raw': utt.utterance_raw,
+            'utterance': utt.utterance,
+            'sentence_type': utt.sentence_type,
+            'comment': utt.comment,
+            'warning': utt.warning,
+            'morpheme': utt.morpheme,
+            'gloss_raw': utt.gloss_raw,
+            'pos_raw': utt.pos_raw,
+            'translation': utt.translation
+        }
+
+        desired_utterance = {
             'source_id': 'session_name.001',
             'start_raw': '00:50:11.150',
             'end_raw': '00:50:22.350',
@@ -81,7 +101,23 @@ class TestChintangParser(unittest.TestCase):
             'pos_raw': 'w1pfxpos- w1stempos -w1sfxpos w2stempos',
             'translation': 'This is the translation.'}
 
-        words = [
+        w1 = utt.words[0]
+        w2 = utt.words[1]
+
+        actual_words = [
+            {'word': w1.word,
+             'word_actual': w1.word_actual,
+             'word_language': w1.word_language,
+             'word_target': w1.word_target,
+             },
+            {'word': w2.word,
+             'word_actual': w2.word_actual,
+             'word_language': w2.word_language,
+             'word_target': w2.word_target,
+             }
+        ]
+
+        desired_words = [
             {'word': 'w1',
              'word_actual': 'w1',
              'word_language': '',
@@ -94,7 +130,44 @@ class TestChintangParser(unittest.TestCase):
              }
         ]
 
-        morphemes = [
+        m1 = utt.morphemes[0][0]
+        m2 = utt.morphemes[0][1]
+        m3 = utt.morphemes[0][2]
+        m4 = utt.morphemes[1][0]
+
+        actual_morphemes = [
+            [
+                {'morpheme': m1.morpheme,
+                 'gloss_raw': m1.gloss_raw,
+                 'pos_raw': m1.pos_raw,
+                 'morpheme_language': m1.morpheme_language,
+                 'lemma_id': m1.lemma_id,
+                 'type': m1.type,
+                 'warning': m1.warning},
+                {'morpheme': m2.morpheme,
+                 'gloss_raw': m2.gloss_raw,
+                 'pos_raw': m2.pos_raw,
+                 'morpheme_language': m2.morpheme_language,
+                 'lemma_id': m2.lemma_id,
+                 'type': m2.type,
+                 'warning': m2.warning},
+                {'morpheme': m3.morpheme,
+                 'gloss_raw': m3.gloss_raw,
+                 'pos_raw': m3.pos_raw,
+                 'morpheme_language': m3.morpheme_language,
+                 'lemma_id': m3.lemma_id,
+                 'type': m3.type,
+                 'warning': m3.warning}],
+            [
+                {'morpheme': m4.morpheme,
+                 'gloss_raw': m4.gloss_raw,
+                 'pos_raw': m4.pos_raw,
+                 'morpheme_language': m4.morpheme_language,
+                 'lemma_id': m4.lemma_id,
+                 'type': m4.type,
+                 'warning': m4.warning}]]
+
+        desired_morphemes = [
             [
                 {'morpheme': 'w1pfxseg-',
                  'gloss_raw': 'w1pfxgloss-',
@@ -125,5 +198,10 @@ class TestChintangParser(unittest.TestCase):
                  'lemma_id': 'w2stemID',
                  'type': 'target',
                  'warning': ''}]]
-        desired_output = [(utterance, words, morphemes)]
+
+        actual_output = [
+            (actual_utterance, actual_words, actual_morphemes)
+        ]
+        desired_output = [
+            (desired_utterance, desired_words, desired_morphemes)]
         self.assertEqual(actual_output, desired_output)

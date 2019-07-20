@@ -151,30 +151,48 @@ class DBProcessor(object):
             )
 
         # Populate the utterances, words and morphemes tables.
-        for utterance, words, morphemes in session_parser.next_utterance():
-            if utterance is None:
-                continue
-
-            utterance.update(corpus=corpus_name,
-                             language=language)
-
-            self.null_empty_values(utterance)
+        for utt in session.utterances:
 
             u_id, = insert_utt(
-                session_id_fk=s_id, **utterance).inserted_primary_key
+                session_id_fk=s_id,
+                corpus=corpus_name,
+                language=language,
+                source_id=utt.source_id,
+                speaker_label=utt.speaker_label,
+                addressee=utt.addressee if utt.addressee else None,
+                utterance_raw=utt.utterance_raw if utt.utterance_raw else None,
+                utterance=utt.utterance if utt.utterance else None,
+                translation=utt.translation if utt.translation else None,
+                morpheme=utt.morpheme if utt.morpheme else None,
+                gloss_raw=utt.gloss_raw if utt.gloss_raw else None,
+                pos_raw=utt.pos_raw if utt.pos_raw else None,
+                sentence_type=utt.sentence_type if utt.sentence_type else None,
+                childdirected=utt.childdirected if utt.childdirected else None,
+                start_raw=utt.start_raw if utt.start_raw else None,
+                end_raw=utt.end_raw if utt.end_raw else None,
+                comment=utt.comment if utt.comment else None,
+                warning=utt.warning if utt.warning else None
+            ).inserted_primary_key
 
             w_ids = []
-            for w in words:
-                if w:
-                    w.update(corpus=corpus_name,
-                             language=language)
+            for w in utt.words:
 
-                    self.null_empty_values(w)
+                w_id, = insert_word(
+                    session_id_fk=s_id,
+                    utterance_id_fk=u_id,
+                    corpus=corpus_name,
+                    language=language,
+                    word_language=w.word_language if w.word_language else None,
+                    word=w.word if w.word else None,
+                    word_actual=w.word_actual if w.word_actual else None,
+                    word_target=w.word_target if w.word_target else None,
+                    warning=w.warning if w.warning else None
 
-                    w_id, = insert_word(
-                        session_id_fk=s_id,
-                        utterance_id_fk=u_id, **w).inserted_primary_key
-                    w_ids.append(w_id)
+                ).inserted_primary_key
+
+                w_ids.append(w_id)
+
+            morphemes = utt.morphemes
 
             link_to_word = len(morphemes) == len(w_ids)
 
@@ -182,22 +200,19 @@ class DBProcessor(object):
                 w_id = w_ids[i] if link_to_word else None
 
                 for m in mword:
-                    m.update(corpus=corpus_name,
-                             language=language,
-                             type=morpheme_type)
-
-                    self.null_empty_values(m)
 
                     insert_morph(
                         session_id_fk=s_id,
                         utterance_id_fk=u_id,
                         word_id_fk=w_id,
-                        **m)
-
-    @staticmethod
-    def null_empty_values(utt_word_mor_dict):
-        for key in utt_word_mor_dict:
-            if utt_word_mor_dict[key] == '':
-                utt_word_mor_dict[key] = None
-
-        return utt_word_mor_dict
+                        corpus=corpus_name,
+                        language=language,
+                        morpheme_language=
+                        m.morpheme_language if m.morpheme_language else None,
+                        type=morpheme_type,
+                        morpheme=m.morpheme if m.morpheme else None,
+                        gloss_raw=m.gloss_raw if m.gloss_raw else None,
+                        pos_raw=m.pos_raw if m.pos_raw else None,
+                        lemma_id=m.lemma_id if m.lemma_id else None,
+                        warning=m.warning if m.warning else None
+                    )

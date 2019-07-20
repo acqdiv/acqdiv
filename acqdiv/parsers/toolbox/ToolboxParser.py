@@ -5,6 +5,9 @@ from acqdiv.parsers.toolbox.readers.ToolboxFileParser import ToolboxFileParser
 from acqdiv.parsers.SessionParser import SessionParser
 from acqdiv.model.Session import Session
 from acqdiv.model.Speaker import Speaker
+from acqdiv.model.Utterance import Utterance
+from acqdiv.model.Word import Word
+from acqdiv.model.Morpheme import Morpheme
 
 import os
 
@@ -52,6 +55,7 @@ class ToolboxParser(SessionParser):
         """
         self.add_session_metadata()
         self.add_speakers()
+        self.add_record()
 
         return self.session
 
@@ -90,11 +94,8 @@ class ToolboxParser(SessionParser):
 
             self.session.speakers.append(speaker)
 
-    def next_utterance(self):
-        """Yield session level utterance data.
-
-        Returns:
-             OrderedDict: Utterance data.
+    def add_record(self):
+        """
         """
         separator = self.record_reader.get_rec_separator()
         toolbox_file = ToolboxFileParser.parse(self.toolbox_path, separator)
@@ -104,15 +105,16 @@ class ToolboxParser(SessionParser):
             if self.record_reader.is_record(rec):
 
                 rec = self.cleaner.cross_clean(rec)
-                utterance = self.get_utterance_data(rec)
+
+                self.add_utterance(rec)
 
                 actual_utterance = self.cleaner.clean_utterance(
                     self.record_reader.get_actual_utterance(rec))
                 target_utterance = self.cleaner.clean_utterance(
                     self.record_reader.get_target_utterance(rec))
-                words = self.get_words_data(actual_utterance, target_utterance)
+                self.add_words(actual_utterance, target_utterance)
 
-                morphemes = self.get_morphemes_data(
+                self.add_morphemes(
                     self.record_reader.get_seg_tier(rec),
                     self.record_reader.get_gloss_tier(rec),
                     self.record_reader.get_pos_tier(rec),
@@ -120,78 +122,54 @@ class ToolboxParser(SessionParser):
                     self.record_reader.get_id_tier(rec)
                 )
 
-                yield utterance, words, morphemes
-
-    def get_utterance_data(self, rec):
-        """Get the utterance dictionary.
+    def add_utterance(self, rec):
+        """Add the utterance to the Session instance.
 
         Args:
             rec (acqdiv.parsers.toolbox.model.Record.Record): The record.
-
-        Returns:
-            dict: The utterance dictionary.
         """
-        speaker_label = self.record_reader.get_speaker_label(rec)
-        addressee = self.record_reader.get_addressee(rec)
-        utterance_raw = self.record_reader.get_actual_utterance(rec)
-        utterance_clean = self.cleaner.clean_utterance(utterance_raw)
-        sentence_type = self.record_reader.get_sentence_type(rec)
-        child_directed = self.record_reader.get_childdirected(rec)
-        source_id = self.record_reader.get_source_id(rec)
-        start_raw = self.record_reader.get_start_raw(rec)
-        end_raw = self.record_reader.get_end_raw(rec)
-        translation = self.record_reader.get_translation(rec)
-        comment = self.record_reader.get_comment(rec)
-        morpheme = self.record_reader.get_seg_tier(rec)
-        gloss_raw = self.record_reader.get_gloss_tier(rec)
-        pos_raw = self.record_reader.get_pos_tier(rec)
+        utt = Utterance()
+        self.session.utterances.append(utt)
+        utt.session = self.session
 
-        utterance = {
-            'speaker_label': speaker_label,
-            'addressee': addressee,
-            'utterance_raw': utterance_raw,
-            'utterance': utterance_clean,
-            'sentence_type': sentence_type,
-            'childdirected': child_directed,
-            'source_id': source_id,
-            'start_raw': start_raw,
-            'end_raw': end_raw,
-            'translation': translation,
-            'comment': comment,
-            'warning': '',
-            'morpheme': morpheme,
-            'gloss_raw': gloss_raw,
-            'pos_raw': pos_raw
-        }
+        utt.speaker_label = self.record_reader.get_speaker_label(rec)
+        utt.addressee = self.record_reader.get_addressee(rec)
+        utt.utterance_raw = self.record_reader.get_actual_utterance(rec)
+        utt.utterance = self.cleaner.clean_utterance(utt.utterance_raw)
+        utt.sentence_type = self.record_reader.get_sentence_type(rec)
+        utt.childdirected = self.record_reader.get_childdirected(rec)
+        utt.source_id = self.record_reader.get_source_id(rec)
+        utt.start_raw = self.record_reader.get_start_raw(rec)
+        utt.end_raw = self.record_reader.get_end_raw(rec)
+        utt.translation = self.record_reader.get_translation(rec)
+        utt.comment = self.record_reader.get_comment(rec)
+        utt.morpheme = self.record_reader.get_seg_tier(rec)
+        utt.gloss_raw = self.record_reader.get_gloss_tier(rec)
+        utt.pos_raw = self.record_reader.get_pos_tier(rec)
 
-        return utterance
-
-    def get_words_data(self, actual_utterance, target_utterance):
+    def add_words(self, actual_utterance, target_utterance):
         """Get list of words from the utterance.
 
         Args:
             actual_utterance (str): The clean actual utterance.
             target_utterance (str): The clean target utterance.
-
-        Returns:
-            list(dict): The list of words as dictionaries.
         """
-        result = []
         words = self.record_reader.get_words(actual_utterance)
+        utterance = self.session.utterances[-1]
 
         for word in words:
+            w = Word()
+            w.utterance = utterance
+            utterance.words.append(w)
+
             word_clean = self.cleaner.clean_word(word)
-            d = {
-                'word': word_clean,
-                'word_actual': word,
-                'word_target': '',
-                'word_language': '',
-            }
-            result.append(d)
 
-        return result
+            w.word = word_clean
+            w.word_actual = w.word
+            w.word_target = ''
+            w.word_language = ''
 
-    def get_morphemes_data(
+    def add_morphemes(
             self, seg_tier, gloss_tier, pos_tier, lang_tier, id_tier):
         # clean morphology tiers
         seg_tier = self.cleaner.clean_seg_tier(seg_tier)
@@ -237,8 +215,8 @@ class ToolboxParser(SessionParser):
         if wlen != len(wids):
             wids = wlen * ['']
 
-        # collect morpheme data of an utterance
-        morphemes = []
+        utt = self.session.utterances[-1]
+
         # go through all morpheme words
         for wseg, wgloss, wpos, wlang, wid in zip(
                 wsegs, wglosses, wposes, wlangs, wids):
@@ -290,24 +268,18 @@ class ToolboxParser(SessionParser):
             for seg, gloss, pos, lang, id_ in zip(
                     segments, glosses, poses, langs, ids):
 
+                m = Morpheme()
+                m.utterance = utt
+
                 # clean the morphemes
-                seg = self.cleaner.clean_seg(seg)
-                gloss = self.cleaner.clean_gloss(gloss)
-                pos = self.cleaner.clean_pos(pos)
-                lang = self.cleaner.clean_lang(lang)
-                id_ = self.cleaner.clean_morpheme(id_)
+                m.morpheme = self.cleaner.clean_seg(seg)
+                m.gloss_raw = self.cleaner.clean_gloss(gloss)
+                m.pos_raw = self.cleaner.clean_pos(pos)
+                m.morpheme_language = self.cleaner.clean_lang(lang)
+                m.lemma_id = self.cleaner.clean_morpheme(id_)
+                m.warning = ''
+                m.type = self.record_reader.get_morpheme_type()
 
-                morpheme_dict = {
-                    'morpheme': seg,
-                    'gloss_raw': gloss,
-                    'pos_raw': pos,
-                    'morpheme_language': lang,
-                    'lemma_id': id_,
-                    'warning': '',
-                    'type': self.record_reader.get_morpheme_type()
-                }
-                wmorphemes.append(morpheme_dict)
+                wmorphemes.append(m)
 
-            morphemes.append(wmorphemes)
-
-        return morphemes
+            utt.morphemes.append(wmorphemes)

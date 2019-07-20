@@ -10,14 +10,7 @@ from acqdiv.parsers.corpora.main.sesotho.SesothoReader import SesothoReader
 
 
 class TestSesothoParser(unittest.TestCase):
-    """Class to test the SesothoSessionParser.
-
-    There are no tests for misalignments between words and the morpheme
-    tiers since the words are replaced by morphemes anyway.
-
-    There are no tests for misaligned poses either, because they are
-    encoded (and thus also tested) in the gloss_tier.
-    """
+    """Class to test the SesothoSessionParser."""
 
     def setUp(self):
         here = os.path.abspath(os.path.dirname(acqdiv.__file__))
@@ -37,318 +30,66 @@ class TestSesothoParser(unittest.TestCase):
         actual_cleaner = SesothoSessionParser.get_cleaner()
         self.assertTrue(isinstance(actual_cleaner, SesothoCleaner))
 
-    def test_next_utterance_no_misalignments_single_word(self):
-        """Test next_utterance with utt containing no misalignemnts. (Sesotho)
+    def test_parse(self):
+        """Test parse()."""
 
-        Test with a one-word utterance.
-        """
-        session_str = ('*HLE:\tTsebo . 1870096_1871196\n%gls:\tTsebo .\n'
-                       '%cod:\tn^name .\n%eng:\tTsebo !\n@End')
+        session_str = ('*NHM:\te tsamo . 113200_115376\n'
+                       '%gls:\te tsamay-a .\n'
+                       '%cod:\tv^leave-m^i .\n'
+                       '%eng:\tYes go and\n'
+                       '@End')
         parser = SesothoSessionParser(self.dummy_cha_path)
         parser.reader = SesothoReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'HLE',
-            'addressee': None,
-            'utterance_raw': 'Tsebo .',
-            'utterance': 'Tsebo',
-            'translation': 'Tsebo !',
-            'morpheme': 'Tsebo .',
-            'gloss_raw': 'n^name .',
-            'pos_raw': 'n^name .',
-            'sentence_type': 'default',
-            'start_raw': '1870096',
-            'end_raw': '1871196',
-            'comment': None,
-            'warning': None
-        }
-        words_list = [
-            {
-                'word_language': None,
-                'word': 'Tsebo',
-                'word_actual': 'Tsebo',
-                'word_target': 'Tsebo',
-                'warning': None
-            }
-        ]
-        morpheme_list = [
-            [
-                {
-                    'gloss_raw': 'a_name',
-                    'morpheme': 'Tsebo',
-                    'morpheme_language': None,
-                    'pos_raw': '???'
-                },
-            ]
-        ]
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
+        session = parser.parse()
+        utt = session.utterances[0]
 
-    def test_next_utterance_no_misalignments_multiple_words(self):
-        """Test next_utterance with utt containing no misalignments. (Sesotho)
-
-        Utterance contains contraction parentheses and infinitive
-        parentheses.
-        """
-
-        session_str = ('*MHL:\te tsamo dula pela ausi Mamello . 113200_115376'
-                       '\n%gls:\te tsamay-a (u-y-e) (ho-)dul-a pela ausi '
-                       'Mamello .\n%cod:\tij v^leave-m^i (sm2s-t^p_v^go-m^s) '
-                       '(if-)v^sit-m^in loc sister(1a , 2a) n^name .\n%eng:\t'
-                       'Yes go and (go) sit next to sister Mamello\n@End')
-        parser = SesothoSessionParser(self.dummy_cha_path)
-        parser.reader = SesothoReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'MHL',
-            'addressee': None,
-            'utterance_raw': 'e tsamo dula pela ausi Mamello .',
-            'utterance': 'e tsamaya hodula pela ausi Mamello',
-            'translation': 'Yes go and (go) sit next to sister Mamello',
-            'morpheme': 'e tsamay-a (u-y-e) (ho-)dul-a pela ausi Mamello .',
-            'gloss_raw': ('ij v^leave-m^i (sm2s-t^p_v^go-m^s) (if-)v^sit-m^in '
-                          'loc sister(1a , 2a) n^name .'),
-            'pos_raw': ('ij v^leave-m^i (sm2s-t^p_v^go-m^s) (if-)v^sit-m^in '
-                        'loc sister(1a , 2a) n^name .'),
-            'sentence_type': 'default',
-            'start_raw': '113200',
-            'end_raw': '115376',
-            'comment': None,
-            'warning': None
-        }
-        words_list = [
-            {
-                'word_language': None,
-                'word': 'e',
-                'word_actual': 'e',
-                'word_target': 'e',
-                'warning': None
-            },
-            {
-                'word_language': None,
-                'word': 'tsamaya',
-                'word_actual': 'tsamaya',
-                'word_target': 'tsamaya',
-                'warning': None
-            },
-            {
-                'word_language': None,
-                'word': 'hodula',
-                'word_actual': 'hodula',
-                'word_target': 'hodula',
-                'warning': None
-            },
-            {
-                'word_language': None,
-                'word': 'pela',
-                'word_actual': 'pela',
-                'word_target': 'pela',
-                'warning': None
-            },
-            {
-                'word_language': None,
-                'word': 'ausi',
-                'word_actual': 'ausi',
-                'word_target': 'ausi',
-                'warning': None
-            },
-            {
-                'word_language': None,
-                'word': 'Mamello',
-                'word_actual': 'Mamello',
-                'word_target': 'Mamello',
-                'warning': None
-            }
+        utterance = [
+            utt.source_id == 'dummy_0',
+            utt.speaker_label == 'NHM',
+            utt.addressee == '',
+            utt.utterance_raw == 'e tsamo .',
+            utt.utterance == 'e tsamaya',
+            utt.translation == 'Yes go and',
+            utt.morpheme == 'e tsamay-a .',
+            utt.gloss_raw == 'v^leave-m^i .',
+            utt.pos_raw == 'v^leave-m^i .',
+            utt.sentence_type == 'default',
+            utt.start_raw == '113200',
+            utt.end_raw == '115376',
+            utt.comment == '',
+            utt.warning == ''
         ]
-        morpheme_list = [
-            [
-                {
-                    'gloss_raw': 'ij',
-                    'morpheme': 'e',
-                    'morpheme_language': None,
-                    'pos_raw': 'ij'
-                }
-            ],
-            [
-                {
-                    'gloss_raw': 'leave',
-                    'morpheme': 'tsamay',
-                    'morpheme_language': None,
-                    'pos_raw': 'v'
-                },
-                {
-                    'gloss_raw': 'm^i',
-                    'morpheme': 'a',
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }
-            ],
-            [
-                {
-                    'gloss_raw': 'if',
-                    'morpheme': 'ho',
-                    'morpheme_language': None,
-                    'pos_raw': 'pfx'
-                },
-                {
-                    'gloss_raw': 'sit',
-                    'morpheme': 'dul',
-                    'morpheme_language': None,
-                    'pos_raw': 'v'
-                },
-                {
-                    'gloss_raw': 'm^in',
-                    'morpheme': 'a',
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }
-            ],
-            [
-                {
-                    'gloss_raw': 'loc',
-                    'morpheme': 'pela',
-                    'morpheme_language': None,
-                    'pos_raw': 'loc'
-                }
-            ],
-            [
-                {
-                    'gloss_raw': 'sister(1a,2a)',
-                    'morpheme': 'ausi',
-                    'morpheme_language': None,
-                    'pos_raw': 'n'
-                }
-            ],
-            [
-                {
-                    'gloss_raw': 'a_name',
-                    'morpheme': 'Mamello',
-                    'morpheme_language': None,
-                    'pos_raw': '???'
-                }
-            ]
-        ]
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
 
-    def test_next_utterance_morphemes_misaligned(self):
-        """Test next_utterance with too few morphemes. (Sesotho)"""
+        w1 = utt.words[0]
+        w2 = utt.words[1]
 
-        session_str = ('*NHL:\te tsamo . 113200_115376\n%gls:\ttsamay-a '
-                       '.\n%cod:\tij v^leave-m^i '
-                       '.\n%eng:\tYes go and\n@End')
-        parser = SesothoSessionParser(self.dummy_cha_path)
-        parser.reader = SesothoReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'NHL',
-            'addressee': None,
-            'utterance_raw': 'e tsamo .',
-            'utterance': 'tsamaya',
-            'translation': 'Yes go and',
-            'morpheme': 'tsamay-a .',
-            'gloss_raw': 'ij v^leave-m^i .',
-            'pos_raw': 'ij v^leave-m^i .',
-            'sentence_type': 'default',
-            'start_raw': '113200',
-            'end_raw': '115376',
-            'comment': None,
-            'warning': None
-        }
-        words_list = [
-            {
-                'word_language': None,
-                'word': 'tsamaya',
-                'word_actual': 'tsamaya',
-                'word_target': 'tsamaya',
-                'warning': None
-            }
+        words = [
+            w1.word_language == '',
+            w1.word == 'e',
+            w1.word_actual == 'e',
+            w1.word_target == 'e',
+            w1.warning == '',
+            w2.word_language == '',
+            w2.word == 'tsamaya',
+            w2.word_actual == 'tsamaya',
+            w2.word_target == 'tsamaya',
+            w2.warning == ''
         ]
-        morpheme_list = [
-            [
-                {
-                    'gloss_raw': 'ij',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'ij'
-                }
-            ],
-            [
-                {
-                    'gloss_raw': 'leave',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'v'
-                },
-                {
-                    'gloss_raw': 'm^i',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }
-            ]
-        ]
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
 
-    def test_next_utterance_glosses_misaligned(self):
-        """Test next_utterance with too few glosses. (Sesotho)"""
+        m1 = utt.morphemes[0][0]
+        m2 = utt.morphemes[0][1]
 
-        session_str = ('*NHM:\te tsamo . 113200_115376\n%gls:\te tsamay-a .'
-                       '\n%cod:\tv^leave-m^i .\n%eng:\tYes go and\n@End')
-        parser = SesothoSessionParser(self.dummy_cha_path)
-        parser.reader = SesothoReader(io.StringIO(session_str))
-        actual_output = list(parser.next_utterance())[0]
-        utt_dict = {
-            'source_id': 'dummy_0',
-            'speaker_label': 'NHM',
-            'addressee': None,
-            'utterance_raw': 'e tsamo .',
-            'utterance': 'e tsamaya',
-            'translation': 'Yes go and',
-            'morpheme': 'e tsamay-a .',
-            'gloss_raw': 'v^leave-m^i .',
-            'pos_raw': 'v^leave-m^i .',
-            'sentence_type': 'default',
-            'start_raw': '113200',
-            'end_raw': '115376',
-            'comment': None,
-            'warning': None
-        }
-        words_list = [
-            {
-                'word_language': None,
-                'word': 'e',
-                'word_actual': 'e',
-                'word_target': 'e',
-                'warning': None
-            },
-            {
-                'word_language': None,
-                'word': 'tsamaya',
-                'word_actual': 'tsamaya',
-                'word_target': 'tsamaya',
-                'warning': None
-            }
+        morphemes = [
+            m1.gloss_raw == 'leave',
+            m1.morpheme == '',
+            m1.morpheme_language == '',
+            m1.pos_raw == 'v',
+            m2.gloss_raw == 'm^i',
+            m2.morpheme == '',
+            m2.morpheme_language == '',
+            m2.pos_raw == 'sfx'
         ]
-        morpheme_list = [
-            [
-                {
-                    'gloss_raw': 'leave',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'v'
-                },
-                {
-                    'gloss_raw': 'm^i',
-                    'morpheme': None,
-                    'morpheme_language': None,
-                    'pos_raw': 'sfx'
-                }
-            ]
-        ]
-        desired_output = (utt_dict, words_list, morpheme_list)
-        self.assertEqual(actual_output, desired_output)
+
+        assert (False not in utterance
+                and False not in words
+                and False not in morphemes)
