@@ -16,10 +16,11 @@ class CorpusParser(ABC):
             cfg (CorpusConfigParser): A config instance.
         """
         self.cfg = cfg
+        self.corpus = Corpus()
 
     def parse(self):
-        """Construct a Corpus instance."""
-        corpus = Corpus()
+        """Get a Corpus instance."""
+        corpus = self.corpus
         corpus.iso_639_3 = self.cfg['corpus']['iso639-3']
         corpus.glottolog_code = self.cfg['corpus']['glottolog_code']
         corpus.corpus = self.cfg['corpus']['corpus']
@@ -40,7 +41,7 @@ class CorpusParser(ABC):
         pass
 
     def iter_sessions(self):
-        """Iter the session of the corpus.
+        """Iter the sessions of the corpus.
 
         Yields:
             acqdiv.parsers.SessionParser: The session parser.
@@ -51,4 +52,8 @@ class CorpusParser(ABC):
             session_parser = self.get_session_parser(session_path)
 
             if session_parser is not None:
-                yield session_parser
+
+                session = session_parser.parse()
+                session.corpus = self.corpus
+
+                yield session

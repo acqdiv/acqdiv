@@ -7,7 +7,7 @@ from acqdiv.database.database_backend import Base
 import acqdiv.database.database_backend as db
 
 
-class DBProcessor(object):
+class DBProcessor:
     """Methods for adding corpus data to the database."""
 
     def __init__(self, test=False):
@@ -76,37 +76,33 @@ class DBProcessor(object):
             corpus (acqdiv.model.Corpus.Corpus): The corpus.
         """
         for session in corpus.sessions:
-            self.process_session(corpus, session)
+            self.process_session(session)
 
             if self.test:
                 break
 
-    def process_session(self, corpus, session):
+    def process_session(self, session):
         """Add session data to the database.
 
         Args:
-            corpus (acqdiv.model.Corpus.Corpus): The corpus.
-            session (acqdiv.parsers.SessionParser.SessionParser): The session.
+            session (acqdiv.model.Session.Session): The session.
         """
         with self.engine.begin() as conn:
             conn.execute('PRAGMA synchronous = OFF')
             conn.execute('PRAGMA journal_mode = MEMORY')
             self._process_session(conn.execution_options(compiled_cache={}),
-                                  corpus,
                                   session)
 
-    def _process_session(self, conn, corpus, session_parser):
+    def _process_session(self, conn, session):
         """Add session data to the database.
 
         Args:
             conn (Connection): The DB connection.
-            corpus (acqdiv.model.Corpus.Corpus): The corpus.
-            session_parser (acqdiv.parsers.SessionParser.SessionParser):
-                The session.
+            session (acqdiv.model.Session.Session): The session.
         """
-        corpus_name = corpus.corpus
-        language = corpus.language
-        morpheme_type = corpus.morpheme_type
+        corpus_name = session.corpus.corpus
+        language = session.corpus.language
+        morpheme_type = session.corpus.morpheme_type
 
         # Get insert functions
         insert_sess, insert_speaker, insert_utt, insert_word, insert_morph = \
@@ -116,8 +112,6 @@ class DBProcessor(object):
                            db.Utterance,
                            db.Word,
                            db.Morpheme))
-
-        session = session_parser.parse()
 
         # Populate Sessions table
         s_id, = insert_sess(
