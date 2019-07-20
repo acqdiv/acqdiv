@@ -17,10 +17,18 @@ class DBProcessor:
             test (bool): Is testing mode used?
         """
         self.test = test
-        self.engine = self._get_engine(test=self.test)
+        self.engine = self.get_engine(test=self.test)
+
+        # initialize them once for each session
+        # to increase performance
+        self.insert_session_func = None
+        self.insert_speaker_func = None
+        self.insert_utt_func = None
+        self.insert_word_func = None
+        self.insert_morph_func = None
 
     @classmethod
-    def _get_engine(cls, test=False):
+    def get_engine(cls, test=False):
         """Return a database engine.
 
         Args:
@@ -69,20 +77,20 @@ class DBProcessor:
         Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(engine)
 
-    def process_corpus(self, corpus):
-        """Add the corpus data to the database.
+    def insert_corpus(self, corpus):
+        """Insert the corpus into the database.
 
         Args:
             corpus (acqdiv.model.Corpus.Corpus): The corpus.
         """
         for session in corpus.sessions:
-            self.process_session(session)
+            self.insert_session(session)
 
             if self.test:
                 break
 
-    def process_session(self, session):
-        """Add session data to the database.
+    def insert_session(self, session):
+        """Insert the session into the database.
 
         Args:
             session (acqdiv.model.Session.Session): The session.
@@ -90,31 +98,23 @@ class DBProcessor:
         with self.engine.begin() as conn:
             conn.execute('PRAGMA synchronous = OFF')
             conn.execute('PRAGMA journal_mode = MEMORY')
-            self._process_session(conn.execution_options(compiled_cache={}),
-                                  session)
+            conn = conn.execution_options(compiled_cache={})
 
-    def _process_session(self, conn, session):
-        """Add session data to the database.
+            self.insert_session_func = sa.insert(db.Session, bind=conn).execute
+            self.insert_speaker_func = sa.insert(db.Speaker, bind=conn).execute
+            self.insert_utt_func = sa.insert(db.Utterance, bind=conn).execute
+            self.insert_word_func = sa.insert(db.Word, bind=conn).execute
+            self.insert_morph_func = sa.insert(db.Morpheme, bind=conn).execute
 
-        Args:
-            conn (Connection): The DB connection.
-            session (acqdiv.model.Session.Session): The session.
-        """
+            s_id = self.insert_session_metadata(session)
+            self.insert_speakers(session.speakers, s_id)
+            self.insert_utterances(session.utterances, s_id)
+
+    def insert_session_metadata(self, session):
         corpus_name = session.corpus.corpus
         language = session.corpus.language
-        morpheme_type = session.corpus.morpheme_type
 
-        # Get insert functions
-        insert_sess, insert_speaker, insert_utt, insert_word, insert_morph = \
-            (sa.insert(model, bind=conn).execute
-             for model in (db.Session,
-                           db.Speaker,
-                           db.Utterance,
-                           db.Word,
-                           db.Morpheme))
-
-        # Populate Sessions table
-        s_id, = insert_sess(
+        s_id, = self.insert_session_func(
             corpus=corpus_name,
             language=language,
             date=session.date,
@@ -122,84 +122,115 @@ class DBProcessor:
             media_id=session.media_filename if session.media_filename else None
         ).inserted_primary_key
 
-        # Populate Speakers table
-        for speaker in session.speakers:
-            insert_speaker(
-                session_id_fk=s_id,
-                corpus=corpus_name,
-                language=language,
-                birthdate=speaker.birth_date,
-                gender_raw=speaker.gender_raw,
-                speaker_label=speaker.code,
-                age_raw=speaker.age_raw,
-                role_raw=speaker.role_raw,
-                name=speaker.name,
-                languages_spoken=speaker.languages_spoken
-            )
+        return s_id
 
-        # Populate the utterances, words and morphemes tables.
-        for utt in session.utterances:
+    def insert_speakers(self, speakers, s_id):
+        for speaker in speakers:
+            self.insert_speaker(speaker, s_id)
 
-            u_id, = insert_utt(
-                session_id_fk=s_id,
-                corpus=corpus_name,
-                language=language,
-                source_id=utt.source_id,
-                speaker_label=utt.speaker_label,
-                addressee=utt.addressee if utt.addressee else None,
-                utterance_raw=utt.utterance_raw if utt.utterance_raw else None,
-                utterance=utt.utterance if utt.utterance else None,
-                translation=utt.translation if utt.translation else None,
-                morpheme=utt.morpheme if utt.morpheme else None,
-                gloss_raw=utt.gloss_raw if utt.gloss_raw else None,
-                pos_raw=utt.pos_raw if utt.pos_raw else None,
-                sentence_type=utt.sentence_type if utt.sentence_type else None,
-                childdirected=utt.childdirected if utt.childdirected else None,
-                start_raw=utt.start_raw if utt.start_raw else None,
-                end_raw=utt.end_raw if utt.end_raw else None,
-                comment=utt.comment if utt.comment else None,
-                warning=utt.warning if utt.warning else None
-            ).inserted_primary_key
+    def insert_speaker(self, speaker, s_id):
+        corpus_name = speaker.session.corpus.corpus
+        language = speaker.session.corpus.language
 
-            w_ids = []
-            for w in utt.words:
+        self.insert_speaker_func(
+            session_id_fk=s_id,
+            corpus=corpus_name,
+            language=language,
+            birthdate=speaker.birth_date,
+            gender_raw=speaker.gender_raw,
+            speaker_label=speaker.code,
+            age_raw=speaker.age_raw,
+            role_raw=speaker.role_raw,
+            name=speaker.name,
+            languages_spoken=speaker.languages_spoken
+        )
 
-                w_id, = insert_word(
-                    session_id_fk=s_id,
-                    utterance_id_fk=u_id,
-                    corpus=corpus_name,
-                    language=language,
-                    word_language=w.word_language if w.word_language else None,
-                    word=w.word if w.word else None,
-                    word_actual=w.word_actual if w.word_actual else None,
-                    word_target=w.word_target if w.word_target else None,
-                    warning=w.warning if w.warning else None
+    def insert_utterances(self, utterances, s_id):
+        for utt in utterances:
+            u_id = self.insert_utterance(utt, s_id)
+            w_ids = self.insert_words(utt.words, s_id, u_id)
+            self.insert_morphemes(utt.morphemes, s_id, u_id, w_ids)
 
-                ).inserted_primary_key
+    def insert_utterance(self, utt, s_id):
+        corpus_name = utt.session.corpus.corpus
+        language = utt.session.corpus.language
 
-                w_ids.append(w_id)
+        u_id, = self.insert_utt_func(
+            session_id_fk=s_id,
+            corpus=corpus_name,
+            language=language,
+            source_id=utt.source_id,
+            speaker_label=utt.speaker_label,
+            addressee=utt.addressee if utt.addressee else None,
+            utterance_raw=utt.utterance_raw if utt.utterance_raw else None,
+            utterance=utt.utterance if utt.utterance else None,
+            translation=utt.translation if utt.translation else None,
+            morpheme=utt.morpheme if utt.morpheme else None,
+            gloss_raw=utt.gloss_raw if utt.gloss_raw else None,
+            pos_raw=utt.pos_raw if utt.pos_raw else None,
+            sentence_type=utt.sentence_type if utt.sentence_type else None,
+            childdirected=utt.childdirected if utt.childdirected else None,
+            start_raw=utt.start_raw if utt.start_raw else None,
+            end_raw=utt.end_raw if utt.end_raw else None,
+            comment=utt.comment if utt.comment else None,
+            warning=utt.warning if utt.warning else None
+        ).inserted_primary_key
 
-            morphemes = utt.morphemes
+        return u_id
 
-            link_to_word = len(morphemes) == len(w_ids)
+    def insert_words(self, words, s_id, u_id):
+        w_ids = []
+        for w in words:
+            w_id = self.insert_word(w, s_id, u_id)
+            w_ids.append(w_id)
 
-            for i, mword in enumerate(morphemes):
-                w_id = w_ids[i] if link_to_word else None
+        return w_ids
 
-                for m in mword:
+    def insert_word(self, w, s_id, u_id):
+        corpus_name = w.utterance.session.corpus.corpus
+        language = w.utterance.session.corpus.language
 
-                    insert_morph(
-                        session_id_fk=s_id,
-                        utterance_id_fk=u_id,
-                        word_id_fk=w_id,
-                        corpus=corpus_name,
-                        language=language,
-                        morpheme_language=
-                        m.morpheme_language if m.morpheme_language else None,
-                        type=morpheme_type,
-                        morpheme=m.morpheme if m.morpheme else None,
-                        gloss_raw=m.gloss_raw if m.gloss_raw else None,
-                        pos_raw=m.pos_raw if m.pos_raw else None,
-                        lemma_id=m.lemma_id if m.lemma_id else None,
-                        warning=m.warning if m.warning else None
-                    )
+        w_id, = self.insert_word_func(
+            session_id_fk=s_id,
+            utterance_id_fk=u_id,
+            corpus=corpus_name,
+            language=language,
+            word_language=w.word_language if w.word_language else None,
+            word=w.word if w.word else None,
+            word_actual=w.word_actual if w.word_actual else None,
+            word_target=w.word_target if w.word_target else None,
+            warning=w.warning if w.warning else None
+
+        ).inserted_primary_key
+
+        return w_id
+
+    def insert_morphemes(self, morphemes, s_id, u_id, w_ids):
+        link_to_word = len(morphemes) == len(w_ids)
+
+        for i, mword in enumerate(morphemes):
+            w_id = w_ids[i] if link_to_word else None
+
+            for m in mword:
+                self.insert_morpheme(m, s_id, u_id, w_id)
+
+    def insert_morpheme(self, m, s_id, u_id, w_id):
+        corpus_name = m.utterance.session.corpus.corpus
+        language = m.utterance.session.corpus.language
+        morpheme_type = m.utterance.session.corpus.morpheme_type
+
+        self.insert_morph_func(
+            session_id_fk=s_id,
+            utterance_id_fk=u_id,
+            word_id_fk=w_id,
+            corpus=corpus_name,
+            language=language,
+            morpheme_language=
+            m.morpheme_language if m.morpheme_language else None,
+            type=morpheme_type,
+            morpheme=m.morpheme if m.morpheme else None,
+            gloss_raw=m.gloss_raw if m.gloss_raw else None,
+            pos_raw=m.pos_raw if m.pos_raw else None,
+            lemma_id=m.lemma_id if m.lemma_id else None,
+            warning=m.warning if m.warning else None
+        )
