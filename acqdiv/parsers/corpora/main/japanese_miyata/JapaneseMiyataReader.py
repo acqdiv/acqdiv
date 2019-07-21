@@ -15,7 +15,7 @@ class JapaneseMiyataReader(CHATReader):
             return 'Japanese'
 
     def get_morph_tier(self):
-        return self.record.dependent_tiers.get('trn', '')
+        return self.record.dependent_tiers.get('xmor', '')
 
     @staticmethod
     def iter_morphemes(morph_word):

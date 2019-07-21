@@ -69,7 +69,7 @@ class JapaneseMiyataCleaner(CHATCleaner):
 
     @classmethod
     def correct_role(cls, role, session_filename, speaker_label):
-        if session_filename.startswith('tai') and speaker_label == 'TAI':
+        if session_filename.startswith('Tai') and speaker_label == 'TAI':
             return 'Target_Child'
 
         return role
