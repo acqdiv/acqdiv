@@ -35,7 +35,7 @@ class TestSesothoParser(unittest.TestCase):
 
         session_str = ('*NHM:\te tsamo . 113200_115376\n'
                        '%gls:\te tsamay-a .\n'
-                       '%cod:\tv^leave-m^i .\n'
+                       '%xcod:\tv^leave-m^i .\n'
                        '%eng:\tYes go and\n'
                        '@End')
         parser = SesothoSessionParser(self.dummy_cha_path)
