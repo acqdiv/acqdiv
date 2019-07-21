@@ -47,7 +47,6 @@ class CorpusParser(ABC):
             acqdiv.parsers.SessionParser: The session parser.
         """
         for session_path in sorted(glob.glob(self.cfg['paths']['sessions'])):
-            print("\t", session_path)
 
             session_parser = self.get_session_parser(session_path)
 
@@ -58,4 +57,6 @@ class CorpusParser(ABC):
 
                 # ignore sessions with no utterances
                 if len(session.utterances):
+                    print("\t", session_path)
+
                     yield session
