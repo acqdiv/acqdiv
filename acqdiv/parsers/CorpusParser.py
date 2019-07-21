@@ -56,4 +56,6 @@ class CorpusParser(ABC):
                 session = session_parser.parse()
                 session.corpus = self.corpus
 
-                yield session
+                # ignore sessions with no utterances
+                if len(session.utterances):
+                    yield session
