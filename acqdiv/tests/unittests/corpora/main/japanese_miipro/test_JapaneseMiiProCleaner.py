@@ -198,9 +198,3 @@ class TestJapaneseMiiProCleaner(unittest.TestCase):
             raw_utt, actual_utt, morph_tier)
         desired_output = 'N|huhu N|repeat N|repeat N|hihi'
         self.assertEqual(actual_output, desired_output)
-
-    def test_correct_session_date(self):
-        actual = JapaneseMiiProCleaner.correct_session_date(
-            'abc19980115.cha', '')
-        expected = '1998-01-15'
-        self.assertEqual(actual, expected)

@@ -23,7 +23,10 @@ class JapaneseMiiProReader(CHATReader):
         return '', ''
 
     def get_morph_tier(self):
-        return self.record.dependent_tiers.get('xtrn', '')
+        if self.record.dependent_tiers.get('xtrn', ''):
+            return self.record.dependent_tiers.get('xtrn', '')
+        else:
+            return self.record.dependent_tiers.get('xmor', '')
 
     @staticmethod
     def get_word_language(word):
