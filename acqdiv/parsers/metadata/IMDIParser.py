@@ -154,7 +154,9 @@ class IMDIParser(MetadataParser):
         """
         media = {
             'mediafile': [],
-            'writtenresource': []
+            'writtenresource': [],
+            'anonyms': [],
+            'source': []
         }
         for e in root.Session.Resources.getchildren():
             t = e.tag.replace("{http://www.mpi.nl/IMDI/Schema/IMDI}", "")
