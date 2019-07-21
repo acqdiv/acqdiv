@@ -50,10 +50,10 @@ class SesothoReader(CHATReader):
         return self.record.dependent_tiers.get('gls', '')
 
     def get_gloss_tier(self):
-        return self.record.dependent_tiers.get('cod', '')
+        return self.record.dependent_tiers.get('xcod', '')
 
     def get_pos_tier(self):
-        return self.record.dependent_tiers.get('cod', '')
+        return self.record.dependent_tiers.get('xcod', '')
 
     def infer_pos(self, gloss, num_morphemes):
         """Infer the pos-tag for a gloss.
@@ -155,12 +155,3 @@ class SesothoReader(CHATReader):
 
     def get_poses(self, pos_word):
         return [pos for _, pos in self.iter_gloss_pos(pos_word)]
-
-    # TODO: decide if remove
-    # @staticmethod
-    # def get_morpheme_language(seg, gloss, pos):
-    #     return 'Sesotho'
-    #
-    # @staticmethod
-    # def get_word_language(word):
-    #     return 'Sesotho'

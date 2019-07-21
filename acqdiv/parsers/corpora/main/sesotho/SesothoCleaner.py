@@ -15,7 +15,7 @@ class SesothoCleaner(CHATCleaner):
         return date
 
     @staticmethod
-    def correct_speaker_name(name):
+    def correct_speaker_name(name, speaker_label):
         if name == 'Khetheng':
             return 'Khethang'
 
@@ -25,6 +25,24 @@ class SesothoCleaner(CHATCleaner):
         if name == 'MantSo':
             return 'Mantso'
 
+        if name == 'NtsoakiCousin':
+            return 'Ntsoaki_Cousin'
+
+        if name == 'TlalaneCousin':
+            return 'Tlalane_Cousin'
+
+        if speaker_label == 'MAN':
+            return 'Mathoto'
+
+        if speaker_label == 'JUL':
+            return 'Julia'
+
+        if speaker_label == 'LIN':
+            return 'Lineo'
+
+        if speaker_label == 'NEU':
+            return 'Neuoe_Cousin'
+
         return name
 
     @classmethod
@@ -33,7 +51,7 @@ class SesothoCleaner(CHATCleaner):
             age, gender, language, birth_date, target_child):
         """Correct label, role and name of speaker."""
         birth_date = cls.correct_birthdate(birth_date)
-        name = cls.correct_speaker_name(name)
+        name = cls.correct_speaker_name(name, label)
 
         return label, name, role, age, gender, language, birth_date
 
