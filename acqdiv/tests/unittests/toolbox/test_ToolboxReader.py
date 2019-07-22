@@ -142,6 +142,26 @@ class TestToolboxReader(unittest.TestCase):
         desired_output = []
         self.assertEqual(actual_output, desired_output)
 
+    def test_get_morpheme_words_clitics(self):
+        morpheme_tier = 'w1pfxseg=   w1stemseg   =w1sfxseg    w2stemseg'
+        actual_output = ToolboxReader.get_morpheme_words(morpheme_tier)
+        desired_output = ['w1pfxseg=   w1stemseg   =w1sfxseg', 'w2stemseg']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_words_clitics_and_affixes(self):
+        morpheme_tier = 'w1pfxseg=   w1stemseg   -w1sfxseg    w2stemseg'
+        actual_output = ToolboxReader.get_morpheme_words(morpheme_tier)
+        desired_output = ['w1pfxseg=   w1stemseg   -w1sfxseg', 'w2stemseg']
+        self.assertEqual(actual_output, desired_output)
+
+    def test_get_morpheme_words_very_complex(self):
+        morpheme_tier = 'abc=   de- fgh   -ijk -lmno =pkr =st    uv -w  xyz'
+        actual_output = ToolboxReader.get_morpheme_words(morpheme_tier)
+        desired_output = ['abc=   de- fgh   -ijk -lmno =pkr =st',
+                          'uv -w',
+                          'xyz']
+        self.assertEqual(actual_output, desired_output)
+
     def test_get_seg_words(self):
         morpheme_tier = 'w1pfxseg-   w1stemseg   -w1sfxseg      w2stemseg'
         actual_output = ToolboxReader.get_seg_words(morpheme_tier)

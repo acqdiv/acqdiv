@@ -123,7 +123,7 @@ class ToolboxReader(object):
 
     @classmethod
     def get_morpheme_words(cls, morpheme_tier):
-        _word_boundary = re.compile('(?<![(\-|=)\s])\s+(?![(\-|=)\s])')
+        _word_boundary = re.compile(r'(?<![\-=\s])\s+(?![\-=\s])')
 
         if morpheme_tier:
             return re.split(_word_boundary, morpheme_tier)
