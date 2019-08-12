@@ -86,6 +86,13 @@ class ChintangCleaner(ToolboxCleaner):
     def clean_pos_raw(cls, pos):
         return cls.infer_pos(pos)
 
+    @staticmethod
+    def unify_unknown_morpheme(id_):
+        return id_.replace('***', '???')
+
     @classmethod
     def clean_id(cls, id_):
-        return cls.remove_dashes(id_)
+        id_ = cls.remove_dashes(id_)
+        id_ = cls.unify_unknown_morpheme(id_)
+
+        return id_
