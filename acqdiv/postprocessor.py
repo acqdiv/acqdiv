@@ -787,68 +787,6 @@ class PostProcessor:
         print("_words_add_pos_labels")
         self._words_add_pos_labels()
 
-        print("_words_unify_unknowns")
-        self._words_unify_unknowns()
-
-    def _words_unify_unknowns(self):
-        """Unify unknown values for words."""
-        for corpus in self.corpora_in_DB:
-
-            print('\t'+corpus)
-
-            s = sa.select([db.Word.id,
-                           db.Word.word,
-                           db.Word.word_actual,
-                           db.Word.word_target,
-                           db.Word.pos]).\
-                where(db.Word.corpus == corpus)
-
-            rows = self.conn.execute(s)
-            results = []
-            null_values = {"", "xx", "ww", "???", "?", "0"}
-
-            for row in rows:
-                has_changed = False
-
-                if row.word_actual in null_values:
-                    word_actual = None
-                    has_changed = True
-                else:
-                    word_actual = row.word_actual
-
-                if row.word_target in null_values:
-                    word_target = None
-                    has_changed = True
-                else:
-                    word_target = row.word_target
-
-                if row.word in null_values or row.word is None:
-                    # If word (= word_actual (except Yucatec)) is missing
-                    # use word_target if it's not NULL
-                    if word_target is not None:
-                        word = word_target
-                    else:
-                        word = None
-                    has_changed = True
-                else:
-                    word = row.word
-
-                if row.pos == '???':
-                    pos = None
-                    has_changed = True
-                else:
-                    pos = row.pos
-
-                if has_changed:
-                    results.append({
-                        'word_id': row.id,
-                        'word': word,
-                        'word_actual': word_actual,
-                        'word_target': word_target,
-                        'pos': pos})
-
-            self._update_rows(db.Word.__table__, 'word_id', results)
-
     def _words_add_pos_labels(self):
         """Add POS labels (processed and UD)."""
         for corpus in self.corpora_in_DB:
