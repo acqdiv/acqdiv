@@ -28,8 +28,8 @@ class IndonesianCleaner(ToolboxCleaner):
         return re.sub('[‘’\'“”\".!,:?+/]', '', morpheme_tier)
 
     @staticmethod
-    def unify_unknown(morpheme_tier):
-        return re.sub('xxx?|www', '???', morpheme_tier)
+    def unify_unknown(utterance):
+        return re.sub('xxx?|www|0', '???', utterance)
 
     @classmethod
     def clean_morph_tier(cls, morph_tier):
