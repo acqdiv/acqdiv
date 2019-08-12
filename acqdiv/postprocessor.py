@@ -9,6 +9,8 @@ import logging
 import sqlalchemy as sa
 import os
 
+from acqdiv.util.MorphemeMappingCSVParser import MorphemeMappingCSVParser
+
 from itertools import groupby
 from configparser import ConfigParser
 
@@ -68,6 +70,25 @@ class PostProcessor:
         self.conn.execution_options(compiled_cache={})
 
     def set_config_parsers(self):
+        mapping = {
+            'Chintang': 'chintang',
+            'Cree': 'cree',
+            'Dene': 'dene',
+            'English_Manchester1': 'english',
+            'Indonesian': 'indonesian',
+            'Inuktitut': 'inuktitut',
+            'Japanese_MiiPro': 'japanese_miipro',
+            'Japanese_Miyata': 'japanese_miyata',
+            'Ku_Waru': 'ku_waru',
+            'Nungon': 'nungon',
+            'Qaqet': 'qaqet',
+            'Russian': 'russian',
+            'Sesotho': 'sesotho',
+            'Tuatschin': 'tuatschin',
+            'Turkish': 'turkish',
+            'Yucatec': 'yucatec'
+        }
+
         with self.engine.begin() as self.conn:
             self.configure_connection()
 
@@ -88,6 +109,19 @@ class PostProcessor:
                     continue
 
                 self.corpora_in_DB[corpus] = ccp
+
+                ccp['gloss'] = MorphemeMappingCSVParser.parse(
+                    'parsers/corpora/main/{}/resources/gloss.csv'.format(
+                        mapping[corpus]))
+
+                ccp['pos'] = MorphemeMappingCSVParser.parse(
+                    'parsers/corpora/main/{}/resources/pos.csv'.format(
+                        mapping[corpus]))
+
+                ccp['pos_ud'] = MorphemeMappingCSVParser.parse(
+                    'parsers/corpora/main/{}/resources/pos_ud.csv'.format(
+                        mapping[corpus]))
+
 
     def set_roles(self):
         """Load the role-mapping ini for unifying roles."""
