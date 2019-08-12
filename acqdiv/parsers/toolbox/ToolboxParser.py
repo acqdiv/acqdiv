@@ -274,8 +274,8 @@ class ToolboxParser(SessionParser):
 
                 # clean the morphemes
                 m.morpheme = self.cleaner.clean_seg(seg)
-                m.gloss_raw = self.cleaner.clean_gloss(gloss)
-                m.pos_raw = self.cleaner.clean_pos(pos)
+                m.gloss_raw = self.cleaner.clean_gloss_raw(gloss)
+                m.pos_raw = self.cleaner.clean_pos_raw(pos)
                 m.morpheme_language = self.cleaner.clean_lang(lang)
                 m.lemma_id = self.cleaner.clean_morpheme(id_)
                 m.warning = ''

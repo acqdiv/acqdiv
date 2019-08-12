@@ -159,7 +159,7 @@ class QaqetCleaner(ToolboxCleaner):
             return pos
 
     @classmethod
-    def clean_pos(cls, pos):
+    def clean_pos_raw(cls, pos):
         pos = cls.infer_pos(pos)
         pos = cls.unify_unknowns_morpheme(pos)
         return pos

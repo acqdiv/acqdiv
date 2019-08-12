@@ -247,6 +247,6 @@ class TestQaqetCleaner(unittest.TestCase):
 
     def test_clean_pos(self):
         pos = '-TEST'
-        actual_output = Qc.clean_pos(pos)
+        actual_output = Qc.clean_pos_raw(pos)
         desired_output = 'sfx'
         self.assertEqual(actual_output, desired_output)

@@ -146,13 +146,13 @@ class TestToolboxCleaner(unittest.TestCase):
 
     def test_clean_gloss(self):
         gloss = 'gloss'
-        actual_output = ToolboxCleaner.clean_gloss(gloss)
+        actual_output = ToolboxCleaner.clean_gloss_raw(gloss)
         desired_output = 'gloss'
         self.assertEqual(actual_output, desired_output)
 
     def test_clean_pos(self):
         pos = 'pos'
-        actual_output = ToolboxCleaner.clean_pos(pos)
+        actual_output = ToolboxCleaner.clean_pos_raw(pos)
         desired_output = 'pos'
         self.assertEqual(actual_output, desired_output)
 

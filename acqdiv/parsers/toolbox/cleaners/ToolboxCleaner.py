@@ -105,14 +105,22 @@ class ToolboxCleaner:
         return cls.clean_morpheme(segment)
 
     @classmethod
-    def clean_gloss(cls, gloss):
+    def clean_gloss_raw(cls, gloss):
         """No cleaning per default."""
         return cls.clean_morpheme(gloss)
 
     @classmethod
-    def clean_pos(cls, pos):
+    def clean_gloss(cls, gloss):
+        return gloss
+
+    @classmethod
+    def clean_pos_raw(cls, pos):
         """No cleaning per default."""
         return cls.clean_morpheme(pos)
+
+    @classmethod
+    def clean_pos(cls, pos):
+        return pos
 
     @classmethod
     def clean_lang(cls, lang):

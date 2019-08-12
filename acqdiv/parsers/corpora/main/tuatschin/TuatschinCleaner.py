@@ -178,7 +178,7 @@ class TuatschinCleaner(ToolboxCleaner):
     # ---------- POS tag cleaners ----------
 
     @classmethod
-    def clean_pos(cls, pos):
+    def clean_pos_raw(cls, pos):
         for cleaning_method in [
             cls.remove_specifications
         ]:
@@ -204,7 +204,7 @@ class TuatschinCleaner(ToolboxCleaner):
     # ---------- gloss cleaners ----------
 
     @classmethod
-    def clean_gloss(cls, gloss):
+    def clean_gloss_raw(cls, gloss):
         for cleaning_method in [
             cls.remove_pos
         ]:

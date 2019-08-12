@@ -112,7 +112,7 @@ class TestTuatschinCleaner(unittest.TestCase):
 
     def test_clean_pos(self):
         pos = 'ADP_Chld'
-        actual_output = Tc.clean_pos(pos)
+        actual_output = Tc.clean_pos_raw(pos)
         desired_output = 'ADP'
         self.assertEqual(actual_output, desired_output)
 
@@ -128,7 +128,7 @@ class TestTuatschinCleaner(unittest.TestCase):
 
     def test_clean_gloss(self):
         gloss = 'ADJ.Fem.Sing'
-        actual_output = Tc.clean_gloss(gloss)
+        actual_output = Tc.clean_gloss_raw(gloss)
         desired_output = 'Fem.Sing'
         self.assertEqual(actual_output, desired_output)
 
