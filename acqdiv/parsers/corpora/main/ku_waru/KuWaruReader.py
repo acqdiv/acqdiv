@@ -52,3 +52,31 @@ class KuWaruReader(ToolboxReader):
                 langs.append('Ku Waru')
 
         return langs
+
+    @classmethod
+    def get_pos_words(cls, pos_tier):
+        """Get POS tag words.
+
+        Enhancement of the super parser: Keep word in parentheses together
+        with the preceding word. Example: v  (eV) -v:FUT
+        """
+        word_boundary = re.compile(r'(?<![\-=\s])\s+(?![\-=\s]|\(\S+\))')
+
+        if pos_tier:
+            return re.split(word_boundary, pos_tier)
+        else:
+            return []
+
+    @classmethod
+    def get_poses(cls, pos_word):
+        """Get POS tags.
+
+        Enhancement of the super parser: Keep morpheme in parentheses together
+        with the preceding morpheme. Example: v  (eV) -v:PROG
+        """
+        morpheme_boundary = re.compile(r'\s+(?!\s|\(\S+\))')
+
+        if pos_word:
+            return re.split(morpheme_boundary, pos_word)
+        else:
+            return []
