@@ -171,7 +171,7 @@ class TestChintangParser(unittest.TestCase):
             [
                 {'morpheme': 'w1pfxseg-',
                  'gloss_raw': 'w1pfxgloss-',
-                 'pos_raw': 'w1pfxpos-',
+                 'pos_raw': 'pfx',
                  'morpheme_language': 'Chintang',
                  'lemma_id': 'w1pfxID-',
                  'type': 'target',
@@ -185,7 +185,7 @@ class TestChintangParser(unittest.TestCase):
                  'warning': ''},
                 {'morpheme': '-w1sfxseg',
                  'gloss_raw': '-w1sfxgloss',
-                 'pos_raw': '-w1sfxpos',
+                 'pos_raw': 'sfx',
                  'morpheme_language': 'Chintang',
                  'lemma_id': '-w1sfxID',
                  'type': 'target',

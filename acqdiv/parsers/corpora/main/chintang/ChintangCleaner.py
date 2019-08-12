@@ -60,3 +60,16 @@ class ChintangCleaner(ToolboxCleaner):
             return languages[lang]
         else:
             return 'Chintang'
+
+    @staticmethod
+    def remove_dashes(pos):
+        if pos.startswith('-'):
+            return 'sfx'
+        elif pos.endswith('-'):
+            return 'pfx'
+
+        return pos
+
+    @classmethod
+    def clean_pos_raw(cls, pos):
+        return cls.remove_dashes(pos)

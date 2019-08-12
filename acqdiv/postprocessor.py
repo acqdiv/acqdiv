@@ -687,9 +687,6 @@ class PostProcessor:
 
     def process_morphemes_table(self):
         """Post-process the morphemes table."""
-        print("_morphemes_infer_pos_chintang")
-        self._morphemes_infer_pos_chintang()
-
         print("_morphemes_infer_pos_indonesian")
         self._morphemes_infer_pos_indonesian()
 
@@ -713,25 +710,6 @@ class PostProcessor:
 
         print("_morphemes_unify_unknowns")
         self._morphemes_unify_unknowns()
-
-    def _morphemes_infer_pos_chintang(self):
-        """Chintang part-of-speech inference.
-
-        Also removes hyphens from raw input data.
-        """
-        s = sa.select(
-            [db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.pos_raw]).where(
-            db.Morpheme.corpus == "Chintang")
-        rows = self.conn.execute(s)
-        results = []
-        for row in rows:
-            if row.pos_raw:
-                if row.pos_raw.startswith('-'):
-                    results.append({'morpheme_id': row.id, 'pos_raw': "sfx"})
-                elif row.pos_raw.endswith('-'):
-                    results.append({'morpheme_id': row.id, 'pos_raw': "pfx"})
-        rows.close()
-        self._update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
     def _morphemes_infer_pos_indonesian(self):
         """Indonesian part-of-speech inference.
