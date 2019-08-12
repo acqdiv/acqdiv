@@ -277,7 +277,7 @@ class ToolboxParser(SessionParser):
                 m.gloss_raw = self.cleaner.clean_gloss_raw(gloss)
                 m.pos_raw = self.cleaner.clean_pos_raw(pos)
                 m.morpheme_language = self.cleaner.clean_lang(lang)
-                m.lemma_id = self.cleaner.clean_morpheme(id_)
+                m.lemma_id = self.cleaner.clean_id(id_)
                 m.warning = ''
                 m.type = self.record_reader.get_morpheme_type()
 

@@ -126,3 +126,8 @@ class ToolboxCleaner:
     def clean_lang(cls, lang):
         """No cleaning per default."""
         return cls.clean_morpheme(lang)
+
+    @classmethod
+    def clean_id(cls, id_):
+        """No cleaning per default."""
+        return cls.clean_morpheme(id_)
