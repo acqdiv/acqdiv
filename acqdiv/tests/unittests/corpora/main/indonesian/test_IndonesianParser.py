@@ -102,8 +102,8 @@ class TestIndonesianParser(unittest.TestCase):
         m4 = utt.morphemes[1][0]
 
         morphemes = [
-            m1.morpheme == 'w1pfxseg-',
-            m1.gloss_raw == 'w1pfxgloss-',
+            m1.morpheme == 'w1pfxseg',
+            m1.gloss_raw == 'w1pfxgloss',
             m1.pos_raw == 'pfx',
             m1.morpheme_language == 'Indonesian',
             m1.type == 'target',
@@ -118,8 +118,8 @@ class TestIndonesianParser(unittest.TestCase):
             m2.warning == '',
             m2.lemma_id == '',
 
-            m3.morpheme == '-w1sfxseg',
-            m3.gloss_raw == '-w1sfxgloss',
+            m3.morpheme == 'w1sfxseg',
+            m3.gloss_raw == 'w1sfxgloss',
             m3.pos_raw == 'sfx',
             m3.morpheme_language == 'Indonesian',
             m3.type == 'target',

@@ -687,9 +687,6 @@ class PostProcessor:
 
     def process_morphemes_table(self):
         """Post-process the morphemes table."""
-        print("_morphemes_infer_pos")
-        self._morphemes_infer_pos()
-
         print("_morphemes_infer_lemma_id_chintang")
         self._morphemes_infer_lemma_id_chintang()
 
@@ -707,34 +704,6 @@ class PostProcessor:
 
         print("_morphemes_unify_unknowns")
         self._morphemes_unify_unknowns()
-
-    def _morphemes_infer_pos(self):
-        """Part-of-speech inference.
-
-        Clean up affix markers "-"; assign sfx, pfx, stem.
-        """
-        for corpus in ['Indonesian', 'Chintang']:
-            s = sa.\
-                select([db.Morpheme.id,
-                        db.Morpheme.corpus,
-                        db.Morpheme.morpheme,
-                        db.Morpheme.gloss_raw,
-                        db.Morpheme.pos_raw]).\
-                where(db.Morpheme.corpus == corpus)
-            rows = self.conn.execute(s)
-            results = []
-            for row in rows:
-                morpheme = None if row.morpheme is None else row.morpheme.replace(
-                    '-', '')
-                gloss_raw = None if row.gloss_raw is None else row.gloss_raw.replace(
-                    '-', '')
-                pos_raw = None if row.pos_raw is None else row.pos_raw.replace(
-                    '-', '')
-                results.append(
-                    {'morpheme_id': row.id, 'pos_raw': pos_raw, 'gloss_raw': gloss_raw,
-                     'morpheme': morpheme})
-            rows.close()
-            self._update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
     def _morphemes_infer_lemma_id_chintang(self):
         """ Chintang morpheme dict id inference. Clean up affix markers "-". """

@@ -62,7 +62,19 @@ class ChintangCleaner(ToolboxCleaner):
             return 'Chintang'
 
     @staticmethod
-    def remove_dashes(pos):
+    def remove_dashes(morpheme):
+        return morpheme.replace('-', '')
+
+    @classmethod
+    def clean_seg(cls, segment):
+        return cls.remove_dashes(segment)
+
+    @classmethod
+    def clean_gloss_raw(cls, gloss):
+        return cls.remove_dashes(gloss)
+
+    @staticmethod
+    def infer_pos(pos):
         if pos.startswith('-'):
             return 'sfx'
         elif pos.endswith('-'):
@@ -72,4 +84,4 @@ class ChintangCleaner(ToolboxCleaner):
 
     @classmethod
     def clean_pos_raw(cls, pos):
-        return cls.remove_dashes(pos)
+        return cls.infer_pos(pos)

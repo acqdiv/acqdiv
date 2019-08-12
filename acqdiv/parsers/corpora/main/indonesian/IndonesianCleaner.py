@@ -57,3 +57,15 @@ class IndonesianCleaner(ToolboxCleaner):
     @classmethod
     def clean_pos_raw(cls, pos):
         return cls.infer_pos(pos)
+
+    @staticmethod
+    def remove_dashes(morpheme):
+        return morpheme.replace('-', '')
+
+    @classmethod
+    def clean_seg(cls, segment):
+        return cls.remove_dashes(segment)
+
+    @classmethod
+    def clean_gloss_raw(cls, gloss):
+        return cls.remove_dashes(gloss)
