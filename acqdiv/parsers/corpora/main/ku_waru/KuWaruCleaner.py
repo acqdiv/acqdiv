@@ -2,6 +2,8 @@ import re
 
 from acqdiv.parsers.toolbox.cleaners.ToolboxCleaner import ToolboxCleaner
 from acqdiv.parsers.corpora.main.ku_waru.KuWaruPOSMapper import KuWaruPOSMapper
+from acqdiv.parsers.corpora.main.ku_waru.KuWaruGlossMapper \
+    import KuWaruGlossMapper
 
 
 class KuWaruCleaner(ToolboxCleaner):
@@ -20,6 +22,10 @@ class KuWaruCleaner(ToolboxCleaner):
         utterance = cls.remove_punctuation(utterance)
         utterance = cls.unify_unknown(utterance)
         return utterance
+
+    @classmethod
+    def clean_gloss(cls, gloss):
+        return KuWaruGlossMapper.map(gloss)
 
     @classmethod
     def clean_pos(cls, pos):
