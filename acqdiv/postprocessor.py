@@ -508,9 +508,6 @@ class PostProcessor:
         print("_utterances_get_directedness")
         self._utterances_get_directedness()
 
-        print("_utterances_unify_unknowns")
-        self._utterances_unify_unknowns()
-
     def _utterances_standardize_timestamps(self):
         """Unify the time stamps."""
         s = sa.select(
@@ -604,86 +601,6 @@ class PostProcessor:
                 results.append({'utterance_id': row.id, 'childdirected': None})
         rows.close()
         self._update_rows(db.Utterance.__table__, 'utterance_id', results)
-
-    def _utterances_unify_unknowns(self):
-        """Unify unknown values for utterances."""
-        s = sa.select([
-            db.Utterance.id, db.Utterance.addressee,
-            db.Utterance.utterance_raw, db.Utterance.utterance,
-            db.Utterance.translation, db.Utterance.morpheme,
-            db.Utterance.gloss_raw, db.Utterance.pos_raw])
-        rows = self.conn.execute(s)
-        results = []
-        for row in rows:
-            # only update rows whose values have changed (to save memory)
-            has_changed = False
-
-            if row.addressee == "???":
-                addressee = None
-                has_changed = True
-            else:
-                addressee = row.addressee
-
-            if row.utterance_raw == "":
-                utterance_raw = None
-                has_changed = True
-            else:
-                utterance_raw = row.utterance_raw
-
-            if row.gloss_raw == "":
-                gloss_raw = None
-                has_changed = True
-            else:
-                gloss_raw = row.gloss_raw
-
-            if row.pos_raw == "":
-                pos_raw = None
-                has_changed = True
-            else:
-                pos_raw = row.pos_raw
-
-            if row.utterance in {"???", "", "0"}:
-                utterance = None
-                has_changed = True
-            else:
-                utterance = row.utterance
-
-            if row.translation is None:
-                translation = None
-            else:
-                # Set to NULL if translation only consists of ???/xxx/www
-                if (re.fullmatch(r"\?{1,3}\.?|x{2,3}\.?|0 ?\.?|w{2,3}\.?",
-                                 row.translation)):
-                    translation = None
-                else:
-                    # Replace by ??? if it partially consists of www/xxx
-                    translation = re.sub(r"www|xxx?", "???",
-                                         row.translation)
-
-                if translation != row.translation:
-                    has_changed = True
-
-            if row.morpheme is None:
-                morpheme = None
-            else:
-                if (row.morpheme in {"", "?", "ww", "xxx"} or
-                        re.fullmatch(r"((\?\?\? ?)|(-\?\?\? ?))+", row.morpheme)):
-                    morpheme = None
-                else:
-                    morpheme = re.sub(r"www|xxx?|\*\*\*", "???", row.morpheme)
-
-                if morpheme != row.morpheme:
-                    has_changed = True
-
-            if has_changed:
-                results.append({
-                    "utterance_id": row.id, "addressee": addressee,
-                    "utterance_raw": utterance_raw, "utterance": utterance,
-                    "translation": translation, "morpheme": morpheme,
-                    "gloss_raw": gloss_raw, "pos_raw": pos_raw})
-
-        rows.close()
-        self._update_rows(db.Utterance.__table__, "utterance_id", results)
 
     def process_morphemes_table(self):
         """Post-process the morphemes table."""
