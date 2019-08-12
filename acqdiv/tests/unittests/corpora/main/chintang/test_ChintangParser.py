@@ -173,7 +173,7 @@ class TestChintangParser(unittest.TestCase):
                  'gloss_raw': 'w1pfxgloss',
                  'pos_raw': 'pfx',
                  'morpheme_language': 'Chintang',
-                 'lemma_id': 'w1pfxID-',
+                 'lemma_id': 'w1pfxID',
                  'type': 'target',
                  'warning': ''},
                 {'morpheme': 'w1stemseg',
@@ -187,7 +187,7 @@ class TestChintangParser(unittest.TestCase):
                  'gloss_raw': 'w1sfxgloss',
                  'pos_raw': 'sfx',
                  'morpheme_language': 'Chintang',
-                 'lemma_id': '-w1sfxID',
+                 'lemma_id': 'w1sfxID',
                  'type': 'target',
                  'warning': ''}],
             [

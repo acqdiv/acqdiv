@@ -85,3 +85,7 @@ class ChintangCleaner(ToolboxCleaner):
     @classmethod
     def clean_pos_raw(cls, pos):
         return cls.infer_pos(pos)
+
+    @classmethod
+    def clean_id(cls, id_):
+        return cls.remove_dashes(id_)

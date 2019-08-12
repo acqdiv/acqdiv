@@ -687,9 +687,6 @@ class PostProcessor:
 
     def process_morphemes_table(self):
         """Post-process the morphemes table."""
-        print("_morphemes_infer_lemma_id_chintang")
-        self._morphemes_infer_lemma_id_chintang()
-
         print("_morphemes_infer_labels")
         self._morphemes_infer_labels()
 
@@ -704,18 +701,6 @@ class PostProcessor:
 
         print("_morphemes_unify_unknowns")
         self._morphemes_unify_unknowns()
-
-    def _morphemes_infer_lemma_id_chintang(self):
-        """ Chintang morpheme dict id inference. Clean up affix markers "-". """
-        s = sa.select([db.Morpheme.id, db.Morpheme.lemma_id]).where(db.Morpheme.corpus == "Chintang")
-        rows = self.conn.execute(s)
-        results = []
-        for row in rows:
-            # TODO: handle IDs containing letters (invalid?) and more than one IDs separated by '|' (added automatically?)
-            lemma_id = None if row.lemma_id is None else row.lemma_id.replace('-', '')
-            results.append({'morpheme_id': row.id, 'lemma_id': lemma_id})
-        rows.close()
-        self._update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
     def _morphemes_infer_labels(self):
         """Perform morpheme and POS tag substitutions given the metadata_path file.
