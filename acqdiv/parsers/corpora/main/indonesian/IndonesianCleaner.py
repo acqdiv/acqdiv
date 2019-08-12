@@ -37,3 +37,23 @@ class IndonesianCleaner(ToolboxCleaner):
                 cls.remove_morph_tier_punctuation, cls.unify_unknown]:
             morph_tier = cleaning_method(morph_tier)
         return morph_tier
+
+    @staticmethod
+    def infer_pos(pos):
+        """Infer POS from the gloss.
+
+        There is no POS tier in Indonesian, but the macro categories
+        `sfx`, `pfx`, `stem` can be inferred from the gloss.
+        """
+        if pos.startswith('-'):
+            return 'sfx'
+        elif pos.endswith('-'):
+            return 'pfx'
+        elif pos in ['', '???']:
+            return pos
+        else:
+            return 'stem'
+
+    @classmethod
+    def clean_pos_raw(cls, pos):
+        return cls.infer_pos(pos)

@@ -687,9 +687,6 @@ class PostProcessor:
 
     def process_morphemes_table(self):
         """Post-process the morphemes table."""
-        print("_morphemes_infer_pos_indonesian")
-        self._morphemes_infer_pos_indonesian()
-
         print("_morphemes_infer_pos")
         self._morphemes_infer_pos()
 
@@ -710,30 +707,6 @@ class PostProcessor:
 
         print("_morphemes_unify_unknowns")
         self._morphemes_unify_unknowns()
-
-    def _morphemes_infer_pos_indonesian(self):
-        """Indonesian part-of-speech inference.
-
-        Clean up affix markers "-"; assign sfx, pfx, stem.
-        """
-        s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw,
-                       db.Morpheme.pos_raw]).where(
-            db.Morpheme.corpus == "Indonesian")
-        rows = self.conn.execute(s)
-        results = []
-        for row in rows:
-            if row.gloss_raw:
-                if row.gloss_raw.startswith('-'):
-                    results.append({'morpheme_id': row.id, 'pos_raw': "sfx"})
-                elif row.gloss_raw.endswith('-'):
-                    results.append({'morpheme_id': row.id, 'pos_raw': "pfx"})
-                elif row.gloss_raw == '???':
-                    results.append({'morpheme_id': row.id, 'pos_raw': "???"})
-                else:
-                    if row.pos_raw not in {'sfx', 'pfx', '???'}:
-                        results.append({'morpheme_id': row.id, 'pos_raw': "stem"})
-        rows.close()
-        self._update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
     def _morphemes_infer_pos(self):
         """Part-of-speech inference.

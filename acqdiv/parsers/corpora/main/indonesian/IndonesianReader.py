@@ -38,6 +38,15 @@ class IndonesianReader(ToolboxReader):
         return rec.get('ge', '')
 
     @classmethod
+    def get_pos_tier(cls, rec):
+        """Get the POS tier.
+
+        There is no POS tier in Indonesian, but the macro categories
+        `sfx`, `pfx`, `stem` for the morpheme can be inferred from the gloss.
+        """
+        return cls.get_gloss_tier(rec)
+
+    @classmethod
     def is_record(cls, rec):
         if not super().is_record(rec):
             return False
