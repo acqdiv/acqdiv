@@ -230,7 +230,9 @@ class DBProcessor:
             type=morpheme_type,
             morpheme=m.morpheme if m.morpheme else None,
             gloss_raw=m.gloss_raw if m.gloss_raw else None,
+            gloss=m.gloss if m.gloss else None,
             pos_raw=m.pos_raw if m.pos_raw else None,
+            pos=m.pos if m.pos else None,
             lemma_id=m.lemma_id if m.lemma_id else None,
             warning=m.warning if m.warning else None
         )
