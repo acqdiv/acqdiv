@@ -1,5 +1,5 @@
-import re
-
+from acqdiv.parsers.toolbox.cleaners.ToolboxMorphemeCleaner \
+    import ToolboxMorphemeCleaner
 from acqdiv.util.MorphemeMappingCSVParser import MorphemeMappingCSVParser
 from acqdiv.util.util import get_full_path
 
@@ -11,30 +11,23 @@ class KuWaruPOSMapper:
                         'parsers/corpora/main/ku_waru/resources/pos.csv'))
 
     @classmethod
+    def map(cls, pos):
+        return cls.infer_pos(pos)
+
+    @classmethod
     def infer_pos(cls, pos):
-        if pos.startswith('-') or pos.startswith('='):
+        if cls.is_suffix(pos):
             return 'sfx'
-        elif pos.endswith('-') or pos.endswith('='):
+        elif cls.is_prefix(pos):
             return 'pfx'
-        elif pos in ['']:
-            return pos
         else:
-            pos = cls.remove_morpheme_delimiters(pos)
-            pos = cls.unify_unknown(pos)
+            pos = ToolboxMorphemeCleaner.clean(pos)
             return cls.pos_dict.get(pos, '')
 
     @staticmethod
-    def remove_morpheme_delimiters(pos):
-        """Remove morpheme delimiters.
-
-        Morpheme delimiters are `-` and `=`.
-        """
-        return pos.replace('-', '').replace('=', '')
+    def is_suffix(pos):
+        return pos.startswith('-') or pos.startswith('=')
 
     @staticmethod
-    def unify_unknown(pos):
-        return re.sub(r'\*{3}|\?{3}', '', pos)
-
-    @classmethod
-    def map(cls, pos):
-        return cls.infer_pos(pos)
+    def is_prefix(pos):
+        return pos.endswith('-') or pos.endswith('=')
