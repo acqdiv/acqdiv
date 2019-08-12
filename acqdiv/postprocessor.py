@@ -652,9 +652,13 @@ class PostProcessor:
         If no key is defined in the corpus ini file, then None (NULL) is written
         to the database.
         """
-        # TODO: Insert some debugging here if the labels are missing?
+        blacklist = {'Ku_Waru'}
 
         for corpus in self.corpora_in_DB:
+
+            if corpus in blacklist:
+                continue
+
             print('\t'+corpus)
 
             s = sa.\
