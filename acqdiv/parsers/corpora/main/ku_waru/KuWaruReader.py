@@ -80,3 +80,7 @@ class KuWaruReader(ToolboxReader):
             return re.split(morpheme_boundary, pos_word)
         else:
             return []
+
+    @classmethod
+    def get_lang_words(cls, morpheme_lang_tier):
+        return cls.get_pos_words(morpheme_lang_tier)
