@@ -94,44 +94,6 @@ class TestTuatschinCleaner(unittest.TestCase):
         desired_output = 'N ??? V'
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- remove_specifications ----------
-
-    def test_remove_specifications_single(self):
-        pos = 'ADP_Chld'
-        actual_output = Tc.remove_specifications(pos)
-        desired_output = 'ADP'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_remove_specifications_multiple(self):
-        pos = 'ADP+DET_Art_Def'
-        actual_output = Tc.remove_specifications(pos)
-        desired_output = 'ADP+DET'
-        self.assertEqual(actual_output, desired_output)
-
-    # ---------- clean_pos ----------
-
-    def test_clean_pos(self):
-        pos = 'ADP_Chld'
-        actual_output = Tc.clean_pos_raw(pos)
-        desired_output = 'ADP'
-        self.assertEqual(actual_output, desired_output)
-
-    # ---------- remove_pos ----------
-
-    def test_remove_pos(self):
-        gloss = 'ADJ.Fem.Sing'
-        actual_output = Tc.remove_pos(gloss)
-        desired_output = 'Fem.Sing'
-        self.assertEqual(actual_output, desired_output)
-
-    # ---------- clean_gloss ----------
-
-    def test_clean_gloss(self):
-        gloss = 'ADJ.Fem.Sing'
-        actual_output = Tc.clean_gloss_raw(gloss)
-        desired_output = 'Fem.Sing'
-        self.assertEqual(actual_output, desired_output)
-
     # ---------- lowercase_seg_word ----------
 
     def test_lowercase_seg_word(self):

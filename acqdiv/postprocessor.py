@@ -119,7 +119,7 @@ class PostProcessor:
                         mapping[corpus]))
 
                 # HACK: corpora performing pos mapping in loader
-                if corpus in ['Ku_Waru']:
+                if corpus in ['Ku_Waru', 'Tuatschin']:
                     ccp['pos_ud'] = {}
                 else:
                     ccp['pos_ud'] = MorphemeMappingCSVParser.parse(
@@ -617,9 +617,6 @@ class PostProcessor:
         print("_morphemes_unify_label_qaqet")
         self._morphemes_unify_label_qaqet()
 
-        print('_morphemes_unify_gloss_tuatschin()')
-        self._morphemes_unify_gloss_tuatschin()
-
     def _morphemes_infer_labels(self):
         """Perform morpheme and POS tag substitutions given the metadata_path file.
 
@@ -656,7 +653,7 @@ class PostProcessor:
         If no key is defined in the corpus ini file, then None (NULL) is written
         to the database.
         """
-        blacklist = {'Ku_Waru'}
+        blacklist = {'Ku_Waru', 'Tuatschin'}
 
         for corpus in self.corpora_in_DB:
 
@@ -687,54 +684,6 @@ class PostProcessor:
 
             query.close()
             self._update_rows(db.Morpheme.__table__, 'morpheme_id', results)
-
-    def _morphemes_unify_gloss_tuatschin(self):
-        s = sa.select(
-            [db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw,
-             db.Morpheme.pos_raw]).where(db.Morpheme.corpus == 'Tuatschin')
-        query = self.conn.execute(s)
-        results = []
-        for corpus, rows in groupby(query, lambda r: r[1]):
-            config = self.get_config(corpus)
-            glosses = config['gloss']
-
-            for row in rows:
-                if row.gloss_raw:
-                    # replace person/number combinations first
-                    pnum_regex = re.compile(r'([0123])\.(Sing)')
-                    gloss = pnum_regex.sub(r'\1SG', row.gloss_raw)
-                    pnum_regex = re.compile(r'([0123])\.(Plur)')
-                    gloss = pnum_regex.sub(r'\1PL', gloss)
-
-                    parts = []
-                    is_null = False
-                    for part in gloss.split('.'):
-                        if re.search(r'[0123](SG|PL)', part):
-                            parts.append(part)
-                        else:
-                            if part in glosses:
-                                part = glosses[part]
-
-                                if part != '???':
-                                    parts.append(part)
-                                else:
-                                    is_null = True
-                                    break
-                            else:
-                                is_null = True
-                                break
-
-                    if is_null:
-                        gloss = None
-                    else:
-                        gloss = '.'.join(parts)
-
-                else:
-                    gloss = None
-
-                results.append({'morpheme_id': row.id, 'gloss': gloss})
-        query.close()
-        self._update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
     def _morphemes_unify_label_qaqet(self):
         """Infer gloss and pos for Qaqet.

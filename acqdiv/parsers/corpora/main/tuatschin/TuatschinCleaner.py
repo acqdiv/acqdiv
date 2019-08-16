@@ -3,6 +3,10 @@ import re
 from acqdiv.parsers.toolbox.cleaners.ToolboxCleaner import ToolboxCleaner
 from acqdiv.parsers.corpora.main.tuatschin.TuatschinReader \
     import TuatschinReader
+from acqdiv.parsers.corpora.main.tuatschin.TuatschinPOSMapper \
+    import TuatschinPOSMapper
+from acqdiv.parsers.corpora.main.tuatschin.TuatschinGlossMapper \
+    import TuatschinGlossMapper
 
 
 class TuatschinCleaner(ToolboxCleaner):
@@ -175,53 +179,16 @@ class TuatschinCleaner(ToolboxCleaner):
     def lowercase_seg_word(cls, segment_word):
         return segment_word.lower()
 
-    # ---------- POS tag cleaners ----------
+    # ---------- morpheme cleaners ----------
 
     @classmethod
-    def clean_pos_raw(cls, pos):
-        for cleaning_method in [
-            cls.remove_specifications
-        ]:
-            pos = cleaning_method(pos)
-        return pos
-
-    @staticmethod
-    def remove_specifications(pos):
-        """Remove specifications of POS tags.
-
-        Specifications start with `_`.
-
-        Examples:
-        - words erroneously written apart: _cont
-        - child forms: _Chld
-        - discourse particles: _Discpart
-        ...
-        """
-        regex = re.compile(r'_[^_]+')
-        pos = regex.sub('', pos)
-        return pos
-
-    # ---------- gloss cleaners ----------
+    def clean_pos(cls, pos):
+        return TuatschinPOSMapper.map(pos)
 
     @classmethod
-    def clean_gloss_raw(cls, gloss):
-        for cleaning_method in [
-            cls.remove_pos
-        ]:
-            gloss = cleaning_method(gloss)
-        return gloss
+    def clean_pos_ud(cls, pos_ud):
+        return TuatschinPOSMapper.map(pos_ud, ud=True)
 
-    @staticmethod
-    def remove_pos(gloss):
-        """Remove the POS tag.
-
-        Morpho-syntactic annotations start with the POS tag:
-        [POS].[SUB-GlOSS1].[SUB-GLOSS2]
-
-        Example:
-            ADJ.Fem.Sing => Fem.Sing
-        """
-        regex = re.compile(r'^[^.]+\.')
-        gloss = regex.sub('', gloss)
-
-        return gloss
+    @classmethod
+    def clean_gloss(cls, gloss):
+        return TuatschinGlossMapper.map(gloss)
