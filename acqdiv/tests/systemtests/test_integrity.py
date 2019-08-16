@@ -255,6 +255,7 @@ class IntegrityTest(unittest.TestCase):
             "German",
             "Hindi",
             'Kuanua',
+            'Ku Waru',
             "Indonesian",
             "Inuktitut",
             "Japanese",
