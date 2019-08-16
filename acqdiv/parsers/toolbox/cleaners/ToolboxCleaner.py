@@ -120,7 +120,13 @@ class ToolboxCleaner:
 
     @classmethod
     def clean_pos(cls, pos):
-        return pos
+        """Map original POS tag to ACQDIV POS tag."""
+        return ''
+
+    @classmethod
+    def clean_pos_ud(cls, pos_ud):
+        """Map original POS tag to Universal Dependency POS tag."""
+        return ''
 
     @classmethod
     def clean_lang(cls, lang):

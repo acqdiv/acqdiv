@@ -118,9 +118,13 @@ class PostProcessor:
                     'parsers/corpora/main/{}/resources/pos.csv'.format(
                         mapping[corpus]))
 
-                ccp['pos_ud'] = MorphemeMappingCSVParser.parse(
-                    'parsers/corpora/main/{}/resources/pos_ud.csv'.format(
-                        mapping[corpus]))
+                # HACK: corpora performing pos mapping in loader
+                if corpus in ['Ku_Waru']:
+                    ccp['pos_ud'] = {}
+                else:
+                    ccp['pos_ud'] = MorphemeMappingCSVParser.parse(
+                        'parsers/corpora/main/{}/resources/pos_ud.csv'.format(
+                            mapping[corpus]))
 
 
     def set_roles(self):
@@ -825,7 +829,8 @@ class PostProcessor:
             # Add the POS tags to the words table
 
             s = sa.select([db.Word.id,
-                           db.Word.corpus]).\
+                           db.Word.corpus,
+                           db.Word.pos_ud]).\
                 where(db.Word.corpus == corpus)
 
             query = self.conn.execute(s)
@@ -841,16 +846,18 @@ class PostProcessor:
                 if row.id in pos_raw_index:
                     # tag in index is pos_raw, so first get UD equivalent
                     pos_raw = pos_raw_index[row.id]
-                    if pos_raw in poses_ud:
-                        pos_ud = poses_ud[pos_raw]
+                    # HACK: corpora performing POS UD mapping in loader
+                    if not row.pos_ud:
+                        if pos_raw in poses_ud:
+                            pos_ud = poses_ud[pos_raw]
 
-                        if pos_ud == '???':
+                            if pos_ud == '???':
+                                pos_ud = None
+                        else:
                             pos_ud = None
-                    else:
-                        pos_ud = None
 
-                    # now add
-                    results_pos_ud.append({'word_id': row.id, 'pos_ud': pos_ud})
+                        # now add
+                        results_pos_ud.append({'word_id': row.id, 'pos_ud': pos_ud})
             query.close()
             self._update_rows(db.Word.__table__, 'word_id', results_pos)
             self._update_rows(db.Word.__table__, 'word_id', results_pos_ud)

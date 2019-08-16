@@ -30,3 +30,7 @@ class KuWaruCleaner(ToolboxCleaner):
     @classmethod
     def clean_pos(cls, pos):
         return KuWaruPOSMapper.map(pos)
+
+    @classmethod
+    def clean_pos_ud(cls, pos_ud):
+        return KuWaruPOSMapper.map(pos_ud, ud=True)

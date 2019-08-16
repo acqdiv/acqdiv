@@ -123,6 +123,8 @@ class ToolboxParser(SessionParser):
                     self.record_reader.get_id_tier(rec)
                 )
 
+        self.align_words_morphemes()
+
     def add_utterance(self, rec):
         """Add the utterance to the Session instance.
 
@@ -277,7 +279,8 @@ class ToolboxParser(SessionParser):
                 m.gloss_raw = self.cleaner.clean_gloss_raw(gloss)
                 m.gloss = self.cleaner.clean_gloss(m.gloss_raw)
                 m.pos_raw = self.cleaner.clean_pos_raw(pos)
-                m.pos = self.cleaner.clean_pos(m.pos_raw)
+                m.pos = self.cleaner.clean_pos(pos)
+                m.pos_ud = self.cleaner.clean_pos_ud(pos)
                 m.morpheme_language = self.cleaner.clean_lang(lang)
                 m.lemma_id = self.cleaner.clean_id(id_)
                 m.warning = ''
@@ -286,3 +289,19 @@ class ToolboxParser(SessionParser):
                 wmorphemes.append(m)
 
             utt.morphemes.append(wmorphemes)
+
+    def align_words_morphemes(self):
+        """Align words and morpheme.
+
+        Sets the word of the morpheme that it belongs to when there are
+        no misalignments. Also, copies the POS and POS UD to the word.
+        """
+        for utt in self.session.utterances:
+            link_to_word = len(utt.morphemes) == len(utt.words)
+            for i, mword in enumerate(utt.morphemes):
+                for morpheme in mword:
+                    if link_to_word:
+                        morpheme.word = utt.words[i]
+                        if morpheme.pos not in ['sfx', 'pfx']:
+                            utt.words[i].pos = morpheme.pos
+                            utt.words[i].pos_ud = morpheme.pos_ud

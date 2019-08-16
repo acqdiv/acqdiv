@@ -199,6 +199,8 @@ class DBProcessor:
             word=w.word if w.word else None,
             word_actual=w.word_actual if w.word_actual else None,
             word_target=w.word_target if w.word_target else None,
+            pos=w.pos if w.pos else None,
+            pos_ud=w.pos_ud if w.pos_ud else None,
             warning=w.warning if w.warning else None
 
         ).inserted_primary_key
