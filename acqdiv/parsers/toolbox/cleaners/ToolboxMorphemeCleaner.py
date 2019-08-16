@@ -16,7 +16,7 @@ class ToolboxMorphemeCleaner:
 
         Morpheme delimiters are `-` and `=`.
         """
-        return morpheme.replace('-', '').replace('=', '')
+        return morpheme.strip('-').strip('=')
 
     @staticmethod
     def null_unknown(morpheme):

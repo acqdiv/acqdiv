@@ -1,5 +1,8 @@
 import re
 
+from acqdiv.parsers.toolbox.cleaners.ToolboxMorphemeCleaner \
+    import ToolboxMorphemeCleaner
+
 
 class ToolboxCleaner:
 
@@ -96,26 +99,27 @@ class ToolboxCleaner:
 
     @classmethod
     def clean_morpheme(cls, morpheme):
-        """No cleaning per default."""
-        return morpheme
+        """Clean the morpheme."""
+        return ToolboxMorphemeCleaner.remove_morpheme_delimiters(morpheme)
 
     @classmethod
     def clean_seg(cls, segment):
-        """No cleaning per default."""
+        """Clean the segment."""
         return cls.clean_morpheme(segment)
 
     @classmethod
     def clean_gloss_raw(cls, gloss):
-        """No cleaning per default."""
+        """Clean the original gloss."""
         return cls.clean_morpheme(gloss)
 
     @classmethod
     def clean_gloss(cls, gloss):
-        return gloss
+        """Map original gloss to ACQDIV gloss."""
+        return ''
 
     @classmethod
     def clean_pos_raw(cls, pos):
-        """No cleaning per default."""
+        """Clean the original POS tag."""
         return cls.clean_morpheme(pos)
 
     @classmethod
@@ -130,10 +134,10 @@ class ToolboxCleaner:
 
     @classmethod
     def clean_lang(cls, lang):
-        """No cleaning per default."""
+        """Clean the morpheme language."""
         return cls.clean_morpheme(lang)
 
     @classmethod
     def clean_id(cls, id_):
-        """No cleaning per default."""
+        """Clean the morpheme ID."""
         return cls.clean_morpheme(id_)
