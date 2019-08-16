@@ -14,7 +14,7 @@ class KuWaruCleaner(ToolboxCleaner):
 
     @classmethod
     def remove_punctuation(cls, utterance):
-        utterance = re.sub(r'[?.]', '', utterance)
+        utterance = re.sub(r'[?.,]', '', utterance)
         return cls.remove_redundant_whitespaces(utterance)
 
     @classmethod
