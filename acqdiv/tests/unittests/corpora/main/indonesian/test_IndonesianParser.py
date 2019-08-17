@@ -104,7 +104,7 @@ class TestIndonesianParser(unittest.TestCase):
         morphemes = [
             m1.morpheme == 'w1pfxseg',
             m1.gloss_raw == 'w1pfxgloss',
-            m1.pos_raw == 'pfx',
+            m1.pos_raw == 'w1pfxgloss',
             m1.morpheme_language == 'Indonesian',
             m1.type == 'target',
             m1.warning == '',
@@ -112,7 +112,7 @@ class TestIndonesianParser(unittest.TestCase):
 
             m2.morpheme == 'w1stemseg',
             m2.gloss_raw == 'w1stemgloss',
-            m2.pos_raw == 'stem',
+            m2.pos_raw == 'w1stemgloss',
             m2.morpheme_language == 'Indonesian',
             m2.type == 'target',
             m2.warning == '',
@@ -120,7 +120,7 @@ class TestIndonesianParser(unittest.TestCase):
 
             m3.morpheme == 'w1sfxseg',
             m3.gloss_raw == 'w1sfxgloss',
-            m3.pos_raw == 'sfx',
+            m3.pos_raw == 'w1sfxgloss',
             m3.morpheme_language == 'Indonesian',
             m3.type == 'target',
             m3.warning == '',
@@ -128,7 +128,7 @@ class TestIndonesianParser(unittest.TestCase):
 
             m4.morpheme == 'w2stemseg',
             m4.gloss_raw == 'w2stemgloss',
-            m4.pos_raw == 'stem',
+            m4.pos_raw == 'w2stemgloss',
             m4.morpheme_language == 'Indonesian',
             m4.type == 'target',
             m4.warning == '',

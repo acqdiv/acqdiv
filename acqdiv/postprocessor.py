@@ -110,16 +110,21 @@ class PostProcessor:
 
                 self.corpora_in_DB[corpus] = ccp
 
-                ccp['gloss'] = MorphemeMappingCSVParser.parse(
-                    'parsers/corpora/main/{}/resources/gloss.csv'.format(
-                        mapping[corpus]))
+                if corpus in ['Indonesian']:
+                    ccp['pos'] = {}
+                    ccp['pos_ud'] = {}
+                else:
+                    ccp['gloss'] = MorphemeMappingCSVParser.parse(
+                        'parsers/corpora/main/{}/resources/gloss.csv'.format(
+                            mapping[corpus]))
 
-                ccp['pos'] = MorphemeMappingCSVParser.parse(
-                    'parsers/corpora/main/{}/resources/pos.csv'.format(
-                        mapping[corpus]))
+                    ccp['pos'] = MorphemeMappingCSVParser.parse(
+                        'parsers/corpora/main/{}/resources/pos.csv'.format(
+                            mapping[corpus]))
 
                 # HACK: corpora performing pos mapping in loader
-                if corpus in ['Ku_Waru', 'Tuatschin', 'Qaqet', 'Chintang']:
+                if corpus in ['Ku_Waru', 'Tuatschin', 'Qaqet', 'Chintang',
+                              'Indonesian']:
                     ccp['pos_ud'] = {}
                 else:
                     ccp['pos_ud'] = MorphemeMappingCSVParser.parse(
@@ -617,7 +622,7 @@ class PostProcessor:
     def _morphemes_infer_labels(self):
         """Perform morpheme and POS tag substitutions given the metadata_path file.
 
-        Indonesian, Japanese_MiiPro, Japanese_Miyata, Sesotho and Turkish have
+        Japanese_MiiPro, Japanese_Miyata, Sesotho and Turkish have
         substitutions defined in their metadata_path files.
         """
         s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw,
@@ -650,7 +655,7 @@ class PostProcessor:
         If no key is defined in the corpus ini file, then None (NULL) is written
         to the database.
         """
-        blacklist = {'Ku_Waru', 'Tuatschin', 'Qaqet', 'Chintang'}
+        blacklist = {'Ku_Waru', 'Tuatschin', 'Qaqet', 'Chintang', 'Indonesian'}
 
         for corpus in self.corpora_in_DB:
 

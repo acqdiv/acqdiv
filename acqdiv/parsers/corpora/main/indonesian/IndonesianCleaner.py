@@ -1,6 +1,10 @@
 import re
 
 from acqdiv.parsers.toolbox.cleaners.ToolboxCleaner import ToolboxCleaner
+from acqdiv.parsers.corpora.main.indonesian.IndonesianGlossMapper \
+    import IndonesianGlossMapper
+from acqdiv.parsers.corpora.main.indonesian.IndonesianPOSMapper \
+    import IndonesianPOSMapper
 
 
 class IndonesianCleaner(ToolboxCleaner):
@@ -38,34 +42,14 @@ class IndonesianCleaner(ToolboxCleaner):
             morph_tier = cleaning_method(morph_tier)
         return morph_tier
 
-    @staticmethod
-    def infer_pos(pos):
-        """Infer POS from the gloss.
-
-        There is no POS tier in Indonesian, but the macro categories
-        `sfx`, `pfx`, `stem` can be inferred from the gloss.
-        """
-        if pos.startswith('-'):
-            return 'sfx'
-        elif pos.endswith('-'):
-            return 'pfx'
-        elif pos in ['', '???']:
-            return pos
-        else:
-            return 'stem'
+    @classmethod
+    def clean_gloss(cls, gloss):
+        return IndonesianGlossMapper.map(gloss)
 
     @classmethod
-    def clean_pos_raw(cls, pos):
-        return cls.infer_pos(pos)
-
-    @staticmethod
-    def remove_dashes(morpheme):
-        return morpheme.replace('-', '')
+    def clean_pos(cls, pos):
+        return IndonesianPOSMapper.map(pos)
 
     @classmethod
-    def clean_seg(cls, segment):
-        return cls.remove_dashes(segment)
-
-    @classmethod
-    def clean_gloss_raw(cls, gloss):
-        return cls.remove_dashes(gloss)
+    def clean_pos_ud(cls, pos_ud):
+        return IndonesianPOSMapper.map(pos_ud, ud=True)
