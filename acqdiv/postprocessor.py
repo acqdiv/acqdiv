@@ -176,7 +176,6 @@ class PostProcessor:
     def process_speakers_table(self):
         """Post-process speakers table."""
         self._speakers_unify_unknowns()
-        self._speakers_indonesian_experimenters()
         self._speakers_update_age()
         self._speakers_standardize_gender_labels()
         self._speakers_standardize_roles()
@@ -246,27 +245,6 @@ class PostProcessor:
                 results = self._update_xml_age(rows)
             self._update_rows(db.Speaker.__table__, "speaker_id", results)
         query.close()
-
-    def _speakers_indonesian_experimenters(self):
-        """Configuration replacements for Indonesian experimenter speaker labels.
-
-        Updates the speakers table.
-        """
-        if 'Indonesian' in self.corpora_in_DB:
-            cfg = self.get_config('Indonesian')
-            s = sa.select([db.Speaker.id,
-                           db.Speaker.speaker_label,
-                           db.Speaker.name]).\
-                where(db.Speaker.corpus == 'Indonesian')
-            rows = self.conn.execute(s)
-            results = []
-            for row in rows:
-                if row.speaker_label == 'EXP':
-                    results.append({
-                        'speaker_id': row.id,
-                        'speaker_label': cfg['exp_labels'][row.name]})
-            rows.close()
-            self._update_rows(db.Speaker.__table__, 'speaker_id', results)
 
     def _speakers_standardize_gender_labels(self):
         """Standardize gender labels in the speakers table."""
@@ -508,9 +486,6 @@ class PostProcessor:
         print("_utterances_standardize_timestamps")
         self._utterances_standardize_timestamps()
 
-        print("_utterances_change_indonesian_speaker_labels")
-        self._utterances_change_indonesian_speaker_labels()
-
         print("_utterances_get_uniquespeaker_ids")
         self._utterances_get_uniquespeaker_ids()
 
@@ -533,22 +508,6 @@ class PostProcessor:
                 except Exception as e:
                     logging.warning('Error unifying timestamps: {}'.format(row, e),
                                    exc_info=sys.exc_info())
-        rows.close()
-        self._update_rows(db.Utterance.__table__, 'utterance_id', results)
-
-    def _utterances_change_indonesian_speaker_labels(self):
-        s = sa.select([db.Utterance.id, db.Utterance.speaker_label]).where(
-            db.Utterance.corpus == "Indonesian")
-        rows = self.conn.execute(s)
-        results = []
-        for row in rows:
-            if row.speaker_label:
-                if not 'EXP' in row.speaker_label:
-                    results.append({'utterance_id': row.id,
-                                    'speaker_label': row.speaker_label[0:3]})
-                else:
-                    results.append({'utterance_id': row.id,
-                                    'speaker_label': row.speaker_label[3:]})
         rows.close()
         self._update_rows(db.Utterance.__table__, 'utterance_id', results)
 

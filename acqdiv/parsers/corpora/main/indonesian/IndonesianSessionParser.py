@@ -5,6 +5,8 @@ from acqdiv.parsers.corpora.main.indonesian.IndonesianReader import \
     IndonesianReader
 from acqdiv.parsers.corpora.main.indonesian.IndonesianCleaner \
     import IndonesianCleaner
+from acqdiv.parsers.corpora.main.indonesian.IndonesianSpeakerLabelCorrector \
+    import IndonesianSpeakerLabelCorrector
 from acqdiv.parsers.metadata.CHATParser import CHATParser
 from acqdiv.parsers.toolbox.ToolboxParser import ToolboxParser
 from acqdiv.model.Speaker import Speaker
@@ -15,6 +17,12 @@ class IndonesianSessionParser(ToolboxParser):
 
     def get_metadata_reader(self):
         return CHATParser(self.metadata_path)
+
+    def parse(self):
+        session = super().parse()
+        IndonesianSpeakerLabelCorrector.correct(session)
+
+        return session
 
     def add_session_metadata(self):
         self.session.source_id = os.path.splitext(os.path.basename(

@@ -67,7 +67,7 @@ class TestIndonesianParser(unittest.TestCase):
             utt.source_id == 'source_id',
             utt.start_raw == 'start_raw',
             utt.end_raw == '',
-            utt.speaker_label == 'speaker_label',
+            utt.speaker_label == 'spe',
             utt.addressee == '',
             utt.childdirected == '',
             utt.utterance_raw == 'w(ord)1 w2.',
