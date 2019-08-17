@@ -1,6 +1,12 @@
 import re
 
 from acqdiv.parsers.toolbox.cleaners.ToolboxCleaner import ToolboxCleaner
+from acqdiv.parsers.toolbox.cleaners.ToolboxMorphemeCleaner \
+    import ToolboxMorphemeCleaner
+from acqdiv.parsers.corpora.main.chintang.ChintangGlossMapper \
+    import ChintangGlossMapper
+from acqdiv.parsers.corpora.main.chintang.ChintangPOSMapper \
+    import ChintangPOSMapper
 
 
 class ChintangCleaner(ToolboxCleaner):
@@ -62,37 +68,24 @@ class ChintangCleaner(ToolboxCleaner):
             return 'Chintang'
 
     @staticmethod
-    def remove_dashes(morpheme):
-        return morpheme.replace('-', '')
-
-    @classmethod
-    def clean_seg(cls, segment):
-        return cls.remove_dashes(segment)
-
-    @classmethod
-    def clean_gloss_raw(cls, gloss):
-        return cls.remove_dashes(gloss)
-
-    @staticmethod
-    def infer_pos(pos):
-        if pos.startswith('-'):
-            return 'sfx'
-        elif pos.endswith('-'):
-            return 'pfx'
-
-        return pos
-
-    @classmethod
-    def clean_pos_raw(cls, pos):
-        return cls.infer_pos(pos)
-
-    @staticmethod
     def unify_unknown_morpheme(id_):
         return id_.replace('***', '???')
 
     @classmethod
     def clean_id(cls, id_):
-        id_ = cls.remove_dashes(id_)
+        id_ = ToolboxMorphemeCleaner.remove_morpheme_delimiters(id_)
         id_ = cls.unify_unknown_morpheme(id_)
 
         return id_
+
+    @classmethod
+    def clean_gloss(cls, gloss):
+        return ChintangGlossMapper.map(gloss)
+
+    @classmethod
+    def clean_pos(cls, pos):
+        return ChintangPOSMapper.map(pos)
+
+    @classmethod
+    def clean_pos_ud(cls, pos_ud):
+        return ChintangPOSMapper.map(pos_ud, ud=True)
