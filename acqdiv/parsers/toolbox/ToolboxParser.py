@@ -55,7 +55,7 @@ class ToolboxParser(SessionParser):
         """
         self.add_session_metadata()
         self.add_speakers()
-        self.add_record()
+        self.add_records()
 
         return self.session
 
@@ -95,35 +95,52 @@ class ToolboxParser(SessionParser):
 
             self.session.speakers.append(speaker)
 
-    def add_record(self):
-        """
-        """
+    def add_records(self):
+        """Add the utterances to the session."""
         separator = self.record_reader.get_rec_separator()
         toolbox_file = ToolboxFileParser.parse(self.toolbox_path, separator)
 
         for rec in toolbox_file.records:
+            self.add_record(rec)
 
-            if self.record_reader.is_record(rec):
+    def add_record(self, rec):
+        """Add the utterance to the session."""
+        if self.record_reader.is_record(rec):
+            rec = self.cleaner.cross_clean(rec)
 
-                rec = self.cleaner.cross_clean(rec)
+            self.add_utterance(rec)
 
-                self.add_utterance(rec)
+            actual_utterance = self.cleaner.clean_utterance(
+                self.record_reader.get_actual_utterance(rec))
+            target_utterance = self.cleaner.clean_utterance(
+                self.record_reader.get_target_utterance(rec))
+            self.add_words(actual_utterance, target_utterance)
 
-                actual_utterance = self.cleaner.clean_utterance(
-                    self.record_reader.get_actual_utterance(rec))
-                target_utterance = self.cleaner.clean_utterance(
-                    self.record_reader.get_target_utterance(rec))
-                self.add_words(actual_utterance, target_utterance)
+            self.add_morphemes(
+                self.record_reader.get_seg_tier(rec),
+                self.record_reader.get_gloss_tier(rec),
+                self.record_reader.get_pos_tier(rec),
+                self.record_reader.get_lang_tier(rec),
+                self.record_reader.get_id_tier(rec)
+            )
 
-                self.add_morphemes(
-                    self.record_reader.get_seg_tier(rec),
-                    self.record_reader.get_gloss_tier(rec),
-                    self.record_reader.get_pos_tier(rec),
-                    self.record_reader.get_lang_tier(rec),
-                    self.record_reader.get_id_tier(rec)
-                )
+            self.align_words_morphemes()
 
-        self.align_words_morphemes()
+    def align_words_morphemes(self):
+        """Align words and morphemes.
+
+        Sets the word of the morpheme that it belongs to when there are
+        no misalignments. Also, copies the POS and POS UD to the word.
+        """
+        utt = self.session.utterances[-1]
+        link_to_word = len(utt.morphemes) == len(utt.words)
+        for i, mword in enumerate(utt.morphemes):
+            for morpheme in mword:
+                if link_to_word:
+                    morpheme.word = utt.words[i]
+                    if morpheme.pos not in ['sfx', 'pfx']:
+                        utt.words[i].pos = morpheme.pos
+                        utt.words[i].pos_ud = morpheme.pos_ud
 
     def add_utterance(self, rec):
         """Add the utterance to the Session instance.
@@ -289,19 +306,3 @@ class ToolboxParser(SessionParser):
                 wmorphemes.append(m)
 
             utt.morphemes.append(wmorphemes)
-
-    def align_words_morphemes(self):
-        """Align words and morpheme.
-
-        Sets the word of the morpheme that it belongs to when there are
-        no misalignments. Also, copies the POS and POS UD to the word.
-        """
-        for utt in self.session.utterances:
-            link_to_word = len(utt.morphemes) == len(utt.words)
-            for i, mword in enumerate(utt.morphemes):
-                for morpheme in mword:
-                    if link_to_word:
-                        morpheme.word = utt.words[i]
-                        if morpheme.pos not in ['sfx', 'pfx']:
-                            utt.words[i].pos = morpheme.pos
-                            utt.words[i].pos_ud = morpheme.pos_ud
