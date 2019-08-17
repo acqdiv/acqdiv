@@ -73,11 +73,9 @@ class TestRussianParser(unittest.TestCase):
             utt.translation == '',
             utt.comment == '',
             utt.warning == '',
-            utt.morpheme == 'lem1 "," lem2 lem3 .',
-            utt.gloss_raw == 'V-PST:SG:F:IRREFL:IPFV PUNCT '
-                             'PRO-DEM-NOUN:NOM:SG PCL PUNCT',
-            utt.pos_raw == 'V-PST:SG:F:IRREFL:IPFV PUNCT '
-                           'PRO-DEM-NOUN:NOM:SG PCL PUNCT'
+            utt.morpheme == '',
+            utt.gloss_raw == '',
+            utt.pos_raw == ''
             ]
 
         w1 = utt.words[0]
@@ -101,37 +99,37 @@ class TestRussianParser(unittest.TestCase):
             w3.word_language == ''
         ]
 
-        m1 = utt.morphemes[0][0]
-        m2 = utt.morphemes[1][0]
-        m3 = utt.morphemes[2][0]
-
-        morphemes = [
-            m1.morpheme == 'lem1',
-            m1.gloss_raw == 'PST:SG:F:IRREFL:IPFV',
-            m1.pos_raw == 'V',
-            m1.morpheme_language == 'Russian',
-            m1.type == 'actual',
-            m1.warning == '',
-            m1.lemma_id == '',
-
-            m2.morpheme == 'lem2',
-            m2.gloss_raw == 'NOM:SG',
-            m2.pos_raw == 'PRO-DEM-NOUN',
-            m2.morpheme_language == 'Russian',
-            m2.type == 'actual',
-            m2.warning == '',
-            m2.lemma_id == '',
-
-            m3.morpheme == 'lem3',
-            m3.gloss_raw == 'PCL',
-            m3.pos_raw == 'PCL',
-            m3.morpheme_language == 'Russian',
-            m3.type == 'actual',
-            m3.warning == '',
-            m3.lemma_id == ''
-
-        ]
+        # m1 = utt.morphemes[0][0]
+        # m2 = utt.morphemes[1][0]
+        # m3 = utt.morphemes[2][0]
+        #
+        # morphemes = [
+        #     m1.morpheme == 'lem1',
+        #     m1.gloss_raw == 'PST:SG:F:IRREFL:IPFV',
+        #     m1.pos_raw == 'V',
+        #     m1.morpheme_language == 'Russian',
+        #     m1.type == 'actual',
+        #     m1.warning == '',
+        #     m1.lemma_id == '',
+        #
+        #     m2.morpheme == 'lem2',
+        #     m2.gloss_raw == 'NOM:SG',
+        #     m2.pos_raw == 'PRO-DEM-NOUN',
+        #     m2.morpheme_language == 'Russian',
+        #     m2.type == 'actual',
+        #     m2.warning == '',
+        #     m2.lemma_id == '',
+        #
+        #     m3.morpheme == 'lem3',
+        #     m3.gloss_raw == 'PCL',
+        #     m3.pos_raw == 'PCL',
+        #     m3.morpheme_language == 'Russian',
+        #     m3.type == 'actual',
+        #     m3.warning == '',
+        #     m3.lemma_id == ''
+        #
+        # ]
 
         assert (False not in utterance
                 and False not in words
-                and False not in morphemes)
+                and not len(utt.morphemes))

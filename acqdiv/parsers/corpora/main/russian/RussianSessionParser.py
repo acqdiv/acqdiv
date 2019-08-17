@@ -29,3 +29,14 @@ class RussianSessionParser(ToolboxParser):
             speaker.languages_spoken = speaker_dict.get('language', None)
 
             self.session.speakers.append(speaker)
+
+    def add_record(self, rec):
+        super().add_record(rec)
+        self.delete_morphemes()
+
+    def delete_morphemes(self):
+        utt = self.session.utterances[-1]
+        utt.morpheme = ''
+        utt.gloss_raw = ''
+        utt.pos_raw = ''
+        utt.morphemes = []

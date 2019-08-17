@@ -16,3 +16,14 @@ class TuatschinSessionParser(ToolboxParser):
 
     def get_cleaner(self):
         return TuatschinCleaner()
+
+    def add_record(self, rec):
+        super().add_record(rec)
+        self.delete_morphemes()
+
+    def delete_morphemes(self):
+        utt = self.session.utterances[-1]
+        utt.morpheme = ''
+        utt.gloss_raw = ''
+        utt.pos_raw = ''
+        utt.morphemes = []
