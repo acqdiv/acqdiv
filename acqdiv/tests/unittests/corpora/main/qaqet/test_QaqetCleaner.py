@@ -93,32 +93,6 @@ class TestQaqetCleaner(unittest.TestCase):
         desired_output = '???'
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- remove_morpheme_sep ----------
-
-    def test_remove_morpheme_sep_sfx(self):
-        morpheme = '-mor'
-        actual_output = Qc.remove_morpheme_sep(morpheme)
-        desired_output = 'mor'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_remove_morpheme_sep_pfx(self):
-        morpheme = 'mor-'
-        actual_output = Qc.remove_morpheme_sep(morpheme)
-        desired_output = 'mor'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_remove_morpheme_sep_clitic_sfx(self):
-        morpheme = '=mor'
-        actual_output = Qc.remove_morpheme_sep(morpheme)
-        desired_output = 'mor'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_remove_morpheme_sep_clitic_pfx(self):
-        morpheme = 'mor='
-        actual_output = Qc.remove_morpheme_sep(morpheme)
-        desired_output = 'mor'
-        self.assertEqual(actual_output, desired_output)
-
     # ---------- untranscribed_morphology_tier ----------
 
     def test_null_untranscribed_morphology_tier_question_marks(self):
@@ -197,38 +171,6 @@ class TestQaqetCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    # ---------- unify_unknowns_morpheme ----------
-
-    def test_unify_unknowns_morpheme_question_mark(self):
-        morpheme = '??'
-        actual_output = Qc.unify_unknowns_morpheme(morpheme)
-        desired_output = '???'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_unify_unknowns_morpheme_xxx(self):
-        morpheme = 'xxx'
-        actual_output = Qc.unify_unknowns_morpheme(morpheme)
-        desired_output = '???'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_unify_unknowns_morpheme_x(self):
-        morpheme = 'x'
-        actual_output = Qc.unify_unknowns_morpheme(morpheme)
-        desired_output = '???'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_unify_unknowns_morpheme_sfx(self):
-        morpheme = 'sfx'
-        actual_output = Qc.unify_unknowns_morpheme(morpheme)
-        desired_output = 'sfx'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_unify_unknowns_morpheme_pfx(self):
-        morpheme = 'pfx'
-        actual_output = Qc.unify_unknowns_morpheme(morpheme)
-        desired_output = 'pfx'
-        self.assertEqual(actual_output, desired_output)
-
     # ---------- clean_morpheme ----------
 
     def test_clean_morpheme_sfx_marker(self):
@@ -237,16 +179,10 @@ class TestQaqetCleaner(unittest.TestCase):
         desired_output = 'sfx'
         self.assertEqual(actual_output, desired_output)
 
-    def test_clean_morpheme_xxx(self):
-        morpheme = 'xxx'
-        actual_output = Qc.clean_morpheme(morpheme)
-        desired_output = '???'
-        self.assertEqual(actual_output, desired_output)
-
     # ---------- clean_pos ----------
 
     def test_clean_pos(self):
         pos = '-TEST'
-        actual_output = Qc.clean_pos_raw(pos)
+        actual_output = Qc.clean_pos(pos)
         desired_output = 'sfx'
         self.assertEqual(actual_output, desired_output)

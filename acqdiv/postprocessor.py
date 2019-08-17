@@ -119,7 +119,7 @@ class PostProcessor:
                         mapping[corpus]))
 
                 # HACK: corpora performing pos mapping in loader
-                if corpus in ['Ku_Waru', 'Tuatschin']:
+                if corpus in ['Ku_Waru', 'Tuatschin', 'Qaqet']:
                     ccp['pos_ud'] = {}
                 else:
                     ccp['pos_ud'] = MorphemeMappingCSVParser.parse(
@@ -614,9 +614,6 @@ class PostProcessor:
         print("_morphemes_unify_label")
         self._morphemes_unify_label()
 
-        print("_morphemes_unify_label_qaqet")
-        self._morphemes_unify_label_qaqet()
-
     def _morphemes_infer_labels(self):
         """Perform morpheme and POS tag substitutions given the metadata_path file.
 
@@ -653,7 +650,7 @@ class PostProcessor:
         If no key is defined in the corpus ini file, then None (NULL) is written
         to the database.
         """
-        blacklist = {'Ku_Waru', 'Tuatschin'}
+        blacklist = {'Ku_Waru', 'Tuatschin', 'Qaqet'}
 
         for corpus in self.corpora_in_DB:
 
@@ -684,60 +681,6 @@ class PostProcessor:
 
             query.close()
             self._update_rows(db.Morpheme.__table__, 'morpheme_id', results)
-
-    def _morphemes_unify_label_qaqet(self):
-        """Infer gloss and pos for Qaqet.
-
-        Use pos_raw und gloss_raw to infer pos and gloss. Other than in
-        _morphemes_unify_label raw_labels are first split (by '.') into
-        atomic labels before substitution. The substituted
-        atomic labels are then joined again to complex labels (by '.').
-
-        If no subsitute for the given label is found, it gets a None/Null.
-        If no substitute is found for only one atomic label in a complex
-        label then the not found label gets a '???' (while the other labels
-        are normally substituted).
-        """
-        s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw,
-                       db.Morpheme.pos_raw]).where(
-            db.Morpheme.corpus == 'Qaqet')
-        query = self.conn.execute(s)
-        results = []
-        for corpus, rows in groupby(query, lambda r: r[1]):
-            config = self.get_config(corpus)
-            glosses = config['gloss']
-            poses = config['pos']
-            for row in rows:
-
-                # Get the gloss label.
-                if row.gloss_raw:
-                    atms_gloss_raw = row.gloss_raw.split('.')
-                    gloss = []
-                    for atm_gl_raw in atms_gloss_raw:
-                        if atm_gl_raw not in glosses:
-                            atm_gl = '???'
-                        else:
-                            atm_gl = glosses[atm_gl_raw]
-                        gloss.append(atm_gl)
-                    # If all atm_poses are '???', set to None.
-                    for atm_gloss in gloss:
-                        if atm_gloss != '???':
-                            gloss = '.'.join(gloss)
-                            break
-                    else:
-                        gloss = None
-                else:
-                    gloss = None
-
-                # Get the POS label.
-                if row.pos_raw and row.pos_raw in poses:
-                    pos = poses[row.pos_raw]
-                else:
-                    pos = None
-
-                results.append({'morpheme_id': row.id, 'gloss': gloss, 'pos': pos})
-        query.close()
-        self._update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
     def process_words_table(self):
         """Add POS labels to the word table."""

@@ -1,6 +1,8 @@
 import re
 
 from acqdiv.parsers.toolbox.cleaners.ToolboxCleaner import ToolboxCleaner
+from acqdiv.parsers.corpora.main.qaqet.QaqetGlossMapper import QaqetGlossMapper
+from acqdiv.parsers.corpora.main.qaqet.QaqetPOSMapper import QaqetPOSMapper
 
 
 class QaqetCleaner(ToolboxCleaner):
@@ -139,38 +141,16 @@ class QaqetCleaner(ToolboxCleaner):
     # ---------- morpheme ----------
 
     @classmethod
-    def unify_unknowns_morpheme(cls, morpheme):
-        unknown_re = re.compile(r'\bx+|\?{2}|\*{3}')
-        return unknown_re.sub('???', morpheme)
+    def clean_gloss(cls, gloss):
+        return QaqetGlossMapper.map(gloss)
 
     @classmethod
-    def clean_morpheme(cls, morpheme):
-        morpheme = cls.unify_unknowns_morpheme(morpheme)
-        morpheme = cls.remove_morpheme_sep(morpheme)
-        return morpheme
+    def clean_pos(cls, pos):
+        return QaqetPOSMapper.map(pos)
 
     @classmethod
-    def infer_pos(cls, pos):
-        if pos.startswith('-') or pos.startswith('='):
-            return 'sfx'
-        elif pos.endswith('-') or pos.endswith('='):
-            return 'sfx'
-        else:
-            return pos
-
-    @classmethod
-    def clean_pos_raw(cls, pos):
-        pos = cls.infer_pos(pos)
-        pos = cls.unify_unknowns_morpheme(pos)
-        return pos
-
-    @classmethod
-    def remove_morpheme_sep(cls, morpheme):
-        """Remove morpheme and clitic separators.
-
-        Morpheme (-), clitic (=)
-        """
-        return morpheme.strip('-').strip('=')
+    def clean_pos_ud(cls, pos_ud):
+        return QaqetPOSMapper.map(pos_ud, ud=True)
 
     @classmethod
     def lang2lang(cls, lang):
@@ -188,5 +168,4 @@ class QaqetCleaner(ToolboxCleaner):
     @classmethod
     def clean_lang(cls, lang):
         lang = super().clean_lang(lang)
-        lang = cls.remove_morpheme_sep(lang)
         return cls.lang2lang(lang)
