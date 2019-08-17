@@ -1,6 +1,10 @@
 import re
 
 from acqdiv.parsers.toolbox.cleaners.ToolboxCleaner import ToolboxCleaner
+from acqdiv.parsers.corpora.main.russian.RussianGlossMapper \
+    import RussianGlossMapper
+from acqdiv.parsers.corpora.main.russian.RussianPOSMapper \
+    import RussianPOSMapper
 
 
 class RussianCleaner(ToolboxCleaner):
@@ -77,3 +81,15 @@ class RussianCleaner(ToolboxCleaner):
     @classmethod
     def clean_lang_tier(cls, lang_tier):
         return cls.clean_gloss_pos_punctuation(lang_tier)
+
+    @classmethod
+    def clean_gloss(cls, gloss):
+        return RussianGlossMapper.map(gloss)
+
+    @classmethod
+    def clean_pos(cls, pos):
+        return RussianPOSMapper.map(pos)
+
+    @classmethod
+    def clean_pos_ud(cls, pos_ud):
+        return RussianPOSMapper.map(pos_ud, ud=True)
