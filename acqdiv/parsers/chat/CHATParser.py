@@ -18,8 +18,6 @@ class CHATParser(SessionParser):
     """
 
     def __init__(self, session_path):
-        self.session = Session()
-
         self.session_path = session_path
         self.session_filename = os.path.basename(self.session_path)
 
@@ -55,16 +53,15 @@ class CHATParser(SessionParser):
         Returns:
             acqdiv.model.Session.Session: The Session instance.
         """
-        self.add_session_metadata()
-        self.add_speakers()
-        self.add_records()
+        session = Session()
+        self.add_session_metadata(session)
+        self.add_speakers(session)
+        self.add_records(session)
 
-        return self.session
+        return session
 
-    def add_session_metadata(self):
-        """Add the metadata of a session."""
-        session = self.session
-
+    def add_session_metadata(self, session):
+        """Add the metadata to the session."""
         date = self.cleaner.clean_date(self.reader.get_session_date())
         media_filename = self.reader.get_session_media_filename()
 
@@ -76,8 +73,8 @@ class CHATParser(SessionParser):
         session.date = date if date else None
         session.media_filename = media_filename if media_filename else None
 
-    def add_speakers(self):
-        """Add the speakers of a session."""
+    def add_speakers(self, session):
+        """Add the speakers to the session."""
         while self.reader.load_next_speaker():
             speaker = Speaker()
 
@@ -105,19 +102,19 @@ class CHATParser(SessionParser):
             speaker.languages_spoken = language if language else None
             speaker.birth_date = birth_date if birth_date else None
 
-            self.session.speakers.append(speaker)
+            session.speakers.append(speaker)
 
-    def add_records(self):
+    def add_records(self, session):
         """Add the records."""
         while self.reader.load_next_record():
-            self.add_utterance()
-            self.add_words()
-            self.add_morphemes()
+            utt = self.add_utterance(session)
+            self.add_words(utt)
+            self.add_morphemes(utt)
 
-    def add_utterance(self):
-        """Add the utterance."""
+    def add_utterance(self, session):
+        """Add the utterance to the session."""
         utt = Utterance()
-        self.session.utterances.append(utt)
+        session.utterances.append(utt)
         utt.source_id = self.get_source_id()
         utt.addressee = self.cleaner.clean_record_speaker_label(
             self.session_filename, self.reader.get_addressee())
@@ -160,10 +157,10 @@ class CHATParser(SessionParser):
         utt.gloss = gloss_tier
         utt.pos = pos_tier
 
-    def add_words(self):
-        """Add the words."""
-        utt = self.session.utterances[-1]
+        return utt
 
+    def add_words(self, utt):
+        """Add the words to the utterance."""
         actual_words = self.reader.get_utterance_words(utt.actual_utterance)
         target_words = self.reader.get_utterance_words(utt.target_utterance)
 
@@ -200,10 +197,8 @@ class CHATParser(SessionParser):
             return '{}_{}'.format(fname_no_ext, uid)
         return uid
 
-    def add_morphemes(self):
-        """Add the morphemes."""
-        utt = self.session.utterances[-1]
-
+    def add_morphemes(self, utt):
+        """Add the morphemes to the utterance."""
         # get morpheme words from the respective morphology tiers
         wsegs = self.reader.get_seg_words(utt.morpheme)
         wglosses = self.reader.get_gloss_words(utt.gloss)
