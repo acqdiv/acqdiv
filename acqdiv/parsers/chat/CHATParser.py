@@ -107,11 +107,65 @@ class CHATParser(SessionParser):
 
             self.session.speakers.append(speaker)
 
-    def add_words(self, actual_utt, target_utt):
-        actual_words = self.reader.get_utterance_words(actual_utt)
-        target_words = self.reader.get_utterance_words(target_utt)
+    def add_records(self):
+        """Add the records."""
+        while self.reader.load_next_record():
+            self.add_utterance()
+            self.add_words()
+            self.add_morphemes()
 
+    def add_utterance(self):
+        """Add the utterance."""
+        utt = Utterance()
+        self.session.utterances.append(utt)
+        utt.source_id = self.get_source_id()
+        utt.addressee = self.cleaner.clean_record_speaker_label(
+            self.session_filename, self.reader.get_addressee())
+        utt.translation = self.cleaner.clean_translation(
+            self.reader.get_translation())
+        utt.comment = self.reader.get_comments()
+        utt.speaker_label = self.cleaner.clean_record_speaker_label(
+            self.session_filename, self.reader.get_record_speaker_label())
+        utt.utterance_raw = self.reader.get_utterance()
+        utt.start_raw = self.reader.get_start_time()
+        utt.end_raw = self.reader.get_end_time()
+        utt.sentence_type = self.reader.get_sentence_type()
+        utt.warning = ''
+
+        # set raw morphology tiers
+        utt.morpheme_raw = self.reader.get_seg_tier()
+        utt.gloss_raw = self.reader.get_gloss_tier()
+        utt.pos_raw = self.reader.get_pos_tier()
+
+        # clean the morphology tiers
+        seg_tier = self.cleaner.clean_seg_tier(utt.morpheme_raw)
+        gloss_tier = self.cleaner.clean_gloss_tier(utt.gloss_raw)
+        pos_tier = self.cleaner.clean_pos_tier(utt.pos_raw)
+
+        # actual & target distinction
+        actual_utt = self.cleaner.clean_utterance(
+            self.reader.get_actual_utterance())
+        target_utt = self.cleaner.clean_utterance(
+            self.reader.get_target_utterance())
+
+        # cross cleaning
+        actual_utt, target_utt, seg_tier, gloss_tier, pos_tier = \
+            self.cleaner.utterance_cross_clean(
+                utt.utterance_raw, actual_utt, target_utt,
+                seg_tier, gloss_tier, pos_tier)
+
+        utt.actual_utterance = actual_utt
+        utt.target_utterance = target_utt
+        utt.morpheme = seg_tier
+        utt.gloss = gloss_tier
+        utt.pos = pos_tier
+
+    def add_words(self):
+        """Add the words."""
         utt = self.session.utterances[-1]
+
+        actual_words = self.reader.get_utterance_words(utt.actual_utterance)
+        target_words = self.reader.get_utterance_words(utt.target_utterance)
 
         for word_actual, word_target in zip(actual_words, target_words):
 
@@ -134,140 +188,8 @@ class CHATParser(SessionParser):
                     w.word_actual = None
                     w.word_target = None
 
-    def add_records(self):
-        """
-        """
-        while self.reader.load_next_record():
-            utt = Utterance()
-            self.session.utterances.append(utt)
-
-            utt.source_id = self.get_source_id()
-            utt.addressee = self.cleaner.clean_record_speaker_label(
-                self.session_filename, self.reader.get_addressee())
-            utt.translation = self.cleaner.clean_translation(
-                                self.reader.get_translation())
-            utt.comment = self.reader.get_comments()
-            utt.speaker_label = self.cleaner.clean_record_speaker_label(
-                self.session_filename, self.reader.get_record_speaker_label())
-            utt.utterance_raw = self.reader.get_utterance()
-            utt.start_raw = self.reader.get_start_time()
-            utt.end_raw = self.reader.get_end_time()
-            utt.sentence_type = self.reader.get_sentence_type()
-            utt.warning = ''
-
-            # actual & target distinction
-            actual_utt = self.cleaner.clean_utterance(
-                self.reader.get_actual_utterance())
-            target_utt = self.cleaner.clean_utterance(
-                self.reader.get_target_utterance())
-
-            # get morphology tiers
-            utt.morpheme_raw = self.reader.get_seg_tier()
-            utt.gloss_raw = self.reader.get_gloss_tier()
-            utt.pos_raw = self.reader.get_pos_tier()
-
-            # clean the morphology tiers
-            seg_tier = self.cleaner.clean_seg_tier(utt.morpheme_raw)
-            gloss_tier = self.cleaner.clean_gloss_tier(utt.gloss_raw)
-            pos_tier = self.cleaner.clean_pos_tier(utt.pos_raw)
-
-            # cross cleaning
-            actual_utt, target_utt, seg_tier, gloss_tier, pos_tier = \
-                self.cleaner.utterance_cross_clean(
-                    utt.utterance_raw, actual_utt, target_utt,
-                    seg_tier, gloss_tier, pos_tier)
-
-            # get dictionary of words
-            self.add_words(actual_utt, target_utt)
-
-            # rebuild utterance from cleaned words
-            utt.utterance = ' '.join(w.word for w in utt.words)
-
-            # get morpheme words from the respective morphology tiers
-            wsegs = self.reader.get_seg_words(seg_tier)
-            wglosses = self.reader.get_gloss_words(gloss_tier)
-            wposes = self.reader.get_pos_words(pos_tier)
-
-            # determine number of words to be considered based on
-            # main morphology tier and existence of this morphology tier
-            if self.reader.get_main_morpheme() == 'segment':
-                wlen = len(wsegs)
-                # segment tier does not exist
-                if not wlen:
-                    wlen = len(wglosses)
-            else:
-                wlen = len(wglosses)
-                # gloss tier does not exist
-                if not wlen:
-                    wlen = len(wsegs)
-
-            # if both segment and gloss tier do not exists, take the pos tier
-            if not wlen:
-                wlen = len(wposes)
-
-            # check for wm-misalignments between morphology tiers
-            # if misaligned, replace by a list of empty strings
-            if wlen != len(wsegs):
-                wsegs = wlen*['']
-            if wlen != len(wglosses):
-                wglosses = wlen*['']
-            if wlen != len(wposes):
-                wposes = wlen*['']
-
-            # collect morpheme data of an utterance
-            # go through all morpheme words
-            for wseg, wgloss, wpos in zip(wsegs, wglosses, wposes):
-
-                cleaned_wseg = self.cleaner.clean_seg_word(wseg)
-                cleaned_wgloss = self.cleaner.clean_gloss_word(wgloss)
-                cleaned_wpos = self.cleaner.clean_pos_word(wpos)
-
-                # collect morpheme data of a word
-                wmorphemes = []
-
-                # get morphemes from the morpheme words
-                segments = self.reader.get_segments(cleaned_wseg)
-                glosses = self.reader.get_glosses(cleaned_wgloss)
-                poses = self.reader.get_poses(cleaned_wpos)
-
-                # determine number of morphemes to be considered
-                if self.reader.get_main_morpheme() == 'segment':
-                    mlen = len(segments)
-                    if not mlen:
-                        mlen = len(glosses)
-                else:
-                    mlen = len(glosses)
-                    if not mlen:
-                        mlen = len(segments)
-
-                # if both segment and gloss do not exists, take the pos
-                if not mlen:
-                    mlen = len(poses)
-
-                # check for mm-misalignments between morphology tiers
-                # if misaligned, replace by a list of empty strings
-                if mlen != len(segments):
-                    segments = mlen*['']
-                if mlen != len(glosses):
-                    glosses = mlen*['']
-                if mlen != len(poses):
-                    poses = mlen*['']
-
-                # go through morphemes
-                for seg, gloss, pos in zip(segments, glosses, poses):
-                    m = Morpheme()
-
-                    m.morpheme_language = self.reader.get_morpheme_language(
-                                            seg, gloss, pos)
-
-                    # clean the morphemes
-                    m.morpheme = self.cleaner.clean_segment(seg)
-                    m.gloss_raw = self.cleaner.clean_gloss(gloss)
-                    m.pos_raw = self.cleaner.clean_pos(pos)
-
-                    wmorphemes.append(m)
-
-                utt.morphemes.append(wmorphemes)
+        # rebuild utterance from cleaned words
+        utt.utterance = ' '.join(w.word for w in utt.words)
 
     def get_source_id(self):
         """Get the source id of the current utterance."""
@@ -277,3 +199,90 @@ class CHATParser(SessionParser):
         if fname:
             return '{}_{}'.format(fname_no_ext, uid)
         return uid
+
+    def add_morphemes(self):
+        """Add the morphemes."""
+        utt = self.session.utterances[-1]
+
+        # get morpheme words from the respective morphology tiers
+        wsegs = self.reader.get_seg_words(utt.morpheme)
+        wglosses = self.reader.get_gloss_words(utt.gloss)
+        wposes = self.reader.get_pos_words(utt.pos)
+
+        # determine number of words to be considered based on
+        # main morphology tier and existence of this morphology tier
+        if self.reader.get_main_morpheme() == 'segment':
+            wlen = len(wsegs)
+            # segment tier does not exist
+            if not wlen:
+                wlen = len(wglosses)
+        else:
+            wlen = len(wglosses)
+            # gloss tier does not exist
+            if not wlen:
+                wlen = len(wsegs)
+        # if both segment and gloss tier do not exists, take the pos tier
+        if not wlen:
+            wlen = len(wposes)
+        # check for wm-misalignments between morphology tiers
+        # if misaligned, replace by a list of empty strings
+        if wlen != len(wsegs):
+            wsegs = wlen * ['']
+        if wlen != len(wglosses):
+            wglosses = wlen * ['']
+        if wlen != len(wposes):
+            wposes = wlen * ['']
+        # collect morpheme data of an utterance
+        # go through all morpheme words
+        for wseg, wgloss, wpos in zip(wsegs, wglosses, wposes):
+
+            cleaned_wseg = self.cleaner.clean_seg_word(wseg)
+            cleaned_wgloss = self.cleaner.clean_gloss_word(wgloss)
+            cleaned_wpos = self.cleaner.clean_pos_word(wpos)
+
+            # collect morpheme data of a word
+            wmorphemes = []
+
+            # get morphemes from the morpheme words
+            segments = self.reader.get_segments(cleaned_wseg)
+            glosses = self.reader.get_glosses(cleaned_wgloss)
+            poses = self.reader.get_poses(cleaned_wpos)
+
+            # determine number of morphemes to be considered
+            if self.reader.get_main_morpheme() == 'segment':
+                mlen = len(segments)
+                if not mlen:
+                    mlen = len(glosses)
+            else:
+                mlen = len(glosses)
+                if not mlen:
+                    mlen = len(segments)
+
+            # if both segment and gloss do not exists, take the pos
+            if not mlen:
+                mlen = len(poses)
+
+            # check for mm-misalignments between morphology tiers
+            # if misaligned, replace by a list of empty strings
+            if mlen != len(segments):
+                segments = mlen * ['']
+            if mlen != len(glosses):
+                glosses = mlen * ['']
+            if mlen != len(poses):
+                poses = mlen * ['']
+
+            # go through morphemes
+            for seg, gloss, pos in zip(segments, glosses, poses):
+                m = Morpheme()
+
+                m.morpheme_language = self.reader.get_morpheme_language(
+                    seg, gloss, pos)
+
+                # clean the morphemes
+                m.morpheme = self.cleaner.clean_segment(seg)
+                m.gloss_raw = self.cleaner.clean_gloss(gloss)
+                m.pos_raw = self.cleaner.clean_pos(pos)
+
+                wmorphemes.append(m)
+
+            utt.morphemes.append(wmorphemes)
