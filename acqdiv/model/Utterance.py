@@ -53,7 +53,7 @@ class Utterance:
     comment: str
     warning: str
     words: List[Word]
-    morphemes: List[Morpheme]
+    morphemes: List[List[Morpheme]]
 
     def __init__(self):
         """Initialize the variables representing an utterance."""
