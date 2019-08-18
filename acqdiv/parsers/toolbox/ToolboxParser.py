@@ -107,7 +107,7 @@ class ToolboxParser(SessionParser):
         if self.record_reader.is_record(rec):
             rec = self.cleaner.cross_clean(rec)
 
-            self.add_utterance(rec)
+            utt = self.add_utterance(rec)
 
             actual_utterance = self.cleaner.clean_utterance(
                 self.record_reader.get_actual_utterance(rec))
@@ -123,23 +123,7 @@ class ToolboxParser(SessionParser):
                 self.record_reader.get_id_tier(rec)
             )
 
-            self.align_words_morphemes()
-
-    def align_words_morphemes(self):
-        """Align words and morphemes.
-
-        Sets the word of the morpheme that it belongs to when there are
-        no misalignments. Also, copies the POS and POS UD to the word.
-        """
-        utt = self.session.utterances[-1]
-        link_to_word = len(utt.morphemes) == len(utt.words)
-        for i, mword in enumerate(utt.morphemes):
-            for morpheme in mword:
-                if link_to_word:
-                    morpheme.word = utt.words[i]
-                    if morpheme.pos not in ['sfx', 'pfx']:
-                        utt.words[i].pos = morpheme.pos
-                        utt.words[i].pos_ud = morpheme.pos_ud
+            self.align_words_morphemes(utt)
 
     def add_utterance(self, rec):
         """Add the utterance to the Session instance.
@@ -164,6 +148,8 @@ class ToolboxParser(SessionParser):
         utt.morpheme_raw = self.record_reader.get_seg_tier(rec)
         utt.gloss_raw = self.record_reader.get_gloss_tier(rec)
         utt.pos_raw = self.record_reader.get_pos_tier(rec)
+
+        return utt
 
     def add_words(self, actual_utterance, target_utterance):
         """Get list of words from the utterance.

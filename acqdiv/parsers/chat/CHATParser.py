@@ -110,6 +110,7 @@ class CHATParser(SessionParser):
             utt = self.add_utterance(session)
             self.add_words(utt)
             self.add_morphemes(utt)
+            self.align_words_morphemes(utt)
 
     def add_utterance(self, session):
         """Add the utterance to the session."""
