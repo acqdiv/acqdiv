@@ -200,35 +200,17 @@ class CHATParser(SessionParser):
 
     def add_morphemes(self, utt):
         """Add the morphemes to the utterance."""
-        # get morpheme words from the respective morphology tiers
         wsegs = self.reader.get_seg_words(utt.morpheme)
         wglosses = self.reader.get_gloss_words(utt.gloss)
         wposes = self.reader.get_pos_words(utt.pos)
 
-        # determine number of words to be considered based on
-        # main morphology tier and existence of this morphology tier
         if self.reader.get_main_morpheme() == 'segment':
-            wlen = len(wsegs)
-            # segment tier does not exist
-            if not wlen:
-                wlen = len(wglosses)
+            wsegs, wglosses, wposes = \
+                self.fix_misalignments([wsegs, wglosses, wposes])
         else:
-            wlen = len(wglosses)
-            # gloss tier does not exist
-            if not wlen:
-                wlen = len(wsegs)
-        # if both segment and gloss tier do not exists, take the pos tier
-        if not wlen:
-            wlen = len(wposes)
-        # check for wm-misalignments between morphology tiers
-        # if misaligned, replace by a list of empty strings
-        if wlen != len(wsegs):
-            wsegs = wlen * ['']
-        if wlen != len(wglosses):
-            wglosses = wlen * ['']
-        if wlen != len(wposes):
-            wposes = wlen * ['']
-        # collect morpheme data of an utterance
+            wglosses, wsegs, wposes = \
+                self.fix_misalignments([wglosses, wsegs, wposes])
+
         # go through all morpheme words
         for wseg, wgloss, wpos in zip(wsegs, wglosses, wposes):
 
@@ -246,26 +228,11 @@ class CHATParser(SessionParser):
 
             # determine number of morphemes to be considered
             if self.reader.get_main_morpheme() == 'segment':
-                mlen = len(segments)
-                if not mlen:
-                    mlen = len(glosses)
+                segments, glosses, poses = \
+                    self.fix_misalignments([segments, glosses, poses])
             else:
-                mlen = len(glosses)
-                if not mlen:
-                    mlen = len(segments)
-
-            # if both segment and gloss do not exists, take the pos
-            if not mlen:
-                mlen = len(poses)
-
-            # check for mm-misalignments between morphology tiers
-            # if misaligned, replace by a list of empty strings
-            if mlen != len(segments):
-                segments = mlen * ['']
-            if mlen != len(glosses):
-                glosses = mlen * ['']
-            if mlen != len(poses):
-                poses = mlen * ['']
+                glosses, segments, poses = \
+                    self.fix_misalignments([glosses, segments, poses])
 
             # go through morphemes
             for seg, gloss, pos in zip(segments, glosses, poses):
@@ -274,7 +241,6 @@ class CHATParser(SessionParser):
                 m.morpheme_language = self.reader.get_morpheme_language(
                     seg, gloss, pos)
 
-                # clean the morphemes
                 m.morpheme = self.cleaner.clean_segment(seg)
                 m.gloss_raw = self.cleaner.clean_gloss(gloss)
                 m.pos_raw = self.cleaner.clean_pos(pos)
