@@ -1,21 +1,27 @@
-from acqdiv.model.Corpus import Corpus
+from typing import List
+
+from acqdiv.model.Utterance import Utterance
+from acqdiv.model.Speaker import Speaker
 
 
 class Session:
+    """Data class representing a session.
+
+    source_id (str): The session name.
+    date (str): The session date.
+    media_filename (str): The media file name of the session.
+    speakers (List[Speaker]): The session speakers.
+    utterances (List[Utterance]): The session utterances.
+    """
+
+    source_id: str
+    date: str
+    media_filename: str
+    speakers: List[Speaker]
+    utterances: List[Utterance]
 
     def __init__(self):
-        """Set variables representing a session.
-
-        corpus (acqdiv.model.Corpus.Corpus): The corpus that the session
-            belongs to.
-        source_id (str): The session name.
-        date (str): The session date.
-        media_filename (str): The media file name of the session.
-        speakers (List[acqdiv.model.Speaker.Speaker]): The session speakers.
-        utterances (List[acqdiv.model.Utterance.Utterance]):
-            The session utterances.
-        """
-        self.corpus = Corpus()
+        """Initialize variables representing a session."""
         self.source_id = ''
         self.date = ''
         self.media_filename = ''

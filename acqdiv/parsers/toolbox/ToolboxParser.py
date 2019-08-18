@@ -84,7 +84,6 @@ class ToolboxParser(SessionParser):
         """Add the speakers of a session."""
         for speaker_dict in self.metadata_reader.metadata['participants']:
             speaker = Speaker()
-            speaker.session = self.session
             speaker.birth_date = speaker_dict.get('birthdate', None)
             speaker.gender_raw = speaker_dict.get('sex', None)
             speaker.code = speaker_dict.get('code', None)
@@ -150,7 +149,6 @@ class ToolboxParser(SessionParser):
         """
         utt = Utterance()
         self.session.utterances.append(utt)
-        utt.session = self.session
 
         utt.speaker_label = self.record_reader.get_speaker_label(rec)
         utt.addressee = self.record_reader.get_addressee(rec)
@@ -179,7 +177,6 @@ class ToolboxParser(SessionParser):
 
         for word in words:
             w = Word()
-            w.utterance = utterance
             utterance.words.append(w)
 
             word_clean = self.cleaner.clean_word(word)
@@ -289,7 +286,6 @@ class ToolboxParser(SessionParser):
                     segments, glosses, poses, langs, ids):
 
                 m = Morpheme()
-                m.utterance = utt
 
                 # clean the morphemes
                 m.morpheme = self.cleaner.clean_seg(seg)

@@ -27,7 +27,6 @@ class QaqetSessionParser(ToolboxParser):
 
         for actual, target in zip(actual_words, target_words):
             w = Word()
-            w.utterance = utt
             utt.words.append(w)
 
             actual_clean = self.cleaner.clean_word(actual)

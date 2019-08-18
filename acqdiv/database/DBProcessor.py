@@ -19,6 +19,11 @@ class DBProcessor:
         self.test = test
         self.engine = self.get_engine(test=self.test)
 
+        # initialize them once for each corpus
+        self.corpus_name = None
+        self.language = None
+        self.morpheme_type = None
+
         # initialize them once for each session
         # to increase performance
         self.insert_session_func = None
@@ -83,6 +88,10 @@ class DBProcessor:
         Args:
             corpus (acqdiv.model.Corpus.Corpus): The corpus.
         """
+        self.corpus_name = corpus.corpus
+        self.language = corpus.language
+        self.morpheme_type = corpus.morpheme_type
+
         for session in corpus.sessions:
             self.insert_session(session)
 
@@ -111,12 +120,9 @@ class DBProcessor:
             self.insert_utterances(session.utterances, s_id)
 
     def insert_session_metadata(self, session):
-        corpus_name = session.corpus.corpus
-        language = session.corpus.language
-
         s_id, = self.insert_session_func(
-            corpus=corpus_name,
-            language=language,
+            corpus=self.corpus_name,
+            language=self.language,
             date=session.date,
             source_id=session.source_id,
             media_id=session.media_filename if session.media_filename else None
@@ -129,13 +135,10 @@ class DBProcessor:
             self.insert_speaker(speaker, s_id)
 
     def insert_speaker(self, speaker, s_id):
-        corpus_name = speaker.session.corpus.corpus
-        language = speaker.session.corpus.language
-
         self.insert_speaker_func(
             session_id_fk=s_id,
-            corpus=corpus_name,
-            language=language,
+            corpus=self.corpus_name,
+            language=self.language,
             birthdate=speaker.birth_date,
             gender_raw=speaker.gender_raw,
             speaker_label=speaker.code,
@@ -152,13 +155,10 @@ class DBProcessor:
             self.insert_morphemes(utt.morphemes, s_id, u_id, w_ids)
 
     def insert_utterance(self, utt, s_id):
-        corpus_name = utt.session.corpus.corpus
-        language = utt.session.corpus.language
-
         u_id, = self.insert_utt_func(
             session_id_fk=s_id,
-            corpus=corpus_name,
-            language=language,
+            corpus=self.corpus_name,
+            language=self.language,
             source_id=utt.source_id,
             speaker_label=utt.speaker_label,
             addressee=utt.addressee if utt.addressee else None,
@@ -187,14 +187,11 @@ class DBProcessor:
         return w_ids
 
     def insert_word(self, w, s_id, u_id):
-        corpus_name = w.utterance.session.corpus.corpus
-        language = w.utterance.session.corpus.language
-
         w_id, = self.insert_word_func(
             session_id_fk=s_id,
             utterance_id_fk=u_id,
-            corpus=corpus_name,
-            language=language,
+            corpus=self.corpus_name,
+            language=self.language,
             word_language=w.word_language if w.word_language else None,
             word=w.word if w.word else None,
             word_actual=w.word_actual if w.word_actual else None,
@@ -217,19 +214,15 @@ class DBProcessor:
                 self.insert_morpheme(m, s_id, u_id, w_id)
 
     def insert_morpheme(self, m, s_id, u_id, w_id):
-        corpus_name = m.utterance.session.corpus.corpus
-        language = m.utterance.session.corpus.language
-        morpheme_type = m.utterance.session.corpus.morpheme_type
-
         self.insert_morph_func(
             session_id_fk=s_id,
             utterance_id_fk=u_id,
             word_id_fk=w_id,
-            corpus=corpus_name,
-            language=language,
+            corpus=self.corpus_name,
+            language=self.language,
             morpheme_language=
             m.morpheme_language if m.morpheme_language else None,
-            type=morpheme_type,
+            type=self.morpheme_type,
             morpheme=m.morpheme if m.morpheme else None,
             gloss_raw=m.gloss_raw if m.gloss_raw else None,
             gloss=m.gloss if m.gloss else None,

@@ -80,7 +80,6 @@ class CHATParser(SessionParser):
         """Add the speakers of a session."""
         while self.reader.load_next_speaker():
             speaker = Speaker()
-            speaker.session = self.session
 
             speaker_label = self.reader.get_speaker_label()
             name = self.reader.get_speaker_name()
@@ -117,7 +116,6 @@ class CHATParser(SessionParser):
         for word_actual, word_target in zip(actual_words, target_words):
 
             w = Word()
-            w.utterance = utt
             utt.words.append(w)
 
             if self.reader.get_standard_form() == 'actual':
@@ -141,7 +139,6 @@ class CHATParser(SessionParser):
         """
         while self.reader.load_next_record():
             utt = Utterance()
-            utt.session = self.session
             self.session.utterances.append(utt)
 
             utt.source_id = self.get_source_id()
@@ -259,7 +256,6 @@ class CHATParser(SessionParser):
                 # go through morphemes
                 for seg, gloss, pos in zip(segments, glosses, poses):
                     m = Morpheme()
-                    m.utterance = utt
 
                     m.morpheme_language = self.reader.get_morpheme_language(
                                             seg, gloss, pos)
