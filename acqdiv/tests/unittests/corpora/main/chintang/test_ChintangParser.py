@@ -78,7 +78,7 @@ class TestChintangParser(unittest.TestCase):
             'sentence_type': utt.sentence_type,
             'comment': utt.comment,
             'warning': utt.warning,
-            'morpheme': utt.morpheme,
+            'morpheme': utt.morpheme_raw,
             'gloss_raw': utt.gloss_raw,
             'pos_raw': utt.pos_raw,
             'translation': utt.translation

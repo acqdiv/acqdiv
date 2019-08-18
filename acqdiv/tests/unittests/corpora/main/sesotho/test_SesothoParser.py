@@ -50,7 +50,7 @@ class TestSesothoParser(unittest.TestCase):
             utt.utterance_raw == 'e tsamo .',
             utt.utterance == 'e tsamaya',
             utt.translation == 'Yes go and',
-            utt.morpheme == 'e tsamay-a .',
+            utt.morpheme_raw == 'e tsamay-a .',
             utt.gloss_raw == 'v^leave-m^i .',
             utt.pos_raw == 'v^leave-m^i .',
             utt.sentence_type == 'default',

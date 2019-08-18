@@ -55,7 +55,7 @@ class TestInuktitutParser(unittest.TestCase):
             utt.utterance_raw == 'Allaigutama  .',
             utt.utterance == 'Allaigutama',
             utt.translation == 'Give me a comb  .',
-            utt.morpheme == 'NR|ollaoguto^comb+NI|mim^MOD_SG .',
+            utt.morpheme_raw == 'NR|ollaoguto^comb+NI|mim^MOD_SG .',
             utt.gloss_raw == 'NR|ollaoguto^comb+NI|mim^MOD_SG .',
             utt.pos_raw == 'NR|ollaoguto^comb+NI|mim^MOD_SG .',
             utt.sentence_type == 'default',

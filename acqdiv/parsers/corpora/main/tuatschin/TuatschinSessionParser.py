@@ -23,7 +23,7 @@ class TuatschinSessionParser(ToolboxParser):
 
     def delete_morphemes(self):
         utt = self.session.utterances[-1]
-        utt.morpheme = ''
+        utt.morpheme_raw = ''
         utt.gloss_raw = ''
         utt.pos_raw = ''
         utt.morphemes = []

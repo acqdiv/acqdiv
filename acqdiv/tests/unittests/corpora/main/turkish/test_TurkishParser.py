@@ -52,7 +52,7 @@ class TestTurkishParser(unittest.TestCase):
             utt.utterance_raw == 'inmekmi istiyo(r)sun ?',
             utt.utterance == 'inmekmi istiyosun',
             utt.translation == '',
-            utt.morpheme == 'V|in-INF-QUE V|iste-IPFV-2S ?',
+            utt.morpheme_raw == 'V|in-INF-QUE V|iste-IPFV-2S ?',
             utt.gloss_raw == 'V|in-INF-QUE V|iste-IPFV-2S ?',
             utt.pos_raw == 'V|in-INF-QUE V|iste-IPFV-2S ?',
             utt.sentence_type == 'question',

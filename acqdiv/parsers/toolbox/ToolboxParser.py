@@ -161,7 +161,7 @@ class ToolboxParser(SessionParser):
         utt.end_raw = self.record_reader.get_end_raw(rec)
         utt.translation = self.record_reader.get_translation(rec)
         utt.comment = self.record_reader.get_comment(rec)
-        utt.morpheme = self.record_reader.get_seg_tier(rec)
+        utt.morpheme_raw = self.record_reader.get_seg_tier(rec)
         utt.gloss_raw = self.record_reader.get_gloss_tier(rec)
         utt.pos_raw = self.record_reader.get_pos_tier(rec)
 

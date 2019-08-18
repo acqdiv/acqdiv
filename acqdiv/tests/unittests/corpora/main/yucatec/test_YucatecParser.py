@@ -50,7 +50,7 @@ class TestYucatecParser(unittest.TestCase):
             utt.utterance_raw == 'baʼax .',
             utt.utterance == 'baʼax',
             utt.translation == 'qué .',
-            utt.morpheme == 'INT|baʼax .',
+            utt.morpheme_raw == 'INT|baʼax .',
             utt.gloss_raw == 'INT|baʼax .',
             utt.pos_raw == 'INT|baʼax .',
             utt.sentence_type == 'default',

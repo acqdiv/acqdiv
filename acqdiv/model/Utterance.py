@@ -13,10 +13,15 @@ class Utterance:
         addressed at.
     utterance_raw (str): The original utterance.
     utterance (str): The cleaned utterance.
+    actual_utterance (str): The actual utterance.
+    target_utterance (str): The target utterance.
     translation (str): The translation of the utterance.
-    morpheme (str): The original morpheme tier.
+    morpheme_raw (str): The original morpheme tier.
+    morpheme (str): The cleaned morpheme tier.
     gloss_raw (str): The original gloss tier.
+    gloss (str): The cleaned gloss tier.
     pos_raw (str): The original POS tag tier.
+    pos (str): The cleaned POS tag tier.
     sentence_type: The type of the utterance.
     childdirected (bool): Whether the utterance is child directed.
     start_raw (str): The original start time of the utterance.
@@ -32,10 +37,15 @@ class Utterance:
     addressee: str
     utterance_raw: str
     utterance: str
+    actual_utterance: str
+    target_utterance: str
     translation: str
+    morpheme_raw: str
     morpheme: str
     gloss_raw: str
+    gloss: str
     pos_raw: str
+    pos: str
     sentence_type: str
     childdirected: str
     start_raw = str
@@ -52,10 +62,15 @@ class Utterance:
         self.addressee = ''
         self.utterance_raw = ''
         self.utterance = ''
+        self.actual_utterance = ''
+        self.target_utterance = ''
         self.translation = ''
+        self.morpheme_raw = ''
         self.morpheme = ''
         self.gloss_raw = ''
+        self.gloss = ''
         self.pos_raw = ''
+        self.pos = ''
         self.sentence_type = ''
         self.childdirected = ''
         self.start_raw = ''

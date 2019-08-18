@@ -73,7 +73,7 @@ class TestRussianParser(unittest.TestCase):
             utt.translation == '',
             utt.comment == '',
             utt.warning == '',
-            utt.morpheme == '',
+            utt.morpheme_raw == '',
             utt.gloss_raw == '',
             utt.pos_raw == ''
             ]

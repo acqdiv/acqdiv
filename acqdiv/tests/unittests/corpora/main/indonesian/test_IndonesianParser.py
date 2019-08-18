@@ -75,7 +75,7 @@ class TestIndonesianParser(unittest.TestCase):
             utt.sentence_type == 'default',
             utt.comment == '',
             utt.warning == '',
-            utt.morpheme == 'w1pfxseg- w1stemseg -w1sfxseg w2stemseg',
+            utt.morpheme_raw == 'w1pfxseg- w1stemseg -w1sfxseg w2stemseg',
             utt.gloss_raw == 'w1pfxgloss- w1stemgloss -w1sfxgloss w2stemgloss',
             utt.pos_raw == 'w1pfxgloss- w1stemgloss -w1sfxgloss w2stemgloss',
             utt.translation == 'This is the translation.'

@@ -162,12 +162,12 @@ class CHATParser(SessionParser):
                 self.reader.get_target_utterance())
 
             # get morphology tiers
-            utt.morpheme = self.reader.get_seg_tier()
+            utt.morpheme_raw = self.reader.get_seg_tier()
             utt.gloss_raw = self.reader.get_gloss_tier()
             utt.pos_raw = self.reader.get_pos_tier()
 
             # clean the morphology tiers
-            seg_tier = self.cleaner.clean_seg_tier(utt.morpheme)
+            seg_tier = self.cleaner.clean_seg_tier(utt.morpheme_raw)
             gloss_tier = self.cleaner.clean_gloss_tier(utt.gloss_raw)
             pos_tier = self.cleaner.clean_pos_tier(utt.pos_raw)
 

@@ -165,7 +165,7 @@ class DBProcessor:
             utterance_raw=utt.utterance_raw if utt.utterance_raw else None,
             utterance=utt.utterance if utt.utterance else None,
             translation=utt.translation if utt.translation else None,
-            morpheme=utt.morpheme if utt.morpheme else None,
+            morpheme=utt.morpheme_raw if utt.morpheme_raw else None,
             gloss_raw=utt.gloss_raw if utt.gloss_raw else None,
             pos_raw=utt.pos_raw if utt.pos_raw else None,
             sentence_type=utt.sentence_type if utt.sentence_type else None,

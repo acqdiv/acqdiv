@@ -51,7 +51,7 @@ class TestJapaneseMiiProParser(unittest.TestCase):
             utt.utterance_raw == 'doozo .',
             utt.utterance == 'doozo',
             utt.translation == '',
-            utt.morpheme == 'n:prop|Hono-chan co:g|doozo .',
+            utt.morpheme_raw == 'n:prop|Hono-chan co:g|doozo .',
             utt.gloss_raw == 'n:prop|Hono-chan co:g|doozo .',
             utt.pos_raw == 'n:prop|Hono-chan co:g|doozo .',
             utt.sentence_type == 'default',
