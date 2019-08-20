@@ -125,7 +125,7 @@ class PostProcessor:
                 # HACK: corpora performing pos mapping in loader
                 if corpus in ['Ku_Waru', 'Tuatschin', 'Qaqet', 'Chintang',
                               'Indonesian', 'Russian', 'English_Manchester1',
-                              'Cree', 'Inuktitut', 'Yucatec']:
+                              'Cree', 'Inuktitut', 'Yucatec', 'Sesotho']:
                     ccp['pos_ud'] = {}
                 else:
                     ccp['pos_ud'] = MorphemeMappingCSVParser.parse(
@@ -582,7 +582,7 @@ class PostProcessor:
     def _morphemes_infer_labels(self):
         """Perform morpheme and POS tag substitutions given the metadata_path file.
 
-        Japanese_MiiPro, Japanese_Miyata, Sesotho and Turkish have
+        Japanese_MiiPro, Japanese_Miyata and Turkish have
         substitutions defined in their metadata_path files.
         """
         s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw,
@@ -617,7 +617,7 @@ class PostProcessor:
         """
         blacklist = {'Ku_Waru', 'Tuatschin', 'Qaqet', 'Chintang', 'Indonesian',
                      'Russian', 'English_Manchester1', 'Cree', 'Inuktitut',
-                     'Yucatec'}
+                     'Yucatec', 'Sesotho'}
 
         for corpus in self.corpora_in_DB:
 

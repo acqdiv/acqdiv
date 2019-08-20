@@ -3,6 +3,10 @@ import re
 from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
 from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
     import CHATUtteranceCleaner
+from acqdiv.parsers.corpora.main.sesotho.SesothoGlossMapper \
+    import SesothoGlossMapper
+from acqdiv.parsers.corpora.main.sesotho.SesothoPOSMapper \
+    import SesothoPOSMapper
 
 
 class SesothoCleaner(CHATCleaner):
@@ -54,7 +58,6 @@ class SesothoCleaner(CHATCleaner):
         name = cls.correct_speaker_name(name, label)
 
         return label, name, role, age, gender, language, birth_date
-
 
     # ---------- utterance cleaning ----------
 
@@ -206,36 +209,6 @@ class SesothoCleaner(CHATCleaner):
         return re.sub(r'[()]', '', seg_word)
 
     @classmethod
-    def remove_markers(cls, gloss_word):
-        """Remove noun and verb markers."""
-        gloss_word = cls.remove_noun_markers(gloss_word)
-        gloss_word = cls.remove_verb_markers(gloss_word)
-        return gloss_word
-
-    @staticmethod
-    def remove_noun_markers(gloss_word):
-        """Remove noun markers."""
-        return re.sub(r'[nN]\^(?=\d)', '', gloss_word)
-
-    @staticmethod
-    def remove_verb_markers(gloss_word):
-        """Remove verb markers."""
-        return re.sub(r'[vs]\^', '', gloss_word)
-
-    @staticmethod
-    def clean_proper_names_gloss_words(gloss_word):
-        """Clean glosses of proper names.
-
-        In proper names substitute 'n^' marker with 'a_'.
-        Lowercase the labels of propernames.
-        """
-        gloss_word = re.sub(r'[nN]\^([gG]ame|[nN]ame|[pP]lace|[sS]ong)',
-                            r'a_\1', gloss_word)
-        if re.search(r'a_(Game|Name|Place|Song)', gloss_word):
-            gloss_word = gloss_word.lower()
-        return gloss_word
-
-    @classmethod
     def replace_concatenators(cls, gloss_word):
         """Replace '_' as concatenator of glosses with '.'.
 
@@ -270,29 +243,6 @@ class SesothoCleaner(CHATCleaner):
         return gloss_word
 
     @staticmethod
-    def remove_nominal_concord_markers(gloss):
-        """Remove markers for nominal concord."""
-        match = re.search(r'^(d|lr|obr|or|pn|ps)\d+', gloss)
-        if match:
-            pos = match.group(1)
-            return re.sub(pos, '', gloss)
-
-        return gloss
-
-    @staticmethod
-    def unify_untranscribed_glosses(gloss):
-        """Unify untranscribed glosses.
-
-        In Sesotho glossing for words which are not understood or
-        couldn't be analyzed are marked by 'word' or by 'xxx'. Turn
-        both into the standart '???'.
-        """
-        if gloss == 'word' or gloss == 'xxx':
-            return '???'
-
-        return gloss
-
-    @staticmethod
     def remove_parentheses_inf(gloss_word):
         """Remove parentheses from infinitives.
 
@@ -305,18 +255,20 @@ class SesothoCleaner(CHATCleaner):
         return gloss_word
 
     @classmethod
-    def clean_gloss_raw(cls, gloss):
-        """Clean a Sesotho gloss."""
-        for method in [cls.remove_markers,
-                       cls.clean_proper_names_gloss_words,
-                       cls.remove_nominal_concord_markers,
-                       cls.unify_untranscribed_glosses]:
-            gloss = method(gloss)
-        return gloss
-
-    @classmethod
     def clean_gloss_word(cls, gloss_word):
         """Clean a Sesotho gloss word."""
         gloss_word = cls.replace_concatenators(gloss_word)
         gloss_word = cls.remove_parentheses_inf(gloss_word)
         return super().clean_gloss_word(gloss_word)
+
+    @classmethod
+    def clean_gloss(cls, gloss):
+        return SesothoGlossMapper.map(gloss)
+
+    @classmethod
+    def clean_pos(cls, pos):
+        return SesothoPOSMapper.map(pos)
+
+    @classmethod
+    def clean_pos_ud(cls, pos_ud):
+        return SesothoPOSMapper.map(pos_ud, ud=True)

@@ -80,7 +80,7 @@ class TestSesothoParser(unittest.TestCase):
         m2 = utt.morphemes[0][1]
 
         morphemes = [
-            m1.gloss_raw == 'leave',
+            m1.gloss_raw == 'v^leave',
             m1.morpheme == '',
             m1.morpheme_language == '',
             m1.pos_raw == 'v',
