@@ -3,6 +3,10 @@ import re
 from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
 from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
     import CHATUtteranceCleaner
+from acqdiv.parsers.corpora.main.yucatec.YucatecGlossMapper \
+    import YucatecGlossMapper
+from acqdiv.parsers.corpora.main.yucatec.YucatecPOSMapper \
+    import YucatecPOSMapper
 
 
 class YucatecCleaner(CHATCleaner):
@@ -86,3 +90,17 @@ class YucatecCleaner(CHATCleaner):
                 cls.remove_colon_dash]:
             morpheme_word = cleaning_method(morpheme_word)
         return morpheme_word
+
+    # ---------- morpheme cleaning ----------
+
+    @classmethod
+    def clean_gloss(cls, gloss):
+        return YucatecGlossMapper.map(gloss)
+
+    @classmethod
+    def clean_pos(cls, pos):
+        return YucatecPOSMapper.map(pos)
+
+    @classmethod
+    def clean_pos_ud(cls, pos_ud):
+        return YucatecPOSMapper.map(pos_ud, ud=True)

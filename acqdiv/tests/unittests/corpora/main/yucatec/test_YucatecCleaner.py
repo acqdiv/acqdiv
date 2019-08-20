@@ -54,3 +54,21 @@ class TestYucatecCleaner(unittest.TestCase):
         actual_output = YucatecCleaner.remove_colon_dash(word)
         desired_output = 'STEM|stem'
         self.assertEqual(actual_output, desired_output)
+
+    def test_clean_gloss(self):
+        gloss = '2POSS:SG'
+        actual = YucatecCleaner.clean_gloss(gloss)
+        expected = '2SG.POSS'
+        self.assertEqual(actual, expected)
+
+    def test_clean_pos(self):
+        pos = 'V:TRANS'
+        actual = YucatecCleaner.clean_pos(pos)
+        expected = 'V'
+        self.assertEqual(actual, expected)
+
+    def test_clean_pos_ud(self):
+        pos_ud = 'V:TRANS'
+        actual = YucatecCleaner.clean_pos_ud(pos_ud)
+        expected = 'VERB'
+        self.assertEqual(actual, expected)
