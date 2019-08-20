@@ -188,35 +188,13 @@ class ToolboxParser(SessionParser):
         wlangs = self.record_reader.get_lang_words(lang_tier)
         wids = self.record_reader.get_id_words(id_tier)
 
-        # determine number of words to be considered based on
-        # main morphology tier and existence of this morphology tier
+        # fix misalignments
         if self.record_reader.get_main_morpheme() == 'segment':
-            wlen = len(wsegs)
-            # segment tier does not exist
-            if not wlen:
-                wlen = len(wglosses)
+            wsegs, wglosses, wposes, wlangs, wids = self.fix_misalignments(
+                [wsegs, wglosses, wposes, wlangs, wids])
         else:
-            wlen = len(wglosses)
-            # gloss tier does not exist
-            if not wlen:
-                wlen = len(wsegs)
-
-        # if both segment and gloss tier do not exists, take the pos tier
-        if not wlen:
-            wlen = len(wposes)
-
-        # check for wm-misalignments between morphology tiers
-        # if misaligned, replace by a list of empty strings
-        if wlen != len(wsegs):
-            wsegs = wlen * ['']
-        if wlen != len(wglosses):
-            wglosses = wlen * ['']
-        if wlen != len(wposes):
-            wposes = wlen * ['']
-        if wlen != len(wlangs):
-            wlangs = wlen * ['']
-        if wlen != len(wids):
-            wids = wlen * ['']
+            wglosses, wsegs, wposes, wlangs, wids = self.fix_misalignments(
+                [wglosses, wsegs, wposes, wlangs, wids])
 
         utt = self.session.utterances[-1]
 
@@ -224,6 +202,7 @@ class ToolboxParser(SessionParser):
         for wseg, wgloss, wpos, wlang, wid in zip(
                 wsegs, wglosses, wposes, wlangs, wids):
 
+            # clean the morpheme words
             cleaned_wseg = self.cleaner.clean_seg_word(wseg)
             cleaned_wgloss = self.cleaner.clean_gloss_word(wgloss)
             cleaned_wpos = self.cleaner.clean_pos_word(wpos)
@@ -240,32 +219,13 @@ class ToolboxParser(SessionParser):
             langs = self.record_reader.get_langs(cleaned_wlang)
             ids = self.record_reader.get_ids(cleaned_wid)
 
-            # determine number of morphemes to be considered
+            # fix misalignments
             if self.record_reader.get_main_morpheme() == 'segment':
-                mlen = len(segments)
-                if not mlen:
-                    mlen = len(glosses)
+                segments, glosses, poses, langs, ids = self.fix_misalignments(
+                    [segments, glosses, poses, langs, ids])
             else:
-                mlen = len(glosses)
-                if not mlen:
-                    mlen = len(segments)
-
-            # if both segment and gloss do not exists, take the pos
-            if not mlen:
-                mlen = len(poses)
-
-            # check for mm-misalignments between morphology tiers
-            # if misaligned, replace by a list of empty strings
-            if mlen != len(segments):
-                segments = mlen * ['']
-            if mlen != len(glosses):
-                glosses = mlen * ['']
-            if mlen != len(poses):
-                poses = mlen * ['']
-            if mlen != len(langs):
-                langs = mlen * ['']
-            if mlen != len(ids):
-                ids = mlen * ['']
+                glosses, segments, poses, langs, ids = self.fix_misalignments(
+                    [glosses, segments, poses, langs, ids])
 
             # go through morphemes
             for seg, gloss, pos, lang, id_ in zip(
