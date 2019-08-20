@@ -141,6 +141,15 @@ class QaqetCleaner(ToolboxCleaner):
     # ---------- morpheme ----------
 
     @classmethod
+    def clean_lang_word(cls, lang_word):
+        if lang_word == '??':
+            return ''
+
+        return lang_word
+
+    # ---------- morpheme ----------
+
+    @classmethod
     def clean_gloss(cls, gloss):
         return QaqetGlossMapper.map(gloss)
 
