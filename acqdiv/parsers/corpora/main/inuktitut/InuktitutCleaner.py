@@ -3,6 +3,10 @@ import re
 from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
 from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
     import CHATUtteranceCleaner
+from acqdiv.parsers.corpora.main.inuktitut.InuktitutGlossMapper \
+    import InuktitutGlossMapper
+from acqdiv.parsers.corpora.main.inuktitut.InuktitutPOSMapper \
+    import InuktitutPOSMapper
 
 
 class InuktitutCleaner(CHATCleaner):
@@ -86,43 +90,14 @@ class InuktitutCleaner(CHATCleaner):
         """Remove english markers from the segment."""
         return cls.remove_english_marker(seg)
 
-    @staticmethod
-    def replace_stem_gram_gloss_connector(gloss):
-        """Replace the stem and grammatical gloss connector.
-
-        A stem gloss is connected with a grammatical gloss by an ampersand.
-        The connector is replaced by a dot.
-
-        Args:
-            gloss (str): The gloss.
-
-        Returns:
-            str: The stem and grammatical connector replaced by a dot.
-        """
-        return gloss.replace('&', '.')
+    @classmethod
+    def clean_gloss(cls, gloss):
+        return InuktitutGlossMapper.map(gloss)
 
     @classmethod
-    def clean_gloss_raw(cls, gloss):
-        """Replace the stem and grammatical gloss connector."""
-        return cls.replace_stem_gram_gloss_connector(gloss)
-
-    @staticmethod
-    def replace_pos_separator(pos):
-        """Replace the POS tag separator.
-
-        A morpheme may have several POS tags separated by a pipe.
-        POS tags to the right are subcategories of the POS tags to the left.
-        The separator is replaced by a dot.
-
-        Args:
-            pos (str): The POS tag.
-
-        Returns:
-            str: POS tag separator replaced by a dot.
-        """
-        return pos.replace('|', '.')
+    def clean_pos(cls, pos):
+        return InuktitutPOSMapper.map(pos)
 
     @classmethod
-    def clean_pos_raw(cls, pos):
-        """Replace the POS tag separator."""
-        return cls.replace_pos_separator(pos)
+    def clean_pos_ud(cls, pos_ud):
+        return InuktitutPOSMapper.map(pos_ud, ud=True)
