@@ -53,7 +53,7 @@ class EnglishManchester1Cleaner(CHATCleaner):
         return gloss.replace('ZERO', '∅')
 
     @classmethod
-    def clean_gloss(cls, gloss):
+    def clean_gloss_raw(cls, gloss):
         for cleaning_method in [cls.replace_ampersand, cls.replace_zero]:
             gloss = cleaning_method(gloss)
 
@@ -70,5 +70,5 @@ class EnglishManchester1Cleaner(CHATCleaner):
         return pos.split(':')[0]
 
     @classmethod
-    def clean_pos(cls, pos):
+    def clean_pos_raw(cls, pos):
         return cls.extract_first_pos(pos)

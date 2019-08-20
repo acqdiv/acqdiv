@@ -305,7 +305,7 @@ class SesothoCleaner(CHATCleaner):
         return gloss_word
 
     @classmethod
-    def clean_gloss(cls, gloss):
+    def clean_gloss_raw(cls, gloss):
         """Clean a Sesotho gloss."""
         for method in [cls.remove_markers,
                        cls.clean_proper_names_gloss_words,

@@ -242,8 +242,11 @@ class CHATParser(SessionParser):
                     seg, gloss, pos)
 
                 m.morpheme = self.cleaner.clean_segment(seg)
-                m.gloss_raw = self.cleaner.clean_gloss(gloss)
-                m.pos_raw = self.cleaner.clean_pos(pos)
+                m.gloss_raw = self.cleaner.clean_gloss_raw(gloss)
+                m.gloss = self.cleaner.clean_gloss(gloss)
+                m.pos_raw = self.cleaner.clean_pos_raw(pos)
+                m.pos = self.cleaner.clean_pos(pos)
+                m.pos_ud = self.cleaner.clean_pos_ud(pos)
 
                 wmorphemes.append(m)
 

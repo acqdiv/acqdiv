@@ -102,7 +102,7 @@ class InuktitutCleaner(CHATCleaner):
         return gloss.replace('&', '.')
 
     @classmethod
-    def clean_gloss(cls, gloss):
+    def clean_gloss_raw(cls, gloss):
         """Replace the stem and grammatical gloss connector."""
         return cls.replace_stem_gram_gloss_connector(gloss)
 
@@ -123,6 +123,6 @@ class InuktitutCleaner(CHATCleaner):
         return pos.replace('|', '.')
 
     @classmethod
-    def clean_pos(cls, pos):
+    def clean_pos_raw(cls, pos):
         """Replace the POS tag separator."""
         return cls.replace_pos_separator(pos)

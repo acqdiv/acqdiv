@@ -256,7 +256,7 @@ class CreeCleaner(CHATCleaner):
         return gloss.replace(',', '.').replace('+', '.')
 
     @classmethod
-    def clean_gloss(cls, gloss):
+    def clean_gloss_raw(cls, gloss):
         gloss = cls.clean_morpheme(gloss)
         # gloss = cls.replace_gloss_connector(gloss)
         return gloss
@@ -278,7 +278,7 @@ class CreeCleaner(CHATCleaner):
             return pos_in_parentheses_regex.sub(r'\1{}\3'.format(up_pos), pos)
 
     @classmethod
-    def clean_pos(cls, pos):
+    def clean_pos_raw(cls, pos):
         pos = cls.clean_morpheme(pos)
         return cls.uppercase_pos_in_parentheses(pos)
 

@@ -218,7 +218,7 @@ class CHATCleaner:
         return cls.clean_morpheme(segment)
 
     @classmethod
-    def clean_gloss(cls, gloss):
+    def clean_gloss_raw(cls, gloss):
         """Clean the gloss.
 
         Returns: str
@@ -226,9 +226,24 @@ class CHATCleaner:
         return cls.clean_morpheme(gloss)
 
     @classmethod
-    def clean_pos(cls, pos):
+    def clean_gloss(cls, gloss):
+        """Map original gloss to ACQDIV gloss."""
+        return ''
+
+    @classmethod
+    def clean_pos_raw(cls, pos):
         """Clean the POS tag.
 
         Returns: str
         """
         return cls.clean_morpheme(pos)
+
+    @classmethod
+    def clean_pos(cls, pos):
+        """Map original POS tag to ACQDIV POS tag."""
+        return ''
+
+    @classmethod
+    def clean_pos_ud(cls, pos_ud):
+        """Map original POS tag to Universal Dependency POS tag."""
+        return ''

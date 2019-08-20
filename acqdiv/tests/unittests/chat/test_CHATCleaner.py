@@ -163,14 +163,14 @@ class TestCHATCleaner(unittest.TestCase):
     def test_clean_gloss(self):
         """Test clean_gloss, same input as output."""
         gloss = 'he'
-        actual_output = CHATCleaner.clean_gloss(gloss)
+        actual_output = CHATCleaner.clean_gloss_raw(gloss)
         desired_output = gloss
         self.assertEqual(actual_output, desired_output)
 
     def test_clean_pos(self):
         """Test clean_pos, same input as output."""
         pos = 'he'
-        actual_output = CHATCleaner.clean_pos(pos)
+        actual_output = CHATCleaner.clean_pos_raw(pos)
         desired_output = pos
         self.assertEqual(actual_output, desired_output)
 

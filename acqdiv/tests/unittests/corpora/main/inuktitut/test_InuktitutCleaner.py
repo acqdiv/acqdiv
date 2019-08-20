@@ -193,7 +193,7 @@ class TestInuktitutCleaner(unittest.TestCase):
     def test_clean_gloss(self):
         """Test clean_gloss with an english marker."""
         gloss = 'NR|amaama^baby_bottle&BW NR|amaama^baby_bottle&BW'
-        actual_output = InuktitutCleaner.clean_gloss(gloss)
+        actual_output = InuktitutCleaner.clean_gloss_raw(gloss)
         desired_output = 'NR|amaama^baby_bottle.BW NR|amaama^baby_bottle.BW'
         self.assertEqual(actual_output, desired_output)
 

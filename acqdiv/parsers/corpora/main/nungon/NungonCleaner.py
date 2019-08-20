@@ -124,7 +124,7 @@ class NungonCleaner(CHATCleaner):
         return gloss.replace('+', '.')
 
     @classmethod
-    def clean_gloss(cls, gloss):
+    def clean_gloss_raw(cls, gloss):
         for cleaning_method in [
                 cls.clean_morpheme, cls.replace_slash, cls.replace_plus]:
             gloss = cleaning_method(gloss)

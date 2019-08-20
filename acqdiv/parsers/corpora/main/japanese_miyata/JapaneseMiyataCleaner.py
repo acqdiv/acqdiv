@@ -34,7 +34,7 @@ class JapaneseMiyataCleaner(CHATCleaner):
         return pos.replace(':', '.')
 
     @classmethod
-    def clean_pos(cls, pos):
+    def clean_pos_raw(cls, pos):
         pos = cls.replace_colon_by_dot_pos(pos)
         return pos
 
