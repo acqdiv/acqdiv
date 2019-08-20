@@ -124,7 +124,7 @@ class PostProcessor:
 
                 # HACK: corpora performing pos mapping in loader
                 if corpus in ['Ku_Waru', 'Tuatschin', 'Qaqet', 'Chintang',
-                              'Indonesian', 'Russian']:
+                              'Indonesian', 'Russian', 'English_Manchester1']:
                     ccp['pos_ud'] = {}
                 else:
                     ccp['pos_ud'] = MorphemeMappingCSVParser.parse(
@@ -615,7 +615,7 @@ class PostProcessor:
         to the database.
         """
         blacklist = {'Ku_Waru', 'Tuatschin', 'Qaqet', 'Chintang', 'Indonesian',
-                     'Russian'}
+                     'Russian', 'English_Manchester1'}
 
         for corpus in self.corpora_in_DB:
 

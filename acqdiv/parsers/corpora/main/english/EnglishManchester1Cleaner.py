@@ -3,6 +3,10 @@ import re
 from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
 from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
     import CHATUtteranceCleaner
+from acqdiv.parsers.corpora.main.english.EnglishGlossMapper \
+    import EnglishGlossMapper
+from acqdiv.parsers.corpora.main.english.EnglishPOSMapper \
+    import EnglishPOSMapper
 
 
 class EnglishManchester1Cleaner(CHATCleaner):
@@ -36,39 +40,14 @@ class EnglishManchester1Cleaner(CHATCleaner):
 
     # ---------- morpheme cleaning ----------
 
-    # ---------- gloss cleaning ----------
+    @classmethod
+    def clean_gloss(cls, gloss):
+        return EnglishGlossMapper.map(gloss)
 
     @classmethod
-    def replace_ampersand(cls, gloss):
-        """Replace the ampersand in glosses by a dot.
-
-        Fusional suffixes are suffixed to the stem by an ampersand.
-        Example: be&3S -> be.3S
-        """
-        return gloss.replace('&', '.')
+    def clean_pos(cls, pos):
+        return EnglishPOSMapper.map(pos)
 
     @classmethod
-    def replace_zero(cls, gloss):
-        """Replace ZERO in glosses by ∅."""
-        return gloss.replace('ZERO', '∅')
-
-    @classmethod
-    def clean_gloss_raw(cls, gloss):
-        for cleaning_method in [cls.replace_ampersand, cls.replace_zero]:
-            gloss = cleaning_method(gloss)
-
-        return gloss
-
-    # ---------- POS cleaning ----------
-
-    @staticmethod
-    def extract_first_pos(pos):
-        """Extract the first POS tag.
-
-        Several POS tags are separated by ':'.
-        """
-        return pos.split(':')[0]
-
-    @classmethod
-    def clean_pos_raw(cls, pos):
-        return cls.extract_first_pos(pos)
+    def clean_pos_ud(cls, pos_ud):
+        return EnglishPOSMapper.map(pos_ud, ud=True)

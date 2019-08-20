@@ -7,19 +7,19 @@ from acqdiv.parsers.corpora.main.english.EnglishManchester1Cleaner \
 class ChintangCleanerTest(unittest.TestCase):
 
     def test_clean_gloss(self):
-        gloss = '-1/2pS/P'
-        actual = Cl.clean_gloss_raw(gloss)
-        expected = '1/2PL.S/P'
+        gloss = 'PRESP'
+        actual = Cl.clean_gloss(gloss)
+        expected = 'PRS'
         self.assertEqual(actual, expected)
 
     def test_clean_pos(self):
-        pos = 'vi'
-        actual = Cl.clean_pos_raw(pos)
-        expected = 'V'
+        pos = 'pro:int'
+        actual = Cl.clean_pos(pos)
+        expected = 'PRODEM'
         self.assertEqual(actual, expected)
 
     def test_clean_pos_ud(self):
-        pos_ud = 'vi'
+        pos_ud = 'pro:int'
         actual = Cl.clean_pos_ud(pos_ud)
-        expected = 'VERB'
+        expected = 'PRON'
         self.assertEqual(actual, expected)
