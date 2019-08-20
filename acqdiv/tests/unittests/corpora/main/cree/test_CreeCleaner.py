@@ -321,32 +321,20 @@ class TestCreeCleaner(unittest.TestCase):
         desired_output = ''
         self.assertEqual(actual_output, desired_output)
 
-    # Tests for replace_gloss_connector.
+    def test_clean_gloss(self):
+        gloss = 'p,polar'
+        actual = CreeCleaner.clean_gloss(gloss)
+        expected = 'Q'
+        self.assertEqual(actual, expected)
 
-    def replace_gloss_connector_multiple_plus_and_comma(self):
-        """Test replace_gloss_connector with 2 commas and 2 pluses."""
-        gloss = 'a,quest sm+gur2 a,quest sm+gur2'
-        actual_output = CreeCleaner.replace_gloss_connector(gloss)
-        desired_output = 'a.quest sm.gur2 a.quest sm.gur2'
-        self.assertEqual(actual_output, desired_output)
+    def test_clean_pos(self):
+        pos = 'dem.pxl'
+        actual = CreeCleaner.clean_pos(pos)
+        expected = 'PRODEM'
+        self.assertEqual(actual, expected)
 
-    def replace_gloss_connector_empty_string(self):
-        """Test replace_gloss_connector with empty string."""
-        actual_output = CreeCleaner.replace_gloss_connector('')
-        desired_output = ''
-        self.assertEqual(actual_output, desired_output)
-
-    # Test for the uppercase_pos_in_parentheses-method.
-
-    def test_uppercase_pos_in_parentheses_one_parenth_pair(self):
-        """Test uppercase_pos_in_parentheses with one pair."""
-        pos = 'na eˈp~o~(h)'
-        actual_output = CreeCleaner.uppercase_pos_in_parentheses(pos)
-        desired_output = 'na eˈp~o~(H)'
-        self.assertEqual(actual_output, desired_output)
-
-    def test_uppercase_pos_in_parentheses_empty_string(self):
-        """Test uppercase_pos_in_parentheses with empty string."""
-        actual_output = CreeCleaner.uppercase_pos_in_parentheses('')
-        desired_output = ''
-        self.assertEqual(actual_output, desired_output)
+    def test_clean_pos_ud(self):
+        pos_ud = 'dem.pxl'
+        actual = CreeCleaner.clean_pos_ud(pos_ud)
+        expected = 'PRON'
+        self.assertEqual(actual, expected)

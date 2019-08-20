@@ -1,6 +1,10 @@
 import re
 
 from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
+from acqdiv.parsers.corpora.main.cree.CreeGlossMapper \
+    import CreeGlossMapper
+from acqdiv.parsers.corpora.main.cree.CreePOSMapper \
+    import CreePOSMapper
 
 
 class CreeCleaner(CHATCleaner):
@@ -236,59 +240,29 @@ class CreeCleaner(CHATCleaner):
 
     # ---------- morpheme cleaning ----------
 
-    @classmethod
-    def clean_morpheme(cls, morpheme):
-        for cleaning_method in [
-                cls.replace_hashtag, cls.handle_question_mark,
-                cls.replace_star]:
-            morpheme = cleaning_method(morpheme)
-
-        return morpheme
-
-    @staticmethod
-    def replace_gloss_connector(gloss):
-        """Replace the gloss connectors.
-
-        There are three different gloss connectors: '.', '+', ','
-        ',' adds an additional specification to a gloss, e.g.
-        'p,quest” (question particle)'. '+' and ',' are replaced by a dot.
-        """
-        return gloss.replace(',', '.').replace('+', '.')
-
-    @classmethod
-    def clean_gloss_raw(cls, gloss):
-        gloss = cls.clean_morpheme(gloss)
-        # gloss = cls.replace_gloss_connector(gloss)
-        return gloss
-
-    @staticmethod
-    def uppercase_pos_in_parentheses(pos):
-        """Uppercase POS tags in parentheses.
-
-        Parentheses indicate covert grammatical categories.
-        """
-        pos_in_parentheses_regex = re.compile(r'(\()(\S+)(\))')
-        # extract POS in parentheses
-        match = pos_in_parentheses_regex.search(pos)
-        if not match:
-            return pos
-        else:
-            # replace by uppercased version
-            up_pos = match.group(2).upper()
-            return pos_in_parentheses_regex.sub(r'\1{}\3'.format(up_pos), pos)
-
-    @classmethod
-    def clean_pos_raw(cls, pos):
-        pos = cls.clean_morpheme(pos)
-        return cls.uppercase_pos_in_parentheses(pos)
-
     @staticmethod
     def remove_parentheses(segment):
         return segment.lstrip('(').rstrip(')')
 
     @classmethod
     def clean_segment(cls, segment):
-        segment = cls.remove_parentheses(segment)
-        segment = cls.clean_morpheme(segment)
+        for cleaning_method in [
+                cls.remove_parentheses,
+                cls.replace_hashtag,
+                cls.handle_question_mark,
+                cls.replace_star]:
+            segment = cleaning_method(segment)
 
         return segment
+
+    @classmethod
+    def clean_gloss(cls, gloss):
+        return CreeGlossMapper.map(gloss)
+
+    @classmethod
+    def clean_pos(cls, pos):
+        return CreePOSMapper.map(pos)
+
+    @classmethod
+    def clean_pos_ud(cls, pos_ud):
+        return CreePOSMapper.map(pos_ud, ud=True)
