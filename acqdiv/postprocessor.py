@@ -573,41 +573,8 @@ class PostProcessor:
 
     def process_morphemes_table(self):
         """Post-process the morphemes table."""
-        print("_morphemes_infer_labels")
-        self._morphemes_infer_labels()
-
         print("_morphemes_unify_label")
         self._morphemes_unify_label()
-
-    def _morphemes_infer_labels(self):
-        """Perform morpheme and POS tag substitutions given the metadata_path file.
-
-        Japanese_MiiPro, Japanese_Miyata and Turkish have
-        substitutions defined in their metadata_path files.
-        """
-        s = sa.select([db.Morpheme.id, db.Morpheme.corpus, db.Morpheme.gloss_raw,
-                       db.Morpheme.pos, db.Morpheme.morpheme])
-        query = self.conn.execute(s)
-        results = []
-        for corpus, rows in groupby(query, lambda r: r[1]):
-            config = self.get_config(corpus)
-            if config['morphemes']['substitutions'] == 'yes':
-                target_tier = config['morphemes']['target_tier']
-                substitutions = config['substitutions']
-                for row in rows:
-                    result = None if row.gloss_raw not in substitutions else \
-                    substitutions[row.gloss_raw]
-                    if result:
-                        if target_tier == "morpheme":
-                            results.append(
-                                {'morpheme_id': row.id, 'morpheme': result,
-                                 'pos': row.pos})
-                        if target_tier == "pos":
-                            results.append(
-                                {'morpheme_id': row.id, 'morpheme': row.morpheme,
-                                 'pos': result})
-        query.close()
-        self._update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
     def _morphemes_unify_label(self):
         """Key-value substitutions for morphological glosses and parts-of-speech.
