@@ -1,6 +1,9 @@
 import re
 
 from acqdiv.parsers.chat.readers.CHATReader import CHATReader
+from acqdiv.parsers.corpora.main.japanese_miyata\
+    .JapaneseMiyataGloss2SegmentMapper\
+    import JapaneseMiyataGloss2SegmentMapper as Mp
 
 
 class JapaneseMiyataReader(CHATReader):
@@ -122,6 +125,9 @@ class JapaneseMiyataReader(CHATReader):
 
                     if stem_match.group(4):
                         gloss = gloss + '.' + stem_match.group(4)
+
+                if Mp.map(gloss):
+                    segment = Mp.map(gloss)
 
                 yield segment, gloss, pos
 
