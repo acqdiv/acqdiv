@@ -82,7 +82,7 @@ class TestJapaneseMiiProParser(unittest.TestCase):
             m1.pos_raw == 'n:prop',
 
             m2.gloss_raw == 'chan',
-            m2.morpheme == '',
+            m2.morpheme == 'chan',
             m2.morpheme_language == '',
             m2.pos_raw == 'sfx',
 
