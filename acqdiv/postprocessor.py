@@ -126,7 +126,7 @@ class PostProcessor:
                 if corpus in ['Ku_Waru', 'Tuatschin', 'Qaqet', 'Chintang',
                               'Indonesian', 'Russian', 'English_Manchester1',
                               'Cree', 'Inuktitut', 'Yucatec', 'Sesotho',
-                              'Japanese_MiiPro', 'Japanese_Miyata']:
+                              'Japanese_MiiPro', 'Japanese_Miyata', 'Turkish']:
                     ccp['pos_ud'] = {}
                 else:
                     ccp['pos_ud'] = MorphemeMappingCSVParser.parse(
@@ -586,7 +586,7 @@ class PostProcessor:
         blacklist = {'Ku_Waru', 'Tuatschin', 'Qaqet', 'Chintang', 'Indonesian',
                      'Russian', 'English_Manchester1', 'Cree', 'Inuktitut',
                      'Yucatec', 'Sesotho', 'Japanese_MiiPro',
-                     'Japanese_Miyata'}
+                     'Japanese_Miyata', 'Turkish'}
 
         for corpus in self.corpora_in_DB:
 

@@ -299,3 +299,21 @@ class TestTurkishCleaner(unittest.TestCase):
         actual_output = TurkishCleaner.clean_word('^ka:+l^e@e')
         desired_output = 'ka_le'
         self.assertEqual(actual_output, desired_output)
+
+    def test_clean_gloss(self):
+        gloss = '2S'
+        actual = TurkishCleaner.clean_gloss(gloss)
+        expected = '2SG'
+        self.assertEqual(actual, expected)
+
+    def test_clean_pos(self):
+        pos = 'N:PROP'
+        actual = TurkishCleaner.clean_pos(pos)
+        expected = 'N'
+        self.assertEqual(actual, expected)
+
+    def test_clean_pos_ud(self):
+        pos_ud = 'N:PROP'
+        actual = TurkishCleaner.clean_pos_ud(pos_ud)
+        expected = 'PROPN'
+        self.assertEqual(actual, expected)

@@ -3,6 +3,10 @@ import re
 from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
 from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
     import CHATUtteranceCleaner
+from acqdiv.parsers.corpora.main.turkish.TurkishGlossMapper \
+    import TurkishGlossMapper
+from acqdiv.parsers.corpora.main.turkish.TurkishPOSMapper \
+    import TurkishPOSMapper
 
 
 class TurkishCleaner(CHATCleaner):
@@ -153,3 +157,17 @@ class TurkishCleaner(CHATCleaner):
     @classmethod
     def clean_segment(cls, segment):
         return cls.replace_plus(segment)
+
+    # ---------- morpheme cleaning ----------
+
+    @classmethod
+    def clean_gloss(cls, gloss):
+        return TurkishGlossMapper.map(gloss)
+
+    @classmethod
+    def clean_pos(cls, pos):
+        return TurkishPOSMapper.map(pos)
+
+    @classmethod
+    def clean_pos_ud(cls, pos_ud):
+        return TurkishPOSMapper.map(pos_ud, ud=True)
