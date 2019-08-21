@@ -1,9 +1,10 @@
 """Abstract class for corpus parsing."""
 
 import glob
-
 from abc import ABC, abstractmethod
+
 from acqdiv.model.Corpus import Corpus
+from acqdiv.util.SessionsDurationExtractor import SessionsDurationExtractor
 
 
 class CorpusParser(ABC):
@@ -53,6 +54,12 @@ class CorpusParser(ABC):
             if session_parser is not None:
 
                 session = session_parser.parse()
+
+                # add duration
+                session.duration = SessionsDurationExtractor.extract(
+                    self.corpus.corpus,
+                    session.source_id
+                )
 
                 # ignore sessions with no utterances
                 if len(session.utterances):

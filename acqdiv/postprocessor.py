@@ -3,7 +3,6 @@
 import re
 import sys
 import time
-import csv
 import argparse
 import logging
 import sqlalchemy as sa
@@ -110,11 +109,6 @@ class PostProcessor:
             self.configure_connection()
             print("Processing utterances table...")
             self.process_utterances_table()
-
-        with self.engine.begin() as self.conn:
-            self.configure_connection()
-            print("Processing sessions table...")
-            self.process_sessions_table()
 
     def get_config(self, corpus):
         """Return the corpus config parser."""
@@ -516,27 +510,6 @@ class PostProcessor:
                 results.append({'utterance_id': row.id, 'childdirected': None})
         rows.close()
         self._update_rows(db.Utterance.__table__, 'utterance_id', results)
-
-    def process_sessions_table(self):
-        self._insert_durations()
-
-    def _insert_durations(self):
-        """Read session durations from ini/durations.csv and insert the matches into the sessions table.
-        """
-        durations = []
-
-        with open('ini/session_durations.csv', 'r', encoding='utf8') as f:
-            reader = csv.DictReader(f)
-
-            for row in reader:
-                duration = row['duration']
-                # Skip rows with empty durations
-                if duration == '':
-                    continue
-                session_id = row['id']
-                durations.append({'session_id': session_id, 'duration': duration})
-
-        self._update_rows(db.Session.__table__, 'session_id', durations)
 
     ### Util functions ###
     def _update_rows(self, t, binder, rows):

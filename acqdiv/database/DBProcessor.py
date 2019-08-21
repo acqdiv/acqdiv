@@ -125,6 +125,7 @@ class DBProcessor:
             language=self.language,
             date=session.date,
             source_id=session.source_id,
+            duration=session.duration if session.duration else None,
             media_id=session.media_filename if session.media_filename else None
         ).inserted_primary_key
 
