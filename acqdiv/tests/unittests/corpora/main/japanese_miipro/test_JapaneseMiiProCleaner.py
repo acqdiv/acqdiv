@@ -198,3 +198,21 @@ class TestJapaneseMiiProCleaner(unittest.TestCase):
             raw_utt, actual_utt, morph_tier)
         desired_output = 'N|huhu N|repeat N|repeat N|hihi'
         self.assertEqual(actual_output, desired_output)
+
+    def test_clean_gloss(self):
+        gloss = 'PRES'
+        actual = JapaneseMiiProCleaner.clean_gloss(gloss)
+        expected = 'PRS'
+        self.assertEqual(actual, expected)
+
+    def test_clean_pos(self):
+        pos = 'sfx'
+        actual = JapaneseMiiProCleaner.clean_pos(pos)
+        expected = 'sfx'
+        self.assertEqual(actual, expected)
+
+    def test_clean_pos_ud(self):
+        pos_ud = 'ptl:fina'
+        actual = JapaneseMiiProCleaner.clean_pos_ud(pos_ud)
+        expected = 'PART'
+        self.assertEqual(actual, expected)

@@ -3,6 +3,10 @@ import re
 from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
 from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
     import CHATUtteranceCleaner
+from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProGlossMapper \
+    import JapaneseMiiProGlossMapper as GMp
+from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProPOSMapper \
+    import JapaneseMiiProPOSMapper as PMp
 
 
 class JapaneseMiiProCleaner(CHATCleaner):
@@ -261,3 +265,17 @@ class JapaneseMiiProCleaner(CHATCleaner):
             return ' '.join(new)
 
         return morph_tier
+
+    # ---------- morpheme cleaning ----------
+
+    @classmethod
+    def clean_gloss(cls, gloss):
+        return GMp.map(gloss)
+
+    @classmethod
+    def clean_pos(cls, pos):
+        return PMp.map(pos)
+
+    @classmethod
+    def clean_pos_ud(cls, pos_ud):
+        return PMp.map(pos_ud, ud=True)
