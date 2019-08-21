@@ -2,6 +2,10 @@ import re
 
 from acqdiv.parsers.chat.readers.CHATReader import CHATReader
 
+from acqdiv.parsers.corpora.main.\
+    japanese_miipro.JapaneseMiiProGloss2SegmentMapper \
+    import JapaneseMiiProGloss2SegmentMapper as Mp
+
 
 class JapaneseMiiProReader(CHATReader):
 
@@ -115,6 +119,9 @@ class JapaneseMiiProReader(CHATReader):
                         # prepend '=' to segment
                         segment = '=' + segment
                     gloss = stem_gloss
+
+                if Mp.map(gloss):
+                    segment = Mp.map(gloss)
 
                 yield segment, gloss, pos
 
