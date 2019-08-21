@@ -159,11 +159,6 @@ class PostProcessor:
 
         with self.engine.begin() as self.conn:
             self.configure_connection()
-            print("Processing words table...")
-            self.process_words_table()
-
-        with self.engine.begin() as self.conn:
-            self.configure_connection()
             print("Processing sessions table...")
             self.process_sessions_table()
 
@@ -567,78 +562,6 @@ class PostProcessor:
                 results.append({'utterance_id': row.id, 'childdirected': None})
         rows.close()
         self._update_rows(db.Utterance.__table__, 'utterance_id', results)
-
-    def process_words_table(self):
-        """Add POS labels to the word table."""
-        print("_words_add_pos_labels")
-        self._words_add_pos_labels()
-
-    def _words_add_pos_labels(self):
-        """Add POS labels (processed and UD)."""
-        for corpus in self.corpora_in_DB:
-
-            print('\t' + corpus)
-
-            # Collect the word IDs together with their POS tags
-            # from the morphemes table
-
-            pos_index = {}
-            pos_raw_index = {}
-
-            s = sa.select([db.Morpheme.id,
-                           db.Morpheme.pos,
-                           db.Morpheme.pos_raw,
-                           db.Morpheme.word_id_fk]).\
-                where(db.Morpheme.corpus == corpus)
-
-            rows = self.conn.execute(s)
-            for row in rows:
-                if row.pos not in ["sfx", "pfx"]:
-                    try:
-                        pos_index[int(row.word_id_fk)] = row.pos
-                    except TypeError:
-                        pass
-                    try:
-                        pos_raw_index[int(row.word_id_fk)] = row.pos_raw
-                    except TypeError:
-                        pass
-            rows.close()
-
-            # Add the POS tags to the words table
-
-            s = sa.select([db.Word.id,
-                           db.Word.corpus,
-                           db.Word.pos_ud]).\
-                where(db.Word.corpus == corpus)
-
-            query = self.conn.execute(s)
-            results_pos = []
-            results_pos_ud = []
-            config = self.get_config(corpus)
-            poses_ud = config['pos_ud']
-
-            for row in query:
-                if row.id in pos_index:
-                    results_pos.append(
-                        {'word_id': row.id, 'pos': pos_index[row.id]})
-                if row.id in pos_raw_index:
-                    # tag in index is pos_raw, so first get UD equivalent
-                    pos_raw = pos_raw_index[row.id]
-                    # HACK: corpora performing POS UD mapping in loader
-                    if not row.pos_ud:
-                        if pos_raw in poses_ud:
-                            pos_ud = poses_ud[pos_raw]
-
-                            if pos_ud == '???':
-                                pos_ud = None
-                        else:
-                            pos_ud = None
-
-                        # now add
-                        results_pos_ud.append({'word_id': row.id, 'pos_ud': pos_ud})
-            query.close()
-            self._update_rows(db.Word.__table__, 'word_id', results_pos)
-            self._update_rows(db.Word.__table__, 'word_id', results_pos_ud)
 
     def process_sessions_table(self):
         self._insert_durations()
