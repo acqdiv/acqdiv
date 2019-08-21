@@ -1,6 +1,8 @@
 import re
 
 from acqdiv.parsers.chat.readers.CHATReader import CHATReader
+from acqdiv.parsers.corpora.main.turkish.TurkishGloss2SegmentMapper \
+    import TurkishGloss2SegmentMapper as Mp
 
 
 class TurkishReader(CHATReader):
@@ -75,7 +77,8 @@ class TurkishReader(CHATReader):
 
         # iter suffixes
         for suffix in morphemes:
-            yield '', suffix, 'sfx'
+            segment = Mp.map(suffix)
+            yield segment, suffix, 'sfx'
 
     @classmethod
     def get_segments(cls, seg_word):

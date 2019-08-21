@@ -39,6 +39,16 @@ class TestTurkishReader(unittest.TestCase):
                           ('', 'SFX3', 'sfx')]
         self.assertEqual(actual_output, desired_output)
 
+    def test_iter_morphemes_suffix_substitution(self):
+        """Test iter_morphemes with gloss-morpheme substitution."""
+        word = 'STEMPOS|stem-ADJR:KI-SFX2&SUBSFX2-SFX3'
+        actual_output = list(TurkishReader.iter_morphemes(word))
+        desired_output = [('stem', '', 'STEMPOS'),
+                          ('kI', 'ADJR:KI', 'sfx'),
+                          ('', 'SFX2&SUBSFX2', 'sfx'),
+                          ('', 'SFX3', 'sfx')]
+        self.assertEqual(actual_output, desired_output)
+
     def test_iter_morphemes_underscore(self):
         """Test iter_morphemes with underscore."""
         word = 'STEMPOS|stem1_stem2-SFX'
