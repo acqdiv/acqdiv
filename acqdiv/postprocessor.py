@@ -159,11 +159,6 @@ class PostProcessor:
 
         with self.engine.begin() as self.conn:
             self.configure_connection()
-            print("Processing morphemes table...")
-            self.process_morphemes_table()
-
-        with self.engine.begin() as self.conn:
-            self.configure_connection()
             print("Processing words table...")
             self.process_words_table()
 
@@ -572,52 +567,6 @@ class PostProcessor:
                 results.append({'utterance_id': row.id, 'childdirected': None})
         rows.close()
         self._update_rows(db.Utterance.__table__, 'utterance_id', results)
-
-    def process_morphemes_table(self):
-        """Post-process the morphemes table."""
-        print("_morphemes_unify_label")
-        self._morphemes_unify_label()
-
-    def _morphemes_unify_label(self):
-        """Key-value substitutions for morphological glosses and parts-of-speech.
-
-        If no key is defined in the corpus ini file, then None (NULL) is written
-        to the database.
-        """
-        blacklist = {'Ku_Waru', 'Tuatschin', 'Qaqet', 'Chintang', 'Indonesian',
-                     'Russian', 'English_Manchester1', 'Cree', 'Inuktitut',
-                     'Yucatec', 'Sesotho', 'Japanese_MiiPro',
-                     'Japanese_Miyata', 'Turkish', 'Nungon'}
-
-        for corpus in self.corpora_in_DB:
-
-            if corpus in blacklist:
-                continue
-
-            print('\t'+corpus)
-
-            s = sa.\
-                select([db.Morpheme.id,
-                        db.Morpheme.corpus,
-                        db.Morpheme.gloss_raw,
-                        db.Morpheme.pos_raw]).\
-                where(db.Morpheme.corpus == corpus)
-
-            query = self.conn.execute(s)
-
-            config = self.get_config(corpus)
-            glosses = config['gloss']
-            poses = config['pos']
-
-            results = []
-            for row in query:
-                gloss = None if row.gloss_raw not in glosses else glosses[
-                    row.gloss_raw]
-                pos = None if row.pos_raw not in poses else poses[row.pos_raw]
-                results.append({'morpheme_id': row.id, 'gloss': gloss, 'pos': pos})
-
-            query.close()
-            self._update_rows(db.Morpheme.__table__, 'morpheme_id', results)
 
     def process_words_table(self):
         """Add POS labels to the word table."""
