@@ -36,7 +36,7 @@ class CorpusParser(ABC):
         """Get a session parser.
 
         Returns:
-            acqdiv.parsers.SessionParser: The session parser.
+            acqdiv.parsers.SessionParser.SessionParser: The session parser.
         """
         pass
 
@@ -53,7 +53,6 @@ class CorpusParser(ABC):
             if session_parser is not None:
 
                 session = session_parser.parse()
-                session.corpus = self.corpus
 
                 # ignore sessions with no utterances
                 if len(session.utterances):
