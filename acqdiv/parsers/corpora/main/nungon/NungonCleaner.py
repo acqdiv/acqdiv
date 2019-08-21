@@ -3,6 +3,10 @@ import re
 from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
 from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
     import CHATUtteranceCleaner
+from acqdiv.parsers.corpora.main.nungon.NungonGlossMapper \
+    import NungonGlossMapper
+from acqdiv.parsers.corpora.main.nungon.NungonPOSMapper \
+    import NungonPOSMapper
 
 
 class NungonCleaner(CHATCleaner):
@@ -108,24 +112,19 @@ class NungonCleaner(CHATCleaner):
         return morpheme.lstrip('?')
 
     @classmethod
-    def clean_morpheme(cls, morpheme):
-        return cls.remove_question_mark(morpheme)
+    def clean_segment(cls, segment):
+        return cls.remove_question_mark(segment)
 
-    # ---------- gloss cleaning ----------
-
-    @staticmethod
-    def replace_slash(gloss):
-        """Replace the slash by a dot between numbers."""
-        return re.sub(r'(\d)/(\d)', r'\1.\2', gloss)
-
-    @staticmethod
-    def replace_plus(gloss):
-        """Replace the plus by a dot."""
-        return gloss.replace('+', '.')
+    # ---------- morpheme cleaning ----------
 
     @classmethod
-    def clean_gloss_raw(cls, gloss):
-        for cleaning_method in [
-                cls.clean_morpheme, cls.replace_slash, cls.replace_plus]:
-            gloss = cleaning_method(gloss)
-        return gloss
+    def clean_gloss(cls, gloss):
+        return NungonGlossMapper.map(gloss)
+
+    @classmethod
+    def clean_pos(cls, pos):
+        return NungonPOSMapper.map(pos)
+
+    @classmethod
+    def clean_pos_ud(cls, pos_ud):
+        return NungonPOSMapper.map(pos_ud, ud=True)
