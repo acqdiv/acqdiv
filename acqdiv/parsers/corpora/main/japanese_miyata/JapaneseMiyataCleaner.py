@@ -2,9 +2,12 @@
 from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
 from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProCleaner import \
     JapaneseMiiProCleaner
-
 from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
     import CHATUtteranceCleaner
+from acqdiv.parsers.corpora.main.japanese_miyata.JapaneseMiyataGlossMapper \
+    import JapaneseMiyataGlossMapper as GMp
+from acqdiv.parsers.corpora.main.japanese_miyata.JapaneseMiyataPOSMapper \
+    import JapaneseMiyataPOSMapper as PMp
 
 
 class JapaneseMiyataCleaner(CHATCleaner):
@@ -25,18 +28,6 @@ class JapaneseMiyataCleaner(CHATCleaner):
         morph_tier = CHATUtteranceCleaner.remove_terminator(morph_tier)
         morph_tier = cls.remove_dloc(morph_tier)
         return morph_tier
-
-    # ---------- morphology tier cleaning ----------
-
-    @classmethod
-    def replace_colon_by_dot_pos(cls, pos):
-        """Replace the colons in the POS tag by a dot."""
-        return pos.replace(':', '.')
-
-    @classmethod
-    def clean_pos_raw(cls, pos):
-        pos = cls.replace_colon_by_dot_pos(pos)
-        return pos
 
     # ---------- utterance cross clean ----------
 
@@ -98,3 +89,17 @@ class JapaneseMiyataCleaner(CHATCleaner):
     def clean_session_metadata(cls, session_filename, date, media_filename):
         """Correct the session date."""
         return date, media_filename
+
+    # ---------- morpheme cleaning ----------
+
+    @classmethod
+    def clean_gloss(cls, gloss):
+        return GMp.map(gloss)
+
+    @classmethod
+    def clean_pos(cls, pos):
+        return PMp.map(pos)
+
+    @classmethod
+    def clean_pos_ud(cls, pos_ud):
+        return PMp.map(pos_ud, ud=True)
