@@ -51,7 +51,12 @@ class IndonesianReader(ToolboxReader):
         if not super().is_record(rec):
             return False
 
-        if cls.get_speaker_label(rec) == '@PAR':
+        speaker_label = cls.get_speaker_label(rec)
+
+        if speaker_label == '@PAR':
+            return False
+
+        if speaker_label == 'AUX':
             return False
 
         return True

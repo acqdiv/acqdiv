@@ -43,7 +43,19 @@ class IndonesianSessionParser(ToolboxParser):
             speaker.name = speaker_dict.get('name', None)
             speaker.languages_spoken = speaker_dict.get('language', None)
 
-            self.session.speakers.append(speaker)
+            if self.is_speaker(speaker):
+                self.session.speakers.append(speaker)
+
+    @staticmethod
+    def is_speaker(speaker):
+        """Check whether the speaker is a real speaker.
+
+        Skip `AUX` participants.
+
+        Args:
+            speaker (Speaker): The `Speaker` instance.
+        """
+        return speaker.code != 'AUX'
 
     def get_record_reader(self):
         return IndonesianReader()
