@@ -100,30 +100,30 @@ class ToolboxParser(SessionParser):
         toolbox_file = ToolboxFileParser.parse(self.toolbox_path, separator)
 
         for rec in toolbox_file.records:
-            self.add_record(rec)
+            if self.record_reader.is_record(rec):
+                self.add_record(rec)
 
     def add_record(self, rec):
         """Add the utterance to the session."""
-        if self.record_reader.is_record(rec):
-            rec = self.cleaner.cross_clean(rec)
+        rec = self.cleaner.cross_clean(rec)
 
-            utt = self.add_utterance(rec)
+        utt = self.add_utterance(rec)
 
-            actual_utterance = self.cleaner.clean_utterance(
-                self.record_reader.get_actual_utterance(rec))
-            target_utterance = self.cleaner.clean_utterance(
-                self.record_reader.get_target_utterance(rec))
-            self.add_words(actual_utterance, target_utterance)
+        actual_utterance = self.cleaner.clean_utterance(
+            self.record_reader.get_actual_utterance(rec))
+        target_utterance = self.cleaner.clean_utterance(
+            self.record_reader.get_target_utterance(rec))
+        self.add_words(actual_utterance, target_utterance)
 
-            self.add_morphemes(
-                self.record_reader.get_seg_tier(rec),
-                self.record_reader.get_gloss_tier(rec),
-                self.record_reader.get_pos_tier(rec),
-                self.record_reader.get_lang_tier(rec),
-                self.record_reader.get_id_tier(rec)
-            )
+        self.add_morphemes(
+            self.record_reader.get_seg_tier(rec),
+            self.record_reader.get_gloss_tier(rec),
+            self.record_reader.get_pos_tier(rec),
+            self.record_reader.get_lang_tier(rec),
+            self.record_reader.get_id_tier(rec)
+        )
 
-            self.align_words_morphemes(utt)
+        self.align_words_morphemes(utt)
 
     def add_utterance(self, rec):
         """Add the utterance to the Session instance.
