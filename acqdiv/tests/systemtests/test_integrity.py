@@ -81,6 +81,7 @@ class IntegrityTest(unittest.TestCase):
 
     def test_counts(self):
         """Use the fixture database gold counts and check production DB."""
+        mismatched_counts = []
         for section in self.cfg:
             if section == "default":
                 continue
@@ -90,11 +91,13 @@ class IntegrityTest(unittest.TestCase):
                     "select count(*) from %s where corpus = '%s'"
                     % (option, section))
                 actual = res.fetchone()[0]
-                self.assertEqual(
-                    actual,
-                    count,
-                    msg='%s %s: expected %s, got %s'
-                        % (section, option, count, actual))
+
+                if actual != count:
+                    mismatched_counts.append((section, option, count, actual))
+
+        self.assertEqual(len(mismatched_counts), 0,
+                         msg="Mismatched session counts: {}"
+                         .format(mismatched_counts))
 
     def test_sentence_type(self):
         """ Check sentence types in database vs whitelist. """
