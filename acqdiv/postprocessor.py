@@ -207,20 +207,16 @@ class PostProcessor:
             db.Speaker.corpus])
         rows = self.conn.execute(s)
         results = []
-        not_found = set()
 
         for row in rows:
             role = row.role_raw
             gender = row.gender
-            macrorole = None
 
             if role in self.roles['role_mapping']:
                 role = self.roles['role_mapping'][role]
                 # all unknown's and none's listed in the ini become NULL
                 if role == 'Unknown' or role == 'None':
                     role = None
-            else:
-                not_found.add((role, row.corpus))
 
             # Inference to gender
             if gender is None:
@@ -232,12 +228,6 @@ class PostProcessor:
                 macrorole = self.roles['role2macrorole'][row.role_raw]
             else:
                 macrorole = None
-
-            for item in not_found:
-                logging.warning(
-                    '\'{}\' from {} not found in role_mapping.ini'.format(item[0],
-                                                                          item[1]),
-                    exc_info=sys.exc_info())
 
             results.append({'speaker_id': row.id, 'role': role, 'gender': gender,
                             'macrorole': macrorole})
