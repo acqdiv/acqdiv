@@ -27,7 +27,6 @@ def load(args):
     loader = Loader()
     loader.load(
         test=not args.full,
-        new=args.new_corpora,
         phonbank=args.phonbank_corpora
     )
 
@@ -80,9 +79,6 @@ def get_cmd_args():
     parser_load.add_argument(
         '-f', '--full', action='store_true', help='Run on full database')
     parser_load.add_argument(
-        '-n', '--new-corpora', action='store_true',
-        help='Run over the new corpora as well.')
-    parser_load.add_argument(
         '-p', '--phonbank-corpora', action='store_true',
         help='Run over the Phonbank corpora.')
 
@@ -124,9 +120,6 @@ def get_cmd_args():
                     'To run them on the full database, use the flag -f.')
     parser_pipeline.add_argument(
         '-f', '--full', action='store_true', help='Run on full database')
-    parser_pipeline.add_argument(
-        '-n', '--new-corpora', action='store_true',
-        help='Run over the new corpora as well.')
     parser_pipeline.add_argument(
         '-p', '--phonbank-corpora', action='store_true',
         help='Run over the Phonbank corpora.')

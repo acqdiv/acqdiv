@@ -10,38 +10,32 @@ from acqdiv.database.DBProcessor import DBProcessor
 
 class Loader:
 
-    def load(self, test=True, new=False, phonbank=False):
+    def load(self, test=True, phonbank=False):
         """Load data from source files into DB.
 
         Args:
             test (bool): Test DB is used.
-            new (bool): Run over the new corpora as well.
             phonbank (bool): Run over the Phonbank corpora.
         """
         start_time = time.time()
 
         configs = [
             'Chintang.ini',
+            'Cree.ini',
             'English_Manchester1.ini',
             'Indonesian.ini',
-            'Russian.ini',
-            'Cree.ini',
             'Inuktitut.ini',
-            'Japanese_Miyata.ini',
             'Japanese_MiiPro.ini',
+            'Japanese_Miyata.ini',
+            'Ku_Waru.ini',
             'Nungon.ini',
             'Qaqet.ini',
+            'Russian.ini',
             'Sesotho.ini',
             'Tuatschin.ini',
             'Turkish.ini',
-            'Yucatec.ini'
+            'Yucatec.ini',
         ]
-
-        if new:
-            configs += [
-                'Dene.ini',
-                'Ku_Waru.ini'
-            ]
 
         if phonbank:
 
