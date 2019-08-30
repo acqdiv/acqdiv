@@ -28,7 +28,6 @@ class CorpusParser(ABC):
         corpus.language = self.cfg['corpus']['language']
         corpus.owner = self.cfg['corpus']['owner']
         corpus.sessions = self.iter_sessions()
-        corpus.morpheme_type = self.cfg['morphemes']['type']
 
         return corpus
 

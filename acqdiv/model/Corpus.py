@@ -20,7 +20,6 @@ class Corpus:
     glottolog_code: str
     owner: str
     sessions: Iterable[Session]
-    morpheme_type: str
 
     def __init__(self):
         """Initialize the variables representing a corpus."""
@@ -30,6 +29,3 @@ class Corpus:
         self.glottolog_code = ''
         self.owner = ''
         self.sessions = []
-
-        # TODO: move to right place
-        self.morpheme_type = ''

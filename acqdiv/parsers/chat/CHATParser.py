@@ -247,6 +247,7 @@ class CHATParser(SessionParser):
                 m.pos_raw = self.cleaner.clean_pos_raw(pos)
                 m.pos = self.cleaner.clean_pos(pos)
                 m.pos_ud = self.cleaner.clean_pos_ud(pos)
+                m.type = self.reader.get_morpheme_type()
 
                 wmorphemes.append(m)
 

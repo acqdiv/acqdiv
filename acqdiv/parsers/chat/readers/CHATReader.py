@@ -379,3 +379,7 @@ class CHATReader:
             str: 'segment' or 'gloss'.
         """
         return 'gloss'
+
+    @staticmethod
+    def get_morpheme_type():
+        return 'target'

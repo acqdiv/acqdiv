@@ -41,3 +41,7 @@ class QaqetReader(ToolboxReader):
             return 'question'
         else:
             return 'default'
+
+    @staticmethod
+    def get_morpheme_type():
+        return 'actual'

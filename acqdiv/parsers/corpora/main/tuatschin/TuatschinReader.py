@@ -80,3 +80,7 @@ class TuatschinReader(ToolboxReader):
         There is no segmentation of words into morphemes.
         """
         return [morpheme_word]
+
+    @staticmethod
+    def get_morpheme_type():
+        return 'actual'

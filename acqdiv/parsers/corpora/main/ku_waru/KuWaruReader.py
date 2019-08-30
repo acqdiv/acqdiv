@@ -84,3 +84,7 @@ class KuWaruReader(ToolboxReader):
     @classmethod
     def get_lang_words(cls, morpheme_lang_tier):
         return cls.get_pos_words(morpheme_lang_tier)
+
+    @staticmethod
+    def get_morpheme_type():
+        return 'actual'

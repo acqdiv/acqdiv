@@ -22,7 +22,6 @@ class DBProcessor:
         # initialize them once for each corpus
         self.corpus_name = None
         self.language = None
-        self.morpheme_type = None
 
         # initialize them once for each session
         # to increase performance
@@ -90,7 +89,6 @@ class DBProcessor:
         """
         self.corpus_name = corpus.corpus
         self.language = corpus.language
-        self.morpheme_type = corpus.morpheme_type
 
         for session in corpus.sessions:
             self.insert_session(session)
@@ -215,6 +213,14 @@ class DBProcessor:
                 self.insert_morpheme(m, s_id, u_id, w_id)
 
     def insert_morpheme(self, m, s_id, u_id, w_id):
+        """Insert the morpheme.
+
+        Args:
+            m (acqdiv.model.Morpheme.Morpheme): The morpheme instance.
+            s_id (str): The session ID.
+            u_id (str): The utterance ID.
+            w_id (str): The word ID.
+        """
         self.insert_morph_func(
             session_id_fk=s_id,
             utterance_id_fk=u_id,
@@ -223,7 +229,7 @@ class DBProcessor:
             language=self.language,
             morpheme_language=
             m.morpheme_language if m.morpheme_language else None,
-            type=self.morpheme_type,
+            type=m.type if m.type else None,
             morpheme=m.morpheme if m.morpheme else None,
             gloss_raw=m.gloss_raw if m.gloss_raw else None,
             gloss=m.gloss if m.gloss else None,
