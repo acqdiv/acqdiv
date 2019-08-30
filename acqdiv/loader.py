@@ -1,6 +1,5 @@
 """ Entry point for loading ACQDIV raw input corpora data into the ACQDIV-DB
 """
-import time
 import argparse
 
 from acqdiv.ini.CorpusConfigParser import CorpusConfigParser
@@ -17,8 +16,6 @@ class Loader:
             test (bool): Test DB is used.
             phonbank (bool): Run over the Phonbank corpora.
         """
-        start_time = time.time()
-
         configs = [
             'Chintang.ini',
             'Cree.ini',
@@ -52,12 +49,8 @@ class Loader:
         db_processor = DBProcessor(test=test)
 
         for config in configs:
-
             cfg = CorpusConfigParser()
             cfg.read("ini/"+config)
-
-            print("{0} seconds --- Start processing: {1}".format(
-                time.time() - start_time, config.split(".")[0]))
 
             # get corpus parser based on corpus name
             name = cfg['corpus']['corpus']
@@ -69,16 +62,6 @@ class Loader:
 
             # add the corpus to the DB
             db_processor.insert_corpus(corpus)
-
-        print("%s seconds --- Finished" % (time.time() - start_time))
-        print()
-        print("Next, call:")
-
-        if test:
-            print("acqdiv postprocess")
-        else:
-            print("acqdiv postprocess -f")
-        print()
 
 
 def main():

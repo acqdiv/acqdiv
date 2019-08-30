@@ -13,6 +13,7 @@ The following commands are supported:
     - pipeline
 """
 import os
+import time
 import acqdiv
 import argparse
 import unittest
@@ -24,19 +25,36 @@ from acqdiv.tests.systemtests.test_integrity import IntegrityTest
 
 def load(args):
     """Run the loader."""
+    start_time = time.time()
     loader = Loader()
     loader.load(
         test=not args.full,
         phonbank=args.phonbank_corpora
     )
+    print("%s seconds --- Finished" % (time.time() - start_time))
+    print()
+    print("Next, call:")
+
+    if args.full:
+        print("acqdiv postprocess -f")
+    else:
+        print("acqdiv postprocess")
+    print()
 
 
 def postprocess(args):
     """Run the postprocessor."""
+    start_time = time.time()
     postprocessor = PostProcessor()
     postprocessor.postprocess(
         test=not args.full,
     )
+    print("%s seconds --- Finished" % (time.time() - start_time))
+    print()
+    print('Next, run tests:')
+    print('acqdiv test')
+    print('acqdiv test -i')
+    print()
 
 
 def test(args):

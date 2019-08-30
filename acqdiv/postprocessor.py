@@ -2,7 +2,6 @@
 
 import re
 import sys
-import time
 import argparse
 import logging
 import sqlalchemy as sa
@@ -30,23 +29,10 @@ class PostProcessor:
 
     def postprocess(self, test=False):
         """Global setup and then call post-processes."""
-
-        start_time = time.time()
-
         self.set_engine(test=test)
-
         self.set_roles()
-
         self.set_config_parsers()
-
         self.process_tables()
-
-        print("%s seconds --- Finished" % (time.time() - start_time))
-        print()
-        print('Next, run tests:')
-        print('acqdiv test')
-        print('acqdiv test -i')
-        print()
 
     def set_engine(self, test=False):
         """Set the engine.
