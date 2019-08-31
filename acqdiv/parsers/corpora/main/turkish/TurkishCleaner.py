@@ -11,6 +11,13 @@ from acqdiv.parsers.corpora.main.turkish.TurkishPOSMapper \
 
 class TurkishCleaner(CHATCleaner):
 
+    @staticmethod
+    def clean_name(name):
+        if name == 'Unknown':
+            return ''
+        else:
+            return name
+
     # ---------- morphology tier cleaning ----------
 
     @classmethod

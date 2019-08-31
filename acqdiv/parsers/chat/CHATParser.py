@@ -83,24 +83,25 @@ class CHATParser(SessionParser):
             name = self.reader.get_speaker_name()
             role = self.reader.get_speaker_role()
             age_raw = self.reader.get_speaker_age()
-            gender = self.reader.get_speaker_gender()
+            gender_raw = self.reader.get_speaker_gender()
             language = self.reader.get_speaker_language()
             birth_date = self.cleaner.clean_date(
                                 self.reader.get_speaker_birthdate())
             target_child = self.reader.get_target_child()
 
             # any corrections of the metadata
-            speaker_label, name, role, age_raw, gender, language, birth_date = \
+            speaker_label, name, role, age_raw, gender_raw, language, birth_date = \
                 self.cleaner.clean_speaker_metadata(
                     self.session_filename, speaker_label, name, role, age_raw,
-                    gender, language, birth_date, target_child)
+                    gender_raw, language, birth_date, target_child)
 
             speaker.code = speaker_label
-            speaker.name = name
+            speaker.name = self.cleaner.clean_name(name)
             speaker.age_raw = age_raw
             speaker.age = self.cleaner.clean_age(speaker.age_raw)
             speaker.age_in_days = AgeCalculator.to_days(speaker.age)
-            speaker.gender_raw = gender
+            speaker.gender_raw = gender_raw
+            speaker.gender = self.cleaner.clean_gender(speaker.gender_raw)
             speaker.role_raw = role
             speaker.languages_spoken = language
             speaker.birth_date = birth_date

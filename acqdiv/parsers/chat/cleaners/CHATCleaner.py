@@ -54,6 +54,22 @@ class CHATCleaner:
         return age
 
     @staticmethod
+    def clean_gender(gender):
+        """Clean the gender.
+
+        Returns: str
+        """
+        return gender.title()
+
+    @staticmethod
+    def clean_name(name):
+        """Clean the name.
+
+        Returns: str
+        """
+        return name
+
+    @staticmethod
     def clean_record_speaker_label(session_filename, speaker_label):
         """Clean the speaker label in a record.
 

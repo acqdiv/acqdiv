@@ -95,67 +95,10 @@ class PostProcessor:
 
     def process_speakers_table(self):
         """Post-process speakers table."""
-        self._speakers_unify_unknowns()
-        self._speakers_standardize_gender_labels()
         self._speakers_standardize_roles()
         self._speakers_standardize_macroroles()
         self._speakers_get_unique_speakers()
         self._speakers_get_target_children()
-
-    def _speakers_unify_unknowns(self):
-        """Unify unknown values for speakers."""
-        s = sa.select([db.Speaker.id, db.Speaker.name, db.Speaker.birthdate,
-                       db.Speaker.speaker_label])
-        rows = self.conn.execute(s)
-        results = []
-        null_values = {'Unknown', 'Unspecified', 'None', 'Unidentified', ''}
-
-        for row in rows:
-            has_changed = False
-
-            if row.name in null_values:
-                name = None
-                has_changed = True
-            else:
-                name = row.name
-
-            if row.birthdate in null_values:
-                birthdate = None
-                has_changed = True
-            else:
-                birthdate = row.birthdate
-
-            if row.speaker_label in null_values:
-                speaker_label = None
-                has_changed = True
-            else:
-                speaker_label = row.speaker_label
-
-            if has_changed:
-                results.append({'speaker_id': row.id, 'name': name,
-                                'birthdate': birthdate,
-                                'speaker_label': speaker_label})
-
-        rows.close()
-        self._update_rows(db.Speaker.__table__, 'speaker_id', results)
-
-    def _speakers_standardize_gender_labels(self):
-        """Standardize gender labels in the speakers table."""
-        s = sa.select([db.Speaker.id, db.Speaker.gender_raw])
-        rows = self.conn.execute(s)
-        results = []
-        for row in rows:
-            if row.gender_raw is not None:
-                if row.gender_raw.lower() == 'female':
-                    results.append({'speaker_id': row.id, 'gender': 'Female'})
-                elif row.gender_raw.lower() == 'male':
-                    results.append({'speaker_id': row.id, 'gender': 'Male'})
-                else:
-                    results.append({'speaker_id': row.id, 'gender': None})
-            else:
-                results.append({'speaker_id': row.id, 'gender': None})
-        rows.close()
-        self._update_rows(db.Speaker.__table__, 'speaker_id', results)
 
     def _speakers_standardize_roles(self):
         """Unify speaker roles and draw inferences to related values.

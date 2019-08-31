@@ -39,6 +39,7 @@ class IndonesianSessionParser(ToolboxParser):
             speaker = Speaker()
             speaker.birth_date = speaker_dict.get('birthday', '')
             speaker.gender_raw = speaker_dict.get('sex', '')
+            speaker.gender = speaker.gender_raw.title()
             speaker.code = speaker_dict.get('id', '')
             speaker.age_raw = speaker_dict.get('age', '')
             speaker.role_raw = speaker_dict.get('role', '')

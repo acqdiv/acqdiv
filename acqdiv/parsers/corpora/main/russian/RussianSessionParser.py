@@ -2,6 +2,7 @@ from acqdiv.parsers.corpora.main.russian.RussianReader import RussianReader
 from acqdiv.parsers.corpora.main.russian.RussianCleaner import RussianCleaner
 from acqdiv.parsers.toolbox.ToolboxParser import ToolboxParser
 from acqdiv.parsers.metadata.IMDIParser import IMDIParser
+from acqdiv.parsers.toolbox.cleaners.IMDICleaner import IMDICleaner as ICl
 from acqdiv.parsers.toolbox.readers.ToolboxAgeUpdater import ToolboxAgeUpdater
 from acqdiv.model.Speaker import Speaker
 
@@ -20,12 +21,14 @@ class RussianSessionParser(ToolboxParser):
     def add_speakers(self):
         for speaker_dict in self.metadata_reader.metadata['participants']:
             speaker = Speaker()
-            speaker.birth_date = speaker_dict.get('birthdate', '')
+            speaker.birth_date = ICl.clean_date(
+                speaker_dict.get('birthdate', ''))
             speaker.gender_raw = speaker_dict.get('sex', '')
-            speaker.code = speaker_dict.get('code', '')
+            speaker.gender = ICl.clean_gender(speaker.gender_raw)
+            speaker.code = ICl.clean_label(speaker_dict.get('code', ''))
             speaker.age_raw = speaker_dict.get('age', '')
             speaker.role_raw = speaker_dict.get('familysocialrole', '')
-            speaker.name = speaker_dict.get('name', '')
+            speaker.name = ICl.clean_name(speaker_dict.get('name', ''))
             speaker.languages_spoken = speaker_dict.get('language', '')
 
             ToolboxAgeUpdater.update(speaker, self.session.date)
