@@ -3,6 +3,8 @@
 import glob
 from abc import ABC, abstractmethod
 
+from tqdm import tqdm
+
 from acqdiv.model.Corpus import Corpus
 from acqdiv.util.SessionsDurationExtractor import SessionsDurationExtractor
 
@@ -10,13 +12,16 @@ from acqdiv.util.SessionsDurationExtractor import SessionsDurationExtractor
 class CorpusParser(ABC):
     """Methods for constructing a corpus instance."""
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, disable_pbar=True):
         """Initialize config.
 
         Args:
             cfg (CorpusConfigParser): A config instance.
+            disable_pbar (bool): Whether the progressbar should be disabled.
         """
         self.cfg = cfg
+        self.disable_pbar = disable_pbar
+        tqdm.monitor_interval = 0
         self.corpus = Corpus()
 
     def parse(self):
@@ -46,22 +51,28 @@ class CorpusParser(ABC):
         Yields:
             acqdiv.parsers.SessionParser: The session parser.
         """
-        for session_path in sorted(glob.glob(self.cfg['paths']['sessions'])):
+        session_paths = sorted(glob.glob(self.cfg['paths']['sessions']))
 
-            session_parser = self.get_session_parser(session_path)
+        with tqdm(session_paths, disable=self.disable_pbar) as pbar:
 
-            if session_parser is not None:
+            for session_path in pbar:
+                pbar.set_description(session_path)
 
-                session = session_parser.parse()
+                session_parser = self.get_session_parser(session_path)
 
-                # add duration
-                session.duration = SessionsDurationExtractor.extract(
-                    self.corpus.corpus,
-                    session.source_id
-                )
+                if session_parser is not None:
 
-                # ignore sessions with no utterances
-                if len(session.utterances):
-                    print("\t", session_path)
+                    session = session_parser.parse()
 
-                    yield session
+                    # add duration
+                    session.duration = SessionsDurationExtractor.extract(
+                        self.corpus.corpus,
+                        session.source_id
+                    )
+
+                    # ignore sessions with no utterances
+                    if len(session.utterances):
+                        if self.disable_pbar:
+                            print("\t", session_path)
+
+                        yield session

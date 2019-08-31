@@ -55,7 +55,7 @@ class Loader:
             # get corpus parser based on corpus name
             name = cfg['corpus']['corpus']
             corpus_parser_class = CorpusParserMapper.map(name)
-            corpus_parser = corpus_parser_class(cfg)
+            corpus_parser = corpus_parser_class(cfg, disable_pbar=test)
 
             # get the corpus
             corpus = corpus_parser.parse()
