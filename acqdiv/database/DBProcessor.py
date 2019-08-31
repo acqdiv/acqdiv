@@ -138,13 +138,16 @@ class DBProcessor:
             session_id_fk=s_id,
             corpus=self.corpus_name,
             language=self.language,
-            birthdate=speaker.birth_date,
-            gender_raw=speaker.gender_raw,
+            birthdate=speaker.birth_date if speaker.birth_date else None,
+            gender_raw=speaker.gender_raw if speaker.gender_raw else None,
             speaker_label=speaker.code,
-            age_raw=speaker.age_raw,
-            role_raw=speaker.role_raw,
-            name=speaker.name,
+            age_raw=speaker.age_raw if speaker.age_raw else None,
+            age=speaker.age if speaker.age else None,
+            age_in_days=speaker.age_in_days if speaker.age_in_days else None,
+            role_raw=speaker.role_raw if speaker.role_raw else None,
+            name=speaker.name if speaker.name else None,
             languages_spoken=speaker.languages_spoken
+            if speaker.languages_spoken else None
         )
 
     def insert_utterances(self, utterances, s_id):

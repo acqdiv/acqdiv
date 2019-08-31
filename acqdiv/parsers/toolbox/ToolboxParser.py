@@ -3,6 +3,7 @@ from acqdiv.parsers.metadata.IMDIParser import IMDIParser
 from acqdiv.parsers.toolbox.cleaners.ToolboxCleaner import ToolboxCleaner
 from acqdiv.parsers.toolbox.readers.ToolboxFileParser import ToolboxFileParser
 from acqdiv.parsers.SessionParser import SessionParser
+from acqdiv.parsers.toolbox.readers.ToolboxAgeUpdater import ToolboxAgeUpdater
 from acqdiv.model.Session import Session
 from acqdiv.model.Speaker import Speaker
 from acqdiv.model.Utterance import Utterance
@@ -84,14 +85,15 @@ class ToolboxParser(SessionParser):
         """Add the speakers of a session."""
         for speaker_dict in self.metadata_reader.metadata['participants']:
             speaker = Speaker()
-            speaker.birth_date = speaker_dict.get('birthdate', None)
-            speaker.gender_raw = speaker_dict.get('sex', None)
-            speaker.code = speaker_dict.get('code', None)
-            speaker.age_raw = speaker_dict.get('age', None)
-            speaker.role_raw = speaker_dict.get('role', None)
-            speaker.name = speaker_dict.get('name', None)
-            speaker.languages_spoken = speaker_dict.get('languages', None)
+            speaker.birth_date = speaker_dict.get('birthdate', '')
+            speaker.gender_raw = speaker_dict.get('sex', '')
+            speaker.code = speaker_dict.get('code', '')
+            speaker.age_raw = speaker_dict.get('age', '')
+            speaker.role_raw = speaker_dict.get('role', '')
+            speaker.name = speaker_dict.get('name', '')
+            speaker.languages_spoken = speaker_dict.get('languages', '')
 
+            ToolboxAgeUpdater.update(speaker, self.session.date)
             self.session.speakers.append(speaker)
 
     def add_records(self):

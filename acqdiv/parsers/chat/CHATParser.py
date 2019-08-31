@@ -2,6 +2,7 @@ import os
 
 from acqdiv.parsers.chat.readers.CHATReader import CHATReader
 from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
+from acqdiv.util.AgeCalculator import AgeCalculator
 from acqdiv.parsers.SessionParser import SessionParser
 from acqdiv.model.Session import Session
 from acqdiv.model.Speaker import Speaker
@@ -81,7 +82,7 @@ class CHATParser(SessionParser):
             speaker_label = self.reader.get_speaker_label()
             name = self.reader.get_speaker_name()
             role = self.reader.get_speaker_role()
-            age = self.reader.get_speaker_age()
+            age_raw = self.reader.get_speaker_age()
             gender = self.reader.get_speaker_gender()
             language = self.reader.get_speaker_language()
             birth_date = self.cleaner.clean_date(
@@ -89,18 +90,20 @@ class CHATParser(SessionParser):
             target_child = self.reader.get_target_child()
 
             # any corrections of the metadata
-            speaker_label, name, role, age, gender, language, birth_date = \
+            speaker_label, name, role, age_raw, gender, language, birth_date = \
                 self.cleaner.clean_speaker_metadata(
-                    self.session_filename, speaker_label, name, role, age,
+                    self.session_filename, speaker_label, name, role, age_raw,
                     gender, language, birth_date, target_child)
 
             speaker.code = speaker_label
-            speaker.name = name if name else None
-            speaker.age_raw = age if age else None
-            speaker.gender_raw = gender if gender else None
+            speaker.name = name
+            speaker.age_raw = age_raw
+            speaker.age = self.cleaner.clean_age(speaker.age_raw)
+            speaker.age_in_days = AgeCalculator.to_days(speaker.age)
+            speaker.gender_raw = gender
             speaker.role_raw = role
-            speaker.languages_spoken = language if language else None
-            speaker.birth_date = birth_date if birth_date else None
+            speaker.languages_spoken = language
+            speaker.birth_date = birth_date
 
             session.speakers.append(speaker)
 

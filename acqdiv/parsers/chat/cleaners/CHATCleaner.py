@@ -28,6 +28,31 @@ class CHATCleaner:
             return '-'.join([year, month_clean, day])
 
     @staticmethod
+    def clean_age(age):
+        """Reformat age in CHAT corpora.
+
+        CHAT ages are usually given in the format YY;MM.DD. If month and day is
+        missing, it is given in the format 'YY;'. If only the day is missing, it is
+        given in the format 'YY;MM.'. Missing values will be converted to 0:
+        'YY;0.0' or 'YY:MM.0'.
+
+        Args:
+            age (str): The raw age.
+
+        Returns:
+            str: The reformatted age.
+        """
+        if age:
+            # month and day is missing
+            if age.endswith(';'):
+                age += '0.0'
+            # day is missing
+            elif age.endswith('.'):
+                age += '0'
+
+        return age
+
+    @staticmethod
     def clean_record_speaker_label(session_filename, speaker_label):
         """Clean the speaker label in a record.
 

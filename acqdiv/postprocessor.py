@@ -1,25 +1,20 @@
 """ Post-processing processes on the corpora in the ACQDIV-DB. """
 
-import re
 import sys
 import argparse
 import logging
 import sqlalchemy as sa
 import os
 
-from itertools import groupby
 from configparser import ConfigParser
 
 import acqdiv.database.database_backend as db
 from acqdiv.ini.CorpusConfigParser import CorpusConfigParser
-from acqdiv.util import age
+from acqdiv.util.TimestampUnificator import TimestampUnificator
 from acqdiv.util.util import get_path_of_most_recent_database
 
 
 class PostProcessor:
-
-    cleaned_age = re.compile(r'\d{1,2};\d{1,2}\.\d{1,2}')
-    age_pattern = re.compile(".*;.*\..*")
 
     def __init__(self):
         self.engine = None
@@ -103,7 +98,6 @@ class PostProcessor:
     def process_speakers_table(self):
         """Post-process speakers table."""
         self._speakers_unify_unknowns()
-        self._speakers_update_age()
         self._speakers_standardize_gender_labels()
         self._speakers_standardize_roles()
         self._speakers_standardize_macroroles()
@@ -146,32 +140,6 @@ class PostProcessor:
 
         rows.close()
         self._update_rows(db.Speaker.__table__, 'speaker_id', results)
-
-    def _speakers_update_age(self):
-        """Age standardization.
-
-        Group by corpus and call age function depending on corpus
-        input format (IMDI of CHAT XML).
-        """
-        s = sa.select([db.Speaker.id,
-                       db.Speaker.session_id_fk,
-                       db.Speaker.corpus,
-                       db.Speaker.age_raw,
-                       db.Speaker.age,
-                       db.Speaker.birthdate])
-        query = self.conn.execute(s)
-        for corpus, rows in groupby(query, lambda r: r[2]):
-            config = self.get_config(corpus)
-            results = []
-            if config["metadata"]["type"] == "imdi":
-                results = self._update_imdi_age(rows)
-            elif config["metadata"]["type"] == "cha":
-                results = self._update_cha_age(rows)
-            # Indonesian
-            else:
-                results = self._update_xml_age(rows)
-            self._update_rows(db.Speaker.__table__, "speaker_id", results)
-        query.close()
 
     def _speakers_standardize_gender_labels(self):
         """Standardize gender labels in the speakers table."""
@@ -418,8 +386,8 @@ class PostProcessor:
         for row in rows:
             if row.start_raw:  # .isnot(None):
                 try:
-                    start = age.unify_timestamps(row.start_raw)
-                    end = age.unify_timestamps(row.end_raw)
+                    start = TimestampUnificator.unify(row.start_raw)
+                    end = TimestampUnificator.unify(row.end_raw)
                     results.append(
                         {'utterance_id': row.id, 'start': start, 'end': end})
                 except Exception as e:
@@ -513,102 +481,6 @@ class PostProcessor:
             self.conn.execute(stmt, rows)
         except sa.exc.IntegrityError:
             pass
-
-    def _update_imdi_age(self, rows):
-        """Process speaker ages in IMDI corpora.
-
-        Finds all the recording sessions in the corpus in the metadata_path. Then,
-        for each speaker in the session:
-
-        First attempts to calculate ages from the speaker's birth date and
-        the session's recording date. For speakers where this fails, looks for
-        speakers that already have a properly formatted age, transfers this age
-        from the age_raw column to the age column and calculates
-        age_in_days from it.
-
-        Finally, it looks for speakers that only have an age in years
-         and does the same.
-        """
-        results = []
-        for row in rows:
-            if row.birthdate is not None:
-                try:
-                    session_date = self._get_session_date(row.session_id_fk)
-                    recording_date = age.numerize_date(session_date)
-                    birth_date = age.numerize_date(row.birthdate)
-                    ages = age.format_imdi_age(birth_date, recording_date)
-                    formatted_age = ages[0]
-                    age_in_days = ages[1]
-                    results.append({'speaker_id': row.id, 'age': formatted_age,
-                                    'age_in_days': age_in_days})
-                except age.BirthdateError:
-                    logging.warning(
-                        'Couldn\'t calculate age of speaker {} from birth and '
-                        'recording dates: '
-                        'Invalid birthdate.'.format(row.id),
-                        exc_info=sys.exc_info())
-                except age.SessionDateError:
-                    logging.warning(
-                        'Couldn\'t calculate age of speaker {} from birth and '
-                        'recording dates: '
-                        'Invalid recording date.'.format(row.id),
-                        exc_info=sys.exc_info())
-
-            if re.fullmatch(self.age_pattern, row.age_raw):
-                formatted_age = row.age_raw
-                age_in_days = age.calculate_xml_days(row.age_raw)
-                results.append({'speaker_id': row.id, 'age': formatted_age,
-                                'age_in_days': age_in_days})
-
-            if ("None" not in row.age_raw
-                    and "Un" not in row.age_raw
-                    and row.age is None):
-                if not self.cleaned_age.fullmatch(row.age_raw):
-                    try:
-                        ages = age.clean_incomplete_ages(row.age_raw)
-                        formatted_age = ages[0]
-                        age_in_days = ages[1]
-                        results.append({'speaker_id': row.id, 'age': formatted_age,
-                                        'age_in_days': age_in_days})
-                    except ValueError:
-                        logging.warning(
-                            'Couldn\'t transform age of speaker {}'.format(row.id),
-                            exc_info=sys.exc_info())
-        return results
-
-    def _update_cha_age(self, rows):
-        """Process speaker ages in CHAT corpora."""
-        results = []
-        for row in rows:
-            if row.age_raw:
-                new_age = age.format_cha_age(row.age_raw)
-                if new_age:
-                    aid = age.calculate_xml_days(new_age)
-                    results.append(
-                        {'speaker_id': row.id, 'age': new_age, 'age_in_days': aid})
-        return results
-
-    def _update_xml_age(self, rows):
-        """Process speaker ages in BaseCHATParser XML corpora.
-
-        Finds all speakers from the corpus in the metadata_path and
-        calls methods from age.py to fill in the age and age_in_days columns.
-        """
-        results = []
-        for row in rows:
-            if row.age_raw:
-                new_age = age.format_xml_age(row.age_raw)
-                if new_age:
-                    aid = age.calculate_xml_days(new_age)
-                    results.append(
-                        {'speaker_id': row.id, 'age': new_age, 'age_in_days': aid})
-        return results
-
-    def _get_session_date(self, session_id):
-        """Return the session date from the session table. """
-        s = sa.select([db.Session]).where(db.Session.id == session_id)
-        row = self.conn.execute(s).fetchone()
-        return row.date
 
 
 def main():
