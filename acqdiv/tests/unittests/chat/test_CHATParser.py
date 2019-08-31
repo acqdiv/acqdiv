@@ -97,7 +97,7 @@ class TestCHATParser(unittest.TestCase):
         mem_dict = {
             'speaker_label': 'MEM',
             'name': 'Mme_Manyili',
-            'age_raw': None,
+            'age_raw': '',
             'gender_raw': 'female',
             'role_raw': 'Grandmother',
             'languages_spoken': 'sme',
@@ -107,7 +107,7 @@ class TestCHATParser(unittest.TestCase):
             'speaker_label': 'CHI',
             'name': 'Hlobohang',
             'age_raw': '2;2.',
-            'gender_raw': None,
+            'gender_raw': '',
             'role_raw': 'Target_Child',
             'languages_spoken': 'sme',
             'birthdate': '2006-01-14'
