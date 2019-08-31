@@ -2,7 +2,8 @@ from acqdiv.parsers.corpora.main.russian.RussianReader import RussianReader
 from acqdiv.parsers.corpora.main.russian.RussianCleaner import RussianCleaner
 from acqdiv.parsers.toolbox.ToolboxParser import ToolboxParser
 from acqdiv.parsers.metadata.IMDIParser import IMDIParser
-from acqdiv.parsers.toolbox.cleaners.IMDICleaner import IMDICleaner as ICl
+from acqdiv.parsers.corpora.main.russian.RussianIMDICleaner \
+    import RussianIMDICleaner as ICl
 from acqdiv.parsers.toolbox.readers.ToolboxAgeUpdater import ToolboxAgeUpdater
 from acqdiv.model.Speaker import Speaker
 
