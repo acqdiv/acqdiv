@@ -173,7 +173,9 @@ class DBProcessor:
             sentence_type=utt.sentence_type if utt.sentence_type else None,
             childdirected=utt.childdirected if utt.childdirected else None,
             start_raw=utt.start_raw if utt.start_raw else None,
+            start=utt.start if utt.start else None,
             end_raw=utt.end_raw if utt.end_raw else None,
+            end=utt.end if utt.end else None,
             comment=utt.comment if utt.comment else None,
             warning=utt.warning if utt.warning else None
         ).inserted_primary_key

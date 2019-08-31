@@ -2,6 +2,7 @@ from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
     import CHATUtteranceCleaner
 
 from acqdiv.parsers.chat.cleaners.CHATWordCleaner import CHATWordCleaner
+from acqdiv.util.TimestampUnificator import TimestampUnificator
 
 
 class CHATCleaner:
@@ -70,6 +71,14 @@ class CHATCleaner:
         Returns: str
         """
         return CHATUtteranceCleaner.clean(utterance)
+
+    @classmethod
+    def clean_timestamp(cls, timestamp):
+        """Clean the time stamp.
+
+        Returns: str
+        """
+        return TimestampUnificator.unify(timestamp)
 
     @staticmethod
     def clean_translation(translation):

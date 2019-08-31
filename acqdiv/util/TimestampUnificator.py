@@ -17,8 +17,8 @@ class TimestampUnificator:
         Returns:
             str: The timestamp in seconds and milliseconds.
         """
-        if timestamp_raw is None:
-            return None
+        if not timestamp_raw:
+            return ''
         times = re.match(r'(\d+):(\d+):(\d+)\.?(\d+)?', timestamp_raw)
         if times:
             fields = times.lastindex
@@ -38,6 +38,6 @@ class TimestampUnificator:
                               + int(times.group(3))
                     return "{0}.000".format(seconds)
             else:
-                return None
+                return ''
         else:
             return timestamp_raw

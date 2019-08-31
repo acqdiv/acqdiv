@@ -25,7 +25,9 @@ class Utterance:
     sentence_type: The type of the utterance.
     childdirected (bool): Whether the utterance is child directed.
     start_raw (str): The original start time of the utterance.
+    start (str): The cleaned start time of the utterance.
     end_raw (str): The original end time of the utterance.
+    end (str): The cleaned end time of the utterance.
     comment (str): Any comments about the utterance.
     warning (str): Warnings concering the utterance.
     words (List[Word]): The words of the utterance.
@@ -49,7 +51,9 @@ class Utterance:
     sentence_type: str
     childdirected: str
     start_raw = str
+    start = str
     end_raw: str
+    end: str
     comment: str
     warning: str
     words: List[Word]
@@ -74,7 +78,9 @@ class Utterance:
         self.sentence_type = ''
         self.childdirected = ''
         self.start_raw = ''
+        self.start = ''
         self.end_raw = ''
+        self.end = ''
         self.comment = ''
         self.warning = ''
         self.words = []

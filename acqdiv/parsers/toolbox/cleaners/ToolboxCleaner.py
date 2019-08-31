@@ -2,6 +2,7 @@ import re
 
 from acqdiv.parsers.toolbox.cleaners.ToolboxMorphemeCleaner \
     import ToolboxMorphemeCleaner
+from acqdiv.util.TimestampUnificator import TimestampUnificator
 
 
 class ToolboxCleaner:
@@ -34,6 +35,14 @@ class ToolboxCleaner:
             str: The cleaned utterance.
         """
         return cls.unify_unknown(utterance)
+
+    @classmethod
+    def clean_timestamp(cls, timestamp):
+        """Clean the time stamp.
+
+        Returns: str
+        """
+        return TimestampUnificator.unify(timestamp)
 
     # ---------- utterance word ----------
 

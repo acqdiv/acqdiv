@@ -129,7 +129,9 @@ class CHATParser(SessionParser):
             self.session_filename, self.reader.get_record_speaker_label())
         utt.utterance_raw = self.reader.get_utterance()
         utt.start_raw = self.reader.get_start_time()
+        utt.start = self.cleaner.clean_timestamp(utt.start_raw)
         utt.end_raw = self.reader.get_end_time()
+        utt.end = self.cleaner.clean_timestamp(utt.end_raw)
         utt.sentence_type = self.reader.get_sentence_type()
         utt.warning = ''
 

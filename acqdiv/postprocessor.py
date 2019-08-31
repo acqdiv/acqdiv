@@ -1,6 +1,5 @@
 """ Post-processing processes on the corpora in the ACQDIV-DB. """
 
-import sys
 import argparse
 import logging
 import sqlalchemy as sa
@@ -10,7 +9,6 @@ from configparser import ConfigParser
 
 import acqdiv.database.database_backend as db
 from acqdiv.ini.CorpusConfigParser import CorpusConfigParser
-from acqdiv.util.TimestampUnificator import TimestampUnificator
 from acqdiv.util.util import get_path_of_most_recent_database
 
 
@@ -368,33 +366,11 @@ class PostProcessor:
 
     def process_utterances_table(self):
         """Post-process utterances table."""
-        print("_utterances_standardize_timestamps")
-        self._utterances_standardize_timestamps()
-
         print("_utterances_get_uniquespeaker_ids")
         self._utterances_get_uniquespeaker_ids()
 
         print("_utterances_get_directedness")
         self._utterances_get_directedness()
-
-    def _utterances_standardize_timestamps(self):
-        """Unify the time stamps."""
-        s = sa.select(
-            [db.Utterance.id, db.Utterance.start_raw, db.Utterance.end_raw])
-        rows = self.conn.execute(s)
-        results = []
-        for row in rows:
-            if row.start_raw:  # .isnot(None):
-                try:
-                    start = TimestampUnificator.unify(row.start_raw)
-                    end = TimestampUnificator.unify(row.end_raw)
-                    results.append(
-                        {'utterance_id': row.id, 'start': start, 'end': end})
-                except Exception as e:
-                    logging.warning('Error unifying timestamps: {}'.format(row, e),
-                                   exc_info=sys.exc_info())
-        rows.close()
-        self._update_rows(db.Utterance.__table__, 'utterance_id', results)
 
     def _utterances_get_uniquespeaker_ids(self):
         """Add speaker ids and unique speaker ids to utterances table."""
