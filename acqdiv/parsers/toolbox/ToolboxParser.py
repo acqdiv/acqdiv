@@ -5,6 +5,8 @@ from acqdiv.parsers.toolbox.cleaners.IMDICleaner import IMDICleaner as ICl
 from acqdiv.parsers.toolbox.readers.ToolboxFileParser import ToolboxFileParser
 from acqdiv.parsers.SessionParser import SessionParser
 from acqdiv.parsers.toolbox.readers.ToolboxAgeUpdater import ToolboxAgeUpdater
+from acqdiv.util.RoleMapper import RoleMapper
+
 from acqdiv.model.Session import Session
 from acqdiv.model.Speaker import Speaker
 from acqdiv.model.Utterance import Utterance
@@ -20,6 +22,7 @@ class ToolboxParser(SessionParser):
     Uses the ToolboxReader for reading a toolbox file and
     IMDIParser or CHATParser for reading the corresponding metadata file.
     """
+    role_mapper = RoleMapper()
 
     def get_record_reader(self):
         return ToolboxReader()
@@ -88,15 +91,24 @@ class ToolboxParser(SessionParser):
             speaker = Speaker()
             speaker.birth_date = ICl.clean_date(
                 speaker_dict.get('birthdate', ''))
-            speaker.gender_raw = speaker_dict.get('sex', '')
-            speaker.gender = ICl.clean_gender(speaker.gender_raw)
             speaker.code = ICl.clean_label(speaker_dict.get('code', ''))
-            speaker.age_raw = speaker_dict.get('age', '')
-            speaker.role_raw = speaker_dict.get('role', '')
             speaker.name = ICl.clean_name(speaker_dict.get('name', ''))
             speaker.languages_spoken = speaker_dict.get('languages', '')
 
+            speaker.age_raw = speaker_dict.get('age', '')
             ToolboxAgeUpdater.update(speaker, self.session.date)
+
+            speaker.role_raw = speaker_dict.get('role', '')
+            speaker.role = self.role_mapper.role_raw2role(speaker.role_raw)
+            speaker.macro_role = self.role_mapper.infer_macro_role(
+                speaker.role_raw, speaker.age_in_days, speaker.code)
+
+            speaker.gender_raw = speaker_dict.get('sex', '')
+            speaker.gender = ICl.clean_gender(speaker.gender_raw)
+            if not speaker.gender:
+                speaker.gender = self.role_mapper.role_raw2gender(
+                    speaker.role_raw)
+
             self.session.speakers.append(speaker)
 
     def add_records(self):

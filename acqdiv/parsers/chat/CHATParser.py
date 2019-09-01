@@ -2,8 +2,11 @@ import os
 
 from acqdiv.parsers.chat.readers.CHATReader import CHATReader
 from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
-from acqdiv.util.AgeCalculator import AgeCalculator
 from acqdiv.parsers.SessionParser import SessionParser
+
+from acqdiv.util.AgeCalculator import AgeCalculator
+from acqdiv.util.RoleMapper import RoleMapper
+
 from acqdiv.model.Session import Session
 from acqdiv.model.Speaker import Speaker
 from acqdiv.model.Utterance import Utterance
@@ -17,6 +20,8 @@ class CHATParser(SessionParser):
     Uses the CHATReader for reading and inferring data from the CHAT file and
     CHATCleaner for cleaning these data.
     """
+
+    role_mapper = RoleMapper()
 
     def __init__(self, session_path):
         self.session_path = session_path
@@ -81,7 +86,7 @@ class CHATParser(SessionParser):
 
             speaker_label = self.reader.get_speaker_label()
             name = self.reader.get_speaker_name()
-            role = self.reader.get_speaker_role()
+            role_raw = self.reader.get_speaker_role()
             age_raw = self.reader.get_speaker_age()
             gender_raw = self.reader.get_speaker_gender()
             language = self.reader.get_speaker_language()
@@ -90,21 +95,30 @@ class CHATParser(SessionParser):
             target_child = self.reader.get_target_child()
 
             # any corrections of the metadata
-            speaker_label, name, role, age_raw, gender_raw, language, birth_date = \
+            speaker_label, name, role_raw, age_raw, gender_raw, language, birth_date = \
                 self.cleaner.clean_speaker_metadata(
-                    self.session_filename, speaker_label, name, role, age_raw,
+                    self.session_filename, speaker_label, name, role_raw, age_raw,
                     gender_raw, language, birth_date, target_child)
 
             speaker.code = speaker_label
             speaker.name = self.cleaner.clean_name(name)
+            speaker.languages_spoken = language
+            speaker.birth_date = birth_date
+
             speaker.age_raw = age_raw
             speaker.age = self.cleaner.clean_age(speaker.age_raw)
             speaker.age_in_days = AgeCalculator.to_days(speaker.age)
+
+            speaker.role_raw = role_raw
+            speaker.role = self.role_mapper.role_raw2role(speaker.role_raw)
+            speaker.macro_role = self.role_mapper.infer_macro_role(
+                speaker.role_raw, speaker.age_in_days, speaker.code)
+
             speaker.gender_raw = gender_raw
             speaker.gender = self.cleaner.clean_gender(speaker.gender_raw)
-            speaker.role_raw = role
-            speaker.languages_spoken = language
-            speaker.birth_date = birth_date
+            if not speaker.gender:
+                speaker.gender = self.role_mapper.role_raw2gender(
+                    speaker.role_raw)
 
             session.speakers.append(speaker)
 

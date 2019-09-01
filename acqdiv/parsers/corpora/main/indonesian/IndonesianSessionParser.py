@@ -9,6 +9,8 @@ from acqdiv.parsers.corpora.main.indonesian.IndonesianSpeakerLabelCorrector \
     import IndonesianSpeakerLabelCorrector
 from acqdiv.parsers.corpora.main.indonesian.IndonesianAgeUpdater \
     import IndonesianAgeUpdater
+from acqdiv.util.RoleMapper import RoleMapper
+from acqdiv.util.util import get_full_path
 from acqdiv.parsers.metadata.CHATParser import CHATParser
 from acqdiv.parsers.toolbox.ToolboxParser import ToolboxParser
 from acqdiv.model.Speaker import Speaker
@@ -16,6 +18,11 @@ from acqdiv.model.Word import Word
 
 
 class IndonesianSessionParser(ToolboxParser):
+
+    role_mapper = RoleMapper(get_full_path(
+        'parsers/corpora/main/indonesian/resources/'
+        'speaker_label2macro_role.csv'
+    ))
 
     def get_metadata_reader(self):
         return CHATParser(self.metadata_path)
@@ -38,15 +45,23 @@ class IndonesianSessionParser(ToolboxParser):
         for speaker_dict in self.metadata_reader.metadata['participants']:
             speaker = Speaker()
             speaker.birth_date = speaker_dict.get('birthday', '')
-            speaker.gender_raw = speaker_dict.get('sex', '')
-            speaker.gender = speaker.gender_raw.title()
             speaker.code = speaker_dict.get('id', '')
-            speaker.age_raw = speaker_dict.get('age', '')
-            speaker.role_raw = speaker_dict.get('role', '')
             speaker.name = speaker_dict.get('name', '')
             speaker.languages_spoken = speaker_dict.get('language', '')
 
+            speaker.age_raw = speaker_dict.get('age', '')
             IndonesianAgeUpdater.update(speaker, self.session.date)
+
+            speaker.role_raw = speaker_dict.get('role', '')
+            speaker.role = self.role_mapper.role_raw2role(speaker.role_raw)
+            speaker.macro_role = self.role_mapper.infer_macro_role(
+                speaker.role_raw, speaker.age_in_days, speaker.code)
+
+            speaker.gender_raw = speaker_dict.get('sex', '')
+            speaker.gender = speaker.gender_raw.title()
+            if not speaker.gender:
+                speaker.gender = self.role_mapper.role_raw2gender(
+                    speaker.role_raw)
 
             if self.is_speaker(speaker):
                 self.session.speakers.append(speaker)

@@ -12,6 +12,8 @@ class Speaker:
     age (str): The age of the speaker in the child language acquisition format.
     age_in_days (str): The age of the speaker in days.
     role_raw (str): The original role of the speaker.
+    role (str): The unified role of the speaker.
+    macro_role (str): The unified macro role of the speaker.
     languages_spoken: The languages spoken by the speaker.
     """
 
@@ -24,6 +26,8 @@ class Speaker:
     age: str
     age_in_days: str
     role_raw: str
+    role: str
+    macro_role: str
     languages_spoken: str
 
     def __init__(self):
@@ -36,4 +40,6 @@ class Speaker:
         self.age = ''
         self.age_in_days = ''
         self.role_raw = ''
+        self.role = ''
+        self.macro_role = ''
         self.languages_spoken = ''

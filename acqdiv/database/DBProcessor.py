@@ -146,6 +146,8 @@ class DBProcessor:
             age=speaker.age if speaker.age else None,
             age_in_days=speaker.age_in_days if speaker.age_in_days else None,
             role_raw=speaker.role_raw if speaker.role_raw else None,
+            role=speaker.role if speaker.role else None,
+            macrorole=speaker.macro_role if speaker.macro_role else None,
             name=speaker.name if speaker.name else None,
             languages_spoken=speaker.languages_spoken
             if speaker.languages_spoken else None
