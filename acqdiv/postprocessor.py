@@ -3,12 +3,8 @@
 import argparse
 import logging
 import sqlalchemy as sa
-import os
-
-from configparser import ConfigParser
 
 import acqdiv.database.database_backend as db
-from acqdiv.ini.CorpusConfigParser import CorpusConfigParser
 from acqdiv.util.util import get_path_of_most_recent_database
 
 
@@ -17,14 +13,10 @@ class PostProcessor:
     def __init__(self):
         self.engine = None
         self.conn = None
-        self.corpora_in_DB = {}
-        self.roles = None
 
     def postprocess(self, test=False):
         """Global setup and then call post-processes."""
         self.set_engine(test=test)
-        self.set_roles()
-        self.set_config_parsers()
         self.process_tables()
 
     def set_engine(self, test=False):
@@ -45,34 +37,6 @@ class PostProcessor:
         self.conn.execute('PRAGMA journal_mode = MEMORY')
         self.conn.execution_options(compiled_cache={})
 
-    def set_config_parsers(self):
-        with self.engine.begin() as self.conn:
-            self.configure_connection()
-
-            s = sa.select([db.Session.corpus]).distinct()
-            for row in self.conn.execute(s):
-                corpus = row[0]
-                ccp = CorpusConfigParser()
-
-                main_ini_path = 'ini/' + corpus + '.ini'
-                phonbank_ini_path = 'ini/Phonbank/' + corpus + '.ini'
-
-                if os.path.isfile(main_ini_path):
-                    ccp.read(main_ini_path)
-                elif os.path.isfile(phonbank_ini_path):
-                    ccp.read(phonbank_ini_path)
-                else:
-                    print('No ini found for: ', corpus)
-                    continue
-
-                self.corpora_in_DB[corpus] = ccp
-
-    def set_roles(self):
-        """Load the role-mapping ini for unifying roles."""
-        self.roles = ConfigParser(delimiters='=')
-        self.roles.optionxform = str
-        self.roles.read("ini/role_mapping.ini")
-
     def process_tables(self):
         """Process the tables.
 
@@ -88,10 +52,6 @@ class PostProcessor:
             self.configure_connection()
             print("Processing utterances table...")
             self.process_utterances_table()
-
-    def get_config(self, corpus):
-        """Return the corpus config parser."""
-        return self.corpora_in_DB[corpus]
 
     def process_speakers_table(self):
         """Post-process speakers table."""
