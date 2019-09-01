@@ -9,7 +9,7 @@ def parse():
     Returns:
         Dict[Dict[str]]: The duration indexed by corpus and source_id.
     """
-    durations_csv_path = 'ini/session_durations.csv'
+    durations_csv_path = 'util/resources/session_durations.csv'
     full_path = get_full_path(durations_csv_path)
 
     durations = {}
