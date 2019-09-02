@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.toolbox.readers.ToolboxFileParser import ToolboxFileParser
+from acqdiv.parsers.toolbox.readers.fileparser import ToolboxFileParser
 
 
 class TestToolboxFileParser(unittest.TestCase):

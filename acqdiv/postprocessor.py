@@ -4,8 +4,8 @@ import argparse
 import logging
 import sqlalchemy as sa
 
-import acqdiv.database.database_backend as db
-from acqdiv.util.util import get_path_of_most_recent_database
+import acqdiv.database.model as db
+from acqdiv.util.path import get_path_of_most_recent_database
 
 
 class PostProcessor:

@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.chat.readers.ActualTargetUtteranceExtractor \
+from acqdiv.parsers.chat.readers.actual_target_utterance \
     import ActualTargetUtteranceExtractor as Extractor
 
 

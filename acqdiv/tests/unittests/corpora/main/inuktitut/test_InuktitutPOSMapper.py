@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.inuktitut.InuktitutPOSMapper \
+from acqdiv.parsers.corpora.main.inuktitut.pos_mapper \
     import InuktitutPOSMapper as Mp
 
 

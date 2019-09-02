@@ -1,9 +1,9 @@
 import unittest
 import io
 
-from acqdiv.parsers.corpora.main.nungon.NungonCleaner import NungonCleaner
-from acqdiv.parsers.corpora.main.nungon.NungonSessionParser import NungonSessionParser
-from acqdiv.parsers.corpora.main.nungon.NungonReader import NungonReader
+from acqdiv.parsers.corpora.main.nungon.cleaner import NungonCleaner
+from acqdiv.parsers.corpora.main.nungon.session_parser import NungonSessionParser
+from acqdiv.parsers.corpora.main.nungon.reader import NungonReader
 
 
 class TestNungonParser(unittest.TestCase):

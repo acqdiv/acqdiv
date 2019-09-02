@@ -3,11 +3,11 @@ import unittest
 import os
 import acqdiv
 
-from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProCleaner import \
+from acqdiv.parsers.corpora.main.japanese_miipro.cleaner import \
     JapaneseMiiProCleaner
-from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProSessionParser \
+from acqdiv.parsers.corpora.main.japanese_miipro.session_parser \
     import JapaneseMiiProSessionParser
-from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProReader import \
+from acqdiv.parsers.corpora.main.japanese_miipro.reader import \
     JapaneseMiiProReader
 
 

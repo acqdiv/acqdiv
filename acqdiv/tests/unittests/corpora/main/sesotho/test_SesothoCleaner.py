@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.sesotho.SesothoCleaner import SesothoCleaner
+from acqdiv.parsers.corpora.main.sesotho.cleaner import SesothoCleaner
 
 
 class TestSesothoCleaner(unittest.TestCase):

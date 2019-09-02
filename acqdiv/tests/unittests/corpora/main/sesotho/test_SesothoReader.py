@@ -1,7 +1,7 @@
 import io
 import unittest
 
-from acqdiv.parsers.corpora.main.sesotho.SesothoReader import SesothoReader
+from acqdiv.parsers.corpora.main.sesotho.reader import SesothoReader
 
 
 class TestSesothoReader(unittest.TestCase):

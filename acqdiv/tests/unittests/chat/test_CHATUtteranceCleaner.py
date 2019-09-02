@@ -1,5 +1,5 @@
 import unittest
-from acqdiv.parsers.chat.cleaners.CHATUtteranceCleaner \
+from acqdiv.parsers.chat.cleaners.utterance_cleaner \
     import CHATUtteranceCleaner
 
 

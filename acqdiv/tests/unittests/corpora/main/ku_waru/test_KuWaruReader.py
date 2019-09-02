@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.ku_waru.KuWaruReader import KuWaruReader
+from acqdiv.parsers.corpora.main.ku_waru.reader import KuWaruReader
 
 
 class TestKuWaruReader(unittest.TestCase):

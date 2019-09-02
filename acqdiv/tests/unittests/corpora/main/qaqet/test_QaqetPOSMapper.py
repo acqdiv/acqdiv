@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.qaqet.QaqetPOSMapper \
+from acqdiv.parsers.corpora.main.qaqet.pos_mapper \
     import QaqetPOSMapper as QM
 
 

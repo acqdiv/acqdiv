@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.chintang.ChintangReader import ChintangReader
+from acqdiv.parsers.corpora.main.chintang.reader import ChintangReader
 
 
 class TestChintangReader(unittest.TestCase):

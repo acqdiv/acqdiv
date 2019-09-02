@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.indonesian.IndonesianCleaner \
+from acqdiv.parsers.corpora.main.indonesian.cleaner \
     import IndonesianCleaner as Cl
 
 

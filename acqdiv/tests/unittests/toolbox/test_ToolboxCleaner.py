@@ -1,5 +1,5 @@
 import unittest
-from acqdiv.parsers.toolbox.cleaners.ToolboxCleaner import ToolboxCleaner
+from acqdiv.parsers.toolbox.cleaners.cleaner import ToolboxCleaner
 
 
 class TestToolboxCleaner(unittest.TestCase):

@@ -1,7 +1,7 @@
 import io
 import unittest
 
-from acqdiv.parsers.corpora.main.nungon.NungonReader import NungonReader
+from acqdiv.parsers.corpora.main.nungon.reader import NungonReader
 
 
 class TestNungonReaderRecord(unittest.TestCase):

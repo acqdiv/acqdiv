@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.inuktitut.InuktitutCleaner import \
+from acqdiv.parsers.corpora.main.inuktitut.cleaner import \
     InuktitutCleaner
 
 

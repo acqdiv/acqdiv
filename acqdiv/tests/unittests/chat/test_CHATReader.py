@@ -1,8 +1,8 @@
 import unittest
 import io
-from acqdiv.parsers.chat.readers.CHATFileParser import CHATFileParser
-from acqdiv.parsers.chat.readers.CHATReader import CHATReader
-from acqdiv.parsers.chat.model.Participant import Participant
+from acqdiv.parsers.chat.readers.fileparser import CHATFileParser
+from acqdiv.parsers.chat.readers.reader import CHATReader
+from acqdiv.parsers.chat.model.participant import Participant
 
 
 class TestCHATReader(unittest.TestCase):

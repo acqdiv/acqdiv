@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.yucatec.YucatecReader import YucatecReader
+from acqdiv.parsers.corpora.main.yucatec.reader import YucatecReader
 
 
 class TestYucatecReader(unittest.TestCase):

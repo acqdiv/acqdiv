@@ -3,8 +3,8 @@
 import argparse
 
 from acqdiv.ini.CorpusConfigParser import CorpusConfigParser
-from acqdiv.parsers.CorpusParserMapper import CorpusParserMapper
-from acqdiv.database.DBProcessor import DBProcessor
+from acqdiv.parsers.corpus_parser_mapper import CorpusParserMapper
+from acqdiv.database.processor import DBProcessor
 
 
 class Loader:

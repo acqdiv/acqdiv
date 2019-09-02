@@ -3,11 +3,11 @@ import unittest
 import os
 import acqdiv
 
-from acqdiv.parsers.corpora.main.turkish.TurkishCleaner \
+from acqdiv.parsers.corpora.main.turkish.cleaner \
     import TurkishCleaner
-from acqdiv.parsers.corpora.main.turkish.TurkishSessionParser \
+from acqdiv.parsers.corpora.main.turkish.session_parser \
     import TurkishSessionParser
-from acqdiv.parsers.corpora.main.turkish.TurkishReader \
+from acqdiv.parsers.corpora.main.turkish.reader \
     import TurkishReader
 
 

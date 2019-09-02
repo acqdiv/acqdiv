@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.nungon.NungonGlossMapper \
+from acqdiv.parsers.corpora.main.nungon.gloss_mapper \
     import NungonGlossMapper as Mp
 
 

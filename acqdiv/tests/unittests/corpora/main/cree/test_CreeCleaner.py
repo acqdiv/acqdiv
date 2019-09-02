@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.cree.CreeCleaner import CreeCleaner
+from acqdiv.parsers.corpora.main.cree.cleaner import CreeCleaner
 
 
 class TestCreeCleaner(unittest.TestCase):

@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.sesotho.SesothoGlossMapper \
+from acqdiv.parsers.corpora.main.sesotho.gloss_mapper \
     import SesothoGlossMapper as Mp
 
 

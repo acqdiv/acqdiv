@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.sesotho.SesothoPOSMapper \
+from acqdiv.parsers.corpora.main.sesotho.pos_mapper \
     import SesothoPOSMapper as Mp
 
 

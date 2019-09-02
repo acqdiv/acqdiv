@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.ku_waru.KuWaruGlossMapper \
+from acqdiv.parsers.corpora.main.ku_waru.gloss_mapper \
     import KuWaruGlossMapper
 
 

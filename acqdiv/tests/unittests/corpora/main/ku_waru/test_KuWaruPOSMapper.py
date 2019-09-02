@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.ku_waru.KuWaruPOSMapper import KuWaruPOSMapper
+from acqdiv.parsers.corpora.main.ku_waru.pos_mapper import KuWaruPOSMapper
 
 
 class KuWaruPOSMapperTest(unittest.TestCase):

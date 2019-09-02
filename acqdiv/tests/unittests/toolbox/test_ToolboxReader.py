@@ -1,5 +1,5 @@
 import unittest
-from acqdiv.parsers.toolbox.readers.ToolboxReader import *
+from acqdiv.parsers.toolbox.readers.reader import *
 
 
 class TestToolboxReader(unittest.TestCase):

@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.inuktitut.InuktitutGlossMapper \
+from acqdiv.parsers.corpora.main.inuktitut.gloss_mapper \
     import InuktitutGlossMapper as Mp
 
 

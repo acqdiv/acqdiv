@@ -3,11 +3,11 @@ import unittest
 import os
 import acqdiv
 
-from acqdiv.parsers.corpora.main.yucatec.YucatecCleaner \
+from acqdiv.parsers.corpora.main.yucatec.cleaner \
     import YucatecCleaner
-from acqdiv.parsers.corpora.main.yucatec.YucatecSessionParser \
+from acqdiv.parsers.corpora.main.yucatec.session_parser \
     import YucatecSessionParser
-from acqdiv.parsers.corpora.main.yucatec.YucatecReader \
+from acqdiv.parsers.corpora.main.yucatec.reader \
     import YucatecReader
 
 

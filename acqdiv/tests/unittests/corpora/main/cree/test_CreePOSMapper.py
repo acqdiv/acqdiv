@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.cree.CreePOSMapper \
+from acqdiv.parsers.corpora.main.cree.pos_mapper \
     import CreePOSMapper as Mp
 
 

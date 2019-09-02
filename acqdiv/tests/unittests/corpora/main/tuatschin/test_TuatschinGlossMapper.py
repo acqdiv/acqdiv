@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.tuatschin.TuatschinGlossMapper \
+from acqdiv.parsers.corpora.main.tuatschin.gloss_mapper \
     import TuatschinGlossMapper as TM
 
 

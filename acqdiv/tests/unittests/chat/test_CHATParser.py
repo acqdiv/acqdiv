@@ -1,9 +1,9 @@
 import acqdiv
 import unittest
 import io
-from acqdiv.parsers.chat.CHATParser import *
-from acqdiv.parsers.chat.readers.CHATReader import CHATReader
-from acqdiv.parsers.chat.cleaners.CHATCleaner import *
+from acqdiv.parsers.chat.parser import *
+from acqdiv.parsers.chat.readers.reader import CHATReader
+from acqdiv.parsers.chat.cleaners.cleaner import *
 
 
 class TestCHATParser(unittest.TestCase):

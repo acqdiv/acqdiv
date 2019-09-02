@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.english.EnglishPOSMapper \
+from acqdiv.parsers.corpora.main.english.pos_mapper \
     import EnglishPOSMapper as Mp
 
 

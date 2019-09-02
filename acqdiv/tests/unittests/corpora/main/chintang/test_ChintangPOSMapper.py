@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.chintang.ChintangPOSMapper \
+from acqdiv.parsers.corpora.main.chintang.pos_mapper \
     import ChintangPOSMapper as CM
 
 

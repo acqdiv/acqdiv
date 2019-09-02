@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProCleaner import \
+from acqdiv.parsers.corpora.main.japanese_miipro.cleaner import \
     JapaneseMiiProCleaner
 
 

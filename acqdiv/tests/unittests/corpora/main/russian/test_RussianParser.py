@@ -2,7 +2,7 @@ import os
 import unittest
 
 import acqdiv
-from acqdiv.parsers.corpora.main.russian.RussianSessionParser import \
+from acqdiv.parsers.corpora.main.russian.session_parser import \
     RussianSessionParser
 
 

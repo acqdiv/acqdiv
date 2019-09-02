@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.japanese_miyata.JapaneseMiyataCleaner \
+from acqdiv.parsers.corpora.main.japanese_miyata.cleaner \
     import JapaneseMiyataCleaner as Cl
 
 

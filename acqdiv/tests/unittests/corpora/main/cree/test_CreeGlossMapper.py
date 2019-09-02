@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.cree.CreeGlossMapper \
+from acqdiv.parsers.corpora.main.cree.gloss_mapper \
     import CreeGlossMapper as Mp
 
 

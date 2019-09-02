@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.tuatschin.TuatschinCleaner \
+from acqdiv.parsers.corpora.main.tuatschin.cleaner \
     import TuatschinCleaner as Tc
 
 

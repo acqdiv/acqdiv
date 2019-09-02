@@ -3,10 +3,10 @@ import unittest
 import os
 import acqdiv
 
-from acqdiv.parsers.corpora.main.cree.CreeCleaner import CreeCleaner
-from acqdiv.parsers.corpora.main.cree.CreeSessionParser \
+from acqdiv.parsers.corpora.main.cree.cleaner import CreeCleaner
+from acqdiv.parsers.corpora.main.cree.session_parser \
     import CreeSessionParser
-from acqdiv.parsers.corpora.main.cree.CreeReader import CreeReader
+from acqdiv.parsers.corpora.main.cree.reader import CreeReader
 
 
 class TestCreeParser(unittest.TestCase):

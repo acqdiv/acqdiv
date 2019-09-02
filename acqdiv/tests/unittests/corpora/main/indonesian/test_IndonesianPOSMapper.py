@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.indonesian.IndonesianPOSMapper \
+from acqdiv.parsers.corpora.main.indonesian.pos_mapper \
     import IndonesianPOSMapper as Mp
 
 

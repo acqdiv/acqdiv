@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.japanese_miipro.JapaneseMiiProReader import \
+from acqdiv.parsers.corpora.main.japanese_miipro.reader import \
     JapaneseMiiProReader
 
 

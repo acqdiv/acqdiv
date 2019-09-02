@@ -1,5 +1,5 @@
 import unittest
-from acqdiv.parsers.chat.readers.SentenceTypeExtractor \
+from acqdiv.parsers.chat.readers.sentence_type \
     import SentenceTypeExtractor as SentTypExtr
 
 

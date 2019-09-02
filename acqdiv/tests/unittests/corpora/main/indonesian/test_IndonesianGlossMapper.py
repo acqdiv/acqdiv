@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.indonesian.IndonesianGlossMapper \
+from acqdiv.parsers.corpora.main.indonesian.gloss_mapper \
     import IndonesianGlossMapper as Mp
 
 

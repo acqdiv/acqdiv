@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.russian.RussianCleaner \
+from acqdiv.parsers.corpora.main.russian.cleaner \
     import RussianCleaner as Cl
 
 

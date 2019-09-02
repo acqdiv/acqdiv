@@ -1,5 +1,5 @@
 import unittest
-from acqdiv.parsers.corpora.main.japanese_miyata.JapaneseMiyataReader import \
+from acqdiv.parsers.corpora.main.japanese_miyata.reader import \
     JapaneseMiyataReader
 
 

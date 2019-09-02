@@ -3,10 +3,10 @@ import unittest
 import os
 import acqdiv
 
-from acqdiv.parsers.corpora.main.sesotho.SesothoCleaner import SesothoCleaner
-from acqdiv.parsers.corpora.main.sesotho.SesothoSessionParser \
+from acqdiv.parsers.corpora.main.sesotho.cleaner import SesothoCleaner
+from acqdiv.parsers.corpora.main.sesotho.session_parser \
     import SesothoSessionParser
-from acqdiv.parsers.corpora.main.sesotho.SesothoReader import SesothoReader
+from acqdiv.parsers.corpora.main.sesotho.reader import SesothoReader
 
 
 class TestSesothoParser(unittest.TestCase):

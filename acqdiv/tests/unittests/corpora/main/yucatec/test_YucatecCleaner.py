@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.yucatec.YucatecCleaner import YucatecCleaner
+from acqdiv.parsers.corpora.main.yucatec.cleaner import YucatecCleaner
 
 
 class TestYucatecCleaner(unittest.TestCase):

@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.chintang.ChintangGlossMapper \
+from acqdiv.parsers.corpora.main.chintang.gloss_mapper \
     import ChintangGlossMapper as CM
 
 

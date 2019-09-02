@@ -1,5 +1,5 @@
 import unittest
-from acqdiv.parsers.chat.cleaners.CHATWordCleaner import CHATWordCleaner
+from acqdiv.parsers.chat.cleaners.word_cleaner import CHATWordCleaner
 
 
 class TestCHATWordCleaner(unittest.TestCase):

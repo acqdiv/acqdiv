@@ -2,7 +2,7 @@ import os
 import unittest
 
 import acqdiv
-from acqdiv.parsers.corpora.main.chintang.ChintangSessionParser import \
+from acqdiv.parsers.corpora.main.chintang.session_parser import \
     ChintangSessionParser
 
 

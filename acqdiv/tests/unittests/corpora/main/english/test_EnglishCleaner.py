@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.english.EnglishManchester1Cleaner \
+from acqdiv.parsers.corpora.main.english.cleaner \
     import EnglishManchester1Cleaner as Cl
 
 

@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.russian.RussianGlossMapper \
+from acqdiv.parsers.corpora.main.russian.gloss_mapper \
     import RussianGlossMapper as Mp
 
 

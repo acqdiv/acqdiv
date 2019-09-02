@@ -1,8 +1,8 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.indonesian.IndonesianReader \
+from acqdiv.parsers.corpora.main.indonesian.reader \
     import IndonesianReader as Rd
-from acqdiv.parsers.toolbox.model.Record import Record
+from acqdiv.parsers.toolbox.model.record import Record
 
 
 class IndonesianReaderTest(unittest.TestCase):

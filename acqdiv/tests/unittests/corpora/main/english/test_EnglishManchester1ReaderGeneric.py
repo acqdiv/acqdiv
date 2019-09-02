@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.english.EnglishManchester1Reader import \
+from acqdiv.parsers.corpora.main.english.reader import \
     EnglishManchester1Reader
 
 

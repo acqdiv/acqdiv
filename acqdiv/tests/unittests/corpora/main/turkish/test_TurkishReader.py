@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.turkish.TurkishReader import TurkishReader
+from acqdiv.parsers.corpora.main.turkish.reader import TurkishReader
 
 
 class TestTurkishReader(unittest.TestCase):

@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.qaqet.QaqetGlossMapper \
+from acqdiv.parsers.corpora.main.qaqet.gloss_mapper \
     import QaqetGlossMapper as QM
 
 

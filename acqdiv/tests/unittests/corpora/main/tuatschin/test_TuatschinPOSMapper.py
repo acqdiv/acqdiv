@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.tuatschin.TuatschinPOSMapper \
+from acqdiv.parsers.corpora.main.tuatschin.pos_mapper \
     import TuatschinPOSMapper as TM
 
 

@@ -2,7 +2,7 @@ import os
 import unittest
 
 import acqdiv
-from acqdiv.parsers.corpora.main.indonesian.IndonesianSessionParser import \
+from acqdiv.parsers.corpora.main.indonesian.session_parser import \
     IndonesianSessionParser
 
 

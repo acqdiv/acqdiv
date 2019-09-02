@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.qaqet.QaqetCleaner import QaqetCleaner as Qc
+from acqdiv.parsers.corpora.main.qaqet.cleaner import QaqetCleaner as Qc
 
 
 class TestQaqetCleaner(unittest.TestCase):

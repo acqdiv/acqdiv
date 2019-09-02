@@ -8,7 +8,7 @@ import sqlalchemy as sa
 from dateutil.parser import parse
 from sqlalchemy.orm import sessionmaker
 
-from acqdiv.util.util import get_path_of_most_recent_database
+from acqdiv.util.path import get_path_of_most_recent_database
 
 
 class IntegrityTest(unittest.TestCase):

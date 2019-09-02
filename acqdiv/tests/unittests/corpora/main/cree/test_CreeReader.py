@@ -1,7 +1,7 @@
 import io
 import unittest
 
-from acqdiv.parsers.corpora.main.cree.CreeReader import CreeReader
+from acqdiv.parsers.corpora.main.cree.reader import CreeReader
 
 
 class TestCreeReader(unittest.TestCase):

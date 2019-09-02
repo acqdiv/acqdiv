@@ -3,11 +3,11 @@ import unittest
 import os
 import acqdiv
 
-from acqdiv.parsers.corpora.main.inuktitut.InuktitutCleaner import \
+from acqdiv.parsers.corpora.main.inuktitut.cleaner import \
     InuktitutCleaner
-from acqdiv.parsers.corpora.main.inuktitut.InuktitutSessionParser import \
+from acqdiv.parsers.corpora.main.inuktitut.session_parser import \
     InuktitutSessionParser
-from acqdiv.parsers.corpora.main.inuktitut.InuktitutReader import \
+from acqdiv.parsers.corpora.main.inuktitut.reader import \
     InuktitutReader
 
 

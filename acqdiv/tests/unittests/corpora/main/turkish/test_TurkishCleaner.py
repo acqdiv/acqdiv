@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.turkish.TurkishCleaner import TurkishCleaner
+from acqdiv.parsers.corpora.main.turkish.cleaner import TurkishCleaner
 
 
 class TestTurkishCleaner(unittest.TestCase):

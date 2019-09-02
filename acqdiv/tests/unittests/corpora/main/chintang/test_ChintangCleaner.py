@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.chintang.ChintangCleaner \
+from acqdiv.parsers.corpora.main.chintang.cleaner \
     import ChintangCleaner as Cl
 
 

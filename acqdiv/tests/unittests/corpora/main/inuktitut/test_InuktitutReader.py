@@ -1,7 +1,7 @@
 import io
 import unittest
 
-from acqdiv.parsers.corpora.main.inuktitut.InuktitutReader import \
+from acqdiv.parsers.corpora.main.inuktitut.reader import \
     InuktitutReader
 
 

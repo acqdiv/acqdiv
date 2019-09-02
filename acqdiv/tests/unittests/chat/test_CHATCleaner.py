@@ -1,5 +1,5 @@
 import unittest
-from acqdiv.parsers.chat.cleaners.CHATCleaner import CHATCleaner
+from acqdiv.parsers.chat.cleaners.cleaner import CHATCleaner
 
 
 class TestCHATCleaner(unittest.TestCase):

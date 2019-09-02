@@ -1,6 +1,6 @@
 import unittest
 
-from acqdiv.parsers.corpora.main.nungon.NungonCleaner import NungonCleaner
+from acqdiv.parsers.corpora.main.nungon.cleaner import NungonCleaner
 
 
 class TestNungonCleaner(unittest.TestCase):
