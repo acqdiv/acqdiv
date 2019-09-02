@@ -1,42 +1,24 @@
-""" ORM declarations, database table definitions for ACQDIV-DB
+"""Model for the ACQDIV database."""
 
-TODO: investigate:
-
-http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#eager-loading
-
-from sqlalchemy.ext.declarative.api import _declarative_constructor
-from sqlalchemy.engine.url import URL
-
-"""
-
-from sqlalchemy import (Text, Column, Integer,
-                        Boolean, ForeignKey)
+from sqlalchemy import (Text, Column, Integer, Boolean, ForeignKey)
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
 
-# TODO: http://stackoverflow.com/questions/13978554/is-possible-to-create-column-in-sqlalchemy-which-is-going-to-be-automatically-po
-
-
 class Session(Base):
-    """ Each row in the Sessions table represents an input file.
-
-        Note:
-            - session_id field is the input filename
-            - source_id field is the id given in the session file
-    """
+    """Model for the session."""
     __tablename__ = 'sessions'
 
     id = Column(Integer, primary_key=True)
-    source_id = Column(Text, nullable=False, unique=False)
-    media_id = Column(Text, nullable=True, unique=False)
-    corpus = Column(Text, nullable=False, unique=False)
-    language = Column(Text, nullable=False, unique=False)
-    date = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    source_id = Column(Text, nullable=False)
+    media_id = Column(Text)
+    corpus = Column(Text, nullable=False)
+    language = Column(Text, nullable=False)
+    date = Column(Text)
     target_child_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
-    duration = Column(Integer, nullable=True, unique=False)
+    duration = Column(Integer)
     # SQLAlchemy relationship definitions:
     speakers = relationship('Speaker', backref='Session')
     utterances = relationship('Utterance', backref='Session')
@@ -45,125 +27,108 @@ class Session(Base):
 
 
 class Speaker(Base):
-    """ Speaker table includes a row for each speaker in a session. Speakers may appear in > 1 session.
-    """
+    """Model for the session speaker."""
     __tablename__ = 'speakers'
 
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
     uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
-    corpus = Column(Text, nullable=False, unique=False)
-    language = Column(Text, nullable=False, unique=False)
-    speaker_label = Column(Text, nullable=True, unique=False)  # TODO: set to nullable=FALSE once all tests pass
-    name = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    age_raw = Column(Text, nullable=True, unique=False)
-    age = Column(Text, nullable=True, unique=False)
-    age_in_days = Column(Integer, nullable=True, unique=False)
-    gender_raw = Column(Text, nullable=True, unique=False)
-    gender = Column(Text, nullable=True, unique=False)
-    role_raw = Column(Text, nullable=True, unique=False)
-    role = Column(Text, nullable=True, unique=False)
-    macrorole = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    languages_spoken = Column(Text, nullable=True, unique=False)
-    birthdate = Column(Text, nullable=True, unique=False)
-
-    # TODO: optional pretty formatting for printing
-    def __repr__(self):
-        return "Speaker(%s), Label(%s), Birthdate(%s)" % (self.name, self.speaker_label, self.birthdate)
+    corpus = Column(Text, nullable=False)
+    language = Column(Text, nullable=False)
+    speaker_label = Column(Text)
+    name = Column(Text)
+    age_raw = Column(Text)
+    age = Column(Text)
+    age_in_days = Column(Integer)
+    gender_raw = Column(Text)
+    gender = Column(Text)
+    role_raw = Column(Text)
+    role = Column(Text)
+    macrorole = Column(Text)
+    languages_spoken = Column(Text)
+    birthdate = Column(Text)
 
 
 class UniqueSpeaker(Base):
-    """ Unique speakers across all corpora.
-    """
+    """Model for the unique speaker across all corpora."""
     __tablename__ = 'uniquespeakers'
 
     id = Column(Integer, primary_key=True)
-    speaker_label = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    name = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    birthdate = Column(Text, nullable=True, unique=False)
-    gender = Column(Text, nullable=True, unique=False)
-    corpus = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    speaker_label = Column(Text)
+    name = Column(Text)
+    birthdate = Column(Text)
+    gender = Column(Text)
+    corpus = Column(Text)
 
 
 class Utterance(Base):
-    """ Utterances in all sessions.
-
-        Note:
-            - source_id is the id in the original files and is not unique across corpora, e.g. u1, u1, u1
-            - addressee field is not present in all corpora (see corpus manual for more info)
-            - x_raw vs x is distinction between original input and cleaned/manipulated output
-    """
+    """Model for the utterance of a session."""
     __tablename__ = 'utterances'
 
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
-    source_id = Column(Text, nullable=True, unique=False)
+    source_id = Column(Text)
     uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
     speaker_id_fk = Column(Integer, ForeignKey('speakers.id'))
-    corpus = Column(Text, nullable=False, unique=False)
-    language = Column(Text, nullable=False, unique=False)
-    speaker_label = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    addressee = Column(Text, nullable=True, unique=False)
-    utterance_raw = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    utterance = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    translation = Column(Text, nullable=True, unique=False)
-    morpheme = Column(Text, nullable=True, unique=False)
-    gloss_raw = Column(Text, nullable=True, unique=False)
-    pos_raw = Column(Text, nullable=True, unique=False)
-    sentence_type = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    childdirected = Column(Boolean, nullable=True, unique=False)
-    start = Column(Text, nullable=True, unique=False)
-    end = Column(Text, nullable=True, unique=False)
-    start_raw = Column(Text, nullable=True, unique=False)
-    end_raw = Column(Text, nullable=True, unique=False)
-    # word = Column(Text, nullable=True, unique=False)
-    comment = Column(Text, nullable=True, unique=False)
-    warning = Column(Text, nullable=True, unique=False)
+    corpus = Column(Text, nullable=False)
+    language = Column(Text, nullable=False)
+    speaker_label = Column(Text)
+    addressee = Column(Text)
+    utterance_raw = Column(Text)
+    utterance = Column(Text)
+    translation = Column(Text)
+    morpheme = Column(Text)
+    gloss_raw = Column(Text)
+    pos_raw = Column(Text)
+    sentence_type = Column(Text)
+    childdirected = Column(Boolean)
+    start = Column(Text)
+    end = Column(Text)
+    start_raw = Column(Text)
+    end_raw = Column(Text)
+    comment = Column(Text)
+    warning = Column(Text)
     # SQLAlchemy relationship definitions:
     words = relationship('Word', backref='Utterance')
     morphemes = relationship('Morpheme', backref='Utterance')
 
 
 class Word(Base):
-    """ Words table.
-
-    TODO: get unique words and assign ids in the postprocessor
-    """
+    """Model for the word of an utterance."""
     __tablename__ = 'words'
 
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
     utterance_id_fk = Column(Integer, ForeignKey('utterances.id'))
-    corpus = Column(Text, nullable=False, unique=False)
-    language = Column(Text, nullable=False, unique=False)
-    word_language = Column(Text, nullable=True, unique=False)
-    word = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    pos = Column(Text, nullable=True, unique=False)
-    pos_ud = Column(Text, nullable=True, unique=False)
-    word_actual = Column(Text, nullable=True, unique=False)
-    word_target = Column(Text, nullable=True, unique=False)
-    warning = Column(Text, nullable=True, unique=False)
+    corpus = Column(Text, nullable=False)
+    language = Column(Text, nullable=False)
+    word_language = Column(Text)
+    word = Column(Text)
+    pos = Column(Text)
+    pos_ud = Column(Text)
+    word_actual = Column(Text)
+    word_target = Column(Text)
+    warning = Column(Text)
     # SQLAlchemy relationship definitions:
     morphemes = relationship('Morpheme', backref='Word')
 
 
 class Morpheme(Base):
-    """ Morphemes table
-    """
+    """Model for the morpheme of an utterance."""
     __tablename__ = 'morphemes'
 
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
     utterance_id_fk = Column(Integer, ForeignKey('utterances.id'))
     word_id_fk = Column(Integer, ForeignKey('words.id'))
-    corpus = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    language = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    morpheme_language = Column(Text, nullable=True, unique=False)
-    type = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    morpheme = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    gloss_raw = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    gloss = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    pos_raw = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    pos = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    lemma_id = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
-    warning = Column(Text, nullable=True, unique=False) # TODO: set to nullable=FALSE once all tests pass
+    corpus = Column(Text)
+    language = Column(Text)
+    morpheme_language = Column(Text)
+    type = Column(Text)
+    morpheme = Column(Text)
+    gloss_raw = Column(Text)
+    gloss = Column(Text)
+    pos_raw = Column(Text)
+    pos = Column(Text)
+    lemma_id = Column(Text)
+    warning = Column(Text)
