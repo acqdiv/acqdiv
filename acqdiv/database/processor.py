@@ -25,6 +25,7 @@ class DBProcessor:
 
         # initialize them once for each session
         # to increase performance
+        self.insert_corpus_func = None
         self.insert_session_func = None
         self.insert_speaker_func = None
         self.insert_utt_func = None
@@ -90,11 +91,37 @@ class DBProcessor:
         self.corpus_name = corpus.corpus
         self.language = corpus.language
 
+        with self.engine.begin() as conn:
+            conn.execute('PRAGMA synchronous = OFF')
+            conn.execute('PRAGMA journal_mode = MEMORY')
+            conn = conn.execution_options(compiled_cache={})
+            self.insert_corpus_func = sa.insert(db.Corpus, bind=conn).execute
+            self.insert_corpus_metadata(corpus)
+
         for session in corpus.sessions:
             self.insert_session(session)
 
             if self.test:
                 break
+
+    def insert_corpus_metadata(self, corpus):
+        """Insert the data into the `Corpus` table.
+
+        Args:
+            corpus (acqdiv.model.corpus.Corpus): The corpus.
+
+        Returns:
+            int: The ID of the corpus.
+        """
+        c_id, = self.insert_corpus_func(
+            id=corpus.corpus,
+            language=corpus.language,
+            iso_639_3=corpus.iso_639_3,
+            glottolog_code=corpus.glottolog_code,
+            owner=corpus.owner,
+        ).inserted_primary_key
+
+        return c_id
 
     def insert_session(self, session):
         """Insert the session into the database.

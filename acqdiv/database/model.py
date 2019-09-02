@@ -7,6 +7,17 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 
+class Corpus(Base):
+    """Model for the corpus."""
+    __tablename__ = 'corpus'
+
+    id = Column(Text, primary_key=True)
+    language = Column(Text)
+    iso_639_3 = Column(Text)
+    glottolog_code = Column(Text)
+    owner = Column(Text)
+
+
 class Session(Base):
     """Model for the session."""
     __tablename__ = 'sessions'
