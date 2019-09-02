@@ -4,8 +4,9 @@ from acqdiv.parsers.chat.readers.reader import CHATReader
 from acqdiv.parsers.chat.cleaners.cleaner import CHATCleaner
 from acqdiv.parsers.session_parser import SessionParser
 
-from acqdiv.util.age import get_age_from_birth_date_session_date, get_age_in_days
+from acqdiv.util.age import get_age_in_days
 from acqdiv.util.role import RoleMapper
+from acqdiv.util.alignment import align_words_morphemes, fix_misalignments
 
 from acqdiv.model.session import Session
 from acqdiv.model.speaker import Speaker
@@ -128,7 +129,7 @@ class CHATParser(SessionParser):
             utt = self.add_utterance(session)
             self.add_words(utt)
             self.add_morphemes(utt)
-            self.align_words_morphemes(utt)
+            align_words_morphemes(utt)
 
     def add_utterance(self, session):
         """Add the utterance to the session."""
@@ -226,10 +227,10 @@ class CHATParser(SessionParser):
 
         if self.reader.get_main_morpheme() == 'segment':
             wsegs, wglosses, wposes = \
-                self.fix_misalignments([wsegs, wglosses, wposes])
+                fix_misalignments([wsegs, wglosses, wposes])
         else:
             wglosses, wsegs, wposes = \
-                self.fix_misalignments([wglosses, wsegs, wposes])
+                fix_misalignments([wglosses, wsegs, wposes])
 
         # go through all morpheme words
         for wseg, wgloss, wpos in zip(wsegs, wglosses, wposes):
@@ -249,10 +250,10 @@ class CHATParser(SessionParser):
             # determine number of morphemes to be considered
             if self.reader.get_main_morpheme() == 'segment':
                 segments, glosses, poses = \
-                    self.fix_misalignments([segments, glosses, poses])
+                    fix_misalignments([segments, glosses, poses])
             else:
                 glosses, segments, poses = \
-                    self.fix_misalignments([glosses, segments, poses])
+                    fix_misalignments([glosses, segments, poses])
 
             # go through morphemes
             for seg, gloss, pos in zip(segments, glosses, poses):

@@ -5,7 +5,9 @@ from acqdiv.parsers.toolbox.cleaners.imdi_cleaner import IMDICleaner as ICl
 from acqdiv.parsers.toolbox.readers.fileparser import ToolboxFileParser
 from acqdiv.parsers.session_parser import SessionParser
 from acqdiv.parsers.toolbox.readers.age_updater import ToolboxAgeUpdater
+
 from acqdiv.util.role import RoleMapper
+from acqdiv.util.alignment import fix_misalignments, align_words_morphemes
 
 from acqdiv.model.session import Session
 from acqdiv.model.speaker import Speaker
@@ -140,7 +142,7 @@ class ToolboxParser(SessionParser):
             self.record_reader.get_id_tier(rec)
         )
 
-        self.align_words_morphemes(utt)
+        align_words_morphemes(utt)
 
     def add_utterance(self, rec):
         """Add the utterance to the Session instance.
@@ -209,10 +211,10 @@ class ToolboxParser(SessionParser):
 
         # fix misalignments
         if self.record_reader.get_main_morpheme() == 'segment':
-            wsegs, wglosses, wposes, wlangs, wids = self.fix_misalignments(
+            wsegs, wglosses, wposes, wlangs, wids = fix_misalignments(
                 [wsegs, wglosses, wposes, wlangs, wids])
         else:
-            wglosses, wsegs, wposes, wlangs, wids = self.fix_misalignments(
+            wglosses, wsegs, wposes, wlangs, wids = fix_misalignments(
                 [wglosses, wsegs, wposes, wlangs, wids])
 
         utt = self.session.utterances[-1]
@@ -240,10 +242,10 @@ class ToolboxParser(SessionParser):
 
             # fix misalignments
             if self.record_reader.get_main_morpheme() == 'segment':
-                segments, glosses, poses, langs, ids = self.fix_misalignments(
+                segments, glosses, poses, langs, ids = fix_misalignments(
                     [segments, glosses, poses, langs, ids])
             else:
-                glosses, segments, poses, langs, ids = self.fix_misalignments(
+                glosses, segments, poses, langs, ids = fix_misalignments(
                     [glosses, segments, poses, langs, ids])
 
             # go through morphemes
