@@ -2,7 +2,7 @@ from acqdiv.parsers.chat.cleaners.utterance_cleaner \
     import CHATUtteranceCleaner
 
 from acqdiv.parsers.chat.cleaners.word_cleaner import CHATWordCleaner
-from acqdiv.util.timestamp import TimestampUnificator
+from acqdiv.util.timestamp import unify_timestamp
 
 
 class CHATCleaner:
@@ -94,7 +94,7 @@ class CHATCleaner:
 
         Returns: str
         """
-        return TimestampUnificator.unify(timestamp)
+        return unify_timestamp(timestamp)
 
     @staticmethod
     def clean_translation(translation):

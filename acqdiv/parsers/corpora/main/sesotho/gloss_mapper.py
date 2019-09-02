@@ -1,14 +1,13 @@
 import re
 
-from acqdiv.util.csvparser import MorphemeMappingCSVParser
+from acqdiv.util.csvparser import parse_csv
 from acqdiv.util.path import get_full_path
 
 
 class SesothoGlossMapper:
 
-    gloss_dict = MorphemeMappingCSVParser.parse(
-                    get_full_path(
-                        'parsers/corpora/main/sesotho/resources/gloss.csv'))
+    gloss_dict = parse_csv(get_full_path(
+        'parsers/corpora/main/sesotho/resources/gloss.csv'))
 
     @classmethod
     def map(cls, gloss):

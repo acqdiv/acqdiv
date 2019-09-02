@@ -4,7 +4,7 @@ from acqdiv.parsers.chat.readers.reader import CHATReader
 from acqdiv.parsers.chat.cleaners.cleaner import CHATCleaner
 from acqdiv.parsers.session_parser import SessionParser
 
-from acqdiv.util.age import AgeCalculator
+from acqdiv.util.age import get_age_from_birth_date_session_date, get_age_in_days
 from acqdiv.util.role import RoleMapper
 
 from acqdiv.model.session import Session
@@ -107,7 +107,7 @@ class CHATParser(SessionParser):
 
             speaker.age_raw = age_raw
             speaker.age = self.cleaner.clean_age(speaker.age_raw)
-            speaker.age_in_days = AgeCalculator.to_days(speaker.age)
+            speaker.age_in_days = get_age_in_days(speaker.age)
 
             speaker.role_raw = role_raw
             speaker.role = self.role_mapper.role_raw2role(speaker.role_raw)

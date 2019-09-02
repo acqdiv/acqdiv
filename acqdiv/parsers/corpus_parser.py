@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from tqdm import tqdm
 
 from acqdiv.model.corpus import Corpus
-from acqdiv.util.session_duration import SessionsDurationExtractor
+from acqdiv.util.session_duration import extract_duration
 
 
 class CorpusParser(ABC):
@@ -65,10 +65,8 @@ class CorpusParser(ABC):
                     session = session_parser.parse()
 
                     # add duration
-                    session.duration = SessionsDurationExtractor.extract(
-                        self.corpus.corpus,
-                        session.source_id
-                    )
+                    session.duration = extract_duration(self.corpus.corpus,
+                                                        session.source_id)
 
                     # ignore sessions with no utterances
                     if len(session.utterances):

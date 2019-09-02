@@ -1,10 +1,10 @@
-from acqdiv.util.csvparser import MorphemeMappingCSVParser
+from acqdiv.util.csvparser import parse_csv
 from acqdiv.util.path import get_full_path
 
 
 class TurkishGloss2SegmentMapper:
 
-    gloss2seg = MorphemeMappingCSVParser.parse(get_full_path(
+    gloss2seg = parse_csv(get_full_path(
         'parsers/corpora/main/turkish/resources/gloss2segment.csv'))
 
     @classmethod

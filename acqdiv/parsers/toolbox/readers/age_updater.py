@@ -1,5 +1,5 @@
 import re
-from acqdiv.util.age import AgeCalculator
+from acqdiv.util.age import get_age_from_birth_date_session_date, get_age_in_days
 
 
 class ToolboxAgeUpdater:
@@ -26,14 +26,14 @@ class ToolboxAgeUpdater:
         """
 
         if speaker.birth_date:
-            ages = AgeCalculator.from_birth_date_session_date(
-                speaker.birth_date, recording_date)
+            ages = get_age_from_birth_date_session_date(speaker.birth_date,
+                                                        recording_date)
             speaker.age = ages[0]
             speaker.age_in_days = ages[1]
 
         if not speaker.age and re.fullmatch(cls.age_pattern, speaker.age_raw):
             speaker.age = speaker.age_raw
-            speaker.age_in_days = AgeCalculator.to_days(speaker.age)
+            speaker.age_in_days = get_age_in_days(speaker.age)
 
         if ("None" not in speaker.age_raw
                 and "Un" not in speaker.age_raw

@@ -1,7 +1,7 @@
 from configparser import ConfigParser
 
 from acqdiv.util.path import get_full_path
-from acqdiv.util.csvparser import MorphemeMappingCSVParser
+from acqdiv.util.csvparser import parse_csv
 
 
 def get_roles():
@@ -19,8 +19,7 @@ class RoleMapper:
 
     def __init__(self, path_label2macro_role=None):
         if path_label2macro_role:
-            self.label2macro_role = MorphemeMappingCSVParser.parse(
-                path_label2macro_role)
+            self.label2macro_role = parse_csv(path_label2macro_role)
         else:
             self.label2macro_role = {}
 

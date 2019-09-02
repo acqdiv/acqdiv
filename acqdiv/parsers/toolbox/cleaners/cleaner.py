@@ -2,7 +2,7 @@ import re
 
 from acqdiv.parsers.toolbox.cleaners.morpheme_cleaner \
     import ToolboxMorphemeCleaner
-from acqdiv.util.timestamp import TimestampUnificator
+from acqdiv.util.timestamp import unify_timestamp
 
 
 class ToolboxCleaner:
@@ -42,7 +42,7 @@ class ToolboxCleaner:
 
         Returns: str
         """
-        return TimestampUnificator.unify(timestamp)
+        return unify_timestamp(timestamp)
 
     # ---------- utterance word ----------
 

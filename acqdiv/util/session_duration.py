@@ -3,7 +3,7 @@ import csv
 from acqdiv.util.path import get_full_path
 
 
-def parse():
+def _parse():
     """Return durations from session_durations.csv.
 
     Returns:
@@ -30,19 +30,20 @@ def parse():
     return durations
 
 
-class SessionsDurationExtractor:
+_durations = _parse()
 
-    durations = parse()
 
-    @classmethod
-    def extract(cls, corpus, source_id):
-        """Get the duration.
+def extract_duration(corpus, source_id):
+    """Get the duration.
 
-        Args:
-            corpus (str): The corpus name.
-            source_id (str): The session name.
-        """
-        if corpus in cls.durations and source_id in cls.durations[corpus]:
-            return cls.durations[corpus][source_id]
+    Args:
+        corpus (str): The corpus name.
+        source_id (str): The session name.
 
-        return ''
+    Returns:
+        str: The duration.
+    """
+    if corpus in _durations and source_id in _durations[corpus]:
+        return _durations[corpus][source_id]
+
+    return ''

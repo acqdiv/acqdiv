@@ -1,5 +1,5 @@
 import re
-from acqdiv.util.age import AgeCalculator
+from acqdiv.util.age import get_age_from_birth_date_session_date, get_age_in_days
 
 
 class IndonesianAgeUpdater:
@@ -12,8 +12,8 @@ class IndonesianAgeUpdater:
             speaker (acqdiv.model.speaker.Speaker): The speaker.
             recording_date (str): The recording date.
         """
-        ages = AgeCalculator.from_birth_date_session_date(
-            speaker.birth_date, recording_date)
+        ages = get_age_from_birth_date_session_date(speaker.birth_date,
+                                                    recording_date)
 
         speaker.age = ages[0]
         speaker.age_in_days = ages[1]
@@ -22,7 +22,7 @@ class IndonesianAgeUpdater:
             speaker.age = cls.clean(speaker.age_raw)
 
         if not speaker.age_in_days:
-            speaker.age_in_days = AgeCalculator.to_days(speaker.age)
+            speaker.age_in_days = get_age_in_days(speaker.age)
 
     @staticmethod
     def clean(age_raw):
