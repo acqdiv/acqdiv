@@ -9,7 +9,7 @@ Base = declarative_base()
 
 class Corpus(Base):
     """Model for the corpus."""
-    __tablename__ = 'corpus'
+    __tablename__ = 'corpora'
 
     id = Column(Text, primary_key=True)
     language = Column(Text)
@@ -23,10 +23,9 @@ class Session(Base):
     __tablename__ = 'sessions'
 
     id = Column(Integer, primary_key=True)
+    corpus_id_fk = Column(Text, ForeignKey('corpora.id'))
     source_id = Column(Text, nullable=False)
     media_id = Column(Text)
-    corpus = Column(Text, nullable=False)
-    language = Column(Text, nullable=False)
     date = Column(Text)
     target_child_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
     duration = Column(Integer)

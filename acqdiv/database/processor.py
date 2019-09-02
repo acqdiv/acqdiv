@@ -96,10 +96,10 @@ class DBProcessor:
             conn.execute('PRAGMA journal_mode = MEMORY')
             conn = conn.execution_options(compiled_cache={})
             self.insert_corpus_func = sa.insert(db.Corpus, bind=conn).execute
-            self.insert_corpus_metadata(corpus)
+            c_id = self.insert_corpus_metadata(corpus)
 
         for session in corpus.sessions:
-            self.insert_session(session)
+            self.insert_session(session, c_id)
 
             if self.test:
                 break
@@ -111,7 +111,7 @@ class DBProcessor:
             corpus (acqdiv.model.corpus.Corpus): The corpus.
 
         Returns:
-            int: The ID of the corpus.
+            str: The ID of the corpus.
         """
         c_id, = self.insert_corpus_func(
             id=corpus.corpus,
@@ -123,11 +123,12 @@ class DBProcessor:
 
         return c_id
 
-    def insert_session(self, session):
+    def insert_session(self, session, c_id):
         """Insert the session into the database.
 
         Args:
             session (acqdiv.model.session.Session): The session.
+            c_id (str): The corpus ID.
         """
         with self.engine.begin() as conn:
             conn.execute('PRAGMA synchronous = OFF')
@@ -140,14 +141,13 @@ class DBProcessor:
             self.insert_word_func = sa.insert(db.Word, bind=conn).execute
             self.insert_morph_func = sa.insert(db.Morpheme, bind=conn).execute
 
-            s_id = self.insert_session_metadata(session)
+            s_id = self.insert_session_metadata(session, c_id)
             self.insert_speakers(session.speakers, s_id)
             self.insert_utterances(session.utterances, s_id)
 
-    def insert_session_metadata(self, session):
+    def insert_session_metadata(self, session, c_id):
         s_id, = self.insert_session_func(
-            corpus=self.corpus_name,
-            language=self.language,
+            corpus_id_fk=c_id,
             date=session.date,
             source_id=session.source_id,
             duration=session.duration if session.duration else None,
