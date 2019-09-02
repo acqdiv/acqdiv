@@ -9,12 +9,11 @@ from acqdiv.database.DBProcessor import DBProcessor
 
 class Loader:
 
-    def load(self, test=True, phonbank=False):
+    def load(self, test=True):
         """Load data from source files into DB.
 
         Args:
             test (bool): Test DB is used.
-            phonbank (bool): Run over the Phonbank corpora.
         """
         configs = [
             'Chintang.ini',
@@ -33,18 +32,6 @@ class Loader:
             'Turkish.ini',
             'Yucatec.ini',
         ]
-
-        if phonbank:
-
-            base_path = 'Phonbank/'
-
-            configs = [
-                base_path + 'Arabic_Kuwaiti.ini',
-                base_path + 'Arabic_Kern.ini',
-                base_path + 'Berber.ini',
-                base_path + 'Polish.ini',
-                base_path + 'Quichua.ini'
-            ]
 
         db_processor = DBProcessor(test=test)
 

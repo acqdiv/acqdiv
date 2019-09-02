@@ -28,8 +28,7 @@ def load(args):
     start_time = time.time()
     loader = Loader()
     loader.load(
-        test=not args.full,
-        phonbank=args.phonbank_corpora
+        test=not args.full
     )
     print("%s seconds --- Finished" % (time.time() - start_time))
     print()
@@ -96,9 +95,6 @@ def get_cmd_args():
                      'use the flag -f.'))
     parser_load.add_argument(
         '-f', '--full', action='store_true', help='Run on full database')
-    parser_load.add_argument(
-        '-p', '--phonbank-corpora', action='store_true',
-        help='Run over the Phonbank corpora.')
 
     parser_load.set_defaults(func=load)
 
@@ -138,9 +134,6 @@ def get_cmd_args():
                     'To run them on the full database, use the flag -f.')
     parser_pipeline.add_argument(
         '-f', '--full', action='store_true', help='Run on full database')
-    parser_pipeline.add_argument(
-        '-p', '--phonbank-corpora', action='store_true',
-        help='Run over the Phonbank corpora.')
 
     parser_pipeline.set_defaults(func=pipeline)
 

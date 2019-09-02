@@ -1,5 +1,3 @@
-# main
-
 from acqdiv.parsers.corpora.main.chintang.ChintangCorpusParser \
     import ChintangCorpusParser
 from acqdiv.parsers.corpora.main.cree.CreeCorpusParser \
@@ -33,24 +31,10 @@ from acqdiv.parsers.corpora.main.turkish.TurkishCorpusParser \
 from acqdiv.parsers.corpora.main.yucatec.YucatecCorpusParser \
     import YucatecCorpusParser
 
-# phonbank
-
-from acqdiv.parsers.corpora.phonbank.arabic_kern.ArabicKernParser \
-    import ArabicKernParser
-from acqdiv.parsers.corpora.phonbank.arabic_kuwaiti.ArabicKuwaitiParser \
-    import ArabicKuwaitiParser
-from acqdiv.parsers.corpora.phonbank.berber.BerberParser \
-    import BerberParser
-from acqdiv.parsers.corpora.phonbank.polish.PolishParser \
-    import PolishParser
-from acqdiv.parsers.corpora.phonbank.quichua.QuichuaParser \
-    import QuichuaParser
-
 
 class CorpusParserMapper:
 
     mappings = {
-        # main
         'Chintang': ChintangCorpusParser,
         'Cree': CreeCorpusParser,
         'Dene': DeneCorpusParser,
@@ -67,13 +51,6 @@ class CorpusParserMapper:
         'Tuatschin': TuatschinCorpusParser,
         'Turkish': TurkishCorpusParser,
         'Yucatec': YucatecCorpusParser,
-
-        # phonbank
-        'Arabic_Kern': ArabicKernParser,
-        'Arabic_Kuwaiti': ArabicKuwaitiParser,
-        'Berber': BerberParser,
-        'Polish': PolishParser,
-        'Quichua': QuichuaParser,
     }
 
     @staticmethod
