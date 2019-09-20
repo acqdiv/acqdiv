@@ -223,7 +223,7 @@ class DBProcessor:
         w_id, = self.insert_word_func(
             session_id_fk=s_id,
             utterance_id_fk=u_id,
-            word_language=w.word_language if w.word_language else None,
+            language=w.word_language if w.word_language else None,
             word=w.word if w.word else None,
             word_actual=w.word_actual if w.word_actual else None,
             word_target=w.word_target if w.word_target else None,
@@ -256,8 +256,7 @@ class DBProcessor:
             session_id_fk=s_id,
             utterance_id_fk=u_id,
             word_id_fk=w_id,
-            morpheme_language=
-            m.morpheme_language if m.morpheme_language else None,
+            language=m.morpheme_language if m.morpheme_language else None,
             type=m.type if m.type else None,
             morpheme=m.morpheme if m.morpheme else None,
             gloss_raw=m.gloss_raw if m.gloss_raw else None,
