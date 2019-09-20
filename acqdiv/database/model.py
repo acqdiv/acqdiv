@@ -97,7 +97,6 @@ class Utterance(Base):
     start_raw = Column(Text)
     end_raw = Column(Text)
     comment = Column(Text)
-    warning = Column(Text)
     # SQLAlchemy relationship definitions:
     words = relationship('Word', backref='Utterance')
     morphemes = relationship('Morpheme', backref='Utterance')
@@ -118,7 +117,6 @@ class Word(Base):
     pos_ud = Column(Text)
     word_actual = Column(Text)
     word_target = Column(Text)
-    warning = Column(Text)
     # SQLAlchemy relationship definitions:
     morphemes = relationship('Morpheme', backref='Word')
 
@@ -141,4 +139,3 @@ class Morpheme(Base):
     pos_raw = Column(Text)
     pos = Column(Text)
     lemma_id = Column(Text)
-    warning = Column(Text)

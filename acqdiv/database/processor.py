@@ -207,7 +207,6 @@ class DBProcessor:
             end_raw=utt.end_raw if utt.end_raw else None,
             end=utt.end if utt.end else None,
             comment=utt.comment if utt.comment else None,
-            warning=utt.warning if utt.warning else None
         ).inserted_primary_key
 
         return u_id
@@ -232,7 +231,6 @@ class DBProcessor:
             word_target=w.word_target if w.word_target else None,
             pos=w.pos if w.pos else None,
             pos_ud=w.pos_ud if w.pos_ud else None,
-            warning=w.warning if w.warning else None
 
         ).inserted_primary_key
 
@@ -271,5 +269,4 @@ class DBProcessor:
             pos_raw=m.pos_raw if m.pos_raw else None,
             pos=m.pos if m.pos else None,
             lemma_id=m.lemma_id if m.lemma_id else None,
-            warning=m.warning if m.warning else None
         )
