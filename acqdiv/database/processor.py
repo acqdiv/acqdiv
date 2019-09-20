@@ -184,7 +184,7 @@ class DBProcessor:
         for utt in utterances:
             u_id = self.insert_utterance(utt, s_id)
             w_ids = self.insert_words(utt.words, s_id, u_id)
-            self.insert_morphemes(utt.morphemes, s_id, u_id, w_ids)
+            self.insert_morphemes(utt.morphemes, u_id, w_ids)
 
     def insert_utterance(self, utt, s_id):
         u_id, = self.insert_utt_func(
@@ -234,26 +234,24 @@ class DBProcessor:
 
         return w_id
 
-    def insert_morphemes(self, morphemes, s_id, u_id, w_ids):
+    def insert_morphemes(self, morphemes, u_id, w_ids):
         link_to_word = len(morphemes) == len(w_ids)
 
         for i, mword in enumerate(morphemes):
             w_id = w_ids[i] if link_to_word else None
 
             for m in mword:
-                self.insert_morpheme(m, s_id, u_id, w_id)
+                self.insert_morpheme(m, u_id, w_id)
 
-    def insert_morpheme(self, m, s_id, u_id, w_id):
+    def insert_morpheme(self, m, u_id, w_id):
         """Insert the morpheme.
 
         Args:
             m (acqdiv.model.morpheme.Morpheme): The morpheme instance.
-            s_id (str): The session ID.
             u_id (str): The utterance ID.
             w_id (str): The word ID.
         """
         self.insert_morph_func(
-            session_id_fk=s_id,
             utterance_id_fk=u_id,
             word_id_fk=w_id,
             language=m.morpheme_language if m.morpheme_language else None,

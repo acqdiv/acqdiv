@@ -124,7 +124,6 @@ class Morpheme(Base):
     __tablename__ = 'morphemes'
 
     id = Column(Integer, primary_key=True)
-    session_id_fk = Column(Integer, ForeignKey('sessions.id'))
     utterance_id_fk = Column(Integer, ForeignKey('utterances.id'))
     word_id_fk = Column(Integer, ForeignKey('words.id'))
     language = Column(Text)
