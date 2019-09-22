@@ -79,8 +79,6 @@ class Utterance(Base):
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
     source_id = Column(Text)
     speaker_id_fk = Column(Integer, ForeignKey('speakers.id'))
-    corpus = Column(Text, nullable=False)
-    language = Column(Text, nullable=False)
     addressee_id_fk = Column(Integer, ForeignKey('speakers.id'))
     utterance_raw = Column(Text)
     utterance = Column(Text)

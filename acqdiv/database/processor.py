@@ -197,8 +197,6 @@ class DBProcessor:
     def insert_utterance(self, utt, s_id, speakers_dict):
         u_id, = self.insert_utt_func(
             session_id_fk=s_id,
-            corpus=self.corpus_name,
-            language=self.language,
             source_id=utt.source_id,
             speaker_id_fk=speakers_dict[utt.speaker],
             addressee_id_fk=speakers_dict[utt.addressee],
