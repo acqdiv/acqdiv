@@ -48,11 +48,6 @@ class PostProcessor:
             print("Processing speakers table...")
             self.process_speakers_table()
 
-        with self.engine.begin() as self.conn:
-            self.configure_connection()
-            print("Processing utterances table...")
-            self.process_utterances_table()
-
     def process_speakers_table(self):
         """Post-process speakers table."""
         self._speakers_get_unique_speakers()
@@ -178,44 +173,6 @@ class PostProcessor:
         rows.close()
         self._update_rows(db.Session.__table__, 'session_id', tc_id_results)
         self._update_rows(db.Speaker.__table__, 'speaker_id', non_targets_results)
-
-    def process_utterances_table(self):
-        """Post-process utterances table."""
-        print("_utterances_get_directedness")
-        self._utterances_get_directedness()
-
-    def _utterances_get_directedness(self):
-        """Infer child directedness for each utterance. Skips Chintang.
-
-        If the utterance is or is not child directed, we denote this with 1 or 0.
-        We use None (NULL) if the corpus is not annotated for child directedness.
-        """
-        s = sa.select([db.Utterance.id,
-                       db.Utterance.corpus,
-                       db.Utterance.addressee_id_fk,
-                       db.Utterance.speaker_id_fk,
-                       db.Speaker.macrorole]).\
-            select_from(
-                sa.outerjoin(db.Utterance, db.Speaker, sa.and_(
-                    db.Utterance.addressee_id_fk == db.Speaker.id,
-                    db.Utterance.session_id_fk == db.Speaker.session_id_fk
-                ))).\
-            where(db.Utterance.corpus != 'Chintang')
-
-        rows = self.conn.execute(s)
-
-        results = []
-        for row in rows:
-            if row.addressee_id_fk:
-                if (row.macrorole == 'Target_Child'
-                        and row.speaker_id_fk != row.addressee_id_fk):
-                    results.append({'utterance_id': row.id, 'childdirected': 1})
-                else:
-                    results.append({'utterance_id': row.id, 'childdirected': 0})
-            else:
-                results.append({'utterance_id': row.id, 'childdirected': None})
-        rows.close()
-        self._update_rows(db.Utterance.__table__, 'utterance_id', results)
 
     ### Util functions ###
     def _update_rows(self, t, binder, rows):

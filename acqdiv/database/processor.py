@@ -209,7 +209,8 @@ class DBProcessor:
             gloss_raw=utt.gloss_raw if utt.gloss_raw else None,
             pos_raw=utt.pos_raw if utt.pos_raw else None,
             sentence_type=utt.sentence_type if utt.sentence_type else None,
-            childdirected=utt.childdirected if utt.childdirected else None,
+            childdirected=utt.childdirected
+            if isinstance(utt.childdirected, bool) else None,
             start_raw=utt.start_raw if utt.start_raw else None,
             start=utt.start if utt.start else None,
             end_raw=utt.end_raw if utt.end_raw else None,

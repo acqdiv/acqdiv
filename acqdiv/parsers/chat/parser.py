@@ -7,6 +7,7 @@ from acqdiv.parsers.session_parser import SessionParser
 from acqdiv.util.age import get_age_in_days
 from acqdiv.util.role import RoleMapper
 from acqdiv.util.alignment import align_words_morphemes, fix_misalignments
+from acqdiv.util.childdirectedness import infer_childdirected
 
 from acqdiv.model.session import Session
 from acqdiv.model.speaker import Speaker
@@ -144,15 +145,16 @@ class CHATParser(SessionParser):
         utt = Utterance()
         session.utterances.append(utt)
         utt.source_id = self.get_source_id()
-        addressee_label = self.cleaner.clean_record_speaker_label(
-            self.session_filename, self.reader.get_addressee())
-        utt.addressee = self._get_speaker(addressee_label, session.speakers)
-        utt.translation = self.cleaner.clean_translation(
-            self.reader.get_translation())
-        utt.comment = self.reader.get_comments()
         speaker_label = self.cleaner.clean_record_speaker_label(
             self.session_filename, self.reader.get_record_speaker_label())
         utt.speaker = self._get_speaker(speaker_label, session.speakers)
+        addressee_label = self.cleaner.clean_record_speaker_label(
+            self.session_filename, self.reader.get_addressee())
+        utt.addressee = self._get_speaker(addressee_label, session.speakers)
+        utt.childdirected = infer_childdirected(utt)
+        utt.translation = self.cleaner.clean_translation(
+            self.reader.get_translation())
+        utt.comment = self.reader.get_comments()
         utt.utterance_raw = self.reader.get_utterance()
         utt.start_raw = self.reader.get_start_time()
         utt.start = self.cleaner.clean_timestamp(utt.start_raw)

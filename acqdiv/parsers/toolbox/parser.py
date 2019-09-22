@@ -8,6 +8,7 @@ from acqdiv.parsers.toolbox.readers.age_updater import ToolboxAgeUpdater
 
 from acqdiv.util.role import RoleMapper
 from acqdiv.util.alignment import fix_misalignments, align_words_morphemes
+from acqdiv.util.childdirectedness import infer_childdirected
 
 from acqdiv.model.session import Session
 from acqdiv.model.speaker import Speaker
@@ -171,6 +172,7 @@ class ToolboxParser(SessionParser):
         utt.utterance = self.cleaner.clean_utterance(utt.utterance_raw)
         utt.sentence_type = self.record_reader.get_sentence_type(rec)
         utt.childdirected = self.record_reader.get_childdirected(rec)
+        utt.childdirected = infer_childdirected(utt)
         utt.source_id = self.record_reader.get_source_id(rec)
         utt.start_raw = self.record_reader.get_start_raw(rec)
         utt.start = self.cleaner.clean_timestamp(utt.start_raw)
