@@ -38,11 +38,11 @@ class TestInuktitutParser(unittest.TestCase):
             '@Participants:\tMAE Maemae Mother , RO Roro Target_Child\n'
             '@ID:\tsme|Inuktitut|MAE||female|||Mother|||\n'
             '@ID:\tsme|Inuktitut|RO||female|||Target_Child|||\n'
-            '*MAE:\tAllaigutama  .\n'
+            '*RO:\tAllaigutama  .\n'
             '%eng:\tGive me a comb  .\n'
             '%xmor:\tNR|ollaoguto^comb+NI|mim^MOD_SG .\n'
             '%tim:\t00:01:32\n'
-            '%add:\tRO\n'
+            '%add:\tMAE\n'
             '@End'
         )
         parser = InuktitutSessionParser(self.dummy_cha_path)
@@ -53,8 +53,9 @@ class TestInuktitutParser(unittest.TestCase):
 
         utterance = [
             utt.source_id == 'dummy_0',
-            utt.speaker.code == 'MAE',
-            utt.addressee.code == 'RO',
+            utt.speaker.code == 'RO',
+            utt.addressee.code == 'MAE',
+            utt.childdirected is False,
             utt.utterance_raw == 'Allaigutama  .',
             utt.utterance == 'Allaigutama',
             utt.translation == 'Give me a comb  .',

@@ -53,6 +53,7 @@ class TestTurkishParser(unittest.TestCase):
             utt.source_id == 'dummy_0',
             utt.speaker.code == 'BAB',
             utt.addressee.code == 'CHI',
+            utt.childdirected is True,
             utt.utterance_raw == 'inmekmi istiyo(r)sun ?',
             utt.utterance == 'inmekmi istiyosun',
             utt.translation == '',
