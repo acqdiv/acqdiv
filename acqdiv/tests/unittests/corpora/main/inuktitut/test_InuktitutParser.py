@@ -35,6 +35,9 @@ class TestInuktitutParser(unittest.TestCase):
     def test_parse(self):
         """Test parse()."""
         session_str = (
+            '@Participants:\tMAE Maemae Mother , RO Roro Target_Child\n'
+            '@ID:\tsme|Inuktitut|MAE||female|||Mother|||\n'
+            '@ID:\tsme|Inuktitut|RO||female|||Target_Child|||\n'
             '*MAE:\tAllaigutama  .\n'
             '%eng:\tGive me a comb  .\n'
             '%xmor:\tNR|ollaoguto^comb+NI|mim^MOD_SG .\n'
@@ -50,8 +53,8 @@ class TestInuktitutParser(unittest.TestCase):
 
         utterance = [
             utt.source_id == 'dummy_0',
-            utt.speaker_label == 'MAE',
-            utt.addressee == 'RO',
+            utt.speaker.code == 'MAE',
+            utt.addressee.code == 'RO',
             utt.utterance_raw == 'Allaigutama  .',
             utt.utterance == 'Allaigutama',
             utt.translation == 'Give me a comb  .',

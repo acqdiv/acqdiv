@@ -47,8 +47,7 @@ class TestCreeParser(unittest.TestCase):
 
         utterance = [
             utt.source_id == 'dummy_0',
-            utt.speaker_label == 'CHI',
-            utt.addressee == '',
+            utt.addressee is None,
             utt.utterance_raw == 'chair .',
             utt.utterance == 'chair',
             utt.translation == 'ohhhhhh',
@@ -95,8 +94,7 @@ class TestCreeParser(unittest.TestCase):
 
         utterance = [
             utt.source_id == 'dummy_0',
-            utt.speaker_label == 'CHI',
-            utt.addressee == '',
+            utt.addressee is None,
             utt.utterance_raw == '‹wâu nîyi› .',
             utt.utterance == 'wâu nîyi',
             utt.translation == 'egg me',
@@ -163,8 +161,7 @@ class TestCreeParser(unittest.TestCase):
 
         utterance = [
             utt.source_id == 'dummy_0',
-            utt.speaker_label == 'CHI',
-            utt.addressee == '',
+            utt.addressee is None,
             utt.utterance_raw == '‹wâu nîyi› .',
             utt.utterance == 'wâu nîyi',
             utt.translation == 'egg me',
@@ -227,8 +224,7 @@ class TestCreeParser(unittest.TestCase):
 
         utterance = [
             utt.source_id == 'dummy_0',
-            utt.speaker_label == 'CHI',
-            utt.addressee == '',
+            utt.addressee is None,
             utt.utterance_raw == '‹wâu nîyi› .',
             utt.utterance == 'wâu nîyi',
             utt.translation == 'egg me',

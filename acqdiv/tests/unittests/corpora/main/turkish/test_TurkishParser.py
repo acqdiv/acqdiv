@@ -36,10 +36,14 @@ class TestTurkishParser(unittest.TestCase):
 
     def test_parse(self):
         """Test parse()."""
-        session_str = ('*BAB:\tinmekmi istiyo(r)sun ?\n'
-                       '%add:\tCHI\n'
-                       '%xmor:\tV|in-INF-QUE V|iste-IPFV-2S ?\n'
-                       '@End')
+        session_str = (
+            '@Participants:\tBAB Baba Mother , CHI Chichi Target_Child\n'
+            '@ID:\tsme|Inuktitut|BAB||female|||Mother|||\n'
+            '@ID:\tsme|Inuktitut|CHI||female|||Target_Child|||\n'
+            '*BAB:\tinmekmi istiyo(r)sun ?\n'
+            '%add:\tCHI\n'
+            '%xmor:\tV|in-INF-QUE V|iste-IPFV-2S ?\n'
+            '@End')
         parser = TurkishSessionParser(self.dummy_cha_path)
         parser.reader = TurkishReader(io.StringIO(session_str))
         session = parser.parse()
@@ -47,8 +51,8 @@ class TestTurkishParser(unittest.TestCase):
 
         utterance = [
             utt.source_id == 'dummy_0',
-            utt.speaker_label == 'BAB',
-            utt.addressee == 'CHI',
+            utt.speaker.code == 'BAB',
+            utt.addressee.code == 'CHI',
             utt.utterance_raw == 'inmekmi istiyo(r)sun ?',
             utt.utterance == 'inmekmi istiyosun',
             utt.translation == '',

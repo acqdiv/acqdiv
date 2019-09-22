@@ -142,8 +142,8 @@ class DBProcessor:
             self.insert_morph_func = sa.insert(db.Morpheme, bind=conn).execute
 
             s_id = self.insert_session_metadata(session, c_id)
-            self.insert_speakers(session.speakers, s_id)
-            self.insert_utterances(session.utterances, s_id)
+            speakers_dict = self.insert_speakers(session.speakers, s_id)
+            self.insert_utterances(session.utterances, s_id, speakers_dict)
 
     def insert_session_metadata(self, session, c_id):
         s_id, = self.insert_session_func(
@@ -157,11 +157,17 @@ class DBProcessor:
         return s_id
 
     def insert_speakers(self, speakers, s_id):
+        speakers_dict = {
+            None: None
+        }
         for speaker in speakers:
-            self.insert_speaker(speaker, s_id)
+            sp_id = self.insert_speaker(speaker, s_id)
+            speakers_dict[speaker] = sp_id
+
+        return speakers_dict
 
     def insert_speaker(self, speaker, s_id):
-        self.insert_speaker_func(
+        sp_id, = self.insert_speaker_func(
             session_id_fk=s_id,
             corpus=self.corpus_name,
             language=self.language,
@@ -178,22 +184,24 @@ class DBProcessor:
             name=speaker.name if speaker.name else None,
             languages_spoken=speaker.languages_spoken
             if speaker.languages_spoken else None
-        )
+        ).inserted_primary_key
 
-    def insert_utterances(self, utterances, s_id):
+        return sp_id
+
+    def insert_utterances(self, utterances, s_id, speakers_dict):
         for utt in utterances:
-            u_id = self.insert_utterance(utt, s_id)
+            u_id = self.insert_utterance(utt, s_id, speakers_dict)
             w_ids = self.insert_words(utt.words, s_id, u_id)
             self.insert_morphemes(utt.morphemes, u_id, w_ids)
 
-    def insert_utterance(self, utt, s_id):
+    def insert_utterance(self, utt, s_id, speakers_dict):
         u_id, = self.insert_utt_func(
             session_id_fk=s_id,
             corpus=self.corpus_name,
             language=self.language,
             source_id=utt.source_id,
-            speaker_label=utt.speaker_label,
-            addressee=utt.addressee if utt.addressee else None,
+            speaker_id_fk=speakers_dict[utt.speaker],
+            addressee_id_fk=speakers_dict[utt.addressee],
             utterance_raw=utt.utterance_raw if utt.utterance_raw else None,
             utterance=utt.utterance if utt.utterance else None,
             translation=utt.translation if utt.translation else None,

@@ -144,6 +144,14 @@ class ToolboxParser(SessionParser):
 
         align_words_morphemes(utt)
 
+    @staticmethod
+    def _get_speaker(label, speakers):
+        for speaker in speakers:
+            if speaker.code == label:
+                return speaker
+
+        return None
+
     def add_utterance(self, rec):
         """Add the utterance to the Session instance.
 
@@ -153,8 +161,12 @@ class ToolboxParser(SessionParser):
         utt = Utterance()
         self.session.utterances.append(utt)
 
-        utt.speaker_label = self.record_reader.get_speaker_label(rec)
-        utt.addressee = self.record_reader.get_addressee(rec)
+        speaker_label = self.record_reader.get_speaker_label(rec)
+        utt.speaker = self._get_speaker(
+            speaker_label, self.session.speakers)
+        addressee_label = self.record_reader.get_addressee(rec)
+        utt.addressee = self._get_speaker(
+            addressee_label, self.session.speakers)
         utt.utterance_raw = self.record_reader.get_actual_utterance(rec)
         utt.utterance = self.cleaner.clean_utterance(utt.utterance_raw)
         utt.sentence_type = self.record_reader.get_sentence_type(rec)

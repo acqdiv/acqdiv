@@ -45,8 +45,7 @@ class TestYucatecParser(unittest.TestCase):
 
         utt_list = [
             utt.source_id == 'dummy_0',
-            utt.speaker_label == 'LOR',
-            utt.addressee == '',
+            utt.addressee is None,
             utt.utterance_raw == 'baʼax .',
             utt.utterance == 'baʼax',
             utt.translation == 'qué .',

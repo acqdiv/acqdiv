@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from acqdiv.model.speaker import Speaker
 from acqdiv.model.word import Word
 from acqdiv.model.morpheme import Morpheme
 
@@ -35,8 +36,8 @@ class Utterance:
     """
 
     source_id: str
-    speaker_label: str
-    addressee: str
+    speaker: Optional[Speaker]
+    addressee: Optional[Speaker]
     utterance_raw: str
     utterance: str
     actual_utterance: str
@@ -62,8 +63,8 @@ class Utterance:
     def __init__(self):
         """Initialize the variables representing an utterance."""
         self.source_id = ''
-        self.speaker_label = ''
-        self.addressee = ''
+        self.speaker = None
+        self.addressee = None
         self.utterance_raw = ''
         self.utterance = ''
         self.actual_utterance = ''

@@ -181,37 +181,8 @@ class PostProcessor:
 
     def process_utterances_table(self):
         """Post-process utterances table."""
-        print("_utterances_get_uniquespeaker_ids")
-        self._utterances_get_uniquespeaker_ids()
-
         print("_utterances_get_directedness")
         self._utterances_get_directedness()
-
-    def _utterances_get_uniquespeaker_ids(self):
-        """Add speaker ids and unique speaker ids to utterances table."""
-        s = sa.select([db.Utterance.id,
-                       db.Utterance.speaker_label,
-                       db.Utterance.session_id_fk,
-                       db.Utterance.corpus,
-                       db.Speaker.id.label('speaker_id'),
-                       db.Speaker.uniquespeaker_id_fk]).\
-            select_from(
-                sa.outerjoin(db.Utterance, db.Speaker, sa.and_(
-                    db.Utterance.speaker_label == db.Speaker.speaker_label,
-                    db.Utterance.session_id_fk == db.Speaker.session_id_fk,
-                    db.Utterance.corpus == db.Speaker.corpus
-                )))
-
-        rows = self.conn.execute(s)
-
-        results = []
-        for row in rows:
-            if row.speaker_label:
-                results.append({'utterance_id': row.id,
-                                'uniquespeaker_id_fk': row.uniquespeaker_id_fk,
-                                'speaker_id_fk': row.speaker_id})
-        rows.close()
-        self._update_rows(db.Utterance.__table__, 'utterance_id', results)
 
     def _utterances_get_directedness(self):
         """Infer child directedness for each utterance. Skips Chintang.
@@ -221,12 +192,12 @@ class PostProcessor:
         """
         s = sa.select([db.Utterance.id,
                        db.Utterance.corpus,
-                       db.Utterance.addressee,
-                       db.Utterance.speaker_label,
+                       db.Utterance.addressee_id_fk,
+                       db.Utterance.speaker_id_fk,
                        db.Speaker.macrorole]).\
             select_from(
                 sa.outerjoin(db.Utterance, db.Speaker, sa.and_(
-                    db.Utterance.addressee == db.Speaker.speaker_label,
+                    db.Utterance.addressee_id_fk == db.Speaker.id,
                     db.Utterance.session_id_fk == db.Speaker.session_id_fk
                 ))).\
             where(db.Utterance.corpus != 'Chintang')
@@ -235,9 +206,9 @@ class PostProcessor:
 
         results = []
         for row in rows:
-            if row.addressee:
+            if row.addressee_id_fk:
                 if (row.macrorole == 'Target_Child'
-                        and row.speaker_label != row.addressee):
+                        and row.speaker_id_fk != row.addressee_id_fk):
                     results.append({'utterance_id': row.id, 'childdirected': 1})
                 else:
                     results.append({'utterance_id': row.id, 'childdirected': 0})

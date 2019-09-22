@@ -131,18 +131,28 @@ class CHATParser(SessionParser):
             self.add_morphemes(utt)
             align_words_morphemes(utt)
 
+    @staticmethod
+    def _get_speaker(label, speakers):
+        for speaker in speakers:
+            if speaker.code == label:
+                return speaker
+
+        return None
+
     def add_utterance(self, session):
         """Add the utterance to the session."""
         utt = Utterance()
         session.utterances.append(utt)
         utt.source_id = self.get_source_id()
-        utt.addressee = self.cleaner.clean_record_speaker_label(
+        addressee_label = self.cleaner.clean_record_speaker_label(
             self.session_filename, self.reader.get_addressee())
+        utt.addressee = self._get_speaker(addressee_label, session.speakers)
         utt.translation = self.cleaner.clean_translation(
             self.reader.get_translation())
         utt.comment = self.reader.get_comments()
-        utt.speaker_label = self.cleaner.clean_record_speaker_label(
+        speaker_label = self.cleaner.clean_record_speaker_label(
             self.session_filename, self.reader.get_record_speaker_label())
+        utt.speaker = self._get_speaker(speaker_label, session.speakers)
         utt.utterance_raw = self.reader.get_utterance()
         utt.start_raw = self.reader.get_start_time()
         utt.start = self.cleaner.clean_timestamp(utt.start_raw)

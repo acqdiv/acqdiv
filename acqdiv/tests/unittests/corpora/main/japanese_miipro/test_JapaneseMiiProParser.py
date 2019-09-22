@@ -46,8 +46,7 @@ class TestJapaneseMiiProParser(unittest.TestCase):
 
         utterance = [
             utt.source_id == 'dummy_0',
-            utt.speaker_label == 'MOT',
-            utt.addressee == '',
+            utt.addressee is None,
             utt.utterance_raw == 'doozo .',
             utt.utterance == 'doozo',
             utt.translation == '',

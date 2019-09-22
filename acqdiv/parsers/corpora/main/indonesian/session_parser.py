@@ -6,7 +6,7 @@ from acqdiv.parsers.corpora.main.indonesian.reader import \
 from acqdiv.parsers.corpora.main.indonesian.cleaner \
     import IndonesianCleaner
 from acqdiv.parsers.corpora.main.indonesian.label_corrector \
-    import IndonesianSpeakerLabelCorrector
+    import IndonesianSpeakerLabelCorrector as Lc
 from acqdiv.parsers.corpora.main.indonesian.age_updater \
     import IndonesianAgeUpdater
 from acqdiv.util.role import RoleMapper
@@ -27,12 +27,6 @@ class IndonesianSessionParser(ToolboxParser):
     def get_metadata_reader(self):
         return CHATParser(self.metadata_path)
 
-    def parse(self):
-        session = super().parse()
-        IndonesianSpeakerLabelCorrector.correct(session)
-
-        return session
-
     def add_session_metadata(self):
         self.session.source_id = os.path.splitext(os.path.basename(
             self.toolbox_path))[0]
@@ -47,6 +41,7 @@ class IndonesianSessionParser(ToolboxParser):
             speaker.birth_date = speaker_dict.get('birthday', '')
             speaker.code = speaker_dict.get('id', '')
             speaker.name = speaker_dict.get('name', '')
+            speaker.code = Lc.correct_speaker_label(speaker.code, speaker.name)
             speaker.languages_spoken = speaker_dict.get('language', '')
 
             speaker.age_raw = speaker_dict.get('age', '')
@@ -65,6 +60,14 @@ class IndonesianSessionParser(ToolboxParser):
 
             if self.is_speaker(speaker):
                 self.session.speakers.append(speaker)
+
+    def add_utterance(self, rec):
+        utt = super().add_utterance(rec)
+        speaker_label = self.record_reader.get_speaker_label(rec)
+        speaker_label = Lc.correct_rec_label(speaker_label)
+        utt.speaker = self._get_speaker(speaker_label, self.session.speakers)
+
+        return utt
 
     @staticmethod
     def is_speaker(speaker):

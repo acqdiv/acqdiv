@@ -1,7 +1,8 @@
-
-
 class IndonesianSpeakerLabelCorrector:
+    """Class for correcting speaker labels.
 
+    Speaker label `EXP` is replaced based on the speaker's name.
+    """
     name2label = {
         'Bety': 'BET',
         'Okki': 'OKK',
@@ -17,24 +18,17 @@ class IndonesianSpeakerLabelCorrector:
     }
 
     @classmethod
-    def correct(cls, session):
-        """Correct the speaker labels.
+    def correct_rec_label(cls, utt_label):
+        """Correct the label in the utterance."""
+        if 'EXP' in utt_label:
+            return utt_label[3:]
+        else:
+            return utt_label[0:3]
 
-        Speaker label `EXP` is replaced based on the speaker's name both
-        in the record and speaker data.
+    @classmethod
+    def correct_speaker_label(cls, speaker_label, speaker_name):
+        """Correct the label in the speaker data."""
+        if speaker_label == 'EXP':
+            return cls.name2label[speaker_name]
 
-        Args:
-            session (acqdiv.model.session.Session): The session instance.
-
-        Returns:
-            session (acqdiv.model.Session.Session): The session instance.
-        """
-        for utt in session.utterances:
-            if 'EXP' in utt.speaker_label:
-                utt.speaker_label = utt.speaker_label[3:]
-            else:
-                utt.speaker_label = utt.speaker_label[0:3]
-
-        for speaker in session.speakers:
-            if speaker.code == 'EXP':
-                speaker.code = cls.name2label[speaker.name]
+        return speaker_label

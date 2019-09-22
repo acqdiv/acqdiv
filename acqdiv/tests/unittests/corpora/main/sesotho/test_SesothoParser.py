@@ -45,8 +45,7 @@ class TestSesothoParser(unittest.TestCase):
 
         utterance = [
             utt.source_id == 'dummy_0',
-            utt.speaker_label == 'NHM',
-            utt.addressee == '',
+            utt.addressee is None,
             utt.utterance_raw == 'e tsamo .',
             utt.utterance == 'e tsamaya',
             utt.translation == 'Yes go and',

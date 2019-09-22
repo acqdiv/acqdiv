@@ -48,7 +48,7 @@ class TestRussianParser(unittest.TestCase):
         desired_output = {
             'role': 'actor family social role',
             'name': 'actor name',
-            'code': 'actor code',
+            'code': 'speaker_label',
             'age': 'actor age',
             'birthdate': 'actor birthdate',
             'sex': 'actor sex'
@@ -64,8 +64,8 @@ class TestRussianParser(unittest.TestCase):
             utt.source_id == 'source_id',
             utt.start_raw == 'start_raw',
             utt.end_raw == 'end_raw',
-            utt.speaker_label == 'speaker_label',
-            utt.addressee == '',
+            utt.speaker.code == 'speaker_label',
+            utt.addressee is None,
             utt.childdirected == '',
             utt.utterance_raw == 'w1 "," w2 w3 .',
             utt.utterance == 'w1 w2 w3',
