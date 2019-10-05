@@ -391,11 +391,9 @@ class IntegrityTest(unittest.TestCase):
 
     def compute_null_proportion(
             self, query, corpus, table, column, expected, fails):
-        try:
-            res = self.session.execute(query.format(
+
+        res = self.session.execute(query.format(
                 table=table, column=column, corpus=corpus))
-        except Exception:
-            return
 
         result = res.fetchall()
 
@@ -426,7 +424,7 @@ class IntegrityTest(unittest.TestCase):
 
         query = """
             SELECT {column}
-            FROM {table}
+            FROM v{table}
             WHERE corpus = '{corpus}'
         """
 
