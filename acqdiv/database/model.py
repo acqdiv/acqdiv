@@ -103,7 +103,6 @@ class Word(Base):
     __tablename__ = 'words'
 
     id = Column(Integer, primary_key=True)
-    session_id_fk = Column(Integer, ForeignKey('sessions.id'))
     utterance_id_fk = Column(Integer, ForeignKey('utterances.id'))
     language = Column(Text)
     word = Column(Text)

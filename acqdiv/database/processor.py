@@ -183,7 +183,7 @@ class DBProcessor:
     def insert_utterances(self, utterances, s_id, speakers_dict):
         for utt in utterances:
             u_id = self.insert_utterance(utt, s_id, speakers_dict)
-            w_ids = self.insert_words(utt.words, s_id, u_id)
+            w_ids = self.insert_words(utt.words, u_id)
             self.insert_morphemes(utt.morphemes, u_id, w_ids)
 
     def insert_utterance(self, utt, s_id, speakers_dict):
@@ -210,17 +210,16 @@ class DBProcessor:
 
         return u_id
 
-    def insert_words(self, words, s_id, u_id):
+    def insert_words(self, words, u_id):
         w_ids = []
         for w in words:
-            w_id = self.insert_word(w, s_id, u_id)
+            w_id = self.insert_word(w, u_id)
             w_ids.append(w_id)
 
         return w_ids
 
-    def insert_word(self, w, s_id, u_id):
+    def insert_word(self, w, u_id):
         w_id, = self.insert_word_func(
-            session_id_fk=s_id,
             utterance_id_fk=u_id,
             language=w.word_language if w.word_language else None,
             word=w.word if w.word else None,
