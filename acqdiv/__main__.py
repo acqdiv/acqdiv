@@ -8,9 +8,7 @@ Invoking commands:
 
 The following commands are supported:
     - load
-    - postprocess
     - test
-    - pipeline
 """
 import os
 import time
@@ -19,7 +17,6 @@ import argparse
 import unittest
 
 from acqdiv.loader import Loader
-from acqdiv.postprocessor import PostProcessor
 from acqdiv.tests.systemtests.test_integrity import IntegrityTest
 
 
@@ -31,29 +28,6 @@ def load(args):
         test=not args.full
     )
     print("%s seconds --- Finished" % (time.time() - start_time))
-    print()
-    print("Next, call:")
-
-    if args.full:
-        print("acqdiv postprocess -f")
-    else:
-        print("acqdiv postprocess")
-    print()
-
-
-def postprocess(args):
-    """Run the postprocessor."""
-    start_time = time.time()
-    postprocessor = PostProcessor()
-    postprocessor.postprocess(
-        test=not args.full,
-    )
-    print("%s seconds --- Finished" % (time.time() - start_time))
-    print()
-    print('Next, run tests:')
-    print('acqdiv test')
-    print('acqdiv test -i')
-    print()
 
 
 def test(args):
@@ -69,12 +43,6 @@ def test(args):
         runner.run(suite)
 
 
-def pipeline(args):
-    """Run the loader, postprocessor and the tests."""
-    load(args)
-    postprocess(args)
-
-
 def get_cmd_args():
     """Get the command-line arguments."""
     parser = argparse.ArgumentParser(
@@ -86,7 +54,7 @@ def get_cmd_args():
 
     # command 'load'
     parser_load = subparsers.add_parser(
-        'load', help='Run loader',
+        'load', help='Load the data into the database.',
         description=('The loader parses the corpus files '
                      'and imports the data into a SQLite database. '
                      'By default, only the test files are parsed and '
@@ -98,20 +66,6 @@ def get_cmd_args():
 
     parser_load.set_defaults(func=load)
 
-    # command 'postprocess'
-    parser_postprocess = subparsers.add_parser(
-        'postprocess', help='Run postprocessor',
-        description=('The postprocessor fills additional columns '
-                     'in the database which contain cleaned, unified and '
-                     'standardized data across the different corpora. '
-                     'By default, the postprocessor is run '
-                     'on the test database. '
-                     'To run the postprocessor on the full database, '
-                     'use the flag -f.'))
-    parser_postprocess.add_argument(
-        '-f', '--full', action='store_true', help='Run on full database')
-    parser_postprocess.set_defaults(func=postprocess)
-
     # command 'test'
     parser_test = subparsers.add_parser(
         'test', help='Run tests',
@@ -122,20 +76,6 @@ def get_cmd_args():
     parser_test.add_argument(
         '-i', action='store_true', help='Run integrity tests on the DB')
     parser_test.set_defaults(func=test)
-
-    # command 'pipeline'
-    parser_pipeline = subparsers.add_parser(
-        'pipeline', help='Run loader, postprocessor and tests',
-        description='Runs the complete pipeline '
-                    'by performing the same actions as the sub-commands '
-                    'load, postprocess and test. '
-                    'By default, all actions are executed '
-                    'on the test database. '
-                    'To run them on the full database, use the flag -f.')
-    parser_pipeline.add_argument(
-        '-f', '--full', action='store_true', help='Run on full database')
-
-    parser_pipeline.set_defaults(func=pipeline)
 
     return parser.parse_args()
 

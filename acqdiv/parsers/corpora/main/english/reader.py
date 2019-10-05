@@ -5,7 +5,7 @@ from acqdiv.parsers.chat.readers.reader import CHATReader
 
 class EnglishManchester1Reader(CHATReader):
 
-    # TODO: move all corrections to cleaner/postprocessor
+    # TODO: move all corrections to cleaner
 
     @staticmethod
     def correct_speaker_name(name, label, role, target_child_name, pid):

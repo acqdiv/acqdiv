@@ -176,7 +176,7 @@ class CHATCleaner:
         """Clean across speaker metadata.
 
         Mostly used for correcting speaker metadata so as to match the speakers
-        across different sessions later in the postprocessor.
+        across different sessions later.
 
         No cleaning by default.
 
