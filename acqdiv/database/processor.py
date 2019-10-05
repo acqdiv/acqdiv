@@ -1,10 +1,12 @@
 import datetime
+import subprocess
 
 import sqlalchemy as sa
 from sqlalchemy import create_engine
 
 from acqdiv.database.model import Base
 import acqdiv.database.model as db
+from acqdiv.util.path import get_full_path
 
 
 class DBProcessor:
@@ -43,15 +45,16 @@ class DBProcessor:
             Engine: The DB engine.
         """
         if test:
-            path = 'sqlite:///database/test.sqlite3'
+            path = 'database/test.sqlite3'
         else:
             date = datetime.datetime.now().strftime('%Y-%m-%d')
-            path = 'sqlite:///database/acqdiv_corpus_{}.sqlite3'.format(date)
+            path = 'database/acqdiv_corpus_{}.sqlite3'.format(date)
 
         print("Writing database to: {}".format(path))
         print()
-        engine = create_engine(path, echo=False)
+        engine = create_engine('sqlite:///'+path, echo=False)
         cls.create_tables(engine)
+        cls.create_views(path)
 
         return engine
 
@@ -64,6 +67,12 @@ class DBProcessor:
         """
         Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(engine)
+
+    @staticmethod
+    def create_views(db_path):
+        view_path = get_full_path('database/views.sql')
+        cmd = f'sqlite3 {db_path} < {view_path}'
+        subprocess.run(cmd, shell=True)
 
     def insert_corpus(self, corpus):
         """Insert the corpus into the database.
