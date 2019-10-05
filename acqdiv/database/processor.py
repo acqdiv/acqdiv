@@ -21,10 +21,6 @@ class DBProcessor:
         self.test = test
         self.engine = self.get_engine(test=self.test)
 
-        # initialize them once for each corpus
-        self.corpus_name = None
-        self.language = None
-
         # initialize them once for each session
         # to increase performance
         self.insert_corpus_func = None
@@ -80,9 +76,6 @@ class DBProcessor:
         Args:
             corpus (acqdiv.model.corpus.Corpus): The corpus.
         """
-        self.corpus_name = corpus.corpus
-        self.language = corpus.language
-
         with self.engine.begin() as conn:
             conn.execute('PRAGMA synchronous = OFF')
             conn.execute('PRAGMA journal_mode = MEMORY')
@@ -161,8 +154,6 @@ class DBProcessor:
     def insert_speaker(self, speaker, s_id):
         sp_id, = self.insert_speaker_func(
             session_id_fk=s_id,
-            corpus=self.corpus_name,
-            language=self.language,
             birthdate=speaker.birth_date if speaker.birth_date else None,
             gender_raw=speaker.gender_raw if speaker.gender_raw else None,
             gender=speaker.gender if speaker.gender else None,

@@ -41,9 +41,6 @@ class Speaker(Base):
 
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
-    uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
-    corpus = Column(Text, nullable=False)
-    language = Column(Text, nullable=False)
     speaker_label = Column(Text)
     name = Column(Text)
     age_raw = Column(Text)
@@ -56,18 +53,6 @@ class Speaker(Base):
     macrorole = Column(Text)
     languages_spoken = Column(Text)
     birthdate = Column(Text)
-
-
-class UniqueSpeaker(Base):
-    """Model for the unique speaker across all corpora."""
-    __tablename__ = 'uniquespeakers'
-
-    id = Column(Integer, primary_key=True)
-    speaker_label = Column(Text)
-    name = Column(Text)
-    birthdate = Column(Text)
-    gender = Column(Text)
-    corpus = Column(Text)
 
 
 class Utterance(Base):
