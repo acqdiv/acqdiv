@@ -126,7 +126,7 @@ class IntegrityTest(unittest.TestCase):
 
     def test_gender(self):
         """ Check genders in database vs whitelist. """
-        query = "select gender from speakers group by gender"
+        query = "select gender from uniquespeakers group by gender"
         gender = ["Female", "Male", None]
         self._in_whitelist(query, gender)
 
@@ -233,11 +233,6 @@ class IntegrityTest(unittest.TestCase):
         query = "select date from sessions group by date"
         self._is_valid_date(query)
 
-    def test_date_speakers(self):
-        """ Check birthdates in speakers.birthdate """
-        query = "select birthdate from speakers group by birthdate"
-        self._is_valid_date(query)
-
     def test_date_uniquespeakers(self):
         """ Check birthdates in uniquespeakers.birthdate """
         query = "select birthdate from uniquespeakers group by birthdate"
@@ -245,7 +240,7 @@ class IntegrityTest(unittest.TestCase):
 
     def test_language_per_morpheme(self):
         """ Check whether the language mapping is working as intended """
-        query = "SELECT DISTINCT morpheme_language FROM morphemes"
+        query = "SELECT DISTINCT language FROM morphemes"
         langs = [
             "Arabic",
             "Bantawa",
@@ -288,7 +283,7 @@ class IntegrityTest(unittest.TestCase):
     def test_no_target_child_for_session(self):
         """Check whether every session has a target child."""
         query = """SELECT id, corpus, source_id
-                   FROM sessions
+                   FROM vsessions
                    WHERE target_child_fk IS NULL"""
         msg = "Sessions {} do not have a target child."
         sessions = []
@@ -483,10 +478,12 @@ class IntegrityTest(unittest.TestCase):
                 INNER JOIN
 
                 (
-                    SELECT corpus, COUNT(distinct uniquespeaker_id_fk)
-                      AS uniquespeakers_in_utterances
-                    FROM utterances
-                    GROUP BY corpus
+                    SELECT vspeakers.corpus, 
+                        COUNT(distinct vspeakers.uniquespeaker_id_fk)
+                            AS uniquespeakers_in_utterances
+                    FROM vutterances, vspeakers
+                    WHERE vutterances.speaker_id_fk = vspeakers.id
+                    GROUP BY vspeakers.corpus
                 ) t2
 
                 ON t1.corpus = t2.corpus"""
@@ -502,7 +499,7 @@ class IntegrityTest(unittest.TestCase):
             FROM
                 (
                     SELECT corpus, COUNT(*) as all_speakers
-                    FROM speakers
+                    FROM vspeakers
                     GROUP BY corpus
                 ) t1
 
@@ -511,7 +508,7 @@ class IntegrityTest(unittest.TestCase):
                 (
                     SELECT corpus, COUNT(distinct speaker_id_fk)
                         AS speakers_in_utterances
-                    FROM utterances
+                    FROM vutterances
                     GROUP BY corpus
                 ) t2
 
