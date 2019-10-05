@@ -50,25 +50,10 @@ class DBProcessor:
 
         print("Writing database to: {}".format(path))
         print()
-        engine = cls.db_connect(path)
+        engine = create_engine(path, echo=False)
         cls.create_tables(engine)
 
         return engine
-
-    @staticmethod
-    def db_connect(path):
-        """Perform database connection.
-
-        If desired, add database settings in settings.py, e.g. for postgres:
-        return create_engine(URL(**settings.DATABASE)).
-
-        Args:
-            path (str) : Path to DB.
-
-        Returns:
-            SQLAlchemy engine instance.
-        """
-        return create_engine(path, echo=False)
 
     @staticmethod
     def create_tables(engine):
