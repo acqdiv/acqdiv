@@ -42,18 +42,13 @@ class Speaker(Base):
     id = Column(Integer, primary_key=True)
     session_id_fk = Column(Integer, ForeignKey('sessions.id'))
     uniquespeaker_id_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
-    speaker_label = Column(Text)
-    name = Column(Text)
     age_raw = Column(Text)
     age = Column(Text)
     age_in_days = Column(Integer)
-    gender_raw = Column(Text)
-    gender = Column(Text)
     role_raw = Column(Text)
     role = Column(Text)
     macrorole = Column(Text)
     languages_spoken = Column(Text)
-    birthdate = Column(Text)
 
 
 class UniqueSpeaker(Base):
