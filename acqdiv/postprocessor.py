@@ -1,7 +1,6 @@
 """ Post-processing processes on the corpora in the ACQDIV-DB. """
 
 import argparse
-import logging
 import sqlalchemy as sa
 
 import acqdiv.database.model as db
@@ -51,7 +50,6 @@ class PostProcessor:
     def process_speakers_table(self):
         """Post-process speakers table."""
         self._speakers_get_unique_speakers()
-        self._speakers_get_target_children()
 
     def _speakers_get_unique_speakers(self):
         """Populate the the unique speakers table.
@@ -85,94 +83,6 @@ class PostProcessor:
         rows.close()
         self._update_rows(db.Speaker.__table__, 'speaker_id', unique_speaker_ids)
         self._insert_rows(db.UniqueSpeaker.__table__, unique_speakers)
-
-    def _speakers_get_target_children(self):
-        """Set target children for sessions.
-
-        Also adapt roles and macroroles if there are multiple target children
-        per session.
-        """
-        s = sa.select([db.Speaker]).where(db.Speaker.role == "Target_Child")
-        rows = self.conn.execute(s)
-        targets_per_session = {}
-        tc_id_results = []
-        non_targets_results = []
-
-        # Store target children per session.
-        for row in rows:
-            if row.session_id_fk in targets_per_session:
-                targets_per_session[row.session_id_fk].add(row.uniquespeaker_id_fk)
-            else:
-                targets_per_session[row.session_id_fk] = {row.uniquespeaker_id_fk}
-
-        # Go through all session ids and get the target children for this session.
-        for session_id in targets_per_session:
-            targets = targets_per_session[session_id]
-            # Get session row.
-            query = sa.select([db.Session]).where(db.Session.id == session_id)
-            rec = self.conn.execute(query).fetchone()
-
-            # If there is one target child only.
-            if len(targets) == 1:
-                # Just set target child for the session.
-                target_child_fk = targets.pop()
-                tc_id_results.append(
-                    {'session_id': session_id, 'target_child_fk': target_child_fk})
-
-            # If several target children infer target child from source id.
-            else:
-                if rec.corpus == "Chintang":
-                    # Get target child label and get right target child id.
-                    label = rec.source_id[2:7]
-                    tc_id_query = sa.select([db.UniqueSpeaker]).where(sa.and_(
-                        db.UniqueSpeaker.corpus == rec.corpus,
-                        db.UniqueSpeaker.speaker_label == label))
-                    tc_id_result = self.conn.execute(tc_id_query).fetchone()
-                    tc_id = tc_id_result.id
-
-                elif rec.corpus == "Russian":
-                    # Session code's first letter matches that of speaker label.
-                    letter = rec.source_id[0]
-                    # Get right target child id.
-                    tc_id_query = sa.select([db.Speaker]).where(sa.and_(
-                        db.Speaker.corpus == rec.corpus,
-                        db.Speaker.role == "Target_Child",
-                        db.Speaker.speaker_label.like("{}%".format(letter))))
-                    tc_id_result = self.conn.execute(tc_id_query).fetchone()
-                    tc_id = tc_id_result.uniquespeaker_id_fk
-
-                elif rec.corpus == "Yucatec":
-                    label = rec.source_id[:3]
-                    tc_id_query = sa.select([db.UniqueSpeaker]).where(sa.and_(
-                        db.UniqueSpeaker.corpus == rec.corpus,
-                        db.UniqueSpeaker.speaker_label == label))
-                    tc_id_result = self.conn.execute(tc_id_query).fetchone()
-                    tc_id = tc_id_result.id
-
-                else:
-                    logging.warning(
-                        "Multiple target children for session {} in {}".format(
-                            session_id, rec.corpus))
-                    continue
-
-                # Set this target child for the session.
-                tc_id_results.append(
-                    {'session_id': session_id, 'target_child_fk': tc_id})
-
-                # Adapt role and macrorole of children that are not target anymore.
-                non_targets_query = sa.select([db.Speaker]).where(sa.and_(
-                    db.Speaker.role == "Target_Child",
-                    db.Speaker.session_id_fk == session_id,
-                    db.Speaker.uniquespeaker_id_fk != tc_id))
-                non_targets = self.conn.execute(non_targets_query)
-
-                for row in non_targets:
-                    non_targets_results.append(
-                        {'speaker_id': row.id, 'role': "Child",
-                         'macrorole': "Child"})
-        rows.close()
-        self._update_rows(db.Session.__table__, 'session_id', tc_id_results)
-        self._update_rows(db.Speaker.__table__, 'speaker_id', non_targets_results)
 
     ### Util functions ###
     def _update_rows(self, t, binder, rows):

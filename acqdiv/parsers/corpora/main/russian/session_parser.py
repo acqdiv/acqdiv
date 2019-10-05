@@ -5,6 +5,7 @@ from acqdiv.parsers.metadata.imdi_parser import IMDIParser
 from acqdiv.parsers.corpora.main.russian.imdi_cleaner \
     import RussianIMDICleaner as ICl
 from acqdiv.parsers.toolbox.readers.age_updater import ToolboxAgeUpdater
+from acqdiv.parsers.corpora.main.russian import tc_cleaner
 from acqdiv.model.speaker import Speaker
 from acqdiv.util.role import RoleMapper
 from acqdiv.util.path import get_full_path
@@ -24,6 +25,11 @@ class RussianSessionParser(ToolboxParser):
 
     def get_cleaner(self):
         return RussianCleaner()
+
+    def parse(self):
+        session = super().parse()
+        tc_cleaner.clean(session)
+        return session
 
     def add_speakers(self):
         for speaker_dict in self.metadata_reader.metadata['participants']:

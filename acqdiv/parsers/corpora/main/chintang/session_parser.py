@@ -4,6 +4,7 @@ from acqdiv.parsers.corpora.main.chintang.imdi_parser \
     import ChintangIMDIParser
 from acqdiv.parsers.corpora.main.chintang.cleaner \
     import ChintangCleaner
+from acqdiv.parsers.corpora.main.chintang import tc_cleaner
 
 from acqdiv.util.role import RoleMapper
 from acqdiv.util.path import get_full_path
@@ -23,3 +24,8 @@ class ChintangSessionParser(ToolboxParser):
 
     def get_cleaner(self):
         return ChintangCleaner()
+
+    def parse(self):
+        session = super().parse()
+        tc_cleaner.clean(session)
+        return session

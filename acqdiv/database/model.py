@@ -27,7 +27,6 @@ class Session(Base):
     source_id = Column(Text, nullable=False)
     media_id = Column(Text)
     date = Column(Text)
-    target_child_fk = Column(Integer, ForeignKey('uniquespeakers.id'))
     duration = Column(Integer)
     # SQLAlchemy relationship definitions:
     speakers = relationship('Speaker', backref='Session')
