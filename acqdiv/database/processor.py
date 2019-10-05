@@ -137,7 +137,7 @@ class DBProcessor:
 
     def insert_session_metadata(self, session, c_id):
         s_id, = self.insert_session_func(
-            corpus_id_fk=c_id,
+            corpus=c_id,
             date=session.date,
             source_id=session.source_id,
             duration=session.duration if session.duration else None,

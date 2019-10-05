@@ -23,7 +23,7 @@ class Session(Base):
     __tablename__ = 'sessions'
 
     id = Column(Integer, primary_key=True)
-    corpus_id_fk = Column(Text, ForeignKey('corpora.id'))
+    corpus = Column(Text, ForeignKey('corpora.id'))
     source_id = Column(Text, nullable=False)
     media_id = Column(Text)
     date = Column(Text)
