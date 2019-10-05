@@ -3,14 +3,13 @@ from acqdiv.model.uniquespeaker import UniqueSpeaker
 uniquespeakers = {}
 
 
-def get_unique_speakers(corpus, speakers):
+def set_unique_speakers(corpus, speakers):
     """Set unique speakers.
 
     Args:
         corpus (str): The corpus name.
         speakers (List[acqdiv.model.speaker.Speaker]): The session speakers.
     """
-    uspeakers = set()
     for speaker in speakers:
         key = (corpus, speaker.code, speaker.name, speaker.birth_date)
 
@@ -25,7 +24,4 @@ def get_unique_speakers(corpus, speakers):
             uspeaker.birth_date = speaker.birth_date
             uniquespeakers[key] = uspeaker
 
-        uspeakers.add(uspeaker)
         speaker.uniquespeaker = uspeaker
-
-    return uspeakers
