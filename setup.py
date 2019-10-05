@@ -29,14 +29,17 @@ setup(
     keywords='data linguistics',
     packages=find_packages(),
     include_package_data=True,
+    python_requires='>=3.6',
     install_requires=[
         'sqlalchemy',
         'lxml',
-        'numpy',
-        'pandas',
-        'nose'
+        'tqdm',
+        'python-dateutil'
     ],
-    # TODO: not sure if we need this: package_data, data_files
+    extras_require={
+        'dev': ['pandas', 'numpy'],
+        'test':  ['pytest'],
+    },
     entry_points={
         'console_scripts': ['acqdiv=acqdiv.__main__:main'],
     },
