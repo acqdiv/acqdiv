@@ -83,8 +83,10 @@ class DBProcessor:
             self.insert_corpus_func = sa.insert(db.Corpus, bind=conn).execute
             c_id = self.insert_corpus_metadata(corpus)
 
+        uspeakers_dict = {}
+
         for session in corpus.sessions:
-            self.insert_session(session, c_id)
+            self.insert_session(session, c_id, uspeakers_dict)
 
             if self.test:
                 break
@@ -108,7 +110,7 @@ class DBProcessor:
 
         return c_id
 
-    def insert_session(self, session, c_id):
+    def insert_session(self, session, c_id, uspeakers_dict):
         """Insert the session into the database.
 
         Args:
@@ -122,12 +124,15 @@ class DBProcessor:
 
             self.insert_session_func = sa.insert(db.Session, bind=conn).execute
             self.insert_speaker_func = sa.insert(db.Speaker, bind=conn).execute
+            self.insert_uspeaker_func = sa.insert(
+                db.UniqueSpeaker, bind=conn).execute
             self.insert_utt_func = sa.insert(db.Utterance, bind=conn).execute
             self.insert_word_func = sa.insert(db.Word, bind=conn).execute
             self.insert_morph_func = sa.insert(db.Morpheme, bind=conn).execute
 
             s_id = self.insert_session_metadata(session, c_id)
-            speakers_dict = self.insert_speakers(session.speakers, s_id)
+            speakers_dict = self.insert_speakers(
+                session.speakers, s_id, c_id, uspeakers_dict)
             self.insert_utterances(session.utterances, s_id, speakers_dict)
 
     def insert_session_metadata(self, session, c_id):
@@ -141,19 +146,38 @@ class DBProcessor:
 
         return s_id
 
-    def insert_speakers(self, speakers, s_id):
+    def insert_speakers(self, speakers, s_id, c_id, uspeakers_dict):
         speakers_dict = {
             None: None
         }
         for speaker in speakers:
-            sp_id = self.insert_speaker(speaker, s_id)
+            if speaker.uniquespeaker in uspeakers_dict:
+                usp_id = uspeakers_dict[speaker.uniquespeaker]
+            else:
+                usp_id = self.insert_uspeaker(speaker.uniquespeaker, c_id)
+                uspeakers_dict[speaker.uniquespeaker] = usp_id
+
+            sp_id = self.insert_speaker(speaker, s_id, usp_id)
             speakers_dict[speaker] = sp_id
 
         return speakers_dict
 
-    def insert_speaker(self, speaker, s_id):
+    def insert_uspeaker(self, uspeaker, c_id):
+        usp_id, = self.insert_uspeaker_func(
+            corpus=c_id,
+            name=uspeaker.name if uspeaker.name else None,
+            birthdate=uspeaker.birth_date if uspeaker.birth_date else None,
+            gender_raw=uspeaker.gender_raw if uspeaker.gender_raw else None,
+            gender=uspeaker.gender if uspeaker.gender else None,
+            speaker_label=uspeaker.code if uspeaker.code else None,
+        ).inserted_primary_key
+
+        return usp_id
+
+    def insert_speaker(self, speaker, s_id, usp_id):
         sp_id, = self.insert_speaker_func(
             session_id_fk=s_id,
+            uniquespeaker_id_fk=usp_id,
             birthdate=speaker.birth_date if speaker.birth_date else None,
             gender_raw=speaker.gender_raw if speaker.gender_raw else None,
             gender=speaker.gender if speaker.gender else None,

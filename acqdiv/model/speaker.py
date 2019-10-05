@@ -1,3 +1,5 @@
+from acqdiv.model.uniquespeaker import UniqueSpeaker
+from typing import Optional
 
 
 class Speaker:
@@ -17,6 +19,7 @@ class Speaker:
     languages_spoken: The languages spoken by the speaker.
     """
 
+    uniquespeaker: Optional[UniqueSpeaker]
     code: str
     name: str
     gender_raw: str
@@ -31,6 +34,7 @@ class Speaker:
     languages_spoken: str
 
     def __init__(self):
+        self.uniquespeaker = None
         self.code = ''
         self.name = ''
         self.gender_raw = ''

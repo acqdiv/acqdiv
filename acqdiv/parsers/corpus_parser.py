@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from tqdm import tqdm
 
 from acqdiv.model.corpus import Corpus
+from acqdiv.util.uniquespeaker import get_unique_speakers
 from acqdiv.util.session_duration import extract_duration
 
 
@@ -63,6 +64,12 @@ class CorpusParser(ABC):
                 if session_parser is not None:
 
                     session = session_parser.parse()
+
+                    # add unique speakers
+                    self.corpus.speakers.update(
+                        get_unique_speakers(
+                            self.corpus.corpus,
+                            session.speakers))
 
                     # add duration
                     session.duration = extract_duration(self.corpus.corpus,

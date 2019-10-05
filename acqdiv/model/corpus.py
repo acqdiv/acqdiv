@@ -1,6 +1,7 @@
-from typing import Iterable
+from typing import Iterable, Set
 
 from acqdiv.model.session import Session
+from acqdiv.model.uniquespeaker import UniqueSpeaker
 
 
 class Corpus:
@@ -20,6 +21,7 @@ class Corpus:
     glottolog_code: str
     owner: str
     sessions: Iterable[Session]
+    speakers: Set[UniqueSpeaker]
 
     def __init__(self):
         """Initialize the variables representing a corpus."""
@@ -29,3 +31,4 @@ class Corpus:
         self.glottolog_code = ''
         self.owner = ''
         self.sessions = []
+        self.speakers = set()
