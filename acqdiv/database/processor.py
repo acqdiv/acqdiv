@@ -43,17 +43,15 @@ class DBProcessor:
             Engine: The DB engine.
         """
         if test:
-            print("Writing test database to: database/test.sqlite3")
-            print()
-            engine = cls.db_connect('sqlite:///database/test.sqlite3')
-            cls.create_tables(engine)
+            path = 'sqlite:///database/test.sqlite3'
         else:
             date = datetime.datetime.now().strftime('%Y-%m-%d')
             path = 'sqlite:///database/acqdiv_corpus_{}.sqlite3'.format(date)
-            print("Writing database to: {}".format(path))
-            print()
-            engine = cls.db_connect(path)
-            cls.create_tables(engine)
+
+        print("Writing database to: {}".format(path))
+        print()
+        engine = cls.db_connect(path)
+        cls.create_tables(engine)
 
         return engine
 
