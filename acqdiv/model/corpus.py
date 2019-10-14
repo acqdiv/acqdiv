@@ -28,4 +28,6 @@ class Corpus:
         self.iso_639_3 = ''
         self.glottolog_code = ''
         self.owner = ''
+        self.acronym = ''
+        self.name = ''
         self.sessions = []

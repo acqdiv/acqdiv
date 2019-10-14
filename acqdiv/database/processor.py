@@ -106,6 +106,8 @@ class DBProcessor:
             iso_639_3=corpus.iso_639_3,
             glottolog_code=corpus.glottolog_code,
             owner=corpus.owner,
+            acronym=corpus.acronym,
+            name=corpus.name,
         ).inserted_primary_key
 
         return c_id

@@ -16,6 +16,8 @@ class Corpus(Base):
     iso_639_3 = Column(Text)
     glottolog_code = Column(Text)
     owner = Column(Text)
+    acronym = Column(Text)
+    name = Column(Text)
 
 
 class Session(Base):

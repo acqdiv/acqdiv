@@ -33,6 +33,8 @@ class CorpusParser(ABC):
         corpus.corpus = self.cfg['corpus']['corpus']
         corpus.language = self.cfg['corpus']['language']
         corpus.owner = self.cfg['corpus']['owner']
+        corpus.acronym = self.cfg['corpus']['acronym']
+        corpus.name = self.cfg['corpus']['name']
         corpus.sessions = self.iter_sessions()
 
         return corpus
