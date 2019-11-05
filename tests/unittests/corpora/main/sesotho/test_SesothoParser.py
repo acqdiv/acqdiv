@@ -3,22 +3,17 @@ import unittest
 import os
 import acqdiv
 
+import pytest
+
 from acqdiv.parsers.corpora.main.sesotho.cleaner import SesothoCleaner
 from acqdiv.parsers.corpora.main.sesotho.session_parser \
     import SesothoSessionParser
 from acqdiv.parsers.corpora.main.sesotho.reader import SesothoReader
 
 
+@pytest.mark.usefixtures('dummy_cha')
 class TestSesothoParser(unittest.TestCase):
     """Class to test the SesothoSessionParser."""
-
-    def setUp(self):
-        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
-
-        self.dummy_cha_path = os.path.join(
-            here,
-            'tests/unittests/chat/test_files/dummy.cha')
-        self.maxDiff = None
 
     def test_get_reader(self):
         """Test get_reader. (Sesotho)"""

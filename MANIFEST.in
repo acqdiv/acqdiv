@@ -1,6 +1,5 @@
-include README.rst 
-include MANIFEST.in 
-include INSTALL.txt
-include setup.py
-recursive-include acqdiv/ini *.ini
-recursive-include acqdiv/tests/unittests *.imdi *.txt *.xml
+include *.md
+graft src
+global-exclude *.py[co]
+prune src/acqdiv/corpora
+global-exclude *.sqlite3

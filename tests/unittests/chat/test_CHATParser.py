@@ -11,11 +11,9 @@ class TestCHATParser(unittest.TestCase):
 
     def setUp(self):
         self.maxDiff = None
-        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
-
         self.dummy_cha_path = os.path.join(
-            here,
-            'tests/unittests/chat/test_files/dummy.cha')
+            os.path.dirname(__file__),
+            'test_files/dummy.cha')
 
     def test_get_reader(self):
         """Test get_reader. (CHATParser)"""

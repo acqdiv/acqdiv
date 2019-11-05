@@ -8,16 +8,13 @@ Invoking commands:
 
 The following commands are supported:
     - load
-    - test
 """
 import os
 import time
 import acqdiv
 import argparse
-import unittest
 
 from acqdiv.loader import Loader
-from acqdiv.tests.systemtests.test_integrity import IntegrityTest
 
 
 def load(args):
@@ -28,19 +25,6 @@ def load(args):
         test=not args.full
     )
     print("%s seconds --- Finished" % (time.time() - start_time))
-
-
-def test(args):
-    """Run the tests."""
-    test_loader = unittest.TestLoader()
-    runner = unittest.TextTestRunner()
-
-    if args.i:
-        suite = test_loader.loadTestsFromTestCase(IntegrityTest)
-        runner.run(suite)
-    else:
-        suite = test_loader.discover('tests/unittests')
-        runner.run(suite)
 
 
 def get_cmd_args():
@@ -65,17 +49,6 @@ def get_cmd_args():
         '-f', '--full', action='store_true', help='Run on full database')
 
     parser_load.set_defaults(func=load)
-
-    # command 'test'
-    parser_test = subparsers.add_parser(
-        'test', help='Run tests',
-        description=('By default, runs the unit tests. '
-                     'To run the validation tests for the test database. '
-                     'To run integrity tests for the full database, '
-                     'use the flag -f.'))
-    parser_test.add_argument(
-        '-i', action='store_true', help='Run integrity tests on the DB')
-    parser_test.set_defaults(func=test)
 
     return parser.parse_args()
 

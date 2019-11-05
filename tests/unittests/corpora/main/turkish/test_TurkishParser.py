@@ -3,6 +3,8 @@ import unittest
 import os
 import acqdiv
 
+import pytest
+
 from acqdiv.parsers.corpora.main.turkish.cleaner \
     import TurkishCleaner
 from acqdiv.parsers.corpora.main.turkish.session_parser \
@@ -11,16 +13,8 @@ from acqdiv.parsers.corpora.main.turkish.reader \
     import TurkishReader
 
 
+@pytest.mark.usefixtures('dummy_cha')
 class TestTurkishParser(unittest.TestCase):
-
-    def setUp(self):
-        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
-
-        self.dummy_cha_path = os.path.join(
-            here,
-            'tests/unittests/chat/test_files/dummy.cha')
-
-        self.maxDiff = None
 
     def test_get_reader(self):
         """Test get_reader. (Sesotho)"""

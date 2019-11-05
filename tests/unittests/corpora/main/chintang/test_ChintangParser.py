@@ -10,15 +10,13 @@ class TestChintangParser(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
-
         toolbox_path = os.path.join(
-            here,
-            'tests/unittests/corpora/main/chintang/test_files/Chintang.txt')
+            os.path.dirname(__file__),
+            'test_files/Chintang.txt')
 
         metadata_path = os.path.join(
-            here,
-            'tests/unittests/corpora/main/chintang/test_files/Chintang.imdi')
+            os.path.dirname(__file__),
+            'test_files/Chintang.imdi')
 
         cls.parser = ChintangSessionParser(toolbox_path, metadata_path)
 

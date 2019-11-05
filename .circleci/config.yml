@@ -21,18 +21,16 @@ jobs:
       - checkout
 
       - run:
-          name: install dependencies
+          name: Install dependencies
           command: |
             sudo pip install -r requirements.txt
 
       - run:
-          name: Install acqdiv
-          command: |
-            sudo python setup.py develop
-
-      - run:
           name: Run tests
           command: |
-            cd acqdiv/tests/unittests
-            python -m unittest
-
+            sudo tox
+            
+      - run:
+          name: Test acqdiv CLI
+          command: |
+            acqdiv load

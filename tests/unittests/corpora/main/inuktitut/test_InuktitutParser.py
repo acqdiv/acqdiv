@@ -3,6 +3,8 @@ import unittest
 import os
 import acqdiv
 
+import pytest
+
 from acqdiv.parsers.corpora.main.inuktitut.cleaner import \
     InuktitutCleaner
 from acqdiv.parsers.corpora.main.inuktitut.session_parser import \
@@ -11,6 +13,7 @@ from acqdiv.parsers.corpora.main.inuktitut.reader import \
     InuktitutReader
 
 
+@pytest.mark.usefixtures('tests_dir')
 class TestInuktitutParser(unittest.TestCase):
     """Class to test InuktitutSessionParser."""
 
@@ -18,9 +21,8 @@ class TestInuktitutParser(unittest.TestCase):
         self.maxDiff = None
         here = os.path.abspath(os.path.dirname(acqdiv.__file__))
 
-        self.dummy_cha_path = os.path.join(
-            here,
-            'tests/unittests/chat/test_files/dummy.cha')
+        self.dummy_cha_path = str(
+            self.tests_dir / 'unittests/chat/test_files/dummy.cha')
 
     def test_get_reader(self):
         """Test get_reader for Inuktitutparser."""

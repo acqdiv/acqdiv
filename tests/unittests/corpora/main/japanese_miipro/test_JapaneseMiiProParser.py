@@ -3,6 +3,8 @@ import unittest
 import os
 import acqdiv
 
+import pytest
+
 from acqdiv.parsers.corpora.main.japanese_miipro.cleaner import \
     JapaneseMiiProCleaner
 from acqdiv.parsers.corpora.main.japanese_miipro.session_parser \
@@ -11,16 +13,9 @@ from acqdiv.parsers.corpora.main.japanese_miipro.reader import \
     JapaneseMiiProReader
 
 
+@pytest.mark.usefixtures('dummy_cha')
 class TestJapaneseMiiProParser(unittest.TestCase):
     """Class to test the JapaneseMiiProSessionParser."""
-
-    def setUp(self):
-        self.maxDiff = None
-        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
-
-        self.dummy_cha_path = os.path.join(
-            here,
-            'tests/unittests/chat/test_files/dummy.cha')
 
     def test_get_reader(self):
         """Test get_reader for JapaneseMiiProSessionParser."""

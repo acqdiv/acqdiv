@@ -1,26 +1,24 @@
 import os
 import unittest
 
+import pytest
+
 import acqdiv
 from acqdiv.parsers.corpora.main.indonesian.session_parser import \
     IndonesianSessionParser
 
 
+@pytest.mark.usefixtures('tests_dir')
 class TestIndonesianParser(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+    def setUp(self):
+        toolbox_path = str(
+            self.tests_dir / 'unittests/corpora/main/indonesian/test_files/Indonesian.txt')
 
-        toolbox_path = os.path.join(
-            here,
-            'tests/unittests/corpora/main/indonesian/test_files/Indonesian.txt')
+        metadata_path = str(
+            self.tests_dir / 'unittests/corpora/main/indonesian/test_files/Indonesian.xml')
 
-        metadata_path = os.path.join(
-            here,
-            'tests/unittests/corpora/main/indonesian/test_files/Indonesian.xml')
-
-        cls.parser = IndonesianSessionParser(toolbox_path, metadata_path)
+        self.parser = IndonesianSessionParser(toolbox_path, metadata_path)
 
     def test_session_metadata(self):
         session = self.parser.parse()

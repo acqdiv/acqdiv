@@ -9,7 +9,7 @@ from acqdiv.parsers.corpora.main.nungon.reader import NungonReader
 class TestNungonParser(unittest.TestCase):
 
     def setUp(self):
-        self.parser = NungonSessionParser('__init__.py')
+        self.parser = NungonSessionParser(__file__)
         self.maxDiff = None
 
     def test_get_reader(self):

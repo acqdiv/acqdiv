@@ -1,26 +1,24 @@
 import os
 import unittest
 
+import pytest
+
 import acqdiv
 from acqdiv.parsers.corpora.main.russian.session_parser import \
     RussianSessionParser
 
 
+@pytest.mark.usefixtures('tests_dir')
 class TestRussianParser(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
+    def setUp(self):
+        toolbox_path = str(
+            self.tests_dir / 'unittests/corpora/main/russian/test_files/Russian.txt')
 
-        toolbox_path = os.path.join(
-            here,
-            'tests/unittests/corpora/main/russian/test_files/Russian.txt')
+        metadata_path = str(
+            self.tests_dir / 'unittests/corpora/main/russian/test_files/Russian.imdi')
 
-        metadata_path = os.path.join(
-            here,
-            'tests/unittests/corpora/main/russian/test_files/Russian.imdi')
-
-        cls.parser = RussianSessionParser(toolbox_path, metadata_path)
+        self.parser = RussianSessionParser(toolbox_path, metadata_path)
 
     def test_session_metadata(self):
         session = self.parser.parse()

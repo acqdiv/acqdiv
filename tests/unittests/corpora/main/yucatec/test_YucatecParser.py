@@ -3,6 +3,8 @@ import unittest
 import os
 import acqdiv
 
+import pytest
+
 from acqdiv.parsers.corpora.main.yucatec.cleaner \
     import YucatecCleaner
 from acqdiv.parsers.corpora.main.yucatec.session_parser \
@@ -11,15 +13,8 @@ from acqdiv.parsers.corpora.main.yucatec.reader \
     import YucatecReader
 
 
+@pytest.mark.usefixtures('dummy_cha')
 class TestYucatecParser(unittest.TestCase):
-
-    def setUp(self):
-        here = os.path.abspath(os.path.dirname(acqdiv.__file__))
-
-        self.dummy_cha_path = os.path.join(
-            here,
-            'tests/unittests/chat/test_files/dummy.cha')
-        self.maxDiff = None
 
     def test_get_reader(self):
         """Test get_reader. (Yucatec)"""
