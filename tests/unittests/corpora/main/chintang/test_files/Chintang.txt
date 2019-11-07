@@ -1,0 +1,16 @@
+\_sh v3.0  400  Chintang
+\_DateStampHasFourDigitYear
+
+\ref session_name.001
+\ELANBegin 00:50:11.150
+\ELANEnd 00:50:22.350
+\ELANParticipant MAR
+\gw  w1                                     w2
+\mph w1pfxseg-   w1stemseg   -w1sfxseg      w2stemseg
+\mgl w1pfxgloss- w1stemgloss -w1sfxgloss    w2stemgloss
+\lg C-           C           -C             N
+\id w1pfxID-     w1stemID    -w1sfxID       w2stemID
+\ps w1pfxpos-    w1stempos   -w1sfxpos      w2stempos
+\eng This is the translation.
+\tos child directed
+\nep ?

@@ -1,0 +1,55 @@
+adj,ADJ,ADJ
+adj(BT),ADJ,ADJ
+adj(BTP),ADJ,ADJ
+adj(TP),ADJ,ADJ
+adv,ADV,ADV
+adv(BT),ADV,ADV
+adv(BTP),ADV,ADV
+adv(TP),ADV,ADV
+conj,CONJ,CCONJ
+conj(BT),CONJ,CCONJ
+conj(TP),CONJ,CCONJ
+dem,PRODEM,DET
+dem(BT),PRODEM,DET
+dem(TP),PRODEM,DET
+int,INTJ,INTJ
+int(BT),INTJ,INTJ
+interrog,N,NOUN
+n,N,NOUN
+n(BT),N,NOUN
+n(BTP),N,NOUN
+n(TP),N,NOUN
+n>v,V,VERB
+pn,N,PROPN
+pn(BT),N,PROPN
+post,POST,ADP
+post(BT),POST,ADP
+prep(BTP),PREP,ADP
+prep(TP),PREP,ADP
+pro,PRODEM,PRON
+pro(BT),PRODEM,PRON
+pro(BTP),PRODEM,PRON
+pro(TP),PRODEM,PRON
+prt,PTCL,PART
+prt(BT),PTCL,PART
+prt(BTP),PTCL,PART
+prt(TP),PTCL,PART
+pv,PVB,NOUN
+pv(BT),PVB,NOUN
+v,V,VERB
+v (aV),V,VERB
+v (eV),V,VERB
+v (lV),V,VERB
+v (oV),V,VERB
+v:,V,VERB
+v(aV),V,VERB
+v(BT),V,VERB
+v(BTP),V,VERB
+v(eV),V,VERB
+v(lV),V,VERB
+v(oV),V,VERB
+v(TP),V,VERB
+v(TP):,V,VERB
+v(TP):(PM),V,VERB
+v>n,V,NOUN
+v>v,V,VERB

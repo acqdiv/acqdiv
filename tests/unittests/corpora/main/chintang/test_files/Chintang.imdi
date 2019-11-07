@@ -1,0 +1,39 @@
+<METATRANSCRIPT>
+    <Session>
+        <Date>session date</Date>
+        <Description>situation</Description>
+        <MDGroup>
+            <Location/>
+            <Project>
+                <Name>project name</Name>
+                <Title>project title</Title>
+                <Id>project id</Id>
+                <Contact/>
+            </Project>
+            <Content>
+                <Genre>genre</Genre>
+            </Content>
+            <Actors>
+                <Actor>
+                    <Role>actor role</Role>
+                    <Name>actor name</Name>
+                    <FullName>actor fullname</FullName>
+                    <Code>MAR</Code>
+                    <FamilySocialRole>actor family social role</FamilySocialRole>
+                    <Languages>
+                        <Language>
+                            <Id>actor language id</Id>
+                            <Name>actor language name</Name>
+                        </Language>
+                    </Languages>
+                    <EthnicGroup>actor ethnic group</EthnicGroup>
+                    <Age>actor age</Age>
+                    <BirthDate>actor birthdate</BirthDate>
+                    <Sex>actor sex</Sex>
+                    <Education>actor education</Education>
+                </Actor>
+            </Actors>
+        </MDGroup>
+        <Resources></Resources>
+    </Session>
+</METATRANSCRIPT>

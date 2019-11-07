@@ -1,0 +1,24 @@
+\_sh v3.0  400  Text
+\_DateStampHasFourDigitYear
+
+\ref ref1
+\id id1
+\sp @PAR
+\tx @Participants: code1 name1 role1, code2 name2 role2
+\pho @Filename: filename
+\ft @Duration: duration
+\nt @Situation: situation
+
+\ref ref2
+\id id2
+\sp @Begin
+\tx @Begin
+
+\ref ref3
+\id source_id
+\begin start_raw
+\sp speaker_label
+\tx w(ord)1                                w2.
+\mb w1pfxseg-   w1stemseg   -w1sfxseg      w2stemseg
+\ge w1pfxgloss- w1stemgloss -w1sfxgloss    w2stemgloss
+\ft This is the translation.

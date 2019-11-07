@@ -1,0 +1,17 @@
+<CHAT
+    PID="PID"
+    Lang="Lang"
+    Corpus="Corpus"
+    Id="Id"
+    Date="Date">
+  <Participants>
+    <participant
+      id="spe"
+      name="name"
+      role="role"
+      language="language"
+      age="age"
+      sex="sex"
+      birthday="birthday"/>
+  </Participants>
+</CHAT>

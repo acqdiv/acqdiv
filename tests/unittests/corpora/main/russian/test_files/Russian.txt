@@ -1,0 +1,22 @@
+\_sh v5.0  400  Language
+\_DateStampHasFourDigitYear
+
+@UTF8
+@Participants
+@ID
+@Filename
+@Sex
+@Date
+@Location
+@Tape Location
+@Time Duration
+@Comment
+@SIT
+
+\ref source_id
+\ELANBegin start_raw
+\ELANEnd end_raw
+\EUDICOp speaker_label
+\text w1                     ","     w2                  w3   .
+\mor  V-PST:SG:F:IRREFL:IPFV PUNCT   PRO-DEM-NOUN:NOM:SG PCL  PUNCT
+\lem  lem1	                 ","	 lem2                lem3 .
