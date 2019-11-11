@@ -83,16 +83,3 @@ For more options:
 `acqdiv load -h`
 
 The database will be created in the directory `acqdiv/database/`.
-
--------------
-
-### Extension
-
-We provide generic parsers for the following corpus formats:
-* CHAT
-* Toolbox
-* IMDI/CMDI
-
-To create a corpus-specific parser, please follow the instructions at
-* `src/acqdiv/parsers/chat/README.md` (CHAT corpus)
-* `src/acqdiv/parsers/toolbox/README.md` (Toolbox corpus)
