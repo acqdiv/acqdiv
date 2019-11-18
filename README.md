@@ -1,6 +1,6 @@
 # ACQDIV
 
-[![CircleCI](https://circleci.com/gh/uzling/acqdiv/tree/master.svg?style=svg&circle-token=86716ee9ff5bdc399d72a74096ef81ba7be0f9d0)](https://circleci.com/gh/uzling/acqdiv/tree/master)
+[![CircleCI](https://circleci.com/gh/acqdiv/acqdiv.svg?style=svg)](https://circleci.com/gh/acqdiv/acqdiv)
 
 
 This repository contains the code and configuration files for transforming 
