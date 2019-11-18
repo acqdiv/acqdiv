@@ -17,7 +17,7 @@ class CorpusParser(ABC):
         """Initialize config.
 
         Args:
-            cfg (CorpusConfigParser): A config instance.
+            cfg (dict): Corpus configuration data.
             disable_pbar (bool): Whether the progressbar should be disabled.
         """
         self.cfg = cfg
@@ -28,13 +28,13 @@ class CorpusParser(ABC):
     def parse(self):
         """Get a Corpus instance."""
         corpus = self.corpus
-        corpus.iso_639_3 = self.cfg['corpus']['iso639-3']
-        corpus.glottolog_code = self.cfg['corpus']['glottolog_code']
-        corpus.corpus = self.cfg['corpus']['corpus']
-        corpus.language = self.cfg['corpus']['language']
-        corpus.owner = self.cfg['corpus']['owner']
-        corpus.acronym = self.cfg['corpus']['acronym']
-        corpus.name = self.cfg['corpus']['name']
+        corpus.iso_639_3 = self.cfg['iso639-3']
+        corpus.glottolog_code = self.cfg['glottolog_code']
+        corpus.corpus = self.cfg['corpus']
+        corpus.language = self.cfg['language']
+        corpus.owner = self.cfg['owner']
+        corpus.acronym = self.cfg['acronym']
+        corpus.name = self.cfg['name']
         corpus.sessions = self.iter_sessions()
 
         return corpus
@@ -54,7 +54,7 @@ class CorpusParser(ABC):
         Yields:
             acqdiv.parsers.SessionParser: The session parser.
         """
-        session_paths = sorted(glob.glob(self.cfg['paths']['sessions']))
+        session_paths = sorted(glob.glob(self.cfg['sessions']))
 
         with tqdm(session_paths, disable=self.disable_pbar) as pbar:
 
