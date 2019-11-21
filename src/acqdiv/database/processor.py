@@ -1,5 +1,6 @@
 import datetime
 import subprocess
+import pathlib
 
 import sqlalchemy as sa
 from sqlalchemy import create_engine
@@ -12,14 +13,15 @@ from acqdiv.util.path import get_full_path
 class DBProcessor:
     """Methods for adding corpus data to the database."""
 
-    def __init__(self, test=False):
+    def __init__(self, db_dir='database', test=False):
         """Initialize DB engine.
 
         Args:
+            db_dir (str): Where the database is written to.
             test (bool): Is testing mode used?
         """
         self.test = test
-        self.engine = self.get_engine(test=self.test)
+        self.engine = self.get_engine(db_dir, test=self.test)
 
         # initialize them once for each session
         # to increase performance
@@ -31,24 +33,26 @@ class DBProcessor:
         self.insert_morph_func = None
 
     @classmethod
-    def get_engine(cls, test=False):
+    def get_engine(cls, db_dir, test=False):
         """Return a database engine.
 
         Args:
+            db_dir (str): Where the database is written to.
             test (bool): Is the test DB used?
 
         Returns:
             Engine: The DB engine.
         """
+        db_dir = pathlib.Path(db_dir)
         if test:
-            path = 'database/test.sqlite3'
+            path = db_dir / 'test.sqlite3'
         else:
             date = datetime.datetime.now().strftime('%Y-%m-%d')
-            path = 'database/acqdiv_corpus_{}.sqlite3'.format(date)
+            path = db_dir / f'acqdiv_corpus_{date}.sqlite3'
 
-        print("Writing database to: {}".format(path))
+        print(f"Writing database to: {path.resolve()}")
         print()
-        engine = create_engine('sqlite:///'+path, echo=False)
+        engine = create_engine(f'sqlite:///{str(path)}', echo=False)
         cls.create_tables(engine)
         cls.create_views(path)
 

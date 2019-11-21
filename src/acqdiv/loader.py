@@ -22,7 +22,8 @@ class Loader:
         cfg = ConfigParser(interpolation=ExtendedInterpolation())
         cfg.read(cfg_path)
 
-        db_processor = DBProcessor(test=test)
+        db_dir = cfg['.global']['db_dir']
+        db_processor = DBProcessor(db_dir=db_dir, test=test)
 
         for section in cfg.sections():
             # ignore sections starting with a dot
