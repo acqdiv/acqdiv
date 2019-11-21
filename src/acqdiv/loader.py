@@ -1,5 +1,6 @@
 """ Entry point for loading ACQDIV raw input corpora data into the ACQDIV-DB
 """
+import os
 import argparse
 from configparser import ConfigParser, ExtendedInterpolation
 
@@ -17,9 +18,11 @@ class Loader:
             test (bool): Test DB is used.
             cfg_path (str): Path to the config file.
         """
-        db_processor = DBProcessor(test=test)
+        print('Reading config file:', os.path.abspath(cfg_path))
         cfg = ConfigParser(interpolation=ExtendedInterpolation())
         cfg.read(cfg_path)
+
+        db_processor = DBProcessor(test=test)
 
         for section in cfg.sections():
             # ignore sections starting with a dot

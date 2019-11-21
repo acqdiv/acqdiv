@@ -21,9 +21,12 @@ def load(args):
     """Run the loader."""
     start_time = time.time()
     loader = Loader()
-    loader.load(
-        test=not args.full
-    )
+
+    if args.cfg:
+        loader.load(test=not args.full, cfg_path=args.cfg)
+    else:
+        loader.load(test=not args.full)
+
     print("%s seconds --- Finished" % (time.time() - start_time))
 
 
@@ -47,6 +50,8 @@ def get_cmd_args():
                      'use the flag -f.'))
     parser_load.add_argument(
         '-f', '--full', action='store_true', help='Run on full database')
+    parser_load.add_argument(
+        '-c', '--cfg', help="Specify a path to a custom ini file.")
 
     parser_load.set_defaults(func=load)
 
