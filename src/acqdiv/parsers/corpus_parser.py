@@ -13,7 +13,7 @@ from acqdiv.util.session_duration import extract_duration
 class CorpusParser(ABC):
     """Methods for constructing a corpus instance."""
 
-    def __init__(self, cfg, disable_pbar=True):
+    def __init__(self, cfg, disable_pbar=False):
         """Initialize config.
 
         Args:

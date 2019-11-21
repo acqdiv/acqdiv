@@ -1,7 +1,6 @@
 """ Entry point for loading ACQDIV raw input corpora data into the ACQDIV-DB
 """
 import os
-import argparse
 from configparser import ConfigParser, ExtendedInterpolation
 
 from acqdiv.parsers.corpus_parser_mapper import CorpusParserMapper
@@ -11,11 +10,10 @@ from acqdiv.database.processor import DBProcessor
 class Loader:
 
     @staticmethod
-    def load(test=True, cfg_path='config.ini'):
+    def load(cfg_path='config.ini'):
         """Load data from source files into DB.
 
         Args:
-            test (bool): Test DB is used.
             cfg_path (str): Path to the config file.
         """
         print('Reading config file:', os.path.abspath(cfg_path))
@@ -23,7 +21,7 @@ class Loader:
         cfg.read(cfg_path)
 
         db_dir = cfg['.global']['db_dir']
-        db_processor = DBProcessor(db_dir=db_dir, test=test)
+        db_processor = DBProcessor(db_dir=db_dir)
 
         for section in cfg.sections():
             # ignore sections starting with a dot
@@ -31,7 +29,7 @@ class Loader:
                 # get corpus parser based on corpus name
                 corpus_parser_class = CorpusParserMapper.map(section)
                 data = dict(cfg.items(section))
-                corpus_parser = corpus_parser_class(data, disable_pbar=test)
+                corpus_parser = corpus_parser_class(data)
 
                 # get the corpus
                 corpus = corpus_parser.parse()
@@ -41,12 +39,7 @@ class Loader:
 
 
 def main():
-    p = argparse.ArgumentParser()
-    p.add_argument('-t', action='store_true')
-    args = p.parse_args()
-
-    loader = Loader()
-    loader.load(test=args.t)
+    Loader.load()
 
 
 if __name__ == "__main__":

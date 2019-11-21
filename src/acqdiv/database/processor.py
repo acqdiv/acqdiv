@@ -13,15 +13,13 @@ from acqdiv.util.path import get_full_path
 class DBProcessor:
     """Methods for adding corpus data to the database."""
 
-    def __init__(self, db_dir='database', test=False):
+    def __init__(self, db_dir='database'):
         """Initialize DB engine.
 
         Args:
             db_dir (str): Where the database is written to.
-            test (bool): Is testing mode used?
         """
-        self.test = test
-        self.engine = self.get_engine(db_dir, test=self.test)
+        self.engine = self.get_engine(db_dir)
 
         # initialize them once for each session
         # to increase performance
@@ -33,22 +31,18 @@ class DBProcessor:
         self.insert_morph_func = None
 
     @classmethod
-    def get_engine(cls, db_dir, test=False):
+    def get_engine(cls, db_dir):
         """Return a database engine.
 
         Args:
             db_dir (str): Where the database is written to.
-            test (bool): Is the test DB used?
 
         Returns:
             Engine: The DB engine.
         """
         db_dir = pathlib.Path(db_dir)
-        if test:
-            path = db_dir / 'test.sqlite3'
-        else:
-            date = datetime.datetime.now().strftime('%Y-%m-%d')
-            path = db_dir / f'acqdiv_corpus_{date}.sqlite3'
+        date = datetime.datetime.now().strftime('%Y-%m-%d')
+        path = db_dir / f'acqdiv_corpus_{date}.sqlite3'
 
         print(f"Writing database to: {path.resolve()}")
         print()
@@ -91,9 +85,6 @@ class DBProcessor:
 
         for session in corpus.sessions:
             self.insert_session(session, c_id, uspeakers_dict)
-
-            if self.test:
-                break
 
     def insert_corpus_metadata(self, corpus):
         """Insert the data into the `Corpus` table.
