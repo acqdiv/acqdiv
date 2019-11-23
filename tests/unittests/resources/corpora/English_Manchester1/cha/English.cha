@@ -1,0 +1,21 @@
+@UTF8
+@PID:	1111
+@Begin
+@Languages:	eng
+@Participants:	CHI Sarah Target_Child , MOT Mother
+@ID:	eng|Manchester|CHI|1;11.11|female|typical|MC|Target_Child|||
+@ID:	eng|Manchester|MOT||female|||Mother|||
+@Location:	Zürich , CH
+@Comment:	My first comment
+@Comment:	My second comment
+@Time Duration:	01:00-02:00
+@Time Start:	01:00
+@Situation:	Free Play
+@Activities:	playing with a box of doll's house accessories
+*MOT:	baby willn't fit ?
+%mor:	n|baby mod|will~neg|not v|fit&ZERO ?
+%gra:	1|4|SUBJ 2|4|AUX 3|2|NEG 4|0|ROOT 5|4|PUNCT
+*MOT:	is it too big ?
+%mor:	aux|be&3S pro:per|it adv|too adj|big ?
+%gra:	1|0|INCROOT 2|4|SUBJ 3|4|JCT 4|1|PRED 5|1|PUNCT
+@End

@@ -1,0 +1,21 @@
+@UTF8
+@PID:	11111
+@Begin
+@Languages:	jpn
+@Participants:	CHI Sarah Target_Child , MOT Susanne Mother
+@ID:	jpn|MiiPro|CHI|3.11.11|female|||Target_Child|||
+@ID:	jpn|MiiPro|MOT||female|||Mother|||
+@Media:	1111, audio
+@Comment:	Very long comment
+	continuing comment
+*CHI:	ne Miririn no ouchi ni itte [?] tonton@o to aketa n da kedo okaasan
+	wa ? 11297_19149
+%xtrn:	ptl:fina|ne n:prop|Miririn ptl:case|no o#n|uchi ptl:case|ni
+	v:c|ik-CONN onoma|tonton n|to v:v|ake-PAST=open ptl:snr|no
+	v:cop|da&PRES ptl:conj|kedo o#n|kaa-san ptl:top|wa ?
+%ort:	ミリリン。ね、ミリリンのおうちにいったとんとんと開けたんだけど、お母さんは ?
+*MOT:	kyuujuu kyuunen ichigatsu tooka . 3994_8560
+%xtrn:	num|+num|kyuu+num|juu num|kyuu-nen num|ichi-gatsu num|too-ka .
+%ort:	99年1月10日。
+%com:	2000年の間違い
+@End

@@ -1,0 +1,23 @@
+@UTF8
+@Begin
+@Languages:	crl
+@Participants:	CHI Bobo Target_Child, ADU Adult Adult
+@ID:	crl|A1|CHI|1;1.11|male|||Target_Child|||
+@ID:	crl|A1|ADU|35;2.7|female|||Adult|||
+@Birth of CHI:	01-JAN-2000
+@Birth of ADU:	01-JAN-1970
+@Media:	11111, video
+@Date:	01-JAN-2000
+*ADU:	‹lîpi tâ fi~i~h› . 28231_30789
+%pho:	‹* * *›
+%mod:	‹* * *›
+%eng:	Very interesting translation
+%xmortyp:	[pro p,emph initial~vai.fin~imp]
+%xmormea:	[2 emph say~vai.fin~2.sg]
+*ADU:	‹kâl~im~tégo tâ fûtî› . 35862_38315
+%pho:	‹* * *›
+%mod:	‹* * *›
+%eng:	Look at the cat!
+%xmortyp:	[initial~vta.fin~imp p,emph na]
+%xmormea:	[light~by.head~2.sg emph cat]
+@End

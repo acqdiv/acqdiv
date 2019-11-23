@@ -1,0 +1,25 @@
+@UTF8
+@Begin
+@Languages:	ike
+@Participants:	CHI Child Target_Child, MOT Mother Mother
+@ID:	ike|inuktitut|CHI|2;1.1|female|||Target_Child|||
+@ID:	ike|inuktitut|MOT||female|||Mother|||
+@Birth of CHI:	01-JAN-2002
+@Media:	filename, video, unlinked
+@Date:	1-JAN-2000
+@Time Duration:	12:00-15:30
+@Location:	Zürich
+@Situation:	Very interesting situation
+
+
+*CHI:	mionpunuping  .
+%eng:	Here is something interesting  .
+%xmor:	LR|mi^here+LI|on^VIA+VZ|pu^something_interesting+VV|TNS|nu^FUT+VI|ping^CSV_3sS  .
+%tim:	00:00:05
+%add:	MOT
+
+*CHI:	Gudi  .
+%eng:	Where  .
+%xmor:	WH|gudi^where  .
+%add:	MOT
+@End
