@@ -103,20 +103,20 @@ and the IMDI files in `corpora/<corpus_name>/imdi/`.
 
 ### Create the database
 
-Get the configuration file `src/acqdiv/config.ini` and specify the
-paths for the corpora directory (`corpora_dir`) and 
+Get the configuration file `src/acqdiv/config.ini` and specify the absolute
+paths (without trailing slashes) for the corpora directory (`corpora_dir`) and 
 the directory where the database should be written to (`db_dir`):
 ```ini
 [.global]
 # directory containing corpora
-corpora_dir = corpora
+corpora_dir = /absolute/path/to/corpora/dir
 # directory where the database is written to
-db_dir = database
+db_dir = /absolute/path/to/database/dir
 ...
 ```
 
-Run the pipeline specifying the path to the configuration file:  
-`acqdiv load -c path/to/config.ini`
+Run the pipeline specifying the absolute path to the configuration file:  
+`acqdiv load -c /absolute/path/to/config.ini`
 
 Run the unittests:  
 `$ pytest tests/unittests`  
