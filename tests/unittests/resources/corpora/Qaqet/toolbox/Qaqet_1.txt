@@ -1,0 +1,19 @@
+\_sh v3.0  400  TextChild
+
+\ref Qaqet_1 001
+\ELANBegin 5.555
+\ELANEnd 6.666
+\ELANParticipant CHI
+\addr MOT
+
+\trs foo foo foo, foo foo 
+\trs-i foo foo foo foo, foo foo
+\ft This is the foo translation
+\tp foo foo foo foo, foo foo foo
+
+\tx foofaa                foo    fifufoo,                  feefa               foo
+\mb foo=          faa     foo    fi=    fu=     foo       fee=          faa    foo
+\ge 2SG.SBJ.NPST= stem1 do/act:IN PLACE= ART.ID= stem2 2SG.SBJ.NPST= do/act:IN stem3
+\ps PRO=          V.CONT   V.CONT    PREP=  ART=    N             PRO=          V.CONT    ADV
+\lg Q=            Q        Q         Q=     Q=      Q             Q=            Q         Q
+\idx 00001=        00002    00003     00004= 00005=  00006         00007=        00008     00009

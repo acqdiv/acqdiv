@@ -48,11 +48,11 @@ class CLITest(unittest.TestCase):
 
     def test_n_corpora(self):
         res = self.cursor.execute('SELECT * FROM corpora')
-        self.assertEqual(len(res.fetchall()), 9)
+        self.assertEqual(len(res.fetchall()), 10)
 
     def test_n_utterances(self):
         res = self.cursor.execute('SELECT * FROM utterances')
-        self.assertEqual(len(res.fetchall()), 14)
+        self.assertEqual(len(res.fetchall()), 15)
 
     @classmethod
     def tearDownClass(cls) -> None:
