@@ -3,6 +3,7 @@ import os
 import re
 import csv
 import configparser
+import subprocess
 import sqlalchemy as sa
 
 from dateutil.parser import parse
@@ -15,6 +16,7 @@ class IntegrityTest(unittest.TestCase):
     """Integrity tests on the production database."""
 
     cwd_path = os.path.dirname(__file__)
+    db_path = None
     session = None
     meta = None
     cfg = None
@@ -53,12 +55,23 @@ class IntegrityTest(unittest.TestCase):
         cls.reader_proportion_nulls = csv.reader(cls.f_proportions)
         next(cls.reader_proportion_nulls)  # Skip the header
 
+        # Create views
+        view_path = os.path.join(cls.cwd_path, 'resources/create_views.sql')
+        cls.db_path = database_path.replace('sqlite:///', '')
+        cmd = f'sqlite3 {cls.db_path} < {view_path}'
+        subprocess.run(cmd, shell=True)
+
     @classmethod
     def tearDownClass(cls):
         """Tear down the test resources."""
         cls.session.close()
         cls.f_no_nulls.close()
         cls.f_proportions.close()
+
+        # Delete views
+        view_path = os.path.join(cls.cwd_path, 'resources/drop_views.sql')
+        cmd = f'sqlite3 {cls.db_path} < {view_path}'
+        subprocess.run(cmd, shell=True)
 
     def test_columns_for_all_null(self):
         """Any column with all NULL rows should throw an error."""
