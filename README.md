@@ -53,7 +53,7 @@ Our full database consists of the following corpora
 
 To run the pipeline yourself:
 
-###Install the package
+### Install the package
 
 Create a virtual environment [optional]:
 
@@ -82,7 +82,7 @@ pip install .
 pip install -r requirements.txt
 ```
 
-###Download the corpora
+### Download the corpora
 
 Create a directory `corpora`.
 
@@ -101,9 +101,9 @@ For the toolbox corpora:
 * Place the toolbox files in `corpora/<corpus_name>/toolbox/`
 and the IMDI files in `corpora/<corpus_name>/imdi/`.
 
-###Create the database
+### Create the database
 
-Get the configuration file `src/config.ini` and specify the
+Get the configuration file `src/acqdiv/config.ini` and specify the
 paths for the corpora directory (`corpora_dir`) and 
 the directory where the database should be written to (`db_dir`):
 ```ini

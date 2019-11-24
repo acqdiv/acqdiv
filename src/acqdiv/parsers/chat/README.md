@@ -3,28 +3,18 @@
 ## Preparation
 
 ### Create ini
-* Create a an ini file: `src/acqdiv/ini/<corpus_name>.ini`
-* Copy the following into the ini file and fill in all `xxx`:
+Add a section to `src/acqdiv/config.ini` and fill in all `xxx`:
 
-```
-[corpus]
-iso639-3 == xxx
-glottolog_code == xxx
-format == cha
-language == xxx
-corpus == xxx
-owner == xxx
-acronym == xxx
-name == xxx
-
-[paths]
-path == corpora
-sessions == ${path}/${corpus:corpus}/${corpus:format}/*.xxx
-sessions_dir == ${path}/${corpus:corpus}/${corpus:format}/
-metadata_dir == ${path}/${corpus:corpus}/${metadata:type}/
-
-[metadata]
-type == cha
+```ini
+[xxx]
+iso639-3 = xxx
+glottolog_code = xxx
+language = xxx
+corpus = xxx
+owner = xxx
+acronym = xxx
+name = xxx
+sessions = ${.global:corpora_dir}/xxx/cha/*.cha
 ```
 
 ## Coding
@@ -64,8 +54,3 @@ classes:
 Add a mapping of the corpus name to the newly implemented corpus parser in
 the `mappings` dictionary of the class `CorpusParserMapper` of the 
 module `acqdiv.parsers.corpus_parser_mapper.CorpusParserMapper`.
-
-### Loader
-
-Add the ini file to the `configs` list in the method `load()` of the module
-`acqdiv.loader`.
