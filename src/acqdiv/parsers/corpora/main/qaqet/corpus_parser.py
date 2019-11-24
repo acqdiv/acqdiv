@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from acqdiv.parsers.corpus_parser import CorpusParser
 from acqdiv.parsers.corpora.main.qaqet.session_parser \
     import QaqetSessionParser
@@ -6,10 +8,7 @@ from acqdiv.parsers.corpora.main.qaqet.session_parser \
 class QaqetCorpusParser(CorpusParser):
 
     def get_session_parser(self, session_path):
-        temp = session_path.replace(self.cfg['sessions_dir'],
-                                    self.cfg['metadata_dir'])
+        metadata_filename = Path(session_path).stem[:-2] + '.imdi'
+        metadata_filepath = Path(self.cfg['metadata_dir']) / metadata_filename
 
-        # remove the session number '_\d'
-        metadata_path = temp[:-6] + '.imdi'
-
-        return QaqetSessionParser(session_path, metadata_path)
+        return QaqetSessionParser(session_path, str(metadata_filepath))

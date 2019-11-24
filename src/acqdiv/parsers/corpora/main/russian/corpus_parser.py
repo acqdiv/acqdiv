@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from acqdiv.parsers.corpus_parser import CorpusParser
 from acqdiv.parsers.corpora.main.russian.session_parser \
     import RussianSessionParser
@@ -6,11 +8,7 @@ from acqdiv.parsers.corpora.main.russian.session_parser \
 class RussianCorpusParser(CorpusParser):
 
     def get_session_parser(self, session_path):
+        metadata_filename = Path(session_path).with_suffix('.imdi').name
+        metadata_filepath = Path(self.cfg['metadata_dir']) / metadata_filename
 
-        temp = session_path.replace(
-            self.cfg['sessions_dir'],
-            self.cfg['metadata_dir'])
-
-        metadata_path = temp.replace('.txt', '.imdi')
-
-        return RussianSessionParser(session_path, metadata_path)
+        return RussianSessionParser(session_path, str(metadata_filepath))

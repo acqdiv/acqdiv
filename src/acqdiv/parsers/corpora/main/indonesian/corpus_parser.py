@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from acqdiv.parsers.corpus_parser import CorpusParser
 from acqdiv.parsers.corpora.main.indonesian.session_parser \
     import IndonesianSessionParser
@@ -6,8 +8,7 @@ from acqdiv.parsers.corpora.main.indonesian.session_parser \
 class IndonesianCorpusParser(CorpusParser):
 
     def get_session_parser(self, session_path):
-        temp = session_path.replace(self.cfg['sessions_dir'],
-                                    self.cfg['metadata_dir'])
-        metadata_path = temp.replace('.txt', '.xml')
+        metadata_filename = Path(session_path).with_suffix('.xml').name
+        metadata_filepath = Path(self.cfg['metadata_dir']) / metadata_filename
 
-        return IndonesianSessionParser(session_path, metadata_path)
+        return IndonesianSessionParser(session_path, str(metadata_filepath))

@@ -1,20 +1,18 @@
+from pathlib import Path
+
 from acqdiv.parsers.corpus_parser import CorpusParser
 from acqdiv.parsers.corpora.main.tuatschin.session_parser \
     import TuatschinSessionParser
-
-import os
 
 
 class TuatschinCorpusParser(CorpusParser):
 
     def get_session_parser(self, session_path):
-
-        temp = session_path.replace(self.cfg['sessions_dir'],
-                                    self.cfg['metadata_dir'])
-        metadata_path = temp.replace('.tbt', '.imdi')
+        metadata_filename = Path(session_path).with_suffix('.imdi').name
+        metadata_filepath = Path(self.cfg['metadata_dir']) / metadata_filename
 
         # TODO: remove this check once we have all the metadata
-        if os.path.isfile(metadata_path):
-            return TuatschinSessionParser(session_path, metadata_path)
+        if metadata_filepath.is_file():
+            return TuatschinSessionParser(session_path, str(metadata_filepath))
 
         return None
