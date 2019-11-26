@@ -22,30 +22,26 @@ In case of technical questions, please open an issue on this repository.
 
 ## Corpora
 
-Our full database consists of the following corpora 
-(open-access corpora are marked with *):
+Our full database consists of the following corpora:
 
-* Chintang Language Corpus (Chintang)
-* [Corpus of the Chisasibi Child Language Acquisition Study](https://phonbank.talkbank.org/access/Other/Cree/CCLAS.html)
-(Cree) *
-* [English Manchester Corpus](https://childes.talkbank.org/access/Eng-UK/Manchester.html) 
-(English) *
-* [MPI-EVA Jakarta Child Language Database](https://archive.mpi.nl/islandora/object/lat%253A1839_00_0000_0000_0022_6164_B) (Indonesian) *
-* Allen Inuktitut Child Language Corpus (Inuktitut)
-* [MiiPro Japanese Corpus](https://childes.talkbank.org/access/Japanese/MiiPro.html) 
-(Japanese) *
-* [Miyata Japanese Corpus](https://childes.talkbank.org/access/Japanese/Miyata.html) 
-(Japanese) *
-* Ku Waru Child Language Socialization Study (Ku Waru) *
-* [Sarvasy Nungon Corpus](https://childes.talkbank.org/access/Other/Nungon/Sarvasy.html)
-(Nungon) *
-* Qaqet Child Language Documentation (Qaqet)
-* Stoll Russian Corpus (Russian)
-* [Demuth Sesotho Corpus](https://childes.talkbank.org/access/Other/Sesotho/Demuth.html)
-(Sesotho) *
-* Tuatschin Corpus (Tuatschin)
-* Koç University Longitudinal Language Development Database (Turkish)
-* Pfeiler Yucatec Child Language Corpus (Yucatec)
+| Corpus                                                                                                                    | ISO | Public | #Words   | 
+|---------------------------------------------------------------------------------------------------------------------------|:---:|:------:|---------:| 
+| Chintang Language Corpus                                                                                                  | ctn | no     | 987'673   | 
+| [Corpus of the Chisasibi Child Language Acquisition Study](https://phonbank.talkbank.org/access/Other/Cree/CCLAS.html)    | cre | yes    | 44'751    | 
+| [English Manchester Corpus](https://childes.talkbank.org/access/Eng-UK/Manchester.html)                                   | eng | yes    | 2'016'043  | 
+| [MPI-EVA Jakarta Child Language Database](https://archive.mpi.nl/islandora/object/lat%253A1839_00_0000_0000_0022_6164_B)  | ind | yes    | 2'489'329  | 
+| Allen Inuktitut Child Language Corpus                                                                                     | ike | no     | 71'191    | 
+| [MiiPro Japanese Corpus](https://childes.talkbank.org/access/Japanese/MiiPro.html)                                        | jpn | yes    | 1'011'670  | 
+| [Miyata Japanese Corpus](https://childes.talkbank.org/access/Japanese/Miyata.html)                                        | jpn | yes    | 373'021   | 
+| Ku Waru Child Language Socialization Study                                                                                | mux | yes    | 65'723    | 
+| [Sarvasy Nungon Corpus](https://childes.talkbank.org/access/Other/Nungon/Sarvasy.html)                                    | yuw | yes    | 19'659    | 
+| Qaqet Child Language Documentation                                                                                        | byx | no     | 56'239    | 
+| Stoll Russian Corpus                                                                                                      | rus | no     | 2'029'704  | 
+| [Demuth Sesotho Corpus](https://childes.talkbank.org/access/Other/Sesotho/Demuth.html)                                    | sot | yes    | 177'963   | 
+| Tuatschin Corpus                                                                                                          | roh | no     | 118'310   | 
+| Koç University Longitudinal Language Development Database                                                                 | tur | no     | 1'120'077  | 
+| Pfeiler Yucatec Child Language Corpus                                                                                     | yua | no     | 262'382   | 
+| **Total**                                                                                                                 |     |        | **10'843'735** |
 
 --------------
 
@@ -72,7 +68,7 @@ You can install the package from PyPI or directly from source:
 
 ```shell script
 # Clone Repository
-git clone git@github.com:uzling/acqdiv.git
+git clone git@github.com:acqdiv/acqdiv.git
 cd acqdiv
 
 # Install package (for users!)
