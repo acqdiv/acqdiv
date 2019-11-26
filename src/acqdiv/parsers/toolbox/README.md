@@ -29,19 +29,27 @@ classes:
     * Create a class called `<corpus_name>Reader` in a file named 
     `reader.py` in the package.
     * Make it inherit from the class 
-    `acqdiv.parsers.toolbox.readers.reader.ToolboxReader`
+    `acqdiv.parsers.toolbox.readers.reader.ToolboxReader`.
     * Make sure every method of `ToolboxReader` has a correct implementation, 
-    otherwise override the method
+    otherwise override the method.
+* Cleaner class:
+    * Create a class called `<corpus_name>Cleaner` in a file named 
+    `cleaner.py` in the package.
+    * Make it inherit from the class 
+    `acqdiv.parsers.toolbox.cleaners.cleaner.ToolboxCleaner`.
+    * Make sure every method of `ToolboxCleaner` has a correct implementation, 
+    otherwise override the method.
 * Session parser class:
     * Create a class called `<corpus_name>SessionParser` in a file named
-    `session_parser.py` in the package
-    * Make it inherit from the class `acqdiv.parsers.toolbox.parser.ToolboxParser`
-    * Override the methods `get_record_reader()` and `get_metadata_reader()` to
-     return an instance of the newly implemented reader class and an instance
-     of some metadata reader (see `acqdiv.parsers.metadata` package)
+    `session_parser.py` in the package.
+    * Make it inherit from the class `acqdiv.parsers.toolbox.parser.ToolboxParser`.
+    * Override the methods `get_record_reader()`, `get_metadata_reader()` and
+     `get_cleaner()` to return an instance of the newly implemented reader class, 
+     an instance of some metadata reader (see `acqdiv.parsers.metadata` package)
+     and an instance of the newly implemented cleaner class, respectively.
 * Corpus parser class:
     * Create a class called `<corpus_name>CorpusParser` in a file named
-    `corpus_parser.py` in the package
+    `corpus_parser.py` in the package.
     * Make it inherit from the class `acqdiv.parsers.corpus_parser.CorpusParser`
     * Implement the method `get_session_parser()` to return an instance of 
     the newly implemented session parser class.
