@@ -3,18 +3,16 @@ from setuptools import setup, find_packages
 
 setup(
     name='acqdiv',
-    version='0.2.1',
+    version='1.0.0',
     description='Pipeline for the ACQDIV database',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     url='https://github.com/acqdiv/acqdiv',
     author='ACQDIV developer team',
-    author_email='steven.moran@uzh.ch',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Topic :: Text Processing :: Linguistic',
-        'License :: Free For Educational Use',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
