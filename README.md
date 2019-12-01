@@ -1,16 +1,17 @@
 # ACQDIV
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3558643.svg)](https://doi.org/10.5281/zenodo.3558643)
+![PyPI](https://img.shields.io/pypi/v/acqdiv)
 
 [![CircleCI](https://circleci.com/gh/acqdiv/acqdiv.svg?style=svg)](https://circleci.com/gh/acqdiv/acqdiv)
-
 
 This repository contains the code and configuration files for transforming 
 the child language acquisition corpora into the ACQDIV database.
 
 ## Resources
 
-Download the ACQDIV database (only open-access corpora):
-* [SQLite]()
-* [R object]()
+Download the ACQDIV database (only public corpora):
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3558641.svg)](https://doi.org/10.5281/zenodo.3558641)
 
 To request access to the full database including the private corpora (for
 research purposes only!), 
@@ -24,10 +25,10 @@ In case of technical questions, please open an issue on this repository.
 
 Our full database consists of the following corpora:
 
-| Corpus                                                                                                                    | ISO | Public | #Words   | 
+| Corpus                                                                                                                    | ISO | Public | # Words   | 
 |---------------------------------------------------------------------------------------------------------------------------|:---:|:------:|---------:| 
 | Chintang Language Corpus                                                                                                  | ctn | no     | 987'673   | 
-| [Corpus of the Chisasibi Child Language Acquisition Study](https://phonbank.talkbank.org/access/Other/Cree/CCLAS.html)    | cre | yes    | 44'751    | 
+| [Cree Child Language Acquisition Study (CCLAS) Corpus](https://phonbank.talkbank.org/access/Other/Cree/CCLAS.html)        | cre | yes    | 44'751    | 
 | [English Manchester Corpus](https://childes.talkbank.org/access/Eng-UK/Manchester.html)                                   | eng | yes    | 2'016'043  | 
 | [MPI-EVA Jakarta Child Language Database](https://archive.mpi.nl/islandora/object/lat%253A1839_00_0000_0000_0022_6164_B)  | ind | yes    | 2'489'329  | 
 | Allen Inuktitut Child Language Corpus                                                                                     | ike | no     | 71'191    | 
@@ -115,10 +116,7 @@ Run the pipeline specifying the absolute path to the configuration file:
 `acqdiv load -c /absolute/path/to/config.ini`
 
 Run the unittests:  
-`$ pytest tests/unittests`  
+`pytest tests/unittests`  
 
 Run the integrity tests on the database:  
-`$ pytest tests/systemtests`
-
-For more options:  
-`acqdiv load -h`
+`pytest tests/systemtests`
