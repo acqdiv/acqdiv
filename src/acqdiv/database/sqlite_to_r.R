@@ -1,4 +1,5 @@
 # Convert the SQLite ACQDIV database into an R data object
+# Make sure to set the db connection sqlite file below
 
 library(RSQLite)
 
