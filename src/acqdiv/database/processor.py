@@ -103,6 +103,8 @@ class DBProcessor:
             owner=corpus.owner,
             acronym=corpus.acronym,
             name=corpus.name,
+            license=corpus.license,
+            format=corpus.format
         ).inserted_primary_key
 
         return c_id

@@ -1,10 +1,16 @@
 """Model for the ACQDIV database."""
+import enum
 
-from sqlalchemy import (Text, Column, Integer, Boolean, ForeignKey)
+from sqlalchemy import (Text, Column, Integer, Boolean, ForeignKey, Enum)
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
+
+
+class CorpusFormat(enum.Enum):
+    cha = 'cha'
+    toolbox = 'toolbox'
 
 
 class Corpus(Base):
@@ -18,6 +24,8 @@ class Corpus(Base):
     owner = Column(Text)
     acronym = Column(Text)
     name = Column(Text)
+    license = Column(Text)
+    format = Column(Enum(CorpusFormat))
 
 
 class Session(Base):
