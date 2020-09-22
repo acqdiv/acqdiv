@@ -1,6 +1,6 @@
 # ACQDIV
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3558643.svg)](https://doi.org/10.5281/zenodo.3558643)
-![PyPI](https://img.shields.io/pypi/v/acqdiv)
+[![PyPI version](https://badge.fury.io/py/acqdiv.svg)](https://badge.fury.io/py/acqdiv)
 
 [![CircleCI](https://circleci.com/gh/acqdiv/acqdiv.svg?style=svg)](https://circleci.com/gh/acqdiv/acqdiv)
 
