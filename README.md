@@ -1,11 +1,21 @@
 # ACQDIV
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3558643.svg)](https://doi.org/10.5281/zenodo.3558643)
-![PyPI](https://img.shields.io/pypi/v/acqdiv)
+[![PyPI version](https://badge.fury.io/py/acqdiv.svg)](https://badge.fury.io/py/acqdiv)
 
 [![CircleCI](https://circleci.com/gh/acqdiv/acqdiv.svg?style=svg)](https://circleci.com/gh/acqdiv/acqdiv)
 
 This repository contains the code and configuration files for transforming 
 the child language acquisition corpora into the ACQDIV database.
+
+## Publication
+If you use the database in your reasearch, please cite as follows:  
+```
+Jancso, Anna, Steven Moran, and Sabine Stoll.
+"The ACQDIV Corpus Database and Aggregation Pipeline."
+Proceedings of The 12th Language Resources and Evaluation Conference. 2020.
+```
+[Link to Paper](http://www.lrec-conf.org/proceedings/lrec2020/pdf/2020.lrec-1.20.pdf)
+
 
 ## Resources
 
