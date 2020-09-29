@@ -27,7 +27,8 @@ setup(
         'sqlalchemy',
         'lxml',
         'tqdm',
-        'python-dateutil'
+        'python-dateutil',
+        'requests'
     ],
     extras_require={
         'dev': ['pandas', 'numpy', 'tox'],
