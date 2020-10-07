@@ -4,7 +4,7 @@ import csv
 def parse_csv(path, raw_pos=0, mapped_pos=1):
     morpheme_dict = {}
 
-    with open(path) as csv_file:
+    with open(path, encoding='utf-8') as csv_file:
         reader = csv.reader(csv_file, delimiter=',', quotechar='"')
         for row in reader:
             raw = row[raw_pos]
