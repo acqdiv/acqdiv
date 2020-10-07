@@ -3,8 +3,10 @@
 
 library(RSQLite)
 
+args = commandArgs(trailingOnly=TRUE)
+
 # Create conection
-con <- dbConnect(SQLite(), "test.sqlite3")
+con <- dbConnect(SQLite(), args[1])
 
 # Which tables?
 as.data.frame(dbListTables(con))
@@ -23,7 +25,7 @@ words <- dbReadTable(con, 'words')
 dbDisconnect(con)
 
 # Write to Rdata
-save(all_data, corpora, morphemes, sessions, speakers, uniquespeakers, utterances, words, file="test.Rdata")
+save(all_data, corpora, morphemes, sessions, speakers, uniquespeakers, utterances, words, file="acqdiv.Rdata")
 
 # Be nice
 rm(list = ls())
