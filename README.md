@@ -58,7 +58,9 @@ Our full database consists of the following corpora:
 
 ## Running the pipeline
 
-To run the pipeline yourself:
+For Windows users, follow the installation/run instructions here: [https://github.com/acqdiv/acqdiv/wiki/Installation-Run-instructions-for-Windows](https://github.com/acqdiv/acqdiv/wiki/Installation-Run-instructions-for-Windows)
+
+For Mac and Linux user, continue here to run the pipeline yourself:
 
 ### Install the package
 
