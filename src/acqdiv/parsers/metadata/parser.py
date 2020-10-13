@@ -22,7 +22,7 @@ class MetadataParser(object):
         if os.path.isfile(path):
             self.path = path
         else:
-            # load dummy file (randomly choosing Chintang here)
+            # load dummy file
             self.path = get_full_path('parsers/metadata/resources/dummy.imdi')
             print(f'ERROR: IMDI {path} missing!!!')
             print('Loading dummy file...')
