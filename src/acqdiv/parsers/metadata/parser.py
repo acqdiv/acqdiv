@@ -3,6 +3,8 @@ import re
 
 from lxml import objectify
 
+from acqdiv.util.path import get_full_path
+
 
 class MetadataParser(object):
     """ Base metadata parser class.
@@ -16,8 +18,17 @@ class MetadataParser(object):
     """
 
     def __init__(self, path):
-        self.path = path
-        self.tree = objectify.parse(path)
+        # check if IMDI file exists
+        if os.path.isfile(path):
+            self.path = path
+        else:
+            # load dummy file (randomly choosing Chintang here)
+            self.path = get_full_path('parsers/metadata/resources/dummy.imdi')
+            print(f'ERROR: IMDI {path} missing!!!')
+            print('Loading dummy file...')
+
+        self.tree = objectify.parse(self.path)
+
         self.root = self.tree.getroot()
         self.metadata = {
             '__attrs__': self.parse_attrs(self.root),
