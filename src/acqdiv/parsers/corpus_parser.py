@@ -1,6 +1,7 @@
 """Abstract class for corpus parsing."""
 
 import glob
+import os
 from abc import ABC, abstractmethod
 
 from tqdm import tqdm
@@ -57,6 +58,7 @@ class CorpusParser(ABC):
             acqdiv.parsers.SessionParser: The session parser.
         """
         session_paths = sorted(glob.glob(self.cfg['sessions']))
+        print('Reading sessions from:', os.path.abspath(self.cfg['sessions']))
 
         with tqdm(session_paths, disable=self.disable_pbar) as pbar:
 
