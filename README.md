@@ -122,6 +122,22 @@ Optionally adapt the paths for the individual corpora (`sessions` and `metadata_
 Run the pipeline specifying the absolute path to the configuration file:  
 `acqdiv load -c /absolute/path/to/config.ini`
 
+### Generate the R object
+
+Install dependencies
+```
+$ R
+> install.packages("RSQLite")
+> install.packages("rlang")
+```
+
+Navigate to `src/acqdiv/database` and run:
+```
+Rscript sqlite_to_r.R /absolute/path/to/sqlite-DB
+```
+
+### Run tests
+
 Run the unittests:  
 `pytest tests/unittests`  
 
