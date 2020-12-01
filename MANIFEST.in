@@ -1,5 +1,6 @@
 include *.md
 graft src
-global-exclude *.py[co]
+global-exclude *.py[cod]
 prune src/acqdiv/corpora
 global-exclude *.sqlite3
+global-exclude *.Rdata
