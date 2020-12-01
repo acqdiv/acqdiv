@@ -91,26 +91,19 @@ pip install .
 pip install -r requirements.txt
 ```
 
-### Download the corpora
+### Get the corpora
 
-Create a directory `corpora`.
+Run the following script to download the public corpora:
 
-For the CHAT corpora:
-* Download the CHAT files on the CHILDES TalkBank website (where available)
-(see `Download transcripts` link)
-* Unzip the data
-* Copy the python script `src/acqdiv/util/cha_extractor.py` into the directory
-* Run the script: `python cha_extractor.py`. A directory `cha/` will be created.
-* Place the `cha/` directory in `corpora/<corpus_name>/` (also 
-see the corresponding ini file in `src/acqdiv/ini/<corpus_name>` for which
-corpus name to use as a directory name).
+`python util/download_public_corpora.py`
 
-For the toolbox corpora:
-* Download the toolbox and metadata files (IMDI/CMDI).
-* Place the toolbox files in `corpora/<corpus_name>/toolbox/`
-and the IMDI files in `corpora/<corpus_name>/imdi/`.
+The corpora are in the folder `corpora`. 
 
-### Create the database
+For the private corpora, either place the session files  in `corpora/<corpus_name>/{cha|toolbox}/` 
+and the metadata files (only Toolbox corpora) in `corpora/<corpus_name>/imdi/` or 
+edit the paths to those files in the `config.ini` (also see below).
+
+### Generate the database
 
 Get the configuration file `src/acqdiv/config.ini` and specify the absolute
 paths (without trailing slashes) for the corpora directory (`corpora_dir`) and 
@@ -124,8 +117,26 @@ db_dir = /absolute/path/to/database/dir
 ...
 ```
 
+Optionally adapt the paths for the individual corpora (`sessions` and `metadata_dir`).
+
 Run the pipeline specifying the absolute path to the configuration file:  
 `acqdiv load -c /absolute/path/to/config.ini`
+
+### Generate the R object
+
+Install dependencies
+```
+$ R
+> install.packages("RSQLite")
+> install.packages("rlang")
+```
+
+Navigate to `src/acqdiv/database` and run:
+```
+Rscript sqlite_to_r.R /absolute/path/to/sqlite-DB
+```
+
+### Run tests
 
 Run the unittests:  
 `pytest tests/unittests`  
