@@ -1,4 +1,4 @@
-CREATE VIEW IF NOT EXISTS all_data
+CREATE VIEW IF NOT EXISTS v_all_data
 AS
 SELECT
 corpora.id as corpus,

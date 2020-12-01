@@ -12,7 +12,7 @@ con <- dbConnect(SQLite(), args[1])
 as.data.frame(dbListTables(con))
 
 # Get tables as dfs
-all_data <- dbReadTable(con, 'all_data')
+all_data <- dbReadTable(con, 'v_all_data')
 corpora <- dbReadTable(con, 'corpora')
 morphemes <- dbReadTable(con, 'morphemes')
 sessions <- dbReadTable(con, 'sessions')
