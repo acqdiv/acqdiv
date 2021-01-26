@@ -5,10 +5,7 @@ from pathlib import Path
 import requests
 
 corpora_dir = Path('corpora')
-if corpora_dir.exists():
-    shutil.rmtree(corpora_dir)
-
-corpora_dir.mkdir()
+corpora_dir.mkdir(exist_ok=True)
 
 tmp_dir = corpora_dir / 'downloaded'
 
@@ -31,6 +28,8 @@ for corpus, childes_corpus_link in childes_corpora_links.items():
 
     # where the corpus data is placed
     corpus_dir = corpora_dir / corpus
+    if corpus_dir.exists():
+        shutil.rmtree(corpus_dir)
     corpus_dir.mkdir()
     cha_dir = corpus_dir / 'cha'
     cha_dir.mkdir()
